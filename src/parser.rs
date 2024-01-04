@@ -5,7 +5,7 @@ extern "C" {
     fn tree_sitter_fortran() -> Language;
 }
 
-fn fortran_parser() -> Parser {
+pub fn fortran_parser() -> Parser {
     let lang_fortran = unsafe{tree_sitter_fortran()};
     let mut parser = Parser::new();
     parser.set_language(lang_fortran).unwrap();
