@@ -13,14 +13,18 @@ fn fortran_parser() -> Parser {
 }
 
 
-#[test]
-fn test_fortran_parser() {
-    let mut parser = fortran_parser();
-    let source_code = "module test_mod\n\
-                       implicit none\n\
-                       character(len=*), parameter :: str = 'Hello World!'\n\
-                       end module test_mod";
-    let tree = parser.parse(source_code, None).unwrap();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    println!("{}", tree.root_node().to_sexp());
+    #[test]
+    fn test_fortran_parser() {
+        let mut parser = fortran_parser();
+        let source_code = "module test_mod\n\
+                           implicit none\n\
+                           character(len=*), parameter :: str = 'Hello World!'\n\
+                           end module test_mod";
+        let tree = parser.parse(source_code, None);
+        assert!(tree.is_some())
+    }
 }
