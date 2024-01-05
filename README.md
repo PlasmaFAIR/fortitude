@@ -23,9 +23,9 @@ $ cargo clippy
 
 ## TODO
 
-- `use_modules` rule for interfaces and other constructs that should be in modules.
-- Require `implicit none` rule.
-- Avoid `double precision` rule.
+- Report `implicit none` use in functions when its already in an enclosing module
+- Require `implicit none` in interface functions
+- Avoid `double precision`.
 - Code style rules
 - `Rule` should be const constructable.
 - Rules should have status: `Default` or `Optional`

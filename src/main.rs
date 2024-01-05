@@ -20,6 +20,7 @@ fn main() {
     let mut parser = fortran_parser();
     let tree = parser.parse(&content, None).unwrap();
     let root = tree.root_node();
+    //println!("{}", root.to_sexp());
     
     // Collect available rules
     // TODO Add feature to deselect rules, or add non-default ones.
@@ -37,7 +38,7 @@ fn main() {
     for rule in rules {
         match rule.method() {
             rules::Method::Tree(f) => {
-                violations.append(&mut f(&root));
+                violations.extend(f(&root));
             },
             _ => {
                 panic!(); // TODO Add extra rule types

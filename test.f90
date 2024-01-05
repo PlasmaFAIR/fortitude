@@ -9,6 +9,13 @@ module my_module
   implicit none
   private
 
+  ! This function should raise an error for missing implicit none
+  interface
+    integer function interface_func(x)
+      integer, intent(in) :: x
+    end function
+  end interface
+
 contains
 
   ! Should not trigger linter
@@ -30,8 +37,10 @@ subroutine triple(x)
   x = x * 3
 end subroutine
 
-interface
-  integer function interface_func(x)
-    integer, intent(in) :: x
-  end function
-end interface
+module implicit_module
+
+  parameter(N = 1)
+
+end module
+
+

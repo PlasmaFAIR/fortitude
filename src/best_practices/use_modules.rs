@@ -15,14 +15,15 @@ const MSG: &str = "Functions and subroutines should be contained within (sub)mod
 /// Checks if a function (or subroutine) is defined within a module, submodule, interface,
 /// function, or subroutine. Free-standing functions return a Violation. Well-contained functions
 /// return None. Assumes that the input node is a function or subroutine.
-fn use_modules_violation(node: &Node) -> Option<rules::Violation> {
+fn use_modules_violation(kind: &str, node: &Node) -> Option<rules::Violation> {
     let parent = node.parent()?;
     match parent.kind() {
         "translation_unit" => Some(
             rules::Violation::from_node(
                 node,
                 CODE,
-                "Function or subroutine not contained within (sub)module, program, or interface",
+                format!("{} not contained within (sub)module, program, or interface", kind)
+                    .as_str(),
             )
         ),
         _ => None,
@@ -36,7 +37,7 @@ fn use_modules_method(node: &Node) -> Vec<rules::Violation> {
     let kind = node.kind();
     match kind {
         "function" | "subroutine" => {
-            match use_modules_violation(node) {
+            match use_modules_violation(kind, node) {
                 Some(x) => vec![x],
                 _ => vec![],
             }
@@ -44,7 +45,7 @@ fn use_modules_method(node: &Node) -> Vec<rules::Violation> {
         _ => {
             let mut violations: Vec<rules::Violation> = Vec::new();
             for child in node.children(&mut node.walk()){
-                violations.append(&mut use_modules_method(&child));
+                violations.extend(use_modules_method(&child));
             }
             violations
         },
