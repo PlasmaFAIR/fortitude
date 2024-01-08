@@ -1,5 +1,5 @@
-use std::path::Path;
 use cc::Build;
+use std::path::Path;
 
 fn main() {
     let src_dir = Path::new("external/tree-sitter-fortran/src");

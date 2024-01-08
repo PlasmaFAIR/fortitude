@@ -1,4 +1,4 @@
-use tree_sitter::{Parser, Language};
+use tree_sitter::{Language, Parser};
 
 #[link(name = "tree-sitter-fortran")]
 extern "C" {
@@ -6,12 +6,11 @@ extern "C" {
 }
 
 pub fn fortran_parser() -> Parser {
-    let lang_fortran = unsafe{tree_sitter_fortran()};
+    let lang_fortran = unsafe { tree_sitter_fortran() };
     let mut parser = Parser::new();
     parser.set_language(lang_fortran).unwrap();
     parser
 }
-
 
 #[cfg(test)]
 mod tests {

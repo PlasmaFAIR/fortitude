@@ -1,11 +1,9 @@
+use crate::rules;
 /// Defines rules that check whether functions and subroutines are defined within modules,
 /// submodules, or interfaces. It is also acceptable to define nested functions or subroutines.
-
 // TODO Need to consider modularisation of (abstract) interface blocks.
 // TODO Add tests.
-
 use tree_sitter::Node;
-use crate::rules;
 
 const CODE: rules::Code = rules::Code::new(rules::Category::BestPractices, 1);
 const MSG: &str = "Functions and subroutines should be contained within (sub)modules, program \
@@ -18,14 +16,15 @@ const MSG: &str = "Functions and subroutines should be contained within (sub)mod
 fn use_modules_violation(kind: &str, node: &Node) -> Option<rules::Violation> {
     let parent = node.parent()?;
     match parent.kind() {
-        "translation_unit" => Some(
-            rules::Violation::from_node(
-                node,
-                CODE,
-                format!("{} not contained within (sub)module, program, or interface", kind)
-                    .as_str(),
+        "translation_unit" => Some(rules::Violation::from_node(
+            node,
+            CODE,
+            format!(
+                "{} not contained within (sub)module, program, or interface",
+                kind
             )
-        ),
+            .as_str(),
+        )),
         _ => None,
     }
 }
@@ -36,19 +35,17 @@ fn use_modules_violation(kind: &str, node: &Node) -> Option<rules::Violation> {
 fn use_modules_method(node: &Node) -> Vec<rules::Violation> {
     let kind = node.kind();
     match kind {
-        "function" | "subroutine" => {
-            match use_modules_violation(kind, node) {
-                Some(x) => vec![x],
-                _ => vec![],
-            }
+        "function" | "subroutine" => match use_modules_violation(kind, node) {
+            Some(x) => vec![x],
+            _ => vec![],
         },
         _ => {
             let mut violations: Vec<rules::Violation> = Vec::new();
-            for child in node.children(&mut node.walk()){
+            for child in node.children(&mut node.walk()) {
                 violations.extend(use_modules_method(&child));
             }
             violations
-        },
+        }
     }
 }
 

@@ -1,16 +1,14 @@
 /// Contains utilities for categorising and defining rules.
-
 // TODO Rules should be const creatable. Figure out str lifetimes.
 // TODO Add RuleStatus, tagging rules as default or optional.
 // TODO Add RuleRegistry, collecting all rules at compile time. A HashSet of active rules should be
 //      determined at runtime depending on default/optional status and user choices.
-
 use std::cmp::Ordering;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
 /// The category of each rule defines the sort of problem it intends to solve.
-#[derive(Copy,Clone,PartialEq,Eq,PartialOrd,Ord,Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Category {
     /// Rules that check for basic syntax errors -- the things that compilers should be
     /// able to tell you.
@@ -33,7 +31,7 @@ impl fmt::Display for Category {
 }
 
 /// The combination of a rule category and a unique identifying number.
-#[derive(Copy,Clone,PartialEq,Eq,PartialOrd,Ord,Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Code {
     category: Category,
     number: u8,
@@ -41,7 +39,7 @@ pub struct Code {
 
 impl Code {
     pub const fn new(category: Category, number: u8) -> Code {
-        Code{category, number}
+        Code { category, number }
     }
 }
 
@@ -64,7 +62,11 @@ pub struct Violation {
 
 impl Violation {
     pub fn new(line: usize, code: Code, message: &str) -> Violation {
-        Violation{line, code, message: String::from(message)}
+        Violation {
+            line,
+            code,
+            message: String::from(message),
+        }
     }
 
     pub fn from_node(node: &tree_sitter::Node, code: Code, message: &str) -> Violation {
@@ -101,7 +103,7 @@ type StrMethod = fn(&str) -> Vec<Violation>;
 
 /// The methods by which rules are enforced. Some rules act on individual lines of code,
 /// some by reading a full file, and others by analysing the concrete syntax tree.
-#[derive(PartialEq,Eq)]
+#[derive(PartialEq, Eq)]
 pub enum Method {
     /// Methods that analyse the concrete syntax tree.
     Tree(TreeMethod),
@@ -124,7 +126,11 @@ pub struct Rule {
 
 impl Rule {
     pub fn new(code: Code, method: Method, description: &str) -> Rule {
-        Rule {code, method, description: String::from(description)}
+        Rule {
+            code,
+            method,
+            description: String::from(description),
+        }
     }
 
     pub fn method(&self) -> &Method {
@@ -133,7 +139,7 @@ impl Rule {
 }
 
 impl Hash for Rule {
-    fn hash<H: Hasher>(&self, state: &mut H){
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.code.hash(state);
     }
 }
@@ -167,9 +173,9 @@ mod tests {
         let msg = "Ensure functions and subroutines are contained within modules";
         let mod_check = Rule::new(
             Code::new(Category::BestPractices, 23),
-            Method::Line(
-                |x: &str| vec![Violation::new(1, Code::new(Category::BestPractices, 23), x)]
-            ),
+            Method::Line(|x: &str| {
+                vec![Violation::new(1, Code::new(Category::BestPractices, 23), x)]
+            }),
             &msg,
         );
         assert_eq!(mod_check.to_string(), format!("B023: {}", msg));
