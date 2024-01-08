@@ -4,7 +4,7 @@ mod rules;
 
 use best_practices::add_best_practices_rules;
 use parser::fortran_parser;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 
@@ -27,21 +27,23 @@ fn main() {
     //      Later requires RuleStatus enum (default, deprecated, etc.) and RulesRegistry
     // TODO Separate rules into multiple categories:
     //      - Call syntax error rules first, and if any are found don't bother checking any others.
-    //      - Match rules based on method type, and feed different views of the code to each. Tree
-    //        rules should be given the root node, Line rules should be applied sequentially
-    //        to each line of the file, and File rules should be given the whole file as text.
-    let mut rules = HashSet::new();
+    let mut rules = HashMap::new();
     add_best_practices_rules(&mut rules);
 
     // Gather violations
     let mut violations = Vec::new();
-    for rule in rules {
+    for (_, rule) in rules {
         match rule.method() {
             rules::Method::Tree(f) => {
                 violations.extend(f(&root));
             }
-            _ => {
-                panic!(); // TODO Add extra rule types
+            rules::Method::File(f) => {
+                violations.extend(f(&content));
+            }
+            rules::Method::Line(f) => {
+                for line in content.split('\n') {
+                    violations.extend(f(line));
+                }
             }
         }
     }

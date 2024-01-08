@@ -50,5 +50,91 @@ fn use_modules_method(node: &Node) -> Vec<rules::Violation> {
 }
 
 pub fn use_modules() -> rules::Rule {
-    rules::Rule::new(CODE, rules::Method::Tree(use_modules_method), MSG)
+    rules::Rule::new(
+        CODE,
+        rules::Method::Tree(use_modules_method),
+        MSG,
+        rules::Status::Standard,
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser::fortran_parser;
+
+    fn test_helper(code: &str, err: Option<Vec<String>>) {
+        let mut parser = fortran_parser();
+        let tree = parser.parse(&code, None).unwrap();
+        let root = tree.root_node();
+        let rule = use_modules();
+        let mut violations = Vec::new();
+        match rule.method() {
+            rules::Method::Tree(f) => {
+                violations.extend(f(&root));
+            }
+            _ => {
+                panic!();
+            }
+        }
+        match err {
+            Some(x) => {
+                assert_eq!(violations.len(), x.len());
+                for (actual, expected) in violations.iter().zip(x) {
+                    assert_eq!(actual.to_string(), expected);
+                }
+            }
+            None => {
+                // Do nothing!
+            }
+        }
+    }
+
+    #[test]
+    fn test_function_not_in_module() {
+        let code = "
+            integer function double(x)
+              integer, intent(in) :: x
+              double = 2 * x
+            end function
+            
+            subroutine triple(x)
+              integer, intent(inout) :: x
+              x = 3 * x
+            end subroutine
+            ";
+        let errs = [2, 7]
+            .iter()
+            .zip(["function", "subroutine"])
+            .map(|(line, msg)| {
+                format!(
+                    "Line {}: B001 {} not contained within (sub)module, \
+                    program, or interface",
+                    line, msg,
+                )
+                .to_string()
+            })
+            .collect();
+        test_helper(code, Some(errs));
+    }
+
+    #[test]
+    fn test_function_in_module() {
+        let code = "
+            module my_module
+                implicit none
+            contains
+                integer function double(x)
+                  integer, intent(in) :: x
+                  double = 2 * x
+                end function
+                
+                subroutine triple(x)
+                  integer, intent(inout) :: x
+                  x = 3 * x
+                end subroutine
+            end module
+            ";
+        test_helper(code, None);
+    }
 }

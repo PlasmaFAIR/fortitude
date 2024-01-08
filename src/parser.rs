@@ -19,10 +19,12 @@ mod tests {
     #[test]
     fn test_fortran_parser() {
         let mut parser = fortran_parser();
-        let source_code = "module test_mod\n\
-                           implicit none\n\
-                           character(len=*), parameter :: str = 'Hello World!'\n\
-                           end module test_mod";
+        let source_code = "
+            module test_mod
+               implicit none
+               character(len=*), parameter :: str = 'Hello World!'
+           end module test_mod
+           ";
         let tree = parser.parse(source_code, None);
         assert!(tree.is_some())
     }

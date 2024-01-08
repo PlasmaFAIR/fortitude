@@ -48,5 +48,85 @@ fn use_implicit_none_method(node: &Node) -> Vec<rules::Violation> {
 }
 
 pub fn use_implicit_none() -> rules::Rule {
-    rules::Rule::new(CODE10, rules::Method::Tree(use_implicit_none_method), MSG10)
+    rules::Rule::new(
+        CODE10,
+        rules::Method::Tree(use_implicit_none_method),
+        MSG10,
+        rules::Status::Standard,
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser::fortran_parser;
+
+    fn test_helper(code: &str, err: Option<Vec<String>>) {
+        let mut parser = fortran_parser();
+        let tree = parser.parse(&code, None).unwrap();
+        let root = tree.root_node();
+        let rule = use_implicit_none();
+        let mut violations = Vec::new();
+        match rule.method() {
+            rules::Method::Tree(f) => {
+                violations.extend(f(&root));
+            }
+            _ => {
+                panic!();
+            }
+        }
+        match err {
+            Some(x) => {
+                assert_eq!(violations.len(), x.len());
+                for (actual, expected) in violations.iter().zip(x) {
+                    assert_eq!(actual.to_string(), expected);
+                }
+            }
+            None => {
+                // Do nothing!
+            }
+        }
+    }
+
+    #[test]
+    fn test_missing_implicit_none() {
+        let code = "
+            module my_module
+                parameter(N = 1)
+            end module
+
+            program my_program
+                write(*,*) 42
+            end program
+            ";
+        let errs = [2, 6]
+            .iter()
+            .zip(["module", "program"])
+            .map(|(line, msg)| {
+                format!("Line {}: B010 {} missing 'implicit none'", line, msg,).to_string()
+            })
+            .collect();
+        test_helper(code, Some(errs));
+    }
+
+    #[test]
+    fn test_uses_implicit_none() {
+        let code = "
+            module my_module
+                implicit none
+            contains
+                integer function double(x)
+                  integer, intent(in) :: x
+                  double = 2 * x
+                end function
+            end module
+
+            program my_program
+                implicit none
+                integer, paramter :: x = 2
+                write(*,*) x
+            end program
+            ";
+        test_helper(code, None);
+    }
 }

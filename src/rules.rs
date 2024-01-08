@@ -1,9 +1,8 @@
+use std::cmp::Ordering;
 /// Contains utilities for categorising and defining rules.
-// TODO Rules should be const creatable. Figure out str lifetimes.
-// TODO Add RuleStatus, tagging rules as default or optional.
 // TODO Add RuleRegistry, collecting all rules at compile time. A HashSet of active rules should be
 //      determined at runtime depending on default/optional status and user choices.
-use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
@@ -113,6 +112,15 @@ pub enum Method {
     File(StrMethod),
 }
 
+/// A way to tag rules as being on or off by default.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Status {
+    /// Rules that are 'on' by default.
+    Standard,
+    /// Rules that are 'off' by default.
+    Optional,
+}
+
 /// The definition of each rule.
 #[derive(Eq)]
 pub struct Rule {
@@ -122,14 +130,17 @@ pub struct Rule {
     method: Method,
     /// A description of what the rule does.
     description: String,
+    /// Whether the rule should be switched on by default.
+    status: Status,
 }
 
 impl Rule {
-    pub fn new(code: Code, method: Method, description: &str) -> Rule {
+    pub fn new(code: Code, method: Method, description: &str, status: Status) -> Rule {
         Rule {
             code,
             method,
             description: String::from(description),
+            status,
         }
     }
 
@@ -156,6 +167,11 @@ impl fmt::Display for Rule {
     }
 }
 
+/// Add a rule to a `HashMap`, using the string representation of its code as the key.
+pub fn register_rule(registry: &mut HashMap<String, Rule>, rule: Rule) {
+    registry.insert(rule.code.to_string(), rule);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,14 +186,39 @@ mod tests {
 
     #[test]
     fn test_rule() {
-        let msg = "Ensure functions and subroutines are contained within modules";
-        let mod_check = Rule::new(
+        let rule = Rule::new(
             Code::new(Category::BestPractices, 23),
             Method::Line(|x: &str| {
                 vec![Violation::new(1, Code::new(Category::BestPractices, 23), x)]
             }),
-            &msg,
+            "hello world",
+            Status::Standard,
         );
-        assert_eq!(mod_check.to_string(), format!("B023: {}", msg));
+        assert_eq!(rule.to_string(), "B023: hello world");
+    }
+
+    #[test]
+    fn test_register() {
+        let mut registry = HashMap::new();
+        let rule = Rule::new(
+            Code::new(Category::BestPractices, 23),
+            Method::Line(|x: &str| {
+                vec![Violation::new(1, Code::new(Category::BestPractices, 23), x)]
+            }),
+            "hello world",
+            Status::Standard,
+        );
+        register_rule(&mut registry, rule);
+        let rule = Rule::new(
+            Code::new(Category::SyntaxError, 42),
+            Method::Line(|x: &str| {
+                vec![Violation::new(1, Code::new(Category::SyntaxError, 42), x)]
+            }),
+            "foo bar",
+            Status::Optional,
+        );
+        register_rule(&mut registry, rule);
+        assert_eq!(registry.contains_key("B023"), true);
+        assert_eq!(registry.contains_key("E042"), true);
     }
 }
