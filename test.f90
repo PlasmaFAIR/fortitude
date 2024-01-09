@@ -44,3 +44,8 @@ module implicit_module
 end module
 
 
+program myprog
+
+  write(*,*) "Hello world!"
+
+end program

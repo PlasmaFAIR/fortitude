@@ -97,7 +97,7 @@ impl fmt::Display for Violation {
     }
 }
 
-type TreeMethod = fn(&tree_sitter::Node) -> Vec<Violation>;
+type TreeMethod = fn(&tree_sitter::Node, &str) -> Vec<Violation>;
 type StrMethod = fn(&str) -> Vec<Violation>;
 
 /// The methods by which rules are enforced. Some rules act on individual lines of code,

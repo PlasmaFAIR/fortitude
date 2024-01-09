@@ -5,10 +5,15 @@ extern "C" {
     fn tree_sitter_fortran() -> Language;
 }
 
+pub fn fortran_language() -> Language {
+    unsafe { tree_sitter_fortran() }
+}
+
 pub fn fortran_parser() -> Parser {
-    let lang_fortran = unsafe { tree_sitter_fortran() };
     let mut parser = Parser::new();
-    parser.set_language(lang_fortran).unwrap();
+    parser
+        .set_language(fortran_language())
+        .expect("Failed to set up Fortan parser");
     parser
 }
 

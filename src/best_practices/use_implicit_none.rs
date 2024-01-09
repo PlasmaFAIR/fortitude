@@ -1,50 +1,46 @@
+use crate::parser::fortran_language;
 use crate::rules;
 /// Defines rules that raise errors if implicit typing is in use.
 // TODO require implicit none in interface functions (code 11)
 // TODO report use of function `implicit none` when its set on the enclosing module (code 12)
-use tree_sitter::Node;
+use tree_sitter::{Node, Query};
 
 const CODE10: rules::Code = rules::Code::new(rules::Category::BestPractices, 10);
 const MSG10: &str = "'implicit none' should be used in all modules and programs, as implicit
     typing reduces the readability of code and increases the chances of typing errors.";
 
-fn use_implicit_none_violation(kind: &str, node: &Node) -> Option<rules::Violation> {
-    for child in node.children(&mut node.walk()) {
-        if child.kind() == "implicit_statement" {
-            match child.child(1) {
-                Some(x) => {
-                    if x.kind() == "none" {
-                        return None;
-                    }
-                }
-                None => {
-                    continue;
+fn use_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Violation> {
+    let mut violations = Vec::new();
+    for query_type in ["module", "submodule", "program"] {
+        // Search for a module, submodule or program, and optionally an 'implicit none'.
+        // Capture module, submodule or program in @mod, and 'implicit none' in @implicit-none.
+        // We don't need @mod explicitly, but if @implicit-none isn't found, we'll need it
+        // for error reporting.
+        let query_txt = format!(
+            "({} (implicit_statement (none))? @implicit-none) @mod",
+            query_type
+        );
+        let query = Query::new(fortran_language(), query_txt.as_str()).unwrap();
+        let implicit_none_index = query.capture_index_for_name("implicit-none").unwrap();
+        let mut cursor = tree_sitter::QueryCursor::new();
+        for captures in cursor
+            .matches(&query, *root, src.as_bytes())
+            .map(|x| x.captures)
+        {
+            // If the @implicit-none capture isn't found, record a violation.
+            if !captures.iter().any(|&x| x.index == implicit_none_index) {
+                // The only other captures must be the module, submodule, or program.
+                for capture in captures {
+                    violations.push(rules::Violation::from_node(
+                        &capture.node,
+                        CODE10,
+                        format!("{} missing 'implicit none'", query_type).as_str(),
+                    ));
                 }
             }
         }
     }
-    Some(rules::Violation::from_node(
-        node,
-        CODE10,
-        format!("{} missing 'implicit none'", kind).as_str(),
-    ))
-}
-
-fn use_implicit_none_method(node: &Node) -> Vec<rules::Violation> {
-    let kind = node.kind();
-    match kind {
-        "module" | "submodule" | "program" => match use_implicit_none_violation(kind, node) {
-            Some(x) => vec![x],
-            _ => vec![],
-        },
-        _ => {
-            let mut violations: Vec<rules::Violation> = Vec::new();
-            for child in node.children(&mut node.walk()) {
-                violations.extend(use_implicit_none_method(&child));
-            }
-            violations
-        }
-    }
+    violations
 }
 
 pub fn use_implicit_none() -> rules::Rule {
@@ -66,15 +62,7 @@ mod tests {
         let tree = parser.parse(&code, None).unwrap();
         let root = tree.root_node();
         let rule = use_implicit_none();
-        let mut violations = Vec::new();
-        match rule.method() {
-            rules::Method::Tree(f) => {
-                violations.extend(f(&root));
-            }
-            _ => {
-                panic!();
-            }
-        }
+        let violations = use_implicit_none_method(&root, code);
         match err {
             Some(x) => {
                 assert_eq!(violations.len(), x.len());
