@@ -1,13 +1,13 @@
 use crate::parser::fortran_language;
-use crate::rules;
+use crate::rules::{Code, Violation};
 /// Defines rules that raise errors if implicit typing is in use.
 use tree_sitter::{Node, Query};
 
-const CODE10: rules::Code = rules::Code::new(rules::Category::BestPractices, 10);
-const MSG10: &str = "'implicit none' should be used in all modules and programs, as implicit \
-    typing reduces the readability of code and increases the chances of typing errors.";
+pub const USE_IMPLICIT_NONE: &str = "'implicit none' should be used in all modules and \
+    programs, as implicit typing reduces the readability of code and increases the chances of \
+    typing errors.";
 
-fn use_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Violation> {
+pub fn use_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["module", "submodule", "program"] {
         // Search for a module, submodule or program, and optionally an 'implicit none'.
@@ -29,9 +29,9 @@ fn use_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Violation> {
             if !captures.iter().any(|&x| x.index == implicit_none_index) {
                 // The only other captures must be the module, submodule, or program.
                 for capture in captures {
-                    violations.push(rules::Violation::from_node(
+                    violations.push(Violation::from_node(
                         &capture.node,
-                        CODE10,
+                        code,
                         format!("{} missing 'implicit none'", query_type).as_str(),
                     ));
                 }
@@ -41,20 +41,10 @@ fn use_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Violation> {
     violations
 }
 
-pub fn use_implicit_none() -> rules::Rule {
-    rules::Rule::new(
-        CODE10,
-        rules::Method::Tree(use_implicit_none_method),
-        MSG10,
-        rules::Status::Standard,
-    )
-}
+pub const USE_INTERFACE_IMPLICIT_NONE: &str = "Interface functions and subroutines require \
+    'implicit none', even if they are inside a module that uses 'implicit none'.";
 
-const CODE11: rules::Code = rules::Code::new(rules::Category::BestPractices, 11);
-const MSG11: &str = "Interface functions and subroutines require 'implicit none', even if they \
-    are inside a module that uses 'implicit none'.";
-
-fn use_interface_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Violation> {
+pub fn use_interface_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["function", "subroutine"] {
         let query_txt = format!(
@@ -72,9 +62,9 @@ fn use_interface_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Viol
             if !captures.iter().any(|&x| x.index == implicit_none_index) {
                 // The only other captures must be the module, submodule, or program.
                 for capture in captures {
-                    violations.push(rules::Violation::from_node(
+                    violations.push(Violation::from_node(
                         &capture.node,
-                        CODE11,
+                        code,
                         format!("interface {} missing 'implicit none'", query_type).as_str(),
                     ));
                 }
@@ -84,20 +74,10 @@ fn use_interface_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Viol
     violations
 }
 
-pub fn use_interface_implicit_none() -> rules::Rule {
-    rules::Rule::new(
-        CODE11,
-        rules::Method::Tree(use_interface_implicit_none_method),
-        MSG11,
-        rules::Status::Standard,
-    )
-}
+pub const AVOID_SUPERFLUOUS_IMPLICIT_NONE: &str = "If a module has 'implicit none' set, it is not \
+    necessary to set it in contained functions and subroutines (except when using interfaces).";
 
-const CODE12: rules::Code = rules::Code::new(rules::Category::BestPractices, 12);
-const MSG12: &str = "If a module has 'implicit none' set, it is not necessary to set this in its \
-    contained functions and subroutines (unless they're defined within interfaces).";
-
-fn avoid_superfluous_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Violation> {
+pub fn avoid_superfluous_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["module", "submodule", "program"] {
         let query_txt = format!(
@@ -117,9 +97,9 @@ fn avoid_superfluous_implicit_none_method(root: &Node, src: &str) -> Vec<rules::
             .map(|x| x.captures)
         {
             for capture in captures {
-                violations.push(rules::Violation::from_node(
+                violations.push(Violation::from_node(
                     &capture.node,
-                    CODE12,
+                    code,
                     format!(
                         "'implicit none' is set on the enclosing {}, and isn't needed here",
                         query_type
@@ -132,47 +112,14 @@ fn avoid_superfluous_implicit_none_method(root: &Node, src: &str) -> Vec<rules::
     violations
 }
 
-pub fn avoid_superfluous_implicit_none() -> rules::Rule {
-    rules::Rule::new(
-        CODE12,
-        rules::Method::Tree(avoid_superfluous_implicit_none_method),
-        MSG12,
-        rules::Status::Standard,
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::fortran_parser;
-
-    fn test_helper(
-        f: fn(&Node, &str) -> Vec<rules::Violation>,
-        code: &str,
-        err: Option<Vec<String>>,
-    ) {
-        let mut parser = fortran_parser();
-        let tree = parser.parse(&code, None).unwrap();
-        let root = tree.root_node();
-        let rule = use_implicit_none();
-        let mut violations = f(&root, code);
-        violations.sort();
-        match err {
-            Some(x) => {
-                assert_eq!(violations.len(), x.len());
-                for (actual, expected) in violations.iter().zip(x) {
-                    assert_eq!(actual.to_string(), expected);
-                }
-            }
-            None => {
-                // Do nothing!
-            }
-        }
-    }
+    use crate::test_utils::{test_tree_method, TEST_CODE};
 
     #[test]
     fn test_missing_implicit_none() {
-        let code = "
+        let source = "
             module my_module
                 parameter(N = 1)
             end module
@@ -181,19 +128,23 @@ mod tests {
                 write(*,*) 42
             end program
             ";
-        let errs = [2, 6]
+        let expected_violations = [2, 6]
             .iter()
             .zip(["module", "program"])
-            .map(|(line, msg)| {
-                format!("Line {}: B010 {} missing 'implicit none'", line, msg,).to_string()
+            .map(|(line, kind)| {
+                Violation::new(
+                    line,
+                    TEST_CODE,
+                    format!("{} missing 'implicit none'", kind).to_string(),
+                )
             })
             .collect();
-        test_helper(use_implicit_none_method, code, Some(errs));
+        test_tree_method(use_implicit_none, source, Some(expected_violations));
     }
 
     #[test]
     fn test_uses_implicit_none() {
-        let code = "
+        let source = "
             module my_module
                 implicit none
             contains
@@ -209,12 +160,12 @@ mod tests {
                 write(*,*) x
             end program
             ";
-        test_helper(use_implicit_none_method, code, None);
+        test_tree_method(use_implicit_none, source, None);
     }
 
     #[test]
     fn test_interface_missing_implicit_none() {
-        let code = "
+        let source = "
             module my_module
                 implicit none
                 interface
@@ -234,23 +185,27 @@ mod tests {
                 write(*,*) 42
             end program
             ";
-        let errs = [5, 14]
+        let expected_violations = [5, 14]
             .iter()
             .zip(["function", "subroutine"])
-            .map(|(line, msg)| {
-                format!(
-                    "Line {}: B011 interface {} missing 'implicit none'",
-                    line, msg,
+            .map(|(line, kind)| {
+                Violation::new(
+                    line,
+                    TEST_CODE,
+                    format!("interface {} missing 'implicit none'", kind).to_string(),
                 )
-                .to_string()
             })
             .collect();
-        test_helper(use_interface_implicit_none_method, code, Some(errs));
+        test_tree_method(
+            use_interface_implicit_none,
+            source,
+            Some(expected_violations),
+        );
     }
 
     #[test]
     fn test_interface_uses_implicit_none() {
-        let code = "
+        let source = "
             module my_module
                 implicit none
                 interface
@@ -272,12 +227,12 @@ mod tests {
                 write(*,*) 42
             end program
             ";
-        test_helper(use_interface_implicit_none_method, code, None);
+        test_tree_method(use_interface_implicit_none, source, None);
     }
 
     #[test]
     fn test_superflous_implicit_none() {
-        let code = "
+        let source = "
             module my_module
                 implicit none
             contains
@@ -311,23 +266,31 @@ mod tests {
                 end subroutine
             end program
             ";
-        let errs = [6, 11, 24, 29]
+        let expected_violations = [6, 11, 24, 29]
             .iter()
             .zip(["module", "module", "program", "program"])
-            .map(|(line, msg)| {
-                format!(
-                    "Line {}: B012 'implicit none' is set on the enclosing {}, and isn't needed here",
-                    line, msg,
+            .map(|(line, kind)| {
+                Violation::new(
+                    line,
+                    TEST_CODE,
+                    format!(
+                        "'implicit none' is set on the enclosing {}, and isn't needed here",
+                        kind
+                    )
+                    .to_string(),
                 )
-                .to_string()
             })
             .collect();
-        test_helper(avoid_superfluous_implicit_none_method, code, Some(errs));
+        test_tree_method(
+            avoid_superfluous_implicit_none,
+            source,
+            Some(expected_violations),
+        );
     }
 
     #[test]
     fn test_non_superflous_implicit_none() {
-        let code = "
+        let source = "
             module my_module
                 implicit none
 
@@ -365,6 +328,6 @@ mod tests {
                 end subroutine
             end program
             ";
-        test_helper(avoid_superfluous_implicit_none_method, code, None);
+        test_tree_method(avoid_superfluous_implicit_none, source, None);
     }
 }

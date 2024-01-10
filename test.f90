@@ -6,8 +6,12 @@ end function
 
 module my_module
 
+  use, intrinsic :: iso_fortran_env, only: dp => real64
+
   implicit none
   private
+
+  real(dp), parameter :: pi = 3.14159265358979_dp
 
   ! This function should raise an error for missing implicit none
   interface

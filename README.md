@@ -17,13 +17,10 @@ $ cargo test
 
 ## TODO
 
-- Avoid `double precision`.
+- Avoid `double precision`, `real*8`, and `real(8)`. Recommend use of `iso_fortran_env`
+  or `iso_c_binding` kinds, `selected_real_kind`, or `kind(0.0d0)`.
 - Rule for `use module` without an `only` clause.
-- Rework relationship between rules and methods. Instead of rules owning a method,
-  there should be a map between rules and methods (and also between rule code strings
-  and rules).
-- Rework how rule codes are shared between rules and violations. Violations should not
-  have a rule code, and this should be inserted by the rule itself.
+- Rule for floating point number literals without a kind suffix.
 - Command line interface.
   - Allow users to switch rules on and off via `--include` and `--exclude`.
   - Use `.fortitude.toml` file to set rules project wide.
@@ -38,11 +35,11 @@ $ cargo test
 
 ## Wishlist
 
+The following will require better analysis of scope:
+
 - Report if a function can be marked pure.
 - Report unused variables.
-- Report things like `real(8)`, and recommend using `real64` from `iso_fortran_env`.
-  To do this properly, will need to look up through relevant scopes to figure out if the
-  user has defined something like `dp`.
+- Report undefined variables.
 
 ## Contributing
 

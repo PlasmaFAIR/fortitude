@@ -20,7 +20,6 @@ fn main() {
     let mut parser = fortran_parser();
     let tree = parser.parse(&content, None).unwrap();
     let root = tree.root_node();
-    println!("{}", root.to_sexp());
 
     // Collect available rules
     // TODO Add feature to deselect rules, or add non-default ones.
@@ -33,16 +32,12 @@ fn main() {
     // Gather violations
     let mut violations = Vec::new();
     for (_, rule) in rules {
-        match rule.method() {
-            rules::Method::Tree(f) => {
-                violations.extend(f(&root, &content));
-            }
-            rules::Method::File(f) => {
-                violations.extend(f(&content));
-            }
+        match rule.method {
+            rules::Method::Tree(f) => violations.extend(f(rule.code, &root, &content)),
+            rules::Method::File(f) => violations.extend(f(rule.code, &content)),
             rules::Method::Line(f) => {
                 for line in content.split('\n') {
-                    violations.extend(f(line));
+                    violations.extend(f(rule.code, line))
                 }
             }
         }
@@ -50,6 +45,7 @@ fn main() {
 
     // If any violations found, sort and print. Otherwise, print something nice!
     if !violations.is_empty() {
+        // Gather into single
         violations.sort_unstable();
         for violation in violations.iter() {
             println!("{}", violation);
