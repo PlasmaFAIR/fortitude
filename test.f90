@@ -1,4 +1,4 @@
-! This function should trigger the linter on line 2
+! This function should trigger for missing enclosing module
 integer function double(x)
   integer, intent(in) :: x
   double = 2 * x
@@ -29,23 +29,27 @@ contains
     integer, intent(inout) :: x
     x = x * 3
   end subroutine
+
+  ! Should trigger for superfluous implicit none
+  integer function quad(x)
+    implicit none
+    integer, intent(in) :: x
+    quad = 4 * x
+  end function
 end module
 
-! This function should trigger the linter on line 28
+! This function should trigger for missing enclosing module
 subroutine triple(x)
   integer, intent(inout) :: x
   x = x * 3
 end subroutine
 
+! Should trigger for missing implicit none
 module implicit_module
-
   parameter(N = 1)
-
 end module
 
-
+! Should trigger for missing implicit none
 program myprog
-
   write(*,*) "Hello world!"
-
 end program

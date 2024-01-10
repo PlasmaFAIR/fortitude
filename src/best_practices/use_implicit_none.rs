@@ -1,8 +1,6 @@
 use crate::parser::fortran_language;
 use crate::rules;
 /// Defines rules that raise errors if implicit typing is in use.
-// TODO require implicit none in interface functions (code 11)
-// TODO report use of function `implicit none` when its set on the enclosing module (code 12)
 use tree_sitter::{Node, Query};
 
 const CODE10: rules::Code = rules::Code::new(rules::Category::BestPractices, 10);
@@ -95,6 +93,54 @@ pub fn use_interface_implicit_none() -> rules::Rule {
     )
 }
 
+const CODE12: rules::Code = rules::Code::new(rules::Category::BestPractices, 12);
+const MSG12: &str = "If a module has 'implicit none' set, it is not necessary to set this in its \
+    contained functions and subroutines (unless they're defined within interfaces).";
+
+fn avoid_superfluous_implicit_none_method(root: &Node, src: &str) -> Vec<rules::Violation> {
+    let mut violations = Vec::new();
+    for query_type in ["module", "submodule", "program"] {
+        let query_txt = format!(
+            "({}
+                (implicit_statement (none))
+                (internal_procedures
+                    (function (implicit_statement (none)) @x)*
+                    (subroutine (implicit_statement (none)) @y)*
+                )
+            )",
+            query_type
+        );
+        let query = Query::new(fortran_language(), query_txt.as_str()).unwrap();
+        let mut cursor = tree_sitter::QueryCursor::new();
+        for captures in cursor
+            .matches(&query, *root, src.as_bytes())
+            .map(|x| x.captures)
+        {
+            for capture in captures {
+                violations.push(rules::Violation::from_node(
+                    &capture.node,
+                    CODE12,
+                    format!(
+                        "'implicit none' is set on the enclosing {}, and isn't needed here",
+                        query_type
+                    )
+                    .as_str(),
+                ));
+            }
+        }
+    }
+    violations
+}
+
+pub fn avoid_superfluous_implicit_none() -> rules::Rule {
+    rules::Rule::new(
+        CODE12,
+        rules::Method::Tree(avoid_superfluous_implicit_none_method),
+        MSG12,
+        rules::Status::Standard,
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -109,7 +155,8 @@ mod tests {
         let tree = parser.parse(&code, None).unwrap();
         let root = tree.root_node();
         let rule = use_implicit_none();
-        let violations = f(&root, code);
+        let mut violations = f(&root, code);
+        violations.sort();
         match err {
             Some(x) => {
                 assert_eq!(violations.len(), x.len());
@@ -182,7 +229,7 @@ mod tests {
                 interface
                     subroutine myfunc2(x)
                         integer, intent(inout) :: x
-                    end function
+                    end subroutine
                 end interface
                 write(*,*) 42
             end program
@@ -217,14 +264,107 @@ mod tests {
             program my_program
                 implicit none
                 interface
-                    subroutine myfunc2(x)
+                    subroutine mysub(x)
                         implicit none
                         integer, intent(inout) :: x
-                    end function
+                    end subroutine
                 end interface
                 write(*,*) 42
             end program
             ";
         test_helper(use_interface_implicit_none_method, code, None);
+    }
+
+    #[test]
+    fn test_superflous_implicit_none() {
+        let code = "
+            module my_module
+                implicit none
+            contains
+                integer function myfunc(x)
+                    implicit none
+                    integer, intent(in) :: x
+                    myfunc = x * 2
+                end function
+                subroutine mysub(x)
+                    implicit none
+                    integer, intent(inout) :: x
+                    x = x * 2
+                end subroutine
+            end module
+
+            program my_program
+                implicit none
+
+                write(*,*) 42
+
+            contains
+                integer function myfunc2(x)
+                    implicit none
+                    integer, intent(in) :: x
+                    myfunc2 = x * 2
+                end function
+                subroutine mysub2(x)
+                    implicit none
+                    integer, intent(inout) :: x
+                    x = x * 2
+                end subroutine
+            end program
+            ";
+        let errs = [6, 11, 24, 29]
+            .iter()
+            .zip(["module", "module", "program", "program"])
+            .map(|(line, msg)| {
+                format!(
+                    "Line {}: B012 'implicit none' is set on the enclosing {}, and isn't needed here",
+                    line, msg,
+                )
+                .to_string()
+            })
+            .collect();
+        test_helper(avoid_superfluous_implicit_none_method, code, Some(errs));
+    }
+
+    #[test]
+    fn test_non_superflous_implicit_none() {
+        let code = "
+            module my_module
+                implicit none
+
+                interface
+                    integer function interfunc(x)
+                        implicit none
+                        integer, intent(in) :: x
+                    end function
+                end interface
+
+            contains
+                integer function myfunc(x)
+                    integer, intent(in) :: x
+                    myfunc = x * 2
+                end function
+                subroutine mysub(x)
+                    integer, intent(inout) :: x
+                    x = x * 2
+                end subroutine
+            end module
+
+            program my_program
+                implicit none
+
+                write(*,*) 42
+
+            contains
+                integer function myfunc2(x)
+                    integer, intent(in) :: x
+                    myfunc2 = x * 2
+                end function
+                subroutine mysub2(x)
+                    integer, intent(inout) :: x
+                    x = x * 2
+                end subroutine
+            end program
+            ";
+        test_helper(avoid_superfluous_implicit_none_method, code, None);
     }
 }

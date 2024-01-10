@@ -8,4 +8,8 @@ pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
     register_rule(registry, use_modules::use_modules());
     register_rule(registry, use_implicit_none::use_implicit_none());
     register_rule(registry, use_implicit_none::use_interface_implicit_none());
+    register_rule(
+        registry,
+        use_implicit_none::avoid_superfluous_implicit_none(),
+    );
 }
