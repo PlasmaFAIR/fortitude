@@ -17,7 +17,6 @@ $ cargo test
 
 ## TODO
 
-- Report `implicit none` use in functions when its already in an enclosing module
 - Avoid `double precision`.
 - Rule for `use module` without an `only` clause.
 - Rework relationship between rules and methods. Instead of rules owning a method,
