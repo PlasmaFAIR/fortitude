@@ -14,11 +14,8 @@ pub fn use_modules_and_programs(code: Code, root: &Node, src: &str) -> Vec<Viola
     let query_txt = "(translation_unit [(function) @func (subroutine) @sub])";
     let query = Query::new(fortran_language(), query_txt).unwrap();
     let mut cursor = tree_sitter::QueryCursor::new();
-    for captures in cursor
-        .matches(&query, *root, src.as_bytes())
-        .map(|x| x.captures)
-    {
-        for capture in captures {
+    for match_ in cursor.matches(&query, *root, src.as_bytes()) {
+        for capture in match_.captures {
             let node = capture.node;
             violations.push(Violation::from_node(
                 &node,

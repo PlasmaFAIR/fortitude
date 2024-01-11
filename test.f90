@@ -13,10 +13,12 @@ module my_module
 
   real(dp), parameter :: pi = 3.14159265358979_dp
 
-  ! This function should raise an error for missing implicit none
+  ! This function should raise an error for missing implicit none, one for using
+  ! a number literal kind in the signature, and one for a number literal kind in the
+  ! variable list.
   interface
-    integer function interface_func(x)
-      integer, intent(in) :: x
+    integer(8) function interface_func(x)
+      integer(kind=8), intent(in) :: x
     end function
   end interface
 

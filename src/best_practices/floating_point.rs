@@ -28,11 +28,8 @@ pub fn avoid_double_precision(code: Code, root: &Node, src: &str) -> Vec<Violati
         let query_txt = format!("({} (intrinsic_type) @type)", query_type,);
         let query = Query::new(fortran_language(), &query_txt).unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
-        for captures in cursor
-            .matches(&query, *root, src.as_bytes())
-            .map(|x| x.captures)
-        {
-            for capture in captures {
+        for match_ in cursor.matches(&query, *root, src.as_bytes()) {
+            for capture in match_.captures {
                 let txt = capture.node.utf8_text(src.as_bytes());
                 match txt {
                     Ok(x) => {

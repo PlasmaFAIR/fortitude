@@ -1,9 +1,10 @@
 use crate::rules::{register_rule, Category, Code, Method, Rule, Status};
 use std::collections::HashMap;
 
-pub mod floating_point;
-pub mod implicit_none;
-pub mod modules_and_programs;
+mod floating_point;
+mod implicit_none;
+mod kind_numbers;
+mod modules_and_programs;
 
 pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
     for rule in [
@@ -35,6 +36,12 @@ pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
             Code::new(Category::BestPractices, 20),
             Method::Tree(floating_point::avoid_double_precision),
             floating_point::AVOID_DOUBLE_PRECISION,
+            Status::Standard,
+        ),
+        Rule::new(
+            Code::new(Category::BestPractices, 30),
+            Method::Tree(kind_numbers::avoid_number_literal_kinds),
+            kind_numbers::AVOID_NUMBER_LITERAL_KINDS,
             Status::Standard,
         ),
     ] {

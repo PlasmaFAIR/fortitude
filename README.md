@@ -17,7 +17,8 @@ $ cargo test
 
 ## TODO
 
-- Avoid `real*8`, and `real(8)`.
+- Avoid `real*8`.
+- Extend `double precision` rule to also capture `double complex`
 - Rule for floating point number literals without a kind suffix.
 - Rule for `use module` without an `only` clause.
 - Command line interface.

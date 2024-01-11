@@ -98,11 +98,8 @@ pub fn avoid_superfluous_implicit_none(code: Code, root: &Node, src: &str) -> Ve
         );
         let query = Query::new(fortran_language(), query_txt.as_str()).unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
-        for captures in cursor
-            .matches(&query, *root, src.as_bytes())
-            .map(|x| x.captures)
-        {
-            for capture in captures {
+        for match_ in cursor.matches(&query, *root, src.as_bytes()) {
+            for capture in match_.captures {
                 violations.push(Violation::from_node(
                     &capture.node,
                     code,
