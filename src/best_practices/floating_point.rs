@@ -17,9 +17,22 @@ pub const AVOID_DOUBLE_PRECISION: &str = "\
     For code that should be compatible with C, you should instead use `real(c_double)`,
     which may be found in the intrinsic module `iso_c_binding`.";
 
-const AVOID_DOUBLE_PRECISION_ERR_MSG: &str = "Instead of 'double precision', use 'real(dp)', \
-    with either 'integer, parameter :: dp = selected_real_kind(15, 307)' or \
-    'use, intrinsic :: iso_fortran_env, only: dp => real64'";
+fn double_precision_err_msg(dtype: &str) -> Option<String> {
+    let lower = dtype.to_lowercase();
+    match lower.as_str() {
+        "double precision" => Some(String::from(
+            "Instead of 'double precision', use 'real(dp)', with either \
+            'integer, parameter :: dp = selected_real_kind(15, 307)' or \
+            'use, intrinsic :: iso_fortran_env, only: dp => real64'",
+        )),
+        "double complex" => Some(String::from(
+            "Instead of 'double complex', use 'complex(dp)', with either \
+            'integer, parameter :: dp = selected_real_kind(15, 307)' or \
+            'use, intrinsic :: iso_fortran_env, only: dp => real64'",
+        )),
+        _ => None,
+    }
+}
 
 pub fn avoid_double_precision(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
@@ -33,16 +46,21 @@ pub fn avoid_double_precision(code: Code, root: &Node, src: &str) -> Vec<Violati
                 let txt = capture.node.utf8_text(src.as_bytes());
                 match txt {
                     Ok(x) => {
-                        if x.to_lowercase() == "double precision" {
-                            violations.push(Violation::from_node(
-                                &capture.node,
-                                code,
-                                AVOID_DOUBLE_PRECISION_ERR_MSG,
-                            ));
+                        match double_precision_err_msg(x) {
+                            Some(y) => {
+                                violations.push(Violation::from_node(
+                                    &capture.node,
+                                    code,
+                                    y.as_str(),
+                                ));
+                            }
+                            None => {
+                                // Do nothing, found some other intrinsic type
+                            }
                         }
                     }
                     Err(_) => {
-                        // Skip, this should be caught by a different rule
+                        // Skip, non-utf8 text should be caught by a different rule
                     }
                 }
             }
@@ -69,15 +87,30 @@ mod tests {
               x = 3 * x
             end subroutine
 
-            function quad(x)
+            function complex_mul(x, y)
               double precision, intent(in) :: x
-              double precision :: quad
-              quad = 4 * x
+              double complex, intent(in) :: y
+              double complex :: complex_mul
+              complex_mul = x * y
             end function
             ";
-        let expected_violations = [2, 3, 8, 13, 14]
+        let expected_violations = [2, 3, 8, 13, 14, 15]
             .iter()
-            .map(|line| Violation::new(*line, TEST_CODE, AVOID_DOUBLE_PRECISION_ERR_MSG))
+            .zip([
+                "double precision",
+                "double precision",
+                "double precision",
+                "double precision",
+                "double complex",
+                "double complex",
+            ])
+            .map(|(line, kind)| {
+                Violation::new(
+                    *line,
+                    TEST_CODE,
+                    double_precision_err_msg(kind).unwrap().as_str(),
+                )
+            })
             .collect();
         test_tree_method(avoid_double_precision, source, Some(expected_violations));
     }
