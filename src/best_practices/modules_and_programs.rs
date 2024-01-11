@@ -4,12 +4,12 @@ use crate::rules::{Code, Violation};
 /// submodules, or interfaces. It is also acceptable to define nested functions or subroutines.
 use tree_sitter::{Node, Query};
 
-pub const USE_MODULES: &str = "\
-    Functions and subroutines should be contained within (sub)modules, program blocks,
-    or interfaces. Fortran compilers are unable to perform type checks and conversions
-    on functions defined outside of these scopes, and this is a common source of bugs.";
+pub const USE_MODULES_AND_PROGRAMS: &str = "\
+    Functions and subroutines should be contained within (sub)modules or programs.
+    Fortran compilers are unable to perform type checks and conversions on functions
+    defined outside of these scopes, and this is a common source of bugs.";
 
-pub fn use_modules(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn use_modules_and_programs(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let query_txt = "(translation_unit [(function) @func (subroutine) @sub])";
     let query = Query::new(fortran_language(), query_txt).unwrap();
@@ -24,7 +24,7 @@ pub fn use_modules(code: Code, root: &Node, src: &str) -> Vec<Violation> {
                 &node,
                 code,
                 format!(
-                    "{} not contained within (sub)module, program, or interface",
+                    "{} not contained within (sub)module or program",
                     node.kind(),
                 )
                 .as_str(),
@@ -59,15 +59,11 @@ mod tests {
                 Violation::new(
                     *line,
                     TEST_CODE,
-                    format!(
-                        "{} not contained within (sub)module, program, or interface",
-                        kind
-                    )
-                    .as_str(),
+                    format!("{} not contained within (sub)module or program", kind).as_str(),
                 )
             })
             .collect();
-        test_tree_method(use_modules, source, Some(expected_violations));
+        test_tree_method(use_modules_and_programs, source, Some(expected_violations));
     }
 
     #[test]
@@ -87,6 +83,6 @@ mod tests {
                 end subroutine
             end module
             ";
-        test_tree_method(use_modules, source, None);
+        test_tree_method(use_modules_and_programs, source, None);
     }
 }

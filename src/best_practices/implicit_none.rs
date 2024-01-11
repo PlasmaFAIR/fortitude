@@ -3,11 +3,15 @@ use crate::rules::{Code, Violation};
 /// Defines rules that raise errors if implicit typing is in use.
 use tree_sitter::{Node, Query};
 
-pub const USE_IMPLICIT_NONE: &str = "\
+pub const USE_IMPLICIT_NONE_MODULES_AND_PROGRAMS: &str = "\
     'implicit none' should be used in all modules and programs, as implicit typing
     reduces the readability of code and increases the chances of typing errors.";
 
-pub fn use_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn use_implicit_none_modules_and_programs(
+    code: Code,
+    root: &Node,
+    src: &str,
+) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["module", "submodule", "program"] {
         // Search for a module, submodule or program, and optionally an 'implicit none'.
@@ -41,11 +45,11 @@ pub fn use_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub const USE_INTERFACE_IMPLICIT_NONE: &str = "\
+pub const USE_IMPLICIT_NONE_INTERFACES: &str = "\
     Interface functions and subroutines require 'implicit none', even if they are inside
     a module that uses 'implicit none'.";
 
-pub fn use_interface_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn use_implicit_none_interfaces(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["function", "subroutine"] {
         let query_txt = format!(
@@ -120,7 +124,7 @@ mod tests {
     use crate::test_utils::test_utils::{test_tree_method, TEST_CODE};
 
     #[test]
-    fn test_missing_implicit_none() {
+    fn test_module_and_program_missing_implicit_none() {
         let source = "
             module my_module
                 parameter(N = 1)
@@ -141,11 +145,15 @@ mod tests {
                 )
             })
             .collect();
-        test_tree_method(use_implicit_none, source, Some(expected_violations));
+        test_tree_method(
+            use_implicit_none_modules_and_programs,
+            source,
+            Some(expected_violations),
+        );
     }
 
     #[test]
-    fn test_uses_implicit_none() {
+    fn test_module_and_program_uses_implicit_none() {
         let source = "
             module my_module
                 implicit none
@@ -162,7 +170,7 @@ mod tests {
                 write(*,*) x
             end program
             ";
-        test_tree_method(use_implicit_none, source, None);
+        test_tree_method(use_implicit_none_modules_and_programs, source, None);
     }
 
     #[test]
@@ -199,7 +207,7 @@ mod tests {
             })
             .collect();
         test_tree_method(
-            use_interface_implicit_none,
+            use_implicit_none_interfaces,
             source,
             Some(expected_violations),
         );
@@ -229,7 +237,7 @@ mod tests {
                 write(*,*) 42
             end program
             ";
-        test_tree_method(use_interface_implicit_none, source, None);
+        test_tree_method(use_implicit_none_interfaces, source, None);
     }
 
     #[test]

@@ -42,9 +42,8 @@ contains
   end function
 
   ! Should trigger for use of 'double precision'
-  function double_prec(x)
+  double precision function double_prec(x)
     double precision, intent(in) :: x
-    double precision :: double_prec
     double_prec = 2 * x
   end function
 end module
