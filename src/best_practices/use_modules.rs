@@ -37,7 +37,7 @@ pub fn use_modules(code: Code, root: &Node, src: &str) -> Vec<Violation> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::{test_tree_method, TEST_CODE};
+    use crate::test_utils::test_utils::{test_tree_method, TEST_CODE};
 
     #[test]
     fn test_function_not_in_module() {
@@ -57,13 +57,13 @@ mod tests {
             .zip(["function", "subroutine"])
             .map(|(line, kind)| {
                 Violation::new(
-                    line,
+                    *line,
                     TEST_CODE,
                     format!(
                         "{} not contained within (sub)module, program, or interface",
                         kind
                     )
-                    .to_string(),
+                    .as_str(),
                 )
             })
             .collect();

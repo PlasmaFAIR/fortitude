@@ -1,6 +1,7 @@
 mod best_practices;
 mod parser;
 mod rules;
+mod test_utils;
 
 use best_practices::add_best_practices_rules;
 use parser::fortran_parser;

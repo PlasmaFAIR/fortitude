@@ -6,7 +6,7 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 
 /// The category of each rule defines the sort of problem it intends to solve.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Category {
     /// Rules that check for basic syntax errors -- the things that compilers should be
     /// able to tell you.
@@ -29,7 +29,7 @@ impl fmt::Display for Category {
 }
 
 /// The combination of a rule category and a unique identifying number.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct Code {
     pub category: Category,
     pub number: u8,
@@ -48,7 +48,7 @@ impl fmt::Display for Code {
 }
 
 /// The type returned when a rule is violated.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Violation {
     /// The line on which an error occurred.
     pub line: usize,

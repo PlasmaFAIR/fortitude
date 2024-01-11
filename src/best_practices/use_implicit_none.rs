@@ -115,7 +115,7 @@ pub fn avoid_superfluous_implicit_none(code: Code, root: &Node, src: &str) -> Ve
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::{test_tree_method, TEST_CODE};
+    use crate::test_utils::test_utils::{test_tree_method, TEST_CODE};
 
     #[test]
     fn test_missing_implicit_none() {
@@ -133,9 +133,9 @@ mod tests {
             .zip(["module", "program"])
             .map(|(line, kind)| {
                 Violation::new(
-                    line,
+                    *line,
                     TEST_CODE,
-                    format!("{} missing 'implicit none'", kind).to_string(),
+                    format!("{} missing 'implicit none'", kind).as_str(),
                 )
             })
             .collect();
@@ -190,9 +190,9 @@ mod tests {
             .zip(["function", "subroutine"])
             .map(|(line, kind)| {
                 Violation::new(
-                    line,
+                    *line,
                     TEST_CODE,
-                    format!("interface {} missing 'implicit none'", kind).to_string(),
+                    format!("interface {} missing 'implicit none'", kind).as_str(),
                 )
             })
             .collect();
@@ -271,13 +271,13 @@ mod tests {
             .zip(["module", "module", "program", "program"])
             .map(|(line, kind)| {
                 Violation::new(
-                    line,
+                    *line,
                     TEST_CODE,
                     format!(
                         "'implicit none' is set on the enclosing {}, and isn't needed here",
                         kind
                     )
-                    .to_string(),
+                    .as_str(),
                 )
             })
             .collect();
