@@ -17,10 +17,9 @@ $ cargo test
 
 ## TODO
 
-- Avoid `double precision`, `real*8`, and `real(8)`. Recommend use of `iso_fortran_env`
-  or `iso_c_binding` kinds, `selected_real_kind`, or `kind(0.0d0)`.
-- Rule for `use module` without an `only` clause.
+- Avoid `real*8`, and `real(8)`.
 - Rule for floating point number literals without a kind suffix.
+- Rule for `use module` without an `only` clause.
 - Command line interface.
   - Allow users to switch rules on and off via `--include` and `--exclude`.
   - Use `.fortitude.toml` file to set rules project wide.

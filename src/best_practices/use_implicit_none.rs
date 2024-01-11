@@ -3,9 +3,9 @@ use crate::rules::{Code, Violation};
 /// Defines rules that raise errors if implicit typing is in use.
 use tree_sitter::{Node, Query};
 
-pub const USE_IMPLICIT_NONE: &str = "'implicit none' should be used in all modules and \
-    programs, as implicit typing reduces the readability of code and increases the chances of \
-    typing errors.";
+pub const USE_IMPLICIT_NONE: &str = "\
+    'implicit none' should be used in all modules and programs, as implicit typing
+    reduces the readability of code and increases the chances of typing errors.";
 
 pub fn use_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
@@ -41,8 +41,9 @@ pub fn use_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub const USE_INTERFACE_IMPLICIT_NONE: &str = "Interface functions and subroutines require \
-    'implicit none', even if they are inside a module that uses 'implicit none'.";
+pub const USE_INTERFACE_IMPLICIT_NONE: &str = "\
+    Interface functions and subroutines require 'implicit none', even if they are inside
+    a module that uses 'implicit none'.";
 
 pub fn use_interface_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
@@ -74,8 +75,9 @@ pub fn use_interface_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Vi
     violations
 }
 
-pub const AVOID_SUPERFLUOUS_IMPLICIT_NONE: &str = "If a module has 'implicit none' set, it is not \
-    necessary to set it in contained functions and subroutines (except when using interfaces).";
+pub const AVOID_SUPERFLUOUS_IMPLICIT_NONE: &str = "If a module has 'implicit none' set,
+    it is not necessary to set it in contained functions and subroutines (except when
+    using interfaces).";
 
 pub fn avoid_superfluous_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
