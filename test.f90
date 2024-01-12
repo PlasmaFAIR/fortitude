@@ -6,7 +6,11 @@ end function
 
 module my_module
 
+  ! Should not raise
   use, intrinsic :: iso_fortran_env, only: dp => real64
+
+  ! Should raise for lack of only clause
+  use, intrinsic :: iso_c_binding
 
   implicit none
   private

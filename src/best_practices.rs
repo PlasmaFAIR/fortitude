@@ -14,6 +14,12 @@ pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
             Status::Standard,
         ),
         Rule::new(
+            Code::new(Category::BestPractices, 2),
+            Method::Tree(modules_and_programs::use_only_clause),
+            modules_and_programs::USE_ONLY_CLAUSE,
+            Status::Optional,
+        ),
+        Rule::new(
             Code::new(Category::BestPractices, 10),
             Method::Tree(implicit_none::use_implicit_none_modules_and_programs),
             implicit_none::USE_IMPLICIT_NONE_MODULES_AND_PROGRAMS,
