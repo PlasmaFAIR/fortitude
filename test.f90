@@ -11,7 +11,17 @@ module my_module
   implicit none
   private
 
+  ! Should not raise error
   real(dp), parameter :: pi = 3.14159265358979_dp
+
+  ! TODO Should raise error for missing suffix
+  real(dp), parameter :: pi_short = 3.14159265358979
+
+  ! Should raise error for non-standard 'type*N'
+  logical*4, parameter :: true = .true.
+
+  ! TODO should raise error for outdated 'character*(*)'
+  character*(*), parameter :: hello = "hello world"
 
   ! This function should raise an error for missing implicit none, one for using
   ! a number literal kind in the signature, and one for a number literal kind in the

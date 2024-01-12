@@ -44,6 +44,12 @@ pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
             kind_numbers::AVOID_NUMBER_LITERAL_KINDS,
             Status::Standard,
         ),
+        Rule::new(
+            Code::new(Category::BestPractices, 31),
+            Method::Tree(kind_numbers::avoid_non_standard_byte_specifier),
+            kind_numbers::AVOID_NON_STANDARD_BYTE_SPECIFIER,
+            Status::Standard,
+        ),
     ] {
         register_rule(registry, rule);
     }

@@ -2,6 +2,7 @@ use crate::parser::fortran_language;
 use crate::rules::{Code, Violation};
 /// Defines rules that discourage the use of raw number literals as kinds, and the use
 /// of non-standard extensions to the language such as the type `real*8`.
+use regex::Regex;
 use tree_sitter::{Node, Query};
 
 pub const AVOID_NUMBER_LITERAL_KINDS: &str = "\
@@ -129,6 +130,52 @@ pub fn avoid_number_literal_kinds(code: Code, root: &Node, src: &str) -> Vec<Vio
     violations
 }
 
+pub const AVOID_NON_STANDARD_BYTE_SPECIFIER: &str = "\
+    Types such as 'real*8' or 'integer*4' are not standard Fortran and should be
+    avoided. For these cases, consider instead using 'real(real64)' or 'integer(int32)',
+    where 'real64' and 'int32' may be found in the intrinsic module 'iso_fortran_env'.
+    You may also wish to determine kinds using the built-in functions
+    'selected_real_kind' and 'selected_int_kind'.";
+
+
+const NON_STANDARD_BYTE_SPECIFIER_ERR: &str = "Avoid non-standard 'type*N', prefer 'type(N)'";
+
+pub fn avoid_non_standard_byte_specifier(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+    // Note: This does not match 'character*(*)', which should be handled by a different
+    // rule.
+    let mut violations = Vec::new();
+    // Match anything beginning with a '*' followed by any amount of whitespace or '&'
+    // symbols (in case you like to split your type specifiers over multiple lines),
+    // followed by at least one digit.
+    let re = Regex::new(r"^\*[\s&]*\d+").unwrap();
+
+    for query_type in ["function_statement", "variable_declaration"] {
+        let query_txt = format!("({} (intrinsic_type) (size) @size)", query_type);
+        let query = Query::new(fortran_language(), &query_txt).unwrap();
+        let mut cursor = tree_sitter::QueryCursor::new();
+        for match_ in cursor.matches(&query, *root, src.as_bytes()) {
+            for capture in match_.captures {
+                match capture.node.utf8_text(src.as_bytes()) {
+                    Ok(x) => {
+                        if re.is_match(x) {
+                            violations.push(Violation::from_node(
+                                &capture.node,
+                                code,
+                                NON_STANDARD_BYTE_SPECIFIER_ERR,
+                            ));
+                        }
+                    }
+                    Err(_) => {
+                        // Found non utf8 text, should be caught by a different rule,
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+    violations
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -176,6 +223,44 @@ mod tests {
             .collect();
         test_tree_method(
             avoid_number_literal_kinds,
+            source,
+            Some(expected_violations),
+        );
+    }
+
+    #[test]
+    fn test_non_standard_byte_specifier() {
+        let source = "
+            integer*8 function add_if(x, y, z)
+              integer(kind=2), intent(in) :: x
+              integer *4, intent(in) :: y
+              logical*   4, intent(in) :: z
+
+              if (x) then
+                add_if = x + y
+              else
+                add_if = x
+              end if
+            end function
+
+            subroutine complex_mul(x, y)
+              real * 8, intent(in) :: x
+              complex  *  16, intent(inout) :: y
+              y = y * x
+            end subroutine
+            ";
+        let expected_violations = [2, 4, 5, 15, 16]
+            .iter()
+            .map(|line| {
+                Violation::new(
+                    *line,
+                    TEST_CODE,
+                    NON_STANDARD_BYTE_SPECIFIER_ERR,
+                )
+            })
+            .collect();
+        test_tree_method(
+            avoid_non_standard_byte_specifier,
             source,
             Some(expected_violations),
         );

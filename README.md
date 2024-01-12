@@ -17,20 +17,22 @@ $ cargo test
 
 ## TODO
 
-- Avoid `real*8`.
 - Rule for floating point number literals without a kind suffix.
 - Rule for `use module` without an `only` clause.
 - Command line interface.
-  - Allow users to switch rules on and off via `--include` and `--exclude`.
+  - Allow users to switch rules on and off via `--include` and `--exclude`. Switch on
+    all optional rules with `--strict`.
   - Use `.fortitude.toml` file to set rules project wide.
   - Work on multiple files.
 - Syntax error rule (just scan the tree and report all error nodes)
-- Code style rules
+- A few code style rules
 - After gathering violations, check per-file and per-line ignores and discard those we
   don't care about.
 - Install executable
 - Python package (see how ruff does it, use `maturin`).
 - Publish to `crates.io` and PyPI.
+- Rule to avoid deprecated `character*`
+    [(example)](https://fortran-lang.discourse.group/t/what-does-character-mean/330/2)
 
 ## Wishlist
 
