@@ -14,11 +14,16 @@ module my_module
   ! Should not raise error
   real(dp), parameter :: pi = 3.14159265358979_dp
 
+  complex(dp), parameter :: imag = (0.0_8, 1.0_8)
+
   ! TODO Should raise error for missing suffix
   real(dp), parameter :: pi_short = 3.14159265358979
 
   ! Should raise error for non-standard 'type*N'
   logical*4, parameter :: true = .true.
+
+  ! Should raise error for non-standard length
+  character*20 :: foo
 
   ! TODO should raise error for outdated 'character*(*)'
   character*(*), parameter :: hello = "hello world"

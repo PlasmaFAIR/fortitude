@@ -17,7 +17,6 @@ $ cargo test
 
 ## TODO
 
-- Rule for floating point number literals without a kind suffix.
 - Rule for `use module` without an `only` clause.
 - Command line interface.
   - Allow users to switch rules on and off via `--include` and `--exclude`. Switch on
@@ -31,8 +30,6 @@ $ cargo test
 - Install executable
 - Python package (see how ruff does it, use `maturin`).
 - Publish to `crates.io` and PyPI.
-- Rule to avoid deprecated `character*`
-    [(example)](https://fortran-lang.discourse.group/t/what-does-character-mean/330/2)
 
 ## Wishlist
 

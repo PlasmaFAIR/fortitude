@@ -1,9 +1,8 @@
 use crate::rules::{register_rule, Category, Code, Method, Rule, Status};
 use std::collections::HashMap;
 
-mod floating_point;
 mod implicit_none;
-mod kind_numbers;
+mod kinds;
 mod modules_and_programs;
 
 pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
@@ -34,20 +33,32 @@ pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
         ),
         Rule::new(
             Code::new(Category::BestPractices, 20),
-            Method::Tree(floating_point::avoid_double_precision),
-            floating_point::AVOID_DOUBLE_PRECISION,
+            Method::Tree(kinds::avoid_number_literal_kinds),
+            kinds::AVOID_NUMBER_LITERAL_KINDS,
             Status::Standard,
         ),
         Rule::new(
-            Code::new(Category::BestPractices, 30),
-            Method::Tree(kind_numbers::avoid_number_literal_kinds),
-            kind_numbers::AVOID_NUMBER_LITERAL_KINDS,
+            Code::new(Category::BestPractices, 21),
+            Method::Tree(kinds::avoid_non_standard_byte_specifier),
+            kinds::AVOID_NON_STANDARD_BYTE_SPECIFIER,
             Status::Standard,
         ),
         Rule::new(
-            Code::new(Category::BestPractices, 31),
-            Method::Tree(kind_numbers::avoid_non_standard_byte_specifier),
-            kind_numbers::AVOID_NON_STANDARD_BYTE_SPECIFIER,
+            Code::new(Category::BestPractices, 22),
+            Method::Tree(kinds::avoid_double_precision),
+            kinds::AVOID_DOUBLE_PRECISION,
+            Status::Standard,
+        ),
+        Rule::new(
+            Code::new(Category::BestPractices, 23),
+            Method::Tree(kinds::use_floating_point_suffixes),
+            kinds::USE_FLOATING_POINT_SUFFIXES,
+            Status::Standard,
+        ),
+        Rule::new(
+            Code::new(Category::BestPractices, 24),
+            Method::Tree(kinds::avoid_numbered_kind_suffixes),
+            kinds::AVOID_NUMBERED_KIND_SUFFIXES,
             Status::Standard,
         ),
     ] {
