@@ -1,30 +1,31 @@
 # Fortitude
 
-A Fortran linter and formatter, written in Rust. The obvious name 'Flint' was taken (by
-multiple projects).
+A Fortran linter and formatter, written in Rust. Currently a work-in-progress.
 
-Currently a work-in-progress, and is being tested using `test.f90`:
-
-```bash
-$ cargo run test.f90
-```
-
-Can also run unit tests:
+To see the available commands:
 
 ```bash
-$ cargo test
+$ cargo run
 ```
+
+To lint some files:
+
+```bash
+$ cargo run check [FILES]
+```
+
+By default, this will lint all `.f90` files from your current working directory.
 
 ## TODO
 
-- Rule for `use module` without an `only` clause.
 - Command line interface.
-  - Allow users to switch rules on and off via `--include` and `--exclude`. Switch on
-    all optional rules with `--strict`.
-  - Use `.fortitude.toml` file to set rules project wide.
-  - Work on multiple files.
+    - `check` mode
+      - Use `.fortitude.toml` file to set rules project wide.
+      - Better error reporting when given unknown rules or files
+      - Accept wider range of file extensions.
+  - `explain` mode, print help text for a given rule
 - Syntax error rule (just scan the tree and report all error nodes)
-- A few code style rules
+- A few code style rules (leave most until after initial release)
 - After gathering violations, check per-file and per-line ignores and discard those we
   don't care about.
 - Install executable

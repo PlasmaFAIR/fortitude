@@ -1,11 +1,10 @@
-use crate::rules::{register_rule, Category, Code, Method, Rule, Status};
-use std::collections::HashMap;
+use crate::rules::{register_rule, Category, Code, Method, Registry, Rule, Status};
 
 mod implicit_none;
 mod kinds;
 mod modules_and_programs;
 
-pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
+pub fn add_best_practices_rules(mut registry: Registry) -> Registry {
     for rule in [
         Rule::new(
             Code::new(Category::BestPractices, 1),
@@ -68,6 +67,7 @@ pub fn add_best_practices_rules(registry: &mut HashMap<String, Rule>) {
             Status::Standard,
         ),
     ] {
-        register_rule(registry, rule);
+        register_rule(&mut registry, rule);
     }
+    registry
 }

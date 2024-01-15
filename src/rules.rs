@@ -1,11 +1,10 @@
-/// Contains utilities for categorising and defining rules.
-// TODO Add RuleRegistry, collecting all rules at compile time. A HashSet of active rules should be
-//      determined at runtime depending on default/optional status and user choices.
 use std::collections::HashMap;
+/// Contains utilities for categorising and defining rules.
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
 /// The category of each rule defines the sort of problem it intends to solve.
+#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Category {
     /// Rules that check for basic syntax errors -- the things that compilers should be
@@ -83,6 +82,7 @@ type StrMethod = fn(Code, &str) -> Vec<Violation>;
 
 /// The methods by which rules are enforced. Some rules act on individual lines of code,
 /// some by reading a full file, and others by analysing the concrete syntax tree.
+#[allow(dead_code)]
 #[derive(PartialEq, Eq)]
 pub enum Method {
     /// Methods that analyse the concrete syntax tree.
@@ -144,8 +144,10 @@ impl fmt::Display for Rule {
     }
 }
 
-/// Add a rule to a `HashMap`, using the string representation of its code as the key.
-pub fn register_rule(registry: &mut HashMap<String, Rule>, rule: Rule) {
+pub type Registry = HashMap<String, Rule>;
+
+/// Add a rule to a registry, using the string representation of its code as the key.
+pub fn register_rule(registry: &mut Registry, rule: Rule) {
     registry.insert(rule.code.to_string(), rule);
 }
 
@@ -173,8 +175,8 @@ mod tests {
     }
 
     #[test]
-    fn test_register() {
-        let mut registry = HashMap::new();
+    fn test_registry() {
+        let mut registry = Registry::new();
         let rule = Rule::new(
             Code::new(Category::BestPractices, 23),
             Method::Line(|code: Code, x: &str| vec![Violation::new(1, code, x)]),

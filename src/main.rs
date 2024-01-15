@@ -1,57 +1,30 @@
+mod active_rules;
 mod best_practices;
+mod check;
+mod cli;
 mod parser;
 mod rules;
 mod test_utils;
 
-use best_practices::add_best_practices_rules;
-use parser::fortran_parser;
-use std::collections::HashMap;
-use std::env;
-use std::fs;
+use check::check;
+use cli::{parse_args, SubCommands};
 
 fn main() {
-    // Currently expects one file provided via the command line
-    // TODO Write proper command line interface
-    // TODO Enable running on multiple files
-    let args: Vec<String> = env::args().collect();
-    let filename = &args[1];
-    let content = fs::read_to_string(filename).unwrap();
-
-    // Parse the file, extract the root node
-    let mut parser = fortran_parser();
-    let tree = parser.parse(&content, None).unwrap();
-    let root = tree.root_node();
-
-    // Collect available rules
-    // TODO Add feature to deselect rules, or add non-default ones.
-    //      Later requires RuleStatus enum (default, deprecated, etc.) and RulesRegistry
-    // TODO Separate rules into multiple categories:
-    //      - Call syntax error rules first, and if any are found don't bother checking any others.
-    let mut rules = HashMap::new();
-    add_best_practices_rules(&mut rules);
-
-    // Gather violations
-    let mut violations = Vec::new();
-    for (_, rule) in rules {
-        match rule.method {
-            rules::Method::Tree(f) => violations.extend(f(rule.code, &root, &content)),
-            rules::Method::File(f) => violations.extend(f(rule.code, &content)),
-            rules::Method::Line(f) => {
-                for line in content.split('\n') {
-                    violations.extend(f(rule.code, line))
+    let args = parse_args();
+    match args.command {
+        SubCommands::Check(args) => {
+            match check(args) {
+                Some(errors) => {
+                    println!("{}", errors);
+                    std::process::exit(1);
+                }
+                None => {
+                    // No errors found, do nothing!
                 }
             }
         }
-    }
-
-    // If any violations found, sort and print. Otherwise, print something nice!
-    if !violations.is_empty() {
-        // Gather into single
-        violations.sort_unstable();
-        for violation in violations.iter() {
-            println!("{}", violation);
+        _ => {
+            panic!("Not yet implemented!")
         }
-        std::process::exit(1);
     }
-    println!("No issues found!");
 }
