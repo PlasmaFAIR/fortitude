@@ -1,5 +1,6 @@
 use crate::rules::{register_rule, Category, Code, Method, Registry, Rule, Status};
 
+mod extensions;
 mod implicit_none;
 mod kinds;
 mod modules_and_programs;
@@ -64,6 +65,12 @@ pub fn add_best_practices_rules(registry: &mut Registry) {
             Code::new(Category::BestPractices, 24),
             Method::Tree(kinds::avoid_numbered_kind_suffixes),
             kinds::AVOID_NUMBERED_KIND_SUFFIXES,
+            Status::Standard,
+        ),
+        Rule::new(
+            Code::new(Category::BestPractices, 60),
+            Method::Path(extensions::use_standard_file_extensions),
+            extensions::USE_STANDARD_FILE_EXTENSIONS,
             Status::Standard,
         ),
     ] {
