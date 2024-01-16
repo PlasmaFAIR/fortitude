@@ -1,5 +1,5 @@
 ![Tests](https://github.com/PlasmaFAIR/fortitude/actions/workflows/test.yml/badge.svg)
-![Clippy](https://github.com/PlasmaFAIR/fortitude/actions/workflows/lint.yml/badge.svg)
+![Clippy](https://github.com/PlasmaFAIR/fortitude/actions/workflows/clippy.yml/badge.svg)
 
 # Fortitude
 
