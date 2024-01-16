@@ -6,6 +6,7 @@ description = "A Fortran linter, written in Rust and with Python bindings"
 
 
 [dependencies]
+anyhow = "1.0.79"
 clap = { version = "4.4.16", features = ["derive"] }
 regex = "1.10.2"
 tree-sitter = "0.20.10"

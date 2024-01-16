@@ -2,44 +2,36 @@ use crate::active_rules::{add_rules, get_all_rules, get_rules_with_status, remov
 use crate::cli::CheckArgs;
 use crate::parser::fortran_parser;
 use crate::rules::{Method, Registry, Status};
+use anyhow::Context;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 /// Parse a file, check it for issues, and return the report.
-fn check_file(rules: &Registry, path: &PathBuf) -> Result<(), String> {
-    match read_to_string(path) {
-        Ok(source) => {
-            let mut parser = fortran_parser();
-            if let Some(tree) = parser.parse(&source, None) {
-                let root = tree.root_node();
+fn check_file(rules: &Registry, path: &PathBuf) -> anyhow::Result<String> {
+    let source = read_to_string(path)?;
+    let mut parser = fortran_parser();
+    let tree = parser
+        .parse(&source, None)
+        .context("Could not parse file")?;
+    let root = tree.root_node();
 
-                let mut violations = Vec::new();
-                for rule in rules.values() {
-                    match rule.method() {
-                        Method::Tree(f) => violations.extend(f(rule.code(), &root, &source)),
-                        Method::File(f) => violations.extend(f(rule.code(), &source)),
-                        Method::Line(f) => {
-                            for line in source.split('\n') {
-                                violations.extend(f(rule.code(), line))
-                            }
-                        }
-                    }
+    let mut violations = Vec::new();
+    for rule in rules.values() {
+        match rule.method() {
+            Method::Tree(f) => violations.extend(f(rule.code(), &root, &source)),
+            Method::File(f) => violations.extend(f(rule.code(), &source)),
+            Method::Line(f) => {
+                for line in source.split('\n') {
+                    violations.extend(f(rule.code(), line))
                 }
-
-                violations.sort_unstable();
-                if violations.is_empty() {
-                    Ok(())
-                } else {
-                    let messages: Vec<String> = violations.iter().map(|x| x.to_string()).collect();
-                    Err(messages.join("\n"))
-                }
-            } else {
-                Err(String::from("Could not parse file."))
             }
         }
-        Err(e) => Err(e.to_string()),
     }
+
+    violations.sort_unstable();
+    let messages: Vec<String> = violations.iter().map(|x| x.to_string()).collect();
+    Ok(messages.join("\n"))
 }
 
 /// Get the list of active rules for this session.
@@ -101,11 +93,13 @@ pub fn check(args: CheckArgs) -> Option<String> {
     let mut errors = Vec::new();
     for file in files {
         match check_file(&rules, &file) {
-            Ok(_) => {
-                // File was okay, do nothing!
+            Ok(s) => {
+                if !s.is_empty() {
+                    errors.push(format!("Issues found for file: {}\n{}", file.display(), s));
+                }
             }
             Err(s) => {
-                errors.push(format!("Errors found for file: {}\n{}", file.display(), s));
+                errors.push(format!("Failed to process file: {}\n{}", file.display(), s));
             }
         }
     }

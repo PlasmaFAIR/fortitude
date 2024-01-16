@@ -21,8 +21,7 @@ By default, this will lint all `.f90` files from your current working directory.
 - Command line interface.
     - `check` mode
       - Use `.fortitude.toml` file to set rules project wide.
-      - Better error reporting when given unknown rules or files
-      - Accept wider range of file extensions.
+      - Better error reporting when given unknown rules
   - `explain` mode, print help text for a given rule
 - Propagate rule errors
 - Syntax error rule (just scan the tree and report all error nodes)
