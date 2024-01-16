@@ -2,19 +2,21 @@
 pub mod test_utils {
     use crate::parser::fortran_parser;
     use crate::rules::{Category, Code, Violation};
+    use std::path::Path;
     use tree_sitter::Node;
 
     pub const TEST_CODE: Code = Code::new(Category::BestPractices, 255);
 
     pub fn test_tree_method(
-        f: fn(Code, &Node, &str) -> Vec<Violation>,
+        f: fn(Code, &Path, &Node, &str) -> Vec<Violation>,
+        path: &Path,
         source: &str,
         expected_violations: Option<Vec<Violation>>,
     ) {
         let mut parser = fortran_parser();
         let tree = parser.parse(&source, None).unwrap();
         let root = tree.root_node();
-        let mut violations = f(TEST_CODE, &root, source);
+        let mut violations = f(TEST_CODE, path, &root, source);
         violations.sort();
         match expected_violations {
             Some(x) => {

@@ -1,10 +1,11 @@
 use crate::parser::fortran_language;
 use crate::rules::{Code, Violation};
+use regex::Regex;
 /// Defines rules that discourage the use of raw number literals as kinds, and the use
 /// of non-standard extensions to the language such as the type `real*8`. Also contains
 /// rules to ensure floating point types are set in a portable manner, and checks for
 /// potential loss of precision in number literals.
-use regex::Regex;
+use std::path::Path;
 use tree_sitter::{Node, Query};
 
 // TODO rule to prefer 1.23e4_sp over 1.23e4, and 1.23e4_dp over 1.23d4
@@ -77,7 +78,12 @@ fn literal_kind_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-pub fn avoid_number_literal_kinds(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn avoid_number_literal_kinds(
+    code: Code,
+    path: &Path,
+    root: &Node,
+    src: &str,
+) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for query_type in ["function_statement", "variable_declaration"] {
@@ -112,6 +118,7 @@ pub fn avoid_number_literal_kinds(code: Code, root: &Node, src: &str) -> Vec<Vio
                         match literal_kind_err_msg(x) {
                             Some(y) => {
                                 violations.push(Violation::from_node(
+                                    path,
                                     &capture.node,
                                     code,
                                     y.as_str(),
@@ -141,7 +148,12 @@ pub const AVOID_NON_STANDARD_BYTE_SPECIFIER: &str = "\
 
 const NON_STANDARD_BYTE_SPECIFIER_ERR: &str = "Avoid non-standard 'type*N', prefer 'type(N)'";
 
-pub fn avoid_non_standard_byte_specifier(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn avoid_non_standard_byte_specifier(
+    code: Code,
+    path: &Path,
+    root: &Node,
+    src: &str,
+) -> Vec<Violation> {
     // Note: This does not match 'character*(*)', which should be handled by a different
     // rule.
     let mut violations = Vec::new();
@@ -160,6 +172,7 @@ pub fn avoid_non_standard_byte_specifier(code: Code, root: &Node, src: &str) -> 
                     Ok(x) => {
                         if re.is_match(x) {
                             violations.push(Violation::from_node(
+                                path,
                                 &capture.node,
                                 code,
                                 NON_STANDARD_BYTE_SPECIFIER_ERR,
@@ -205,7 +218,7 @@ fn double_precision_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-pub fn avoid_double_precision(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn avoid_double_precision(code: Code, path: &Path, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for query_type in ["function_statement", "variable_declaration"] {
@@ -220,6 +233,7 @@ pub fn avoid_double_precision(code: Code, root: &Node, src: &str) -> Vec<Violati
                         match double_precision_err_msg(x) {
                             Some(y) => {
                                 violations.push(Violation::from_node(
+                                    path,
                                     &capture.node,
                                     code,
                                     y.as_str(),
@@ -259,7 +273,12 @@ pub const USE_FLOATING_POINT_SUFFIXES: &str = "\
     `8.85418782e-12`, which would also lose precision compared to `8.85418782d-12`,
     or better yet `8.85418782e-12_dp`.";
 
-pub fn use_floating_point_suffixes(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn use_floating_point_suffixes(
+    code: Code,
+    path: &Path,
+    root: &Node,
+    src: &str,
+) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Given a number literal, match anything with a decimal place, some amount of
     // digits either side, and no suffix. This will not catch exponentiation.
@@ -277,6 +296,7 @@ pub fn use_floating_point_suffixes(code: Code, root: &Node, src: &str) -> Vec<Vi
                 Ok(x) => {
                     if re.is_match(x) {
                         violations.push(Violation::from_node(
+                            path,
                             &capture.node,
                             code,
                             format!(
@@ -321,7 +341,12 @@ pub const AVOID_NUMBERED_KIND_SUFFIXES: &str = "\
     ```
     ";
 
-pub fn avoid_numbered_kind_suffixes(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn avoid_numbered_kind_suffixes(
+    code: Code,
+    path: &Path,
+    root: &Node,
+    src: &str,
+) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Given a number literal, match anything suffixed with plain number.
     // TODO Match either int or real, change error message accordingly
@@ -337,6 +362,7 @@ pub fn avoid_numbered_kind_suffixes(code: Code, root: &Node, src: &str) -> Vec<V
                 Ok(x) => {
                     if re.is_match(x) {
                         violations.push(Violation::from_node(
+                            path,
                             &capture.node,
                             code,
                             format!(
@@ -389,6 +415,7 @@ mod tests {
               complex_add = y + x
             end function
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [2, 3, 5, 15, 16, 22]
             .iter()
             .zip([
@@ -396,6 +423,7 @@ mod tests {
             ])
             .map(|(line, kind)| {
                 Violation::new(
+                    &path,
                     *line,
                     TEST_CODE,
                     literal_kind_err_msg(kind).unwrap().as_str(),
@@ -404,6 +432,7 @@ mod tests {
             .collect();
         test_tree_method(
             avoid_number_literal_kinds,
+            &path,
             source,
             Some(expected_violations),
         );
@@ -430,12 +459,14 @@ mod tests {
               y = y * x
             end subroutine
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [2, 4, 5, 15, 16]
             .iter()
-            .map(|line| Violation::new(*line, TEST_CODE, NON_STANDARD_BYTE_SPECIFIER_ERR))
+            .map(|line| Violation::new(&path, *line, TEST_CODE, NON_STANDARD_BYTE_SPECIFIER_ERR))
             .collect();
         test_tree_method(
             avoid_non_standard_byte_specifier,
+            &path,
             source,
             Some(expected_violations),
         );
@@ -461,6 +492,7 @@ mod tests {
               complex_mul = x * y
             end function
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [2, 3, 8, 13, 14, 15]
             .iter()
             .zip([
@@ -473,13 +505,19 @@ mod tests {
             ])
             .map(|(line, kind)| {
                 Violation::new(
+                    &path,
                     *line,
                     TEST_CODE,
                     double_precision_err_msg(kind).unwrap().as_str(),
                 )
             })
             .collect();
-        test_tree_method(avoid_double_precision, source, Some(expected_violations));
+        test_tree_method(
+            avoid_double_precision,
+            &path,
+            source,
+            Some(expected_violations),
+        );
     }
 
     #[test]
@@ -493,11 +531,13 @@ mod tests {
             real(dp), parameter :: x4 = 9.876
             real(sp), parameter :: x5 = 2.468_sp
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [4, 7]
             .iter()
             .zip(["1.234567", "9.876"])
             .map(|(line, num)| {
                 Violation::new(
+                    &path,
                     *line,
                     TEST_CODE,
                     format!(
@@ -510,6 +550,7 @@ mod tests {
             .collect();
         test_tree_method(
             use_floating_point_suffixes,
+            &path,
             source,
             Some(expected_violations),
         );
@@ -526,11 +567,13 @@ mod tests {
             real(dp), parameter :: x4 = 9.876_8
             real(sp), parameter :: x5 = 2.468_sp
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [4, 7]
             .iter()
             .zip(["1.234567_4", "9.876_8"])
             .map(|(line, num)| {
                 Violation::new(
+                    &path,
                     *line,
                     TEST_CODE,
                     format!(
@@ -544,6 +587,7 @@ mod tests {
             .collect();
         test_tree_method(
             avoid_numbered_kind_suffixes,
+            &path,
             source,
             Some(expected_violations),
         );

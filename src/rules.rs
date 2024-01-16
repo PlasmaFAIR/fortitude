@@ -1,29 +1,31 @@
+use colored::Colorize;
 use std::collections::HashMap;
 /// Contains utilities for categorising and defining rules.
 use std::fmt;
 use std::hash::{Hash, Hasher};
+use std::path::{Path, PathBuf};
 
 /// The category of each rule defines the sort of problem it intends to solve.
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Category {
-    /// Rules that check for basic syntax errors -- the things that compilers should be
-    /// able to tell you.
-    SyntaxError,
     /// Rules for ensuring code is written in a way that minimises bugs and promotes
     /// maintainability.
     BestPractices,
     /// Rules for ensuring code follows certain style conventions. May be opinionated.
     CodeStyle,
+    /// Used to indicate a failure to process or parse a file.
+    Error,
 }
 
 impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::SyntaxError => write!(f, "E"),
-            Self::BestPractices => write!(f, "B"),
-            Self::CodeStyle => write!(f, "S"),
-        }
+        let s = match self {
+            Self::BestPractices => "B",
+            Self::CodeStyle => "S",
+            Self::Error => "E",
+        };
+        write!(f, "{}", s)
     }
 }
 
@@ -49,7 +51,9 @@ impl fmt::Display for Code {
 /// The type returned when a rule is violated.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Violation {
-    /// The line on which an error occurred.
+    /// The file in which an issue was found.
+    path: PathBuf,
+    /// The line on which an issue was found.
     line: usize,
     /// The rule code that triggered the violation.
     code: Code,
@@ -58,33 +62,49 @@ pub struct Violation {
 }
 
 impl Violation {
-    pub fn new(line: usize, code: Code, message: &str) -> Violation {
+    pub fn new(path: &Path, line: usize, code: Code, message: &str) -> Violation {
         Violation {
+            path: PathBuf::from(path),
             line,
             code,
             message: String::from(message),
         }
     }
 
-    pub fn from_node(node: &tree_sitter::Node, code: Code, message: &str) -> Violation {
-        Violation::new(node.start_position().row + 1, code, message)
+    pub fn from_node(
+        path: &Path,
+        node: &tree_sitter::Node,
+        code: Code,
+        message: &str,
+    ) -> Violation {
+        Violation::new(path, node.start_position().row + 1, code, message)
     }
 }
 
 impl fmt::Display for Violation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Line {}: {} {}", self.line, self.code, self.message)
+        write!(
+            f,
+            "{}:{}: {} {}",
+            self.path.to_string_lossy().bold(),
+            self.line,
+            self.code.to_string().bold().bright_red(),
+            self.message
+        )
     }
 }
 
-type TreeMethod = fn(Code, &tree_sitter::Node, &str) -> Vec<Violation>;
-type StrMethod = fn(Code, &str) -> Vec<Violation>;
+type PathMethod = fn(Code, &Path) -> Vec<Violation>;
+type TreeMethod = fn(Code, &Path, &tree_sitter::Node, &str) -> Vec<Violation>;
+type StrMethod = fn(Code, &Path, &str) -> Vec<Violation>;
 
 /// The methods by which rules are enforced. Some rules act on individual lines of code,
 /// some by reading a full file, and others by analysing the concrete syntax tree.
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Method {
+    /// Methods that work on just the path name of the file.
+    Path(PathMethod),
     /// Methods that analyse the concrete syntax tree.
     Tree(TreeMethod),
     /// Methods that analyse individual lines of code, using regex or otherwise.
@@ -179,7 +199,7 @@ mod tests {
     fn test_rule() {
         let rule = Rule::new(
             Code::new(Category::BestPractices, 23),
-            Method::Line(|code: Code, x: &str| vec![Violation::new(1, code, x)]),
+            Method::Line(|code: Code, path: &Path, x: &str| vec![Violation::new(path, 1, code, x)]),
             "hello world",
             Status::Standard,
         );
@@ -191,14 +211,14 @@ mod tests {
         let mut registry = Registry::new();
         let rule = Rule::new(
             Code::new(Category::BestPractices, 23),
-            Method::Line(|code: Code, x: &str| vec![Violation::new(1, code, x)]),
+            Method::Line(|code: Code, path: &Path, x: &str| vec![Violation::new(path, 1, code, x)]),
             "hello world",
             Status::Standard,
         );
         register_rule(&mut registry, rule);
         let rule = Rule::new(
-            Code::new(Category::SyntaxError, 42),
-            Method::Line(|code: Code, x: &str| vec![Violation::new(1, code, x)]),
+            Code::new(Category::Error, 42),
+            Method::Line(|code: Code, path: &Path, x: &str| vec![Violation::new(path, 1, code, x)]),
             "foo bar",
             Status::Optional,
         );

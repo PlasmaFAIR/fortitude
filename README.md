@@ -1,20 +1,40 @@
 # Fortitude
 
-A Fortran linter and formatter, written in Rust. Currently a work-in-progress.
+A Fortran linter and formatter, written in Rust :crab:. Currently a work-in-progress.
 
-To see the available commands:
+## Installation
 
-```bash
-$ cargo run
-```
-
-To lint some files:
+To install from source, you must first have a working Rust environment (see
+[rustup](https://rustup.rs/)). Clone this repository using `--recurse-submodules`, and
+install using `cargo`:
 
 ```bash
-$ cargo run check [FILES]
+$ git clone https://github.com/PlasmaFAIR/fortitude --recurse-submodules
+$ cd fortitude
+$ cargo install
 ```
 
-By default, this will lint all `.f90` files from your current working directory.
+## Usage:
+
+After installing, you can view available commands simply by calling:
+
+```bash
+$ fortitude
+```
+
+The `check` command is used to analyse your Fortran files:
+
+```bash
+$ fortitude check [FILES]
+```
+
+where `[FILES]` is a list of files and directories to search. If no files are provided,
+`fortitude` will search for them from your current working directory. To see additional
+options for the `check` tool:
+
+```bash
+$ fortitude check --help
+```
 
 ## TODO
 
@@ -24,7 +44,7 @@ By default, this will lint all `.f90` files from your current working directory.
       - Better error reporting when given unknown rules
   - `explain` mode, print help text for a given rule
 - Propagate rule errors
-- Syntax error rule (just scan the tree and report all error nodes)
+- Syntax error rules (scan the tree and report error nodes)
 - A few code style rules (leave most until after initial release)
 - After gathering violations, check per-file and per-line ignores and discard those we
   don't care about.

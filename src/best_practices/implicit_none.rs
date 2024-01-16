@@ -1,7 +1,8 @@
 use crate::parser::fortran_language;
 use crate::rules::{Code, Violation};
-/// Defines rules that raise errors if implicit typing is in use.
+use std::path::Path;
 use tree_sitter::{Node, Query};
+/// Defines rules that raise errors if implicit typing is in use.
 
 pub const USE_IMPLICIT_NONE_MODULES_AND_PROGRAMS: &str = "\
     'implicit none' should be used in all modules and programs, as implicit typing
@@ -9,6 +10,7 @@ pub const USE_IMPLICIT_NONE_MODULES_AND_PROGRAMS: &str = "\
 
 pub fn use_implicit_none_modules_and_programs(
     code: Code,
+    path: &Path,
     root: &Node,
     src: &str,
 ) -> Vec<Violation> {
@@ -34,6 +36,7 @@ pub fn use_implicit_none_modules_and_programs(
                 // The only other captures must be the module, submodule, or program.
                 for capture in captures {
                     violations.push(Violation::from_node(
+                        path,
                         &capture.node,
                         code,
                         format!("{} missing 'implicit none'", query_type).as_str(),
@@ -49,7 +52,12 @@ pub const USE_IMPLICIT_NONE_INTERFACES: &str = "\
     Interface functions and subroutines require 'implicit none', even if they are inside
     a module that uses 'implicit none'.";
 
-pub fn use_implicit_none_interfaces(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn use_implicit_none_interfaces(
+    code: Code,
+    path: &Path,
+    root: &Node,
+    src: &str,
+) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["function", "subroutine"] {
         let query_txt = format!(
@@ -68,6 +76,7 @@ pub fn use_implicit_none_interfaces(code: Code, root: &Node, src: &str) -> Vec<V
                 // The only other captures must be the module, submodule, or program.
                 for capture in captures {
                     violations.push(Violation::from_node(
+                        path,
                         &capture.node,
                         code,
                         format!("interface {} missing 'implicit none'", query_type).as_str(),
@@ -83,7 +92,12 @@ pub const AVOID_SUPERFLUOUS_IMPLICIT_NONE: &str = "If a module has 'implicit non
     it is not necessary to set it in contained functions and subroutines (except when
     using interfaces).";
 
-pub fn avoid_superfluous_implicit_none(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn avoid_superfluous_implicit_none(
+    code: Code,
+    path: &Path,
+    root: &Node,
+    src: &str,
+) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["module", "submodule", "program"] {
         let query_txt = format!(
@@ -101,6 +115,7 @@ pub fn avoid_superfluous_implicit_none(code: Code, root: &Node, src: &str) -> Ve
         for match_ in cursor.matches(&query, *root, src.as_bytes()) {
             for capture in match_.captures {
                 violations.push(Violation::from_node(
+                    path,
                     &capture.node,
                     code,
                     format!(
@@ -131,11 +146,13 @@ mod tests {
                 write(*,*) 42
             end program
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [2, 6]
             .iter()
             .zip(["module", "program"])
             .map(|(line, kind)| {
                 Violation::new(
+                    &path,
                     *line,
                     TEST_CODE,
                     format!("{} missing 'implicit none'", kind).as_str(),
@@ -144,6 +161,7 @@ mod tests {
             .collect();
         test_tree_method(
             use_implicit_none_modules_and_programs,
+            path,
             source,
             Some(expected_violations),
         );
@@ -167,7 +185,8 @@ mod tests {
                 write(*,*) x
             end program
             ";
-        test_tree_method(use_implicit_none_modules_and_programs, source, None);
+        let path = Path::new("file.f90");
+        test_tree_method(use_implicit_none_modules_and_programs, path, source, None);
     }
 
     #[test]
@@ -192,11 +211,13 @@ mod tests {
                 write(*,*) 42
             end program
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [5, 14]
             .iter()
             .zip(["function", "subroutine"])
             .map(|(line, kind)| {
                 Violation::new(
+                    &path,
                     *line,
                     TEST_CODE,
                     format!("interface {} missing 'implicit none'", kind).as_str(),
@@ -205,6 +226,7 @@ mod tests {
             .collect();
         test_tree_method(
             use_implicit_none_interfaces,
+            path,
             source,
             Some(expected_violations),
         );
@@ -234,7 +256,8 @@ mod tests {
                 write(*,*) 42
             end program
             ";
-        test_tree_method(use_implicit_none_interfaces, source, None);
+        let path = Path::new("file.f90");
+        test_tree_method(use_implicit_none_interfaces, &path, source, None);
     }
 
     #[test]
@@ -273,11 +296,13 @@ mod tests {
                 end subroutine
             end program
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [6, 11, 24, 29]
             .iter()
             .zip(["module", "module", "program", "program"])
             .map(|(line, kind)| {
                 Violation::new(
+                    &path,
                     *line,
                     TEST_CODE,
                     format!(
@@ -290,6 +315,7 @@ mod tests {
             .collect();
         test_tree_method(
             avoid_superfluous_implicit_none,
+            &path,
             source,
             Some(expected_violations),
         );
@@ -335,6 +361,7 @@ mod tests {
                 end subroutine
             end program
             ";
-        test_tree_method(avoid_superfluous_implicit_none, source, None);
+        let path = Path::new("file.f90");
+        test_tree_method(avoid_superfluous_implicit_none, &path, source, None);
     }
 }

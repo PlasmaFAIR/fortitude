@@ -13,15 +13,7 @@ fn main() {
     let args = parse_args();
     match args.command {
         SubCommands::Check(args) => {
-            match check(args) {
-                Some(errors) => {
-                    println!("{}", errors);
-                    std::process::exit(1);
-                }
-                None => {
-                    // No errors found, do nothing!
-                }
-            }
+            std::process::exit(check(args));
         }
         _ => {
             panic!("Not yet implemented!")

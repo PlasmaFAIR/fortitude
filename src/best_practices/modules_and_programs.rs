@@ -1,15 +1,16 @@
 use crate::parser::fortran_language;
 use crate::rules::{Code, Violation};
+use std::path::Path;
+use tree_sitter::{Node, Query};
 /// Defines rules that check whether functions and subroutines are defined within modules,
 /// submodules, or interfaces. Also ensures that `use` statements are used correctly.
-use tree_sitter::{Node, Query};
 
 pub const USE_MODULES_AND_PROGRAMS: &str = "\
     Functions and subroutines should be contained within (sub)modules or programs.
     Fortran compilers are unable to perform type checks and conversions on functions
     defined outside of these scopes, and this is a common source of bugs.";
 
-pub fn use_modules_and_programs(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn use_modules_and_programs(code: Code, path: &Path, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let query_txt = "(translation_unit [(function) @func (subroutine) @sub])";
     let query = Query::new(fortran_language(), query_txt).unwrap();
@@ -18,6 +19,7 @@ pub fn use_modules_and_programs(code: Code, root: &Node, src: &str) -> Vec<Viola
         for capture in match_.captures {
             let node = capture.node;
             violations.push(Violation::from_node(
+                path,
                 &node,
                 code,
                 format!(
@@ -49,7 +51,7 @@ pub const USE_ONLY_CLAUSE: &str = "\
 
 const ONLY_CLAUSE_ERR: &str = "'use' statement missing 'only' clause";
 
-pub fn use_only_clause(code: Code, root: &Node, src: &str) -> Vec<Violation> {
+pub fn use_only_clause(code: Code, path: &Path, root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Search for 'use' clause, and optionally an 'only' clause, capturing both.
     let query_txt = "(use_statement (included_items)? @only) @use";
@@ -64,7 +66,12 @@ pub fn use_only_clause(code: Code, root: &Node, src: &str) -> Vec<Violation> {
         if !captures.iter().any(|&x| x.index == only_index) {
             // The only remaining capture must be the use clause
             for capture in captures {
-                violations.push(Violation::from_node(&capture.node, code, ONLY_CLAUSE_ERR));
+                violations.push(Violation::from_node(
+                    path,
+                    &capture.node,
+                    code,
+                    ONLY_CLAUSE_ERR,
+                ));
             }
         }
     }
@@ -89,18 +96,25 @@ mod tests {
               x = 3 * x
             end subroutine
             ";
+        let path = Path::new("file.f90");
         let expected_violations = [2, 7]
             .iter()
             .zip(["function", "subroutine"])
             .map(|(line, kind)| {
                 Violation::new(
+                    &path,
                     *line,
                     TEST_CODE,
                     format!("{} not contained within (sub)module or program", kind).as_str(),
                 )
             })
             .collect();
-        test_tree_method(use_modules_and_programs, source, Some(expected_violations));
+        test_tree_method(
+            use_modules_and_programs,
+            &path,
+            source,
+            Some(expected_violations),
+        );
     }
 
     #[test]
@@ -120,7 +134,8 @@ mod tests {
                 end subroutine
             end module
             ";
-        test_tree_method(use_modules_and_programs, source, None);
+        let path = Path::new("file.f90");
+        test_tree_method(use_modules_and_programs, &path, source, None);
     }
 
     #[test]
@@ -131,7 +146,8 @@ mod tests {
                 use, intrinsic :: iso_c_binding
             end module
             ";
-        let violation = Violation::new(4, TEST_CODE, ONLY_CLAUSE_ERR);
-        test_tree_method(use_only_clause, source, Some(vec![violation]));
+        let path = Path::new("file.f90");
+        let violation = Violation::new(&path, 4, TEST_CODE, ONLY_CLAUSE_ERR);
+        test_tree_method(use_only_clause, &path, source, Some(vec![violation]));
     }
 }

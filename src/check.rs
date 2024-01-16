@@ -1,38 +1,12 @@
 use crate::active_rules::{add_rules, get_all_rules, get_rules_with_status, remove_rules};
 use crate::cli::CheckArgs;
 use crate::parser::fortran_parser;
-use crate::rules::{Method, Registry, Status};
+use crate::rules::{Category, Code, Method, Registry, Status, Violation};
 use anyhow::Context;
+use itertools::join;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-
-/// Parse a file, check it for issues, and return the report.
-fn check_file(rules: &Registry, path: &PathBuf) -> anyhow::Result<String> {
-    let source = read_to_string(path)?;
-    let mut parser = fortran_parser();
-    let tree = parser
-        .parse(&source, None)
-        .context("Could not parse file")?;
-    let root = tree.root_node();
-
-    let mut violations = Vec::new();
-    for rule in rules.values() {
-        match rule.method() {
-            Method::Tree(f) => violations.extend(f(rule.code(), &root, &source)),
-            Method::File(f) => violations.extend(f(rule.code(), &source)),
-            Method::Line(f) => {
-                for line in source.split('\n') {
-                    violations.extend(f(rule.code(), line))
-                }
-            }
-        }
-    }
-
-    violations.sort_unstable();
-    let messages: Vec<String> = violations.iter().map(|x| x.to_string()).collect();
-    Ok(messages.join("\n"))
-}
 
 /// Get the list of active rules for this session.
 fn get_rules(all_rules: &Registry, args: &CheckArgs) -> Registry {
@@ -86,7 +60,35 @@ fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
     paths
 }
 
-pub fn check(args: CheckArgs) -> Option<String> {
+/// Parse a file, check it for issues, and return the report.
+fn check_file(rules: &Registry, path: &Path) -> anyhow::Result<Vec<Violation>> {
+    let source = read_to_string(path)?;
+    let mut parser = fortran_parser();
+    let tree = parser
+        .parse(&source, None)
+        .context("Could not parse file")?;
+    let root = tree.root_node();
+
+    let mut violations = Vec::new();
+    for rule in rules.values() {
+        match rule.method() {
+            Method::Path(f) => violations.extend(f(rule.code(), path)),
+            Method::Tree(f) => violations.extend(f(rule.code(), path, &root, &source)),
+            Method::File(f) => violations.extend(f(rule.code(), path, &source)),
+            Method::Line(f) => {
+                for line in source.split('\n') {
+                    violations.extend(f(rule.code(), path, line))
+                }
+            }
+        }
+    }
+
+    violations.sort_unstable();
+    Ok(violations)
+}
+
+/// Check all files, report issues found, and return error code.
+pub fn check(args: CheckArgs) -> i32 {
     let all_rules = get_all_rules();
     let rules = get_rules(&all_rules, &args);
     let files = get_files(&args.files);
@@ -94,18 +96,23 @@ pub fn check(args: CheckArgs) -> Option<String> {
     for file in files {
         match check_file(&rules, &file) {
             Ok(s) => {
-                if !s.is_empty() {
-                    errors.push(format!("Issues found for file: {}\n{}", file.display(), s));
-                }
+                errors.extend(s);
             }
             Err(s) => {
-                errors.push(format!("Failed to process file: {}\n{}", file.display(), s));
+                errors.push(Violation::new(
+                    file.as_path(),
+                    0,
+                    Code::new(Category::Error, 0),
+                    format!("Failed to process: {}", s).as_str(),
+                ));
             }
         }
     }
     if errors.is_empty() {
-        None
+        0
     } else {
-        Some(errors.join("\n\n"))
+        println!("{}", join(&errors, "\n"));
+        println!("Number of errors: {}", errors.len());
+        1
     }
 }
