@@ -1,0 +1,24 @@
+name: Formatting
+
+on:
+  push:
+    paths:
+      - '**.rs'
+  pull_request:
+    paths:
+      - '**.rs'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+
+  format:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: "recursive"
+    - name: format
+      run: cargo fmt --check --verbose

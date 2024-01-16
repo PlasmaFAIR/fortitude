@@ -1,3 +1,6 @@
+![Tests](https://github.com/PlasmaFAIR/fortitude/actions/workflows/test.yml/badge.svg)
+![Clippy](https://github.com/PlasmaFAIR/fortitude/actions/workflows/lint.yml/badge.svg)
+
 # Fortitude
 
 A Fortran linter and formatter, written in Rust :crab:. Currently a work-in-progress.
