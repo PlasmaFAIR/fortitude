@@ -30,8 +30,8 @@ impl fmt::Display for Category {
 /// The combination of a rule category and a unique identifying number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct Code {
-    pub category: Category,
-    pub number: u8,
+    category: Category,
+    number: u8,
 }
 
 impl Code {
@@ -50,11 +50,11 @@ impl fmt::Display for Code {
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Violation {
     /// The line on which an error occurred.
-    pub line: usize,
+    line: usize,
     /// The rule code that triggered the violation.
-    pub code: Code,
+    code: Code,
     /// Description of the error.
-    pub message: String,
+    message: String,
 }
 
 impl Violation {
@@ -83,7 +83,7 @@ type StrMethod = fn(Code, &str) -> Vec<Violation>;
 /// The methods by which rules are enforced. Some rules act on individual lines of code,
 /// some by reading a full file, and others by analysing the concrete syntax tree.
 #[allow(dead_code)]
-#[derive(PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Method {
     /// Methods that analyse the concrete syntax tree.
     Tree(TreeMethod),
@@ -103,16 +103,16 @@ pub enum Status {
 }
 
 /// The definition of each rule.
-#[derive(Eq)]
+#[derive(Eq, Clone)]
 pub struct Rule {
     /// The unique identifier for this rule.
-    pub code: Code,
+    code: Code,
     // The method used to enforce the rule.
-    pub method: Method,
+    method: Method,
     /// A description of what the rule does.
-    pub description: String,
+    description: String,
     /// Whether the rule should be switched on by default.
-    pub status: Status,
+    status: Status,
 }
 
 impl Rule {
@@ -123,6 +123,18 @@ impl Rule {
             description: String::from(description),
             status,
         }
+    }
+
+    pub fn code(&self) -> Code {
+        self.code
+    }
+
+    pub fn method(&self) -> Method {
+        self.method
+    }
+
+    pub fn status(&self) -> Status {
+        self.status
     }
 }
 

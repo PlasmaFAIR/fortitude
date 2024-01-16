@@ -4,7 +4,7 @@ mod implicit_none;
 mod kinds;
 mod modules_and_programs;
 
-pub fn add_best_practices_rules(mut registry: Registry) -> Registry {
+pub fn add_best_practices_rules(registry: &mut Registry) {
     for rule in [
         Rule::new(
             Code::new(Category::BestPractices, 1),
@@ -67,7 +67,6 @@ pub fn add_best_practices_rules(mut registry: Registry) -> Registry {
             Status::Standard,
         ),
     ] {
-        register_rule(&mut registry, rule);
+        register_rule(registry, rule);
     }
-    registry
 }

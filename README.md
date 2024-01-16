@@ -24,6 +24,7 @@ By default, this will lint all `.f90` files from your current working directory.
       - Better error reporting when given unknown rules or files
       - Accept wider range of file extensions.
   - `explain` mode, print help text for a given rule
+- Propagate rule errors
 - Syntax error rule (just scan the tree and report all error nodes)
 - A few code style rules (leave most until after initial release)
 - After gathering violations, check per-file and per-line ignores and discard those we

@@ -1,4 +1,4 @@
-use crate::active_rules::{get_all_rules, ActiveRules};
+use crate::active_rules::{add_rules, get_all_rules, get_rules_with_status, remove_rules};
 use crate::cli::CheckArgs;
 use crate::parser::fortran_parser;
 use crate::rules::{Method, Registry, Status};
@@ -6,7 +6,7 @@ use std::fs::read_to_string;
 use std::path::PathBuf;
 
 /// Parse a file, check it for issues, and return the report.
-fn check_file(rules: &ActiveRules, path: &PathBuf) -> Result<(), String> {
+fn check_file(rules: &Registry, path: &PathBuf) -> Result<(), String> {
     match read_to_string(path) {
         Ok(source) => {
             let mut parser = fortran_parser();
@@ -14,13 +14,13 @@ fn check_file(rules: &ActiveRules, path: &PathBuf) -> Result<(), String> {
                 let root = tree.root_node();
 
                 let mut violations = Vec::new();
-                for (_, rule) in rules {
-                    match rule.method {
-                        Method::Tree(f) => violations.extend(f(rule.code, &root, &source)),
-                        Method::File(f) => violations.extend(f(rule.code, &source)),
+                for rule in rules.values() {
+                    match rule.method() {
+                        Method::Tree(f) => violations.extend(f(rule.code(), &root, &source)),
+                        Method::File(f) => violations.extend(f(rule.code(), &source)),
                         Method::Line(f) => {
                             for line in source.split('\n') {
-                                violations.extend(f(rule.code, line))
+                                violations.extend(f(rule.code(), line))
                             }
                         }
                     }
@@ -42,21 +42,23 @@ fn check_file(rules: &ActiveRules, path: &PathBuf) -> Result<(), String> {
 }
 
 /// Get the list of active rules for this session.
-fn get_rules<'a>(all_rules: &'a Registry, args: &'a CheckArgs) -> ActiveRules<'a> {
+fn get_rules(all_rules: &Registry, args: &CheckArgs) -> Registry {
     // TODO update lists with settings file
     // TODO report error if rule does not exist
+    let mut active_rules = Registry::new();
+    let standard_rules = get_rules_with_status(Status::Standard, all_rules);
+    let optional_rules = get_rules_with_status(Status::Optional, all_rules);
     if args.strict {
-        ActiveRules::new(all_rules)
-            .with_status(Status::Standard)
-            .with_status(Status::Optional)
+        add_rules(all_rules, &mut active_rules, &standard_rules);
+        add_rules(all_rules, &mut active_rules, &optional_rules);
     } else if !args.select.is_empty() {
-        ActiveRules::new(all_rules).add(&args.select)
+        add_rules(all_rules, &mut active_rules, &args.select);
     } else {
-        ActiveRules::new(all_rules)
-            .with_status(Status::Standard)
-            .remove(&args.ignore)
-            .add(&args.include)
+        add_rules(all_rules, &mut active_rules, &standard_rules);
+        remove_rules(&mut active_rules, &args.ignore);
+        add_rules(all_rules, &mut active_rules, &args.include);
     }
+    active_rules
 }
 
 fn get_files_helper(path: PathBuf) -> Vec<PathBuf> {
