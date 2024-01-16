@@ -3,7 +3,8 @@ use crate::cli::CheckArgs;
 use crate::parser::fortran_parser;
 use crate::rules::{Method, Registry, Status};
 use std::fs::read_to_string;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 /// Parse a file, check it for issues, and return the report.
 fn check_file(rules: &Registry, path: &PathBuf) -> Result<(), String> {
@@ -61,27 +62,34 @@ fn get_rules(all_rules: &Registry, args: &CheckArgs) -> Registry {
     active_rules
 }
 
-fn get_files_helper(path: PathBuf) -> Vec<PathBuf> {
-    let mut paths = Vec::new();
-    if path.is_dir() {
-        for entry in path.read_dir().unwrap() {
-            paths.extend(get_files_helper(entry.unwrap().path()));
-        }
-    } else if let Some(ext) = path.extension() {
-        if ext == "f90" {
-            paths.push(path);
-        }
+fn filter_fortran_extensions(path: &Path) -> bool {
+    const FORTRAN_EXTS: &[&str] = &[
+        "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
+    ];
+    if let Some(ext) = path.extension() {
+        // Can't use '&[&str].contains()', as extensions are of type OsStr
+        FORTRAN_EXTS.iter().any(|&x| x == ext)
+    } else {
+        false
     }
-    paths
 }
 
 /// Expand the input list of files to include all Fortran files.
 fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
-    // TODO complain about files missing f90 extension
-    // TODO Merge with helper function
     let mut paths = Vec::new();
     for path in files_in {
-        paths.extend(get_files_helper(path.to_path_buf()));
+        if path.is_dir() {
+            paths.extend(
+                WalkDir::new(path)
+                    .min_depth(1)
+                    .into_iter()
+                    .filter_map(|x| x.ok())
+                    .map(|x| x.path().to_path_buf())
+                    .filter(|x| filter_fortran_extensions(x.as_path())),
+            );
+        } else {
+            paths.push(path.to_path_buf());
+        }
     }
     paths
 }
