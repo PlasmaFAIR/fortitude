@@ -62,7 +62,7 @@ pub fn build_rule(code_str: &str, _: &Settings) -> anyhow::Result<RuleBox> {
         Code {
             category: Category::CodeStyle,
             number: 1,
-        } => Ok(Box::new(code_style::AvoidTrailingWhitespace {})),
+        } => Ok(Box::new(code_style::AvoidTrailingWhitespace::new()?)),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }

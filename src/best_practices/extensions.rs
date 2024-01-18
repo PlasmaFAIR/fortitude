@@ -22,7 +22,7 @@ pub struct UseStandardFileExtensions {}
 
 impl Rule for UseStandardFileExtensions {
     fn method(&self) -> Method {
-        Method::Path(use_standard_file_extensions)
+        Method::Path(Box::new(use_standard_file_extensions))
     }
 
     fn explain(&self) -> &str {

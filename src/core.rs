@@ -148,16 +148,16 @@ macro_rules! violation {
 /// The methods by which rules are enforced. Some rules act on individual lines of code,
 /// some by reading a full file, and others by analysing the concrete syntax tree. All
 /// rules must be associated with a `Method` via the `Rule` trait.
-#[allow(dead_code)]
-pub enum Method {
+#[allow(dead_code, clippy::type_complexity)]
+pub enum Method<'a> {
     /// Methods that work on just the path name of the file.
-    Path(fn(&Path) -> Option<Violation>),
+    Path(Box<dyn Fn(&Path) -> Option<Violation> + 'a>),
     /// Methods that analyse the syntax tree.
-    Tree(fn(&tree_sitter::Node, &str) -> Vec<Violation>), // TODO should return anyhow::Result
+    Tree(Box<dyn Fn(&tree_sitter::Node, &str) -> Vec<Violation> + 'a>),
     /// Methods that analyse individual lines of code, using regex or otherwise.
-    Line(fn(usize, &str) -> Option<Violation>),
+    Line(Box<dyn Fn(usize, &str) -> Option<Violation> + 'a>),
     /// Methods that analyse multiple lines of code.
-    MultiLine(fn(&str) -> Vec<Violation>),
+    MultiLine(Box<dyn Fn(&str) -> Vec<Violation> + 'a>),
 }
 
 // Rule trait
