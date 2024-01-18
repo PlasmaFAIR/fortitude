@@ -123,6 +123,7 @@ pub fn check(args: CheckArgs) -> i32 {
             if diagnostics.is_empty() {
                 0
             } else {
+                diagnostics.sort_unstable();
                 println!("{}", join(&diagnostics, "\n"));
                 println!("Number of errors: {}", diagnostics.len());
                 1
