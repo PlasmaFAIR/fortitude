@@ -85,8 +85,8 @@ fn check_file(rule: &RuleBox, path: &Path) -> anyhow::Result<Vec<Violation>> {
             violations.extend(f(&source));
         }
         Method::Line(f) => {
-            for line in source.split('\n') {
-                if let Some(violation) = f(line) {
+            for (idx, line) in source.split('\n').enumerate() {
+                if let Some(violation) = f(idx + 1, line) {
                     violations.push(violation);
                 }
             }

@@ -13,7 +13,7 @@ pub mod test_utils {
         let mut parser = fortran_parser();
         let tree = parser.parse(src, None).unwrap();
         let root = tree.root_node();
-        let mut violations = f(&root, src);
+        let violations = f(&root, src);
         match expected_violations {
             Some(x) => {
                 assert_eq!(violations.len(), x.len());

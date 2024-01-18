@@ -1,7 +1,8 @@
+#[macro_use]
+mod code_style;
 mod best_practices;
 mod check;
 mod cli;
-#[macro_use]
 mod core;
 mod parser;
 mod rules;

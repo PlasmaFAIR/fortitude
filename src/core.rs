@@ -129,13 +129,16 @@ impl Violation {
 #[macro_export]
 macro_rules! violation {
     ($msg:expr) => {
-        crate::core::Violation::new($msg, crate::core::ViolationPosition::None)
+        $crate::core::Violation::new($msg, $crate::core::ViolationPosition::None)
     };
     ($msg:expr, $line:expr) => {
-        crate::core::Violation::new($msg, crate::core::ViolationPosition::Line($line))
+        $crate::core::Violation::new($msg, $crate::core::ViolationPosition::Line($line))
     };
     ($msg:expr, $line:expr, $col:expr) => {
-        crate::core::Violation::new($msg, crate::core::ViolationPosition::LineCol(($line, $col)))
+        $crate::core::Violation::new(
+            $msg,
+            $crate::core::ViolationPosition::LineCol(($line, $col)),
+        )
     };
 }
 
@@ -152,7 +155,7 @@ pub enum Method {
     /// Methods that analyse the syntax tree.
     Tree(fn(&tree_sitter::Node, &str) -> Vec<Violation>), // TODO should return anyhow::Result
     /// Methods that analyse individual lines of code, using regex or otherwise.
-    Line(fn(&str) -> Option<Violation>),
+    Line(fn(usize, &str) -> Option<Violation>),
     /// Methods that analyse multiple lines of code.
     MultiLine(fn(&str) -> Vec<Violation>),
 }

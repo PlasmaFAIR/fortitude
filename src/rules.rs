@@ -1,4 +1,5 @@
 use crate::best_practices;
+use crate::code_style;
 use crate::core::{Category, Code, Rule};
 use crate::settings::Settings;
 use std::collections::{HashMap, HashSet};
@@ -58,6 +59,10 @@ pub fn build_rule(code_str: &str, _: &Settings) -> anyhow::Result<RuleBox> {
             category: Category::BestPractices,
             number: 60,
         } => Ok(Box::new(best_practices::UseStandardFileExtensions {})),
+        Code {
+            category: Category::CodeStyle,
+            number: 1,
+        } => Ok(Box::new(code_style::AvoidTrailingWhitespace {})),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }
@@ -67,7 +72,7 @@ pub fn build_rule(code_str: &str, _: &Settings) -> anyhow::Result<RuleBox> {
 /// Returns the set of rules that are activated by default, expressed as strings.
 pub fn default_ruleset() -> RuleSet {
     let defaults = &[
-        "B001", "B010", "B011", "B020", "B021", "B022", "B023", "B024", "B060",
+        "B001", "B010", "B011", "B020", "B021", "B022", "B023", "B024", "B060", "S001",
     ];
     RuleSet::from_iter(defaults.iter().map(|x| x.to_string()))
 }
