@@ -1,23 +1,19 @@
 #[cfg(test)]
 pub mod test_utils {
+    use crate::core::Violation;
     use crate::parser::fortran_parser;
-    use crate::rules::{Category, Code, Violation};
-    use std::path::Path;
     use tree_sitter::Node;
 
-    pub const TEST_CODE: Code = Code::new(Category::BestPractices, 255);
-
-    pub fn test_tree_method(
-        f: fn(Code, &Path, &Node, &str) -> Vec<Violation>,
-        path: &Path,
-        source: &str,
+    pub fn test_tree_method<S: AsRef<str>>(
+        f: fn(&Node, &str) -> Vec<Violation>,
+        source: S,
         expected_violations: Option<Vec<Violation>>,
     ) {
+        let src = source.as_ref();
         let mut parser = fortran_parser();
-        let tree = parser.parse(&source, None).unwrap();
+        let tree = parser.parse(src, None).unwrap();
         let root = tree.root_node();
-        let mut violations = f(TEST_CODE, path, &root, source);
-        violations.sort();
+        let mut violations = f(&root, src);
         match expected_violations {
             Some(x) => {
                 assert_eq!(violations.len(), x.len());

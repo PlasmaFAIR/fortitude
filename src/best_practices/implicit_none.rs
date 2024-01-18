@@ -1,19 +1,13 @@
+use crate::core::{Method, Rule, Violation};
 use crate::parser::fortran_language;
-use crate::rules::{Code, Violation};
-use std::path::Path;
 use tree_sitter::{Node, Query};
+
 /// Defines rules that raise errors if implicit typing is in use.
 
-pub const USE_IMPLICIT_NONE_MODULES_AND_PROGRAMS: &str = "\
-    'implicit none' should be used in all modules and programs, as implicit typing
-    reduces the readability of code and increases the chances of typing errors.";
+// Use implicit none in modules and programs
+// -----------------------------------------
 
-pub fn use_implicit_none_modules_and_programs(
-    code: Code,
-    path: &Path,
-    root: &Node,
-    src: &str,
-) -> Vec<Violation> {
+fn use_implicit_none_modules_and_programs(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["module", "submodule", "program"] {
         // Search for a module, submodule or program, and optionally an 'implicit none'.
@@ -35,12 +29,8 @@ pub fn use_implicit_none_modules_and_programs(
             if !captures.iter().any(|&x| x.index == implicit_none_index) {
                 // The only other captures must be the module, submodule, or program.
                 for capture in captures {
-                    violations.push(Violation::from_node(
-                        path,
-                        &capture.node,
-                        code,
-                        format!("{} missing 'implicit none'", query_type).as_str(),
-                    ));
+                    let msg = format!("{} missing 'implicit none'", query_type);
+                    violations.push(Violation::from_node(&msg, &capture.node));
                 }
             }
         }
@@ -48,16 +38,23 @@ pub fn use_implicit_none_modules_and_programs(
     violations
 }
 
-pub const USE_IMPLICIT_NONE_INTERFACES: &str = "\
-    Interface functions and subroutines require 'implicit none', even if they are inside
-    a module that uses 'implicit none'.";
+pub struct UseImplicitNoneModulesAndPrograms {}
 
-pub fn use_implicit_none_interfaces(
-    code: Code,
-    path: &Path,
-    root: &Node,
-    src: &str,
-) -> Vec<Violation> {
+impl Rule for UseImplicitNoneModulesAndPrograms {
+    fn method(&self) -> Method {
+        Method::Tree(use_implicit_none_modules_and_programs)
+    }
+
+    fn explain(&self) -> &str {
+        "'implicit none' should be used in all modules and programs, as implicit typing
+        reduces the readability of code and increases the chances of typing errors."
+    }
+}
+
+// Use implicit none in interfaces
+// -------------------------------
+
+fn use_implicit_none_interfaces(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["function", "subroutine"] {
         let query_txt = format!(
@@ -75,12 +72,8 @@ pub fn use_implicit_none_interfaces(
             if !captures.iter().any(|&x| x.index == implicit_none_index) {
                 // The only other captures must be the module, submodule, or program.
                 for capture in captures {
-                    violations.push(Violation::from_node(
-                        path,
-                        &capture.node,
-                        code,
-                        format!("interface {} missing 'implicit none'", query_type).as_str(),
-                    ));
+                    let msg = format!("interface {} missing 'implicit none'", query_type);
+                    violations.push(Violation::from_node(&msg, &capture.node));
                 }
             }
         }
@@ -88,16 +81,23 @@ pub fn use_implicit_none_interfaces(
     violations
 }
 
-pub const AVOID_SUPERFLUOUS_IMPLICIT_NONE: &str = "If a module has 'implicit none' set,
-    it is not necessary to set it in contained functions and subroutines (except when
-    using interfaces).";
+pub struct UseImplicitNoneInterfaces {}
 
-pub fn avoid_superfluous_implicit_none(
-    code: Code,
-    path: &Path,
-    root: &Node,
-    src: &str,
-) -> Vec<Violation> {
+impl Rule for UseImplicitNoneInterfaces {
+    fn method(&self) -> Method {
+        Method::Tree(use_implicit_none_interfaces)
+    }
+
+    fn explain(&self) -> &str {
+        "Interface functions and subroutines require 'implicit none', even if they are
+        inside a module that uses 'implicit none'."
+    }
+}
+
+// Avoid implicit none where it isn't needed
+// -----------------------------------------
+
+fn avoid_superfluous_implicit_none(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["module", "submodule", "program"] {
         let query_txt = format!(
@@ -114,30 +114,41 @@ pub fn avoid_superfluous_implicit_none(
         let mut cursor = tree_sitter::QueryCursor::new();
         for match_ in cursor.matches(&query, *root, src.as_bytes()) {
             for capture in match_.captures {
-                violations.push(Violation::from_node(
-                    path,
-                    &capture.node,
-                    code,
-                    format!(
-                        "'implicit none' is set on the enclosing {}, and isn't needed here",
-                        query_type
-                    )
-                    .as_str(),
-                ));
+                let msg = format!(
+                    "'implicit none' is set on the enclosing {}, and isn't needed here",
+                    query_type
+                );
+                violations.push(Violation::from_node(&msg, &capture.node));
             }
         }
     }
     violations
 }
 
+pub struct AvoidSuperfluousImplicitNone {}
+
+impl Rule for AvoidSuperfluousImplicitNone {
+    fn method(&self) -> Method {
+        Method::Tree(avoid_superfluous_implicit_none)
+    }
+
+    fn explain(&self) -> &str {
+        "If a module has 'implicit none' set, it is not necessary to set it in contained
+        functions and subroutines (except when using interfaces)."
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::{test_tree_method, TEST_CODE};
+    use crate::test_utils::test_utils::test_tree_method;
+    use crate::violation;
+    use textwrap::dedent;
 
     #[test]
     fn test_module_and_program_missing_implicit_none() {
-        let source = "
+        let source = dedent(
+            "
             module my_module
                 parameter(N = 1)
             end module
@@ -145,23 +156,17 @@ mod tests {
             program my_program
                 write(*,*) 42
             end program
-            ";
-        let path = Path::new("file.f90");
-        let expected_violations = [2, 6]
+            ",
+        );
+        let expected_violations = [(2, 1, "module"), (6, 1, "program")]
             .iter()
-            .zip(["module", "program"])
-            .map(|(line, kind)| {
-                Violation::new(
-                    &path,
-                    *line,
-                    TEST_CODE,
-                    format!("{} missing 'implicit none'", kind).as_str(),
-                )
+            .map(|(line, col, kind)| {
+                let msg = format!("{} missing 'implicit none'", kind);
+                violation!(&msg, *line, *col)
             })
             .collect();
         test_tree_method(
             use_implicit_none_modules_and_programs,
-            path,
             source,
             Some(expected_violations),
         );
@@ -185,13 +190,13 @@ mod tests {
                 write(*,*) x
             end program
             ";
-        let path = Path::new("file.f90");
-        test_tree_method(use_implicit_none_modules_and_programs, path, source, None);
+        test_tree_method(use_implicit_none_modules_and_programs, source, None);
     }
 
     #[test]
     fn test_interface_missing_implicit_none() {
-        let source = "
+        let source = dedent(
+            "
             module my_module
                 implicit none
                 interface
@@ -210,23 +215,17 @@ mod tests {
                 end interface
                 write(*,*) 42
             end program
-            ";
-        let path = Path::new("file.f90");
-        let expected_violations = [5, 14]
+            ",
+        );
+        let expected_violations = [(5, 9, "function"), (14, 9, "subroutine")]
             .iter()
-            .zip(["function", "subroutine"])
-            .map(|(line, kind)| {
-                Violation::new(
-                    &path,
-                    *line,
-                    TEST_CODE,
-                    format!("interface {} missing 'implicit none'", kind).as_str(),
-                )
+            .map(|(line, col, kind)| {
+                let msg = format!("interface {} missing 'implicit none'", kind);
+                violation!(&msg, *line, *col)
             })
             .collect();
         test_tree_method(
             use_implicit_none_interfaces,
-            path,
             source,
             Some(expected_violations),
         );
@@ -256,13 +255,13 @@ mod tests {
                 write(*,*) 42
             end program
             ";
-        let path = Path::new("file.f90");
-        test_tree_method(use_implicit_none_interfaces, &path, source, None);
+        test_tree_method(use_implicit_none_interfaces, source, None);
     }
 
     #[test]
     fn test_superflous_implicit_none() {
-        let source = "
+        let source = dedent(
+            "
             module my_module
                 implicit none
             contains
@@ -295,27 +294,25 @@ mod tests {
                     x = x * 2
                 end subroutine
             end program
-            ";
-        let path = Path::new("file.f90");
-        let expected_violations = [6, 11, 24, 29]
-            .iter()
-            .zip(["module", "module", "program", "program"])
-            .map(|(line, kind)| {
-                Violation::new(
-                    &path,
-                    *line,
-                    TEST_CODE,
-                    format!(
-                        "'implicit none' is set on the enclosing {}, and isn't needed here",
-                        kind
-                    )
-                    .as_str(),
-                )
-            })
-            .collect();
+            ",
+        );
+        let expected_violations = [
+            (6, 9, "module"),
+            (11, 9, "module"),
+            (24, 9, "program"),
+            (29, 9, "program"),
+        ]
+        .iter()
+        .map(|(line, col, kind)| {
+            let msg = format!(
+                "'implicit none' is set on the enclosing {}, and isn't needed here",
+                kind
+            );
+            violation!(&msg, *line, *col)
+        })
+        .collect();
         test_tree_method(
             avoid_superfluous_implicit_none,
-            &path,
             source,
             Some(expected_violations),
         );
@@ -361,7 +358,6 @@ mod tests {
                 end subroutine
             end program
             ";
-        let path = Path::new("file.f90");
-        test_tree_method(avoid_superfluous_implicit_none, &path, source, None);
+        test_tree_method(avoid_superfluous_implicit_none, source, None);
     }
 }

@@ -1,65 +1,16 @@
+use crate::core::{Method, Rule, Violation};
 use crate::parser::fortran_language;
-use crate::rules::{Code, Violation};
 use regex::Regex;
+use tree_sitter::{Node, Query};
 /// Defines rules that discourage the use of raw number literals as kinds, and the use
 /// of non-standard extensions to the language such as the type `real*8`. Also contains
 /// rules to ensure floating point types are set in a portable manner, and checks for
 /// potential loss of precision in number literals.
-use std::path::Path;
-use tree_sitter::{Node, Query};
 
 // TODO rule to prefer 1.23e4_sp over 1.23e4, and 1.23e4_dp over 1.23d4
 
-pub const AVOID_NUMBER_LITERAL_KINDS: &str = "\
-    Rather than setting an intrinsic type's kind using an integer literal, such as
-    `real(8)` or `integer(kind=4)`, consider setting precision using the built-in
-    `selected_real_kind` or `selected_int_kind` functions. Although it is widely
-    believed that `real(8)` represents an 8-byte floating point (and indeed, this is the
-    case for most compilers and architectures), there is nothing in the standard to
-    mandate this, and compiler vendors are free to choose any mapping between kind
-    numbers and machine precision. This may lead to surprising results if your code is
-    ported to another machine or compiled with a difference compiler.
-
-    For floating point variables, it is recommended to use `real(sp)` (single
-    precision), `real(dp)` (double precision), and `real(qp)` (quadruple precision),
-    using:
-
-    ```
-    integer, parameter :: sp = selected_real_kind(6, 37)
-    integer, parameter :: dp = selected_real_kind(15, 307)
-    integer, parameter :: qp = selected_real_kind(33, 4931)
-    ```
-
-    Or alternatively:
-
-    ```
-    use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64, qp => real128
-    ```
-
-    Some prefer to set one precision parameter `wp` (working precision), which is set
-    in one module and used throughout a project.
-
-    Integer sizes may be set similarly:
-
-    ```
-    integer, parameter :: i1 = selected_int_kind(2)  ! 8 bits
-    integer, parameter :: i2 = selected_int_kind(4)  ! 16 bits
-    integer, parameter :: i4 = selected_int_kind(9)  ! 32 bits
-    integer, parameter :: i8 = selected_int_kind(18) ! 64 bits
-    ```
-
-    Or:
-
-    ```
-    use, intrinsic :: iso_fortran_env, only: i1 => int8, &
-                                             i2 => int16, &
-                                             i4 => int32, &
-                                             i8 => int64
-    ```
-
-    For code that should be compatible with C, you should instead set kinds such as
-    `real(c_double)` or `integer(c_int)` which may be found in the intrinsic module
-    `iso_c_binding`.";
+// Avoid number literal kinds
+// --------------------------
 
 fn literal_kind_err_msg(dtype: &str) -> Option<String> {
     let lower = dtype.to_lowercase();
@@ -78,12 +29,7 @@ fn literal_kind_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-pub fn avoid_number_literal_kinds(
-    code: Code,
-    path: &Path,
-    root: &Node,
-    src: &str,
-) -> Vec<Violation> {
+fn avoid_number_literal_kinds(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for query_type in ["function_statement", "variable_declaration"] {
@@ -116,13 +62,8 @@ pub fn avoid_number_literal_kinds(
                 match txt {
                     Ok(x) => {
                         match literal_kind_err_msg(x) {
-                            Some(y) => {
-                                violations.push(Violation::from_node(
-                                    path,
-                                    &capture.node,
-                                    code,
-                                    y.as_str(),
-                                ));
+                            Some(msg) => {
+                                violations.push(Violation::from_node(&msg, &capture.node));
                             }
                             None => {
                                 // Do nothing, characters should be handled elsewhere
@@ -139,21 +80,72 @@ pub fn avoid_number_literal_kinds(
     violations
 }
 
-pub const AVOID_NON_STANDARD_BYTE_SPECIFIER: &str = "\
-    Types such as 'real*8' or 'integer*4' are not standard Fortran and should be
-    avoided. For these cases, consider instead using 'real(real64)' or 'integer(int32)',
-    where 'real64' and 'int32' may be found in the intrinsic module 'iso_fortran_env'.
-    You may also wish to determine kinds using the built-in functions
-    'selected_real_kind' and 'selected_int_kind'.";
+pub struct AvoidNumberLiteralKinds {}
 
-const NON_STANDARD_BYTE_SPECIFIER_ERR: &str = "Avoid non-standard 'type*N', prefer 'type(N)'";
+impl Rule for AvoidNumberLiteralKinds {
+    fn method(&self) -> Method {
+        Method::Tree(avoid_number_literal_kinds)
+    }
 
-pub fn avoid_non_standard_byte_specifier(
-    code: Code,
-    path: &Path,
-    root: &Node,
-    src: &str,
-) -> Vec<Violation> {
+    fn explain(&self) -> &str {
+        "Rather than setting an intrinsic type's kind using an integer literal, such as
+        `real(8)` or `integer(kind=4)`, consider setting precision using the built-in
+        `selected_real_kind` or `selected_int_kind` functions. Although it is widely
+        believed that `real(8)` represents an 8-byte floating point (and indeed, this is 
+        the case for most compilers and architectures), there is nothing in the standard 
+        to mandate this, and compiler vendors are free to choose any mapping between 
+        kind numbers and machine precision. This may lead to surprising results if your 
+        code is ported to another machine or compiled with a difference compiler.
+
+        For floating point variables, it is recommended to use `real(sp)` (single
+        precision), `real(dp)` (double precision), and `real(qp)` (quadruple precision),
+        using:
+
+        ```
+        integer, parameter :: sp = selected_real_kind(6, 37)
+        integer, parameter :: dp = selected_real_kind(15, 307)
+        integer, parameter :: qp = selected_real_kind(33, 4931)
+        ```
+
+        Or alternatively:
+
+        ```
+        use, intrinsic :: iso_fortran_env, only: sp => real32, &
+                                                 dp => real64, &
+                                                 qp => real128
+        ```
+
+        Some prefer to set one precision parameter `wp` (working precision), which is 
+        set in one module and used throughout a project.
+
+        Integer sizes may be set similarly:
+
+        ```
+        integer, parameter :: i1 = selected_int_kind(2)  ! 8 bits
+        integer, parameter :: i2 = selected_int_kind(4)  ! 16 bits
+        integer, parameter :: i4 = selected_int_kind(9)  ! 32 bits
+        integer, parameter :: i8 = selected_int_kind(18) ! 64 bits
+        ```
+
+        Or:
+
+        ```
+        use, intrinsic :: iso_fortran_env, only: i1 => int8, &
+                                                 i2 => int16, &
+                                                 i4 => int32, &
+                                                 i8 => int64
+        ```
+
+        For code that should be compatible with C, you should instead set kinds such as
+        `real(c_double)` or `integer(c_int)` which may be found in the intrinsic module
+        `iso_c_binding`."
+    }
+}
+
+// Avoid non-standard bytes specifier
+// ----------------------------------
+
+fn avoid_non_standard_byte_specifier(root: &Node, src: &str) -> Vec<Violation> {
     // Note: This does not match 'character*(*)', which should be handled by a different
     // rule.
     let mut violations = Vec::new();
@@ -171,12 +163,8 @@ pub fn avoid_non_standard_byte_specifier(
                 match capture.node.utf8_text(src.as_bytes()) {
                     Ok(x) => {
                         if re.is_match(x) {
-                            violations.push(Violation::from_node(
-                                path,
-                                &capture.node,
-                                code,
-                                NON_STANDARD_BYTE_SPECIFIER_ERR,
-                            ));
+                            let msg = "Avoid non-standard 'type*N', prefer 'type(N)'";
+                            violations.push(Violation::from_node(msg, &capture.node));
                         }
                     }
                     Err(_) => {
@@ -190,18 +178,24 @@ pub fn avoid_non_standard_byte_specifier(
     violations
 }
 
-pub const AVOID_DOUBLE_PRECISION: &str = "\
-    The 'double precision' type specifier does not guarantee a 64-bit floating point,
-    as one might expect. It is simply required to be twice the size of a default 'real',
-    which may vary depending on your system. It may also be modified by compiler
-    arguments. For consistency, it is recommended to use `real(dp)`, with `dp` set in
-    one of the following ways:
+pub struct AvoidNonStandardByteSpecifier {}
 
-    - `integer, parameter :: dp = selected_real_kind(15, 307)`
-    - `use, intrinsic :: iso_fortran_env, only: dp => real64`
+impl Rule for AvoidNonStandardByteSpecifier {
+    fn method(&self) -> Method {
+        Method::Tree(avoid_non_standard_byte_specifier)
+    }
 
-    For code that should be compatible with C, you should instead use `real(c_double)`,
-    which may be found in the intrinsic module `iso_c_binding`.";
+    fn explain(&self) -> &str {
+        "Types such as 'real*8' or 'integer*4' are not standard Fortran and should be
+        avoided. For these cases, consider instead using 'real(real64)' or 
+        'integer(int32)', where 'real64' and 'int32' may be found in the intrinsic 
+        module 'iso_fortran_env'. You may also wish to determine kinds using the 
+        built-in functions 'selected_real_kind' and 'selected_int_kind'."
+    }
+}
+
+// Avoid double precision type
+// ---------------------------
 
 fn double_precision_err_msg(dtype: &str) -> Option<String> {
     let lower = dtype.to_lowercase();
@@ -218,7 +212,7 @@ fn double_precision_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-pub fn avoid_double_precision(code: Code, path: &Path, root: &Node, src: &str) -> Vec<Violation> {
+fn avoid_double_precision(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for query_type in ["function_statement", "variable_declaration"] {
@@ -231,13 +225,8 @@ pub fn avoid_double_precision(code: Code, path: &Path, root: &Node, src: &str) -
                 match txt {
                     Ok(x) => {
                         match double_precision_err_msg(x) {
-                            Some(y) => {
-                                violations.push(Violation::from_node(
-                                    path,
-                                    &capture.node,
-                                    code,
-                                    y.as_str(),
-                                ));
+                            Some(msg) => {
+                                violations.push(Violation::from_node(&msg, &capture.node));
                             }
                             None => {
                                 // Do nothing, found some other intrinsic type
@@ -254,31 +243,32 @@ pub fn avoid_double_precision(code: Code, path: &Path, root: &Node, src: &str) -
     violations
 }
 
-pub const USE_FLOATING_POINT_SUFFIXES: &str = "\
-    Floating point literals will take on the default 'real' kind unless given a
-    kind suffix. This can cause surprising loss of precision:
+pub struct AvoidDoublePrecision {}
 
-    ```
-    use, intrinsic :: iso_fortran_env, only: dp => real64
+impl Rule for AvoidDoublePrecision {
+    fn method(&self) -> Method {
+        Method::Tree(avoid_double_precision)
+    }
 
-    ! Error, pi is truncated to 6 decimal places
-    real(dp), parameter :: pi = 3.14159265358979
-    ! Correct
-    real(dp), parameter :: pi = 3.14159265358979_dp
-    ```
+    fn explain(&self) -> &str {
+        "The 'double precision' type specifier does not guarantee a 64-bit floating 
+        point, as one might expect. It is simply required to be twice the size of a 
+        default 'real', which may vary depending on your system. It may also be modified 
+        by compiler arguments. For consistency, it is recommended to use `real(dp)`, 
+        with `dp` set in one of the following ways:
 
-    Floating point constants should therefore always be specified with a kind suffix.
+        - `integer, parameter :: dp = selected_real_kind(15, 307)`
+        - `use, intrinsic :: iso_fortran_env, only: dp => real64`
 
-    This rule does not concern constants that make use of exponentiation, such as
-    `8.85418782e-12`, which would also lose precision compared to `8.85418782d-12`,
-    or better yet `8.85418782e-12_dp`.";
+        For code that should be compatible with C, you should instead use 
+        `real(c_double)`, which may be found in the intrinsic module `iso_c_binding`."
+    }
+}
 
-pub fn use_floating_point_suffixes(
-    code: Code,
-    path: &Path,
-    root: &Node,
-    src: &str,
-) -> Vec<Violation> {
+// Use floating point suffixes
+// ---------------------------
+
+fn use_floating_point_suffixes(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Given a number literal, match anything with a decimal place, some amount of
     // digits either side, and no suffix. This will not catch exponentiation.
@@ -295,16 +285,11 @@ pub fn use_floating_point_suffixes(
             match txt {
                 Ok(x) => {
                     if re.is_match(x) {
-                        violations.push(Violation::from_node(
-                            path,
-                            &capture.node,
-                            code,
-                            format!(
-                                "Floating point literal {} specified without a kind suffix",
-                                x,
-                            )
-                            .as_str(),
-                        ));
+                        let msg = format!(
+                            "Floating point literal {} specified without a kind suffix",
+                            x,
+                        );
+                        violations.push(Violation::from_node(&msg, &capture.node));
                     }
                 }
                 Err(_) => {
@@ -316,37 +301,39 @@ pub fn use_floating_point_suffixes(
     violations
 }
 
-pub const AVOID_NUMBERED_KIND_SUFFIXES: &str = "\
-    Using an integer literal as a kind specifier gives no guarantees regarding the
-    precision of the type, as kind numbers are not required to match the number of
-    bytes. It is recommended to set integer parameters using `selected_int_kind` and/or
-    'selected_real_kind':
+pub struct UseFloatingPointSuffixes {}
 
-    ```
-    integer, parameter :: sp => selected_real_kind(6, 37)
-    integer, parameter :: dp => selected_real_kind(15, 307)
-    ```
+impl Rule for UseFloatingPointSuffixes {
+    fn method(&self) -> Method {
+        Method::Tree(use_floating_point_suffixes)
+    }
 
-    or to use those provided in `iso_fortran_env`:
+    fn explain(&self) -> &str {
+        "Floating point literals will take on the default 'real' kind unless given a
+        kind suffix. This can cause surprising loss of precision:
 
-    ```
-    use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
-    ```
+        ```
+        use, intrinsic :: iso_fortran_env, only: dp => real64
 
-    Floating point constants can then be specified as follows:
+        ! Error, pi is truncated to 6 decimal places
+        real(dp), parameter :: pi = 3.14159265358979
+        ! Correct
+        real(dp), parameter :: pi = 3.14159265358979_dp
+        ```
 
-    ```
-    real(sp), parameter :: sqrt2 = 1.41421_sp
-    real(dp), parameter :: pi = 3.14159265358979_dp
-    ```
-    ";
+        Floating point constants should therefore always be specified with a kind 
+        suffix.
 
-pub fn avoid_numbered_kind_suffixes(
-    code: Code,
-    path: &Path,
-    root: &Node,
-    src: &str,
-) -> Vec<Violation> {
+        This rule does not concern constants that make use of exponentiation, such as
+        `8.85418782e-12`, which would also lose precision compared to `8.85418782d-12`,
+        or better yet `8.85418782e-12_dp`."
+    }
+}
+
+// Avoid numbered kind suffixes
+// -----------------------------
+
+fn avoid_numbered_kind_suffixes(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Given a number literal, match anything suffixed with plain number.
     // TODO Match either int or real, change error message accordingly
@@ -361,17 +348,12 @@ pub fn avoid_numbered_kind_suffixes(
             match txt {
                 Ok(x) => {
                     if re.is_match(x) {
-                        violations.push(Violation::from_node(
-                            path,
-                            &capture.node,
-                            code,
-                            format!(
-                                "Instead of number literal suffix in {}, use parameter suffix \
-                                from 'iso_fortran_env' or 'selected_int/real_kind'",
-                                x,
-                            )
-                            .as_str(),
-                        ));
+                        let msg = format!(
+                            "Instead of number literal suffix in {}, use parameter suffix \
+                            from 'iso_fortran_env' or 'selected_int/real_kind'",
+                            x
+                        );
+                        violations.push(Violation::from_node(&msg, &capture.node));
                     }
                 }
                 Err(_) => {
@@ -383,14 +365,50 @@ pub fn avoid_numbered_kind_suffixes(
     violations
 }
 
+pub struct AvoidNumberedKindSuffixes {}
+
+impl Rule for AvoidNumberedKindSuffixes {
+    fn method(&self) -> Method {
+        Method::Tree(avoid_numbered_kind_suffixes)
+    }
+
+    fn explain(&self) -> &str {
+        "Using an integer literal as a kind specifier gives no guarantees regarding the
+        precision of the type, as kind numbers are not required to match the number of
+        bytes. It is recommended to set integer parameters using `selected_int_kind` 
+        and/or 'selected_real_kind':
+
+        ```
+        integer, parameter :: sp => selected_real_kind(6, 37)
+        integer, parameter :: dp => selected_real_kind(15, 307)
+        ```
+
+        or to use those provided in `iso_fortran_env`:
+
+        ```
+        use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
+        ```
+
+        Floating point constants can then be specified as follows:
+
+        ```
+        real(sp), parameter :: sqrt2 = 1.41421_sp
+        real(dp), parameter :: pi = 3.14159265358979_dp
+        ```"
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::{test_tree_method, TEST_CODE};
+    use crate::test_utils::test_utils::test_tree_method;
+    use crate::violation;
+    use textwrap::dedent;
 
     #[test]
     fn test_number_literal_kinds() {
-        let source = "
+        let source = dedent(
+            "
             integer(8) function add_if(x, y, z)
               integer(kind=2), intent(in) :: x
               integer(i32), intent(in) :: y
@@ -414,25 +432,24 @@ mod tests {
               complex(kind=4), intent(in) :: y
               complex_add = y + x
             end function
-            ";
-        let path = Path::new("file.f90");
-        let expected_violations = [2, 3, 5, 15, 16, 22]
-            .iter()
-            .zip([
-                "integer", "integer", "logical", "real", "complex", "complex",
-            ])
-            .map(|(line, kind)| {
-                Violation::new(
-                    &path,
-                    *line,
-                    TEST_CODE,
-                    literal_kind_err_msg(kind).unwrap().as_str(),
-                )
-            })
-            .collect();
+            ",
+        );
+        let expected_violations = [
+            (2, 1, "integer"),
+            (3, 3, "integer"),
+            (5, 3, "logical"),
+            (15, 3, "real"),
+            (16, 3, "complex"),
+            (22, 3, "complex"),
+        ]
+        .iter()
+        .map(|(line, col, kind)| {
+            let msg = literal_kind_err_msg(kind).unwrap();
+            violation!(&msg, *line, *col)
+        })
+        .collect();
         test_tree_method(
             avoid_number_literal_kinds,
-            &path,
             source,
             Some(expected_violations),
         );
@@ -440,7 +457,8 @@ mod tests {
 
     #[test]
     fn test_non_standard_byte_specifier() {
-        let source = "
+        let source = dedent(
+            "
             integer*8 function add_if(x, y, z)
               integer(kind=2), intent(in) :: x
               integer *4, intent(in) :: y
@@ -458,15 +476,16 @@ mod tests {
               complex  *  16, intent(inout) :: y
               y = y * x
             end subroutine
-            ";
-        let path = Path::new("file.f90");
-        let expected_violations = [2, 4, 5, 15, 16]
+            ",
+        );
+        let expected_violations = [(2, 8), (4, 11), (5, 10), (15, 8), (16, 12)]
             .iter()
-            .map(|line| Violation::new(&path, *line, TEST_CODE, NON_STANDARD_BYTE_SPECIFIER_ERR))
+            .map(|(line, col)| {
+                violation!("Avoid non-standard 'type*N', prefer 'type(N)'", *line, *col)
+            })
             .collect();
         test_tree_method(
             avoid_non_standard_byte_specifier,
-            &path,
             source,
             Some(expected_violations),
         );
@@ -474,7 +493,8 @@ mod tests {
 
     #[test]
     fn test_double_precision() {
-        let source = "
+        let source = dedent(
+            "
             double precision function double(x)
               double precision, intent(in) :: x
               double = 2 * x
@@ -491,38 +511,29 @@ mod tests {
               double complex :: complex_mul
               complex_mul = x * y
             end function
-            ";
-        let path = Path::new("file.f90");
-        let expected_violations = [2, 3, 8, 13, 14, 15]
-            .iter()
-            .zip([
-                "double precision",
-                "double precision",
-                "double precision",
-                "double precision",
-                "double complex",
-                "double complex",
-            ])
-            .map(|(line, kind)| {
-                Violation::new(
-                    &path,
-                    *line,
-                    TEST_CODE,
-                    double_precision_err_msg(kind).unwrap().as_str(),
-                )
-            })
-            .collect();
-        test_tree_method(
-            avoid_double_precision,
-            &path,
-            source,
-            Some(expected_violations),
+            ",
         );
+        let expected_violations = [
+            (2, 1, "double precision"),
+            (3, 3, "double precision"),
+            (8, 3, "double precision"),
+            (13, 3, "double precision"),
+            (14, 3, "double complex"),
+            (15, 3, "double complex"),
+        ]
+        .iter()
+        .map(|(line, col, kind)| {
+            let msg = double_precision_err_msg(kind).unwrap();
+            violation!(&msg, *line, *col)
+        })
+        .collect();
+        test_tree_method(avoid_double_precision, source, Some(expected_violations));
     }
 
     #[test]
     fn test_floating_point_without_suffixes() {
-        let source = "
+        let source = dedent(
+            "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
             real(sp), parameter :: x1 = 1.234567
@@ -530,27 +541,20 @@ mod tests {
             real(dp), parameter :: x3 = 1.789d3
             real(dp), parameter :: x4 = 9.876
             real(sp), parameter :: x5 = 2.468_sp
-            ";
-        let path = Path::new("file.f90");
-        let expected_violations = [4, 7]
+            ",
+        );
+        let expected_violations = [(4, 29, "1.234567"), (7, 29, "9.876")]
             .iter()
-            .zip(["1.234567", "9.876"])
-            .map(|(line, num)| {
-                Violation::new(
-                    &path,
-                    *line,
-                    TEST_CODE,
-                    format!(
-                        "Floating point literal {} specified without a kind suffix",
-                        num,
-                    )
-                    .as_str(),
-                )
+            .map(|(line, col, num)| {
+                let msg = format!(
+                    "Floating point literal {} specified without a kind suffix",
+                    num,
+                );
+                violation!(&msg, *line, *col)
             })
             .collect();
         test_tree_method(
             use_floating_point_suffixes,
-            &path,
             source,
             Some(expected_violations),
         );
@@ -558,7 +562,8 @@ mod tests {
 
     #[test]
     fn test_avoid_numbered_suffixes() {
-        let source = "
+        let source = dedent(
+            "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
             real(sp), parameter :: x1 = 1.234567_4
@@ -566,28 +571,21 @@ mod tests {
             real(dp), parameter :: x3 = 1.789d3
             real(dp), parameter :: x4 = 9.876_8
             real(sp), parameter :: x5 = 2.468_sp
-            ";
-        let path = Path::new("file.f90");
-        let expected_violations = [4, 7]
+            ",
+        );
+        let expected_violations = [(4, 29, "1.234567_4"), (7, 29, "9.876_8")]
             .iter()
-            .zip(["1.234567_4", "9.876_8"])
-            .map(|(line, num)| {
-                Violation::new(
-                    &path,
-                    *line,
-                    TEST_CODE,
-                    format!(
-                        "Instead of number literal suffix in {}, use parameter suffix \
-                        from 'iso_fortran_env' or 'selected_int/real_kind'",
-                        num,
-                    )
-                    .as_str(),
-                )
+            .map(|(line, col, num)| {
+                let msg = format!(
+                    "Instead of number literal suffix in {}, use parameter suffix from \
+                    'iso_fortran_env' or 'selected_int/real_kind'",
+                    num,
+                );
+                violation!(&msg, *line, *col)
             })
             .collect();
         test_tree_method(
             avoid_numbered_kind_suffixes,
-            &path,
             source,
             Some(expected_violations),
         );

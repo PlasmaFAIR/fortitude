@@ -1,9 +1,11 @@
-mod active_rules;
 mod best_practices;
 mod check;
 mod cli;
+#[macro_use]
+mod core;
 mod parser;
 mod rules;
+mod settings;
 mod test_utils;
 
 use check::check;

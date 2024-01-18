@@ -1,33 +1,35 @@
-use crate::active_rules::{add_rules, get_all_rules, get_rules_with_status, remove_rules};
 use crate::cli::CheckArgs;
+use crate::core::{Category, Code, Diagnostic, Method, Violation};
 use crate::parser::fortran_parser;
-use crate::rules::{Category, Code, Method, Registry, Status, Violation};
+use crate::rules::{default_ruleset, rulemap, strict_ruleset, RuleBox, RuleSet};
+use crate::settings::Settings;
+use crate::violation;
 use anyhow::Context;
-use itertools::join;
+use colored::Colorize;
+use itertools::{chain, join};
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 /// Get the list of active rules for this session.
-fn get_rules(all_rules: &Registry, args: &CheckArgs) -> Registry {
+fn get_ruleset(args: &CheckArgs) -> RuleSet {
     // TODO update lists with settings file
-    // TODO report error if rule does not exist
-    let mut active_rules = Registry::new();
-    let standard_rules = get_rules_with_status(Status::Standard, all_rules);
-    let optional_rules = get_rules_with_status(Status::Optional, all_rules);
+    let mut ruleset = RuleSet::new();
     if args.strict {
-        add_rules(all_rules, &mut active_rules, &standard_rules);
-        add_rules(all_rules, &mut active_rules, &optional_rules);
+        ruleset.extend(chain(&default_ruleset(), &strict_ruleset()).map(|x| x.to_string()));
     } else if !args.select.is_empty() {
-        add_rules(all_rules, &mut active_rules, &args.select);
+        ruleset.extend(args.select.iter().map(|x| x.to_string()));
     } else {
-        add_rules(all_rules, &mut active_rules, &standard_rules);
-        remove_rules(&mut active_rules, &args.ignore);
-        add_rules(all_rules, &mut active_rules, &args.include);
+        ruleset.extend(chain(&default_ruleset(), &args.include).map(|x| x.to_string()));
+        for rule in &args.ignore {
+            ruleset.remove(rule);
+        }
     }
-    active_rules
+    ruleset
 }
 
+/// Helper function used with `filter` to select only paths that end in a Fortran extension.
+/// Includes non-standard extensions, as these should be reported.
 fn filter_fortran_extensions(path: &Path) -> bool {
     const FORTRAN_EXTS: &[&str] = &[
         "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
@@ -61,7 +63,7 @@ fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
 }
 
 /// Parse a file, check it for issues, and return the report.
-fn check_file(rules: &Registry, path: &Path) -> anyhow::Result<Vec<Violation>> {
+fn check_file(rule: &RuleBox, path: &Path) -> anyhow::Result<Vec<Violation>> {
     let source = read_to_string(path)?;
     let mut parser = fortran_parser();
     let tree = parser
@@ -70,49 +72,65 @@ fn check_file(rules: &Registry, path: &Path) -> anyhow::Result<Vec<Violation>> {
     let root = tree.root_node();
 
     let mut violations = Vec::new();
-    for rule in rules.values() {
-        match rule.method() {
-            Method::Path(f) => violations.extend(f(rule.code(), path)),
-            Method::Tree(f) => violations.extend(f(rule.code(), path, &root, &source)),
-            Method::File(f) => violations.extend(f(rule.code(), path, &source)),
-            Method::Line(f) => {
-                for line in source.split('\n') {
-                    violations.extend(f(rule.code(), path, line))
+    match rule.method() {
+        Method::Path(f) => {
+            if let Some(violation) = f(path) {
+                violations.push(violation);
+            }
+        }
+        Method::Tree(f) => {
+            violations.extend(f(&root, &source));
+        }
+        Method::MultiLine(f) => {
+            violations.extend(f(&source));
+        }
+        Method::Line(f) => {
+            for line in source.split('\n') {
+                if let Some(violation) = f(line) {
+                    violations.push(violation);
                 }
             }
         }
     }
-
-    violations.sort_unstable();
     Ok(violations)
 }
 
 /// Check all files, report issues found, and return error code.
 pub fn check(args: CheckArgs) -> i32 {
-    let all_rules = get_all_rules();
-    let rules = get_rules(&all_rules, &args);
-    let files = get_files(&args.files);
-    let mut errors = Vec::new();
-    for file in files {
-        match check_file(&rules, &file) {
-            Ok(s) => {
-                errors.extend(s);
+    let settings = Settings {
+        line_length: args.line_length,
+    };
+    let ruleset = get_ruleset(&args);
+    match rulemap(&ruleset, &settings) {
+        Ok(rules) => {
+            let mut diagnostics = Vec::new();
+            for file in get_files(&args.files) {
+                for (code, rule) in &rules {
+                    match check_file(rule, &file) {
+                        Ok(violations) => {
+                            diagnostics
+                                .extend(violations.iter().map(|x| Diagnostic::new(&file, code, x)));
+                        }
+                        Err(msg) => {
+                            let err_code = Code::new(Category::Error, 0).to_string();
+                            let err_msg = format!("Failed to process: {}", msg);
+                            let violation = violation!(&err_msg);
+                            diagnostics.push(Diagnostic::new(&file, &err_code, &violation));
+                        }
+                    }
+                }
             }
-            Err(s) => {
-                errors.push(Violation::new(
-                    file.as_path(),
-                    0,
-                    Code::new(Category::Error, 0),
-                    format!("Failed to process: {}", s).as_str(),
-                ));
+            if diagnostics.is_empty() {
+                0
+            } else {
+                println!("{}", join(&diagnostics, "\n"));
+                println!("Number of errors: {}", diagnostics.len());
+                1
             }
         }
-    }
-    if errors.is_empty() {
-        0
-    } else {
-        println!("{}", join(&errors, "\n"));
-        println!("Number of errors: {}", errors.len());
-        1
+        Err(msg) => {
+            eprintln!("{}: {}", "Error:".bright_red(), msg);
+            1
+        }
     }
 }

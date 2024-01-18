@@ -40,6 +40,9 @@ pub struct CheckArgs {
     /// Activate all optional rules.
     #[arg(long, conflicts_with_all=["include", "ignore", "select"])]
     pub strict: bool,
+    /// Set the maximum allowable line length.
+    #[arg(long, default_value = "100")]
+    pub line_length: usize,
 }
 
 pub fn parse_args() -> Cli {
