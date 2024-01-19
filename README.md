@@ -3,7 +3,7 @@
 
 # Fortitude
 
-A Fortran linter and formatter, written in Rust :crab:. Currently a work-in-progress.
+A Fortran linter, written in Rust :crab:. Currently a work-in-progress.
 
 ## Installation
 
@@ -19,7 +19,7 @@ $ cargo install
 
 ## Usage:
 
-After installing, you can view available commands simply by calling:
+After installing, you can view available commands by calling:
 
 ```bash
 $ fortitude
@@ -41,12 +41,10 @@ $ fortitude check --help
 
 ## TODO
 
-- Command line interface.
-    - `check` mode
-      - Use `.fortitude.toml` file to set rules project wide.
-  - `explain` mode, print help text for a given rule
-- Propagate rule errors
 - Syntax error rules (scan the tree and report error nodes)
+- Propagate rule errors
+- `explain` mode, print help text for a given rule
+- Use `.fortitude.toml` file to set rules project wide.
 - After gathering violations, check per-file and per-line ignores and discard those we
   don't care about.
 - Python package (see how ruff does it, use `maturin`).
