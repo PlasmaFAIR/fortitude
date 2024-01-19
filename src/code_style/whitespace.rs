@@ -29,8 +29,10 @@ impl Rule for AvoidTrailingWhitespace {
     }
 
     fn explain(&self) -> &str {
-        "Trailing whitespace is difficult to spot, and as some editors will remove it
+        "
+        Trailing whitespace is difficult to spot, and as some editors will remove it
         automatically while others leave it, it can cause unwanted 'diff noise' in
-        shared projects."
+        shared projects.
+        "
     }
 }

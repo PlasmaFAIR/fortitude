@@ -53,7 +53,8 @@ impl Rule for EnforceMaxLineLength {
     }
 
     fn explain(&self) -> &str {
-        "Long lines are more difficult to read, and may not fit on some developers'
+        "
+        Long lines are more difficult to read, and may not fit on some developers'
         terminals. The line continuation character '&' may be used to split a long line
         across multiple lines, and overly long expressions may be broken down into
         multiple parts.
@@ -66,6 +67,7 @@ impl Rule for EnforceMaxLineLength {
 
         Note that the Fortran standard states a maximum line length of 132 characters,
         and while some modern compilers will support longer lines, for portability it
-        is recommended to stay beneath this limit."
+        is recommended to stay beneath this limit.
+        "
     }
 }

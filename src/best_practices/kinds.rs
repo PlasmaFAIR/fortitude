@@ -89,13 +89,14 @@ impl Rule for AvoidNumberLiteralKinds {
     }
 
     fn explain(&self) -> &str {
-        "Rather than setting an intrinsic type's kind using an integer literal, such as
+        "
+        Rather than setting an intrinsic type's kind using an integer literal, such as
         `real(8)` or `integer(kind=4)`, consider setting precision using the built-in
         `selected_real_kind` or `selected_int_kind` functions. Although it is widely
-        believed that `real(8)` represents an 8-byte floating point (and indeed, this is 
-        the case for most compilers and architectures), there is nothing in the standard 
-        to mandate this, and compiler vendors are free to choose any mapping between 
-        kind numbers and machine precision. This may lead to surprising results if your 
+        believed that `real(8)` represents an 8-byte floating point (and indeed, this is
+        the case for most compilers and architectures), there is nothing in the standard
+        to mandate this, and compiler vendors are free to choose any mapping between
+        kind numbers and machine precision. This may lead to surprising results if your
         code is ported to another machine or compiled with a difference compiler.
 
         For floating point variables, it is recommended to use `real(sp)` (single
@@ -116,7 +117,7 @@ impl Rule for AvoidNumberLiteralKinds {
                                                  qp => real128
         ```
 
-        Some prefer to set one precision parameter `wp` (working precision), which is 
+        Some prefer to set one precision parameter `wp` (working precision), which is
         set in one module and used throughout a project.
 
         Integer sizes may be set similarly:
@@ -139,7 +140,8 @@ impl Rule for AvoidNumberLiteralKinds {
 
         For code that should be compatible with C, you should instead set kinds such as
         `real(c_double)` or `integer(c_int)` which may be found in the intrinsic module
-        `iso_c_binding`."
+        `iso_c_binding`.
+        "
     }
 }
 
@@ -187,11 +189,13 @@ impl Rule for AvoidNonStandardByteSpecifier {
     }
 
     fn explain(&self) -> &str {
-        "Types such as 'real*8' or 'integer*4' are not standard Fortran and should be
-        avoided. For these cases, consider instead using 'real(real64)' or 
-        'integer(int32)', where 'real64' and 'int32' may be found in the intrinsic 
-        module 'iso_fortran_env'. You may also wish to determine kinds using the 
-        built-in functions 'selected_real_kind' and 'selected_int_kind'."
+        "
+        Types such as 'real*8' or 'integer*4' are not standard Fortran and should be
+        avoided. For these cases, consider instead using 'real(real64)' or
+        'integer(int32)', where 'real64' and 'int32' may be found in the intrinsic
+        module 'iso_fortran_env'. You may also wish to determine kinds using the
+        built-in functions 'selected_real_kind' and 'selected_int_kind'.
+        "
     }
 }
 
@@ -252,17 +256,19 @@ impl Rule for AvoidDoublePrecision {
     }
 
     fn explain(&self) -> &str {
-        "The 'double precision' type specifier does not guarantee a 64-bit floating 
-        point, as one might expect. It is simply required to be twice the size of a 
-        default 'real', which may vary depending on your system. It may also be modified 
-        by compiler arguments. For consistency, it is recommended to use `real(dp)`, 
+        "
+        The 'double precision' type specifier does not guarantee a 64-bit floating
+        point, as one might expect. It is simply required to be twice the size of a
+        default 'real', which may vary depending on your system. It may also be modified
+        by compiler arguments. For consistency, it is recommended to use `real(dp)`,
         with `dp` set in one of the following ways:
 
         - `integer, parameter :: dp = selected_real_kind(15, 307)`
         - `use, intrinsic :: iso_fortran_env, only: dp => real64`
 
-        For code that should be compatible with C, you should instead use 
-        `real(c_double)`, which may be found in the intrinsic module `iso_c_binding`."
+        For code that should be compatible with C, you should instead use
+        `real(c_double)`, which may be found in the intrinsic module `iso_c_binding`.
+        "
     }
 }
 
@@ -320,7 +326,8 @@ impl Rule for UseFloatingPointSuffixes {
     }
 
     fn explain(&self) -> &str {
-        "Floating point literals will take on the default 'real' kind unless given a
+        "
+        Floating point literals will take on the default 'real' kind unless given a
         kind suffix. This can cause surprising loss of precision:
 
         ```
@@ -332,7 +339,7 @@ impl Rule for UseFloatingPointSuffixes {
         real(dp), parameter :: pi = 3.14159265358979_dp
         ```
 
-        Floating point constants should therefore always be specified with a kind 
+        Floating point constants should therefore always be specified with a kind
         suffix.
 
         When running in regular mode, this rule will only report constants with six
@@ -343,7 +350,8 @@ impl Rule for UseFloatingPointSuffixes {
 
         This rule does not concern constants that make use of exponentiation, such as
         `8.85418782e-12`, which would also lose precision compared to `8.85418782d-12`,
-        or better yet `8.85418782e-12_dp`."
+        or better yet `8.85418782e-12_dp`.
+        "
     }
 }
 
@@ -390,9 +398,10 @@ impl Rule for AvoidNumberedKindSuffixes {
     }
 
     fn explain(&self) -> &str {
-        "Using an integer literal as a kind specifier gives no guarantees regarding the
+        "
+        Using an integer literal as a kind specifier gives no guarantees regarding the
         precision of the type, as kind numbers are not required to match the number of
-        bytes. It is recommended to set integer parameters using `selected_int_kind` 
+        bytes. It is recommended to set integer parameters using `selected_int_kind`
         and/or 'selected_real_kind':
 
         ```
@@ -411,7 +420,8 @@ impl Rule for AvoidNumberedKindSuffixes {
         ```
         real(sp), parameter :: sqrt2 = 1.41421_sp
         real(dp), parameter :: pi = 3.14159265358979_dp
-        ```"
+        ```
+        "
     }
 }
 

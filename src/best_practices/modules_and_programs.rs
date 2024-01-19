@@ -34,9 +34,11 @@ impl Rule for UseModulesAndPrograms {
     }
 
     fn explain(&self) -> &str {
-        "Functions and subroutines should be contained within (sub)modules or programs.
+        "
+        Functions and subroutines should be contained within (sub)modules or programs.
         Fortran compilers are unable to perform type checks and conversions on functions
-        defined outside of these scopes, and this is a common source of bugs."
+        defined outside of these scopes, and this is a common source of bugs.
+        "
     }
 }
 
@@ -74,7 +76,8 @@ impl Rule for UseOnlyClause {
     }
 
     fn explain(&self) -> &str {
-        "When using a module, it is recommended to add an 'only' clause to specify which
+        "
+        When using a module, it is recommended to add an 'only' clause to specify which
         components you intend to use:
 
         ```
@@ -87,7 +90,8 @@ impl Rule for UseOnlyClause {
 
         This makes it easier for programmers to understand where the symbols in your
         code have come from, and avoids introducing many unneeded components to your
-        local scope."
+        local scope.
+        "
     }
 }
 

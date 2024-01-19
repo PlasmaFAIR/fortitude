@@ -80,6 +80,15 @@ pub fn build_rule(code_str: &str, settings: &Settings) -> anyhow::Result<RuleBox
     }
 }
 
+// Returns the full set of all rules.
+pub fn full_ruleset() -> RuleSet {
+    let all_rules = &[
+        "E001", "B001", "B002", "B010", "B011", "B012", "B020", "B021", "B022", "B023", "B024",
+        "B060", "S001", "S010",
+    ];
+    RuleSet::from_iter(all_rules.iter().map(|x| x.to_string()))
+}
+
 /// Returns the set of rules that are activated by default, expressed as strings.
 pub fn default_ruleset() -> RuleSet {
     let defaults = &[

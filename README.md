@@ -41,11 +41,10 @@ $ fortitude check --help
 
 ## TODO
 
-- Propagate rule errors
-- `explain` mode, print help text for a given rule
 - Use `.fortitude.toml` file to set rules project wide.
 - After gathering violations, check per-file and per-line ignores and discard those we
   don't care about.
+- Propagate rule errors
 - Python package (see how ruff does it, use `maturin`).
 - Publish to `crates.io` and PyPI.
 

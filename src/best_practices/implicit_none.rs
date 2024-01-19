@@ -46,8 +46,10 @@ impl Rule for UseImplicitNoneModulesAndPrograms {
     }
 
     fn explain(&self) -> &str {
-        "'implicit none' should be used in all modules and programs, as implicit typing
-        reduces the readability of code and increases the chances of typing errors."
+        "
+        'implicit none' should be used in all modules and programs, as implicit typing
+        reduces the readability of code and increases the chances of typing errors.
+        "
     }
 }
 
@@ -89,8 +91,10 @@ impl Rule for UseImplicitNoneInterfaces {
     }
 
     fn explain(&self) -> &str {
-        "Interface functions and subroutines require 'implicit none', even if they are
-        inside a module that uses 'implicit none'."
+        "
+        Interface functions and subroutines require 'implicit none', even if they are
+        inside a module that uses 'implicit none'.
+        "
     }
 }
 
@@ -133,8 +137,10 @@ impl Rule for AvoidSuperfluousImplicitNone {
     }
 
     fn explain(&self) -> &str {
-        "If a module has 'implicit none' set, it is not necessary to set it in contained
-        functions and subroutines (except when using interfaces)."
+        "
+        If a module has 'implicit none' set, it is not necessary to set it in contained
+        functions and subroutines (except when using interfaces).
+        "
     }
 }
 
