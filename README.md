@@ -47,7 +47,6 @@ $ fortitude check --help
   - `explain` mode, print help text for a given rule
 - Propagate rule errors
 - Syntax error rules (scan the tree and report error nodes)
-- A few code style rules (leave most until after initial release)
 - After gathering violations, check per-file and per-line ignores and discard those we
   don't care about.
 - Python package (see how ruff does it, use `maturin`).

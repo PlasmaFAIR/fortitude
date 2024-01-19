@@ -98,6 +98,7 @@ fn check_file(rule: &RuleBox, path: &Path) -> anyhow::Result<Vec<Violation>> {
 /// Check all files, report issues found, and return error code.
 pub fn check(args: CheckArgs) -> i32 {
     let settings = Settings {
+        strict: args.strict,
         line_length: args.line_length,
     };
     let ruleset = get_ruleset(&args);

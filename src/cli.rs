@@ -37,7 +37,7 @@ pub struct CheckArgs {
     /// Comma-separated list of the only rules you wish to use.
     #[arg(long, value_delimiter=',', conflicts_with_all=["include", "ignore"])]
     pub select: Vec<String>,
-    /// Activate all optional rules.
+    /// Activate extra rules, strengthen others.
     #[arg(long, conflicts_with_all=["include", "ignore", "select"])]
     pub strict: bool,
     /// Set the maximum allowable line length.

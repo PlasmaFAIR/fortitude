@@ -10,7 +10,7 @@ pub type RuleSet = HashSet<String>;
 pub type RuleMap = HashMap<String, RuleBox>;
 
 /// Create a new `Rule` given a rule code, expressed as a string.
-pub fn build_rule(code_str: &str, _: &Settings) -> anyhow::Result<RuleBox> {
+pub fn build_rule(code_str: &str, settings: &Settings) -> anyhow::Result<RuleBox> {
     let code = Code::from(code_str)?;
     match code {
         Code {
@@ -63,6 +63,10 @@ pub fn build_rule(code_str: &str, _: &Settings) -> anyhow::Result<RuleBox> {
             category: Category::CodeStyle,
             number: 1,
         } => Ok(Box::new(code_style::AvoidTrailingWhitespace::new()?)),
+        Code {
+            category: Category::CodeStyle,
+            number: 10,
+        } => Ok(Box::new(code_style::EnforceMaxLineLength::new(settings)?)),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }
@@ -72,7 +76,7 @@ pub fn build_rule(code_str: &str, _: &Settings) -> anyhow::Result<RuleBox> {
 /// Returns the set of rules that are activated by default, expressed as strings.
 pub fn default_ruleset() -> RuleSet {
     let defaults = &[
-        "B001", "B010", "B011", "B020", "B021", "B022", "B023", "B024", "B060", "S001",
+        "B001", "B010", "B011", "B020", "B021", "B022", "B023", "B024", "B060", "S001", "S010",
     ];
     RuleSet::from_iter(defaults.iter().map(|x| x.to_string()))
 }
