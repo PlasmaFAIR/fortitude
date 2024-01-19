@@ -3,6 +3,7 @@ mod code_style;
 mod best_practices;
 mod check;
 mod cli;
+mod code_errors;
 mod core;
 mod parser;
 mod rules;

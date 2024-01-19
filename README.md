@@ -41,7 +41,6 @@ $ fortitude check --help
 
 ## TODO
 
-- Syntax error rules (scan the tree and report error nodes)
 - Propagate rule errors
 - `explain` mode, print help text for a given rule
 - Use `.fortitude.toml` file to set rules project wide.

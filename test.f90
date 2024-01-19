@@ -23,11 +23,11 @@ module my_module
   ! Should raise error for missing suffix
   real(dp), parameter :: pi_short = 3.14159265358979
 
-  ! Should raise error for maximum line length
-  integer, parameter :: the_worlds_longest_parameter_name_like_its_really_quite_excessive_and_silly = 3
-
   ! Should not raise error for maximum line length
   character(*), parameter :: long_string = "https://verylongurl.com/page/another_page/yet_another_page/wow"
+
+  ! Should report error
+  !int, parameter :: bad_type = 1
 
   ! Should not raise error for maximum line length
   character(*), parameter :: long_comment = "short string" ! The origins of this string date back to the 18th century...
