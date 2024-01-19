@@ -55,7 +55,9 @@ pub fn build_rule(code_str: &str, settings: &Settings) -> anyhow::Result<RuleBox
         Code {
             category: Category::BestPractices,
             number: 23,
-        } => Ok(Box::new(best_practices::UseFloatingPointSuffixes {})),
+        } => Ok(Box::new(best_practices::UseFloatingPointSuffixes::new(
+            settings,
+        ))),
         Code {
             category: Category::BestPractices,
             number: 24,

@@ -4,11 +4,14 @@ pub mod test_utils {
     use crate::parser::fortran_parser;
     use tree_sitter::Node;
 
-    pub fn test_tree_method<S: AsRef<str>>(
-        f: fn(&Node, &str) -> Vec<Violation>,
+    pub fn test_tree_method<F, S: AsRef<str>>(
+        f: F,
         source: S,
         expected_violations: Option<Vec<Violation>>,
-    ) {
+    ) where
+        F: Fn(&Node, &str) -> Vec<Violation>,
+        S: AsRef<str>,
+    {
         let src = source.as_ref();
         let mut parser = fortran_parser();
         let tree = parser.parse(src, None).unwrap();
