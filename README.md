@@ -3,7 +3,10 @@
 
 # Fortitude
 
-A Fortran linter, written in Rust :crab:. Currently a work-in-progress.
+A Fortran linter, written in Rust :crab:.
+
+This project is a work-in-progress, and needs a few more feature additions before its
+initial release.
 
 ## Installation
 
@@ -17,7 +20,7 @@ $ cd fortitude
 $ cargo install
 ```
 
-## Usage:
+## Usage
 
 After installing, you can view available commands by calling:
 
@@ -39,25 +42,38 @@ options for the `check` tool:
 $ fortitude check --help
 ```
 
-## TODO
+To see a list of available rules and their descriptions, you can use:
 
-- Use `.fortitude.toml` file to set rules project wide.
-- After gathering violations, check per-file and per-line ignores and discard those we
-  don't care about.
-- Propagate rule errors
-- Python package (see how ruff does it, use `maturin`).
-- Publish to `crates.io` and PyPI.
+```bash
+$ fortitude explain [RULES]
+```
 
-## Wishlist
+where `[RULES]` is a list of rule codes to explain. If no rules are provided, this
+will print all rule descriptions to the terminal.
 
-The following will require better analysis of scope:
+## Testing
 
-- Report if a function can be marked pure.
-- Report unused variables.
-- Report undefined variables.
+Unit tests can be run by calling:
+
+```bash
+$ cargo test
+```
+
+Testing is also being performed manually using the file `test.f90`:
+
+```bash
+$ fortitude check test.f90
+```
+
+The test suite is still in need of work, and we hope to include proper integration
+tests soon.
 
 ## Contributing
 
 Please feel free to add or suggest new rules, or comment on the layout of the project
 while it's still at this early stage of development. When contributing, please use
 `cargo clippy` to lint your code, and `cargo fmt` to format it.
+
+## License
+
+This work is distributed under the MIT License. See `LICENSE` for more information.
