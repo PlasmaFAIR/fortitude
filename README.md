@@ -17,7 +17,7 @@ install using `cargo`:
 ```bash
 $ git clone https://github.com/PlasmaFAIR/fortitude --recurse-submodules
 $ cd fortitude
-$ cargo install
+$ cargo install --path .
 ```
 
 ## Usage
