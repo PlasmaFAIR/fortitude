@@ -18,7 +18,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: "recursive"
     - name: format
       run: cargo fmt --check --verbose
