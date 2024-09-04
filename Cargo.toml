@@ -1,8 +1,15 @@
 [package]
 name = "fortitude"
 version = "0.1.0"
+description = "A Fortran linter, written in Rust"
+authors = ["Liam Pattinson <liampattinson@gmail.com>"]
 edition = "2021"
-description = "A Fortran linter, written in Rust and with Python bindings"
+readme = "README.md"
+repository = "https://github.com/PlasmaFAIR/fortitude"
+license = "MIT"
+keywords = ["Fortran", "linter"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [".*", "test.f90"]
 
 [dependencies]
 anyhow = "1.0.79"
