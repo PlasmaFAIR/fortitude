@@ -3,77 +3,56 @@
 
 # Fortitude
 
-A Fortran linter, written in Rust :crab:.
-
-This project is a work-in-progress, and needs a few more feature additions before its
-initial release.
+A Fortran linter, written in Rust :crab: and installable with Python :snake:.
 
 ## Installation
 
-To install from source, you must first have a working Rust environment (see
-[rustup](https://rustup.rs/)). Clone this repository using `--recurse-submodules`, and
-install using `cargo`:
+Fortitude can be installed directly into your Python environment:
 
 ```bash
-$ git clone https://github.com/PlasmaFAIR/fortitude --recurse-submodules
-$ cd fortitude
-$ cargo install --path .
+pip install fortitude
+```
+
+It is also available as a pure Rust project:
+
+```bash
+cargo install fortitude
 ```
 
 ## Usage
 
-After installing, you can view available commands by calling:
+Fortitude can lint your project using the `check` command:
 
 ```bash
-$ fortitude
+fortitude check my_code.f90
 ```
 
-The `check` command is used to analyse your Fortran files:
+You can also call `check` on directories, and if no files are provided, `fortitude` will
+search for them from your current working directory.
+
+The `explain` command can be used to get extra information about any rules:
 
 ```bash
-$ fortitude check [FILES]
+fortitude explain B023
 ```
 
-where `[FILES]` is a list of files and directories to search. If no files are provided,
-`fortitude` will search for them from your current working directory. To see additional
-options for the `check` tool:
+If no rules are provided, this will print all rule descriptions to the terminal.
+
+To see further commands and optional arguments, try using `--help`:
 
 ```bash
-$ fortitude check --help
+fortitude --help
+fortitude check --help
 ```
-
-To see a list of available rules and their descriptions, you can use:
-
-```bash
-$ fortitude explain [RULES]
-```
-
-where `[RULES]` is a list of rule codes to explain. If no rules are provided, this
-will print all rule descriptions to the terminal.
-
-## Testing
-
-Unit tests can be run by calling:
-
-```bash
-$ cargo test
-```
-
-Testing is also being performed manually using the file `test.f90`:
-
-```bash
-$ fortitude check test.f90
-```
-
-The test suite is still in need of work, and we hope to include proper integration
-tests soon.
 
 ## Contributing
 
-Please feel free to add or suggest new rules, or comment on the layout of the project
-while it's still at this early stage of development. When contributing, please use
-`cargo clippy` to lint your code, and `cargo fmt` to format it.
+Please feel free to add or suggest new rules or comment on the layout of the project
+while it's still at this early stage of development. See
+[`README.dev.md`](README.dev.md) for a guide on building the project from source,
+running tests, and linting/formatting the code.
 
 ## License
 
-This work is distributed under the MIT License. See `LICENSE` for more information.
+This work is distributed under the MIT License. See [`LICENSE`](LICENSE) for more
+information.
