@@ -103,17 +103,17 @@ impl Rule for AvoidNumberLiteralKinds {
         using:
 
         ```
-        integer, parameter :: sp = selected_real_kind(6, 37)
-        integer, parameter :: dp = selected_real_kind(15, 307)
-        integer, parameter :: qp = selected_real_kind(33, 4931)
+        use, intrinsic :: iso_fortran_env, only: sp => real32, &
+                                                 dp => real64, &
+                                                 qp => real128
         ```
 
         Or alternatively:
 
         ```
-        use, intrinsic :: iso_fortran_env, only: sp => real32, &
-                                                 dp => real64, &
-                                                 qp => real128
+        integer, parameter :: sp = selected_real_kind(6, 37)
+        integer, parameter :: dp = selected_real_kind(15, 307)
+        integer, parameter :: qp = selected_real_kind(33, 4931)
         ```
 
         Some prefer to set one precision parameter `wp` (working precision), which is
@@ -205,12 +205,12 @@ fn double_precision_err_msg(dtype: &str) -> Option<String> {
     let lower = dtype.to_lowercase();
     match lower.as_str() {
         "double precision" => Some(String::from(
-            "Instead of 'double precision', use 'real(dp)', with 'dp' set using \
-            'iso_fortran_env' or 'selected_real_kind'",
+            "Instead of 'double precision', use 'real(dp)', with 'dp' set to 'real64' \
+            from the intrinsic module 'iso_fortran_env'",
         )),
         "double complex" => Some(String::from(
-            "Instead of 'double complex', use 'complex(dp)', with 'dp' set using \
-            'iso_fortran_env' or 'selected_real_kind'",
+            "Instead of 'double complex', use 'complex(dp)', with 'dp' set to 'real64' \
+            from the intrinsic module 'iso_fortran_env'",
         )),
         _ => None,
     }
@@ -258,12 +258,12 @@ impl Rule for AvoidDoublePrecision {
         "
         The 'double precision' type specifier does not guarantee a 64-bit floating
         point, as one might expect. It is simply required to be twice the size of a
-        default 'real', which may vary depending on your system. It may also be modified
+        default 'real', which may vary depending on your system and can be modified
         by compiler arguments. For consistency, it is recommended to use `real(dp)`,
         with `dp` set in one of the following ways:
 
-        - `integer, parameter :: dp = selected_real_kind(15, 307)`
         - `use, intrinsic :: iso_fortran_env, only: dp => real64`
+        - `integer, parameter :: dp = selected_real_kind(15, 307)`
 
         For code that should be compatible with C, you should instead use
         `real(c_double)`, which may be found in the intrinsic module `iso_c_binding`.
@@ -326,7 +326,7 @@ impl Rule for UseFloatingPointSuffixes {
 
     fn explain(&self) -> &str {
         "
-        Floating point literals will take on the default 'real' kind unless given a
+        Floating point literals use the default 'real' kind unless given an explicit
         kind suffix. This can cause surprising loss of precision:
 
         ```
@@ -403,15 +403,16 @@ impl Rule for AvoidNumberedKindSuffixes {
         bytes. It is recommended to set integer parameters using `selected_int_kind`
         and/or 'selected_real_kind':
 
-        ```
-        integer, parameter :: sp => selected_real_kind(6, 37)
-        integer, parameter :: dp => selected_real_kind(15, 307)
-        ```
-
-        or to use those provided in `iso_fortran_env`:
 
         ```
         use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
+        ```
+
+        or alternatively:
+
+        ```
+        integer, parameter :: sp => selected_real_kind(6, 37)
+        integer, parameter :: dp => selected_real_kind(15, 307)
         ```
 
         Floating point constants can then be specified as follows:
