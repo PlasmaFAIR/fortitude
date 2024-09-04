@@ -34,8 +34,9 @@ jobs:
             target: armv7
           - runner: ubuntu-latest
             target: s390x
-          - runner: ubuntu-latest
-            target: ppc64le
+          # tree-sitter-fortran doesn't work on PowerPC
+          # - runner: ubuntu-latest
+          #   target: ppc64le
     steps:
       - uses: actions/checkout@v4
       - name: Build wheels
