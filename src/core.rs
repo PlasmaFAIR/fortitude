@@ -31,7 +31,7 @@ impl Category {
             "S" => Ok(Self::CodeStyle),
             "E" => Ok(Self::Error),
             _ => {
-                anyhow::bail!("{} is not a rule category", s)
+                anyhow::bail!("{} is not a rule category.", s)
             }
         }
     }
@@ -64,7 +64,7 @@ impl Code {
         let re = Regex::new(r"^([A-Z]+)(\d{3})$")?;
         let captures = re
             .captures(code_str)
-            .context(format!("{} is not a valid error code", code_str))?;
+            .context(format!("{} is not a valid error code.", code_str))?;
         let category_str = captures.get(1).map_or("", |x| x.as_str());
         let number_str = captures.get(2).map_or("", |x| x.as_str());
         let category = Category::from(category_str)?;
