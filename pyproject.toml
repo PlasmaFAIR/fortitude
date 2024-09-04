@@ -1,0 +1,32 @@
+[build-system]
+requires = ["maturin"]
+build-backend = "maturin"
+
+[project]
+name = "fortitude"
+version = "0.1.0"
+description = "A Fortran linter, written in Rust"
+readme = "README.md"
+authors = [
+    {name = "Liam Pattinson", email = "liampattinson@gmail.com"}
+]
+licence = {file = "LICENSE"}
+keywords = ["Fortran", "linter"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Quality Assurance",
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/PlasmaFAIR/fortitude"
+
+[tool.maturin]
+python-source = "python"
