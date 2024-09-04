@@ -6,7 +6,6 @@ mod cli;
 mod code_errors;
 mod core;
 mod explain;
-mod parser;
 mod rules;
 mod settings;
 mod test_utils;

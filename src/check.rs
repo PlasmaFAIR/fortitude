@@ -1,6 +1,5 @@
 use crate::cli::CheckArgs;
 use crate::core::{Category, Code, Diagnostic, Method, Violation};
-use crate::parser::fortran_parser;
 use crate::rules::{default_ruleset, rulemap, strict_ruleset, RuleBox, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
@@ -65,7 +64,10 @@ fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
 /// Parse a file, check it for issues, and return the report.
 fn check_file(rule: &RuleBox, path: &Path) -> anyhow::Result<Vec<Violation>> {
     let source = read_to_string(path)?;
-    let mut parser = fortran_parser();
+    let mut parser = tree_sitter::Parser::new();
+    parser
+        .set_language(&tree_sitter_fortran::language())
+        .expect("Error loading Fortran grammar");
     let tree = parser
         .parse(&source, None)
         .context("Could not parse file")?;

@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 description = "A Fortran linter, written in Rust and with Python bindings"
 
-
 [dependencies]
 anyhow = "1.0.79"
 clap = { version = "4.4.16", features = ["derive"] }
@@ -12,8 +11,6 @@ colored = "2.1.0"
 itertools = "0.12.0"
 regex = "1.10.2"
 textwrap = "0.16.0"
-tree-sitter = "0.20.10"
+tree-sitter = "~0.22.6"
+tree-sitter-fortran = "0.0.1"
 walkdir = "2.4.0"
-
-[build-dependencies]
-cc = "*"

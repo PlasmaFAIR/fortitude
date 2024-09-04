@@ -1,3 +1,0 @@
-[submodule "external/tree-sitter-fortran"]
-	path = external/tree-sitter-fortran
-	url = https://github.com/stadelmanma/tree-sitter-fortran

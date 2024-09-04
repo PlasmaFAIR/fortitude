@@ -1,7 +1,6 @@
 #[cfg(test)]
 pub mod test_utils {
     use crate::core::Violation;
-    use crate::parser::fortran_parser;
     use tree_sitter::Node;
 
     pub fn test_tree_method<F, S: AsRef<str>>(
@@ -13,7 +12,10 @@ pub mod test_utils {
         S: AsRef<str>,
     {
         let src = source.as_ref();
-        let mut parser = fortran_parser();
+        let mut parser = tree_sitter::Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::language())
+            .expect("Error loading Fortran grammar");
         let tree = parser.parse(src, None).unwrap();
         let root = tree.root_node();
         let violations = f(&root, src);

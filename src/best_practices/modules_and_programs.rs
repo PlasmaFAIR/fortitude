@@ -1,5 +1,4 @@
 use crate::core::{Method, Rule, Violation};
-use crate::parser::fortran_language;
 use tree_sitter::{Node, Query};
 
 /// Defines rules that check whether functions and subroutines are defined within modules,
@@ -11,7 +10,7 @@ use tree_sitter::{Node, Query};
 fn use_modules_and_programs(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let query_txt = "(translation_unit [(function) @func (subroutine) @sub])";
-    let query = Query::new(fortran_language(), query_txt).unwrap();
+    let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
     let mut cursor = tree_sitter::QueryCursor::new();
     for match_ in cursor.matches(&query, *root, src.as_bytes()) {
         for capture in match_.captures {
@@ -49,7 +48,7 @@ fn use_only_clause(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Search for 'use' clause, and optionally an 'only' clause, capturing both.
     let query_txt = "(use_statement (included_items)? @only) @use";
-    let query = Query::new(fortran_language(), query_txt).unwrap();
+    let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
     let only_index = query.capture_index_for_name("only").unwrap();
     let mut cursor = tree_sitter::QueryCursor::new();
     for captures in cursor

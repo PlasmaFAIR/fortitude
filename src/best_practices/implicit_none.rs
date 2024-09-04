@@ -1,5 +1,4 @@
 use crate::core::{Method, Rule, Violation};
-use crate::parser::fortran_language;
 use tree_sitter::{Node, Query};
 
 /// Defines rules that raise errors if implicit typing is in use.
@@ -18,7 +17,7 @@ fn use_implicit_none_modules_and_programs(root: &Node, src: &str) -> Vec<Violati
             "({} (implicit_statement (none))? @implicit-none) @mod",
             query_type
         );
-        let query = Query::new(fortran_language(), query_txt.as_str()).unwrap();
+        let query = Query::new(&tree_sitter_fortran::language(), query_txt.as_str()).unwrap();
         let implicit_none_index = query.capture_index_for_name("implicit-none").unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
         for captures in cursor
@@ -63,7 +62,7 @@ fn use_implicit_none_interfaces(root: &Node, src: &str) -> Vec<Violation> {
             "(interface ({} (implicit_statement (none))? @implicit-none) @func)",
             query_type,
         );
-        let query = Query::new(fortran_language(), query_txt.as_str()).unwrap();
+        let query = Query::new(&tree_sitter_fortran::language(), query_txt.as_str()).unwrap();
         let implicit_none_index = query.capture_index_for_name("implicit-none").unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
         for captures in cursor
@@ -114,7 +113,7 @@ fn avoid_superfluous_implicit_none(root: &Node, src: &str) -> Vec<Violation> {
             )",
             query_type
         );
-        let query = Query::new(fortran_language(), query_txt.as_str()).unwrap();
+        let query = Query::new(&tree_sitter_fortran::language(), query_txt.as_str()).unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
         for match_ in cursor.matches(&query, *root, src.as_bytes()) {
             for capture in match_.captures {

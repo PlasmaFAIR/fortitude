@@ -1,5 +1,4 @@
 use crate::core::{Method, Rule, Violation};
-use crate::parser::fortran_language;
 use crate::settings::Settings;
 use regex::Regex;
 use tree_sitter::{Node, Query};
@@ -55,7 +54,7 @@ fn avoid_number_literal_kinds(root: &Node, src: &str) -> Vec<Violation> {
             )",
             query_type,
         );
-        let query = Query::new(fortran_language(), &query_txt).unwrap();
+        let query = Query::new(&tree_sitter_fortran::language(), &query_txt).unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
         for match_ in cursor.matches(&query, *root, src.as_bytes()) {
             for capture in match_.captures {
@@ -159,7 +158,7 @@ fn avoid_non_standard_byte_specifier(root: &Node, src: &str) -> Vec<Violation> {
 
     for query_type in ["function_statement", "variable_declaration"] {
         let query_txt = format!("({} (intrinsic_type) (size) @size)", query_type);
-        let query = Query::new(fortran_language(), &query_txt).unwrap();
+        let query = Query::new(&tree_sitter_fortran::language(), &query_txt).unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
         for match_ in cursor.matches(&query, *root, src.as_bytes()) {
             for capture in match_.captures {
@@ -222,7 +221,7 @@ fn avoid_double_precision(root: &Node, src: &str) -> Vec<Violation> {
 
     for query_type in ["function_statement", "variable_declaration"] {
         let query_txt = format!("({} (intrinsic_type) @type)", query_type);
-        let query = Query::new(fortran_language(), &query_txt).unwrap();
+        let query = Query::new(&tree_sitter_fortran::language(), &query_txt).unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
         for match_ in cursor.matches(&query, *root, src.as_bytes()) {
             for capture in match_.captures {
@@ -295,7 +294,7 @@ impl UseFloatingPointSuffixes {
         let re = Regex::new(r"^\d*\.\d*$").unwrap();
 
         let query_txt = "(number_literal) @num";
-        let query = Query::new(fortran_language(), query_txt).unwrap();
+        let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
         let mut cursor = tree_sitter::QueryCursor::new();
         for match_ in cursor.matches(&query, *root, src.as_bytes()) {
             for capture in match_.captures {
@@ -365,7 +364,7 @@ fn avoid_numbered_kind_suffixes(root: &Node, src: &str) -> Vec<Violation> {
     let re = Regex::new(r"_\d+$").unwrap();
 
     let query_txt = "(number_literal) @num";
-    let query = Query::new(fortran_language(), query_txt).unwrap();
+    let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
     let mut cursor = tree_sitter::QueryCursor::new();
     for match_ in cursor.matches(&query, *root, src.as_bytes()) {
         for capture in match_.captures {
