@@ -10,7 +10,7 @@ A Fortran linter, written in Rust :crab: and installable with Python :snake:.
 Fortitude can be installed directly into your Python environment:
 
 ```bash
-pip install fortitude
+pip install fortitude-lint
 ```
 
 It is also available as a pure Rust project:
