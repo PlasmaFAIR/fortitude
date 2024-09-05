@@ -1,6 +1,6 @@
 use crate::cli::CheckArgs;
 use crate::core::{Category, Code, Diagnostic, Method, Violation};
-use crate::rules::{default_ruleset, rulemap, strict_ruleset, RuleBox, RuleSet};
+use crate::rules::{default_ruleset, rulemap, RuleBox, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
 use anyhow::Context;
@@ -14,9 +14,7 @@ use walkdir::WalkDir;
 fn get_ruleset(args: &CheckArgs) -> RuleSet {
     // TODO update lists with settings file
     let mut ruleset = RuleSet::new();
-    if args.strict {
-        ruleset.extend(chain(&default_ruleset(), &strict_ruleset()).map(|x| x.to_string()));
-    } else if !args.select.is_empty() {
+    if !args.select.is_empty() {
         ruleset.extend(args.select.iter().map(|x| x.to_string()));
     } else {
         ruleset.extend(chain(&default_ruleset(), &args.include).map(|x| x.to_string()));
@@ -100,7 +98,6 @@ fn check_file(rule: &RuleBox, path: &Path) -> anyhow::Result<Vec<Violation>> {
 /// Check all files, report issues found, and return error code.
 pub fn check(args: CheckArgs) -> i32 {
     let settings = Settings {
-        strict: args.strict,
         line_length: args.line_length,
     };
     let ruleset = get_ruleset(&args);

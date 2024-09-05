@@ -18,15 +18,10 @@ impl EnforceMaxLineLength {
         // - End in a comment
         // - Start line with a string continuation
         // Regex may need refining, this might let some bad lines through.
-        let max_len = settings.line_length;
-        if settings.strict && max_len > 132 {
-            anyhow::bail!("Under strict mode, the maximum possible line length is 132")
-        } else {
-            Ok(Self {
-                max_len: settings.line_length,
-                re: Regex::new(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#)?,
-            })
-        }
+        Ok(Self {
+            max_len: settings.line_length,
+            re: Regex::new(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#)?,
+        })
     }
 
     fn rule(&self, number: usize, line: &str) -> Option<Violation> {

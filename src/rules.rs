@@ -55,9 +55,7 @@ pub fn build_rule(code_str: &str, settings: &Settings) -> anyhow::Result<RuleBox
         Code {
             category: Category::BestPractices,
             number: 23,
-        } => Ok(Box::new(best_practices::UseFloatingPointSuffixes::new(
-            settings,
-        ))),
+        } => Ok(Box::new(best_practices::UseFloatingPointSuffixes {})),
         Code {
             category: Category::BestPractices,
             number: 24,
@@ -91,17 +89,9 @@ pub fn full_ruleset() -> RuleSet {
 
 /// Returns the set of rules that are activated by default, expressed as strings.
 pub fn default_ruleset() -> RuleSet {
-    let defaults = &[
-        "E001", "B001", "B010", "B011", "B020", "B021", "B022", "B023", "B024", "B060", "S001",
-        "S010",
-    ];
-    RuleSet::from_iter(defaults.iter().map(|x| x.to_string()))
-}
-
-/// Returns the set of extra rules that are activated under `--strict` mode.
-pub fn strict_ruleset() -> RuleSet {
-    let stricts = &["B002", "B012"];
-    RuleSet::from_iter(stricts.iter().map(|x| x.to_string()))
+    // Currently all rules are activated by default.
+    // Community feedback will be needed to determine a sensible set.
+    full_ruleset()
 }
 
 pub fn rulemap(set: &RuleSet, settings: &Settings) -> anyhow::Result<RuleMap> {

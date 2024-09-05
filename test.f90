@@ -20,10 +20,8 @@ module my_module
 
   complex(dp), parameter :: imag = (0.0_8, 1.0_8)
 
-  ! Should raise error for missing suffix
+  ! Should raise errors for missing suffix
   real(dp), parameter :: pi_32 = 3.14159265358979
-
-  ! Should raise error for missing only in strict mode
   real(dp), parameter :: pi_short = 3.1415
 
   ! Should not raise error for maximum line length

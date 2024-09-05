@@ -1,5 +1,4 @@
 use crate::core::{Method, Rule, Violation};
-use crate::settings::Settings;
 use regex::Regex;
 use tree_sitter::{Node, Query};
 /// Defines rules that discourage the use of raw number literals as kinds, and the use
@@ -274,54 +273,44 @@ impl Rule for AvoidDoublePrecision {
 // Use floating point suffixes
 // ---------------------------
 
-pub struct UseFloatingPointSuffixes {
-    strict: bool,
-}
+pub struct UseFloatingPointSuffixes {}
 
-impl UseFloatingPointSuffixes {
-    pub fn new(settings: &Settings) -> Self {
-        Self {
-            strict: settings.strict,
-        }
-    }
+fn use_floating_point_suffixes(root: &Node, src: &str) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    // Given a number literal, match anything with a decimal place, some amount of
+    // digits either side, and no suffix. This will not catch exponentiation.
+    // Tree sitter will also not include a + or - prefix within the number literal,
+    // considering this to be a unary operator.
+    let re = Regex::new(r"^\d*\.\d*$").unwrap();
 
-    fn rule(&self, root: &Node, src: &str) -> Vec<Violation> {
-        let mut violations = Vec::new();
-        // Given a number literal, match anything with a decimal place, some amount of
-        // digits either side, and no suffix. This will not catch exponentiation.
-        // Tree sitter will also not include a + or - prefix within the number literal,
-        // considering this to be a unary operator.
-        let re = Regex::new(r"^\d*\.\d*$").unwrap();
-
-        let query_txt = "(number_literal) @num";
-        let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
-        let mut cursor = tree_sitter::QueryCursor::new();
-        for match_ in cursor.matches(&query, *root, src.as_bytes()) {
-            for capture in match_.captures {
-                let txt = capture.node.utf8_text(src.as_bytes());
-                match txt {
-                    Ok(x) => {
-                        if re.is_match(x) && (self.strict || x.len() > 6) {
-                            let msg = format!(
-                                "Floating point literal {} specified without a kind suffix",
-                                x,
-                            );
-                            violations.push(Violation::from_node(&msg, &capture.node));
-                        }
+    let query_txt = "(number_literal) @num";
+    let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
+    let mut cursor = tree_sitter::QueryCursor::new();
+    for match_ in cursor.matches(&query, *root, src.as_bytes()) {
+        for capture in match_.captures {
+            let txt = capture.node.utf8_text(src.as_bytes());
+            match txt {
+                Ok(x) => {
+                    if re.is_match(x) {
+                        let msg = format!(
+                            "Floating point literal {} specified without a kind suffix",
+                            x,
+                        );
+                        violations.push(Violation::from_node(&msg, &capture.node));
                     }
-                    Err(_) => {
-                        // Skip, non-utf8 text should be caught by a different rule
-                    }
+                }
+                Err(_) => {
+                    // Skip, non-utf8 text should be caught by a different rule
                 }
             }
         }
-        violations
     }
+    violations
 }
 
 impl Rule for UseFloatingPointSuffixes {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(move |root, src| self.rule(root, src)))
+        Method::Tree(Box::new(use_floating_point_suffixes))
     }
 
     fn explain(&self) -> &str {
@@ -337,19 +326,6 @@ impl Rule for UseFloatingPointSuffixes {
         ! Correct
         real(dp), parameter :: pi = 3.14159265358979_dp
         ```
-
-        Floating point constants should therefore always be specified with a kind
-        suffix.
-
-        When running in regular mode, this rule will only report constants with six
-        or more significant figures, as a standard 32-bit floating point can store
-        these without issue. However, precision may still be unexpectedly lost in
-        operations between 32-bit floats, so strict mode will require _all_ literal
-        floating points to use a suffix.
-
-        This rule does not concern constants that make use of exponentiation, such as
-        `8.85418782e-12`, which would also lose precision compared to `8.85418782d-12`,
-        or better yet `8.85418782e-12_dp`.
         "
     }
 }
@@ -570,32 +546,21 @@ mod tests {
             real(sp), parameter :: x5 = 2.468_sp
             ",
         );
-        let expected = &[(4, 29, "1.234567"), (7, 29, "9.876")];
-        for strict in [true, false] {
-            let rule = UseFloatingPointSuffixes { strict: strict };
-            // If strict, expect both errors. Otherwise, the second isn't sufficiently
-            // precise to trigger the rule.
-            let errors = if strict {
-                &expected[..]
-            } else {
-                &expected[..1]
-            };
-            if let Method::Tree(func) = rule.method() {
-                let expected_violations = errors
-                    .iter()
-                    .map(|(line, col, num)| {
-                        let msg = format!(
-                            "Floating point literal {} specified without a kind suffix",
-                            num,
-                        );
-                        violation!(&msg, *line, *col)
-                    })
-                    .collect();
-                test_tree_method(func, &source, Some(expected_violations));
-            } else {
-                panic!("Returning wrong kind of method!");
-            };
-        }
+        let expected_violations = [(4, 29, "1.234567"), (7, 29, "9.876")]
+            .iter()
+            .map(|(line, col, num)| {
+                let msg = format!(
+                    "Floating point literal {} specified without a kind suffix",
+                    num,
+                );
+                violation!(&msg, *line, *col)
+            })
+            .collect();
+        test_tree_method(
+            use_floating_point_suffixes,
+            &source,
+            Some(expected_violations),
+        );
     }
 
     #[test]
