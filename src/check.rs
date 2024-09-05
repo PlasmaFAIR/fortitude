@@ -60,7 +60,7 @@ fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
 }
 
 /// Parse a file, check it for issues, and return the report.
-fn check_file(rule: &RuleBox, path: &Path) -> anyhow::Result<Vec<Violation>> {
+fn check_file(rule: &RuleBox, path: &Path, settings: &Settings) -> anyhow::Result<Vec<Violation>> {
     let source = read_to_string(path)?;
     let mut parser = tree_sitter::Parser::new();
     parser
@@ -81,15 +81,8 @@ fn check_file(rule: &RuleBox, path: &Path) -> anyhow::Result<Vec<Violation>> {
         Method::Tree(f) => {
             violations.extend(f(&root, &source));
         }
-        Method::MultiLine(f) => {
-            violations.extend(f(&source));
-        }
-        Method::Line(f) => {
-            for (idx, line) in source.split('\n').enumerate() {
-                if let Some(violation) = f(idx + 1, line) {
-                    violations.push(violation);
-                }
-            }
+        Method::Text(f) => {
+            violations.extend(f(&source, settings));
         }
     }
     Ok(violations)
@@ -101,12 +94,12 @@ pub fn check(args: CheckArgs) -> i32 {
         line_length: args.line_length,
     };
     let ruleset = get_ruleset(&args);
-    match rulemap(&ruleset, &settings) {
+    match rulemap(&ruleset) {
         Ok(rules) => {
             let mut diagnostics = Vec::new();
             for file in get_files(&args.files) {
                 for (code, rule) in &rules {
-                    match check_file(rule, &file) {
+                    match check_file(rule, &file, &settings) {
                         Ok(violations) => {
                             diagnostics
                                 .extend(violations.iter().map(|x| Diagnostic::new(&file, code, x)));

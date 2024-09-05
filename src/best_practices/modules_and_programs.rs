@@ -29,7 +29,7 @@ pub struct UseModulesAndPrograms {}
 
 impl Rule for UseModulesAndPrograms {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(use_modules_and_programs))
+        Method::Tree(use_modules_and_programs)
     }
 
     fn explain(&self) -> &str {
@@ -71,7 +71,7 @@ pub struct UseOnlyClause {}
 
 impl Rule for UseOnlyClause {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(use_only_clause))
+        Method::Tree(use_only_clause)
     }
 
     fn explain(&self) -> &str {

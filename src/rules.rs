@@ -2,7 +2,6 @@ use crate::best_practices;
 use crate::code_errors;
 use crate::code_style;
 use crate::core::{Category, Code, Rule};
-use crate::settings::Settings;
 use std::collections::{HashMap, HashSet};
 /// A collection of all rules, and utilities to select a subset at runtime.
 
@@ -11,7 +10,7 @@ pub type RuleSet = HashSet<String>;
 pub type RuleMap = HashMap<String, RuleBox>;
 
 /// Create a new `Rule` given a rule code, expressed as a string.
-pub fn build_rule(code_str: &str, settings: &Settings) -> anyhow::Result<RuleBox> {
+pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
     let code = Code::from(code_str)?;
     match code {
         Code {
@@ -67,11 +66,11 @@ pub fn build_rule(code_str: &str, settings: &Settings) -> anyhow::Result<RuleBox
         Code {
             category: Category::CodeStyle,
             number: 1,
-        } => Ok(Box::new(code_style::AvoidTrailingWhitespace::new()?)),
+        } => Ok(Box::new(code_style::AvoidTrailingWhitespace {})),
         Code {
             category: Category::CodeStyle,
             number: 10,
-        } => Ok(Box::new(code_style::EnforceMaxLineLength::new(settings)?)),
+        } => Ok(Box::new(code_style::EnforceMaxLineLength {})),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }
@@ -94,10 +93,10 @@ pub fn default_ruleset() -> RuleSet {
     full_ruleset()
 }
 
-pub fn rulemap(set: &RuleSet, settings: &Settings) -> anyhow::Result<RuleMap> {
+pub fn rulemap(set: &RuleSet) -> anyhow::Result<RuleMap> {
     let mut rules = RuleMap::new();
     for code in set {
-        let rule = build_rule(code, settings)?;
+        let rule = build_rule(code)?;
         rules.insert(code.to_string(), rule);
     }
     Ok(rules)

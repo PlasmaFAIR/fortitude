@@ -1,31 +1,23 @@
 use crate::core::{Method, Rule, Violation};
+use crate::settings::Settings;
 use crate::violation;
-use regex::Regex;
 /// Defines rules that enforce widely accepted whitespace rules.
 
-pub struct AvoidTrailingWhitespace {
-    re: Regex,
-}
+pub struct AvoidTrailingWhitespace {}
 
-impl AvoidTrailingWhitespace {
-    pub fn new() -> anyhow::Result<Self> {
-        Ok(Self {
-            re: Regex::new(r"[ \t]+$")?,
-        })
-    }
-
-    fn rule(&self, number: usize, line: &str) -> Option<Violation> {
-        if self.re.is_match(line) {
-            Some(violation!("trailing whitespace", number))
-        } else {
-            None
+fn avoid_trailing_whitespace(source: &str, _: &Settings) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    for (idx, line) in source.split('\n').enumerate() {
+        if line.ends_with(&[' ', '\t']) {
+            violations.push(violation!("trailing whitespace", idx + 1));
         }
     }
+    violations
 }
 
 impl Rule for AvoidTrailingWhitespace {
     fn method(&self) -> Method {
-        Method::Line(Box::new(move |num, line| self.rule(num, line)))
+        Method::Text(avoid_trailing_whitespace)
     }
 
     fn explain(&self) -> &str {

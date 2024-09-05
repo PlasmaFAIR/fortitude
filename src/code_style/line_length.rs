@@ -4,47 +4,35 @@ use crate::violation;
 use regex::Regex;
 /// Defines rules that govern line length.
 
-pub struct EnforceMaxLineLength {
-    max_len: usize,
-    re: Regex,
-}
+pub struct EnforceMaxLineLength {}
 
-impl EnforceMaxLineLength {
-    pub fn new(settings: &Settings) -> anyhow::Result<Self> {
-        // Regex matches possible exceptions to the rule. Strings and comments might
-        // exceed maximum line length, which may be due to them containing URLs that
-        // cannot be shrunk down to fit.
-        // - End in an string, possibly with a line continuation
-        // - End in a comment
-        // - Start line with a string continuation
-        // Regex may need refining, this might let some bad lines through.
-        Ok(Self {
-            max_len: settings.line_length,
-            re: Regex::new(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#)?,
-        })
-    }
+fn enforce_max_line_length(source: &str, settings: &Settings) -> Vec<Violation> {
+    let mut violations = Vec::new();
 
-    fn rule(&self, number: usize, line: &str) -> Option<Violation> {
+    // Are we ending on a string or comment? If so, we'll allow it through, as
+    // it may contain something like a long URL that cannot be reasonably split
+    // across multiple lines.
+    let re = Regex::new(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#).unwrap();
+
+    for (idx, line) in source.split('\n').enumerate() {
         let len = line.len();
-        if len > self.max_len {
-            // Are we ending on a string or comment? If so, allow it through, as it may
-            // contain something like a long URL that cannot be reasonably split across
-            // multiple lines.
-            if self.re.is_match(line) {
-                None
-            } else {
-                let msg = format!("line length of {}, exceeds maximum {}", len, self.max_len);
-                Some(violation!(&msg, number))
+        if len > settings.line_length {
+            if re.is_match(line) {
+                continue;
             }
-        } else {
-            None
+            let msg = format!(
+                "line length of {}, exceeds maximum {}",
+                len, settings.line_length
+            );
+            violations.push(violation!(&msg, idx + 1));
         }
     }
+    violations
 }
 
 impl Rule for EnforceMaxLineLength {
     fn method(&self) -> Method {
-        Method::Line(Box::new(move |num, line| self.rule(num, line)))
+        Method::Text(enforce_max_line_length)
     }
 
     fn explain(&self) -> &str {
