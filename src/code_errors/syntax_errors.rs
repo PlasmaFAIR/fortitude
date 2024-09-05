@@ -3,7 +3,7 @@ use tree_sitter::Node;
 
 /// Rules that check for syntax errors.
 
-fn find_syntax_errors(node: &Node) -> Vec<Violation> {
+fn find_syntax_errors(node: &Node, _src: &str) -> Vec<Violation> {
     // TODO There should be a way to achieve this just using iterators, without
     //      returning intermediates.
     let mut violations = Vec::new();
@@ -13,7 +13,7 @@ fn find_syntax_errors(node: &Node) -> Vec<Violation> {
         if child.is_error() {
             violations.push(Violation::from_node("syntax error", &child));
         }
-        violations.extend(find_syntax_errors(&child));
+        violations.extend(find_syntax_errors(&child, _src));
     }
     violations
 }
@@ -22,7 +22,7 @@ pub struct SyntaxErrors {}
 
 impl Rule for SyntaxErrors {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(|node, _| find_syntax_errors(node)))
+        Method::Tree(find_syntax_errors)
     }
 
     fn explain(&self) -> &str {

@@ -83,7 +83,7 @@ pub struct AvoidNumberLiteralKinds {}
 
 impl Rule for AvoidNumberLiteralKinds {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(avoid_number_literal_kinds))
+        Method::Tree(avoid_number_literal_kinds)
     }
 
     fn explain(&self) -> &str {
@@ -183,7 +183,7 @@ pub struct AvoidNonStandardByteSpecifier {}
 
 impl Rule for AvoidNonStandardByteSpecifier {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(avoid_non_standard_byte_specifier))
+        Method::Tree(avoid_non_standard_byte_specifier)
     }
 
     fn explain(&self) -> &str {
@@ -250,7 +250,7 @@ pub struct AvoidDoublePrecision {}
 
 impl Rule for AvoidDoublePrecision {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(avoid_double_precision))
+        Method::Tree(avoid_double_precision)
     }
 
     fn explain(&self) -> &str {
@@ -310,7 +310,7 @@ fn use_floating_point_suffixes(root: &Node, src: &str) -> Vec<Violation> {
 
 impl Rule for UseFloatingPointSuffixes {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(use_floating_point_suffixes))
+        Method::Tree(use_floating_point_suffixes)
     }
 
     fn explain(&self) -> &str {
@@ -369,7 +369,7 @@ pub struct AvoidNumberedKindSuffixes {}
 
 impl Rule for AvoidNumberedKindSuffixes {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(avoid_numbered_kind_suffixes))
+        Method::Tree(avoid_numbered_kind_suffixes)
     }
 
     fn explain(&self) -> &str {

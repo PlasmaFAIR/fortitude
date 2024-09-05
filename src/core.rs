@@ -1,3 +1,4 @@
+use crate::settings::Settings;
 use anyhow::Context;
 use colored::Colorize;
 use regex::Regex;
@@ -149,15 +150,13 @@ macro_rules! violation {
 /// some by reading a full file, and others by analysing the concrete syntax tree. All
 /// rules must be associated with a `Method` via the `Rule` trait.
 #[allow(dead_code, clippy::type_complexity)]
-pub enum Method<'a> {
+pub enum Method {
     /// Methods that work on just the path name of the file.
-    Path(Box<dyn Fn(&Path) -> Option<Violation> + 'a>),
+    Path(fn(&Path) -> Option<Violation>),
     /// Methods that analyse the syntax tree.
-    Tree(Box<dyn Fn(&tree_sitter::Node, &str) -> Vec<Violation> + 'a>),
-    /// Methods that analyse individual lines of code, using regex or otherwise.
-    Line(Box<dyn Fn(usize, &str) -> Option<Violation> + 'a>),
-    /// Methods that analyse multiple lines of code.
-    MultiLine(Box<dyn Fn(&str) -> Vec<Violation> + 'a>),
+    Tree(fn(&tree_sitter::Node, &str) -> Vec<Violation>),
+    /// Methods that analyse lines of code directly, using regex or otherwise.
+    Text(fn(&str, &Settings) -> Vec<Violation>),
 }
 
 // Rule trait

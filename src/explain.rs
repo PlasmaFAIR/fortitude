@@ -1,6 +1,5 @@
 use crate::cli::ExplainArgs;
 use crate::rules::{full_ruleset, rulemap, RuleSet};
-use crate::settings::Settings;
 use colored::Colorize;
 use textwrap::dedent;
 
@@ -17,9 +16,8 @@ fn get_ruleset(args: &ExplainArgs) -> RuleSet {
 
 /// Check all files, report issues found, and return error code.
 pub fn explain(args: ExplainArgs) -> i32 {
-    let settings = Settings { line_length: 100 };
     let ruleset = get_ruleset(&args);
-    match rulemap(&ruleset, &settings) {
+    match rulemap(&ruleset) {
         Ok(rules) => {
             let mut outputs = Vec::new();
             for (code, rule) in &rules {

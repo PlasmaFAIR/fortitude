@@ -41,7 +41,7 @@ pub struct UseImplicitNoneModulesAndPrograms {}
 
 impl Rule for UseImplicitNoneModulesAndPrograms {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(use_implicit_none_modules_and_programs))
+        Method::Tree(use_implicit_none_modules_and_programs)
     }
 
     fn explain(&self) -> &str {
@@ -86,7 +86,7 @@ pub struct UseImplicitNoneInterfaces {}
 
 impl Rule for UseImplicitNoneInterfaces {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(use_implicit_none_interfaces))
+        Method::Tree(use_implicit_none_interfaces)
     }
 
     fn explain(&self) -> &str {
@@ -132,7 +132,7 @@ pub struct AvoidSuperfluousImplicitNone {}
 
 impl Rule for AvoidSuperfluousImplicitNone {
     fn method(&self) -> Method {
-        Method::Tree(Box::new(avoid_superfluous_implicit_none))
+        Method::Tree(avoid_superfluous_implicit_none)
     }
 
     fn explain(&self) -> &str {
