@@ -29,4 +29,9 @@ dependencies = []
 Repository = "https://github.com/PlasmaFAIR/fortitude"
 
 [tool.maturin]
+bindings = "bin"
+module-name = "fortitude"
 python-source = "python"
+python-packages = ["fortitude"]
+manifest-path = "Cargo.toml"
+strip = true
