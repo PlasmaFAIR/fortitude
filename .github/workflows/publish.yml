@@ -28,15 +28,14 @@ jobs:
             target: x86_64
           - runner: ubuntu-latest
             target: x86
-          # tree-sitter-fortran doesn't work on various Linux systems
-          # - runner: ubuntu-latest
-          #   target: aarch64
-          # - runner: ubuntu-latest
-          #   target: armv7
-          # - runner: ubuntu-latest
-          #   target: s390x
-          # - runner: ubuntu-latest
-          #   target: ppc64le
+          - runner: ubuntu-latest
+            target: aarch64
+          - runner: ubuntu-latest
+            target: armv7
+          - runner: ubuntu-latest
+            target: s390x
+          - runner: ubuntu-latest
+            target: ppc64le
     steps:
       - uses: actions/checkout@v4
       - name: Build wheels
@@ -46,6 +45,8 @@ jobs:
           args: --release --out dist
           sccache: 'true'
           manylinux: auto
+        env:
+          CFLAGS: -std=c99
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
