@@ -1,12 +1,10 @@
 #[macro_use]
-mod code_style;
-mod best_practices;
+mod rules;
+mod rule_set;
 mod check;
 mod cli;
-mod code_errors;
 mod core;
 mod explain;
-mod rules;
 mod settings;
 mod test_utils;
 

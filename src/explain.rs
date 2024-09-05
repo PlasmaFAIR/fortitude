@@ -1,5 +1,5 @@
 use crate::cli::ExplainArgs;
-use crate::rules::{full_ruleset, rulemap, RuleSet};
+use crate::rule_set::{full_ruleset, rulemap, RuleSet};
 use colored::Colorize;
 use textwrap::dedent;
 

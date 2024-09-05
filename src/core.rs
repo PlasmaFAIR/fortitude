@@ -22,7 +22,7 @@ pub enum Category {
     /// Rules for ensuring code follows certain style conventions. May be opinionated.
     CodeStyle,
     /// Used to indicate a failure to process or parse a file.
-    Error,
+    SyntaxError,
 }
 
 impl Category {
@@ -30,7 +30,7 @@ impl Category {
         match s {
             "B" => Ok(Self::BestPractices),
             "S" => Ok(Self::CodeStyle),
-            "E" => Ok(Self::Error),
+            "E" => Ok(Self::SyntaxError),
             _ => {
                 anyhow::bail!("{} is not a rule category.", s)
             }
@@ -43,7 +43,7 @@ impl fmt::Display for Category {
         let s = match self {
             Self::BestPractices => "B",
             Self::CodeStyle => "S",
-            Self::Error => "E",
+            Self::SyntaxError => "E",
         };
         write!(f, "{}", s)
     }

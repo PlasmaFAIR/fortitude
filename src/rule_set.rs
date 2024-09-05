@@ -1,6 +1,4 @@
-use crate::best_practices;
-use crate::code_errors;
-use crate::code_style;
+use crate::rules::{best_practices, code_style, syntax_error};
 use crate::core::{Category, Code, Rule};
 use std::collections::{HashMap, HashSet};
 /// A collection of all rules, and utilities to select a subset at runtime.
@@ -14,63 +12,63 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
     let code = Code::from(code_str)?;
     match code {
         Code {
-            category: Category::Error,
+            category: Category::SyntaxError,
             number: 1,
-        } => Ok(Box::new(code_errors::SyntaxErrors {})),
+        } => Ok(Box::new(syntax_error::syntax_error::SyntaxError {})),
         Code {
             category: Category::BestPractices,
             number: 1,
-        } => Ok(Box::new(best_practices::UseModulesAndPrograms {})),
+        } => Ok(Box::new(best_practices::modules_and_programs::UseModulesAndPrograms {})),
         Code {
             category: Category::BestPractices,
             number: 2,
-        } => Ok(Box::new(best_practices::UseOnlyClause {})),
+        } => Ok(Box::new(best_practices::modules_and_programs::UseOnlyClause {})),
         Code {
             category: Category::BestPractices,
             number: 10,
         } => Ok(Box::new(
-            best_practices::UseImplicitNoneModulesAndPrograms {},
+            best_practices::implicit_none::UseImplicitNoneModulesAndPrograms {},
         )),
         Code {
             category: Category::BestPractices,
             number: 11,
-        } => Ok(Box::new(best_practices::UseImplicitNoneInterfaces {})),
+        } => Ok(Box::new(best_practices::implicit_none::UseImplicitNoneInterfaces {})),
         Code {
             category: Category::BestPractices,
             number: 12,
-        } => Ok(Box::new(best_practices::AvoidSuperfluousImplicitNone {})),
+        } => Ok(Box::new(best_practices::implicit_none::AvoidSuperfluousImplicitNone {})),
         Code {
             category: Category::BestPractices,
             number: 20,
-        } => Ok(Box::new(best_practices::AvoidNumberLiteralKinds {})),
+        } => Ok(Box::new(best_practices::kinds::AvoidNumberLiteralKinds {})),
         Code {
             category: Category::BestPractices,
             number: 21,
-        } => Ok(Box::new(best_practices::AvoidNonStandardByteSpecifier {})),
+        } => Ok(Box::new(best_practices::kinds::AvoidNonStandardByteSpecifier {})),
         Code {
             category: Category::BestPractices,
             number: 22,
-        } => Ok(Box::new(best_practices::AvoidDoublePrecision {})),
+        } => Ok(Box::new(best_practices::kinds::AvoidDoublePrecision {})),
         Code {
             category: Category::BestPractices,
             number: 23,
-        } => Ok(Box::new(best_practices::UseFloatingPointSuffixes {})),
+        } => Ok(Box::new(best_practices::kinds::UseFloatingPointSuffixes {})),
         Code {
             category: Category::BestPractices,
             number: 24,
-        } => Ok(Box::new(best_practices::AvoidNumberedKindSuffixes {})),
+        } => Ok(Box::new(best_practices::kinds::AvoidNumberedKindSuffixes {})),
         Code {
             category: Category::BestPractices,
             number: 60,
-        } => Ok(Box::new(best_practices::UseStandardFileExtensions {})),
+        } => Ok(Box::new(best_practices::filesystem::UseStandardFileExtensions {})),
         Code {
             category: Category::CodeStyle,
             number: 1,
-        } => Ok(Box::new(code_style::AvoidTrailingWhitespace {})),
+        } => Ok(Box::new(code_style::whitespace::AvoidTrailingWhitespace {})),
         Code {
             category: Category::CodeStyle,
             number: 10,
-        } => Ok(Box::new(code_style::EnforceMaxLineLength {})),
+        } => Ok(Box::new(code_style::line_length::EnforceMaxLineLength {})),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }

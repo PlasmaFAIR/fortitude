@@ -1,6 +1,6 @@
 use crate::cli::CheckArgs;
 use crate::core::{Category, Code, Diagnostic, Method, Violation};
-use crate::rules::{default_ruleset, rulemap, RuleBox, RuleSet};
+use crate::rule_set::{default_ruleset, rulemap, RuleBox, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
 use anyhow::Context;
@@ -105,7 +105,7 @@ pub fn check(args: CheckArgs) -> i32 {
                                 .extend(violations.iter().map(|x| Diagnostic::new(&file, code, x)));
                         }
                         Err(msg) => {
-                            let err_code = Code::new(Category::Error, 0).to_string();
+                            let err_code = Code::new(Category::SyntaxError, 0).to_string();
                             let err_msg = format!("Failed to process: {}", msg);
                             let violation = violation!(&err_msg);
                             diagnostics.push(Diagnostic::new(&file, &err_code, &violation));
