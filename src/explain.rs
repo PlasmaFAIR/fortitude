@@ -17,10 +17,7 @@ fn get_ruleset(args: &ExplainArgs) -> RuleSet {
 
 /// Check all files, report issues found, and return error code.
 pub fn explain(args: ExplainArgs) -> i32 {
-    let settings = Settings {
-        strict: false,
-        line_length: 100,
-    };
+    let settings = Settings { line_length: 100 };
     let ruleset = get_ruleset(&args);
     match rulemap(&ruleset, &settings) {
         Ok(rules) => {
