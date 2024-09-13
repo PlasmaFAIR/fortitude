@@ -11,7 +11,6 @@ use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::{Path, PathBuf};
-/// Contains utilities for defining and categorising rules.
 
 // Rule categories and identity codes
 // ----------------------------------
@@ -22,21 +21,24 @@ use std::path::{Path, PathBuf};
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Category {
+    /// Failure to parse a file.
+    Error,
+    /// Violation of style conventions.
+    Style,
+    /// Misuse of types and kinds.
+    Typing,
     /// Rules for ensuring code is written in a way that minimises bugs and promotes
     /// maintainability. (Deprecated)
     BestPractices,
-    /// Rules for ensuring code follows certain style conventions. May be opinionated.
-    Style,
-    /// Used to indicate a failure to process or parse a file.
-    Error,
 }
 
 impl Category {
     fn from(s: &str) -> anyhow::Result<Self> {
         match s {
-            "B" => Ok(Self::BestPractices),
-            "S" => Ok(Self::Style),
             "E" => Ok(Self::Error),
+            "S" => Ok(Self::Style),
+            "T" => Ok(Self::Typing),
+            "B" => Ok(Self::BestPractices),
             _ => {
                 anyhow::bail!("{} is not a rule category.", s)
             }
@@ -47,9 +49,10 @@ impl Category {
 impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
-            Self::BestPractices => "B",
-            Self::Style => "S",
             Self::Error => "E",
+            Self::Style => "S",
+            Self::Typing => "T",
+            Self::BestPractices => "B",
         };
         write!(f, "{}", s)
     }

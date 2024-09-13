@@ -1,6 +1,7 @@
 mod best_practices;
 mod code_style;
 mod error;
+mod typing;
 use crate::{Category, Code, Rule};
 use std::collections::{HashMap, HashSet};
 /// A collection of all rules, and utilities to select a subset at runtime.
@@ -45,26 +46,6 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
         )),
         Code {
             category: Category::BestPractices,
-            number: 20,
-        } => Ok(Box::new(best_practices::kinds::LiteralKind {})),
-        Code {
-            category: Category::BestPractices,
-            number: 21,
-        } => Ok(Box::new(best_practices::kinds::StarKind {})),
-        Code {
-            category: Category::BestPractices,
-            number: 22,
-        } => Ok(Box::new(best_practices::kinds::DoublePrecision {})),
-        Code {
-            category: Category::BestPractices,
-            number: 23,
-        } => Ok(Box::new(best_practices::kinds::NoRealSuffix {})),
-        Code {
-            category: Category::BestPractices,
-            number: 24,
-        } => Ok(Box::new(best_practices::kinds::LiteralKindSuffix {})),
-        Code {
-            category: Category::BestPractices,
             number: 60,
         } => Ok(Box::new(
             best_practices::filesystem::NonStandardFileExtension {},
@@ -77,6 +58,26 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
             category: Category::Style,
             number: 10,
         } => Ok(Box::new(code_style::line_length::LineTooLong {})),
+        Code {
+            category: Category::Typing,
+            number: 1,
+        } => Ok(Box::new(typing::literal_kinds::LiteralKind {})),
+        Code {
+            category: Category::Typing,
+            number: 2,
+        } => Ok(Box::new(typing::literal_kinds::LiteralKindSuffix {})),
+        Code {
+            category: Category::Typing,
+            number: 11,
+        } => Ok(Box::new(typing::star_kinds::StarKind {})),
+        Code {
+            category: Category::Typing,
+            number: 21,
+        } => Ok(Box::new(typing::real_precision::DoublePrecision {})),
+        Code {
+            category: Category::Typing,
+            number: 22,
+        } => Ok(Box::new(typing::real_precision::NoRealSuffix {})),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }
