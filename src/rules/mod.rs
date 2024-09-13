@@ -1,6 +1,6 @@
 mod best_practices;
 mod code_style;
-mod syntax_error;
+mod error;
 use crate::core::{Category, Code, Rule};
 use std::collections::{HashMap, HashSet};
 /// A collection of all rules, and utilities to select a subset at runtime.
@@ -16,7 +16,7 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
         Code {
             category: Category::SyntaxError,
             number: 1,
-        } => Ok(Box::new(syntax_error::syntax_error::SyntaxError {})),
+        } => Ok(Box::new(error::syntax_error::SyntaxError {})),
         Code {
             category: Category::BestPractices,
             number: 1,
