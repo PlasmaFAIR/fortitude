@@ -14,7 +14,7 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
     let code = Code::from(code_str)?;
     match code {
         Code {
-            category: Category::SyntaxError,
+            category: Category::Error,
             number: 1,
         } => Ok(Box::new(error::syntax_error::SyntaxError {})),
         Code {
@@ -70,11 +70,11 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
             best_practices::filesystem::NonStandardFileExtension {},
         )),
         Code {
-            category: Category::CodeStyle,
+            category: Category::Style,
             number: 1,
         } => Ok(Box::new(code_style::whitespace::TrailingWhitespace {})),
         Code {
-            category: Category::CodeStyle,
+            category: Category::Style,
             number: 10,
         } => Ok(Box::new(code_style::line_length::LineTooLong {})),
         _ => {
