@@ -5,6 +5,13 @@
 
 A Fortran linter, written in Rust :crab: and installable with Python :snake:.
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Installation
 
 Fortitude can be installed directly into your Python environment:
