@@ -1,7 +1,7 @@
 mod best_practices;
-mod code_style;
 mod error;
 mod modules;
+mod style;
 mod typing;
 use crate::{Category, Code, Rule};
 use std::collections::{HashMap, HashSet};
@@ -28,11 +28,11 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
         Code {
             category: Category::Style,
             number: 1,
-        } => Ok(Box::new(code_style::line_length::LineTooLong {})),
+        } => Ok(Box::new(style::line_length::LineTooLong {})),
         Code {
             category: Category::Style,
             number: 101,
-        } => Ok(Box::new(code_style::whitespace::TrailingWhitespace {})),
+        } => Ok(Box::new(style::whitespace::TrailingWhitespace {})),
         Code {
             category: Category::Typing,
             number: 1,
