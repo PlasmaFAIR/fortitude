@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# To activate this hook, use:
+# git config --local core.hooksPath .githooks
+
+echo "Running Fortitude pre-commit hook..."
+
+caveat="If you really know what you're doing, commit again with --no-verify"
+
+echo "Testing Rust..."
+cargo test
+if [ $? != "0" ]; then
+  echo "Rust tests are failing, fix all reported by 'cargo test' and try again"
+  echo $caveat
+  exit 1
+fi
+
+echo "Linting Rust..."
+cargo clippy
+if [ $? != "0" ]; then
+  echo "Found Rust linter errors, fix all reported by 'cargo clippy' and try again"
+  echo $caveat
+  exit 1
+fi
+
+echo "Checking Rust format..."
+cargo fmt --check
+if [ $? != "0" ]; then
+  echo "Rust is unformatted, run 'cargo fmt' and try again"
+  echo $caveat
+  exit 1
+fi
+
+echo "Linting Python..."
+ruff check
+if [ $? != "0" ]; then
+  echo "Found Python linter errors, fix all reported by 'ruff check' and try again"
+  echo $caveat
+  exit 1
+fi
+
+echo "Checking Python format..."
+ruff format --check
+if [ $? != "0" ]; then
+  echo "Python is unformatted, run 'cargo fmt' and try again"
+  echo $caveat
+  exit 1
+fi
