@@ -1,5 +1,5 @@
-mod best_practices;
 mod error;
+mod filesystem;
 mod modules;
 mod style;
 mod typing;
@@ -20,10 +20,10 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
             number: 1,
         } => Ok(Box::new(error::syntax_error::SyntaxError {})),
         Code {
-            category: Category::BestPractices,
-            number: 60,
+            category: Category::FileSystem,
+            number: 1,
         } => Ok(Box::new(
-            best_practices::filesystem::NonStandardFileExtension {},
+            filesystem::extensions::NonStandardFileExtension {},
         )),
         Code {
             category: Category::Style,
@@ -86,7 +86,7 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
 // Returns the full set of all rules.
 pub fn full_ruleset() -> RuleSet {
     let all_rules = &[
-        "E001", "S001", "S101", "B060", "T001", "T002", "T011", "T021", "T022", "T031", "T032",
+        "E001", "F001", "S001", "S101", "T001", "T002", "T011", "T021", "T022", "T031", "T032",
         "T033", "M001", "M011",
     ];
     RuleSet::from_iter(all_rules.iter().map(|x| x.to_string()))

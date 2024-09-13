@@ -29,9 +29,8 @@ pub enum Category {
     Typing,
     /// Failure to use modules or use them appropriately.
     Modules,
-    /// Rules for ensuring code is written in a way that minimises bugs and promotes
-    /// maintainability. (Deprecated)
-    BestPractices,
+    /// Check path names, directory structures, etc.
+    FileSystem,
 }
 
 impl Category {
@@ -41,7 +40,7 @@ impl Category {
             "S" => Ok(Self::Style),
             "T" => Ok(Self::Typing),
             "M" => Ok(Self::Modules),
-            "B" => Ok(Self::BestPractices),
+            "F" => Ok(Self::FileSystem),
             _ => {
                 anyhow::bail!("{} is not a rule category.", s)
             }
@@ -56,7 +55,7 @@ impl fmt::Display for Category {
             Self::Style => "S",
             Self::Typing => "T",
             Self::Modules => "M",
-            Self::BestPractices => "B",
+            Self::FileSystem => "F",
         };
         write!(f, "{}", s)
     }
@@ -263,8 +262,8 @@ mod tests {
 
     #[test]
     fn test_rule_code() {
-        let b001 = Code::new(Category::BestPractices, 1);
-        assert_eq!(b001.to_string(), "B001");
+        let b001 = Code::new(Category::FileSystem, 1);
+        assert_eq!(b001.to_string(), "F001");
         let c120 = Code::new(Category::Style, 120);
         assert_eq!(c120.to_string(), "S120");
     }
