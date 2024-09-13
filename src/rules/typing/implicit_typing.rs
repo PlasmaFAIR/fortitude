@@ -1,12 +1,8 @@
-use crate::core::{Method, Rule, Violation};
+use crate::{Method, Rule, Violation};
 use tree_sitter::{Node, Query};
-
 /// Defines rules that raise errors if implicit typing is in use.
 
-// Use implicit none in modules and programs
-// -----------------------------------------
-
-fn use_implicit_none_modules_and_programs(root: &Node, src: &str) -> Vec<Violation> {
+fn implicit_typing(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["module", "submodule", "program"] {
         // Search for a module, submodule or program, and optionally an 'implicit none'.
@@ -37,11 +33,11 @@ fn use_implicit_none_modules_and_programs(root: &Node, src: &str) -> Vec<Violati
     violations
 }
 
-pub struct UseImplicitNoneModulesAndPrograms {}
+pub struct ImplicitTyping {}
 
-impl Rule for UseImplicitNoneModulesAndPrograms {
+impl Rule for ImplicitTyping {
     fn method(&self) -> Method {
-        Method::Tree(use_implicit_none_modules_and_programs)
+        Method::Tree(implicit_typing)
     }
 
     fn explain(&self) -> &str {
@@ -52,10 +48,7 @@ impl Rule for UseImplicitNoneModulesAndPrograms {
     }
 }
 
-// Use implicit none in interfaces
-// -------------------------------
-
-fn use_implicit_none_interfaces(root: &Node, src: &str) -> Vec<Violation> {
+fn interface_implicit_typing(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["function", "subroutine"] {
         let query_txt = format!(
@@ -82,11 +75,11 @@ fn use_implicit_none_interfaces(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub struct UseImplicitNoneInterfaces {}
+pub struct InterfaceImplicitTyping {}
 
-impl Rule for UseImplicitNoneInterfaces {
+impl Rule for InterfaceImplicitTyping {
     fn method(&self) -> Method {
-        Method::Tree(use_implicit_none_interfaces)
+        Method::Tree(interface_implicit_typing)
     }
 
     fn explain(&self) -> &str {
@@ -97,10 +90,7 @@ impl Rule for UseImplicitNoneInterfaces {
     }
 }
 
-// Avoid implicit none where it isn't needed
-// -----------------------------------------
-
-fn avoid_superfluous_implicit_none(root: &Node, src: &str) -> Vec<Violation> {
+fn superfluous_implicit_none(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["module", "submodule", "program"] {
         let query_txt = format!(
@@ -128,11 +118,11 @@ fn avoid_superfluous_implicit_none(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub struct AvoidSuperfluousImplicitNone {}
+pub struct SuperfluousImplicitNone {}
 
-impl Rule for AvoidSuperfluousImplicitNone {
+impl Rule for SuperfluousImplicitNone {
     fn method(&self) -> Method {
-        Method::Tree(avoid_superfluous_implicit_none)
+        Method::Tree(superfluous_implicit_none)
     }
 
     fn explain(&self) -> &str {
@@ -151,7 +141,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_module_and_program_missing_implicit_none() {
+    fn test_implicit_typing() {
         let source = dedent(
             "
             module my_module
@@ -170,15 +160,11 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(
-            use_implicit_none_modules_and_programs,
-            source,
-            Some(expected_violations),
-        );
+        test_tree_method(implicit_typing, source, Some(expected_violations));
     }
 
     #[test]
-    fn test_module_and_program_uses_implicit_none() {
+    fn test_implicit_none() {
         let source = "
             module my_module
                 implicit none
@@ -195,11 +181,11 @@ mod tests {
                 write(*,*) x
             end program
             ";
-        test_tree_method(use_implicit_none_modules_and_programs, source, None);
+        test_tree_method(implicit_typing, source, None);
     }
 
     #[test]
-    fn test_interface_missing_implicit_none() {
+    fn test_interface_implicit_typing() {
         let source = dedent(
             "
             module my_module
@@ -229,15 +215,11 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(
-            use_implicit_none_interfaces,
-            source,
-            Some(expected_violations),
-        );
+        test_tree_method(interface_implicit_typing, source, Some(expected_violations));
     }
 
     #[test]
-    fn test_interface_uses_implicit_none() {
+    fn test_interface_implicit_none() {
         let source = "
             module my_module
                 implicit none
@@ -260,11 +242,11 @@ mod tests {
                 write(*,*) 42
             end program
             ";
-        test_tree_method(use_implicit_none_interfaces, source, None);
+        test_tree_method(interface_implicit_typing, source, None);
     }
 
     #[test]
-    fn test_superflous_implicit_none() {
+    fn test_superfluous_implicit_none() {
         let source = dedent(
             "
             module my_module
@@ -316,15 +298,11 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(
-            avoid_superfluous_implicit_none,
-            source,
-            Some(expected_violations),
-        );
+        test_tree_method(superfluous_implicit_none, source, Some(expected_violations));
     }
 
     #[test]
-    fn test_non_superflous_implicit_none() {
+    fn test_no_superfluous_implicit_none() {
         let source = "
             module my_module
                 implicit none
@@ -363,6 +341,6 @@ mod tests {
                 end subroutine
             end program
             ";
-        test_tree_method(avoid_superfluous_implicit_none, source, None);
+        test_tree_method(superfluous_implicit_none, source, None);
     }
 }

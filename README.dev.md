@@ -1,14 +1,14 @@
 # Fortitude Development
 
-
-
 ## Installation from source
 
 To install from source, you must first have a working Rust environment (see
 [rustup](https://rustup.rs/)). The project may then be installed either using `pip`:
 
 ```bash
-pip install .
+python -m venv venv # Or use your preferred virtual environment method...
+source venv/bin/activate
+pip install .[lint]
 ```
 
 Or using `cargo`:
@@ -36,5 +36,13 @@ tests soon.
 
 ## Linting and Formatting
 
-When contributing, please use `cargo clippy` to lint your code, and `cargo fmt` to
-format it.
+When contributing, please use `cargo clippy` for linting and `cargo fmt` for formatting.
+If you edit any Python code, please also use `ruff check` and `ruff format`.
+
+## Adding Rules
+
+Similarly to how [Ruff](https://docs.astral.sh/ruff/) names rules, the rules in
+Fortitude should be categorised appropriately and their name should describe the pattern
+the rule is intended to fix. Words such as 'forbid' should be omitted. For example, the
+name for the rule that warns of overly long lines is `LineTooLong`, and not something
+like `AvoidLineTooLong` or `KeepLinesShort`.

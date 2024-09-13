@@ -1,11 +1,16 @@
-use crate::settings::Settings;
+pub mod check;
+pub mod cli;
+pub mod explain;
+mod rules;
+mod settings;
+mod test_utils;
 use anyhow::Context;
 use colored::Colorize;
 use regex::Regex;
+use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::{Path, PathBuf};
-/// Contains utilities for defining and categorising rules.
 
 // Rule categories and identity codes
 // ----------------------------------
@@ -16,21 +21,26 @@ use std::path::{Path, PathBuf};
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Category {
-    /// Rules for ensuring code is written in a way that minimises bugs and promotes
-    /// maintainability.
-    BestPractices,
-    /// Rules for ensuring code follows certain style conventions. May be opinionated.
-    CodeStyle,
-    /// Used to indicate a failure to process or parse a file.
+    /// Failure to parse a file.
     Error,
+    /// Violation of style conventions.
+    Style,
+    /// Misuse of types and kinds.
+    Typing,
+    /// Failure to use modules or use them appropriately.
+    Modules,
+    /// Check path names, directory structures, etc.
+    FileSystem,
 }
 
 impl Category {
     fn from(s: &str) -> anyhow::Result<Self> {
         match s {
-            "B" => Ok(Self::BestPractices),
-            "S" => Ok(Self::CodeStyle),
             "E" => Ok(Self::Error),
+            "S" => Ok(Self::Style),
+            "T" => Ok(Self::Typing),
+            "M" => Ok(Self::Modules),
+            "F" => Ok(Self::FileSystem),
             _ => {
                 anyhow::bail!("{} is not a rule category.", s)
             }
@@ -41,9 +51,11 @@ impl Category {
 impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
-            Self::BestPractices => "B",
-            Self::CodeStyle => "S",
             Self::Error => "E",
+            Self::Style => "S",
+            Self::Typing => "T",
+            Self::Modules => "M",
+            Self::FileSystem => "F",
         };
         write!(f, "{}", s)
     }
@@ -130,16 +142,13 @@ impl Violation {
 #[macro_export]
 macro_rules! violation {
     ($msg:expr) => {
-        $crate::core::Violation::new($msg, $crate::core::ViolationPosition::None)
+        $crate::Violation::new($msg, $crate::ViolationPosition::None)
     };
     ($msg:expr, $line:expr) => {
-        $crate::core::Violation::new($msg, $crate::core::ViolationPosition::Line($line))
+        $crate::Violation::new($msg, $crate::ViolationPosition::Line($line))
     };
     ($msg:expr, $line:expr, $col:expr) => {
-        $crate::core::Violation::new(
-            $msg,
-            $crate::core::ViolationPosition::LineCol(($line, $col)),
-        )
+        $crate::Violation::new($msg, $crate::ViolationPosition::LineCol(($line, $col)))
     };
 }
 
@@ -253,9 +262,9 @@ mod tests {
 
     #[test]
     fn test_rule_code() {
-        let b001 = Code::new(Category::BestPractices, 1);
-        assert_eq!(b001.to_string(), "B001");
-        let c120 = Code::new(Category::CodeStyle, 120);
+        let f001 = Code::new(Category::FileSystem, 1);
+        assert_eq!(f001.to_string(), "F001");
+        let c120 = Code::new(Category::Style, 120);
         assert_eq!(c120.to_string(), "S120");
     }
 

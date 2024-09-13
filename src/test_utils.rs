@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub mod test_utils {
-    use crate::core::Violation;
+    use crate::Violation;
     use tree_sitter::Node;
 
     pub fn test_tree_method<F, S: AsRef<str>>(

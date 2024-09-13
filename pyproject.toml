@@ -28,6 +28,11 @@ dependencies = []
 [project.urls]
 Repository = "https://github.com/PlasmaFAIR/fortitude"
 
+[project.optional-dependencies]
+lint = [
+    "ruff",
+]
+
 [tool.maturin]
 bindings = "bin"
 module-name = "fortitude"
