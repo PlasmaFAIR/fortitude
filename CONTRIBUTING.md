@@ -34,10 +34,7 @@ experience for all involved. We look forward to your contributions!
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the [Fortitude Code of
-Conduct](https://github.com/PlasmaFAIR/fortitude/blob/main/CODE_OF_CONDUCT.md). By
-participating, you are expected to uphold this code. Please report unacceptable
-behaviour to <>.
-
+Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ## I Have a Question
 
@@ -155,9 +152,8 @@ here in the description. -->
 
 ### Your First Code Contribution
 
-Please read
-[README.dev.md](https://github.com/PlasmaFAIR/fortitude/blob/main/README.dev.md) for
-information on how to compile the code from source and how to maintain good code style.
+Please read [README.dev.md](README.dev.md) for information on how to compile the code
+from source and how to maintain good code style.
 
 Some good first contributions include:
 
