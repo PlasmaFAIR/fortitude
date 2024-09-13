@@ -1,6 +1,6 @@
 use crate::cli::CheckArgs;
 use crate::core::{Category, Code, Diagnostic, Method, Violation};
-use crate::rule_set::{default_ruleset, rulemap, RuleBox, RuleSet};
+use crate::rules::{default_ruleset, rulemap, RuleBox, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
 use anyhow::Context;

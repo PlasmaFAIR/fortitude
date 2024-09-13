@@ -1,6 +1,5 @@
 #[macro_use]
 mod rules;
-mod rule_set;
 mod check;
 mod cli;
 mod core;
