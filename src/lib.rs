@@ -262,8 +262,8 @@ mod tests {
 
     #[test]
     fn test_rule_code() {
-        let b001 = Code::new(Category::FileSystem, 1);
-        assert_eq!(b001.to_string(), "F001");
+        let f001 = Code::new(Category::FileSystem, 1);
+        assert_eq!(f001.to_string(), "F001");
         let c120 = Code::new(Category::Style, 120);
         assert_eq!(c120.to_string(), "S120");
     }
