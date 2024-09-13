@@ -1,6 +1,7 @@
 mod best_practices;
 mod code_style;
 mod error;
+mod modules;
 mod typing;
 use crate::{Category, Code, Rule};
 use std::collections::{HashMap, HashSet};
@@ -18,16 +19,6 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
             category: Category::Error,
             number: 1,
         } => Ok(Box::new(error::syntax_error::SyntaxError {})),
-        Code {
-            category: Category::BestPractices,
-            number: 1,
-        } => Ok(Box::new(
-            best_practices::modules_and_programs::ExternalFunction {},
-        )),
-        Code {
-            category: Category::BestPractices,
-            number: 2,
-        } => Ok(Box::new(best_practices::modules_and_programs::UseAll {})),
         Code {
             category: Category::BestPractices,
             number: 60,
@@ -78,6 +69,14 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
         } => Ok(Box::new(
             typing::implicit_typing::SuperfluousImplicitNone {},
         )),
+        Code {
+            category: Category::Modules,
+            number: 1,
+        } => Ok(Box::new(modules::external_functions::ExternalFunction {})),
+        Code {
+            category: Category::Modules,
+            number: 11,
+        } => Ok(Box::new(modules::use_statements::UseAll {})),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }
@@ -87,8 +86,8 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
 // Returns the full set of all rules.
 pub fn full_ruleset() -> RuleSet {
     let all_rules = &[
-        "E001", "S001", "S101", "B002", "B060", "T001", "T002", "T011", "T021", "T022", "T031",
-        "T032", "T033",
+        "E001", "S001", "S101", "B060", "T001", "T002", "T011", "T021", "T022", "T031", "T032",
+        "T033", "M001", "M011",
     ];
     RuleSet::from_iter(all_rules.iter().map(|x| x.to_string()))
 }

@@ -27,6 +27,8 @@ pub enum Category {
     Style,
     /// Misuse of types and kinds.
     Typing,
+    /// Failure to use modules or use them appropriately.
+    Modules,
     /// Rules for ensuring code is written in a way that minimises bugs and promotes
     /// maintainability. (Deprecated)
     BestPractices,
@@ -38,6 +40,7 @@ impl Category {
             "E" => Ok(Self::Error),
             "S" => Ok(Self::Style),
             "T" => Ok(Self::Typing),
+            "M" => Ok(Self::Modules),
             "B" => Ok(Self::BestPractices),
             _ => {
                 anyhow::bail!("{} is not a rule category.", s)
@@ -52,6 +55,7 @@ impl fmt::Display for Category {
             Self::Error => "E",
             Self::Style => "S",
             Self::Typing => "T",
+            Self::Modules => "M",
             Self::BestPractices => "B",
         };
         write!(f, "{}", s)
