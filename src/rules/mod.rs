@@ -87,8 +87,8 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
 // Returns the full set of all rules.
 pub fn full_ruleset() -> RuleSet {
     let all_rules = &[
-        "E001", "B001", "B002", "B010", "B011", "B012", "B020", "B021", "B022", "B023", "B024",
-        "B060", "S001", "S010",
+        "E001", "S001", "S101", "B002", "B060", "T001", "T002", "T011", "T021", "T022", "T031",
+        "T032", "T033",
     ];
     RuleSet::from_iter(all_rules.iter().map(|x| x.to_string()))
 }
