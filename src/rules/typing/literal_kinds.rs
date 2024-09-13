@@ -1,5 +1,5 @@
 use crate::{Method, Rule, Violation};
-use regex::Regex;
+use lazy_regex::regex_is_match;
 use tree_sitter::{Node, Query};
 /// Defines rules that discourage the use of raw number literals as kinds, as this can result in
 /// non-portable code.
@@ -139,7 +139,6 @@ fn literal_kind_suffix(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Given a number literal, match anything suffixed with plain number.
     // TODO Match either int or real, change error message accordingly
-    let re = Regex::new(r"_\d+$").unwrap();
 
     let query_txt = "(number_literal) @num";
     let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
@@ -149,7 +148,7 @@ fn literal_kind_suffix(root: &Node, src: &str) -> Vec<Violation> {
             let txt = capture.node.utf8_text(src.as_bytes());
             match txt {
                 Ok(x) => {
-                    if re.is_match(x) {
+                    if regex_is_match!(r"_\d+$", x) {
                         let msg = format!(
                             "Instead of number literal suffix in {}, use parameter suffix \
                             from 'iso_fortran_env'",

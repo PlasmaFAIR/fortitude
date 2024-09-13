@@ -1,23 +1,20 @@
 use crate::settings::Settings;
 use crate::violation;
 use crate::{Method, Rule, Violation};
-use regex::Regex;
+use lazy_regex::regex_is_match;
 /// Defines rules that govern line length.
 
 pub struct LineTooLong {}
 
 fn line_too_long(source: &str, settings: &Settings) -> Vec<Violation> {
     let mut violations = Vec::new();
-
-    // Are we ending on a string or comment? If so, we'll allow it through, as
-    // it may contain something like a long URL that cannot be reasonably split
-    // across multiple lines.
-    let re = Regex::new(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#).unwrap();
-
     for (idx, line) in source.split('\n').enumerate() {
         let len = line.len();
         if len > settings.line_length {
-            if re.is_match(line) {
+            // Are we ending on a string or comment? If so, we'll allow it through, as it may
+            // contain something like a long URL that cannot be reasonably split across multiple
+            // lines.
+            if regex_is_match!(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#, line) {
                 continue;
             }
             let msg = format!(
