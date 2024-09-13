@@ -6,7 +6,7 @@ mod settings;
 mod test_utils;
 use anyhow::Context;
 use colored::Colorize;
-use regex::Regex;
+use lazy_regex::regex_captures;
 use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
@@ -74,12 +74,8 @@ impl Code {
     }
 
     pub fn from(code_str: &str) -> anyhow::Result<Self> {
-        let re = Regex::new(r"^([A-Z]+)(\d{3})$")?;
-        let captures = re
-            .captures(code_str)
+        let (_, category_str, number_str) = regex_captures!(r"^([A-Z]+)([0-9]{3})$", code_str)
             .context(format!("{} is not a valid error code.", code_str))?;
-        let category_str = captures.get(1).map_or("", |x| x.as_str());
-        let number_str = captures.get(2).map_or("", |x| x.as_str());
         let category = Category::from(category_str)?;
         let number = number_str.parse::<usize>()?;
         Ok(Code::new(category, number))

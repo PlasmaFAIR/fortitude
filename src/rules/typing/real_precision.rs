@@ -1,5 +1,5 @@
 use crate::{Method, Rule, Violation};
-use regex::Regex;
+use lazy_regex::regex_is_match;
 use tree_sitter::{Node, Query};
 /// Defines rules that ensure real precision is always explicit and stated in a portable way.
 
@@ -77,12 +77,6 @@ pub struct NoRealSuffix {}
 
 fn no_real_suffix(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
-    // Given a number literal, match anything with a decimal place, some amount of
-    // digits either side, and no suffix. This will not catch exponentiation.
-    // Tree sitter will also not include a + or - prefix within the number literal,
-    // considering this to be a unary operator.
-    let re = Regex::new(r"^\d*\.\d*$").unwrap();
-
     let query_txt = "(number_literal) @num";
     let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
     let mut cursor = tree_sitter::QueryCursor::new();
@@ -91,7 +85,11 @@ fn no_real_suffix(root: &Node, src: &str) -> Vec<Violation> {
             let txt = capture.node.utf8_text(src.as_bytes());
             match txt {
                 Ok(x) => {
-                    if re.is_match(x) {
+                    // Given a number literal, match anything with a decimal place, some amount of
+                    // digits either side, and no suffix. This will not catch exponentiation. Tree
+                    // sitter will also not include a + or - prefix within the number literal,
+                    // considering this to be a unary operator.
+                    if regex_is_match!(r"^\d*\.\d*$", x) {
                         let msg = format!(
                             "Floating point literal {} specified without a kind suffix",
                             x,

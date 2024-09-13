@@ -1,5 +1,5 @@
 use crate::{Method, Rule, Violation};
-use regex::Regex;
+use lazy_regex::regex_is_match;
 use tree_sitter::{Node, Query};
 /// Defines rules that discourage the use of the non-standard kind specifiers such as
 /// `int*4` or `real*8`. Also prefers the use of `character(len=*)` to
@@ -12,11 +12,6 @@ fn star_kind(root: &Node, src: &str) -> Vec<Violation> {
     // Note: This does not match 'character*(*)', which should be handled by a different
     // rule.
     let mut violations = Vec::new();
-    // Match anything beginning with a '*' followed by any amount of whitespace or '&'
-    // symbols (in case you like to split your type specifiers over multiple lines),
-    // followed by at least one digit.
-    let re = Regex::new(r"^\*[\s&]*\d+").unwrap();
-
     for query_type in ["function_statement", "variable_declaration"] {
         let query_txt = format!("({} (intrinsic_type) (size) @size)", query_type);
         let query = Query::new(&tree_sitter_fortran::language(), &query_txt).unwrap();
@@ -25,7 +20,10 @@ fn star_kind(root: &Node, src: &str) -> Vec<Violation> {
             for capture in match_.captures {
                 match capture.node.utf8_text(src.as_bytes()) {
                     Ok(x) => {
-                        if re.is_match(x) {
+                        // Match anything beginning with a '*' followed by any amount of whitespace
+                        // or '&' symbols (in case you like to split your type specifiers over
+                        // multiple lines), followed by at least one digit.
+                        if regex_is_match!(r"^\*[\s&]*\d+", x) {
                             let msg = "Avoid non-standard 'type*N', prefer 'type(N)'";
                             violations.push(Violation::from_node(msg, &capture.node));
                         }
