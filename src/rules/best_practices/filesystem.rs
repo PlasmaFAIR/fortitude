@@ -1,5 +1,5 @@
-use crate::core::{Method, Rule, Violation};
 use crate::violation;
+use crate::{Method, Rule, Violation};
 use std::path::Path;
 /// Defines rule that enforces use of standard file extensions.
 

@@ -1,7 +1,7 @@
 mod best_practices;
 mod code_style;
 mod error;
-use crate::core::{Category, Code, Rule};
+use crate::{Category, Code, Rule};
 use std::collections::{HashMap, HashSet};
 /// A collection of all rules, and utilities to select a subset at runtime.
 

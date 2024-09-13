@@ -1,4 +1,4 @@
-use crate::core::{Method, Rule, Violation};
+use crate::{Method, Rule, Violation};
 use tree_sitter::{Node, Query};
 
 /// Defines rules that raise errors if implicit typing is in use.

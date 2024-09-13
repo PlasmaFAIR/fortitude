@@ -1,4 +1,4 @@
-use crate::core::{Method, Rule, Violation};
+use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 
 /// Rules that check for syntax errors.

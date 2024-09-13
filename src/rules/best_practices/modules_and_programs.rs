@@ -1,4 +1,4 @@
-use crate::core::{Method, Rule, Violation};
+use crate::{Method, Rule, Violation};
 use tree_sitter::{Node, Query};
 
 /// Defines rules that check whether functions and subroutines are defined within modules,

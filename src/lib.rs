@@ -1,7 +1,13 @@
-use crate::settings::Settings;
+pub mod check;
+pub mod cli;
+pub mod explain;
+mod rules;
+mod settings;
+mod test_utils;
 use anyhow::Context;
 use colored::Colorize;
 use regex::Regex;
+use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -130,16 +136,13 @@ impl Violation {
 #[macro_export]
 macro_rules! violation {
     ($msg:expr) => {
-        $crate::core::Violation::new($msg, $crate::core::ViolationPosition::None)
+        $crate::Violation::new($msg, $crate::ViolationPosition::None)
     };
     ($msg:expr, $line:expr) => {
-        $crate::core::Violation::new($msg, $crate::core::ViolationPosition::Line($line))
+        $crate::Violation::new($msg, $crate::ViolationPosition::Line($line))
     };
     ($msg:expr, $line:expr, $col:expr) => {
-        $crate::core::Violation::new(
-            $msg,
-            $crate::core::ViolationPosition::LineCol(($line, $col)),
-        )
+        $crate::Violation::new($msg, $crate::ViolationPosition::LineCol(($line, $col)))
     };
 }
 

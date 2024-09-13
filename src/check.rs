@@ -1,8 +1,8 @@
 use crate::cli::CheckArgs;
-use crate::core::{Category, Code, Diagnostic, Method, Violation};
 use crate::rules::{default_ruleset, rulemap, RuleBox, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
+use crate::{Category, Code, Diagnostic, Method, Violation};
 use anyhow::Context;
 use colored::Colorize;
 use itertools::{chain, join};

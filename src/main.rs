@@ -1,15 +1,6 @@
-#[macro_use]
-mod rules;
-mod check;
-mod cli;
-mod core;
-mod explain;
-mod settings;
-mod test_utils;
-
-use check::check;
-use cli::{parse_args, SubCommands};
-use explain::explain;
+use fortitude::check::check;
+use fortitude::cli::{parse_args, SubCommands};
+use fortitude::explain::explain;
 
 fn main() {
     let args = parse_args();

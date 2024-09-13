@@ -1,6 +1,6 @@
-use crate::core::{Method, Rule, Violation};
 use crate::settings::Settings;
 use crate::violation;
+use crate::{Method, Rule, Violation};
 /// Defines rules that enforce widely accepted whitespace rules.
 
 pub struct AvoidTrailingWhitespace {}

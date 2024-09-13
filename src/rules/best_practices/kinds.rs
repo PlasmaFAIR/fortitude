@@ -1,4 +1,4 @@
-use crate::core::{Method, Rule, Violation};
+use crate::{Method, Rule, Violation};
 use regex::Regex;
 use tree_sitter::{Node, Query};
 /// Defines rules that discourage the use of raw number literals as kinds, and the use
