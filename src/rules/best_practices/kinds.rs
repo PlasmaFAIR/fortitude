@@ -28,7 +28,7 @@ fn literal_kind_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-fn avoid_number_literal_kinds(root: &Node, src: &str) -> Vec<Violation> {
+fn literal_kind(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for query_type in ["function_statement", "variable_declaration"] {
@@ -79,11 +79,11 @@ fn avoid_number_literal_kinds(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub struct AvoidNumberLiteralKinds {}
+pub struct LiteralKind {}
 
-impl Rule for AvoidNumberLiteralKinds {
+impl Rule for LiteralKind {
     fn method(&self) -> Method {
-        Method::Tree(avoid_number_literal_kinds)
+        Method::Tree(literal_kind)
     }
 
     fn explain(&self) -> &str {
@@ -146,7 +146,7 @@ impl Rule for AvoidNumberLiteralKinds {
 // Avoid non-standard bytes specifier
 // ----------------------------------
 
-fn avoid_non_standard_byte_specifier(root: &Node, src: &str) -> Vec<Violation> {
+fn star_kind(root: &Node, src: &str) -> Vec<Violation> {
     // Note: This does not match 'character*(*)', which should be handled by a different
     // rule.
     let mut violations = Vec::new();
@@ -179,11 +179,11 @@ fn avoid_non_standard_byte_specifier(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub struct AvoidNonStandardByteSpecifier {}
+pub struct StarKind {}
 
-impl Rule for AvoidNonStandardByteSpecifier {
+impl Rule for StarKind {
     fn method(&self) -> Method {
-        Method::Tree(avoid_non_standard_byte_specifier)
+        Method::Tree(star_kind)
     }
 
     fn explain(&self) -> &str {
@@ -215,7 +215,7 @@ fn double_precision_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-fn avoid_double_precision(root: &Node, src: &str) -> Vec<Violation> {
+fn double_precision(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for query_type in ["function_statement", "variable_declaration"] {
@@ -246,11 +246,11 @@ fn avoid_double_precision(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub struct AvoidDoublePrecision {}
+pub struct DoublePrecision {}
 
-impl Rule for AvoidDoublePrecision {
+impl Rule for DoublePrecision {
     fn method(&self) -> Method {
-        Method::Tree(avoid_double_precision)
+        Method::Tree(double_precision)
     }
 
     fn explain(&self) -> &str {
@@ -273,9 +273,9 @@ impl Rule for AvoidDoublePrecision {
 // Use floating point suffixes
 // ---------------------------
 
-pub struct UseFloatingPointSuffixes {}
+pub struct NoRealSuffix {}
 
-fn use_floating_point_suffixes(root: &Node, src: &str) -> Vec<Violation> {
+fn no_real_suffix(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Given a number literal, match anything with a decimal place, some amount of
     // digits either side, and no suffix. This will not catch exponentiation.
@@ -308,9 +308,9 @@ fn use_floating_point_suffixes(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-impl Rule for UseFloatingPointSuffixes {
+impl Rule for NoRealSuffix {
     fn method(&self) -> Method {
-        Method::Tree(use_floating_point_suffixes)
+        Method::Tree(no_real_suffix)
     }
 
     fn explain(&self) -> &str {
@@ -333,7 +333,7 @@ impl Rule for UseFloatingPointSuffixes {
 // Avoid numbered kind suffixes
 // -----------------------------
 
-fn avoid_numbered_kind_suffixes(root: &Node, src: &str) -> Vec<Violation> {
+fn literal_kind_suffix(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Given a number literal, match anything suffixed with plain number.
     // TODO Match either int or real, change error message accordingly
@@ -365,11 +365,11 @@ fn avoid_numbered_kind_suffixes(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub struct AvoidNumberedKindSuffixes {}
+pub struct LiteralKindSuffix {}
 
-impl Rule for AvoidNumberedKindSuffixes {
+impl Rule for LiteralKindSuffix {
     fn method(&self) -> Method {
-        Method::Tree(avoid_numbered_kind_suffixes)
+        Method::Tree(literal_kind_suffix)
     }
 
     fn explain(&self) -> &str {
@@ -409,7 +409,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_number_literal_kinds() {
+    fn test_literal_kind() {
         let source = dedent(
             "
             integer(8) function add_if(x, y, z)
@@ -451,15 +451,11 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(
-            avoid_number_literal_kinds,
-            source,
-            Some(expected_violations),
-        );
+        test_tree_method(literal_kind, source, Some(expected_violations));
     }
 
     #[test]
-    fn test_non_standard_byte_specifier() {
+    fn test_star_kind() {
         let source = dedent(
             "
             integer*8 function add_if(x, y, z)
@@ -487,11 +483,7 @@ mod tests {
                 violation!("Avoid non-standard 'type*N', prefer 'type(N)'", *line, *col)
             })
             .collect();
-        test_tree_method(
-            avoid_non_standard_byte_specifier,
-            source,
-            Some(expected_violations),
-        );
+        test_tree_method(star_kind, source, Some(expected_violations));
     }
 
     #[test]
@@ -530,11 +522,11 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(avoid_double_precision, source, Some(expected_violations));
+        test_tree_method(double_precision, source, Some(expected_violations));
     }
 
     #[test]
-    fn test_floating_point_without_suffixes() {
+    fn test_no_real_suffix() {
         let source = dedent(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
@@ -556,15 +548,11 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(
-            use_floating_point_suffixes,
-            &source,
-            Some(expected_violations),
-        );
+        test_tree_method(no_real_suffix, &source, Some(expected_violations));
     }
 
     #[test]
-    fn test_avoid_numbered_suffixes() {
+    fn test_literal_kind_suffix() {
         let source = dedent(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
@@ -587,10 +575,6 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(
-            avoid_numbered_kind_suffixes,
-            source,
-            Some(expected_violations),
-        );
+        test_tree_method(literal_kind_suffix, source, Some(expected_violations));
     }
 }

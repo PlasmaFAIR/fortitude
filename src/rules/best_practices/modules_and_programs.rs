@@ -7,7 +7,7 @@ use tree_sitter::{Node, Query};
 // Define functions and subroutines in modules
 // -------------------------------------------
 
-fn use_modules_and_programs(root: &Node, src: &str) -> Vec<Violation> {
+fn external_fucntion(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let query_txt = "(translation_unit [(function) @func (subroutine) @sub])";
     let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
@@ -25,11 +25,11 @@ fn use_modules_and_programs(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub struct UseModulesAndPrograms {}
+pub struct ExternalFunction {}
 
-impl Rule for UseModulesAndPrograms {
+impl Rule for ExternalFunction {
     fn method(&self) -> Method {
-        Method::Tree(use_modules_and_programs)
+        Method::Tree(external_fucntion)
     }
 
     fn explain(&self) -> &str {
@@ -44,7 +44,7 @@ impl Rule for UseModulesAndPrograms {
 // Always follow 'use' with 'only'
 // -------------------------------
 
-fn use_only_clause(root: &Node, src: &str) -> Vec<Violation> {
+fn use_all(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     // Search for 'use' clause, and optionally an 'only' clause, capturing both.
     let query_txt = "(use_statement (included_items)? @only) @use";
@@ -67,11 +67,11 @@ fn use_only_clause(root: &Node, src: &str) -> Vec<Violation> {
     violations
 }
 
-pub struct UseOnlyClause {}
+pub struct UseAll {}
 
-impl Rule for UseOnlyClause {
+impl Rule for UseAll {
     fn method(&self) -> Method {
-        Method::Tree(use_only_clause)
+        Method::Tree(use_all)
     }
 
     fn explain(&self) -> &str {
@@ -123,7 +123,7 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(use_modules_and_programs, source, Some(expected_violations));
+        test_tree_method(external_fucntion, source, Some(expected_violations));
     }
 
     #[test]
@@ -143,11 +143,11 @@ mod tests {
                 end subroutine
             end module
             ";
-        test_tree_method(use_modules_and_programs, source, None);
+        test_tree_method(external_fucntion, source, None);
     }
 
     #[test]
-    fn test_use_only_clause() {
+    fn test_use_all() {
         let source = dedent(
             "
             module my_module
@@ -157,6 +157,6 @@ mod tests {
             ",
         );
         let violation = violation!("'use' statement missing 'only' clause", 4, 5);
-        test_tree_method(use_only_clause, source, Some(vec![violation]));
+        test_tree_method(use_all, source, Some(vec![violation]));
     }
 }

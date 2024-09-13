@@ -3,7 +3,7 @@ use crate::{Method, Rule, Violation};
 use std::path::Path;
 /// Defines rule that enforces use of standard file extensions.
 
-fn use_standard_file_extensions(path: &Path) -> Option<Violation> {
+fn non_standard_file_extension(path: &Path) -> Option<Violation> {
     let msg: &str = "file extension should be '.f90' or '.F90'";
     match path.extension() {
         Some(ext) => {
@@ -18,11 +18,11 @@ fn use_standard_file_extensions(path: &Path) -> Option<Violation> {
     }
 }
 
-pub struct UseStandardFileExtensions {}
+pub struct NonStandardFileExtension {}
 
-impl Rule for UseStandardFileExtensions {
+impl Rule for NonStandardFileExtension {
     fn method(&self) -> Method {
-        Method::Path(use_standard_file_extensions)
+        Method::Path(non_standard_file_extension)
     }
 
     fn explain(&self) -> &str {
@@ -43,7 +43,7 @@ mod tests {
     fn test_bad_file_extension() {
         let path = Path::new("my/dir/to/file.f95");
         assert_eq!(
-            use_standard_file_extensions(&path),
+            non_standard_file_extension(&path),
             Some(violation!["file extension should be '.f90' or '.F90'"]),
         );
     }
@@ -52,7 +52,7 @@ mod tests {
     fn test_missing_file_extension() {
         let path = Path::new("my/dir/to/file");
         assert_eq!(
-            use_standard_file_extensions(&path),
+            non_standard_file_extension(&path),
             Some(violation!["file extension should be '.f90' or '.F90'"]),
         );
     }
@@ -61,7 +61,7 @@ mod tests {
     fn test_correct_file_extensions() {
         let path1 = Path::new("my/dir/to/file.f90");
         let path2 = Path::new("my/dir/to/file.F90");
-        assert_eq!(use_standard_file_extensions(&path1), None);
-        assert_eq!(use_standard_file_extensions(&path2), None);
+        assert_eq!(non_standard_file_extension(&path1), None);
+        assert_eq!(non_standard_file_extension(&path2), None);
     }
 }

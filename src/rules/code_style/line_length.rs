@@ -4,9 +4,9 @@ use crate::{Method, Rule, Violation};
 use regex::Regex;
 /// Defines rules that govern line length.
 
-pub struct EnforceMaxLineLength {}
+pub struct LineTooLong {}
 
-fn enforce_max_line_length(source: &str, settings: &Settings) -> Vec<Violation> {
+fn line_too_long(source: &str, settings: &Settings) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     // Are we ending on a string or comment? If so, we'll allow it through, as
@@ -30,9 +30,9 @@ fn enforce_max_line_length(source: &str, settings: &Settings) -> Vec<Violation> 
     violations
 }
 
-impl Rule for EnforceMaxLineLength {
+impl Rule for LineTooLong {
     fn method(&self) -> Method {
-        Method::Text(enforce_max_line_length)
+        Method::Text(line_too_long)
     }
 
     fn explain(&self) -> &str {

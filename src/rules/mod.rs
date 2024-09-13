@@ -21,70 +21,62 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
             category: Category::BestPractices,
             number: 1,
         } => Ok(Box::new(
-            best_practices::modules_and_programs::UseModulesAndPrograms {},
+            best_practices::modules_and_programs::ExternalFunction {},
         )),
         Code {
             category: Category::BestPractices,
             number: 2,
-        } => Ok(Box::new(
-            best_practices::modules_and_programs::UseOnlyClause {},
-        )),
+        } => Ok(Box::new(best_practices::modules_and_programs::UseAll {})),
         Code {
             category: Category::BestPractices,
             number: 10,
-        } => Ok(Box::new(
-            best_practices::implicit_none::UseImplicitNoneModulesAndPrograms {},
-        )),
+        } => Ok(Box::new(best_practices::implicit_none::ImplicitTyping {})),
         Code {
             category: Category::BestPractices,
             number: 11,
         } => Ok(Box::new(
-            best_practices::implicit_none::UseImplicitNoneInterfaces {},
+            best_practices::implicit_none::InterfaceImplicitTyping {},
         )),
         Code {
             category: Category::BestPractices,
             number: 12,
         } => Ok(Box::new(
-            best_practices::implicit_none::AvoidSuperfluousImplicitNone {},
+            best_practices::implicit_none::SuperfluousImplicitNone {},
         )),
         Code {
             category: Category::BestPractices,
             number: 20,
-        } => Ok(Box::new(best_practices::kinds::AvoidNumberLiteralKinds {})),
+        } => Ok(Box::new(best_practices::kinds::LiteralKind {})),
         Code {
             category: Category::BestPractices,
             number: 21,
-        } => Ok(Box::new(
-            best_practices::kinds::AvoidNonStandardByteSpecifier {},
-        )),
+        } => Ok(Box::new(best_practices::kinds::StarKind {})),
         Code {
             category: Category::BestPractices,
             number: 22,
-        } => Ok(Box::new(best_practices::kinds::AvoidDoublePrecision {})),
+        } => Ok(Box::new(best_practices::kinds::DoublePrecision {})),
         Code {
             category: Category::BestPractices,
             number: 23,
-        } => Ok(Box::new(best_practices::kinds::UseFloatingPointSuffixes {})),
+        } => Ok(Box::new(best_practices::kinds::NoRealSuffix {})),
         Code {
             category: Category::BestPractices,
             number: 24,
-        } => Ok(Box::new(
-            best_practices::kinds::AvoidNumberedKindSuffixes {},
-        )),
+        } => Ok(Box::new(best_practices::kinds::LiteralKindSuffix {})),
         Code {
             category: Category::BestPractices,
             number: 60,
         } => Ok(Box::new(
-            best_practices::filesystem::UseStandardFileExtensions {},
+            best_practices::filesystem::NonStandardFileExtension {},
         )),
         Code {
             category: Category::CodeStyle,
             number: 1,
-        } => Ok(Box::new(code_style::whitespace::AvoidTrailingWhitespace {})),
+        } => Ok(Box::new(code_style::whitespace::TrailingWhitespace {})),
         Code {
             category: Category::CodeStyle,
             number: 10,
-        } => Ok(Box::new(code_style::line_length::EnforceMaxLineLength {})),
+        } => Ok(Box::new(code_style::line_length::LineTooLong {})),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }
