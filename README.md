@@ -5,6 +5,13 @@
 
 A Fortran linter, written in Rust :crab: and installable with Python :snake:.
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Installation
 
 Fortitude can be installed directly into your Python environment:
@@ -49,8 +56,10 @@ fortitude check --help
 
 Please feel free to add or suggest new rules or comment on the layout of the project
 while it's still at this early stage of development. See
-[`README.dev.md`](README.dev.md) for a guide on building the project from source,
-running tests, and linting/formatting the code.
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for a guide on contributing to the project, and
+[`README.dev.md`](README.dev.md) for details on building the project from source,
+running tests, and linting/formatting the code. Please consult our [code of
+conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ## License
 
