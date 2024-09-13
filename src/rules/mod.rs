@@ -30,22 +30,6 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
         } => Ok(Box::new(best_practices::modules_and_programs::UseAll {})),
         Code {
             category: Category::BestPractices,
-            number: 10,
-        } => Ok(Box::new(best_practices::implicit_none::ImplicitTyping {})),
-        Code {
-            category: Category::BestPractices,
-            number: 11,
-        } => Ok(Box::new(
-            best_practices::implicit_none::InterfaceImplicitTyping {},
-        )),
-        Code {
-            category: Category::BestPractices,
-            number: 12,
-        } => Ok(Box::new(
-            best_practices::implicit_none::SuperfluousImplicitNone {},
-        )),
-        Code {
-            category: Category::BestPractices,
             number: 60,
         } => Ok(Box::new(
             best_practices::filesystem::NonStandardFileExtension {},
@@ -53,11 +37,11 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
         Code {
             category: Category::Style,
             number: 1,
-        } => Ok(Box::new(code_style::whitespace::TrailingWhitespace {})),
+        } => Ok(Box::new(code_style::line_length::LineTooLong {})),
         Code {
             category: Category::Style,
-            number: 10,
-        } => Ok(Box::new(code_style::line_length::LineTooLong {})),
+            number: 101,
+        } => Ok(Box::new(code_style::whitespace::TrailingWhitespace {})),
         Code {
             category: Category::Typing,
             number: 1,
@@ -78,6 +62,22 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
             category: Category::Typing,
             number: 22,
         } => Ok(Box::new(typing::real_precision::NoRealSuffix {})),
+        Code {
+            category: Category::Typing,
+            number: 31,
+        } => Ok(Box::new(typing::implicit_typing::ImplicitTyping {})),
+        Code {
+            category: Category::Typing,
+            number: 32,
+        } => Ok(Box::new(
+            typing::implicit_typing::InterfaceImplicitTyping {},
+        )),
+        Code {
+            category: Category::Typing,
+            number: 33,
+        } => Ok(Box::new(
+            typing::implicit_typing::SuperfluousImplicitNone {},
+        )),
         _ => {
             anyhow::bail!("Unknown rule code {}", code_str)
         }

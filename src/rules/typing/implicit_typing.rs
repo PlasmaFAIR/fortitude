@@ -1,10 +1,6 @@
 use crate::{Method, Rule, Violation};
 use tree_sitter::{Node, Query};
-
 /// Defines rules that raise errors if implicit typing is in use.
-
-// Use implicit none in modules and programs
-// -----------------------------------------
 
 fn implicit_typing(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
@@ -52,9 +48,6 @@ impl Rule for ImplicitTyping {
     }
 }
 
-// Use implicit none in interfaces
-// -------------------------------
-
 fn interface_implicit_typing(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     for query_type in ["function", "subroutine"] {
@@ -96,9 +89,6 @@ impl Rule for InterfaceImplicitTyping {
         "
     }
 }
-
-// Avoid implicit none where it isn't needed
-// -----------------------------------------
 
 fn superfluous_implicit_none(root: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
