@@ -37,7 +37,13 @@ tests soon.
 ## Linting and Formatting
 
 When contributing, please use `cargo clippy` for linting and `cargo fmt` for formatting.
-If you edit any Python code, please also use `ruff check` and `ruff format`.
+If you edit any Python code, please also use `ruff check` and `ruff format`. To avoid
+accidentally pushing unlinted/unformatted code to GitHub, we recommend using the Git
+pre-commit hook provided:
+
+```bash
+git config --local core.hooksPath .githooks
+```
 
 ## Adding Rules
 
