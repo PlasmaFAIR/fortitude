@@ -2,33 +2,37 @@ use crate::{Method, Rule, Violation};
 use tree_sitter::{Node, Query};
 /// Defines rules that raise errors if implicit typing is in use.
 
-fn implicit_typing(root: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    for query_type in ["module", "submodule", "program"] {
-        // Search for a module, submodule or program, and optionally an 'implicit none'.
-        // Capture module, submodule or program in @mod, and 'implicit none' in @implicit-none.
-        // We don't need @mod explicitly, but if @implicit-none isn't found, we'll need it
-        // for error reporting.
-        let query_txt = format!(
-            "({} (implicit_statement (none))? @implicit-none) @mod",
-            query_type
-        );
-        let query = Query::new(&tree_sitter_fortran::language(), query_txt.as_str()).unwrap();
-        let implicit_none_index = query.capture_index_for_name("implicit-none").unwrap();
-        let mut cursor = tree_sitter::QueryCursor::new();
-        for captures in cursor
-            .matches(&query, *root, src.as_bytes())
-            .map(|x| x.captures)
-        {
-            // If the @implicit-none capture isn't found, record a violation.
-            if !captures.iter().any(|&x| x.index == implicit_none_index) {
-                // The only other captures must be the module, submodule, or program.
-                for capture in captures {
-                    let msg = format!("{} missing 'implicit none'", query_type);
-                    violations.push(Violation::from_node(&msg, &capture.node));
-                }
+fn implicit_none_not_found(node: &Node) -> Option<Violation> {
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.kind() == "implicit_statement" {
+            let mut subcursor = child.walk();
+            if child.children(&mut subcursor).any(|x| x.kind() == "none") {
+                return None;
             }
         }
+    }
+    let msg = format!("{} missing 'implicit none'", node.kind());
+    Some(Violation::from_node(&msg, node))
+}
+
+fn implicit_typing(node: &Node, _src: &str) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        match child.kind() {
+            "module" | "submodule" | "program" => {
+                // For some reason a second 'module' node is found at the end
+                // of each module, but it has nothing in it.
+                if child.child_count() != 0 {
+                    if let Some(x) = implicit_none_not_found(&child) {
+                        violations.push(x)
+                    }
+                }
+            }
+            _ => (),
+        }
+        violations.extend(implicit_typing(&child, _src));
     }
     violations
 }
