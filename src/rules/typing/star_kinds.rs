@@ -1,40 +1,49 @@
+use crate::parsing::{dtype_is_number, intrinsic_type, strip_line_breaks, to_text};
 use crate::{Method, Rule, Violation};
-use lazy_regex::regex_is_match;
-use tree_sitter::{Node, Query};
+use lazy_regex::regex_captures;
+use tree_sitter::Node;
 /// Defines rules that discourage the use of the non-standard kind specifiers such as
 /// `int*4` or `real*8`. Also prefers the use of `character(len=*)` to
 /// `character*(*)`, as although the latter is permitted by the standard, the former is
 /// more explicit.
 
-// TODO Add character* rule
-
-fn star_kind(root: &Node, src: &str) -> Vec<Violation> {
-    // Note: This does not match 'character*(*)', which should be handled by a different
-    // rule.
-    let mut violations = Vec::new();
-    for query_type in ["function_statement", "variable_declaration"] {
-        let query_txt = format!("({} (intrinsic_type) (size) @size)", query_type);
-        let query = Query::new(&tree_sitter_fortran::language(), &query_txt).unwrap();
-        let mut cursor = tree_sitter::QueryCursor::new();
-        for match_ in cursor.matches(&query, *root, src.as_bytes()) {
-            for capture in match_.captures {
-                match capture.node.utf8_text(src.as_bytes()) {
-                    Ok(x) => {
-                        // Match anything beginning with a '*' followed by any amount of whitespace
-                        // or '&' symbols (in case you like to split your type specifiers over
-                        // multiple lines), followed by at least one digit.
-                        if regex_is_match!(r"^\*[\s&]*\d+", x) {
-                            let msg = "Avoid non-standard 'type*N', prefer 'type(N)'";
-                            violations.push(Violation::from_node(msg, &capture.node));
-                        }
-                    }
-                    Err(_) => {
-                        // Found non utf8 text, should be caught by a different rule,
-                        continue;
-                    }
+fn variable_has_star_kind(node: &Node, src: &str) -> Option<Violation> {
+    let dtype = intrinsic_type(node)?;
+    if dtype_is_number(dtype.as_str()) {
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            if child.kind() == "size" {
+                let size = strip_line_breaks(to_text(&child, src)?);
+                // Match anything beginning with a '*' followed by any amount of
+                // whitespace and some digits. Parameters like real64 aren't
+                // allowed in this syntax, so we don't need to worry about them.
+                if let Some((_, kind)) = regex_captures!(r"^\*\s*([\d]+)", size.as_str()) {
+                    let msg = format!(
+                        "{}{} is non-standard, use {}({})",
+                        dtype,
+                        size.replace(" ", "").replace("\t", ""),
+                        dtype,
+                        kind,
+                    );
+                    return Some(Violation::from_node(&msg, node));
                 }
             }
         }
+    }
+    None
+}
+
+fn star_kind(node: &Node, src: &str) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        let kind = child.kind();
+        if kind == "variable_declaration" || kind == "function_statement" {
+            if let Some(x) = variable_has_star_kind(&child, src) {
+                violations.push(x)
+            }
+        }
+        violations.extend(star_kind(&child, src));
     }
     violations
 }
@@ -72,6 +81,8 @@ mod tests {
               integer(kind=2), intent(in) :: x
               integer *4, intent(in) :: y
               logical*   4, intent(in) :: z
+              real    * &
+               8 :: t
 
               if (x) then
                 add_if = x + y
@@ -81,18 +92,26 @@ mod tests {
             end function
 
             subroutine complex_mul(x, y)
-              real * 8, intent(in) :: x
-              complex  *  16, intent(inout) :: y
+              real * 4, intent(in) :: x
+              complex  *  8, intent(inout) :: y
               y = y * x
             end subroutine
             ",
         );
-        let expected_violations = [(2, 8), (4, 11), (5, 10), (15, 8), (16, 12)]
-            .iter()
-            .map(|(line, col)| {
-                violation!("Avoid non-standard 'type*N', prefer 'type(N)'", *line, *col)
-            })
-            .collect();
+        let expected_violations = [
+            (2, 1, "integer*8", "integer(8)"),
+            (4, 3, "integer*4", "integer(4)"),
+            (5, 3, "logical*4", "logical(4)"),
+            (6, 3, "real*8", "real(8)"),
+            (17, 3, "real*4", "real(4)"),
+            (18, 3, "complex*8", "complex(8)"),
+        ]
+        .iter()
+        .map(|(line, col, from, to)| {
+            let msg = format!("{} is non-standard, use {}", from, to);
+            violation!(&msg, *line, *col)
+        })
+        .collect();
         test_tree_method(star_kind, source, Some(expected_violations));
     }
 }

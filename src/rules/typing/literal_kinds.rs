@@ -1,3 +1,4 @@
+use crate::parsing::{dtype_is_number, intrinsic_type, to_text};
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::Node;
@@ -5,21 +6,6 @@ use tree_sitter::Node;
 /// non-portable code.
 
 // TODO rules for intrinsic kinds in real(x, [KIND]) and similar type casting functions
-
-fn intrinsic_type(node: &Node) -> Option<String> {
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        if child.kind() == "intrinsic_type" {
-            let grandchild = child.child(0)?;
-            return Some(grandchild.kind().to_string());
-        }
-    }
-    None
-}
-
-fn dtype_is_number(dtype: &str) -> bool {
-    matches!(dtype, "integer" | "real" | "logical" | "complex")
-}
 
 fn descendant_is_number_literal(node: &Node) -> bool {
     // Find any number literal from a given starting point
@@ -131,7 +117,7 @@ impl Rule for LiteralKind {
 }
 
 fn literal_has_literal_suffix(node: &Node, src: &str) -> Option<Violation> {
-    let txt = node.utf8_text(src.as_bytes()).ok()?;
+    let txt = to_text(node, src)?;
     if regex_is_match!(r"_\d+$", txt) {
         let msg = format!(
             "{} has literal suffix, use 'iso_fortran_env' parameter",
