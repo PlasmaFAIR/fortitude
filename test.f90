@@ -4,6 +4,11 @@ integer function double(x)
   double = 2 * x
 end function
 
+subroutine print_val(y)
+  real, intent(in) :: y
+  write (*,*) y
+end subroutine print_val
+
 module my_module
 
   ! Should not raise
