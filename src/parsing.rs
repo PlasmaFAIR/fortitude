@@ -27,6 +27,10 @@ pub fn intrinsic_type(node: &Node) -> Option<String> {
 }
 
 /// Returns true if the type passed to it is number-like.
+/// Deliberately does not include 'double precision' or 'double complex'.
 pub fn dtype_is_number(dtype: &str) -> bool {
-    matches!(dtype, "integer" | "real" | "logical" | "complex")
+    matches!(
+        dtype.to_lowercase().as_str(),
+        "integer" | "real" | "logical" | "complex"
+    )
 }

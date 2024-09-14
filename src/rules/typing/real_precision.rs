@@ -1,3 +1,4 @@
+use crate::parsing::to_text;
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::{Node, Query};
@@ -6,8 +7,7 @@ use tree_sitter::{Node, Query};
 // TODO rule to prefer 1.23e4_sp over 1.23e4, and 1.23e4_dp over 1.23d4
 
 fn double_precision_err_msg(dtype: &str) -> Option<String> {
-    let lower = dtype.to_lowercase();
-    match lower.as_str() {
+    match dtype {
         "double precision" => Some(String::from(
             "Prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')",
         )),
@@ -18,33 +18,25 @@ fn double_precision_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-fn double_precision(root: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
+fn type_is_double_precision(node: &Node, src: &str) -> Option<Violation> {
+    // Trigger from 'intrinsic_type'
+    let txt = to_text(node, src)?.to_lowercase();
+    if let Some(msg) = double_precision_err_msg(txt.as_str()) {
+        return Some(Violation::from_node(msg.as_str(), node));
+    }
+    None
+}
 
-    for query_type in ["function_statement", "variable_declaration"] {
-        let query_txt = format!("({} (intrinsic_type) @type)", query_type);
-        let query = Query::new(&tree_sitter_fortran::language(), &query_txt).unwrap();
-        let mut cursor = tree_sitter::QueryCursor::new();
-        for match_ in cursor.matches(&query, *root, src.as_bytes()) {
-            for capture in match_.captures {
-                let txt = capture.node.utf8_text(src.as_bytes());
-                match txt {
-                    Ok(x) => {
-                        match double_precision_err_msg(x) {
-                            Some(msg) => {
-                                violations.push(Violation::from_node(&msg, &capture.node));
-                            }
-                            None => {
-                                // Do nothing, found some other intrinsic type
-                            }
-                        }
-                    }
-                    Err(_) => {
-                        // Skip, non-utf8 text should be caught by a different rule
-                    }
-                }
+fn double_precision(node: &Node, src: &str) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.kind() == "intrinsic_type" {
+            if let Some(x) = type_is_double_precision(&child, src) {
+                violations.push(x)
             }
         }
+        violations.extend(double_precision(&child, src));
     }
     violations
 }
