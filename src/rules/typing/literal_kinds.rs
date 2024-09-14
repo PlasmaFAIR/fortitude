@@ -1,73 +1,68 @@
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_is_match;
-use tree_sitter::{Node, Query};
+use tree_sitter::Node;
 /// Defines rules that discourage the use of raw number literals as kinds, as this can result in
 /// non-portable code.
 
-fn literal_kind_err_msg(dtype: &str) -> Option<String> {
-    let lower = dtype.to_lowercase();
-    match lower.as_str() {
-        "integer" | "logical" => Some(format!(
-            "Avoid setting {} kind with raw number literals, use a parameter from \
-            'iso_fortran_env' or set using 'selected_int_kind'",
-            lower,
-        )),
-        "real" | "complex" => Some(format!(
-            "Avoid setting {} kind with raw number literals, use a parameter from \
-            'iso_fortran_env' or set using 'selected_real_kind'",
-            lower,
-        )),
-        _ => None,
+// TODO rules for intrinsic kinds in real(x, [KIND]) and similar type casting functions
+
+fn intrinsic_type(node: &Node) -> Option<String> {
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.kind() == "intrinsic_type" {
+            let grandchild = child.child(0)?;
+            return Some(grandchild.kind().to_string());
+        }
     }
+    None
 }
 
-fn literal_kind(root: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
+fn dtype_is_number(dtype: &str) -> bool {
+    matches!(dtype, "integer" | "real" | "logical" | "complex")
+}
 
-    for query_type in ["function_statement", "variable_declaration"] {
-        // Find intrinstic types annotated with a single number literal, or with a
-        // 'kind' keyword. This will also pick up characters with a a length specified,
-        // but we'll skip those later.
-        let query_txt = format!(
-            "
-            ({}
-                (intrinsic_type) @type
-                (size
-                    [
-                        (argument_list (number_literal))
-                        (argument_list
-                            (keyword_argument
-                                name: (identifier)
-                                value: (number_literal)
-                            )
-                        )
-                    ]
-                )
-            )",
-            query_type,
-        );
-        let query = Query::new(&tree_sitter_fortran::language(), &query_txt).unwrap();
-        let mut cursor = tree_sitter::QueryCursor::new();
-        for match_ in cursor.matches(&query, *root, src.as_bytes()) {
-            for capture in match_.captures {
-                let txt = capture.node.utf8_text(src.as_bytes());
-                match txt {
-                    Ok(x) => {
-                        match literal_kind_err_msg(x) {
-                            Some(msg) => {
-                                violations.push(Violation::from_node(&msg, &capture.node));
-                            }
-                            None => {
-                                // Do nothing, characters should be handled elsewhere
-                            }
-                        }
-                    }
-                    Err(_) => {
-                        // Skip, non utf8 text should be caught by a different rule
-                    }
-                }
+fn descendant_is_number_literal(node: &Node) -> bool {
+    // Find any number literal from a given starting point
+    if node.kind() == "number_literal" {
+        return true;
+    }
+    let mut cursor = node.walk();
+    let result = node
+        .children(&mut cursor)
+        .any(|x| descendant_is_number_literal(&x));
+    result
+}
+
+fn variable_has_literal_kind(node: &Node) -> Option<Violation> {
+    let dtype = intrinsic_type(node)?;
+    if dtype_is_number(dtype.as_str()) {
+        // Must check for number literals under the 'size' node, as otherwise
+        // this can pick up assignment at the end of the variable declaration
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            if child.kind() == "size" && descendant_is_number_literal(&child) {
+                let msg = format!(
+                    "{} kind set with number literal, use 'iso_fortran_env' parameter",
+                    dtype,
+                );
+                return Some(Violation::from_node(&msg, node));
             }
         }
+    }
+    None
+}
+
+fn literal_kind(node: &Node, _src: &str) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        let kind = child.kind();
+        if kind == "variable_declaration" || kind == "function_statement" {
+            if let Some(x) = variable_has_literal_kind(&child) {
+                violations.push(x)
+            }
+        }
+        violations.extend(literal_kind(&child, _src));
     }
     violations
 }
@@ -135,33 +130,28 @@ impl Rule for LiteralKind {
     }
 }
 
-fn literal_kind_suffix(root: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    // Given a number literal, match anything suffixed with plain number.
-    // TODO Match either int or real, change error message accordingly
+fn literal_has_literal_suffix(node: &Node, src: &str) -> Option<Violation> {
+    let txt = node.utf8_text(src.as_bytes()).ok()?;
+    if regex_is_match!(r"_\d+$", txt) {
+        let msg = format!(
+            "{} has literal suffix, use 'iso_fortran_env' parameter",
+            txt,
+        );
+        return Some(Violation::from_node(&msg, node));
+    }
+    None
+}
 
-    let query_txt = "(number_literal) @num";
-    let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
-    let mut cursor = tree_sitter::QueryCursor::new();
-    for match_ in cursor.matches(&query, *root, src.as_bytes()) {
-        for capture in match_.captures {
-            let txt = capture.node.utf8_text(src.as_bytes());
-            match txt {
-                Ok(x) => {
-                    if regex_is_match!(r"_\d+$", x) {
-                        let msg = format!(
-                            "Instead of number literal suffix in {}, use parameter suffix \
-                            from 'iso_fortran_env'",
-                            x
-                        );
-                        violations.push(Violation::from_node(&msg, &capture.node));
-                    }
-                }
-                Err(_) => {
-                    // Skip, non-utf8 text should be caught by a different rule
-                }
+fn literal_kind_suffix(node: &Node, src: &str) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.kind() == "number_literal" {
+            if let Some(x) = literal_has_literal_suffix(&child, src) {
+                violations.push(x)
             }
         }
+        violations.extend(literal_kind_suffix(&child, src));
     }
     violations
 }
@@ -212,6 +202,7 @@ mod tests {
         let source = dedent(
             "
             integer(8) function add_if(x, y, z)
+              integer :: w
               integer(kind=2), intent(in) :: x
               integer(i32), intent(in) :: y
               logical(kind=4), intent(in) :: z
@@ -226,6 +217,7 @@ mod tests {
             subroutine complex_mul(x, y)
               real(8), intent(in) :: x
               complex(4), intent(inout) :: y
+              real :: z = 0.5
               y = y * x
             end subroutine
 
@@ -238,15 +230,18 @@ mod tests {
         );
         let expected_violations = [
             (2, 1, "integer"),
-            (3, 3, "integer"),
-            (5, 3, "logical"),
-            (15, 3, "real"),
-            (16, 3, "complex"),
-            (22, 3, "complex"),
+            (4, 3, "integer"),
+            (6, 3, "logical"),
+            (16, 3, "real"),
+            (17, 3, "complex"),
+            (24, 3, "complex"),
         ]
         .iter()
         .map(|(line, col, kind)| {
-            let msg = literal_kind_err_msg(kind).unwrap();
+            let msg = format!(
+                "{} kind set with number literal, use 'iso_fortran_env' parameter",
+                kind,
+            );
             violation!(&msg, *line, *col)
         })
         .collect();
@@ -270,8 +265,7 @@ mod tests {
             .iter()
             .map(|(line, col, num)| {
                 let msg = format!(
-                    "Instead of number literal suffix in {}, use parameter suffix from \
-                    'iso_fortran_env'",
+                    "{} has literal suffix, use 'iso_fortran_env' parameter",
                     num,
                 );
                 violation!(&msg, *line, *col)
