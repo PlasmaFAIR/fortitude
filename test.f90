@@ -98,6 +98,7 @@ end subroutine
 
 ! Should trigger for missing implicit none
 module implicit_module
+  implicit integer(A)
   parameter(N = 1)
 end module
 
