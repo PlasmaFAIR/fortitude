@@ -47,12 +47,18 @@ module my_module
   ! TODO should raise error for outdated 'character*(*)'
   character*(*), parameter :: hello = "hello world"
 
-  ! This function should raise an error for missing implicit none, one for using
-  ! a number literal kind in the signature, and one for a number literal kind in the
-  ! variable list.
   interface
+    ! This function should raise an error for missing implicit none, one for using
+    ! a number literal kind in the signature, and one for a number literal kind in the
+    ! variable list.
     integer(8) function interface_func(x)
       integer(kind=8), intent(in) :: x
+    end function
+
+    ! This function shouldn't raise anything
+    real function interface_func2(x)
+      implicit none
+      real, intent(in) :: x
     end function
   end interface
 
