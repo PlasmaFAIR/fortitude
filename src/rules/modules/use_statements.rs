@@ -1,29 +1,32 @@
 use crate::{Method, Rule, Violation};
-use tree_sitter::{Node, Query};
+use tree_sitter::Node;
 
 /// Defines rules that check whether `use` statements are used correctly.
 
 // TODO Check that 'used' entity is actually used somewhere
 
-fn use_all(root: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    // Search for 'use' clause, and optionally an 'only' clause, capturing both.
-    let query_txt = "(use_statement (included_items)? @only) @use";
-    let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
-    let only_index = query.capture_index_for_name("only").unwrap();
-    let mut cursor = tree_sitter::QueryCursor::new();
-    for captures in cursor
-        .matches(&query, *root, src.as_bytes())
-        .map(|x| x.captures)
+fn use_missing_only_clause(node: &Node) -> Option<Violation> {
+    let mut cursor = node.walk();
+    if !node
+        .children(&mut cursor)
+        .any(|x| x.kind() == "included_items")
     {
-        // If the @only capture isn't found, record a violation.
-        if !captures.iter().any(|&x| x.index == only_index) {
-            // The only remaining capture must be the use clause
-            for capture in captures {
-                let msg = "'use' statement missing 'only' clause";
-                violations.push(Violation::from_node(msg, &capture.node));
+        let msg = "'use' statement missing 'only' clause";
+        return Some(Violation::from_node(msg, node));
+    }
+    None
+}
+
+fn use_all(node: &Node, _src: &str) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.kind() == "use_statement" {
+            if let Some(x) = use_missing_only_clause(&child) {
+                violations.push(x);
             }
         }
+        violations.extend(use_all(&child, _src));
     }
     violations
 }

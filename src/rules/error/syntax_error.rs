@@ -4,12 +4,9 @@ use tree_sitter::Node;
 /// Rules that check for syntax errors.
 
 fn syntax_error(node: &Node, _src: &str) -> Vec<Violation> {
-    // TODO There should be a way to achieve this just using iterators, without
-    //      returning intermediates.
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    let children = node.children(&mut cursor);
-    for child in children {
+    for child in node.children(&mut cursor) {
         if child.is_error() {
             violations.push(Violation::from_node("syntax error", &child));
         }
