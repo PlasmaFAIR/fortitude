@@ -4,12 +4,12 @@ mod modules;
 mod style;
 mod typing;
 use crate::{Category, Code, Rule};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 /// A collection of all rules, and utilities to select a subset at runtime.
 
 pub type RuleBox = Box<dyn Rule>;
-pub type RuleSet = HashSet<String>;
-pub type RuleMap = HashMap<String, RuleBox>;
+pub type RuleSet = BTreeSet<String>;
+pub type RuleMap = BTreeMap<String, RuleBox>;
 
 /// Create a new `Rule` given a rule code, expressed as a string.
 pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
