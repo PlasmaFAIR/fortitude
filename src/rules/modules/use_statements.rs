@@ -53,6 +53,10 @@ impl Rule for UseAll {
         local scope.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["use_statement"]
+    }
 }
 
 #[cfg(test)]

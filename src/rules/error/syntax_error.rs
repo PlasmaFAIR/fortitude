@@ -33,4 +33,8 @@ impl Rule for SyntaxError {
         bug in our code or in our parser!
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["ERROR"]
+    }
 }

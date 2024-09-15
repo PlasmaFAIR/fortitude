@@ -44,6 +44,10 @@ impl Rule for ExternalFunction {
         defined outside of these scopes, and this is a common source of bugs.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["function", "subroutine"]
+    }
 }
 
 #[cfg(test)]

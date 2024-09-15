@@ -63,6 +63,10 @@ impl Rule for DoublePrecision {
         `real(c_double)`, which may be found in the intrinsic module `iso_c_binding`.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["intrinsic_type"]
+    }
 }
 
 fn real_has_no_suffix(node: &Node, src: &str) -> Option<Violation> {
@@ -136,6 +140,10 @@ impl Rule for NoRealSuffix {
         implementation it instead requires all real literals to have an explicit
         kind suffix.
         "
+    }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["number_literal"]
     }
 }
 

@@ -55,6 +55,10 @@ impl Rule for ImplicitTyping {
         reduces the readability of code and increases the chances of typing errors.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["module", "submodule", "program"]
+    }
 }
 
 fn interface_implicit_none_not_found(node: &Node) -> Option<Violation> {
@@ -94,6 +98,10 @@ impl Rule for InterfaceImplicitTyping {
         Interface functions and subroutines require 'implicit none', even if they are
         inside a module that uses 'implicit none'.
         "
+    }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["function", "subroutine"]
     }
 }
 
@@ -150,6 +158,10 @@ impl Rule for SuperfluousImplicitNone {
         If a module has 'implicit none' set, it is not necessary to set it in contained
         functions and subroutines (except when using interfaces).
         "
+    }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["implicit_statement"]
     }
 }
 

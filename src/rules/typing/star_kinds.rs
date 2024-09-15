@@ -63,6 +63,10 @@ impl Rule for StarKind {
         built-in functions 'selected_real_kind' and 'selected_int_kind'.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["variable_declaration", "function_statement"]
+    }
 }
 
 #[cfg(test)]

@@ -176,6 +176,12 @@ pub trait Rule {
     /// Return text explaining what the rule tests for, why this is important, and how
     /// the user might fix it.
     fn explain(&self) -> &str;
+
+    /// Return list of tree-sitter node types on which a rule should trigger.
+    /// Only relevant for tree-sitter based rules, should not be implemented otherwise.
+    fn entrypoints(&self) -> Vec<&str> {
+        vec![]
+    }
 }
 
 // Violation diagnostics

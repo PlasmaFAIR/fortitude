@@ -105,6 +105,10 @@ impl Rule for LiteralKind {
         ```
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["variable_declaration", "function_statement"]
+    }
 }
 
 fn literal_has_literal_suffix(node: &Node, src: &str) -> Option<Violation> {
@@ -164,6 +168,10 @@ impl Rule for LiteralKindSuffix {
         real(dp), parameter :: pi = 3.14159265358979_dp
         ```
         "
+    }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["number_literal"]
     }
 }
 
