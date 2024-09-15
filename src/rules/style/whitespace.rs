@@ -9,7 +9,7 @@ fn trailing_whitespace(source: &str, _: &Settings) -> Vec<Violation> {
     let mut violations = Vec::new();
     for (idx, line) in source.split('\n').enumerate() {
         if line.ends_with(&[' ', '\t']) {
-            violations.push(violation!("Trailing whitespace", idx + 1));
+            violations.push(violation!("trailing whitespace", idx + 1));
         }
     }
     violations
