@@ -1,34 +1,47 @@
+use crate::parsing::child_with_name;
 use crate::{Method, Rule, Violation};
-use tree_sitter::{Node, Query};
+use tree_sitter::Node;
 /// Defines rules that raise errors if implicit typing is in use.
 
-fn implicit_typing(root: &Node, src: &str) -> Vec<Violation> {
+fn implicit_statement_is_none(node: &Node) -> bool {
+    if let Some(child) = node.child(1) {
+        return child.kind() == "none";
+    }
+    false
+}
+
+fn child_is_implicit_none(node: &Node) -> bool {
+    if let Some(child) = child_with_name(node, "implicit_statement") {
+        return implicit_statement_is_none(&child);
+    }
+    false
+}
+
+fn implicit_none_not_found(node: &Node) -> Option<Violation> {
+    if !child_is_implicit_none(node) {
+        let msg = format!("{} missing 'implicit none'", node.kind());
+        return Some(Violation::from_node(&msg, node));
+    }
+    None
+}
+
+fn implicit_typing(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
-    for query_type in ["module", "submodule", "program"] {
-        // Search for a module, submodule or program, and optionally an 'implicit none'.
-        // Capture module, submodule or program in @mod, and 'implicit none' in @implicit-none.
-        // We don't need @mod explicitly, but if @implicit-none isn't found, we'll need it
-        // for error reporting.
-        let query_txt = format!(
-            "({} (implicit_statement (none))? @implicit-none) @mod",
-            query_type
-        );
-        let query = Query::new(&tree_sitter_fortran::language(), query_txt.as_str()).unwrap();
-        let implicit_none_index = query.capture_index_for_name("implicit-none").unwrap();
-        let mut cursor = tree_sitter::QueryCursor::new();
-        for captures in cursor
-            .matches(&query, *root, src.as_bytes())
-            .map(|x| x.captures)
-        {
-            // If the @implicit-none capture isn't found, record a violation.
-            if !captures.iter().any(|&x| x.index == implicit_none_index) {
-                // The only other captures must be the module, submodule, or program.
-                for capture in captures {
-                    let msg = format!("{} missing 'implicit none'", query_type);
-                    violations.push(Violation::from_node(&msg, &capture.node));
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        match child.kind() {
+            "module" | "submodule" | "program" => {
+                // For some reason a second 'module' node is found at the end
+                // of each module, but it has nothing in it.
+                if child.child_count() != 0 {
+                    if let Some(x) = implicit_none_not_found(&child) {
+                        violations.push(x)
+                    }
                 }
             }
+            _ => (),
         }
+        violations.extend(implicit_typing(&child, _src));
     }
     violations
 }
@@ -48,29 +61,27 @@ impl Rule for ImplicitTyping {
     }
 }
 
-fn interface_implicit_typing(root: &Node, src: &str) -> Vec<Violation> {
+fn interface_implicit_none_not_found(node: &Node) -> Option<Violation> {
+    // check it is an interface function
+    let parent = node.parent()?;
+    if parent.kind() == "interface" && !child_is_implicit_none(node) {
+        let msg = format!("interface {} missing 'implicit none'", node.kind());
+        return Some(Violation::from_node(&msg, node));
+    }
+    None
+}
+
+fn interface_implicit_typing(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
-    for query_type in ["function", "subroutine"] {
-        let query_txt = format!(
-            "(interface ({} (implicit_statement (none))? @implicit-none) @func)",
-            query_type,
-        );
-        let query = Query::new(&tree_sitter_fortran::language(), query_txt.as_str()).unwrap();
-        let implicit_none_index = query.capture_index_for_name("implicit-none").unwrap();
-        let mut cursor = tree_sitter::QueryCursor::new();
-        for captures in cursor
-            .matches(&query, *root, src.as_bytes())
-            .map(|x| x.captures)
-        {
-            // If the @implicit-none capture isn't found, record a violation.
-            if !captures.iter().any(|&x| x.index == implicit_none_index) {
-                // The only other captures must be the module, submodule, or program.
-                for capture in captures {
-                    let msg = format!("interface {} missing 'implicit none'", query_type);
-                    violations.push(Violation::from_node(&msg, &capture.node));
-                }
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        let kind = child.kind();
+        if kind == "function" || kind == "subroutine" {
+            if let Some(x) = interface_implicit_none_not_found(&child) {
+                violations.push(x)
             }
         }
+        violations.extend(interface_implicit_typing(&child, _src));
     }
     violations
 }
@@ -90,30 +101,43 @@ impl Rule for InterfaceImplicitTyping {
     }
 }
 
-fn superfluous_implicit_none(root: &Node, src: &str) -> Vec<Violation> {
+fn top_level_scope(node: Node) -> Option<Node> {
+    let parent = node.parent()?;
+    match parent.kind() {
+        "module" | "submodule" | "program" => Some(parent),
+        _ => top_level_scope(parent),
+    }
+}
+
+fn implicit_none_not_needed(node: &Node) -> Option<Violation> {
+    if !implicit_statement_is_none(node) {
+        return None;
+    }
+    let parent_kind = node.parent()?.kind();
+    if parent_kind == "function" || parent_kind == "subroutine" {
+        let enclosing = top_level_scope(*node)?;
+        if child_is_implicit_none(&enclosing) {
+            let msg = format!(
+                "'implicit none' is set on the enclosing {}, and isn't needed here",
+                enclosing.kind()
+            );
+            return Some(Violation::from_node(&msg, node));
+        }
+    }
+    None
+}
+
+fn superfluous_implicit_none(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
-    for query_type in ["module", "submodule", "program"] {
-        let query_txt = format!(
-            "({}
-                (implicit_statement (none))
-                (internal_procedures
-                    (function (implicit_statement (none)) @x)*
-                    (subroutine (implicit_statement (none)) @y)*
-                )
-            )",
-            query_type
-        );
-        let query = Query::new(&tree_sitter_fortran::language(), query_txt.as_str()).unwrap();
-        let mut cursor = tree_sitter::QueryCursor::new();
-        for match_ in cursor.matches(&query, *root, src.as_bytes()) {
-            for capture in match_.captures {
-                let msg = format!(
-                    "'implicit none' is set on the enclosing {}, and isn't needed here",
-                    query_type
-                );
-                violations.push(Violation::from_node(&msg, &capture.node));
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        let kind = child.kind();
+        if kind == "implicit_statement" {
+            if let Some(x) = implicit_none_not_needed(&child) {
+                violations.push(x)
             }
         }
+        violations.extend(superfluous_implicit_none(&child, _src));
     }
     violations
 }
@@ -293,7 +317,7 @@ mod tests {
         .map(|(line, col, kind)| {
             let msg = format!(
                 "'implicit none' is set on the enclosing {}, and isn't needed here",
-                kind
+                kind,
             );
             violation!(&msg, *line, *col)
         })

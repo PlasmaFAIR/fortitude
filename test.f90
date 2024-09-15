@@ -4,6 +4,11 @@ integer function double(x)
   double = 2 * x
 end function
 
+subroutine print_val(y)
+  real, intent(in) :: y
+  write (*,*) y
+end subroutine print_val
+
 module my_module
 
   ! Should not raise
@@ -24,6 +29,9 @@ module my_module
   real(dp), parameter :: pi_32 = 3.14159265358979
   real(dp), parameter :: pi_short = 3.1415
 
+  ! Should raise syntax error
+  real(dp), parameter :: mistake = 2e
+
   ! Should not raise error for maximum line length
   character(*), parameter :: long_string = "https://verylongurl.com/page/another_page/yet_another_page/wow"
 
@@ -42,12 +50,18 @@ module my_module
   ! TODO should raise error for outdated 'character*(*)'
   character*(*), parameter :: hello = "hello world"
 
-  ! This function should raise an error for missing implicit none, one for using
-  ! a number literal kind in the signature, and one for a number literal kind in the
-  ! variable list.
   interface
+    ! This function should raise an error for missing implicit none, one for using
+    ! a number literal kind in the signature, and one for a number literal kind in the
+    ! variable list.
     integer(8) function interface_func(x)
       integer(kind=8), intent(in) :: x
+    end function
+
+    ! This function shouldn't raise anything
+    real function interface_func2(x)
+      implicit none
+      real, intent(in) :: x
     end function
   end interface
 
@@ -87,6 +101,7 @@ end subroutine
 
 ! Should trigger for missing implicit none
 module implicit_module
+  implicit integer(A)
   parameter(N = 1)
 end module
 

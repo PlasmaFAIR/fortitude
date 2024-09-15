@@ -1,23 +1,31 @@
 use crate::{Method, Rule, Violation};
-use tree_sitter::{Node, Query};
+use tree_sitter::Node;
 
 /// Defines rules that check whether functions and subroutines are defined within modules (or one
 /// of a few acceptable alternatives).
 
-fn external_fucntion(root: &Node, src: &str) -> Vec<Violation> {
+fn function_is_at_top_level(node: &Node, _src: &str) -> Option<Violation> {
+    if node.parent()?.kind() == "translation_unit" {
+        let msg = format!(
+            "{} not contained within (sub)module or program",
+            node.kind()
+        );
+        return Some(Violation::from_node(msg, node));
+    }
+    None
+}
+
+fn external_function(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
-    let query_txt = "(translation_unit [(function) @func (subroutine) @sub])";
-    let query = Query::new(&tree_sitter_fortran::language(), query_txt).unwrap();
-    let mut cursor = tree_sitter::QueryCursor::new();
-    for match_ in cursor.matches(&query, *root, src.as_bytes()) {
-        for capture in match_.captures {
-            let node = capture.node;
-            let msg = format!(
-                "{} not contained within (sub)module or program",
-                node.kind()
-            );
-            violations.push(Violation::from_node(&msg, &node));
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        let kind = child.kind();
+        if kind == "function" || kind == "subroutine" {
+            if let Some(x) = function_is_at_top_level(&child, _src) {
+                violations.push(x);
+            }
         }
+        violations.extend(external_function(&child, _src));
     }
     violations
 }
@@ -26,7 +34,7 @@ pub struct ExternalFunction {}
 
 impl Rule for ExternalFunction {
     fn method(&self) -> Method {
-        Method::Tree(external_fucntion)
+        Method::Tree(external_function)
     }
 
     fn explain(&self) -> &str {
@@ -67,7 +75,7 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(external_fucntion, source, Some(expected_violations));
+        test_tree_method(external_function, source, Some(expected_violations));
     }
 
     #[test]
@@ -87,6 +95,6 @@ mod tests {
                 end subroutine
             end module
             ";
-        test_tree_method(external_fucntion, source, None);
+        test_tree_method(external_function, source, None);
     }
 }

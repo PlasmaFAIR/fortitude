@@ -1,6 +1,7 @@
 pub mod check;
 pub mod cli;
 pub mod explain;
+mod parsing;
 mod rules;
 mod settings;
 mod test_utils;
@@ -206,10 +207,10 @@ impl Diagnostic {
 
     fn orderable(&self) -> (&Path, usize, usize, &str) {
         match self.violation.position() {
-            ViolationPosition::None => (&self.path.as_path(), 0, 0, &self.code.as_str()),
-            ViolationPosition::Line(line) => (&self.path.as_path(), line, 0, &self.code.as_str()),
+            ViolationPosition::None => (self.path.as_path(), 0, 0, self.code.as_str()),
+            ViolationPosition::Line(line) => (self.path.as_path(), line, 0, self.code.as_str()),
             ViolationPosition::LineCol((line, col)) => {
-                (&self.path.as_path(), line, col, &self.code.as_str())
+                (self.path.as_path(), line, col, self.code.as_str())
             }
         }
     }
