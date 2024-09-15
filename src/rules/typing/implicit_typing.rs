@@ -31,12 +31,8 @@ fn implicit_typing(node: &Node, _src: &str) -> Vec<Violation> {
     for child in node.named_children(&mut cursor) {
         match child.kind() {
             "module" | "submodule" | "program" => {
-                // For some reason a second 'module' node is found at the end
-                // of each module, but it has nothing in it.
-                if child.child_count() != 0 {
-                    if let Some(x) = implicit_none_not_found(&child) {
-                        violations.push(x)
-                    }
+                if let Some(x) = implicit_none_not_found(&child) {
+                    violations.push(x)
                 }
             }
             _ => (),
