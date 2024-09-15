@@ -1,4 +1,4 @@
-use crate::parsing::{dtype_is_number, intrinsic_type, to_text};
+use crate::parsing::{child_with_name, dtype_is_number, intrinsic_type, to_text};
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::Node;
@@ -7,26 +7,17 @@ use tree_sitter::Node;
 
 // TODO rules for intrinsic kinds in real(x, [KIND]) and similar type casting functions
 
-fn descendant_is_number_literal(node: &Node) -> bool {
-    // Find any number literal from a given starting point
-    if node.kind() == "number_literal" {
-        return true;
-    }
-    let mut cursor = node.walk();
-    let result = node
-        .children(&mut cursor)
-        .any(|x| descendant_is_number_literal(&x));
-    result
-}
-
-fn variable_has_literal_kind(node: &Node) -> Option<Violation> {
+fn variable_has_literal_kind(node: &Node, src: &str) -> Option<Violation> {
     let dtype = intrinsic_type(node)?;
     if dtype_is_number(dtype.as_str()) {
-        // Must check for number literals under the 'size' node, as otherwise
-        // this can pick up assignment at the end of the variable declaration
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            if child.kind() == "size" && descendant_is_number_literal(&child) {
+        if let Some(child) = child_with_name(node, "size") {
+            let txt = to_text(&child, src)?;
+            // Match for numbers that aren't preceeded by:
+            // - Letters: don't want to catch things like real64
+            // - Other numbers: again, shouldn't catch real64
+            // - Underscores: could be part of parameter name
+            // - "*": 'star kinds' are caught by a different rule
+            if regex_is_match!(r"[^A-z0-9_\*]\d", txt) {
                 let msg = format!(
                     "{} kind set with number literal, use 'iso_fortran_env' parameter",
                     dtype,
@@ -38,17 +29,17 @@ fn variable_has_literal_kind(node: &Node) -> Option<Violation> {
     None
 }
 
-fn literal_kind(node: &Node, _src: &str) -> Vec<Violation> {
+fn literal_kind(node: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         let kind = child.kind();
         if kind == "variable_declaration" || kind == "function_statement" {
-            if let Some(x) = variable_has_literal_kind(&child) {
+            if let Some(x) = variable_has_literal_kind(&child, src) {
                 violations.push(x)
             }
         }
-        violations.extend(literal_kind(&child, _src));
+        violations.extend(literal_kind(&child, src));
     }
     violations
 }

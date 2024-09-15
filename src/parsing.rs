@@ -22,12 +22,9 @@ pub fn strip_line_breaks(src: &str) -> String {
 /// Given a variable declaration or function statement, return its type if it's an intrinsic type,
 /// or None otherwise.
 pub fn intrinsic_type(node: &Node) -> Option<String> {
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        if child.kind() == "intrinsic_type" {
-            let grandchild = child.child(0)?;
-            return Some(grandchild.kind().to_string());
-        }
+    if let Some(child) = child_with_name(node, "intrinsic_type") {
+        let grandchild = child.child(0)?;
+        return Some(grandchild.kind().to_string());
     }
     None
 }
