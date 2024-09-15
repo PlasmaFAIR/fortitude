@@ -3,16 +3,8 @@ use tree_sitter::Node;
 
 /// Rules that check for syntax errors.
 
-fn syntax_error(node: &Node, _src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        if child.is_error() {
-            violations.push(Violation::from_node("syntax error", &child));
-        }
-        violations.extend(syntax_error(&child, _src));
-    }
-    violations
+fn syntax_error(node: &Node, _src: &str) -> Option<Violation> {
+    Some(Violation::from_node("syntax_error", node))
 }
 
 pub struct SyntaxError {}

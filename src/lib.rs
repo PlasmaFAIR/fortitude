@@ -160,7 +160,7 @@ pub enum Method {
     /// Methods that work on just the path name of the file.
     Path(fn(&Path) -> Option<Violation>),
     /// Methods that analyse the syntax tree.
-    Tree(fn(&tree_sitter::Node, &str) -> Vec<Violation>),
+    Tree(fn(&tree_sitter::Node, &str) -> Option<Violation>),
     /// Methods that analyse lines of code directly, using regex or otherwise.
     Text(fn(&str, &Settings) -> Vec<Violation>),
 }
@@ -178,10 +178,9 @@ pub trait Rule {
     fn explain(&self) -> &str;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
-    /// Only relevant for tree-sitter based rules, should not be implemented otherwise.
-    fn entrypoints(&self) -> Vec<&str> {
-        vec![]
-    }
+    /// Path-based rules should return a vector containing only "PATH" while
+    /// text-based rules should return a vector containing only "TEXT".
+    fn entrypoints(&self) -> Vec<&str>;
 }
 
 // Violation diagnostics

@@ -32,6 +32,10 @@ impl Rule for NonStandardFileExtension {
         by some compilers and build tools.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["PATH"]
+    }
 }
 
 #[cfg(test)]

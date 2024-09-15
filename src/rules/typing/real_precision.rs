@@ -18,27 +18,12 @@ fn double_precision_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-fn type_is_double_precision(node: &Node, src: &str) -> Option<Violation> {
-    // Trigger from 'intrinsic_type'
+fn double_precision(node: &Node, src: &str) -> Option<Violation> {
     let txt = to_text(node, src)?.to_lowercase();
     if let Some(msg) = double_precision_err_msg(txt.as_str()) {
         return Some(Violation::from_node(msg.as_str(), node));
     }
     None
-}
-
-fn double_precision(node: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        if child.kind() == "intrinsic_type" {
-            if let Some(x) = type_is_double_precision(&child, src) {
-                violations.push(x)
-            }
-        }
-        violations.extend(double_precision(&child, src));
-    }
-    violations
 }
 
 pub struct DoublePrecision {}
@@ -69,7 +54,7 @@ impl Rule for DoublePrecision {
     }
 }
 
-fn real_has_no_suffix(node: &Node, src: &str) -> Option<Violation> {
+fn no_real_suffix(node: &Node, src: &str) -> Option<Violation> {
     // Given a number literal, match anything with one or more of a decimal place or
     // an exponentiation e or E. There should not be an underscore present.
     // Exponentiation with d or D are ignored, and should be handled with a different
@@ -80,20 +65,6 @@ fn real_has_no_suffix(node: &Node, src: &str) -> Option<Violation> {
         return Some(Violation::from_node(&msg, node));
     }
     None
-}
-
-fn no_real_suffix(node: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        if child.kind() == "number_literal" {
-            if let Some(x) = real_has_no_suffix(&child, src) {
-                violations.push(x)
-            }
-        }
-        violations.extend(no_real_suffix(&child, src));
-    }
-    violations
 }
 
 pub struct NoRealSuffix {}
@@ -155,7 +126,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_double_precision() {
+    fn test_double_precision() -> Result<(), String> {
         let source = dedent(
             "
             double precision function double(x)
@@ -190,11 +161,12 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(double_precision, source, Some(expected_violations));
+        test_tree_method(&DoublePrecision {}, source, Some(expected_violations))?;
+        Ok(())
     }
 
     #[test]
-    fn test_no_real_suffix() {
+    fn test_no_real_suffix() -> Result<(), String> {
         let source = dedent(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
@@ -229,6 +201,7 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(no_real_suffix, &source, Some(expected_violations));
+        test_tree_method(&NoRealSuffix {}, &source, Some(expected_violations))?;
+        Ok(())
     }
 }

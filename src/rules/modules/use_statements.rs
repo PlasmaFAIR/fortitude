@@ -6,26 +6,12 @@ use tree_sitter::Node;
 
 // TODO Check that 'used' entity is actually used somewhere
 
-fn use_missing_only_clause(node: &Node) -> Option<Violation> {
+fn use_all(node: &Node, _src: &str) -> Option<Violation> {
     if child_with_name(node, "included_items").is_none() {
         let msg = "'use' statement missing 'only' clause";
         return Some(Violation::from_node(msg, node));
     }
     None
-}
-
-fn use_all(node: &Node, _src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        if child.kind() == "use_statement" {
-            if let Some(x) = use_missing_only_clause(&child) {
-                violations.push(x);
-            }
-        }
-        violations.extend(use_all(&child, _src));
-    }
-    violations
 }
 
 pub struct UseAll {}
@@ -67,7 +53,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_use_all() {
+    fn test_use_all() -> Result<(), String> {
         let source = dedent(
             "
             module my_module
@@ -77,6 +63,7 @@ mod tests {
             ",
         );
         let violation = violation!("'use' statement missing 'only' clause", 4, 5);
-        test_tree_method(use_all, source, Some(vec![violation]));
+        test_tree_method(&UseAll {}, source, Some(vec![violation]))?;
+        Ok(())
     }
 }

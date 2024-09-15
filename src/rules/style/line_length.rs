@@ -50,4 +50,8 @@ impl Rule for LineTooLong {
         is recommended to stay beneath this limit.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["TEXT"]
+    }
 }
