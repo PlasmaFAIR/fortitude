@@ -30,7 +30,7 @@ fn type_is_double_precision(node: &Node, src: &str) -> Option<Violation> {
 fn double_precision(node: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         if child.kind() == "intrinsic_type" {
             if let Some(x) = type_is_double_precision(&child, src) {
                 violations.push(x)
@@ -81,7 +81,7 @@ fn real_has_no_suffix(node: &Node, src: &str) -> Option<Violation> {
 fn no_real_suffix(node: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         if child.kind() == "number_literal" {
             if let Some(x) = real_has_no_suffix(&child, src) {
                 violations.push(x)

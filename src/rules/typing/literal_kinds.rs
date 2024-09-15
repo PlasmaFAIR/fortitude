@@ -32,7 +32,7 @@ fn variable_has_literal_kind(node: &Node, src: &str) -> Option<Violation> {
 fn literal_kind(node: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         let kind = child.kind();
         if kind == "variable_declaration" || kind == "function_statement" {
             if let Some(x) = variable_has_literal_kind(&child, src) {
@@ -122,7 +122,7 @@ fn literal_has_literal_suffix(node: &Node, src: &str) -> Option<Violation> {
 fn literal_kind_suffix(node: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         if child.kind() == "number_literal" {
             if let Some(x) = literal_has_literal_suffix(&child, src) {
                 violations.push(x)

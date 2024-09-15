@@ -17,7 +17,7 @@ fn use_missing_only_clause(node: &Node) -> Option<Violation> {
 fn use_all(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         if child.kind() == "use_statement" {
             if let Some(x) = use_missing_only_clause(&child) {
                 violations.push(x);

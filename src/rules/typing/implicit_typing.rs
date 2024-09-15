@@ -28,7 +28,7 @@ fn implicit_none_not_found(node: &Node) -> Option<Violation> {
 fn implicit_typing(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         match child.kind() {
             "module" | "submodule" | "program" => {
                 // For some reason a second 'module' node is found at the end
@@ -74,7 +74,7 @@ fn interface_implicit_none_not_found(node: &Node) -> Option<Violation> {
 fn interface_implicit_typing(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         let kind = child.kind();
         if kind == "function" || kind == "subroutine" {
             if let Some(x) = interface_implicit_none_not_found(&child) {
@@ -130,7 +130,7 @@ fn implicit_none_not_needed(node: &Node) -> Option<Violation> {
 fn superfluous_implicit_none(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         let kind = child.kind();
         if kind == "implicit_statement" {
             if let Some(x) = implicit_none_not_needed(&child) {

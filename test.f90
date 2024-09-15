@@ -29,6 +29,9 @@ module my_module
   real(dp), parameter :: pi_32 = 3.14159265358979
   real(dp), parameter :: pi_short = 3.1415
 
+  ! Should raise syntax error
+  real(dp), parameter :: mistake = 2e
+
   ! Should not raise error for maximum line length
   character(*), parameter :: long_string = "https://verylongurl.com/page/another_page/yet_another_page/wow"
 

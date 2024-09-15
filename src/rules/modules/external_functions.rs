@@ -18,7 +18,7 @@ fn function_is_at_top_level(node: &Node, _src: &str) -> Option<Violation> {
 fn external_function(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         let kind = child.kind();
         if kind == "function" || kind == "subroutine" {
             if let Some(x) = function_is_at_top_level(&child, _src) {

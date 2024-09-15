@@ -6,7 +6,7 @@ use tree_sitter::Node;
 fn syntax_error(node: &Node, _src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         if child.is_error() {
             violations.push(Violation::from_node("syntax error", &child));
         }

@@ -35,7 +35,7 @@ fn variable_has_star_kind(node: &Node, src: &str) -> Option<Violation> {
 fn star_kind(node: &Node, src: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.named_children(&mut cursor) {
         let kind = child.kind();
         if kind == "variable_declaration" || kind == "function_statement" {
             if let Some(x) = variable_has_star_kind(&child, src) {
