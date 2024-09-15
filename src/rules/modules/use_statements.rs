@@ -1,3 +1,4 @@
+use crate::parsing::child_with_name;
 use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 
@@ -6,11 +7,7 @@ use tree_sitter::Node;
 // TODO Check that 'used' entity is actually used somewhere
 
 fn use_missing_only_clause(node: &Node) -> Option<Violation> {
-    let mut cursor = node.walk();
-    if !node
-        .children(&mut cursor)
-        .any(|x| x.kind() == "included_items")
-    {
+    if child_with_name(node, "included_items").is_none() {
         let msg = "'use' statement missing 'only' clause";
         return Some(Violation::from_node(msg, node));
     }

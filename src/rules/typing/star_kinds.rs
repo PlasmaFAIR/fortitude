@@ -1,4 +1,6 @@
-use crate::parsing::{dtype_is_number, intrinsic_type, strip_line_breaks, to_text};
+use crate::parsing::{
+    child_with_name, dtype_is_number, intrinsic_type, strip_line_breaks, to_text,
+};
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_captures;
 use tree_sitter::Node;
@@ -10,23 +12,20 @@ use tree_sitter::Node;
 fn variable_has_star_kind(node: &Node, src: &str) -> Option<Violation> {
     let dtype = intrinsic_type(node)?;
     if dtype_is_number(dtype.as_str()) {
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            if child.kind() == "size" {
-                let size = strip_line_breaks(to_text(&child, src)?);
-                // Match anything beginning with a '*' followed by any amount of
-                // whitespace and some digits. Parameters like real64 aren't
-                // allowed in this syntax, so we don't need to worry about them.
-                if let Some((_, kind)) = regex_captures!(r"^\*\s*([\d]+)", size.as_str()) {
-                    let msg = format!(
-                        "{}{} is non-standard, use {}({})",
-                        dtype,
-                        size.replace(" ", "").replace("\t", ""),
-                        dtype,
-                        kind,
-                    );
-                    return Some(Violation::from_node(&msg, node));
-                }
+        if let Some(child) = child_with_name(node, "size") {
+            let size = strip_line_breaks(to_text(&child, src)?);
+            // Match anything beginning with a '*' followed by any amount of
+            // whitespace and some digits. Parameters like real64 aren't
+            // allowed in this syntax, so we don't need to worry about them.
+            if let Some((_, kind)) = regex_captures!(r"^\*\s*(\d+)", size.as_str()) {
+                let msg = format!(
+                    "{}{} is non-standard, use {}({})",
+                    dtype,
+                    size.replace(" ", "").replace("\t", ""),
+                    dtype,
+                    kind,
+                );
+                return Some(Violation::from_node(&msg, node));
             }
         }
     }

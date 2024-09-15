@@ -1,3 +1,4 @@
+use crate::parsing::child_with_name;
 use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 /// Defines rules that raise errors if implicit typing is in use.
@@ -10,11 +11,8 @@ fn implicit_statement_is_none(node: &Node) -> bool {
 }
 
 fn child_is_implicit_none(node: &Node) -> bool {
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        if child.kind() == "implicit_statement" {
-            return implicit_statement_is_none(&child);
-        }
+    if let Some(child) = child_with_name(node, "implicit_statement") {
+        return implicit_statement_is_none(&child);
     }
     false
 }
