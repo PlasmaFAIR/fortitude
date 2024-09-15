@@ -27,4 +27,8 @@ impl Rule for TrailingWhitespace {
         shared projects.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["TEXT"]
+    }
 }

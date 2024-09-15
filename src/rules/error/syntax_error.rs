@@ -3,16 +3,8 @@ use tree_sitter::Node;
 
 /// Rules that check for syntax errors.
 
-fn syntax_error(node: &Node, _src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        if child.is_error() {
-            violations.push(Violation::from_node("syntax error", &child));
-        }
-        violations.extend(syntax_error(&child, _src));
-    }
-    violations
+fn syntax_error(node: &Node, _src: &str) -> Option<Violation> {
+    Some(Violation::from_node("syntax_error", node))
 }
 
 pub struct SyntaxError {}
@@ -32,5 +24,9 @@ impl Rule for SyntaxError {
         If this rule is reporting valid Fortran, please let us know, as it's likely a
         bug in our code or in our parser!
         "
+    }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["ERROR"]
     }
 }

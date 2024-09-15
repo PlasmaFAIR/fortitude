@@ -4,12 +4,13 @@ mod modules;
 mod style;
 mod typing;
 use crate::{Category, Code, Rule};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 /// A collection of all rules, and utilities to select a subset at runtime.
 
 pub type RuleBox = Box<dyn Rule>;
-pub type RuleSet = HashSet<String>;
-pub type RuleMap = HashMap<String, RuleBox>;
+pub type RuleSet = BTreeSet<String>;
+pub type RuleMap = BTreeMap<String, RuleBox>;
+pub type EntryPointMap = BTreeMap<String, Vec<(String, RuleBox)>>;
 
 /// Create a new `Rule` given a rule code, expressed as a string.
 pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
@@ -106,4 +107,27 @@ pub fn rulemap(set: &RuleSet) -> anyhow::Result<RuleMap> {
         rules.insert(code.to_string(), rule);
     }
     Ok(rules)
+}
+
+/// Map tree-sitter node types to the rules that operate over them
+pub fn entrypoint_map(set: &RuleSet) -> anyhow::Result<EntryPointMap> {
+    let mut map = EntryPointMap::new();
+    for code in set {
+        let rule = build_rule(code)?;
+        let entrypoints = rule.entrypoints();
+        for entrypoint in entrypoints {
+            match map.get_mut(entrypoint) {
+                Some(rule_vec) => {
+                    rule_vec.push((code.to_string(), build_rule(code)?));
+                }
+                None => {
+                    map.insert(
+                        entrypoint.to_string(),
+                        vec![(code.to_string(), build_rule(code)?)],
+                    );
+                }
+            }
+        }
+    }
+    Ok(map)
 }

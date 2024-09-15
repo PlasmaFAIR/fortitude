@@ -9,7 +9,7 @@ use tree_sitter::Node;
 /// `character*(*)`, as although the latter is permitted by the standard, the former is
 /// more explicit.
 
-fn variable_has_star_kind(node: &Node, src: &str) -> Option<Violation> {
+fn star_kind(node: &Node, src: &str) -> Option<Violation> {
     let dtype = intrinsic_type(node)?;
     if dtype_is_number(dtype.as_str()) {
         if let Some(child) = child_with_name(node, "size") {
@@ -32,21 +32,6 @@ fn variable_has_star_kind(node: &Node, src: &str) -> Option<Violation> {
     None
 }
 
-fn star_kind(node: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        let kind = child.kind();
-        if kind == "variable_declaration" || kind == "function_statement" {
-            if let Some(x) = variable_has_star_kind(&child, src) {
-                violations.push(x)
-            }
-        }
-        violations.extend(star_kind(&child, src));
-    }
-    violations
-}
-
 pub struct StarKind {}
 
 impl Rule for StarKind {
@@ -63,6 +48,10 @@ impl Rule for StarKind {
         built-in functions 'selected_real_kind' and 'selected_int_kind'.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["variable_declaration", "function_statement"]
+    }
 }
 
 #[cfg(test)]
@@ -73,7 +62,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_star_kind() {
+    fn test_star_kind() -> Result<(), String> {
         let source = dedent(
             "
             integer*8 function add_if(x, y, z)
@@ -111,6 +100,7 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(star_kind, source, Some(expected_violations));
+        test_tree_method(&StarKind {}, source, Some(expected_violations))?;
+        Ok(())
     }
 }

@@ -7,7 +7,7 @@ use tree_sitter::Node;
 
 // TODO rules for intrinsic kinds in real(x, [KIND]) and similar type casting functions
 
-fn variable_has_literal_kind(node: &Node, src: &str) -> Option<Violation> {
+fn literal_kind(node: &Node, src: &str) -> Option<Violation> {
     let dtype = intrinsic_type(node)?;
     if dtype_is_number(dtype.as_str()) {
         if let Some(child) = child_with_name(node, "size") {
@@ -27,21 +27,6 @@ fn variable_has_literal_kind(node: &Node, src: &str) -> Option<Violation> {
         }
     }
     None
-}
-
-fn literal_kind(node: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        let kind = child.kind();
-        if kind == "variable_declaration" || kind == "function_statement" {
-            if let Some(x) = variable_has_literal_kind(&child, src) {
-                violations.push(x)
-            }
-        }
-        violations.extend(literal_kind(&child, src));
-    }
-    violations
 }
 
 pub struct LiteralKind {}
@@ -105,9 +90,13 @@ impl Rule for LiteralKind {
         ```
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["variable_declaration", "function_statement"]
+    }
 }
 
-fn literal_has_literal_suffix(node: &Node, src: &str) -> Option<Violation> {
+fn literal_kind_suffix(node: &Node, src: &str) -> Option<Violation> {
     let txt = to_text(node, src)?;
     if regex_is_match!(r"_\d+$", txt) {
         let msg = format!(
@@ -117,20 +106,6 @@ fn literal_has_literal_suffix(node: &Node, src: &str) -> Option<Violation> {
         return Some(Violation::from_node(&msg, node));
     }
     None
-}
-
-fn literal_kind_suffix(node: &Node, src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        if child.kind() == "number_literal" {
-            if let Some(x) = literal_has_literal_suffix(&child, src) {
-                violations.push(x)
-            }
-        }
-        violations.extend(literal_kind_suffix(&child, src));
-    }
-    violations
 }
 
 pub struct LiteralKindSuffix {}
@@ -165,6 +140,10 @@ impl Rule for LiteralKindSuffix {
         ```
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["number_literal"]
+    }
 }
 
 #[cfg(test)]
@@ -175,7 +154,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_literal_kind() {
+    fn test_literal_kind() -> Result<(), String> {
         let source = dedent(
             "
             integer(8) function add_if(x, y, z)
@@ -222,11 +201,12 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(literal_kind, source, Some(expected_violations));
+        test_tree_method(&LiteralKind {}, source, Some(expected_violations))?;
+        Ok(())
     }
 
     #[test]
-    fn test_literal_kind_suffix() {
+    fn test_literal_kind_suffix() -> Result<(), String> {
         let source = dedent(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
@@ -248,6 +228,7 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(literal_kind_suffix, source, Some(expected_violations));
+        test_tree_method(&LiteralKindSuffix {}, source, Some(expected_violations))?;
+        Ok(())
     }
 }

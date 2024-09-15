@@ -17,33 +17,12 @@ fn child_is_implicit_none(node: &Node) -> bool {
     false
 }
 
-fn implicit_none_not_found(node: &Node) -> Option<Violation> {
+fn implicit_typing(node: &Node, _src: &str) -> Option<Violation> {
     if !child_is_implicit_none(node) {
         let msg = format!("{} missing 'implicit none'", node.kind());
         return Some(Violation::from_node(&msg, node));
     }
     None
-}
-
-fn implicit_typing(node: &Node, _src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        match child.kind() {
-            "module" | "submodule" | "program" => {
-                // For some reason a second 'module' node is found at the end
-                // of each module, but it has nothing in it.
-                if child.child_count() != 0 {
-                    if let Some(x) = implicit_none_not_found(&child) {
-                        violations.push(x)
-                    }
-                }
-            }
-            _ => (),
-        }
-        violations.extend(implicit_typing(&child, _src));
-    }
-    violations
 }
 
 pub struct ImplicitTyping {}
@@ -59,31 +38,19 @@ impl Rule for ImplicitTyping {
         reduces the readability of code and increases the chances of typing errors.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["module", "submodule", "program"]
+    }
 }
 
-fn interface_implicit_none_not_found(node: &Node) -> Option<Violation> {
-    // check it is an interface function
+fn interface_implicit_typing(node: &Node, _src: &str) -> Option<Violation> {
     let parent = node.parent()?;
     if parent.kind() == "interface" && !child_is_implicit_none(node) {
         let msg = format!("interface {} missing 'implicit none'", node.kind());
         return Some(Violation::from_node(&msg, node));
     }
     None
-}
-
-fn interface_implicit_typing(node: &Node, _src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        let kind = child.kind();
-        if kind == "function" || kind == "subroutine" {
-            if let Some(x) = interface_implicit_none_not_found(&child) {
-                violations.push(x)
-            }
-        }
-        violations.extend(interface_implicit_typing(&child, _src));
-    }
-    violations
 }
 
 pub struct InterfaceImplicitTyping {}
@@ -99,6 +66,10 @@ impl Rule for InterfaceImplicitTyping {
         inside a module that uses 'implicit none'.
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["function", "subroutine"]
+    }
 }
 
 fn top_level_scope(node: Node) -> Option<Node> {
@@ -109,7 +80,7 @@ fn top_level_scope(node: Node) -> Option<Node> {
     }
 }
 
-fn implicit_none_not_needed(node: &Node) -> Option<Violation> {
+fn superfluous_implicit_none(node: &Node, _src: &str) -> Option<Violation> {
     if !implicit_statement_is_none(node) {
         return None;
     }
@@ -127,21 +98,6 @@ fn implicit_none_not_needed(node: &Node) -> Option<Violation> {
     None
 }
 
-fn superfluous_implicit_none(node: &Node, _src: &str) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        let kind = child.kind();
-        if kind == "implicit_statement" {
-            if let Some(x) = implicit_none_not_needed(&child) {
-                violations.push(x)
-            }
-        }
-        violations.extend(superfluous_implicit_none(&child, _src));
-    }
-    violations
-}
-
 pub struct SuperfluousImplicitNone {}
 
 impl Rule for SuperfluousImplicitNone {
@@ -155,6 +111,10 @@ impl Rule for SuperfluousImplicitNone {
         functions and subroutines (except when using interfaces).
         "
     }
+
+    fn entrypoints(&self) -> Vec<&str> {
+        vec!["implicit_statement"]
+    }
 }
 
 #[cfg(test)]
@@ -165,7 +125,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_implicit_typing() {
+    fn test_implicit_typing() -> Result<(), String> {
         let source = dedent(
             "
             module my_module
@@ -184,11 +144,12 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(implicit_typing, source, Some(expected_violations));
+        test_tree_method(&ImplicitTyping {}, source, Some(expected_violations))?;
+        Ok(())
     }
 
     #[test]
-    fn test_implicit_none() {
+    fn test_implicit_none() -> Result<(), String> {
         let source = "
             module my_module
                 implicit none
@@ -205,11 +166,12 @@ mod tests {
                 write(*,*) x
             end program
             ";
-        test_tree_method(implicit_typing, source, None);
+        test_tree_method(&ImplicitTyping {}, source, None)?;
+        Ok(())
     }
 
     #[test]
-    fn test_interface_implicit_typing() {
+    fn test_interface_implicit_typing() -> Result<(), String> {
         let source = dedent(
             "
             module my_module
@@ -239,11 +201,16 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(interface_implicit_typing, source, Some(expected_violations));
+        test_tree_method(
+            &InterfaceImplicitTyping {},
+            source,
+            Some(expected_violations),
+        )?;
+        Ok(())
     }
 
     #[test]
-    fn test_interface_implicit_none() {
+    fn test_interface_implicit_none() -> Result<(), String> {
         let source = "
             module my_module
                 implicit none
@@ -266,11 +233,12 @@ mod tests {
                 write(*,*) 42
             end program
             ";
-        test_tree_method(interface_implicit_typing, source, None);
+        test_tree_method(&InterfaceImplicitTyping {}, source, None)?;
+        Ok(())
     }
 
     #[test]
-    fn test_superfluous_implicit_none() {
+    fn test_superfluous_implicit_none() -> Result<(), String> {
         let source = dedent(
             "
             module my_module
@@ -322,11 +290,16 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(superfluous_implicit_none, source, Some(expected_violations));
+        test_tree_method(
+            &SuperfluousImplicitNone {},
+            source,
+            Some(expected_violations),
+        )?;
+        Ok(())
     }
 
     #[test]
-    fn test_no_superfluous_implicit_none() {
+    fn test_no_superfluous_implicit_none() -> Result<(), String> {
         let source = "
             module my_module
                 implicit none
@@ -365,6 +338,7 @@ mod tests {
                 end subroutine
             end program
             ";
-        test_tree_method(superfluous_implicit_none, source, None);
+        test_tree_method(&SuperfluousImplicitNone {}, source, None)?;
+        Ok(())
     }
 }
