@@ -30,6 +30,8 @@ pub enum Category {
     Typing,
     /// Failure to use modules or use them appropriately.
     Modules,
+    /// Best practices for setting floating point precision.
+    Precision,
     /// Check path names, directory structures, etc.
     FileSystem,
 }
@@ -41,6 +43,7 @@ impl Category {
             "S" => Ok(Self::Style),
             "T" => Ok(Self::Typing),
             "M" => Ok(Self::Modules),
+            "P" => Ok(Self::Precision),
             "F" => Ok(Self::FileSystem),
             _ => {
                 anyhow::bail!("{} is not a rule category.", s)
@@ -56,6 +59,7 @@ impl fmt::Display for Category {
             Self::Style => "S",
             Self::Typing => "T",
             Self::Modules => "M",
+            Self::Precision => "P",
             Self::FileSystem => "F",
         };
         write!(f, "{}", s)

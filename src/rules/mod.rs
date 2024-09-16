@@ -1,6 +1,7 @@
 mod error;
 mod filesystem;
 mod modules;
+mod precision;
 mod style;
 mod typing;
 use crate::{Category, Code, Rule};
@@ -37,39 +38,39 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
         Code {
             category: Category::Typing,
             number: 1,
-        } => Ok(Box::new(typing::literal_kinds::LiteralKind {})),
-        Code {
-            category: Category::Typing,
-            number: 2,
-        } => Ok(Box::new(typing::literal_kinds::LiteralKindSuffix {})),
-        Code {
-            category: Category::Typing,
-            number: 11,
-        } => Ok(Box::new(typing::star_kinds::StarKind {})),
-        Code {
-            category: Category::Typing,
-            number: 21,
-        } => Ok(Box::new(typing::real_precision::DoublePrecision {})),
-        Code {
-            category: Category::Typing,
-            number: 22,
-        } => Ok(Box::new(typing::real_precision::NoRealSuffix {})),
-        Code {
-            category: Category::Typing,
-            number: 31,
         } => Ok(Box::new(typing::implicit_typing::ImplicitTyping {})),
         Code {
             category: Category::Typing,
-            number: 32,
+            number: 2,
         } => Ok(Box::new(
             typing::implicit_typing::InterfaceImplicitTyping {},
         )),
         Code {
             category: Category::Typing,
-            number: 33,
+            number: 3,
         } => Ok(Box::new(
             typing::implicit_typing::SuperfluousImplicitNone {},
         )),
+        Code {
+            category: Category::Typing,
+            number: 11,
+        } => Ok(Box::new(typing::literal_kinds::LiteralKind {})),
+        Code {
+            category: Category::Typing,
+            number: 12,
+        } => Ok(Box::new(typing::literal_kinds::LiteralKindSuffix {})),
+        Code {
+            category: Category::Typing,
+            number: 21,
+        } => Ok(Box::new(typing::star_kinds::StarKind {})),
+        Code {
+            category: Category::Precision,
+            number: 1,
+        } => Ok(Box::new(precision::kind_suffixes::NoRealSuffix {})),
+        Code {
+            category: Category::Precision,
+            number: 11,
+        } => Ok(Box::new(precision::double_precision::DoublePrecision {})),
         Code {
             category: Category::Modules,
             number: 1,
@@ -87,8 +88,8 @@ pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
 // Returns the full set of all rules.
 pub fn full_ruleset() -> RuleSet {
     let all_rules = &[
-        "E001", "F001", "S001", "S101", "T001", "T002", "T011", "T021", "T022", "T031", "T032",
-        "T033", "M001", "M011",
+        "E001", "F001", "S001", "S101", "T001", "T002", "T003", "T011", "T012", "T021", "P001",
+        "P011", "M001", "M011",
     ];
     RuleSet::from_iter(all_rules.iter().map(|x| x.to_string()))
 }
