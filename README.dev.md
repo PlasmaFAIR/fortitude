@@ -52,3 +52,16 @@ Fortitude should be categorised appropriately and their name should describe the
 the rule is intended to fix. Words such as 'forbid' should be omitted. For example, the
 name for the rule that warns of overly long lines is `LineTooLong`, and not something
 like `AvoidLineTooLong` or `KeepLinesShort`.
+
+## Making New Releases
+
+To make a new release, the following steps must be completed in order:
+
+- Make a new commit that updates the project version in `pyproject.toml` and
+  `Cargo.toml`.
+  - Remember to run `cargo build` to update the `Cargo.lock` file too!
+- Open a new PR to merge this change.
+- After merging, make a new release on GitHub.
+  - This will automatically upload the new version to PyPI.
+- On your machine, pull the main branch, and run `cargo publish`.
+  - This will upload the Rust crate to `crates.io`.
