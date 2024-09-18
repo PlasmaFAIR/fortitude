@@ -1,4 +1,5 @@
 use crate::cli::CheckArgs;
+use crate::parsing::named_nodes_depth_first;
 use crate::rules::{default_ruleset, entrypoint_map, EntryPointMap, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
@@ -62,18 +63,17 @@ fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
 
 fn tree_rules(
     entrypoints: &EntryPointMap,
-    node: &Node,
+    root: &Node,
     src: &str,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
     let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
+    for node in named_nodes_depth_first(root) {
         let empty = vec![];
-        let rules = entrypoints.get(child.kind()).unwrap_or(&empty);
+        let rules = entrypoints.get(node.kind()).unwrap_or(&empty);
         for (code, rule) in rules {
             match rule.method() {
                 Method::Tree(f) => {
-                    if let Some(violation) = f(&child, src) {
+                    if let Some(violation) = f(&node, src) {
                         violations.push((code.clone(), violation));
                     }
                 }
@@ -82,7 +82,6 @@ fn tree_rules(
                 }
             }
         }
-        violations.extend(tree_rules(entrypoints, &child, src)?);
     }
     Ok(violations)
 }
