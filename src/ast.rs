@@ -50,15 +50,15 @@ impl<'a> Iterator for DepthFirstIterator<'a> {
 }
 
 /// Iterate over all nodes beneath the current node in a depth-first manner.
-pub fn descendants_depth_first<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
+pub fn descendants<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
     DepthFirstIterator {
         cursor: node.walk(),
     }
 }
 
 /// Iterate over all named nodes beneath the current node in a depth-first manner.
-pub fn named_descendants_depth_first<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
-    descendants_depth_first(node).filter(|&x| x.is_named())
+pub fn named_descendants<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
+    descendants(node).filter(|&x| x.is_named())
 }
 
 pub struct AncestorsIterator<'a> {

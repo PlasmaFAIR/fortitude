@@ -57,12 +57,14 @@ impl Rule for StarKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::test_tree_method;
+    use crate::ast::{named_descendants, parse};
     use crate::violation;
+    use anyhow::bail;
+    use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
     #[test]
-    fn test_star_kind() -> Result<(), String> {
+    fn test_star_kind() -> anyhow::Result<()> {
         let source = dedent(
             "
             integer*8 function add_if(x, y, z)
@@ -86,7 +88,8 @@ mod tests {
             end subroutine
             ",
         );
-        let expected_violations = [
+
+        let expected: Vec<Violation> = [
             (2, 1, "integer*8", "integer(8)"),
             (4, 3, "integer*4", "integer(4)"),
             (5, 3, "logical*4", "logical(4)"),
@@ -100,7 +103,20 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(&StarKind {}, source, Some(expected_violations))?;
+
+        let rule = StarKind {};
+        if let Method::Tree(f) = rule.method() {
+            let entrypoints = rule.entrypoints();
+            let actual: Vec<Violation> = named_descendants(&parse(&source)?.root_node())
+                .filter(|x| entrypoints.contains(&x.kind()))
+                .filter_map(|x| f(&x, source.as_str()))
+                .collect();
+
+            assert_eq!(actual, expected);
+        } else {
+            bail!("Incorrect method type")
+        }
+
         Ok(())
     }
 }
