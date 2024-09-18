@@ -1,11 +1,11 @@
 use tree_sitter::{Node, TreeCursor};
 /// Utilities to simplify parsing tree-sitter structures.
 
-pub struct TreeWalkerDepthFirst<'a> {
+pub struct DepthFirstIterator<'a> {
     cursor: TreeCursor<'a>,
 }
 
-impl<'a> Iterator for TreeWalkerDepthFirst<'a> {
+impl<'a> Iterator for DepthFirstIterator<'a> {
     type Item = Node<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -24,14 +24,31 @@ impl<'a> Iterator for TreeWalkerDepthFirst<'a> {
     }
 }
 
-pub fn nodes_depth_first<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
-    TreeWalkerDepthFirst {
+pub fn descendants_depth_first<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
+    DepthFirstIterator {
         cursor: node.walk(),
     }
 }
 
-pub fn named_nodes_depth_first<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
-    nodes_depth_first(node).filter(|&x| x.is_named())
+pub fn named_descendants_depth_first<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
+    descendants_depth_first(node).filter(|&x| x.is_named())
+}
+
+pub struct AncestorsIterator<'a> {
+    node: Node<'a>,
+}
+
+impl<'a> Iterator for AncestorsIterator<'a> {
+    type Item = Node<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.node = self.node.parent()?;
+        Some(self.node)
+    }
+}
+
+pub fn ancestors<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
+    AncestorsIterator { node: *node }
 }
 
 /// Get the first child with a given name. Returns None if not found.

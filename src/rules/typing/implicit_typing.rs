@@ -1,4 +1,4 @@
-use crate::parsing::child_with_name;
+use crate::parsing::{ancestors, child_with_name};
 use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 /// Defines rules that raise errors if implicit typing is in use.
@@ -72,21 +72,14 @@ impl Rule for InterfaceImplicitTyping {
     }
 }
 
-fn top_level_scope(node: Node) -> Option<Node> {
-    let parent = node.parent()?;
-    match parent.kind() {
-        "module" | "submodule" | "program" => Some(parent),
-        _ => top_level_scope(parent),
-    }
-}
-
 fn superfluous_implicit_none(node: &Node, _src: &str) -> Option<Violation> {
     if !implicit_statement_is_none(node) {
         return None;
     }
     let parent_kind = node.parent()?.kind();
-    if parent_kind == "function" || parent_kind == "subroutine" {
-        let enclosing = top_level_scope(*node)?;
+    if matches!(parent_kind, "function" | "subroutine") {
+        let enclosing =
+            ancestors(node).find(|x| matches!(x.kind(), "module" | "submodule" | "program"))?;
         if child_is_implicit_none(&enclosing) {
             let msg = format!(
                 "'implicit none' is set on the enclosing {}, and isn't needed here",

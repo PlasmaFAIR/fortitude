@@ -1,5 +1,5 @@
 use crate::cli::CheckArgs;
-use crate::parsing::named_nodes_depth_first;
+use crate::parsing::named_descendants_depth_first;
 use crate::rules::{default_ruleset, entrypoint_map, EntryPointMap, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
@@ -67,7 +67,7 @@ fn tree_rules(
     src: &str,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
     let mut violations = Vec::new();
-    for node in named_nodes_depth_first(root) {
+    for node in named_descendants_depth_first(root) {
         let empty = vec![];
         let rules = entrypoints.get(node.kind()).unwrap_or(&empty);
         for (code, rule) in rules {
