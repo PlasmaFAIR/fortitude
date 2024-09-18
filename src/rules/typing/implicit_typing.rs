@@ -1,4 +1,4 @@
-use crate::parsing::{ancestors, child_with_name};
+use crate::ast::{ancestors, child_with_name};
 use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 /// Defines rules that raise errors if implicit typing is in use.

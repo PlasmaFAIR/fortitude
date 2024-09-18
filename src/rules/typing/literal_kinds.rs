@@ -1,4 +1,4 @@
-use crate::parsing::{child_with_name, dtype_is_number, intrinsic_type, to_text};
+use crate::ast::{child_with_name, dtype_is_plain_number, parse_intrinsic_type, to_text};
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::Node;
@@ -8,8 +8,8 @@ use tree_sitter::Node;
 // TODO rules for intrinsic kinds in real(x, [KIND]) and similar type casting functions
 
 fn literal_kind(node: &Node, src: &str) -> Option<Violation> {
-    let dtype = intrinsic_type(node)?;
-    if dtype_is_number(dtype.as_str()) {
+    let dtype = parse_intrinsic_type(node)?;
+    if dtype_is_plain_number(dtype.as_str()) {
         if let Some(child) = child_with_name(node, "size") {
             let txt = to_text(&child, src)?;
             // Match for numbers that aren't preceeded by:

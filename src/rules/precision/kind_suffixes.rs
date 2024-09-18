@@ -1,4 +1,4 @@
-use crate::parsing::to_text;
+use crate::ast::to_text;
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::Node;

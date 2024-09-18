@@ -1,4 +1,4 @@
-use crate::parsing::to_text;
+use crate::ast::to_text;
 use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 /// Defines rules to avoid the 'double precision' and 'double complex' types.

@@ -1,5 +1,5 @@
+use crate::ast::named_descendants_depth_first;
 use crate::cli::CheckArgs;
-use crate::parsing::named_descendants_depth_first;
 use crate::rules::{default_ruleset, entrypoint_map, EntryPointMap, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
@@ -130,7 +130,7 @@ fn check_file(
         }
     }
 
-    // Perform concrete syntax tree analysis
+    // Perform AST analysis
     let tree = parser
         .parse(&source, None)
         .context("Could not parse file")?;

@@ -1,5 +1,5 @@
 use tree_sitter::{Node, TreeCursor};
-/// Utilities to simplify parsing tree-sitter structures.
+/// Utilities to simplify the navigation of tree-sitter structures.
 
 pub struct DepthFirstIterator<'a> {
     cursor: TreeCursor<'a>,
@@ -24,12 +24,14 @@ impl<'a> Iterator for DepthFirstIterator<'a> {
     }
 }
 
+/// Iterate over all nodes beneath the current node in a depth-first manner.
 pub fn descendants_depth_first<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
     DepthFirstIterator {
         cursor: node.walk(),
     }
 }
 
+/// Iterate over all named nodes beneath the current node in a depth-first manner.
 pub fn named_descendants_depth_first<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
     descendants_depth_first(node).filter(|&x| x.is_named())
 }
@@ -47,6 +49,7 @@ impl<'a> Iterator for AncestorsIterator<'a> {
     }
 }
 
+// Iterate over all nodes above the current node.
 pub fn ancestors<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
     AncestorsIterator { node: *node }
 }
@@ -69,7 +72,7 @@ pub fn strip_line_breaks(src: &str) -> String {
 
 /// Given a variable declaration or function statement, return its type if it's an intrinsic type,
 /// or None otherwise.
-pub fn intrinsic_type(node: &Node) -> Option<String> {
+pub fn parse_intrinsic_type(node: &Node) -> Option<String> {
     if let Some(child) = child_with_name(node, "intrinsic_type") {
         let grandchild = child.child(0)?;
         return Some(grandchild.kind().to_string());
@@ -77,9 +80,9 @@ pub fn intrinsic_type(node: &Node) -> Option<String> {
     None
 }
 
-/// Returns true if the type passed to it is number-like.
-/// Deliberately does not include 'double precision' or 'double complex'.
-pub fn dtype_is_number(dtype: &str) -> bool {
+/// Returns true if the type passed to it is number-like, and of a kind that can be modified using
+/// kinds. 'double precision' and 'double complex' are not included.
+pub fn dtype_is_plain_number(dtype: &str) -> bool {
     matches!(
         dtype.to_lowercase().as_str(),
         "integer" | "real" | "logical" | "complex"

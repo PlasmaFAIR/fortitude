@@ -1,5 +1,5 @@
-use crate::parsing::{
-    child_with_name, dtype_is_number, intrinsic_type, strip_line_breaks, to_text,
+use crate::ast::{
+    child_with_name, dtype_is_plain_number, parse_intrinsic_type, strip_line_breaks, to_text,
 };
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_captures;
@@ -10,8 +10,8 @@ use tree_sitter::Node;
 /// more explicit.
 
 fn star_kind(node: &Node, src: &str) -> Option<Violation> {
-    let dtype = intrinsic_type(node)?;
-    if dtype_is_number(dtype.as_str()) {
+    let dtype = parse_intrinsic_type(node)?;
+    if dtype_is_plain_number(dtype.as_str()) {
         if let Some(child) = child_with_name(node, "size") {
             let size = strip_line_breaks(to_text(&child, src)?);
             // Match anything beginning with a '*' followed by any amount of

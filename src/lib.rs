@@ -1,7 +1,7 @@
+mod ast;
 pub mod check;
 pub mod cli;
 pub mod explain;
-mod parsing;
 mod rules;
 mod settings;
 mod test_utils;

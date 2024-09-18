@@ -1,4 +1,4 @@
-use crate::parsing::child_with_name;
+use crate::ast::child_with_name;
 use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 
