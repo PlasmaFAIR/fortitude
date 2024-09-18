@@ -1,5 +1,30 @@
-use tree_sitter::{Node, TreeCursor};
-/// Utilities to simplify the navigation of tree-sitter structures.
+use anyhow::Context;
+use lazy_static::lazy_static;
+/// Contains methods to parse Fortran code into a tree-sitter Tree and utilites to simplify the
+/// navigation of a Tree.
+use std::sync::Mutex;
+use tree_sitter::{Node, Parser, Tree, TreeCursor};
+
+lazy_static! {
+    static ref PARSER: Mutex<Parser> = {
+        let parser = Mutex::new(Parser::new());
+        parser
+            .lock()
+            .unwrap()
+            .set_language(&tree_sitter_fortran::language())
+            .expect("Error loading Fortran grammar");
+        parser
+    };
+}
+
+/// Parse a Fortran string and return the root note to the AST.
+pub fn parse<S: AsRef<str>>(source: S) -> anyhow::Result<Tree> {
+    PARSER
+        .lock()
+        .unwrap()
+        .parse(source.as_ref(), None)
+        .context("Failed to parse")
+}
 
 pub struct DepthFirstIterator<'a> {
     cursor: TreeCursor<'a>,

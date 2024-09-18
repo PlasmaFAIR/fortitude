@@ -146,6 +146,7 @@ dependencies = [
  "colored",
  "itertools",
  "lazy-regex",
+ "lazy_static",
  "textwrap",
  "tree-sitter",
  "tree-sitter-fortran",
