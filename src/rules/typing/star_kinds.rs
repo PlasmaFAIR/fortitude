@@ -57,9 +57,8 @@ impl Rule for StarKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{named_descendants, parse};
+    use crate::settings::default_settings;
     use crate::violation;
-    use anyhow::bail;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
@@ -104,18 +103,8 @@ mod tests {
         })
         .collect();
 
-        let rule = StarKind {};
-        if let Method::Tree(f) = rule.method() {
-            let entrypoints = rule.entrypoints();
-            let actual: Vec<Violation> = named_descendants(&parse(&source)?.root_node())
-                .filter(|x| entrypoints.contains(&x.kind()))
-                .filter_map(|x| f(&x, source.as_str()))
-                .collect();
-
-            assert_eq!(actual, expected);
-        } else {
-            bail!("Incorrect method type")
-        }
+        let actual = StarKind {}.apply(source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
 
         Ok(())
     }

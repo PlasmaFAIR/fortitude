@@ -115,9 +115,9 @@ fn check_file(
     let source = read_to_string(path)?;
     for (code, rule) in text_rules {
         match rule.method() {
-            Method::Text(f) => {
+            Method::Text(_) => {
                 violations.extend(
-                    f(&source, settings)
+                    rule.apply(&source, settings)?
                         .iter()
                         .map(|x| (code.clone(), x.clone())),
                 );
