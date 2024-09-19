@@ -1,14 +1,14 @@
+use crate::ast::{named_descendants, parse};
 use crate::cli::CheckArgs;
 use crate::rules::{default_ruleset, entrypoint_map, EntryPointMap, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
 use crate::{Category, Code, Diagnostic, Method, Violation};
-use anyhow::Context;
 use colored::Colorize;
 use itertools::{chain, join};
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
-use tree_sitter::{Node, Parser};
+use tree_sitter::Node;
 use walkdir::WalkDir;
 
 /// Get the list of active rules for this session.
@@ -62,18 +62,17 @@ fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
 
 fn tree_rules(
     entrypoints: &EntryPointMap,
-    node: &Node,
+    root: &Node,
     src: &str,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
     let mut violations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
+    for node in named_descendants(root) {
         let empty = vec![];
-        let rules = entrypoints.get(child.kind()).unwrap_or(&empty);
+        let rules = entrypoints.get(node.kind()).unwrap_or(&empty);
         for (code, rule) in rules {
             match rule.method() {
                 Method::Tree(f) => {
-                    if let Some(violation) = f(&child, src) {
+                    if let Some(violation) = f(&node, src) {
                         violations.push((code.clone(), violation));
                     }
                 }
@@ -82,7 +81,6 @@ fn tree_rules(
                 }
             }
         }
-        violations.extend(tree_rules(entrypoints, &child, src)?);
     }
     Ok(violations)
 }
@@ -91,7 +89,6 @@ fn tree_rules(
 fn check_file(
     entrypoints: &EntryPointMap,
     path: &Path,
-    parser: &mut Parser,
     settings: &Settings,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
     let mut violations = Vec::new();
@@ -118,9 +115,9 @@ fn check_file(
     let source = read_to_string(path)?;
     for (code, rule) in text_rules {
         match rule.method() {
-            Method::Text(f) => {
+            Method::Text(_) => {
                 violations.extend(
-                    f(&source, settings)
+                    rule.apply(&source, settings)?
                         .iter()
                         .map(|x| (code.clone(), x.clone())),
                 );
@@ -131,12 +128,12 @@ fn check_file(
         }
     }
 
-    // Perform concrete syntax tree analysis
-    let tree = parser
-        .parse(&source, None)
-        .context("Could not parse file")?;
-    let root = tree.root_node();
-    violations.extend(tree_rules(entrypoints, &root, &source)?);
+    // Perform AST analysis
+    violations.extend(tree_rules(
+        entrypoints,
+        &parse(&source)?.root_node(),
+        &source,
+    )?);
 
     Ok(violations)
 }
@@ -147,15 +144,11 @@ pub fn check(args: CheckArgs) -> i32 {
         line_length: args.line_length,
     };
     let ruleset = get_ruleset(&args);
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_fortran::language())
-        .expect("Error loading Fortran grammar");
     match entrypoint_map(&ruleset) {
         Ok(entrypoints) => {
             let mut total_errors = 0;
             for file in get_files(&args.files) {
-                match check_file(&entrypoints, &file, &mut parser, &settings) {
+                match check_file(&entrypoints, &file, &settings) {
                     Ok(violations) => {
                         let mut diagnostics: Vec<Diagnostic> = violations
                             .into_iter()

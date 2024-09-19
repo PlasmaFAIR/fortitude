@@ -1,4 +1,4 @@
-use crate::parsing::child_with_name;
+use crate::ast::{ancestors, child_with_name};
 use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 /// Defines rules that raise errors if implicit typing is in use.
@@ -72,27 +72,28 @@ impl Rule for InterfaceImplicitTyping {
     }
 }
 
-fn top_level_scope(node: Node) -> Option<Node> {
-    let parent = node.parent()?;
-    match parent.kind() {
-        "module" | "submodule" | "program" => Some(parent),
-        _ => top_level_scope(parent),
-    }
-}
-
 fn superfluous_implicit_none(node: &Node, _src: &str) -> Option<Violation> {
     if !implicit_statement_is_none(node) {
         return None;
     }
-    let parent_kind = node.parent()?.kind();
-    if parent_kind == "function" || parent_kind == "subroutine" {
-        let enclosing = top_level_scope(*node)?;
-        if child_is_implicit_none(&enclosing) {
-            let msg = format!(
-                "'implicit none' is set on the enclosing {}, and isn't needed here",
-                enclosing.kind()
-            );
-            return Some(Violation::from_node(&msg, node));
+    let parent = node.parent()?;
+    if matches!(parent.kind(), "function" | "subroutine") {
+        for ancestor in ancestors(&parent) {
+            let kind = ancestor.kind();
+            match kind {
+                "module" | "submodule" | "program" | "function" | "subroutine" => {
+                    if child_is_implicit_none(&ancestor) {
+                        let msg = format!("'implicit none' set on the enclosing {}", kind,);
+                        return Some(Violation::from_node(&msg, node));
+                    }
+                }
+                "interface" => {
+                    break;
+                }
+                _ => {
+                    continue;
+                }
+            }
         }
     }
     None
@@ -120,12 +121,13 @@ impl Rule for SuperfluousImplicitNone {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::test_tree_method;
+    use crate::settings::default_settings;
     use crate::violation;
+    use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
     #[test]
-    fn test_implicit_typing() -> Result<(), String> {
+    fn test_implicit_typing() -> anyhow::Result<()> {
         let source = dedent(
             "
             module my_module
@@ -137,20 +139,22 @@ mod tests {
             end program
             ",
         );
-        let expected_violations = [(2, 1, "module"), (6, 1, "program")]
+        let expected: Vec<Violation> = [(2, 1, "module"), (6, 1, "program")]
             .iter()
             .map(|(line, col, kind)| {
                 let msg = format!("{} missing 'implicit none'", kind);
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(&ImplicitTyping {}, source, Some(expected_violations))?;
+        let actual = ImplicitTyping {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
-    fn test_implicit_none() -> Result<(), String> {
-        let source = "
+    fn test_implicit_none() -> anyhow::Result<()> {
+        let source = dedent(
+            "
             module my_module
                 implicit none
             contains
@@ -165,13 +169,16 @@ mod tests {
                 integer, paramter :: x = 2
                 write(*,*) x
             end program
-            ";
-        test_tree_method(&ImplicitTyping {}, source, None)?;
+            ",
+        );
+        let expected: Vec<Violation> = vec![];
+        let actual = ImplicitTyping {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
-    fn test_interface_implicit_typing() -> Result<(), String> {
+    fn test_interface_implicit_typing() -> anyhow::Result<()> {
         let source = dedent(
             "
             module my_module
@@ -194,24 +201,22 @@ mod tests {
             end program
             ",
         );
-        let expected_violations = [(5, 9, "function"), (14, 9, "subroutine")]
+        let expected: Vec<Violation> = [(5, 9, "function"), (14, 9, "subroutine")]
             .iter()
             .map(|(line, col, kind)| {
                 let msg = format!("interface {} missing 'implicit none'", kind);
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(
-            &InterfaceImplicitTyping {},
-            source,
-            Some(expected_violations),
-        )?;
+        let actual = InterfaceImplicitTyping {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
-    fn test_interface_implicit_none() -> Result<(), String> {
-        let source = "
+    fn test_interface_implicit_none() -> anyhow::Result<()> {
+        let source = dedent(
+            "
             module my_module
                 implicit none
                 interface
@@ -232,13 +237,16 @@ mod tests {
                 end interface
                 write(*,*) 42
             end program
-            ";
-        test_tree_method(&InterfaceImplicitTyping {}, source, None)?;
+            ",
+        );
+        let expected: Vec<Violation> = vec![];
+        let actual = InterfaceImplicitTyping {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
-    fn test_superfluous_implicit_none() -> Result<(), String> {
+    fn test_superfluous_implicit_none() -> anyhow::Result<()> {
         let source = dedent(
             "
             module my_module
@@ -275,7 +283,7 @@ mod tests {
             end program
             ",
         );
-        let expected_violations = [
+        let expected: Vec<Violation> = [
             (6, 9, "module"),
             (11, 9, "module"),
             (24, 9, "program"),
@@ -283,24 +291,19 @@ mod tests {
         ]
         .iter()
         .map(|(line, col, kind)| {
-            let msg = format!(
-                "'implicit none' is set on the enclosing {}, and isn't needed here",
-                kind,
-            );
+            let msg = format!("'implicit none' set on the enclosing {}", kind);
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(
-            &SuperfluousImplicitNone {},
-            source,
-            Some(expected_violations),
-        )?;
+        let actual = SuperfluousImplicitNone {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
-    fn test_no_superfluous_implicit_none() -> Result<(), String> {
-        let source = "
+    fn test_no_superfluous_implicit_none() -> anyhow::Result<()> {
+        let source = dedent(
+            "
             module my_module
                 implicit none
 
@@ -337,8 +340,11 @@ mod tests {
                     x = x * 2
                 end subroutine
             end program
-            ";
-        test_tree_method(&SuperfluousImplicitNone {}, source, None)?;
+            ",
+        );
+        let expected: Vec<Violation> = vec![];
+        let actual = SuperfluousImplicitNone {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 }

@@ -1,4 +1,4 @@
-use crate::parsing::{child_with_name, dtype_is_number, intrinsic_type, to_text};
+use crate::ast::{child_with_name, dtype_is_plain_number, parse_intrinsic_type, to_text};
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::Node;
@@ -8,8 +8,8 @@ use tree_sitter::Node;
 // TODO rules for intrinsic kinds in real(x, [KIND]) and similar type casting functions
 
 fn literal_kind(node: &Node, src: &str) -> Option<Violation> {
-    let dtype = intrinsic_type(node)?;
-    if dtype_is_number(dtype.as_str()) {
+    let dtype = parse_intrinsic_type(node)?;
+    if dtype_is_plain_number(dtype.as_str()) {
         if let Some(child) = child_with_name(node, "size") {
             let txt = to_text(&child, src)?;
             // Match for numbers that aren't preceeded by:
@@ -149,12 +149,13 @@ impl Rule for LiteralKindSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::test_tree_method;
+    use crate::settings::default_settings;
     use crate::violation;
+    use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
     #[test]
-    fn test_literal_kind() -> Result<(), String> {
+    fn test_literal_kind() -> anyhow::Result<()> {
         let source = dedent(
             "
             integer(8) function add_if(x, y, z)
@@ -184,7 +185,7 @@ mod tests {
             end function
             ",
         );
-        let expected_violations = [
+        let expected: Vec<Violation> = [
             (2, 1, "integer"),
             (4, 3, "integer"),
             (6, 3, "logical"),
@@ -201,12 +202,13 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(&LiteralKind {}, source, Some(expected_violations))?;
+        let actual = LiteralKind {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
-    fn test_literal_kind_suffix() -> Result<(), String> {
+    fn test_literal_kind_suffix() -> anyhow::Result<()> {
         let source = dedent(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
@@ -218,7 +220,7 @@ mod tests {
             real(sp), parameter :: x5 = 2.468_sp
             ",
         );
-        let expected_violations = [(4, 29, "1.234567_4"), (7, 29, "9.876_8")]
+        let expected: Vec<Violation> = [(4, 29, "1.234567_4"), (7, 29, "9.876_8")]
             .iter()
             .map(|(line, col, num)| {
                 let msg = format!(
@@ -228,7 +230,8 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(&LiteralKindSuffix {}, source, Some(expected_violations))?;
+        let actual = LiteralKindSuffix {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 }

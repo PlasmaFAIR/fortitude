@@ -1,11 +1,11 @@
+mod ast;
 pub mod check;
 pub mod cli;
 pub mod explain;
-mod parsing;
 mod rules;
 mod settings;
-mod test_utils;
 use anyhow::Context;
+use ast::{named_descendants, parse};
 use colored::Colorize;
 use lazy_regex::regex_captures;
 use settings::Settings;
@@ -159,7 +159,6 @@ macro_rules! violation {
 /// The methods by which rules are enforced. Some rules act on individual lines of code,
 /// some by reading a full file, and others by analysing the concrete syntax tree. All
 /// rules must be associated with a `Method` via the `Rule` trait.
-#[allow(dead_code, clippy::type_complexity)]
 pub enum Method {
     /// Methods that work on just the path name of the file.
     Path(fn(&Path) -> Option<Violation>),
@@ -177,14 +176,31 @@ pub trait Rule {
     /// Return a function pointer to the method associated with this rule.
     fn method(&self) -> Method;
 
-    /// Return text explaining what the rule tests for, why this is important, and how
-    /// the user might fix it.
+    /// Return text explaining what the rule tests for, why this is important, and how the user
+    /// might fix it.
     fn explain(&self) -> &str;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
-    /// Path-based rules should return a vector containing only "PATH" while
-    /// text-based rules should return a vector containing only "TEXT".
+    /// Path-based rules should return a vector containing only "PATH" while text-based rules
+    /// should return a vector containing only "TEXT".
     fn entrypoints(&self) -> Vec<&str>;
+
+    /// Apply a rule over some text, generating all violations raised as a result.
+    fn apply(&self, source: &str, settings: &Settings) -> anyhow::Result<Vec<Violation>> {
+        match self.method() {
+            Method::Tree(f) => {
+                let entrypoints = self.entrypoints();
+                Ok(named_descendants(&parse(source)?.root_node())
+                    .filter(|x| entrypoints.contains(&x.kind()))
+                    .filter_map(|x| f(&x, source))
+                    .collect())
+            }
+            Method::Text(f) => Ok(f(source, settings)),
+            _ => {
+                anyhow::bail!("Apply may only be called for tree and text methods.")
+            }
+        }
+    }
 }
 
 // Violation diagnostics

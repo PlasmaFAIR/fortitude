@@ -17,7 +17,11 @@ clap = { version = "4.4.16", features = ["derive"] }
 colored = "2.1.0"
 itertools = "0.12.0"
 lazy-regex = "3.3.0"
+lazy_static = "1.5.0"
 textwrap = "0.16.0"
 tree-sitter = "~0.22.6"
 tree-sitter-fortran = "0.0.1"
 walkdir = "2.4.0"
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"

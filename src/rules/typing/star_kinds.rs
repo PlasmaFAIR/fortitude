@@ -1,5 +1,5 @@
-use crate::parsing::{
-    child_with_name, dtype_is_number, intrinsic_type, strip_line_breaks, to_text,
+use crate::ast::{
+    child_with_name, dtype_is_plain_number, parse_intrinsic_type, strip_line_breaks, to_text,
 };
 use crate::{Method, Rule, Violation};
 use lazy_regex::regex_captures;
@@ -10,8 +10,8 @@ use tree_sitter::Node;
 /// more explicit.
 
 fn star_kind(node: &Node, src: &str) -> Option<Violation> {
-    let dtype = intrinsic_type(node)?;
-    if dtype_is_number(dtype.as_str()) {
+    let dtype = parse_intrinsic_type(node)?;
+    if dtype_is_plain_number(dtype.as_str()) {
         if let Some(child) = child_with_name(node, "size") {
             let size = strip_line_breaks(to_text(&child, src)?);
             // Match anything beginning with a '*' followed by any amount of
@@ -57,12 +57,13 @@ impl Rule for StarKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::test_tree_method;
+    use crate::settings::default_settings;
     use crate::violation;
+    use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
     #[test]
-    fn test_star_kind() -> Result<(), String> {
+    fn test_star_kind() -> anyhow::Result<()> {
         let source = dedent(
             "
             integer*8 function add_if(x, y, z)
@@ -86,7 +87,8 @@ mod tests {
             end subroutine
             ",
         );
-        let expected_violations = [
+
+        let expected: Vec<Violation> = [
             (2, 1, "integer*8", "integer(8)"),
             (4, 3, "integer*4", "integer(4)"),
             (5, 3, "logical*4", "logical(4)"),
@@ -100,7 +102,10 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(&StarKind {}, source, Some(expected_violations))?;
+
+        let actual = StarKind {}.apply(source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
+
         Ok(())
     }
 }

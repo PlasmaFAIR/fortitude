@@ -1,4 +1,4 @@
-use crate::parsing::to_text;
+use crate::ast::to_text;
 use crate::{Method, Rule, Violation};
 use tree_sitter::Node;
 /// Defines rules to avoid the 'double precision' and 'double complex' types.
@@ -56,12 +56,13 @@ impl Rule for DoublePrecision {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::test_tree_method;
+    use crate::settings::default_settings;
     use crate::violation;
+    use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
     #[test]
-    fn test_double_precision() -> Result<(), String> {
+    fn test_double_precision() -> anyhow::Result<()> {
         let source = dedent(
             "
             double precision function double(x)
@@ -82,7 +83,7 @@ mod tests {
             end function
             ",
         );
-        let expected_violations = [
+        let expected: Vec<Violation> = [
             (2, 1, "double precision"),
             (3, 3, "double precision"),
             (8, 3, "double precision"),
@@ -96,7 +97,8 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(&DoublePrecision {}, source, Some(expected_violations))?;
+        let actual = DoublePrecision {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 }
