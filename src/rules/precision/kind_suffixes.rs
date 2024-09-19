@@ -71,12 +71,13 @@ impl Rule for NoRealSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::test_tree_method;
+    use crate::settings::default_settings;
     use crate::violation;
+    use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
     #[test]
-    fn test_no_real_suffix() -> Result<(), String> {
+    fn test_no_real_suffix() -> anyhow::Result<()> {
         let source = dedent(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
@@ -95,7 +96,7 @@ mod tests {
 
             ",
         );
-        let expected_violations = [
+        let expected: Vec<Violation> = [
             (4, 29, "1.234567"),
             (7, 29, "9.876"),
             (9, 29, "2."),
@@ -111,7 +112,8 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        test_tree_method(&NoRealSuffix {}, &source, Some(expected_violations))?;
+        let actual = NoRealSuffix {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 }

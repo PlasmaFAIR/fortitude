@@ -48,12 +48,13 @@ impl Rule for UseAll {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::test_tree_method;
+    use crate::settings::default_settings;
     use crate::violation;
+    use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
     #[test]
-    fn test_use_all() -> Result<(), String> {
+    fn test_use_all() -> anyhow::Result<()> {
         let source = dedent(
             "
             module my_module
@@ -62,8 +63,9 @@ mod tests {
             end module
             ",
         );
-        let violation = violation!("'use' statement missing 'only' clause", 4, 5);
-        test_tree_method(&UseAll {}, source, Some(vec![violation]))?;
+        let expected = vec![violation!("'use' statement missing 'only' clause", 4, 5)];
+        let actual = UseAll {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 }

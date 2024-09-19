@@ -4,7 +4,6 @@ pub mod cli;
 pub mod explain;
 mod rules;
 mod settings;
-mod test_utils;
 use anyhow::Context;
 use ast::{named_descendants, parse};
 use colored::Colorize;

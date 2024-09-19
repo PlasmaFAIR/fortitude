@@ -38,12 +38,13 @@ impl Rule for ExternalFunction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::test_utils::test_tree_method;
+    use crate::settings::default_settings;
     use crate::violation;
+    use pretty_assertions::assert_eq;
     use textwrap::dedent;
 
     #[test]
-    fn test_function_not_in_module() -> Result<(), String> {
+    fn test_function_not_in_module() -> anyhow::Result<()> {
         let source = dedent(
             "
             integer function double(x)
@@ -57,20 +58,22 @@ mod tests {
             end subroutine
             ",
         );
-        let expected_violations = [(2, 1, "function"), (7, 1, "subroutine")]
+        let expected: Vec<Violation> = [(2, 1, "function"), (7, 1, "subroutine")]
             .iter()
             .map(|(line, col, kind)| {
                 let msg = format!("{} not contained within (sub)module or program", kind);
                 violation!(&msg, *line, *col)
             })
             .collect();
-        test_tree_method(&ExternalFunction {}, source, Some(expected_violations))?;
+        let actual = ExternalFunction {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
-    fn test_function_in_module() -> Result<(), String> {
-        let source = "
+    fn test_function_in_module() -> anyhow::Result<()> {
+        let source = dedent(
+            "
             module my_module
                 implicit none
             contains
@@ -84,8 +87,11 @@ mod tests {
                   x = 3 * x
                 end subroutine
             end module
-            ";
-        test_tree_method(&ExternalFunction {}, source, None)?;
+            ",
+        );
+        let expected: Vec<Violation> = vec![];
+        let actual = ExternalFunction {}.apply(&source.as_str(), &default_settings())?;
+        assert_eq!(actual, expected);
         Ok(())
     }
 }
