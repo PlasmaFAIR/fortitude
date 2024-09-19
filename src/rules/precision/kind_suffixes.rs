@@ -11,7 +11,7 @@ fn no_real_suffix(node: &Node, src: &str) -> Option<Violation> {
     // rule.
     let txt = to_text(node, src)?;
     if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
-        let msg = format!("real literal {} has no kind suffix", txt);
+        let msg = format!("real literal {} missing kind suffix", txt);
         return Some(Violation::from_node(&msg, node));
     }
     None
@@ -108,7 +108,7 @@ mod tests {
         ]
         .iter()
         .map(|(line, col, num)| {
-            let msg = format!("real literal {} has no kind suffix", num);
+            let msg = format!("real literal {} missing kind suffix", num);
             violation!(&msg, *line, *col)
         })
         .collect();

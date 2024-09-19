@@ -83,10 +83,7 @@ fn superfluous_implicit_none(node: &Node, _src: &str) -> Option<Violation> {
             match kind {
                 "module" | "submodule" | "program" | "function" | "subroutine" => {
                     if child_is_implicit_none(&ancestor) {
-                        let msg = format!(
-                            "'implicit none' is set on the enclosing {}, can remove here",
-                            kind,
-                        );
+                        let msg = format!("'implicit none' set on the enclosing {}", kind,);
                         return Some(Violation::from_node(&msg, node));
                     }
                 }
@@ -294,10 +291,7 @@ mod tests {
         ]
         .iter()
         .map(|(line, col, kind)| {
-            let msg = format!(
-                "'implicit none' is set on the enclosing {}, can remove here",
-                kind,
-            );
+            let msg = format!("'implicit none' set on the enclosing {}", kind);
             violation!(&msg, *line, *col)
         })
         .collect();
