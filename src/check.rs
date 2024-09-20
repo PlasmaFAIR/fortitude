@@ -154,8 +154,10 @@ pub fn check(args: CheckArgs) -> i32 {
                             .into_iter()
                             .map(|(c, v)| Diagnostic::new(&file, c, &v))
                             .collect();
-                        diagnostics.sort_unstable();
-                        println!("{}", join(&diagnostics, "\n"));
+                        if !diagnostics.is_empty() {
+                            diagnostics.sort_unstable();
+                            println!("{}", join(&diagnostics, "\n"));
+                        }
                         total_errors += diagnostics.len();
                     }
                     Err(msg) => {
