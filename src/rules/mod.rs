@@ -4,7 +4,7 @@ mod modules;
 mod precision;
 mod style;
 mod typing;
-use crate::{Category, Code, Rule};
+use crate::Rule;
 use std::collections::{BTreeMap, BTreeSet};
 /// A collection of all rules, and utilities to select a subset at runtime.
 
@@ -14,73 +14,30 @@ pub type RuleMap = BTreeMap<String, RuleBox>;
 pub type EntryPointMap = BTreeMap<String, Vec<(String, RuleBox)>>;
 
 /// Create a new `Rule` given a rule code, expressed as a string.
-pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
-    let code = Code::from(code_str)?;
+pub fn build_rule(code: &str) -> anyhow::Result<RuleBox> {
     match code {
-        Code {
-            category: Category::Error,
-            number: 1,
-        } => Ok(Box::new(error::syntax_error::SyntaxError {})),
-        Code {
-            category: Category::FileSystem,
-            number: 1,
-        } => Ok(Box::new(
+        "E001" => Ok(Box::new(error::syntax_error::SyntaxError {})),
+        "F001" => Ok(Box::new(
             filesystem::extensions::NonStandardFileExtension {},
         )),
-        Code {
-            category: Category::Style,
-            number: 1,
-        } => Ok(Box::new(style::line_length::LineTooLong {})),
-        Code {
-            category: Category::Style,
-            number: 101,
-        } => Ok(Box::new(style::whitespace::TrailingWhitespace {})),
-        Code {
-            category: Category::Typing,
-            number: 1,
-        } => Ok(Box::new(typing::implicit_typing::ImplicitTyping {})),
-        Code {
-            category: Category::Typing,
-            number: 2,
-        } => Ok(Box::new(
+        "S001" => Ok(Box::new(style::line_length::LineTooLong {})),
+        "S101" => Ok(Box::new(style::whitespace::TrailingWhitespace {})),
+        "T001" => Ok(Box::new(typing::implicit_typing::ImplicitTyping {})),
+        "T002" => Ok(Box::new(
             typing::implicit_typing::InterfaceImplicitTyping {},
         )),
-        Code {
-            category: Category::Typing,
-            number: 3,
-        } => Ok(Box::new(
+        "T003" => Ok(Box::new(
             typing::implicit_typing::SuperfluousImplicitNone {},
         )),
-        Code {
-            category: Category::Typing,
-            number: 11,
-        } => Ok(Box::new(typing::literal_kinds::LiteralKind {})),
-        Code {
-            category: Category::Typing,
-            number: 12,
-        } => Ok(Box::new(typing::literal_kinds::LiteralKindSuffix {})),
-        Code {
-            category: Category::Typing,
-            number: 21,
-        } => Ok(Box::new(typing::star_kinds::StarKind {})),
-        Code {
-            category: Category::Precision,
-            number: 1,
-        } => Ok(Box::new(precision::kind_suffixes::NoRealSuffix {})),
-        Code {
-            category: Category::Precision,
-            number: 11,
-        } => Ok(Box::new(precision::double_precision::DoublePrecision {})),
-        Code {
-            category: Category::Modules,
-            number: 1,
-        } => Ok(Box::new(modules::external_functions::ExternalFunction {})),
-        Code {
-            category: Category::Modules,
-            number: 11,
-        } => Ok(Box::new(modules::use_statements::UseAll {})),
+        "T011" => Ok(Box::new(typing::literal_kinds::LiteralKind {})),
+        "T012" => Ok(Box::new(typing::literal_kinds::LiteralKindSuffix {})),
+        "T021" => Ok(Box::new(typing::star_kinds::StarKind {})),
+        "P001" => Ok(Box::new(precision::kind_suffixes::NoRealSuffix {})),
+        "P011" => Ok(Box::new(precision::double_precision::DoublePrecision {})),
+        "M001" => Ok(Box::new(modules::external_functions::ExternalFunction {})),
+        "M011" => Ok(Box::new(modules::use_statements::UseAll {})),
         _ => {
-            anyhow::bail!("Unknown rule code {}", code_str)
+            anyhow::bail!("Unknown rule code {}", code)
         }
     }
 }

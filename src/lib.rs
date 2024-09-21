@@ -4,10 +4,8 @@ pub mod cli;
 pub mod explain;
 mod rules;
 mod settings;
-use anyhow::Context;
 use ast::{named_descendants, parse};
 use colored::Colorize;
-use lazy_regex::regex_captures;
 use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
@@ -36,6 +34,7 @@ pub enum Category {
     FileSystem,
 }
 
+#[allow(dead_code)]
 impl Category {
     fn from(s: &str) -> anyhow::Result<Self> {
         match s {
@@ -49,47 +48,6 @@ impl Category {
                 anyhow::bail!("{} is not a rule category.", s)
             }
         }
-    }
-}
-
-impl fmt::Display for Category {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Self::Error => "E",
-            Self::Style => "S",
-            Self::Typing => "T",
-            Self::Modules => "M",
-            Self::Precision => "P",
-            Self::FileSystem => "F",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-/// The combination of a rule category and a unique identifying number.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct Code {
-    pub category: Category,
-    pub number: usize,
-}
-
-impl Code {
-    pub const fn new(category: Category, number: usize) -> Self {
-        Self { category, number }
-    }
-
-    pub fn from(code_str: &str) -> anyhow::Result<Self> {
-        let (_, category_str, number_str) = regex_captures!(r"^([A-Z]+)([0-9]{3})$", code_str)
-            .context(format!("{} is not a valid error code.", code_str))?;
-        let category = Category::from(category_str)?;
-        let number = number_str.parse::<usize>()?;
-        Ok(Code::new(category, number))
-    }
-}
-
-impl fmt::Display for Code {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{:03}", self.category, self.number)
     }
 }
 
@@ -276,19 +234,4 @@ impl fmt::Display for Diagnostic {
             }
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_rule_code() {
-        let f001 = Code::new(Category::FileSystem, 1);
-        assert_eq!(f001.to_string(), "F001");
-        let c120 = Code::new(Category::Style, 120);
-        assert_eq!(c120.to_string(), "S120");
-    }
-
-    // TODO Test diagnostics
 }

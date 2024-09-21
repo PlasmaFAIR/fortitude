@@ -3,7 +3,7 @@ use crate::cli::CheckArgs;
 use crate::rules::{default_ruleset, entrypoint_map, EntryPointMap, RuleSet};
 use crate::settings::Settings;
 use crate::violation;
-use crate::{Category, Code, Diagnostic, Method, Violation};
+use crate::{Diagnostic, Method, Violation};
 use colored::Colorize;
 use itertools::{chain, join};
 use std::fs::read_to_string;
@@ -161,10 +161,9 @@ pub fn check(args: CheckArgs) -> i32 {
                         total_errors += diagnostics.len();
                     }
                     Err(msg) => {
-                        let err_code = Code::new(Category::Error, 0).to_string();
                         let err_msg = format!("Failed to process: {}", msg);
                         let violation = violation!(&err_msg);
-                        let diagnostic = Diagnostic::new(&file, &err_code, &violation);
+                        let diagnostic = Diagnostic::new(&file, "E000", &violation);
                         println!("{}", diagnostic);
                         total_errors += 1;
                     }
