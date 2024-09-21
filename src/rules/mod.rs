@@ -1,54 +1,41 @@
+/// A collection of all rules, and utilities to select a subset at runtime.
 mod error;
 mod filesystem;
+#[macro_use]
+mod macros;
 mod modules;
 mod precision;
 mod style;
 mod typing;
+use crate::register_rules;
 use crate::Rule;
 use std::collections::{BTreeMap, BTreeSet};
-/// A collection of all rules, and utilities to select a subset at runtime.
+
+register_rules! {
+    (Category::Error, "E001", error::syntax_error::SyntaxError, SyntaxError),
+    (Category::Filesystem, "F001", filesystem::extensions::NonStandardFileExtension, NonStandardFileExtension),
+    (Category::Style, "S001", style::line_length::LineTooLong, LineTooLong),
+    (Category::Style, "S101", style::whitespace::TrailingWhitespace, TrailingWhitespace),
+    (Category::Typing, "T001", typing::implicit_typing::ImplicitTyping, ImplicitTyping),
+    (Category::Typing, "T002", typing::implicit_typing::InterfaceImplicitTyping, InterfaceImplicitTyping),
+    (Category::Typing, "T003", typing::implicit_typing::SuperfluousImplicitNone, SuperfluousImplicitNone),
+    (Category::Typing, "T011", typing::literal_kinds::LiteralKind, LiteralKind),
+    (Category::Typing, "T012", typing::literal_kinds::LiteralKindSuffix, LiteralKindSuffix),
+    (Category::Typing, "T021", typing::star_kinds::StarKind, StarKind),
+    (Category::Precision, "P001", precision::kind_suffixes::NoRealSuffix, NoRealSuffix),
+    (Category::Precision, "P011", precision::double_precision::DoublePrecision, DoublePrecision),
+    (Category::Modules, "M001", modules::external_functions::ExternalFunction, ExternalFunction),
+    (Category::Modules, "M011", modules::use_statements::UseAll, UseAll)
+}
 
 pub type RuleBox = Box<dyn Rule>;
 pub type RuleSet = BTreeSet<String>;
 pub type RuleMap = BTreeMap<String, RuleBox>;
 pub type EntryPointMap = BTreeMap<String, Vec<(String, RuleBox)>>;
 
-/// Create a new `Rule` given a rule code, expressed as a string.
-pub fn build_rule(code: &str) -> anyhow::Result<RuleBox> {
-    match code {
-        "E001" => Ok(Box::new(error::syntax_error::SyntaxError {})),
-        "F001" => Ok(Box::new(
-            filesystem::extensions::NonStandardFileExtension {},
-        )),
-        "S001" => Ok(Box::new(style::line_length::LineTooLong {})),
-        "S101" => Ok(Box::new(style::whitespace::TrailingWhitespace {})),
-        "T001" => Ok(Box::new(typing::implicit_typing::ImplicitTyping {})),
-        "T002" => Ok(Box::new(
-            typing::implicit_typing::InterfaceImplicitTyping {},
-        )),
-        "T003" => Ok(Box::new(
-            typing::implicit_typing::SuperfluousImplicitNone {},
-        )),
-        "T011" => Ok(Box::new(typing::literal_kinds::LiteralKind {})),
-        "T012" => Ok(Box::new(typing::literal_kinds::LiteralKindSuffix {})),
-        "T021" => Ok(Box::new(typing::star_kinds::StarKind {})),
-        "P001" => Ok(Box::new(precision::kind_suffixes::NoRealSuffix {})),
-        "P011" => Ok(Box::new(precision::double_precision::DoublePrecision {})),
-        "M001" => Ok(Box::new(modules::external_functions::ExternalFunction {})),
-        "M011" => Ok(Box::new(modules::use_statements::UseAll {})),
-        _ => {
-            anyhow::bail!("Unknown rule code {}", code)
-        }
-    }
-}
-
 // Returns the full set of all rules.
 pub fn full_ruleset() -> RuleSet {
-    let all_rules = &[
-        "E001", "F001", "S001", "S101", "T001", "T002", "T003", "T011", "T012", "T021", "P001",
-        "P011", "M001", "M011",
-    ];
-    RuleSet::from_iter(all_rules.iter().map(|x| x.to_string()))
+    RuleSet::from_iter(CODES.iter().map(|x| x.to_string()))
 }
 
 /// Returns the set of rules that are activated by default, expressed as strings.
