@@ -1,23 +1,13 @@
 use crate::settings::Settings;
 use crate::violation;
-use crate::{Method, Rule, Violation};
+use crate::{BaseRule, TextRule, Violation};
 /// Defines rules that enforce widely accepted whitespace rules.
 
 pub struct TrailingWhitespace {}
 
-fn trailing_whitespace(source: &str, _: &Settings) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    for (idx, line) in source.split('\n').enumerate() {
-        if line.ends_with(&[' ', '\t']) {
-            violations.push(violation!("trailing whitespace", idx + 1));
-        }
-    }
-    violations
-}
-
-impl Rule for TrailingWhitespace {
-    fn method(&self) -> Method {
-        Method::Text(trailing_whitespace)
+impl BaseRule for TrailingWhitespace {
+    fn new(_settings: &Settings) -> Self {
+        TrailingWhitespace {}
     }
 
     fn explain(&self) -> &str {
@@ -27,8 +17,16 @@ impl Rule for TrailingWhitespace {
         shared projects.
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
-        vec!["TEXT"]
+impl TextRule for TrailingWhitespace {
+    fn check(&self, source: &str) -> Vec<Violation> {
+        let mut violations = Vec::new();
+        for (idx, line) in source.split('\n').enumerate() {
+            if line.ends_with(&[' ', '\t']) {
+                violations.push(violation!("trailing whitespace", idx + 1));
+            }
+        }
+        violations
     }
 }

@@ -120,14 +120,12 @@ macro_rules! violation {
 pub enum Method {
     /// Methods that analyse the syntax tree.
     Tree(fn(&tree_sitter::Node, &str) -> Option<Violation>),
-    /// Methods that analyse lines of code directly, using regex or otherwise.
-    Text(fn(&str, &Settings) -> Vec<Violation>),
 }
 
 // Rule trait
 // ----------
 
-/// Should be implemented by all rules.
+/// Implemented by all rules.
 pub trait BaseRule {
     fn new(settings: &Settings) -> Self
     where
@@ -138,9 +136,14 @@ pub trait BaseRule {
     fn explain(&self) -> &str;
 }
 
-/// Should be implemented by all rules that act directly on the file path.
+/// Implemented by rules that act directly on the file path.
 pub trait PathRule: BaseRule {
     fn check(&self, path: &Path) -> Option<Violation>;
+}
+
+/// Implemented by rules that analyse lines of code directly, using regex or otherwise.
+pub trait TextRule: BaseRule {
+    fn check(&self, source: &str) -> Vec<Violation>;
 }
 
 /// Should be implemented for all rules.
@@ -158,7 +161,7 @@ pub trait Rule {
     fn entrypoints(&self) -> Vec<&str>;
 
     /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(&self, source: &str, settings: &Settings) -> anyhow::Result<Vec<Violation>> {
+    fn apply(&self, source: &str, _settings: &Settings) -> anyhow::Result<Vec<Violation>> {
         match self.method() {
             Method::Tree(f) => {
                 let entrypoints = self.entrypoints();
@@ -167,7 +170,6 @@ pub trait Rule {
                     .filter_map(|x| f(&x, source))
                     .collect())
             }
-            Method::Text(f) => Ok(f(source, settings)),
         }
     }
 }

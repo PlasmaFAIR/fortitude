@@ -1,35 +1,18 @@
 use crate::settings::Settings;
 use crate::violation;
-use crate::{Method, Rule, Violation};
+use crate::{BaseRule, TextRule, Violation};
 use lazy_regex::regex_is_match;
 /// Defines rules that govern line length.
 
-pub struct LineTooLong {}
-
-fn line_too_long(source: &str, settings: &Settings) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    for (idx, line) in source.split('\n').enumerate() {
-        let len = line.len();
-        if len > settings.line_length {
-            // Are we ending on a string or comment? If so, we'll allow it through, as it may
-            // contain something like a long URL that cannot be reasonably split across multiple
-            // lines.
-            if regex_is_match!(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#, line) {
-                continue;
-            }
-            let msg = format!(
-                "line length of {}, exceeds maximum {}",
-                len, settings.line_length
-            );
-            violations.push(violation!(&msg, idx + 1));
-        }
-    }
-    violations
+pub struct LineTooLong {
+    line_length: usize,
 }
 
-impl Rule for LineTooLong {
-    fn method(&self) -> Method {
-        Method::Text(line_too_long)
+impl BaseRule for LineTooLong {
+    fn new(settings: &Settings) -> Self {
+        LineTooLong {
+            line_length: settings.line_length,
+        }
     }
 
     fn explain(&self) -> &str {
@@ -50,8 +33,27 @@ impl Rule for LineTooLong {
         is recommended to stay beneath this limit.
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
-        vec!["TEXT"]
+impl TextRule for LineTooLong {
+    fn check(&self, source: &str) -> Vec<Violation> {
+        let mut violations = Vec::new();
+        for (idx, line) in source.split('\n').enumerate() {
+            let len = line.len();
+            if len > self.line_length {
+                // Are we ending on a string or comment? If so, we'll allow it through, as it may
+                // contain something like a long URL that cannot be reasonably split across multiple
+                // lines.
+                if regex_is_match!(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#, line) {
+                    continue;
+                }
+                let msg = format!(
+                    "line length of {}, exceeds maximum {}",
+                    len, self.line_length
+                );
+                violations.push(violation!(&msg, idx + 1));
+            }
+        }
+        violations
     }
 }

@@ -8,7 +8,7 @@ mod precision;
 mod style;
 mod typing;
 use crate::register_rules;
-use crate::{PathRule, Rule};
+use crate::{PathRule, Rule, TextRule};
 use std::collections::BTreeMap;
 
 register_rules! {
@@ -59,6 +59,9 @@ pub fn entrypoint_map(set: &RuleSet) -> anyhow::Result<EntryPointMap> {
     let mut map = EntryPointMap::new();
     for code in set {
         if PATH_CODES.contains(code.as_str()) {
+            continue;
+        }
+        if TEXT_CODES.contains(code.as_str()) {
             continue;
         }
         let rule = build_rule(code)?;

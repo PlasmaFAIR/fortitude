@@ -1,7 +1,8 @@
 use crate::ast::{named_descendants, parse};
 use crate::cli::CheckArgs;
 use crate::rules::{
-    default_ruleset, entrypoint_map, path_rule_map, EntryPointMap, PathRuleMap, RuleSet,
+    default_ruleset, entrypoint_map, path_rule_map, text_rule_map, EntryPointMap, PathRuleMap,
+    RuleSet, TextRuleMap,
 };
 use crate::settings::Settings;
 use crate::violation;
@@ -78,9 +79,6 @@ fn tree_rules(
                         violations.push((code.clone(), violation));
                     }
                 }
-                _ => {
-                    anyhow::bail!("Non-Tree rule {} has incorrect entrypoints", code);
-                }
             }
         }
     }
@@ -90,12 +88,13 @@ fn tree_rules(
 /// Parse a file, check it for issues, and return the report.
 fn check_file(
     path_rules: &PathRuleMap,
+    text_rules: &TextRuleMap,
     entrypoints: &EntryPointMap,
     path: &Path,
-    settings: &Settings,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
     let mut violations = Vec::new();
 
+    // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     for (code, rule) in path_rules {
         if let Some(violation) = rule.check(path) {
             violations.push((code.to_string(), violation));
@@ -103,22 +102,13 @@ fn check_file(
     }
 
     // Perform plain text analysis
-    let empty_text_rules = vec![];
-    let text_rules = entrypoints.get("TEXT").unwrap_or(&empty_text_rules);
     let source = read_to_string(path)?;
     for (code, rule) in text_rules {
-        match rule.method() {
-            Method::Text(_) => {
-                violations.extend(
-                    rule.apply(&source, settings)?
-                        .iter()
-                        .map(|x| (code.clone(), x.clone())),
-                );
-            }
-            _ => {
-                anyhow::bail!("Non-Text rule {} has incorrect entrypoints", code);
-            }
-        }
+        violations.extend(
+            rule.check(&source)
+                .iter()
+                .map(|x| (code.to_string(), x.clone())),
+        );
     }
 
     // Perform AST analysis
@@ -140,11 +130,12 @@ pub fn check(args: CheckArgs) -> i32 {
     // TODO: remove temporary cast to &str ruleset
     let str_ruleset: std::collections::BTreeSet<_> = ruleset.iter().map(|x| x.as_str()).collect();
     let path_rules = path_rule_map(&str_ruleset, &settings);
+    let text_rules = text_rule_map(&str_ruleset, &settings);
     match entrypoint_map(&ruleset) {
         Ok(entrypoints) => {
             let mut total_errors = 0;
             for file in get_files(&args.files) {
-                match check_file(&path_rules, &entrypoints, &file, &settings) {
+                match check_file(&path_rules, &text_rules, &entrypoints, &file) {
                     Ok(violations) => {
                         let mut diagnostics: Vec<Diagnostic> = violations
                             .into_iter()
