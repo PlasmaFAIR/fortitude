@@ -1,19 +1,33 @@
-macro_rules! num_ast {
-    (AST) => {1};
-    ($type: tt) => {0};
-    (AST, $($types: tt), +) => {
-        1 + num_ast!($($types), +)
+macro_rules! num_types {
+    (PATH, PATH) => {1};
+    (TEXT, TEXT) => {1};
+    (AST, AST) => {1};
+    ($type1: tt, $type2: tt) => {0};
+    (PATH, PATH, $($types: tt), +) => {
+        1 + num_types!(PATH, $($types), +)
     };
-    ($type: tt, $($types: tt), +) => {
-        num_ast!($($types), +)
-    }
+    (TEXT, TEXT, $($types: tt), +) => {
+        1 + num_types!(TEXT, $($types), +)
+    };
+    (AST, AST, $($types: tt), +) => {
+        1 + num_types!(AST, $($types), +)
+    };
+    ($type1: tt, $type2: tt, $($types: tt), +) => {
+        num_types!($type1, $($types), +)
+    };
 }
 
-macro_rules! option_ast {
-    (AST, $value: tt) => {
+macro_rules! some_type {
+    (PATH, PATH, $value: tt) => {
         Some($value)
     };
-    ($type: tt, $value: tt) => {
+    (AST, AST, $value: tt) => {
+        Some($value)
+    };
+    (TEXT, TEXT, $value: tt) => {
+        Some($value)
+    };
+    ($type1: tt, $type2: tt, $value: tt) => {
         None
     };
 }
@@ -38,8 +52,16 @@ macro_rules! register_rules {
             result
         }
 
-        const N_AST: usize = num_ast!($($types), +);
-        const AST_OPTIONS: &[Option<&str>; CODES.len()] = &[$(option_ast!($types, $codes)), +];
+        const N_PATH: usize = num_types!(PATH, $($types), +);
+        const PATH_OPTIONS: &[Option<&str>; CODES.len()] = &[$(some_type!(PATH, $types, $codes)), +];
+        const PATH_CODES: &[&str; N_PATH] = &drop_none(PATH_OPTIONS);
+
+        const N_TEXT: usize = num_types!(TEXT, $($types), +);
+        const TEXT_OPTIONS: &[Option<&str>; CODES.len()] = &[$(some_type!(TEXT, $types, $codes)), +];
+        const TEXT_CODES: &[&str; N_TEXT] = &drop_none(TEXT_OPTIONS);
+
+        const N_AST: usize = num_types!(AST, $($types), +);
+        const AST_OPTIONS: &[Option<&str>; CODES.len()] = &[$(some_type!(AST, $types, $codes)), +];
         const AST_CODES: &[&str; N_AST] = &drop_none(AST_OPTIONS);
 
         $(type $rules = $paths;)+
