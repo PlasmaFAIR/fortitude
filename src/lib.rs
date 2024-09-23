@@ -118,8 +118,6 @@ macro_rules! violation {
 /// some by reading a full file, and others by analysing the concrete syntax tree. All
 /// rules must be associated with a `Method` via the `Rule` trait.
 pub enum Method {
-    /// Methods that work on just the path name of the file.
-    Path(fn(&Path) -> Option<Violation>),
     /// Methods that analyse the syntax tree.
     Tree(fn(&tree_sitter::Node, &str) -> Option<Violation>),
     /// Methods that analyse lines of code directly, using regex or otherwise.
@@ -128,6 +126,22 @@ pub enum Method {
 
 // Rule trait
 // ----------
+
+/// Should be implemented by all rules.
+pub trait BaseRule {
+    fn new(settings: &Settings) -> Self
+    where
+        Self: Sized;
+
+    /// Return text explaining what the rule tests for, why this is important, and how the user
+    /// might fix it.
+    fn explain(&self) -> &str;
+}
+
+/// Should be implemented by all rules that act directly on the file path.
+pub trait PathRule: BaseRule {
+    fn check(&self, path: &Path) -> Option<Violation>;
+}
 
 /// Should be implemented for all rules.
 pub trait Rule {
@@ -154,9 +168,6 @@ pub trait Rule {
                     .collect())
             }
             Method::Text(f) => Ok(f(source, settings)),
-            _ => {
-                anyhow::bail!("Apply may only be called for tree and text methods.")
-            }
         }
     }
 }

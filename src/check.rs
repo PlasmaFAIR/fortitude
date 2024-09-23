@@ -1,6 +1,8 @@
 use crate::ast::{named_descendants, parse};
 use crate::cli::CheckArgs;
-use crate::rules::{default_ruleset, entrypoint_map, EntryPointMap, RuleSet};
+use crate::rules::{
+    default_ruleset, entrypoint_map, path_rule_map, EntryPointMap, PathRuleMap, RuleSet,
+};
 use crate::settings::Settings;
 use crate::violation;
 use crate::{Diagnostic, Method, Violation};
@@ -87,25 +89,16 @@ fn tree_rules(
 
 /// Parse a file, check it for issues, and return the report.
 fn check_file(
+    path_rules: &PathRuleMap,
     entrypoints: &EntryPointMap,
     path: &Path,
     settings: &Settings,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
     let mut violations = Vec::new();
 
-    // Check path itself
-    let empty_path_rules = vec![];
-    let path_rules = entrypoints.get("PATH").unwrap_or(&empty_path_rules);
     for (code, rule) in path_rules {
-        match rule.method() {
-            Method::Path(f) => {
-                if let Some(violation) = f(path) {
-                    violations.push((code.clone(), violation));
-                }
-            }
-            _ => {
-                anyhow::bail!("Non-Path rule {} has incorrect entrypoints", code);
-            }
+        if let Some(violation) = rule.check(path) {
+            violations.push((code.to_string(), violation));
         }
     }
 
@@ -144,11 +137,14 @@ pub fn check(args: CheckArgs) -> i32 {
         line_length: args.line_length,
     };
     let ruleset = get_ruleset(&args);
+    // TODO: remove temporary cast to &str ruleset
+    let str_ruleset: std::collections::BTreeSet<_> = ruleset.iter().map(|x| x.as_str()).collect();
+    let path_rules = path_rule_map(&str_ruleset, &settings);
     match entrypoint_map(&ruleset) {
         Ok(entrypoints) => {
             let mut total_errors = 0;
             for file in get_files(&args.files) {
-                match check_file(&entrypoints, &file, &settings) {
+                match check_file(&path_rules, &entrypoints, &file, &settings) {
                     Ok(violations) => {
                         let mut diagnostics: Vec<Diagnostic> = violations
                             .into_iter()

@@ -40,12 +40,32 @@ macro_rules! build_set {
     };
 }
 
+macro_rules! add_rule_to_map {
+    (PATH, PATH, $code: literal, $rule: ident, $map: ident, $settings: ident) => {
+        $map.insert($code, Box::new($rule::new($settings)));
+    };
+    ($type1: tt, $type2: tt, $code: literal, $rule: ident, $map: ident, $settings: ident) => {
+        ();
+    };
+}
+
+macro_rules! match_result {
+    (PATH, $code: literal, $rule: ident) => {
+        anyhow::bail!("Unknown rule code {}", $code)
+    };
+    ($type: tt, $code: literal, $rule: ident) => {
+        Ok(Box::new($rule {}))
+    };
+}
+
 #[macro_export]
 macro_rules! register_rules {
     ($(($categories: ty, $codes: literal, $types: tt, $paths: path, $rules: ident)), +) => {
 
         use lazy_static::lazy_static;
         use std::collections::BTreeSet;
+        use $crate::BaseRule;
+        use $crate::settings::Settings;
 
         const _CODES: &[&'static str; [$($codes), *].len()] = &[$($codes), +];
         build_set!(CODES, _CODES);
@@ -84,11 +104,28 @@ macro_rules! register_rules {
         /// Create a new `Rule` given a rule code, expressed as a string.
         pub fn build_rule(code: &str) -> anyhow::Result<Box<dyn Rule>> {
             match code {
-                $($codes => Ok(Box::new($rules {})),)+
+                $($codes => match_result!($types, $codes, $rules),)+
                 _ => {
                     anyhow::bail!("Unknown rule code {}", code)
                 }
             }
+        }
+
+        pub type PathRuleMap<'a>  = BTreeMap<&'a str, Box<dyn PathRule>>;
+
+        /// Create a mapping of codes to rule instances that operate on paths.
+        pub fn path_rule_map<'a>(codes: &'a BTreeSet<&'a str>, settings: &'a Settings) -> PathRuleMap<'a> {
+            let path_codes: BTreeSet<_> = PATH_CODES.intersection(&codes).collect();
+            let mut map = PathRuleMap::new();
+            for code in path_codes {
+                match *code {
+                    $($codes => {add_rule_to_map!(PATH, $types, $codes, $rules, map, settings);})+
+                    _ => {
+                        continue;
+                    }
+                }
+            }
+            map
         }
     };
 }

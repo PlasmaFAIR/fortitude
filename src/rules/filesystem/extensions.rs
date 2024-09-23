@@ -1,28 +1,14 @@
+use crate::settings::Settings;
 use crate::violation;
-use crate::{Method, Rule, Violation};
+use crate::{BaseRule, PathRule, Violation};
 use std::path::Path;
 /// Defines rule that enforces use of standard file extensions.
 
-fn non_standard_file_extension(path: &Path) -> Option<Violation> {
-    let msg: &str = "file extension should be '.f90' or '.F90'";
-    match path.extension() {
-        Some(ext) => {
-            // Must check like this as ext is an OsStr
-            if ["f90", "F90"].iter().any(|&x| x == ext) {
-                None
-            } else {
-                Some(violation!(msg))
-            }
-        }
-        None => Some(violation!(msg)),
-    }
-}
-
 pub struct NonStandardFileExtension {}
 
-impl Rule for NonStandardFileExtension {
-    fn method(&self) -> Method {
-        Method::Path(non_standard_file_extension)
+impl BaseRule for NonStandardFileExtension {
+    fn new(_settings: &Settings) -> Self {
+        NonStandardFileExtension {}
     }
 
     fn explain(&self) -> &str {
@@ -32,22 +18,37 @@ impl Rule for NonStandardFileExtension {
         by some compilers and build tools.
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
-        vec!["PATH"]
+impl PathRule for NonStandardFileExtension {
+    fn check(&self, path: &Path) -> Option<Violation> {
+        let msg: &str = "file extension should be '.f90' or '.F90'";
+        match path.extension() {
+            Some(ext) => {
+                // Must check like this as ext is an OsStr
+                if ["f90", "F90"].iter().any(|&x| x == ext) {
+                    None
+                } else {
+                    Some(violation!(msg))
+                }
+            }
+            None => Some(violation!(msg)),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::default_settings;
     use crate::violation;
 
     #[test]
     fn test_bad_file_extension() {
         let path = Path::new("my/dir/to/file.f95");
+        let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
-            non_standard_file_extension(&path),
+            rule.check(&path),
             Some(violation!["file extension should be '.f90' or '.F90'"]),
         );
     }
@@ -55,8 +56,9 @@ mod tests {
     #[test]
     fn test_missing_file_extension() {
         let path = Path::new("my/dir/to/file");
+        let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
-            non_standard_file_extension(&path),
+            rule.check(&path),
             Some(violation!["file extension should be '.f90' or '.F90'"]),
         );
     }
@@ -65,7 +67,8 @@ mod tests {
     fn test_correct_file_extensions() {
         let path1 = Path::new("my/dir/to/file.f90");
         let path2 = Path::new("my/dir/to/file.F90");
-        assert_eq!(non_standard_file_extension(&path1), None);
-        assert_eq!(non_standard_file_extension(&path2), None);
+        let rule = NonStandardFileExtension::new(&default_settings());
+        assert_eq!(rule.check(&path1), None);
+        assert_eq!(rule.check(&path2), None);
     }
 }
