@@ -9,7 +9,7 @@ mod style;
 mod typing;
 use crate::register_rules;
 use crate::Rule;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 register_rules! {
     (Category::Error, "E001", AST, error::syntax_error::SyntaxError, SyntaxError),
@@ -35,7 +35,7 @@ pub type EntryPointMap = BTreeMap<String, Vec<(String, RuleBox)>>;
 
 // Returns the full set of all rules.
 pub fn full_ruleset() -> RuleSet {
-    RuleSet::from_iter(CODES.iter().map(|x| x.to_string()))
+    CODES.iter().map(|x| x.to_string()).collect()
 }
 
 /// Returns the set of rules that are activated by default, expressed as strings.

@@ -32,14 +32,26 @@ macro_rules! some_type {
     };
 }
 
+macro_rules! build_set {
+    ($name: ident, $array: ident) => {
+        lazy_static! {
+            static ref $name: BTreeSet<&'static str> = { BTreeSet::from(*$array) };
+        }
+    };
+}
+
 #[macro_export]
 macro_rules! register_rules {
     ($(($categories: ty, $codes: literal, $types: tt, $paths: path, $rules: ident)), +) => {
 
-        const CODES: &[&str; [$($codes), *].len()] = &[$($codes), +];
+        use lazy_static::lazy_static;
+        use std::collections::BTreeSet;
 
-        const fn drop_none<'a, const N1: usize, const N2: usize>(xs: &'a [Option<&'a str>; N1]) -> [&'a str; N2] {
-            let mut result: [&str; N2] = [""; N2];
+        const _CODES: &[&'static str; [$($codes), *].len()] = &[$($codes), +];
+        build_set!(CODES, _CODES);
+
+        const fn drop_none<const N1: usize, const N2: usize>(xs: &[Option<&'static str>; N1]) -> [&'static str; N2] {
+            let mut result: [&'static str; N2] = [""; N2];
             let mut i = 0;
             let mut j = 0;
             while i < N1 {
@@ -52,17 +64,20 @@ macro_rules! register_rules {
             result
         }
 
-        const N_PATH: usize = num_types!(PATH, $($types), +);
-        const PATH_OPTIONS: &[Option<&str>; CODES.len()] = &[$(some_type!(PATH, $types, $codes)), +];
-        const PATH_CODES: &[&str; N_PATH] = &drop_none(PATH_OPTIONS);
+        const _N_PATH: usize = num_types!(PATH, $($types), +);
+        const _PATH_OPTIONS: &[Option<&str>; _CODES.len()] = &[$(some_type!(PATH, $types, $codes)), +];
+        const _PATH_CODES: &[&str; _N_PATH] = &drop_none(_PATH_OPTIONS);
+        build_set!(PATH_CODES, _PATH_CODES);
 
-        const N_TEXT: usize = num_types!(TEXT, $($types), +);
-        const TEXT_OPTIONS: &[Option<&str>; CODES.len()] = &[$(some_type!(TEXT, $types, $codes)), +];
-        const TEXT_CODES: &[&str; N_TEXT] = &drop_none(TEXT_OPTIONS);
+        const _N_TEXT: usize = num_types!(TEXT, $($types), +);
+        const _TEXT_OPTIONS: &[Option<&str>; _CODES.len()] = &[$(some_type!(TEXT, $types, $codes)), +];
+        const _TEXT_CODES: &[&str; _N_TEXT] = &drop_none(_TEXT_OPTIONS);
+        build_set!(TEXT_CODES, _TEXT_CODES);
 
-        const N_AST: usize = num_types!(AST, $($types), +);
-        const AST_OPTIONS: &[Option<&str>; CODES.len()] = &[$(some_type!(AST, $types, $codes)), +];
-        const AST_CODES: &[&str; N_AST] = &drop_none(AST_OPTIONS);
+        const _N_AST: usize = num_types!(AST, $($types), +);
+        const _AST_OPTIONS: &[Option<&str>; _CODES.len()] = &[$(some_type!(AST, $types, $codes)), +];
+        const _AST_CODES: &[&str; _N_AST] = &drop_none(_AST_OPTIONS);
+        build_set!(AST_CODES, _AST_CODES);
 
         $(type $rules = $paths;)+
 
