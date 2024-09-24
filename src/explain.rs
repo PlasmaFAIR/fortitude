@@ -40,7 +40,7 @@ pub fn explain(args: ExplainArgs) -> i32 {
             0
         }
         Err(msg) => {
-            eprintln!("{}: {}", "ERROR:".bright_red(), msg);
+            eprintln!("{}: {}", "ERROR".bright_red(), msg);
             1
         }
     }

@@ -155,7 +155,7 @@ pub fn check(args: CheckArgs) -> i32 {
             }
         }
         Err(msg) => {
-            println!("{}{}", "ERROR".bright_red(), msg);
+            eprintln!("{}: {}", "ERROR".bright_red(), msg);
             1
         }
     }
