@@ -4,8 +4,9 @@ pub mod cli;
 pub mod explain;
 mod rules;
 mod settings;
+use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{named_descendants, parse};
-use colored::Colorize;
+use colored::{ColoredString, Colorize};
 use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
@@ -218,11 +219,88 @@ impl fmt::Display for Diagnostic {
                 write!(f, "{}: {} {}", path, code, message)
             }
             ViolationPosition::Line(line) => {
-                write!(f, "{}:{}: {} {}", path, line, code, message)
+                format_violation_line_col(self, f, line, 0, message, &path, &code)
             }
             ViolationPosition::LineCol((line, col)) => {
-                write!(f, "{}:{}:{}: {} {}", path, line, col, code, message)
+                format_violation_line_col(self, f, line, col, message, &path, &code)
             }
         }
     }
+}
+
+/// Read filename into vec of strings
+fn read_lines(filename: &PathBuf) -> Vec<String> {
+    std::fs::read_to_string(filename)
+        .unwrap() // panic on possible file-reading errors
+        .lines() // split the string into an iterator of string slices
+        .map(String::from) // make each slice into a string
+        .collect() // gather them together into a vector
+}
+
+fn format_violation_line_col(
+    diagnostic: &Diagnostic,
+    f: &mut fmt::Formatter,
+    line: usize,
+    col: usize,
+    message: &str,
+    path: &ColoredString,
+    code: &ColoredString,
+) -> fmt::Result {
+    let lines = read_lines(&diagnostic.path);
+    let mut start_index = line.saturating_sub(2).max(1);
+
+    // Trim leading empty lines.
+    while start_index < line {
+        if !lines[start_index.saturating_sub(1)].trim().is_empty() {
+            break;
+        }
+        start_index = start_index.saturating_add(1);
+    }
+
+    let mut end_index = line.saturating_add(2).min(lines.len());
+
+    // Trim leading empty lines.
+    while end_index > line {
+        if !lines[end_index.saturating_sub(1)].trim().is_empty() {
+            break;
+        }
+        end_index = end_index.saturating_sub(1);
+    }
+
+    let content_slice = lines[start_index.saturating_sub(1)..end_index]
+        .iter()
+        .fold(String::default(), |acc, line| format!("{acc}{line}\n"));
+
+    // Annotations are done by offset, so we need to count line
+    // lengths... including the newline character, which doesn't
+    // appear in `lines`!
+    let offset_up_to_line = lines[start_index.saturating_sub(1)..line.saturating_sub(1)]
+        .iter()
+        .fold(0, |acc, line| acc + line.chars().count() + 1);
+
+    // Something really weird going on here, where I can't get it to
+    // put the annotation in the first column: it's either in column 2
+    // or the end of the previous line. But does appear to be right
+    // for other columns!
+    let label_offset = offset_up_to_line + col.saturating_sub(1);
+
+    // Some annoyance here: we *have* to have some level prefix to our
+    // message. Might be fixed in future version of annotate-snippets
+    // -- or we use an earlier version with more control.
+    // Also, we could use `.origin(path)` to get the filename and
+    // line:col automatically, but see above about off-by-one error
+    let message_line = format!("{}:{}:{}: {} {}", path, line, col, code, message);
+    let snippet = Level::Warning.title(&message_line).snippet(
+        Snippet::source(&content_slice)
+            .line_start(start_index)
+            .annotation(
+                Level::Error
+                    .span(label_offset..label_offset.saturating_add(1))
+                    .label(code),
+            ),
+    );
+
+    let renderer = Renderer::styled();
+    let source_block = renderer.render(snippet);
+    writeln!(f, "{}", source_block)
 }
