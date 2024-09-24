@@ -111,66 +111,44 @@ macro_rules! violation {
     };
 }
 
-// Rule methods
-// ------------
-
-/// The methods by which rules are enforced. Some rules act on individual lines of code,
-/// some by reading a full file, and others by analysing the concrete syntax tree. All
-/// rules must be associated with a `Method` via the `Rule` trait.
-pub enum Method {
-    /// Methods that analyse the syntax tree.
-    Tree(fn(&tree_sitter::Node, &str) -> Option<Violation>),
-}
-
 // Rule trait
 // ----------
 
 /// Implemented by all rules.
-pub trait BaseRule {
+pub trait Rule {
     fn new(settings: &Settings) -> Self
     where
         Self: Sized;
 
     /// Return text explaining what the rule tests for, why this is important, and how the user
     /// might fix it.
-    fn explain(&self) -> &str;
+    fn explain(&self) -> &'static str;
 }
 
 /// Implemented by rules that act directly on the file path.
-pub trait PathRule: BaseRule {
+pub trait PathRule: Rule {
     fn check(&self, path: &Path) -> Option<Violation>;
 }
 
 /// Implemented by rules that analyse lines of code directly, using regex or otherwise.
-pub trait TextRule: BaseRule {
+pub trait TextRule: Rule {
     fn check(&self, source: &str) -> Vec<Violation>;
 }
 
-/// Should be implemented for all rules.
-pub trait Rule {
-    /// Return a function pointer to the method associated with this rule.
-    fn method(&self) -> Method;
-
-    /// Return text explaining what the rule tests for, why this is important, and how the user
-    /// might fix it.
-    fn explain(&self) -> &str;
+/// Implemented by rules that analyse the abstract syntax tree.
+pub trait ASTRule: Rule {
+    fn check(&self, node: &tree_sitter::Node, source: &str) -> Option<Violation>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
-    /// Path-based rules should return a vector containing only "PATH" while text-based rules
-    /// should return a vector containing only "TEXT".
-    fn entrypoints(&self) -> Vec<&str>;
+    fn entrypoints(&self) -> Vec<&'static str>;
 
     /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(&self, source: &str, _settings: &Settings) -> anyhow::Result<Vec<Violation>> {
-        match self.method() {
-            Method::Tree(f) => {
-                let entrypoints = self.entrypoints();
-                Ok(named_descendants(&parse(source)?.root_node())
-                    .filter(|x| entrypoints.contains(&x.kind()))
-                    .filter_map(|x| f(&x, source))
-                    .collect())
-            }
-        }
+    fn apply(&self, source: &str) -> anyhow::Result<Vec<Violation>> {
+        let entrypoints = self.entrypoints();
+        Ok(named_descendants(&parse(source)?.root_node())
+            .filter(|x| entrypoints.contains(&x.kind()))
+            .filter_map(|x| self.check(&x, source))
+            .collect())
     }
 }
 

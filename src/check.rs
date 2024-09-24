@@ -1,32 +1,39 @@
 use crate::ast::{named_descendants, parse};
 use crate::cli::CheckArgs;
 use crate::rules::{
-    default_ruleset, entrypoint_map, path_rule_map, text_rule_map, EntryPointMap, PathRuleMap,
-    RuleSet, TextRuleMap,
+    ast_entrypoint_map, default_ruleset, full_ruleset, path_rule_map, text_rule_map,
+    ASTEntryPointMap, PathRuleMap, RuleSet, TextRuleMap,
 };
 use crate::settings::Settings;
 use crate::violation;
-use crate::{Diagnostic, Method, Violation};
+use crate::{Diagnostic, Violation};
 use colored::Colorize;
 use itertools::{chain, join};
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
-use tree_sitter::Node;
 use walkdir::WalkDir;
 
 /// Get the list of active rules for this session.
-fn get_ruleset(args: &CheckArgs) -> RuleSet {
-    // TODO update lists with settings file
-    let mut ruleset = RuleSet::new();
+fn ruleset(args: &CheckArgs) -> anyhow::Result<RuleSet> {
+    // TODO Check that all rules in the set are valid, use Map::difference
+    let mut choices = RuleSet::new();
     if !args.select.is_empty() {
-        ruleset.extend(args.select.iter().map(|x| x.to_string()));
+        let select: RuleSet = args.select.iter().map(|x| x.as_str()).collect();
+        choices.extend(select);
     } else {
-        ruleset.extend(chain(&default_ruleset(), &args.include).map(|x| x.to_string()));
-        for rule in &args.ignore {
-            ruleset.remove(rule);
+        let include: RuleSet = args.include.iter().map(|x| x.as_str()).collect();
+        let ignore: RuleSet = args.ignore.iter().map(|x| x.as_str()).collect();
+        let defaults = default_ruleset();
+        choices.extend(chain(&defaults, &include));
+        for rule in &ignore {
+            choices.remove(rule);
         }
     }
-    ruleset
+    let diff: Vec<_> = choices.difference(&full_ruleset()).copied().collect();
+    if !diff.is_empty() {
+        anyhow::bail!("Unknown rule codes {:?}", diff);
+    }
+    Ok(choices)
 }
 
 /// Helper function used with `filter` to select only paths that end in a Fortran extension.
@@ -63,38 +70,16 @@ fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
     paths
 }
 
-fn tree_rules(
-    entrypoints: &EntryPointMap,
-    root: &Node,
-    src: &str,
-) -> anyhow::Result<Vec<(String, Violation)>> {
-    let mut violations = Vec::new();
-    for node in named_descendants(root) {
-        let empty = vec![];
-        let rules = entrypoints.get(node.kind()).unwrap_or(&empty);
-        for (code, rule) in rules {
-            match rule.method() {
-                Method::Tree(f) => {
-                    if let Some(violation) = f(&node, src) {
-                        violations.push((code.clone(), violation));
-                    }
-                }
-            }
-        }
-    }
-    Ok(violations)
-}
-
 /// Parse a file, check it for issues, and return the report.
 fn check_file(
     path_rules: &PathRuleMap,
     text_rules: &TextRuleMap,
-    entrypoints: &EntryPointMap,
+    ast_entrypoints: &ASTEntryPointMap,
     path: &Path,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
+    // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     let mut violations = Vec::new();
 
-    // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     for (code, rule) in path_rules {
         if let Some(violation) = rule.check(path) {
             violations.push((code.to_string(), violation));
@@ -112,11 +97,16 @@ fn check_file(
     }
 
     // Perform AST analysis
-    violations.extend(tree_rules(
-        entrypoints,
-        &parse(&source)?.root_node(),
-        &source,
-    )?);
+    let tree = parse(&source)?;
+    for node in named_descendants(&tree.root_node()) {
+        if let Some(rules) = ast_entrypoints.get(node.kind()) {
+            for (code, rule) in rules {
+                if let Some(violation) = rule.check(&node, &source) {
+                    violations.push((code.to_string(), violation));
+                }
+            }
+        }
+    }
 
     Ok(violations)
 }
@@ -126,16 +116,14 @@ pub fn check(args: CheckArgs) -> i32 {
     let settings = Settings {
         line_length: args.line_length,
     };
-    let ruleset = get_ruleset(&args);
-    // TODO: remove temporary cast to &str ruleset
-    let str_ruleset: std::collections::BTreeSet<_> = ruleset.iter().map(|x| x.as_str()).collect();
-    let path_rules = path_rule_map(&str_ruleset, &settings);
-    let text_rules = text_rule_map(&str_ruleset, &settings);
-    match entrypoint_map(&ruleset) {
-        Ok(entrypoints) => {
+    match ruleset(&args) {
+        Ok(rules) => {
+            let path_rules = path_rule_map(&rules, &settings);
+            let text_rules = text_rule_map(&rules, &settings);
+            let ast_entrypoints = ast_entrypoint_map(&rules, &settings);
             let mut total_errors = 0;
             for file in get_files(&args.files) {
-                match check_file(&path_rules, &text_rules, &entrypoints, &file) {
+                match check_file(&path_rules, &text_rules, &ast_entrypoints, &file) {
                     Ok(violations) => {
                         let mut diagnostics: Vec<Diagnostic> = violations
                             .into_iter()
@@ -167,7 +155,7 @@ pub fn check(args: CheckArgs) -> i32 {
             }
         }
         Err(msg) => {
-            eprintln!("{}: {}", "INTERNAL ERROR:".bright_red(), msg);
+            println!("{}{}", "ERROR".bright_red(), msg);
             1
         }
     }

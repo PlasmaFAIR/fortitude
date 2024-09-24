@@ -1,17 +1,17 @@
 use crate::settings::Settings;
 use crate::violation;
-use crate::{BaseRule, PathRule, Violation};
+use crate::{PathRule, Rule, Violation};
 use std::path::Path;
 /// Defines rule that enforces use of standard file extensions.
 
 pub struct NonStandardFileExtension {}
 
-impl BaseRule for NonStandardFileExtension {
+impl Rule for NonStandardFileExtension {
     fn new(_settings: &Settings) -> Self {
         NonStandardFileExtension {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         The standard file extensions for modern (free-form) Fortran are '.f90' or  '.F90'.
         Forms that reference later Fortran standards such as '.f08' or '.F95' may be rejected

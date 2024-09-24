@@ -47,20 +47,21 @@ macro_rules! add_rule_to_map {
     (TEXT, TEXT, $code: literal, $rule: ident, $map: ident, $settings: ident) => {
         $map.insert($code, Box::new($rule::new($settings)));
     };
+    (AST, AST, $code: literal, $rule: ident, $map: ident, $settings: ident) => {
+        let rule = $rule::new($settings);
+        for entrypoint in rule.entrypoints() {
+            match $map.get_mut(entrypoint) {
+                Some(rule_vec) => {
+                    rule_vec.push(($code, Box::new($rule::new($settings))));
+                }
+                None => {
+                    $map.insert(entrypoint, vec![($code, Box::new($rule::new($settings)))]);
+                }
+            }
+        }
+    };
     ($type1: tt, $type2: tt, $code: literal, $rule: ident, $map: ident, $settings: ident) => {
         ();
-    };
-}
-
-macro_rules! match_result {
-    (PATH, $code: literal, $rule: ident) => {
-        anyhow::bail!("Unknown rule code {}", $code)
-    };
-    (TEXT, $code: literal, $rule: ident) => {
-        anyhow::bail!("Unknown rule code {}", $code)
-    };
-    ($type: tt, $code: literal, $rule: ident) => {
-        Ok(Box::new($rule {}))
     };
 }
 
@@ -69,8 +70,8 @@ macro_rules! register_rules {
     ($(($categories: ty, $codes: literal, $types: tt, $paths: path, $rules: ident)), +) => {
 
         use lazy_static::lazy_static;
-        use std::collections::BTreeSet;
-        use $crate::BaseRule;
+        use std::collections::{BTreeSet, BTreeMap};
+        use $crate::{Rule, ASTRule, PathRule, TextRule};
         use $crate::settings::Settings;
 
         const _CODES: &[&'static str; [$($codes), *].len()] = &[$($codes), +];
@@ -106,27 +107,33 @@ macro_rules! register_rules {
         build_set!(AST_CODES, _AST_CODES);
 
         // Make a local type alias to each rule.
+        // Needed as macro rules forbids calling ::new() on type paths.
         $(type $rules = $paths;)+
 
-        // Create a new `Rule` given a rule code, expressed as a string.
-        pub fn build_rule(code: &str) -> anyhow::Result<Box<dyn Rule>> {
-            match code {
-                $($codes => match_result!($types, $codes, $rules),)+
-                _ => {
-                    anyhow::bail!("Unknown rule code {}", code)
-                }
-            }
+        pub type RuleSet<'a> = BTreeSet<&'a str>;
+        pub type PathRuleMap<'a> = BTreeMap<&'a str, Box<dyn PathRule>>;
+        pub type TextRuleMap<'a> = BTreeMap<&'a str, Box<dyn TextRule>>;
+        pub type ASTEntryPointMap<'a> = BTreeMap<&'a str, Vec<(&'a str, Box<dyn ASTRule>)>>;
+
+        // Returns the full set of all rules.
+        pub fn full_ruleset<'a>() -> RuleSet<'a> {
+            CODES.clone()
         }
 
-        pub type PathRuleMap<'a>  = BTreeMap<&'a str, Box<dyn PathRule>>;
-        pub type TextRuleMap<'a>  = BTreeMap<&'a str, Box<dyn TextRule>>;
+        // Returns the set of rules that are activated by default, expressed as strings.
+        pub fn default_ruleset<'a>() -> RuleSet<'a> {
+            // Currently all rules are activated by default.
+            // Should add an additional macro input to toggle default or not.
+            // Community feedback will be needed to determine a sensible set.
+            full_ruleset()
+        }
 
         // Create a mapping of codes to rule instances that operate on paths.
-        pub fn path_rule_map<'a>(codes: &'a BTreeSet<&'a str>, settings: &'a Settings) -> PathRuleMap<'a> {
-            let path_codes: BTreeSet<_> = PATH_CODES.intersection(&codes).collect();
+        pub fn path_rule_map<'a>(codes: &'a RuleSet<'a>, settings: &'a Settings) -> PathRuleMap<'a> {
+            let path_codes: RuleSet = PATH_CODES.intersection(&codes).copied().collect();
             let mut map = PathRuleMap::new();
             for code in path_codes {
-                match *code {
+                match code {
                     $($codes => {add_rule_to_map!(PATH, $types, $codes, $rules, map, settings);})+
                     _ => {
                         continue;
@@ -137,11 +144,11 @@ macro_rules! register_rules {
         }
 
         // Create a mapping of codes to rule instances that operate on lines of code directly.
-        pub fn text_rule_map<'a>(codes: &'a BTreeSet<&'a str>, settings: &'a Settings) -> TextRuleMap<'a> {
-            let text_codes: BTreeSet<_> = TEXT_CODES.intersection(&codes).collect();
+        pub fn text_rule_map<'a>(codes: &'a RuleSet<'a>, settings: &'a Settings) -> TextRuleMap<'a> {
+            let text_codes: RuleSet = TEXT_CODES.intersection(&codes).copied().collect();
             let mut map = TextRuleMap::new();
             for code in text_codes {
-                match *code {
+                match code {
                     $($codes => {add_rule_to_map!(TEXT, $types, $codes, $rules, map, settings);})+
                     _ => {
                         continue;
@@ -149,6 +156,31 @@ macro_rules! register_rules {
                 }
             }
             map
+        }
+
+        // Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
+        pub fn ast_entrypoint_map<'a>(codes: &'a RuleSet<'a>, settings: &'a Settings) -> ASTEntryPointMap<'a> {
+            let ast_codes: RuleSet = AST_CODES.intersection(&codes).copied().collect();
+            let mut map = ASTEntryPointMap::new();
+            for code in ast_codes {
+                match code {
+                    $($codes => {add_rule_to_map!(AST, $types, $codes, $rules, map, settings);})+
+                    _ => {
+                        continue;
+                    }
+                }
+            }
+            map
+        }
+
+        // Print the help text for a rule.
+        pub fn explain_rule<'a>(code: &'a str, settings: &'a Settings) -> &'a str {
+            match code {
+                $($codes => {$rules::new(&settings).explain()})+
+                _ => {
+                    ""
+                }
+            }
         }
     };
 }

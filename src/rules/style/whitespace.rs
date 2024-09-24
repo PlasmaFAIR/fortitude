@@ -1,16 +1,16 @@
 use crate::settings::Settings;
 use crate::violation;
-use crate::{BaseRule, TextRule, Violation};
+use crate::{Rule, TextRule, Violation};
 /// Defines rules that enforce widely accepted whitespace rules.
 
 pub struct TrailingWhitespace {}
 
-impl BaseRule for TrailingWhitespace {
+impl Rule for TrailingWhitespace {
     fn new(_settings: &Settings) -> Self {
         TrailingWhitespace {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         Trailing whitespace is difficult to spot, and as some editors will remove it
         automatically while others leave it, it can cause unwanted 'diff noise' in

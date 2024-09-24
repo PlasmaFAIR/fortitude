@@ -1,6 +1,6 @@
 use crate::settings::Settings;
 use crate::violation;
-use crate::{BaseRule, TextRule, Violation};
+use crate::{Rule, TextRule, Violation};
 use lazy_regex::regex_is_match;
 /// Defines rules that govern line length.
 
@@ -8,14 +8,14 @@ pub struct LineTooLong {
     line_length: usize,
 }
 
-impl BaseRule for LineTooLong {
+impl Rule for LineTooLong {
     fn new(settings: &Settings) -> Self {
         LineTooLong {
             line_length: settings.line_length,
         }
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         Long lines are more difficult to read, and may not fit on some developers'
         terminals. The line continuation character '&' may be used to split a long line

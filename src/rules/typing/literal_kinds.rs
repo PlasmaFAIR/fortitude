@@ -1,5 +1,6 @@
 use crate::ast::{child_with_name, dtype_is_plain_number, parse_intrinsic_type, to_text};
-use crate::{Method, Rule, Violation};
+use crate::settings::Settings;
+use crate::{ASTRule, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::Node;
 /// Defines rules that discourage the use of raw number literals as kinds, as this can result in
@@ -7,36 +8,14 @@ use tree_sitter::Node;
 
 // TODO rules for intrinsic kinds in real(x, [KIND]) and similar type casting functions
 
-fn literal_kind(node: &Node, src: &str) -> Option<Violation> {
-    let dtype = parse_intrinsic_type(node)?;
-    if dtype_is_plain_number(dtype.as_str()) {
-        if let Some(child) = child_with_name(node, "size") {
-            let txt = to_text(&child, src)?;
-            // Match for numbers that aren't preceeded by:
-            // - Letters: don't want to catch things like real64
-            // - Other numbers: again, shouldn't catch real64
-            // - Underscores: could be part of parameter name
-            // - "*": 'star kinds' are caught by a different rule
-            if regex_is_match!(r"[^A-z0-9_\*]\d", txt) {
-                let msg = format!(
-                    "{} kind set with number literal, use 'iso_fortran_env' parameter",
-                    dtype,
-                );
-                return Some(Violation::from_node(&msg, node));
-            }
-        }
-    }
-    None
-}
-
 pub struct LiteralKind {}
 
 impl Rule for LiteralKind {
-    fn method(&self) -> Method {
-        Method::Tree(literal_kind)
+    fn new(_settings: &Settings) -> Self {
+        LiteralKind {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         Rather than setting an intrinsic type's kind using an integer literal, such as
         `real(8)` or `integer(kind=4)`, consider setting kinds using parameters in the
@@ -90,32 +69,44 @@ impl Rule for LiteralKind {
         ```
         "
     }
-
-    fn entrypoints(&self) -> Vec<&str> {
-        vec!["variable_declaration", "function_statement"]
-    }
 }
 
-fn literal_kind_suffix(node: &Node, src: &str) -> Option<Violation> {
-    let txt = to_text(node, src)?;
-    if regex_is_match!(r"_\d+$", txt) {
-        let msg = format!(
-            "{} has literal suffix, use 'iso_fortran_env' parameter",
-            txt,
-        );
-        return Some(Violation::from_node(&msg, node));
+impl ASTRule for LiteralKind {
+    fn check(&self, node: &Node, src: &str) -> Option<Violation> {
+        let dtype = parse_intrinsic_type(node)?;
+        if dtype_is_plain_number(dtype.as_str()) {
+            if let Some(child) = child_with_name(node, "size") {
+                let txt = to_text(&child, src)?;
+                // Match for numbers that aren't preceeded by:
+                // - Letters: don't want to catch things like real64
+                // - Other numbers: again, shouldn't catch real64
+                // - Underscores: could be part of parameter name
+                // - "*": 'star kinds' are caught by a different rule
+                if regex_is_match!(r"[^A-z0-9_\*]\d", txt) {
+                    let msg = format!(
+                        "{} kind set with number literal, use 'iso_fortran_env' parameter",
+                        dtype,
+                    );
+                    return Some(Violation::from_node(&msg, node));
+                }
+            }
+        }
+        None
     }
-    None
+
+    fn entrypoints(&self) -> Vec<&'static str> {
+        vec!["variable_declaration", "function_statement"]
+    }
 }
 
 pub struct LiteralKindSuffix {}
 
 impl Rule for LiteralKindSuffix {
-    fn method(&self) -> Method {
-        Method::Tree(literal_kind_suffix)
+    fn new(_settings: &Settings) -> Self {
+        LiteralKindSuffix {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         Using an integer literal as a kind specifier gives no guarantees regarding the
         precision of the type, as kind numbers are not specified in the Fortran
@@ -140,8 +131,22 @@ impl Rule for LiteralKindSuffix {
         ```
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
+impl ASTRule for LiteralKindSuffix {
+    fn check(&self, node: &Node, src: &str) -> Option<Violation> {
+        let txt = to_text(node, src)?;
+        if regex_is_match!(r"_\d+$", txt) {
+            let msg = format!(
+                "{} has literal suffix, use 'iso_fortran_env' parameter",
+                txt,
+            );
+            return Some(Violation::from_node(&msg, node));
+        }
+        None
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
         vec!["number_literal"]
     }
 }
@@ -202,7 +207,8 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        let actual = LiteralKind {}.apply(&source.as_str(), &default_settings())?;
+        let rule = LiteralKind::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -230,7 +236,8 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        let actual = LiteralKindSuffix {}.apply(&source.as_str(), &default_settings())?;
+        let rule = LiteralKindSuffix::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

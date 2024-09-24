@@ -1,36 +1,39 @@
-use crate::{Method, Rule, Violation};
+use crate::settings::Settings;
+use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
 
 /// Defines rules that check whether functions and subroutines are defined within modules (or one
 /// of a few acceptable alternatives).
 
-fn external_function(node: &Node, _src: &str) -> Option<Violation> {
-    if node.parent()?.kind() == "translation_unit" {
-        let msg = format!(
-            "{} not contained within (sub)module or program",
-            node.kind()
-        );
-        return Some(Violation::from_node(msg, node));
-    }
-    None
-}
-
 pub struct ExternalFunction {}
 
 impl Rule for ExternalFunction {
-    fn method(&self) -> Method {
-        Method::Tree(external_function)
+    fn new(_settings: &Settings) -> Self {
+        ExternalFunction {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         Functions and subroutines should be contained within (sub)modules or programs.
         Fortran compilers are unable to perform type checks and conversions on functions
         defined outside of these scopes, and this is a common source of bugs.
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
+impl ASTRule for ExternalFunction {
+    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+        if node.parent()?.kind() == "translation_unit" {
+            let msg = format!(
+                "{} not contained within (sub)module or program",
+                node.kind()
+            );
+            return Some(Violation::from_node(msg, node));
+        }
+        None
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
         vec!["function", "subroutine"]
     }
 }
@@ -65,7 +68,8 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        let actual = ExternalFunction {}.apply(&source.as_str(), &default_settings())?;
+        let rule = ExternalFunction::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -90,7 +94,8 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = vec![];
-        let actual = ExternalFunction {}.apply(&source.as_str(), &default_settings())?;
+        let rule = ExternalFunction::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

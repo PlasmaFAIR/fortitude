@@ -1,29 +1,33 @@
 use crate::cli::ExplainArgs;
-use crate::rules::{full_ruleset, rulemap, RuleSet};
+use crate::rules::{explain_rule, full_ruleset, RuleSet};
+use crate::settings::default_settings;
 use colored::Colorize;
 use textwrap::dedent;
 
 /// Get the list of active rules for this session.
-fn get_ruleset(args: &ExplainArgs) -> RuleSet {
-    let mut ruleset = RuleSet::new();
+fn ruleset(args: &ExplainArgs) -> anyhow::Result<RuleSet> {
     if args.rules.is_empty() {
-        ruleset.extend(full_ruleset());
+        Ok(full_ruleset())
     } else {
-        ruleset.extend(args.rules.iter().map(|x| x.to_string()));
+        let choices: RuleSet = args.rules.iter().map(|x| x.as_str()).collect();
+        let diff: Vec<_> = choices.difference(&full_ruleset()).copied().collect();
+        if !diff.is_empty() {
+            anyhow::bail!("Unknown rule codes {:?}", diff);
+        }
+        Ok(choices)
     }
-    ruleset
 }
 
 /// Check all files, report issues found, and return error code.
 pub fn explain(args: ExplainArgs) -> i32 {
-    let ruleset = get_ruleset(&args);
-    match rulemap(&ruleset) {
+    match ruleset(&args) {
         Ok(rules) => {
             let mut outputs = Vec::new();
-            for (code, rule) in &rules {
+            let settings = default_settings();
+            for rule in rules {
                 outputs.push((
-                    format!("{} {}", "#".bright_red(), code.bright_red()),
-                    dedent(rule.explain()),
+                    format!("{} {}", "#".bright_red(), rule.bright_red()),
+                    dedent(explain_rule(rule, &settings)),
                 ));
             }
             outputs.sort_by(|a, b| {
@@ -36,7 +40,7 @@ pub fn explain(args: ExplainArgs) -> i32 {
             0
         }
         Err(msg) => {
-            eprintln!("{}: {}", "Error:".bright_red(), msg);
+            eprintln!("{}: {}", "ERROR:".bright_red(), msg);
             1
         }
     }

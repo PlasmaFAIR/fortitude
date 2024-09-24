@@ -8,8 +8,6 @@ mod precision;
 mod style;
 mod typing;
 use crate::register_rules;
-use crate::{PathRule, Rule, TextRule};
-use std::collections::BTreeMap;
 
 register_rules! {
     (Category::Error, "E001", AST, error::syntax_error::SyntaxError, SyntaxError),
@@ -26,59 +24,4 @@ register_rules! {
     (Category::Precision, "P011", AST, precision::double_precision::DoublePrecision, DoublePrecision),
     (Category::Modules, "M001", AST, modules::external_functions::ExternalFunction, ExternalFunction),
     (Category::Modules, "M011", AST, modules::use_statements::UseAll, UseAll)
-}
-
-pub type RuleBox = Box<dyn Rule>;
-pub type RuleSet = BTreeSet<String>;
-pub type RuleMap = BTreeMap<String, RuleBox>;
-pub type EntryPointMap = BTreeMap<String, Vec<(String, RuleBox)>>;
-
-// Returns the full set of all rules.
-pub fn full_ruleset() -> RuleSet {
-    CODES.iter().map(|x| x.to_string()).collect()
-}
-
-/// Returns the set of rules that are activated by default, expressed as strings.
-pub fn default_ruleset() -> RuleSet {
-    // Currently all rules are activated by default.
-    // Community feedback will be needed to determine a sensible set.
-    full_ruleset()
-}
-
-pub fn rulemap(set: &RuleSet) -> anyhow::Result<RuleMap> {
-    let mut rules = RuleMap::new();
-    for code in set {
-        let rule = build_rule(code)?;
-        rules.insert(code.to_string(), rule);
-    }
-    Ok(rules)
-}
-
-/// Map tree-sitter node types to the rules that operate over them
-pub fn entrypoint_map(set: &RuleSet) -> anyhow::Result<EntryPointMap> {
-    let mut map = EntryPointMap::new();
-    for code in set {
-        if PATH_CODES.contains(code.as_str()) {
-            continue;
-        }
-        if TEXT_CODES.contains(code.as_str()) {
-            continue;
-        }
-        let rule = build_rule(code)?;
-        let entrypoints = rule.entrypoints();
-        for entrypoint in entrypoints {
-            match map.get_mut(entrypoint) {
-                Some(rule_vec) => {
-                    rule_vec.push((code.to_string(), build_rule(code)?));
-                }
-                None => {
-                    map.insert(
-                        entrypoint.to_string(),
-                        vec![(code.to_string(), build_rule(code)?)],
-                    );
-                }
-            }
-        }
-    }
-    Ok(map)
 }
