@@ -12,6 +12,7 @@ categories = ["command-line-utilities", "development-tools"]
 exclude = [".*", "test.f90"]
 
 [dependencies]
+annotate-snippets = "0.11.4"
 anyhow = "1.0.79"
 clap = { version = "4.4.16", features = ["derive"] }
 colored = "2.1.0"
