@@ -333,7 +333,7 @@ fn format_violation_line_col(
     // put the annotation in the first column: it's either in column 2
     // or the end of the previous line. But does appear to be right
     // for other columns!
-    let label_offset = offset_up_to_line + col.saturating_sub(1).max(1);
+    let label_offset = offset_up_to_line + col.saturating_sub(1);
 
     // Some annoyance here: we *have* to have some level prefix to our
     // message. Might be fixed in future version of annotate-snippets
@@ -344,7 +344,11 @@ fn format_violation_line_col(
     let snippet = Level::Warning.title(&message_line).snippet(
         Snippet::source(&content_slice)
             .line_start(start_index)
-            .annotation(Level::Error.span(label_offset..label_offset).label(code)),
+            .annotation(
+                Level::Error
+                    .span(label_offset..label_offset.saturating_add(1))
+                    .label(code),
+            ),
     );
 
     let renderer = Renderer::styled();
