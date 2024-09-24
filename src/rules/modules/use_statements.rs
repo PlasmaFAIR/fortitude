@@ -1,27 +1,20 @@
 use crate::ast::child_with_name;
-use crate::{Method, Rule, Violation};
+use crate::settings::Settings;
+use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
 
 /// Defines rules that check whether `use` statements are used correctly.
 
 // TODO Check that 'used' entity is actually used somewhere
 
-fn use_all(node: &Node, _src: &str) -> Option<Violation> {
-    if child_with_name(node, "included_items").is_none() {
-        let msg = "'use' statement missing 'only' clause";
-        return Some(Violation::from_node(msg, node));
-    }
-    None
-}
-
 pub struct UseAll {}
 
 impl Rule for UseAll {
-    fn method(&self) -> Method {
-        Method::Tree(use_all)
+    fn new(_settings: &Settings) -> Self {
+        UseAll {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         When using a module, it is recommended to add an 'only' clause to specify which
         components you intend to use:
@@ -39,8 +32,18 @@ impl Rule for UseAll {
         local scope.
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
+impl ASTRule for UseAll {
+    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+        if child_with_name(node, "included_items").is_none() {
+            let msg = "'use' statement missing 'only' clause";
+            return Some(Violation::from_node(msg, node));
+        }
+        None
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
         vec!["use_statement"]
     }
 }
@@ -64,7 +67,8 @@ mod tests {
             ",
         );
         let expected = vec![violation!("'use' statement missing 'only' clause", 4, 5)];
-        let actual = UseAll {}.apply(&source.as_str(), &default_settings())?;
+        let rule = UseAll::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

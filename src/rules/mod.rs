@@ -1,134 +1,27 @@
+/// A collection of all rules, and utilities to select a subset at runtime.
 mod error;
 mod filesystem;
+#[macro_use]
+mod macros;
 mod modules;
 mod precision;
 mod style;
 mod typing;
-use crate::{Category, Code, Rule};
-use std::collections::{BTreeMap, BTreeSet};
-/// A collection of all rules, and utilities to select a subset at runtime.
+use crate::register_rules;
 
-pub type RuleBox = Box<dyn Rule>;
-pub type RuleSet = BTreeSet<String>;
-pub type RuleMap = BTreeMap<String, RuleBox>;
-pub type EntryPointMap = BTreeMap<String, Vec<(String, RuleBox)>>;
-
-/// Create a new `Rule` given a rule code, expressed as a string.
-pub fn build_rule(code_str: &str) -> anyhow::Result<RuleBox> {
-    let code = Code::from(code_str)?;
-    match code {
-        Code {
-            category: Category::Error,
-            number: 1,
-        } => Ok(Box::new(error::syntax_error::SyntaxError {})),
-        Code {
-            category: Category::FileSystem,
-            number: 1,
-        } => Ok(Box::new(
-            filesystem::extensions::NonStandardFileExtension {},
-        )),
-        Code {
-            category: Category::Style,
-            number: 1,
-        } => Ok(Box::new(style::line_length::LineTooLong {})),
-        Code {
-            category: Category::Style,
-            number: 101,
-        } => Ok(Box::new(style::whitespace::TrailingWhitespace {})),
-        Code {
-            category: Category::Typing,
-            number: 1,
-        } => Ok(Box::new(typing::implicit_typing::ImplicitTyping {})),
-        Code {
-            category: Category::Typing,
-            number: 2,
-        } => Ok(Box::new(
-            typing::implicit_typing::InterfaceImplicitTyping {},
-        )),
-        Code {
-            category: Category::Typing,
-            number: 3,
-        } => Ok(Box::new(
-            typing::implicit_typing::SuperfluousImplicitNone {},
-        )),
-        Code {
-            category: Category::Typing,
-            number: 11,
-        } => Ok(Box::new(typing::literal_kinds::LiteralKind {})),
-        Code {
-            category: Category::Typing,
-            number: 12,
-        } => Ok(Box::new(typing::literal_kinds::LiteralKindSuffix {})),
-        Code {
-            category: Category::Typing,
-            number: 21,
-        } => Ok(Box::new(typing::star_kinds::StarKind {})),
-        Code {
-            category: Category::Precision,
-            number: 1,
-        } => Ok(Box::new(precision::kind_suffixes::NoRealSuffix {})),
-        Code {
-            category: Category::Precision,
-            number: 11,
-        } => Ok(Box::new(precision::double_precision::DoublePrecision {})),
-        Code {
-            category: Category::Modules,
-            number: 1,
-        } => Ok(Box::new(modules::external_functions::ExternalFunction {})),
-        Code {
-            category: Category::Modules,
-            number: 11,
-        } => Ok(Box::new(modules::use_statements::UseAll {})),
-        _ => {
-            anyhow::bail!("Unknown rule code {}", code_str)
-        }
-    }
-}
-
-// Returns the full set of all rules.
-pub fn full_ruleset() -> RuleSet {
-    let all_rules = &[
-        "E001", "F001", "S001", "S101", "T001", "T002", "T003", "T011", "T012", "T021", "P001",
-        "P011", "M001", "M011",
-    ];
-    RuleSet::from_iter(all_rules.iter().map(|x| x.to_string()))
-}
-
-/// Returns the set of rules that are activated by default, expressed as strings.
-pub fn default_ruleset() -> RuleSet {
-    // Currently all rules are activated by default.
-    // Community feedback will be needed to determine a sensible set.
-    full_ruleset()
-}
-
-pub fn rulemap(set: &RuleSet) -> anyhow::Result<RuleMap> {
-    let mut rules = RuleMap::new();
-    for code in set {
-        let rule = build_rule(code)?;
-        rules.insert(code.to_string(), rule);
-    }
-    Ok(rules)
-}
-
-/// Map tree-sitter node types to the rules that operate over them
-pub fn entrypoint_map(set: &RuleSet) -> anyhow::Result<EntryPointMap> {
-    let mut map = EntryPointMap::new();
-    for code in set {
-        let rule = build_rule(code)?;
-        let entrypoints = rule.entrypoints();
-        for entrypoint in entrypoints {
-            match map.get_mut(entrypoint) {
-                Some(rule_vec) => {
-                    rule_vec.push((code.to_string(), build_rule(code)?));
-                }
-                None => {
-                    map.insert(
-                        entrypoint.to_string(),
-                        vec![(code.to_string(), build_rule(code)?)],
-                    );
-                }
-            }
-        }
-    }
-    Ok(map)
+register_rules! {
+    (Category::Error, "E001", AST, error::syntax_error::SyntaxError, SyntaxError),
+    (Category::Filesystem, "F001", PATH, filesystem::extensions::NonStandardFileExtension, NonStandardFileExtension),
+    (Category::Style, "S001", TEXT, style::line_length::LineTooLong, LineTooLong),
+    (Category::Style, "S101", TEXT, style::whitespace::TrailingWhitespace, TrailingWhitespace),
+    (Category::Typing, "T001", AST, typing::implicit_typing::ImplicitTyping, ImplicitTyping),
+    (Category::Typing, "T002", AST, typing::implicit_typing::InterfaceImplicitTyping, InterfaceImplicitTyping),
+    (Category::Typing, "T003", AST, typing::implicit_typing::SuperfluousImplicitNone, SuperfluousImplicitNone),
+    (Category::Typing, "T011", AST, typing::literal_kinds::LiteralKind, LiteralKind),
+    (Category::Typing, "T012", AST, typing::literal_kinds::LiteralKindSuffix, LiteralKindSuffix),
+    (Category::Typing, "T021", AST, typing::star_kinds::StarKind, StarKind),
+    (Category::Precision, "P001", AST, precision::kind_suffixes::NoRealSuffix, NoRealSuffix),
+    (Category::Precision, "P011", AST, precision::double_precision::DoublePrecision, DoublePrecision),
+    (Category::Modules, "M001", AST, modules::external_functions::ExternalFunction, ExternalFunction),
+    (Category::Modules, "M011", AST, modules::use_statements::UseAll, UseAll)
 }

@@ -5,10 +5,8 @@ pub mod explain;
 mod rules;
 mod settings;
 use annotate_snippets::{Level, Renderer, Snippet};
-use anyhow::Context;
 use ast::{named_descendants, parse};
 use colored::{ColoredString, Colorize};
-use lazy_regex::regex_captures;
 use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
@@ -37,6 +35,7 @@ pub enum Category {
     FileSystem,
 }
 
+#[allow(dead_code)]
 impl Category {
     fn from(s: &str) -> anyhow::Result<Self> {
         match s {
@@ -50,47 +49,6 @@ impl Category {
                 anyhow::bail!("{} is not a rule category.", s)
             }
         }
-    }
-}
-
-impl fmt::Display for Category {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Self::Error => "E",
-            Self::Style => "S",
-            Self::Typing => "T",
-            Self::Modules => "M",
-            Self::Precision => "P",
-            Self::FileSystem => "F",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-/// The combination of a rule category and a unique identifying number.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct Code {
-    pub category: Category,
-    pub number: usize,
-}
-
-impl Code {
-    pub const fn new(category: Category, number: usize) -> Self {
-        Self { category, number }
-    }
-
-    pub fn from(code_str: &str) -> anyhow::Result<Self> {
-        let (_, category_str, number_str) = regex_captures!(r"^([A-Z]+)([0-9]{3})$", code_str)
-            .context(format!("{} is not a valid error code.", code_str))?;
-        let category = Category::from(category_str)?;
-        let number = number_str.parse::<usize>()?;
-        Ok(Code::new(category, number))
-    }
-}
-
-impl fmt::Display for Code {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{:03}", self.category, self.number)
     }
 }
 
@@ -154,53 +112,44 @@ macro_rules! violation {
     };
 }
 
-// Rule methods
-// ------------
-
-/// The methods by which rules are enforced. Some rules act on individual lines of code,
-/// some by reading a full file, and others by analysing the concrete syntax tree. All
-/// rules must be associated with a `Method` via the `Rule` trait.
-pub enum Method {
-    /// Methods that work on just the path name of the file.
-    Path(fn(&Path) -> Option<Violation>),
-    /// Methods that analyse the syntax tree.
-    Tree(fn(&tree_sitter::Node, &str) -> Option<Violation>),
-    /// Methods that analyse lines of code directly, using regex or otherwise.
-    Text(fn(&str, &Settings) -> Vec<Violation>),
-}
-
 // Rule trait
 // ----------
 
-/// Should be implemented for all rules.
+/// Implemented by all rules.
 pub trait Rule {
-    /// Return a function pointer to the method associated with this rule.
-    fn method(&self) -> Method;
+    fn new(settings: &Settings) -> Self
+    where
+        Self: Sized;
 
     /// Return text explaining what the rule tests for, why this is important, and how the user
     /// might fix it.
-    fn explain(&self) -> &str;
+    fn explain(&self) -> &'static str;
+}
+
+/// Implemented by rules that act directly on the file path.
+pub trait PathRule: Rule {
+    fn check(&self, path: &Path) -> Option<Violation>;
+}
+
+/// Implemented by rules that analyse lines of code directly, using regex or otherwise.
+pub trait TextRule: Rule {
+    fn check(&self, source: &str) -> Vec<Violation>;
+}
+
+/// Implemented by rules that analyse the abstract syntax tree.
+pub trait ASTRule: Rule {
+    fn check(&self, node: &tree_sitter::Node, source: &str) -> Option<Violation>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
-    /// Path-based rules should return a vector containing only "PATH" while text-based rules
-    /// should return a vector containing only "TEXT".
-    fn entrypoints(&self) -> Vec<&str>;
+    fn entrypoints(&self) -> Vec<&'static str>;
 
     /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(&self, source: &str, settings: &Settings) -> anyhow::Result<Vec<Violation>> {
-        match self.method() {
-            Method::Tree(f) => {
-                let entrypoints = self.entrypoints();
-                Ok(named_descendants(&parse(source)?.root_node())
-                    .filter(|x| entrypoints.contains(&x.kind()))
-                    .filter_map(|x| f(&x, source))
-                    .collect())
-            }
-            Method::Text(f) => Ok(f(source, settings)),
-            _ => {
-                anyhow::bail!("Apply may only be called for tree and text methods.")
-            }
-        }
+    fn apply(&self, source: &str) -> anyhow::Result<Vec<Violation>> {
+        let entrypoints = self.entrypoints();
+        Ok(named_descendants(&parse(source)?.root_node())
+            .filter(|x| entrypoints.contains(&x.kind()))
+            .filter_map(|x| self.check(&x, source))
+            .collect())
     }
 }
 
@@ -354,19 +303,4 @@ fn format_violation_line_col(
     let renderer = Renderer::styled();
     let source_block = renderer.render(snippet);
     writeln!(f, "{}", source_block)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_rule_code() {
-        let f001 = Code::new(Category::FileSystem, 1);
-        assert_eq!(f001.to_string(), "F001");
-        let c120 = Code::new(Category::Style, 120);
-        assert_eq!(c120.to_string(), "S120");
-    }
-
-    // TODO Test diagnostics
 }

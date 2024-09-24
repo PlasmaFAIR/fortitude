@@ -1,30 +1,18 @@
 use crate::ast::to_text;
-use crate::{Method, Rule, Violation};
+use crate::settings::Settings;
+use crate::{ASTRule, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::Node;
 /// Defines rule to ensure real precision is explicit, as this avoids accidental loss of precision.
 
-fn no_real_suffix(node: &Node, src: &str) -> Option<Violation> {
-    // Given a number literal, match anything with one or more of a decimal place or
-    // an exponentiation e or E. There should not be an underscore present.
-    // Exponentiation with d or D are ignored, and should be handled with a different
-    // rule.
-    let txt = to_text(node, src)?;
-    if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
-        let msg = format!("real literal {} missing kind suffix", txt);
-        return Some(Violation::from_node(&msg, node));
-    }
-    None
-}
-
 pub struct NoRealSuffix {}
 
 impl Rule for NoRealSuffix {
-    fn method(&self) -> Method {
-        Method::Tree(no_real_suffix)
+    fn new(_settings: &Settings) -> Self {
+        Self {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         Floating point literals use the default 'real' kind unless given an explicit
         kind suffix. This can cause surprising loss of precision:
@@ -62,8 +50,23 @@ impl Rule for NoRealSuffix {
         kind suffix.
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
+impl ASTRule for NoRealSuffix {
+    fn check(&self, node: &Node, src: &str) -> Option<Violation> {
+        // Given a number literal, match anything with one or more of a decimal place or
+        // an exponentiation e or E. There should not be an underscore present.
+        // Exponentiation with d or D are ignored, and should be handled with a different
+        // rule.
+        let txt = to_text(node, src)?;
+        if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
+            let msg = format!("real literal {} missing kind suffix", txt);
+            return Some(Violation::from_node(&msg, node));
+        }
+        None
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
         vec!["number_literal"]
     }
 }
@@ -112,7 +115,8 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        let actual = NoRealSuffix {}.apply(&source.as_str(), &default_settings())?;
+        let rule = NoRealSuffix::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

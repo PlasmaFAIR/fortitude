@@ -1,20 +1,17 @@
-use crate::{Method, Rule, Violation};
+use crate::settings::Settings;
+use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
 
 /// Rules that check for syntax errors.
 
-fn syntax_error(node: &Node, _src: &str) -> Option<Violation> {
-    Some(Violation::from_node("syntax_error", node))
-}
-
 pub struct SyntaxError {}
 
 impl Rule for SyntaxError {
-    fn method(&self) -> Method {
-        Method::Tree(syntax_error)
+    fn new(_settings: &Settings) -> Self {
+        SyntaxError {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         This rule reports any syntax errors reported by Fortitude's Fortran parser.
         This may indicate an error with your code, an aspect of Fortran not recognised
@@ -25,8 +22,14 @@ impl Rule for SyntaxError {
         bug in our code or in our parser!
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
+impl ASTRule for SyntaxError {
+    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+        Some(Violation::from_node("syntax_error", node))
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
         vec!["ERROR"]
     }
 }

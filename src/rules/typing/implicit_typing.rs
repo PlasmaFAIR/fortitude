@@ -1,5 +1,6 @@
 use crate::ast::{ancestors, child_with_name};
-use crate::{Method, Rule, Violation};
+use crate::settings::Settings;
+use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
 /// Defines rules that raise errors if implicit typing is in use.
 
@@ -17,103 +18,109 @@ fn child_is_implicit_none(node: &Node) -> bool {
     false
 }
 
-fn implicit_typing(node: &Node, _src: &str) -> Option<Violation> {
-    if !child_is_implicit_none(node) {
-        let msg = format!("{} missing 'implicit none'", node.kind());
-        return Some(Violation::from_node(&msg, node));
-    }
-    None
-}
-
 pub struct ImplicitTyping {}
 
 impl Rule for ImplicitTyping {
-    fn method(&self) -> Method {
-        Method::Tree(implicit_typing)
+    fn new(_settings: &Settings) -> Self {
+        ImplicitTyping {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         'implicit none' should be used in all modules and programs, as implicit typing
         reduces the readability of code and increases the chances of typing errors.
         "
     }
-
-    fn entrypoints(&self) -> Vec<&str> {
-        vec!["module", "submodule", "program"]
-    }
 }
 
-fn interface_implicit_typing(node: &Node, _src: &str) -> Option<Violation> {
-    let parent = node.parent()?;
-    if parent.kind() == "interface" && !child_is_implicit_none(node) {
-        let msg = format!("interface {} missing 'implicit none'", node.kind());
-        return Some(Violation::from_node(&msg, node));
+impl ASTRule for ImplicitTyping {
+    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+        if !child_is_implicit_none(node) {
+            let msg = format!("{} missing 'implicit none'", node.kind());
+            return Some(Violation::from_node(&msg, node));
+        }
+        None
     }
-    None
+
+    fn entrypoints(&self) -> Vec<&'static str> {
+        vec!["module", "submodule", "program"]
+    }
 }
 
 pub struct InterfaceImplicitTyping {}
 
 impl Rule for InterfaceImplicitTyping {
-    fn method(&self) -> Method {
-        Method::Tree(interface_implicit_typing)
+    fn new(_settings: &Settings) -> Self {
+        InterfaceImplicitTyping {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         Interface functions and subroutines require 'implicit none', even if they are
         inside a module that uses 'implicit none'.
         "
     }
-
-    fn entrypoints(&self) -> Vec<&str> {
-        vec!["function", "subroutine"]
-    }
 }
 
-fn superfluous_implicit_none(node: &Node, _src: &str) -> Option<Violation> {
-    if !implicit_statement_is_none(node) {
-        return None;
-    }
-    let parent = node.parent()?;
-    if matches!(parent.kind(), "function" | "subroutine") {
-        for ancestor in ancestors(&parent) {
-            let kind = ancestor.kind();
-            match kind {
-                "module" | "submodule" | "program" | "function" | "subroutine" => {
-                    if child_is_implicit_none(&ancestor) {
-                        let msg = format!("'implicit none' set on the enclosing {}", kind,);
-                        return Some(Violation::from_node(&msg, node));
-                    }
-                }
-                "interface" => {
-                    break;
-                }
-                _ => {
-                    continue;
-                }
-            }
+impl ASTRule for InterfaceImplicitTyping {
+    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+        let parent = node.parent()?;
+        if parent.kind() == "interface" && !child_is_implicit_none(node) {
+            let msg = format!("interface {} missing 'implicit none'", node.kind());
+            return Some(Violation::from_node(&msg, node));
         }
+        None
     }
-    None
+
+    fn entrypoints(&self) -> Vec<&'static str> {
+        vec!["function", "subroutine"]
+    }
 }
 
 pub struct SuperfluousImplicitNone {}
 
 impl Rule for SuperfluousImplicitNone {
-    fn method(&self) -> Method {
-        Method::Tree(superfluous_implicit_none)
+    fn new(_settings: &Settings) -> Self {
+        SuperfluousImplicitNone {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         If a module has 'implicit none' set, it is not necessary to set it in contained
         functions and subroutines (except when using interfaces).
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
+impl ASTRule for SuperfluousImplicitNone {
+    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+        if !implicit_statement_is_none(node) {
+            return None;
+        }
+        let parent = node.parent()?;
+        if matches!(parent.kind(), "function" | "subroutine") {
+            for ancestor in ancestors(&parent) {
+                let kind = ancestor.kind();
+                match kind {
+                    "module" | "submodule" | "program" | "function" | "subroutine" => {
+                        if child_is_implicit_none(&ancestor) {
+                            let msg = format!("'implicit none' set on the enclosing {}", kind,);
+                            return Some(Violation::from_node(&msg, node));
+                        }
+                    }
+                    "interface" => {
+                        break;
+                    }
+                    _ => {
+                        continue;
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
         vec!["implicit_statement"]
     }
 }
@@ -146,7 +153,8 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        let actual = ImplicitTyping {}.apply(&source.as_str(), &default_settings())?;
+        let rule = ImplicitTyping::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -172,7 +180,8 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = vec![];
-        let actual = ImplicitTyping {}.apply(&source.as_str(), &default_settings())?;
+        let rule = ImplicitTyping::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -208,7 +217,8 @@ mod tests {
                 violation!(&msg, *line, *col)
             })
             .collect();
-        let actual = InterfaceImplicitTyping {}.apply(&source.as_str(), &default_settings())?;
+        let rule = InterfaceImplicitTyping::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -240,7 +250,8 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = vec![];
-        let actual = InterfaceImplicitTyping {}.apply(&source.as_str(), &default_settings())?;
+        let rule = InterfaceImplicitTyping::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -295,7 +306,8 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        let actual = SuperfluousImplicitNone {}.apply(&source.as_str(), &default_settings())?;
+        let rule = SuperfluousImplicitNone::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -343,7 +355,8 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = vec![];
-        let actual = SuperfluousImplicitNone {}.apply(&source.as_str(), &default_settings())?;
+        let rule = SuperfluousImplicitNone::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

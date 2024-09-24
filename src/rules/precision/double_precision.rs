@@ -1,5 +1,6 @@
 use crate::ast::to_text;
-use crate::{Method, Rule, Violation};
+use crate::settings::Settings;
+use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
 /// Defines rules to avoid the 'double precision' and 'double complex' types.
 
@@ -17,22 +18,14 @@ fn double_precision_err_msg(dtype: &str) -> Option<String> {
     }
 }
 
-fn double_precision(node: &Node, src: &str) -> Option<Violation> {
-    let txt = to_text(node, src)?.to_lowercase();
-    if let Some(msg) = double_precision_err_msg(txt.as_str()) {
-        return Some(Violation::from_node(msg.as_str(), node));
-    }
-    None
-}
-
 pub struct DoublePrecision {}
 
 impl Rule for DoublePrecision {
-    fn method(&self) -> Method {
-        Method::Tree(double_precision)
+    fn new(_settings: &Settings) -> Self {
+        Self {}
     }
 
-    fn explain(&self) -> &str {
+    fn explain(&self) -> &'static str {
         "
         The 'double precision' type does not guarantee a 64-bit floating point number
         as one might expect. It is instead required to be twice the size of a default
@@ -47,8 +40,18 @@ impl Rule for DoublePrecision {
         `real(c_double)`, which may be found in the intrinsic module `iso_c_binding`.
         "
     }
+}
 
-    fn entrypoints(&self) -> Vec<&str> {
+impl ASTRule for DoublePrecision {
+    fn check(&self, node: &Node, src: &str) -> Option<Violation> {
+        let txt = to_text(node, src)?.to_lowercase();
+        if let Some(msg) = double_precision_err_msg(txt.as_str()) {
+            return Some(Violation::from_node(msg.as_str(), node));
+        }
+        None
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
         vec!["intrinsic_type"]
     }
 }
@@ -97,7 +100,8 @@ mod tests {
             violation!(&msg, *line, *col)
         })
         .collect();
-        let actual = DoublePrecision {}.apply(&source.as_str(), &default_settings())?;
+        let rule = DoublePrecision::new(&default_settings());
+        let actual = rule.apply(&source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
