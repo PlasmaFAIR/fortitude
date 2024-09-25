@@ -11,7 +11,7 @@ lazy_static! {
         parser
             .lock()
             .unwrap()
-            .set_language(&tree_sitter_fortran::language())
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
             .expect("Error loading Fortran grammar");
         parser
     };
