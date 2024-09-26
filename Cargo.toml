@@ -21,7 +21,7 @@ lazy-regex = "3.3.0"
 lazy_static = "1.5.0"
 textwrap = "0.16.0"
 tree-sitter = "~0.23.0"
-tree-sitter-fortran = { git = "https://github.com/ZedThree/tree-sitter-fortran", branch = "kind-and-sizes" }
+tree-sitter-fortran = "0.1.0"
 walkdir = "2.4.0"
 
 [dev-dependencies]

@@ -353,8 +353,9 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-fortran"
-version = "0.0.1"
-source = "git+https://github.com/ZedThree/tree-sitter-fortran?branch=kind-and-sizes#fba22c0c71b73e77f4b67abf5c99a0ce4990a48f"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50d655214a848bfb63dfdc2e7eeef5c3c323807a220b3117a1aef46b2bb95a12"
 dependencies = [
  "cc",
  "tree-sitter-language",
