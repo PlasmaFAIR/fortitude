@@ -84,8 +84,7 @@ impl ASTRule for LiteralKind {
         // TODO: Can we recommend the "correct" size? Although
         // non-standard, `real*8` _usually_ means `real(real64)`
         let msg = format!(
-            "{} kind set with number literal '{}', use 'iso_fortran_env' parameter",
-            dtype,
+            "{dtype} kind set with number literal '{}', use 'iso_fortran_env' parameter",
             to_text(&literal_value, src)?
         );
         Some(Violation::from_node(&msg, &literal_value))
@@ -227,8 +226,7 @@ mod tests {
         .iter()
         .map(|(line, col, kind, literal)| {
             let msg = format!(
-                "{} kind set with number literal '{}', use 'iso_fortran_env' parameter",
-                kind, literal
+                "{kind} kind set with number literal '{literal}', use 'iso_fortran_env' parameter",
             );
             violation!(&msg, *line, *col)
         })
@@ -256,8 +254,7 @@ mod tests {
             .iter()
             .map(|(line, col, num, kind)| {
                 let msg = format!(
-                    "'{}' has literal suffix '{}', use 'iso_fortran_env' parameter",
-                    num, kind
+                    "'{num}' has literal suffix '{kind}', use 'iso_fortran_env' parameter",
                 );
                 violation!(&msg, *line, *col)
             })

@@ -47,7 +47,7 @@ impl ASTRule for StarKind {
         let literal = child_with_name(&kind_node, "number_literal")?;
         let kind = to_text(&literal, &src)?;
         // TODO: Better suggestion, rather than use integer literal
-        let msg = format!("{}{} is non-standard, use {}({})", dtype, size, dtype, kind);
+        let msg = format!("{dtype}{size} is non-standard, use {dtype}({kind})");
         return Some(Violation::from_node(&msg, &kind_node));
     }
 
@@ -101,7 +101,7 @@ mod tests {
         ]
         .iter()
         .map(|(line, col, from, to)| {
-            let msg = format!("{} is non-standard, use {}", from, to);
+            let msg = format!("{from} is non-standard, use {to}");
             violation!(&msg, *line, *col)
         })
         .collect();
