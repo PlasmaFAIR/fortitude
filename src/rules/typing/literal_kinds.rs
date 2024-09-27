@@ -1,7 +1,6 @@
 use crate::ast::{child_with_name, dtype_is_plain_number, parse_intrinsic_type, to_text};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
-use lazy_regex::regex_is_match;
 use tree_sitter::Node;
 /// Defines rules that discourage the use of raw number literals as kinds, as this can result in
 /// non-portable code.
@@ -74,29 +73,54 @@ impl Rule for LiteralKind {
 impl ASTRule for LiteralKind {
     fn check(&self, node: &Node, src: &str) -> Option<Violation> {
         let dtype = parse_intrinsic_type(node)?;
-        if dtype_is_plain_number(dtype.as_str()) {
-            if let Some(child) = child_with_name(node, "size") {
-                let txt = to_text(&child, src)?;
-                // Match for numbers that aren't preceeded by:
-                // - Letters: don't want to catch things like real64
-                // - Other numbers: again, shouldn't catch real64
-                // - Underscores: could be part of parameter name
-                // - "*": 'star kinds' are caught by a different rule
-                if regex_is_match!(r"[^A-z0-9_\*]\d", txt) {
-                    let msg = format!(
-                        "{} kind set with number literal, use 'iso_fortran_env' parameter",
-                        dtype,
-                    );
-                    return Some(Violation::from_node(&msg, node));
-                }
-            }
+        // TODO: Deal with characters
+        if !dtype_is_plain_number(dtype.as_str()) {
+            return None;
         }
-        None
+
+        let type_node = node.child_by_field_name("type")?;
+        let kind_node = type_node.child_by_field_name("kind")?;
+        let literal_value = integer_literal_kind(&kind_node, &src)?;
+        // TODO: Can we recommend the "correct" size? Although
+        // non-standard, `real*8` _usually_ means `real(real64)`
+        let msg = format!(
+            "{dtype} kind set with number literal '{}', use 'iso_fortran_env' parameter",
+            to_text(&literal_value, src)?
+        );
+        Some(Violation::from_node(&msg, &literal_value))
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
         vec!["variable_declaration", "function_statement"]
     }
+}
+
+/// Return any kind spec that is a number literal
+fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
+    if let Some(literal) = child_with_name(&node, "number_literal") {
+        return Some(literal);
+    }
+
+    for child in node.named_children(&mut node.walk()) {
+        if child.kind() == "number_literal" {
+            return Some(child);
+        }
+
+        if child.kind() != "keyword_argument" {
+            continue;
+        }
+
+        // find instances of `kind=8` etc
+        let name = child.child_by_field_name("name")?;
+        if to_text(&name, src)?.to_lowercase() != "kind" {
+            continue;
+        }
+        let value = child.child_by_field_name("value")?;
+        if value.kind() == "number_literal" {
+            return Some(value);
+        }
+    }
+    None
 }
 
 pub struct LiteralKindSuffix {}
@@ -135,15 +159,16 @@ impl Rule for LiteralKindSuffix {
 
 impl ASTRule for LiteralKindSuffix {
     fn check(&self, node: &Node, src: &str) -> Option<Violation> {
-        let txt = to_text(node, src)?;
-        if regex_is_match!(r"_\d+$", txt) {
-            let msg = format!(
-                "{} has literal suffix, use 'iso_fortran_env' parameter",
-                txt,
-            );
-            return Some(Violation::from_node(&msg, node));
+        let kind = node.child_by_field_name("kind")?;
+        if kind.kind() != "number_literal" {
+            return None;
         }
-        None
+        let msg = format!(
+            "'{}' has literal suffix '{}', use 'iso_fortran_env' parameter",
+            to_text(node, src)?,
+            to_text(&kind, src)?,
+        );
+        Some(Violation::from_node(&msg, &kind))
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -191,18 +216,17 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (2, 1, "integer"),
-            (4, 3, "integer"),
-            (6, 3, "logical"),
-            (16, 3, "real"),
-            (17, 3, "complex"),
-            (24, 3, "complex"),
+            (2, 9, "integer", 8),
+            (4, 16, "integer", 2),
+            (6, 16, "logical", 4),
+            (16, 8, "real", 8),
+            (17, 11, "complex", 4),
+            (24, 16, "complex", 4),
         ]
         .iter()
-        .map(|(line, col, kind)| {
+        .map(|(line, col, kind, literal)| {
             let msg = format!(
-                "{} kind set with number literal, use 'iso_fortran_env' parameter",
-                kind,
+                "{kind} kind set with number literal '{literal}', use 'iso_fortran_env' parameter",
             );
             violation!(&msg, *line, *col)
         })
@@ -226,12 +250,11 @@ mod tests {
             real(sp), parameter :: x5 = 2.468_sp
             ",
         );
-        let expected: Vec<Violation> = [(4, 29, "1.234567_4"), (7, 29, "9.876_8")]
+        let expected: Vec<Violation> = [(4, 38, "1.234567_4", "4"), (7, 35, "9.876_8", "8")]
             .iter()
-            .map(|(line, col, num)| {
+            .map(|(line, col, num, kind)| {
                 let msg = format!(
-                    "{} has literal suffix, use 'iso_fortran_env' parameter",
-                    num,
+                    "'{num}' has literal suffix '{kind}', use 'iso_fortran_env' parameter",
                 );
                 violation!(&msg, *line, *col)
             })

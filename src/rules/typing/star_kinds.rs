@@ -3,7 +3,6 @@ use crate::ast::{
 };
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
-use lazy_regex::regex_captures;
 use tree_sitter::Node;
 /// Defines rules that discourage the use of the non-standard kind specifiers such as
 /// `int*4` or `real*8`. Also prefers the use of `character(len=*)` to
@@ -31,25 +30,25 @@ impl Rule for StarKind {
 impl ASTRule for StarKind {
     fn check(&self, node: &Node, src: &str) -> Option<Violation> {
         let dtype = parse_intrinsic_type(node)?;
-        if dtype_is_plain_number(dtype.as_str()) {
-            if let Some(child) = child_with_name(node, "size") {
-                let size = strip_line_breaks(to_text(&child, src)?);
-                // Match anything beginning with a '*' followed by any amount of
-                // whitespace and some digits. Parameters like real64 aren't
-                // allowed in this syntax, so we don't need to worry about them.
-                if let Some((_, kind)) = regex_captures!(r"^\*\s*(\d+)", size.as_str()) {
-                    let msg = format!(
-                        "{}{} is non-standard, use {}({})",
-                        dtype,
-                        size.replace(" ", "").replace("\t", ""),
-                        dtype,
-                        kind,
-                    );
-                    return Some(Violation::from_node(&msg, node));
-                }
-            }
+        // TODO: Handle characters
+        if !dtype_is_plain_number(dtype.as_str()) {
+            return None;
         }
-        None
+        let type_node = node.child_by_field_name("type")?;
+        let kind_node = type_node.child_by_field_name("kind")?;
+        let size = to_text(&kind_node, src)?;
+        if !size.starts_with('*') {
+            return None;
+        }
+
+        // Tidy up the kind spec so it's just e.g. '*8'
+        let size = strip_line_breaks(size).replace(" ", "").replace("\t", "");
+
+        let literal = child_with_name(&kind_node, "number_literal")?;
+        let kind = to_text(&literal, &src)?;
+        // TODO: Better suggestion, rather than use integer literal
+        let msg = format!("{dtype}{size} is non-standard, use {dtype}({kind})");
+        return Some(Violation::from_node(&msg, &kind_node));
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -76,32 +75,33 @@ mod tests {
               real    * &
                8 :: t
 
-              if (x) then
+              if (x == 2) then
                 add_if = x + y
               else
                 add_if = x
               end if
             end function
 
-            subroutine complex_mul(x, y)
+            subroutine complex_mul(x, real)
               real * 4, intent(in) :: x
-              complex  *  8, intent(inout) :: y
-              y = y * x
+              complex  *  8, intent(inout) :: real
+              ! This would be a false positive with purely regexp based linting
+              real = real * 8
             end subroutine
             ",
         );
 
         let expected: Vec<Violation> = [
-            (2, 1, "integer*8", "integer(8)"),
-            (4, 3, "integer*4", "integer(4)"),
-            (5, 3, "logical*4", "logical(4)"),
-            (6, 3, "real*8", "real(8)"),
-            (17, 3, "real*4", "real(4)"),
-            (18, 3, "complex*8", "complex(8)"),
+            (2, 8, "integer*8", "integer(8)"),
+            (4, 11, "integer*4", "integer(4)"),
+            (5, 10, "logical*4", "logical(4)"),
+            (6, 11, "real*8", "real(8)"),
+            (17, 8, "real*4", "real(4)"),
+            (18, 12, "complex*8", "complex(8)"),
         ]
         .iter()
         .map(|(line, col, from, to)| {
-            let msg = format!("{} is non-standard, use {}", from, to);
+            let msg = format!("{from} is non-standard, use {to}");
             violation!(&msg, *line, *col)
         })
         .collect();
