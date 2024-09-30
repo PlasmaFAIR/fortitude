@@ -22,13 +22,13 @@ impl Rule for ExternalFunction {
 }
 
 impl ASTRule for ExternalFunction {
-    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
         if node.parent()?.kind() == "translation_unit" {
             let msg = format!(
                 "{} not contained within (sub)module or program",
                 node.kind()
             );
-            return Some(Violation::from_node(msg, node));
+            return Some(vec![Violation::from_node(msg, node)]);
         }
         None
     }

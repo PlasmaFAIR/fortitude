@@ -53,7 +53,7 @@ impl Rule for NoRealSuffix {
 }
 
 impl ASTRule for NoRealSuffix {
-    fn check(&self, node: &Node, src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with a different
@@ -61,7 +61,7 @@ impl ASTRule for NoRealSuffix {
         let txt = to_text(node, src)?;
         if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
             let msg = format!("real literal {} missing kind suffix", txt);
-            return Some(Violation::from_node(&msg, node));
+            return Some(vec![Violation::from_node(&msg, node)]);
         }
         None
     }

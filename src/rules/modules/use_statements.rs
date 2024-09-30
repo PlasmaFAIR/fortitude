@@ -35,10 +35,10 @@ impl Rule for UseAll {
 }
 
 impl ASTRule for UseAll {
-    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
         if child_with_name(node, "included_items").is_none() {
             let msg = "'use' statement missing 'only' clause";
-            return Some(Violation::from_node(msg, node));
+            return Some(vec![Violation::from_node(msg, node)]);
         }
         None
     }

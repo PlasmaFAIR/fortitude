@@ -34,10 +34,10 @@ impl Rule for ImplicitTyping {
 }
 
 impl ASTRule for ImplicitTyping {
-    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
         if !child_is_implicit_none(node) {
             let msg = format!("{} missing 'implicit none'", node.kind());
-            return Some(Violation::from_node(&msg, node));
+            return Some(vec![Violation::from_node(&msg, node)]);
         }
         None
     }
@@ -63,11 +63,11 @@ impl Rule for InterfaceImplicitTyping {
 }
 
 impl ASTRule for InterfaceImplicitTyping {
-    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
             let msg = format!("interface {} missing 'implicit none'", node.kind());
-            return Some(Violation::from_node(&msg, node));
+            return Some(vec![Violation::from_node(&msg, node)]);
         }
         None
     }
@@ -93,7 +93,7 @@ impl Rule for SuperfluousImplicitNone {
 }
 
 impl ASTRule for SuperfluousImplicitNone {
-    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
         if !implicit_statement_is_none(node) {
             return None;
         }
@@ -105,7 +105,7 @@ impl ASTRule for SuperfluousImplicitNone {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
                         if child_is_implicit_none(&ancestor) {
                             let msg = format!("'implicit none' set on the enclosing {}", kind,);
-                            return Some(Violation::from_node(&msg, node));
+                            return Some(vec![Violation::from_node(&msg, node)]);
                         }
                     }
                     "interface" => {

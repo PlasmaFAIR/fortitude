@@ -25,8 +25,8 @@ impl Rule for SyntaxError {
 }
 
 impl ASTRule for SyntaxError {
-    fn check(&self, node: &Node, _src: &str) -> Option<Violation> {
-        Some(Violation::from_node("syntax_error", node))
+    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
+        Some(vec![Violation::from_node("syntax_error", node)])
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

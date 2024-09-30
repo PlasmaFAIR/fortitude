@@ -102,7 +102,9 @@ fn check_file(
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for (code, rule) in rules {
                 if let Some(violation) = rule.check(&node, &source) {
-                    violations.push((code.to_string(), violation));
+                    for v in violation {
+                        violations.push((code.to_string(), v));
+                    }
                 }
             }
         }
