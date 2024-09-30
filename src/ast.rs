@@ -86,7 +86,7 @@ pub fn child_with_name<'a>(node: &'a Node, name: &'a str) -> Option<Node<'a>> {
 }
 
 // Convert a node to text, collapsing any raised errors to None.
-pub fn to_text<'a>(node: &'a Node<'a>, src: &'a str) -> Option<&'a str> {
+pub fn to_text<'a>(node: &Node, src: &'a str) -> Option<&'a str> {
     node.utf8_text(src.as_bytes()).ok()
 }
 
