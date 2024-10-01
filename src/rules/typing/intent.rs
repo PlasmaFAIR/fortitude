@@ -143,7 +143,7 @@ mod tests {
         })
         .collect();
         let rule = MissingIntent::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

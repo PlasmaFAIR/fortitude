@@ -16,7 +16,7 @@ if [ $? != "0" ]; then
 fi
 
 echo "Linting Rust..."
-cargo clippy
+cargo clippy --all-targets --all-features -- -Dwarnings
 if [ $? != "0" ]; then
   echo "Found Rust linter errors, fix all reported by 'cargo clippy' and try again"
   echo $caveat
