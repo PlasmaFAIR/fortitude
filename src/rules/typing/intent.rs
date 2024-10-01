@@ -1,4 +1,4 @@
-use crate::ast::to_text;
+use crate::ast::{child_with_name, to_text};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -56,21 +56,25 @@ impl ASTRule for MissingIntent {
                     })
             })
             .filter_map(|decl| {
-                let dummys: Vec<(Node, &str)> = decl
+                let violations: Vec<Violation> = decl
                     .children_by_field_name("declarator", &mut decl.walk())
                     .filter_map(|declarator| {
-                        let name = to_text(&declarator, &src)?;
-                        // FIXME: need to extract identifier from
-                        // sized_declarators etc
+                        let identifier = match declarator.kind() {
+                            "identifier" => Some(declarator),
+                            "sized_declarator" => child_with_name(&declarator, "identifier"),
+                            // Although tree-sitter-fortran grammar allows
+                            // `init_declarator` and `pointer_init_declarator`
+                            // here, dummy arguments aren't actually allow
+                            // initialisers. _Could_ still catch them here, and
+                            // flag as syntax error elsewhere?
+                            _ => None,
+                        }?;
+                        let name = to_text(&identifier, &src)?;
                         if parameters.contains(&name) {
                             return Some((declarator, name));
                         }
                         None
                     })
-                    .collect();
-
-                let violations: Vec<Violation> = dummys
-                    .iter()
                     .filter_map(|(dummy, name)| {
                         let msg = format!(
                             "{procedure_kind} argument '{name}' missing 'intent' attribute"
@@ -103,19 +107,25 @@ mod tests {
     fn test_missing_intent() -> anyhow::Result<()> {
         let source = dedent(
             "
-            integer function foo(a, b, c, d)
+            integer function foo(a, b, c)
               use mod
-              integer :: a, c, e
+              integer :: a, c(2), f
               integer, dimension(:), intent(in) :: b
-              integer, pointer, dimension(:) :: d
-              integer :: f
             end function
+
+            subroutine bar(d, e, f)
+              integer, pointer :: d
+              integer, allocatable :: e(:, :)
+              type(integer(kind=int64)), intent(inout) :: f
+              integer :: g
+            end subroutine
             ",
         );
         let expected: Vec<Violation> = [
             (4, 14, "function", "a"),
             (4, 17, "function", "c"),
-            (6, 37, "function", "d"),
+            (9, 23, "subroutine", "d"),
+            (10, 27, "subroutine", "e"),
         ]
         .iter()
         .map(|(line, col, entity, arg)| {
