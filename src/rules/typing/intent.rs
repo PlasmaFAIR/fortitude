@@ -33,12 +33,12 @@ impl Rule for MissingIntent {
 }
 
 impl ASTRule for MissingIntent {
-    fn check<'a>(&self, node: &Node, src: &'a str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
         // Names of all the dummy arguments
         let parameters: Vec<&str> = node
             .child_by_field_name("parameters")?
             .named_children(&mut node.walk())
-            .filter_map(|param| Some(to_text(&param, &src)?))
+            .filter_map(|param| to_text(&param, src))
             .collect();
 
         let parent = node.parent()?;
@@ -61,15 +61,14 @@ impl ASTRule for MissingIntent {
                 !decl
                     .children_by_field_name("attribute", &mut decl.walk())
                     .any(|attr| {
-                        to_text(&attr, &src)
+                        to_text(&attr, src)
                             .unwrap_or("")
                             .to_lowercase()
                             .starts_with("intent")
                     })
             })
-            .filter_map(|decl| {
-                let violations: Vec<Violation> = decl
-                    .children_by_field_name("declarator", &mut decl.walk())
+            .flat_map(|decl| {
+                decl.children_by_field_name("declarator", &mut decl.walk())
                     .filter_map(|declarator| {
                         let identifier = match declarator.kind() {
                             "identifier" => Some(declarator),
@@ -81,22 +80,20 @@ impl ASTRule for MissingIntent {
                             // flag as syntax error elsewhere?
                             _ => None,
                         }?;
-                        let name = to_text(&identifier, &src)?;
+                        let name = to_text(&identifier, src)?;
                         if parameters.contains(&name) {
                             return Some((declarator, name));
                         }
                         None
                     })
-                    .filter_map(|(dummy, name)| {
+                    .map(|(dummy, name)| {
                         let msg = format!(
                             "{procedure_kind} argument '{name}' missing 'intent' attribute"
                         );
-                        Some(Violation::from_node(&msg, &dummy))
+                        Violation::from_node(msg, &dummy)
                     })
-                    .collect();
-                Some(violations)
+                    .collect::<Vec<Violation>>()
             })
-            .flatten()
             .collect();
 
         Some(violations)
