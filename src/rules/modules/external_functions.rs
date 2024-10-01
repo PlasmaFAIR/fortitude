@@ -28,7 +28,7 @@ impl ASTRule for ExternalFunction {
                 "{} not contained within (sub)module or program",
                 node.kind()
             );
-            return Some(vec![Violation::from_node(msg, node)]);
+            return some_vec![Violation::from_node(msg, node)];
         }
         None
     }

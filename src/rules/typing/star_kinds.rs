@@ -48,7 +48,7 @@ impl ASTRule for StarKind {
         let kind = to_text(&literal, &src)?;
         // TODO: Better suggestion, rather than use integer literal
         let msg = format!("{dtype}{size} is non-standard, use {dtype}({kind})");
-        return Some(vec![Violation::from_node(&msg, &kind_node)]);
+        return some_vec![Violation::from_node(&msg, &kind_node)];
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

@@ -38,7 +38,7 @@ impl ASTRule for UseAll {
     fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
         if child_with_name(node, "included_items").is_none() {
             let msg = "'use' statement missing 'only' clause";
-            return Some(vec![Violation::from_node(msg, node)]);
+            return some_vec![Violation::from_node(msg, node)];
         }
         None
     }

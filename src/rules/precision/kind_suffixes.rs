@@ -61,7 +61,7 @@ impl ASTRule for NoRealSuffix {
         let txt = to_text(node, src)?;
         if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
             let msg = format!("real literal {} missing kind suffix", txt);
-            return Some(vec![Violation::from_node(&msg, node)]);
+            return some_vec![Violation::from_node(&msg, node)];
         }
         None
     }

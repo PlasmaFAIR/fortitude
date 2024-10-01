@@ -46,7 +46,7 @@ impl ASTRule for DoublePrecision {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
         let txt = to_text(node, src)?.to_lowercase();
         if let Some(msg) = double_precision_err_msg(txt.as_str()) {
-            return Some(vec![Violation::from_node(msg.as_str(), node)]);
+            return some_vec![Violation::from_node(msg.as_str(), node)];
         }
         None
     }

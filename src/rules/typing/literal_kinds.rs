@@ -87,7 +87,7 @@ impl ASTRule for LiteralKind {
             "{dtype} kind set with number literal '{}', use 'iso_fortran_env' parameter",
             to_text(&literal_value, src)?
         );
-        Some(vec![Violation::from_node(&msg, &literal_value)])
+        some_vec![Violation::from_node(&msg, &literal_value)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -168,7 +168,7 @@ impl ASTRule for LiteralKindSuffix {
             to_text(node, src)?,
             to_text(&kind, src)?,
         );
-        Some(vec![Violation::from_node(&msg, &kind)])
+        some_vec![Violation::from_node(&msg, &kind)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
