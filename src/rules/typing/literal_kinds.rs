@@ -80,14 +80,14 @@ impl ASTRule for LiteralKind {
 
         let type_node = node.child_by_field_name("type")?;
         let kind_node = type_node.child_by_field_name("kind")?;
-        let literal_value = integer_literal_kind(&kind_node, &src)?;
+        let literal_value = integer_literal_kind(&kind_node, src)?;
         // TODO: Can we recommend the "correct" size? Although
         // non-standard, `real*8` _usually_ means `real(real64)`
         let msg = format!(
             "{dtype} kind set with number literal '{}', use 'iso_fortran_env' parameter",
             to_text(&literal_value, src)?
         );
-        some_vec![Violation::from_node(&msg, &literal_value)]
+        some_vec![Violation::from_node(msg, &literal_value)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -97,7 +97,7 @@ impl ASTRule for LiteralKind {
 
 /// Return any kind spec that is a number literal
 fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
-    if let Some(literal) = child_with_name(&node, "number_literal") {
+    if let Some(literal) = child_with_name(node, "number_literal") {
         return Some(literal);
     }
 
@@ -168,7 +168,7 @@ impl ASTRule for LiteralKindSuffix {
             to_text(node, src)?,
             to_text(&kind, src)?,
         );
-        some_vec![Violation::from_node(&msg, &kind)]
+        some_vec![Violation::from_node(msg, &kind)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -232,7 +232,7 @@ mod tests {
         })
         .collect();
         let rule = LiteralKind::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -260,7 +260,7 @@ mod tests {
             })
             .collect();
         let rule = LiteralKindSuffix::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

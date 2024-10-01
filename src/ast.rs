@@ -92,7 +92,7 @@ pub fn to_text<'a>(node: &Node, src: &'a str) -> Option<&'a str> {
 
 /// Strip line breaks from a string of Fortran code.
 pub fn strip_line_breaks(src: &str) -> String {
-    src.replace("&", "").replace("\n", " ")
+    src.replace('&', "").replace('\n', " ")
 }
 
 /// Given a variable declaration or function statement, return its type if it's an intrinsic type,

@@ -101,7 +101,7 @@ mod tests {
         })
         .collect();
         let rule = DoublePrecision::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

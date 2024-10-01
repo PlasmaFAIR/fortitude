@@ -42,13 +42,13 @@ impl ASTRule for StarKind {
         }
 
         // Tidy up the kind spec so it's just e.g. '*8'
-        let size = strip_line_breaks(size).replace(" ", "").replace("\t", "");
+        let size = strip_line_breaks(size).replace([' ', '\t'], "");
 
         let literal = child_with_name(&kind_node, "number_literal")?;
-        let kind = to_text(&literal, &src)?;
+        let kind = to_text(&literal, src)?;
         // TODO: Better suggestion, rather than use integer literal
         let msg = format!("{dtype}{size} is non-standard, use {dtype}({kind})");
-        return some_vec![Violation::from_node(&msg, &kind_node)];
+        some_vec![Violation::from_node(msg, &kind_node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

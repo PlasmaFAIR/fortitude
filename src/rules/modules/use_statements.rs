@@ -68,7 +68,7 @@ mod tests {
         );
         let expected = vec![violation!("'use' statement missing 'only' clause", 4, 5)];
         let rule = UseAll::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }

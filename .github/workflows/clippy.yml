@@ -19,4 +19,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: lint
-      run: cargo clippy
+      run: cargo clippy --all-targets --all-features -- -Dwarnings

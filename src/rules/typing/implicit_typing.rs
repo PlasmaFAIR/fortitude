@@ -37,7 +37,7 @@ impl ASTRule for ImplicitTyping {
     fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
         if !child_is_implicit_none(node) {
             let msg = format!("{} missing 'implicit none'", node.kind());
-            return some_vec![Violation::from_node(&msg, node)];
+            return some_vec![Violation::from_node(msg, node)];
         }
         None
     }
@@ -67,7 +67,7 @@ impl ASTRule for InterfaceImplicitTyping {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
             let msg = format!("interface {} missing 'implicit none'", node.kind());
-            return some_vec![Violation::from_node(&msg, node)];
+            return some_vec![Violation::from_node(msg, node)];
         }
         None
     }
@@ -105,7 +105,7 @@ impl ASTRule for SuperfluousImplicitNone {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
                         if child_is_implicit_none(&ancestor) {
                             let msg = format!("'implicit none' set on the enclosing {}", kind,);
-                            return some_vec![Violation::from_node(&msg, node)];
+                            return some_vec![Violation::from_node(msg, node)];
                         }
                     }
                     "interface" => {
@@ -154,7 +154,7 @@ mod tests {
             })
             .collect();
         let rule = ImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -181,7 +181,7 @@ mod tests {
         );
         let expected: Vec<Violation> = vec![];
         let rule = ImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -218,7 +218,7 @@ mod tests {
             })
             .collect();
         let rule = InterfaceImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -251,7 +251,7 @@ mod tests {
         );
         let expected: Vec<Violation> = vec![];
         let rule = InterfaceImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -307,7 +307,7 @@ mod tests {
         })
         .collect();
         let rule = SuperfluousImplicitNone::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -356,7 +356,7 @@ mod tests {
         );
         let expected: Vec<Violation> = vec![];
         let rule = SuperfluousImplicitNone::new(&default_settings());
-        let actual = rule.apply(&source.as_str())?;
+        let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
     }
