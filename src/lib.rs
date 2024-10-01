@@ -138,7 +138,7 @@ pub trait TextRule: Rule {
 
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait ASTRule: Rule {
-    fn check(&self, node: &tree_sitter::Node, source: &str) -> Option<Violation>;
+    fn check(&self, node: &tree_sitter::Node, source: &str) -> Option<Vec<Violation>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints(&self) -> Vec<&'static str>;
@@ -149,6 +149,7 @@ pub trait ASTRule: Rule {
         Ok(named_descendants(&parse(source)?.root_node())
             .filter(|x| entrypoints.contains(&x.kind()))
             .filter_map(|x| self.check(&x, source))
+            .flatten()
             .collect())
     }
 }

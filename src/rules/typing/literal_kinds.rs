@@ -71,7 +71,7 @@ impl Rule for LiteralKind {
 }
 
 impl ASTRule for LiteralKind {
-    fn check(&self, node: &Node, src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
         let dtype = parse_intrinsic_type(node)?;
         // TODO: Deal with characters
         if !dtype_is_plain_number(dtype.as_str()) {
@@ -87,7 +87,7 @@ impl ASTRule for LiteralKind {
             "{dtype} kind set with number literal '{}', use 'iso_fortran_env' parameter",
             to_text(&literal_value, src)?
         );
-        Some(Violation::from_node(&msg, &literal_value))
+        some_vec![Violation::from_node(&msg, &literal_value)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -158,7 +158,7 @@ impl Rule for LiteralKindSuffix {
 }
 
 impl ASTRule for LiteralKindSuffix {
-    fn check(&self, node: &Node, src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
             return None;
@@ -168,7 +168,7 @@ impl ASTRule for LiteralKindSuffix {
             to_text(node, src)?,
             to_text(&kind, src)?,
         );
-        Some(Violation::from_node(&msg, &kind))
+        some_vec![Violation::from_node(&msg, &kind)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

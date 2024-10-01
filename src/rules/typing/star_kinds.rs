@@ -28,7 +28,7 @@ impl Rule for StarKind {
 }
 
 impl ASTRule for StarKind {
-    fn check(&self, node: &Node, src: &str) -> Option<Violation> {
+    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
         let dtype = parse_intrinsic_type(node)?;
         // TODO: Handle characters
         if !dtype_is_plain_number(dtype.as_str()) {
@@ -48,7 +48,7 @@ impl ASTRule for StarKind {
         let kind = to_text(&literal, &src)?;
         // TODO: Better suggestion, rather than use integer literal
         let msg = format!("{dtype}{size} is non-standard, use {dtype}({kind})");
-        return Some(Violation::from_node(&msg, &kind_node));
+        return some_vec![Violation::from_node(&msg, &kind_node)];
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
