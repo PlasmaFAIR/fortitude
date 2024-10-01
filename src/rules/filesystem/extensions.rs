@@ -48,7 +48,7 @@ mod tests {
         let path = Path::new("my/dir/to/file.f95");
         let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
-            rule.check(&path),
+            rule.check(path),
             Some(violation!["file extension should be '.f90' or '.F90'"]),
         );
     }
@@ -58,7 +58,7 @@ mod tests {
         let path = Path::new("my/dir/to/file");
         let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
-            rule.check(&path),
+            rule.check(path),
             Some(violation!["file extension should be '.f90' or '.F90'"]),
         );
     }
@@ -68,7 +68,7 @@ mod tests {
         let path1 = Path::new("my/dir/to/file.f90");
         let path2 = Path::new("my/dir/to/file.F90");
         let rule = NonStandardFileExtension::new(&default_settings());
-        assert_eq!(rule.check(&path1), None);
-        assert_eq!(rule.check(&path2), None);
+        assert_eq!(rule.check(path1), None);
+        assert_eq!(rule.check(path2), None);
     }
 }
