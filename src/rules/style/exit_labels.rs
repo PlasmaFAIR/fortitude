@@ -31,14 +31,15 @@ impl Rule for MissingExitOrCycleLabel {
 impl ASTRule for MissingExitOrCycleLabel {
     fn check<'a>(&self, node: &'a Node, src: &'a str) -> Option<Vec<Violation>> {
         // Skip unlabelled loops
-        child_with_name(node, "block_label_start_expression")?;
+        let label_node = child_with_name(node, "block_label_start_expression")?;
+        let label = to_text(&label_node, src)?.trim_end_matches(':');
 
         let violations: Vec<Violation> = named_descendants_except(node, ["do_loop_statement"])
             .filter(|node| node.kind() == "keyword_statement")
             .map(|stmt| (stmt, to_text(&stmt, src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
-                let msg = format!("'{name}' statement in named 'do' loop missing label");
+                let msg = format!("'{name}' statement in named 'do' loop missing label '{label}'");
                 Violation::from_node(msg, &stmt)
             })
             .collect();
@@ -109,13 +110,17 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<Violation> = [(5, 7, "exit"), (10, 17, "exit"), (29, 19, "cycle")]
-            .iter()
-            .map(|(line, col, stmt_kind)| {
-                let msg = format!("'{stmt_kind}' statement in named 'do' loop missing label");
-                violation!(msg, *line, *col)
-            })
-            .collect();
+        let expected: Vec<Violation> = [
+            (5, 7, "exit", "label1"),
+            (10, 17, "exit", "label2"),
+            (29, 19, "cycle", "inner"),
+        ]
+        .iter()
+        .map(|(line, col, stmt_kind, label)| {
+            let msg = format!("'{stmt_kind}' statement in named 'do' loop missing label '{label}'");
+            violation!(msg, *line, *col)
+        })
+        .collect();
         let rule = MissingExitOrCycleLabel::new(&default_settings());
         let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
