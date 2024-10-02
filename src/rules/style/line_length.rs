@@ -51,9 +51,46 @@ impl TextRule for LineTooLong {
                     "line length of {}, exceeds maximum {}",
                     len, self.line_length
                 );
-                violations.push(violation!(&msg, idx + 1));
+                violations.push(violation!(&msg, idx + 1, self.line_length));
             }
         }
         violations
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::violation;
+    use pretty_assertions::assert_eq;
+    use textwrap::dedent;
+
+    #[test]
+    fn test_line_too_long() -> anyhow::Result<()> {
+        let source = dedent(
+            "
+            program test
+              use some_really_long_module_name, only : integer_working_precision
+              implicit none
+              integer(integer_working_precision), parameter, dimension(1) :: a = [1]
+            end program test
+            ",
+        );
+        let line_length = 20;
+        let short_line_settings = Settings { line_length };
+        let expected: Vec<Violation> = [(3, line_length, 68), (5, line_length, 72)]
+            .iter()
+            .map(|(line, col, length)| {
+                violation!(
+                    format!("line length of {length}, exceeds maximum {line_length}"),
+                    *line,
+                    *col
+                )
+            })
+            .collect();
+        let rule = LineTooLong::new(&short_line_settings);
+        let actual = rule.check(source.as_str());
+        assert_eq!(actual, expected);
+        Ok(())
     }
 }
