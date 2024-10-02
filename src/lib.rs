@@ -59,7 +59,6 @@ impl Category {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ViolationPosition {
     None,
-    Line(usize),
     LineCol((usize, usize)),
 }
 
@@ -103,9 +102,6 @@ impl Violation {
 macro_rules! violation {
     ($msg:expr) => {
         $crate::Violation::new($msg, $crate::ViolationPosition::None)
-    };
-    ($msg:expr, $line:expr) => {
-        $crate::Violation::new($msg, $crate::ViolationPosition::Line($line))
     };
     ($msg:expr, $line:expr, $col:expr) => {
         $crate::Violation::new($msg, $crate::ViolationPosition::LineCol(($line, $col)))
@@ -184,7 +180,6 @@ impl Diagnostic {
     fn orderable(&self) -> (&Path, usize, usize, &str) {
         match self.violation.position() {
             ViolationPosition::None => (self.path.as_path(), 0, 0, self.code.as_str()),
-            ViolationPosition::Line(line) => (self.path.as_path(), line, 0, self.code.as_str()),
             ViolationPosition::LineCol((line, col)) => {
                 (self.path.as_path(), line, col, self.code.as_str())
             }
@@ -218,9 +213,6 @@ impl fmt::Display for Diagnostic {
         match self.violation.position() {
             ViolationPosition::None => {
                 write!(f, "{}: {} {}", path, code, message)
-            }
-            ViolationPosition::Line(line) => {
-                format_violation_line_col(self, f, line, 0, message, &path, &code)
             }
             ViolationPosition::LineCol((line, col)) => {
                 format_violation_line_col(self, f, line, col, message, &path, &code)
