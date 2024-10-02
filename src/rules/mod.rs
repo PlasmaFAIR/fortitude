@@ -13,6 +13,7 @@ register_rules! {
     (Category::Error, "E001", AST, error::syntax_error::SyntaxError, SyntaxError),
     (Category::Filesystem, "F001", PATH, filesystem::extensions::NonStandardFileExtension, NonStandardFileExtension),
     (Category::Style, "S001", TEXT, style::line_length::LineTooLong, LineTooLong),
+    (Category::Style, "S041", AST, style::old_style_array_literal::OldStyleArrayLiteral, OldStyleArrayLiteral),
     (Category::Style, "S101", TEXT, style::whitespace::TrailingWhitespace, TrailingWhitespace),
     (Category::Typing, "T001", AST, typing::implicit_typing::ImplicitTyping, ImplicitTyping),
     (Category::Typing, "T002", AST, typing::implicit_typing::InterfaceImplicitTyping, InterfaceImplicitTyping),
