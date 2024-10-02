@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 /// Contains methods to parse Fortran code into a tree-sitter Tree and utilites to simplify the
 /// navigation of a Tree.
 use std::sync::Mutex;
-use tree_sitter::{Node, Parser, Tree, TreeCursor};
+use tree_sitter::{Language, Node, Parser, Tree, TreeCursor};
 
 lazy_static! {
     static ref PARSER: Mutex<Parser> = {
@@ -24,6 +24,11 @@ pub fn parse<S: AsRef<str>>(source: S) -> anyhow::Result<Tree> {
         .unwrap()
         .parse(source.as_ref(), None)
         .context("Failed to parse")
+}
+
+/// Access the language of the parser.
+pub fn language() -> Language {
+    PARSER.lock().unwrap().language().unwrap()
 }
 
 pub struct DepthFirstIterator<'a> {
@@ -59,6 +64,62 @@ pub fn descendants<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
 /// Iterate over all named nodes beneath the current node in a depth-first manner.
 pub fn named_descendants<'a>(node: &'a Node) -> impl Iterator<Item = Node<'a>> {
     descendants(node).filter(|&x| x.is_named())
+}
+
+pub struct DepthFirstIteratorExcept<'a> {
+    cursor: TreeCursor<'a>,
+    exceptions: Vec<u16>,
+}
+
+impl<'a> Iterator for DepthFirstIteratorExcept<'a> {
+    type Item = Node<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // ignore exception list if we're at a depth of 0
+        if (self.cursor.depth() == 0 || !self.exceptions.contains(&self.cursor.node().kind_id()))
+            && self.cursor.goto_first_child()
+        {
+            return Some(self.cursor.node());
+        }
+        if self.cursor.goto_next_sibling() {
+            return Some(self.cursor.node());
+        }
+        while self.cursor.goto_parent() {
+            if self.cursor.goto_next_sibling() {
+                return Some(self.cursor.node());
+            }
+        }
+        None
+    }
+}
+
+/// Iterate over all nodes beneath the current node in a depth-first manner, never going deeper
+/// than any node types in the exceptions list.
+pub fn descendants_except<'a, I>(node: &'a Node, exceptions: I) -> impl Iterator<Item = Node<'a>>
+where
+    I: IntoIterator<Item = &'a str>,
+{
+    let lang = language();
+    let exception_ids: Vec<_> = exceptions
+        .into_iter()
+        .map(|x| lang.id_for_node_kind(x, true))
+        .collect();
+    DepthFirstIteratorExcept {
+        cursor: node.walk(),
+        exceptions: exception_ids,
+    }
+}
+
+/// Iterate over all nodes beneath the current node in a depth-first manner, never going deeper
+/// than any node types in the exceptions list.
+pub fn named_descendants_except<'a, I>(
+    node: &'a Node,
+    exceptions: I,
+) -> impl Iterator<Item = Node<'a>>
+where
+    I: IntoIterator<Item = &'a str>,
+{
+    descendants_except(node, exceptions).filter(|&x| x.is_named())
 }
 
 pub struct AncestorsIterator<'a> {
