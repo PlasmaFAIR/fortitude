@@ -1,4 +1,4 @@
-use crate::ast::{child_with_name, named_descendants, to_text};
+use crate::ast::{child_with_name, named_descendants_except, to_text};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -33,7 +33,7 @@ impl ASTRule for MissingExitOrCycleLabel {
         // Skip unlabelled loops
         child_with_name(node, "block_label_start_expression")?;
 
-        let violations: Vec<Violation> = named_descendants(node)
+        let violations: Vec<Violation> = named_descendants_except(node, ["do_loop_statement"])
             .filter(|node| node.kind() == "keyword_statement")
             .map(|stmt| (stmt, to_text(&stmt, src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
@@ -83,14 +83,14 @@ mod tests {
               end do label4
 
               label5: do i = 1, 2
-                do j = 1, 2  ! unnamed inner loop
+                do j = 1, 2  ! unnamed inner loop: currently doesn't warn
                   cycle
                 end do
               end do label5
 
               label6: do i = 1, 2
                 inner: do j = 1, 2
-                  if (.true.) CYCLE ! named inner loop: currently get two warnings
+                  if (.true.) CYCLE ! named inner loop: warns on inner loop
                 end do inner
               end do label6
 
@@ -109,19 +109,13 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<Violation> = [
-            (5, 7, "exit"),
-            (10, 17, "exit"),
-            (23, 7, "cycle"),
-            (29, 19, "cycle"),
-            (29, 19, "cycle"), // Ideally don't get this one
-        ]
-        .iter()
-        .map(|(line, col, stmt_kind)| {
-            let msg = format!("'{stmt_kind}' statement in named 'do' loop missing label");
-            violation!(msg, *line, *col)
-        })
-        .collect();
+        let expected: Vec<Violation> = [(5, 7, "exit"), (10, 17, "exit"), (29, 19, "cycle")]
+            .iter()
+            .map(|(line, col, stmt_kind)| {
+                let msg = format!("'{stmt_kind}' statement in named 'do' loop missing label");
+                violation!(msg, *line, *col)
+            })
+            .collect();
         let rule = MissingExitOrCycleLabel::new(&default_settings());
         let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
