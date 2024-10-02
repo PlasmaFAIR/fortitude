@@ -93,7 +93,8 @@ impl<'a> Iterator for DepthFirstIteratorExcept<'a> {
     }
 }
 
-/// Iterate over all nodes beneath the current node in a depth-first manner.
+/// Iterate over all nodes beneath the current node in a depth-first manner, never going deeper
+/// than any node types in the exceptions list.
 pub fn descendants_except<'a, I>(node: &'a Node, exceptions: I) -> impl Iterator<Item = Node<'a>>
 where
     I: IntoIterator<Item = &'a str>,
@@ -109,7 +110,8 @@ where
     }
 }
 
-/// Iterate over all named nodes beneath the current node in a depth-first manner.
+/// Iterate over all nodes beneath the current node in a depth-first manner, never going deeper
+/// than any node types in the exceptions list.
 pub fn named_descendants_except<'a, I>(
     node: &'a Node,
     exceptions: I,
