@@ -1,4 +1,4 @@
-use crate::ast::{named_descendants, parse};
+use crate::ast::{parse, FortitudeNode};
 use crate::cli::CheckArgs;
 use crate::rules::{
     ast_entrypoint_map, default_ruleset, full_ruleset, path_rule_map, text_rule_map,
@@ -98,7 +98,7 @@ fn check_file(
 
     // Perform AST analysis
     let tree = parse(&source)?;
-    for node in named_descendants(&tree.root_node()) {
+    for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for (code, rule) in rules {
                 if let Some(violation) = rule.check(&node, &source) {

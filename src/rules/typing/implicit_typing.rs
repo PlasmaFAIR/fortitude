@@ -1,4 +1,4 @@
-use crate::ast::{ancestors, child_with_name};
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -12,7 +12,7 @@ fn implicit_statement_is_none(node: &Node) -> bool {
 }
 
 fn child_is_implicit_none(node: &Node) -> bool {
-    if let Some(child) = child_with_name(node, "implicit_statement") {
+    if let Some(child) = node.child_with_name("implicit_statement") {
         return implicit_statement_is_none(&child);
     }
     false
@@ -99,7 +99,7 @@ impl ASTRule for SuperfluousImplicitNone {
         }
         let parent = node.parent()?;
         if matches!(parent.kind(), "function" | "subroutine") {
-            for ancestor in ancestors(&parent) {
+            for ancestor in parent.ancestors() {
                 let kind = ancestor.kind();
                 match kind {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
