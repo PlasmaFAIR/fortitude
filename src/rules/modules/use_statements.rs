@@ -1,4 +1,4 @@
-use crate::ast::child_with_name;
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -36,7 +36,7 @@ impl Rule for UseAll {
 
 impl ASTRule for UseAll {
     fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
-        if child_with_name(node, "included_items").is_none() {
+        if node.child_with_name("included_items").is_none() {
             let msg = "'use' statement missing 'only' clause";
             return some_vec![Violation::from_node(msg, node)];
         }

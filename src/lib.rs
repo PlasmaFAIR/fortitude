@@ -5,7 +5,7 @@ pub mod explain;
 mod rules;
 mod settings;
 use annotate_snippets::{Level, Renderer, Snippet};
-use ast::{named_descendants, parse};
+use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
 use settings::Settings;
 use std::cmp::Ordering;
@@ -146,7 +146,9 @@ pub trait ASTRule: Rule {
     /// Apply a rule over some text, generating all violations raised as a result.
     fn apply(&self, source: &str) -> anyhow::Result<Vec<Violation>> {
         let entrypoints = self.entrypoints();
-        Ok(named_descendants(&parse(source)?.root_node())
+        Ok(parse(source)?
+            .root_node()
+            .named_descendants()
             .filter(|x| entrypoints.contains(&x.kind()))
             .filter_map(|x| self.check(&x, source))
             .flatten()

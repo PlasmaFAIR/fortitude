@@ -1,4 +1,4 @@
-use crate::ast::to_text;
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -44,7 +44,7 @@ impl Rule for DoublePrecision {
 
 impl ASTRule for DoublePrecision {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let txt = to_text(node, src)?.to_lowercase();
+        let txt = node.to_text(src)?.to_lowercase();
         if let Some(msg) = double_precision_err_msg(txt.as_str()) {
             return some_vec![Violation::from_node(msg.as_str(), node)];
         }

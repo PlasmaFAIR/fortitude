@@ -1,4 +1,4 @@
-use crate::ast::to_text;
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use lazy_regex::regex_is_match;
@@ -58,7 +58,7 @@ impl ASTRule for NoRealSuffix {
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with a different
         // rule.
-        let txt = to_text(node, src)?;
+        let txt = node.to_text(src)?;
         if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
             let msg = format!("real literal {} missing kind suffix", txt);
             return some_vec![Violation::from_node(msg, node)];

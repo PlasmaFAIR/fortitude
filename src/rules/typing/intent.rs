@@ -1,4 +1,4 @@
-use crate::ast::{child_with_name, to_text};
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -38,7 +38,7 @@ impl ASTRule for MissingIntent {
         let parameters: Vec<&str> = node
             .child_by_field_name("parameters")?
             .named_children(&mut node.walk())
-            .filter_map(|param| to_text(&param, src))
+            .filter_map(|param| param.to_text(src))
             .collect();
 
         let parent = node.parent()?;
@@ -61,7 +61,7 @@ impl ASTRule for MissingIntent {
                 !decl
                     .children_by_field_name("attribute", &mut decl.walk())
                     .any(|attr| {
-                        to_text(&attr, src)
+                        attr.to_text(src)
                             .unwrap_or("")
                             .to_lowercase()
                             .starts_with("intent")
@@ -72,7 +72,7 @@ impl ASTRule for MissingIntent {
                     .filter_map(|declarator| {
                         let identifier = match declarator.kind() {
                             "identifier" => Some(declarator),
-                            "sized_declarator" => child_with_name(&declarator, "identifier"),
+                            "sized_declarator" => declarator.child_with_name("identifier"),
                             // Although tree-sitter-fortran grammar allows
                             // `init_declarator` and `pointer_init_declarator`
                             // here, dummy arguments aren't actually allow
@@ -80,7 +80,7 @@ impl ASTRule for MissingIntent {
                             // flag as syntax error elsewhere?
                             _ => None,
                         }?;
-                        let name = to_text(&identifier, src)?;
+                        let name = identifier.to_text(src)?;
                         if parameters.contains(&name) {
                             return Some((declarator, name));
                         }

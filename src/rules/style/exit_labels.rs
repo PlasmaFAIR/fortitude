@@ -1,4 +1,4 @@
-use crate::ast::{child_with_name, named_descendants_except, to_text};
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -31,12 +31,15 @@ impl Rule for MissingExitOrCycleLabel {
 impl ASTRule for MissingExitOrCycleLabel {
     fn check<'a>(&self, node: &'a Node, src: &'a str) -> Option<Vec<Violation>> {
         // Skip unlabelled loops
-        let label_node = child_with_name(node, "block_label_start_expression")?;
-        let label = to_text(&label_node, src)?.trim_end_matches(':');
+        let label = node
+            .child_with_name("block_label_start_expression")?
+            .to_text(src)?
+            .trim_end_matches(':');
 
-        let violations: Vec<Violation> = named_descendants_except(node, ["do_loop_statement"])
+        let violations: Vec<Violation> = node
+            .named_descendants_except(["do_loop_statement"])
             .filter(|node| node.kind() == "keyword_statement")
-            .map(|stmt| (stmt, to_text(&stmt, src).unwrap_or_default().to_lowercase()))
+            .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
                 let msg = format!("'{name}' statement in named 'do' loop missing label '{label}'");

@@ -1,4 +1,4 @@
-use crate::ast::{child_with_name, dtype_is_plain_number, parse_intrinsic_type, to_text};
+use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -72,7 +72,7 @@ impl Rule for LiteralKind {
 
 impl ASTRule for LiteralKind {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let dtype = parse_intrinsic_type(node)?;
+        let dtype = node.parse_intrinsic_type()?;
         // TODO: Deal with characters
         if !dtype_is_plain_number(dtype.as_str()) {
             return None;
@@ -85,7 +85,7 @@ impl ASTRule for LiteralKind {
         // non-standard, `real*8` _usually_ means `real(real64)`
         let msg = format!(
             "{dtype} kind set with number literal '{}', use 'iso_fortran_env' parameter",
-            to_text(&literal_value, src)?
+            literal_value.to_text(src)?
         );
         some_vec![Violation::from_node(msg, &literal_value)]
     }
@@ -97,7 +97,7 @@ impl ASTRule for LiteralKind {
 
 /// Return any kind spec that is a number literal
 fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
-    if let Some(literal) = child_with_name(node, "number_literal") {
+    if let Some(literal) = node.child_with_name("number_literal") {
         return Some(literal);
     }
 
@@ -112,7 +112,7 @@ fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
 
         // find instances of `kind=8` etc
         let name = child.child_by_field_name("name")?;
-        if to_text(&name, src)?.to_lowercase() != "kind" {
+        if &name.to_text(src)?.to_lowercase() != "kind" {
             continue;
         }
         let value = child.child_by_field_name("value")?;
@@ -165,8 +165,8 @@ impl ASTRule for LiteralKindSuffix {
         }
         let msg = format!(
             "'{}' has literal suffix '{}', use 'iso_fortran_env' parameter",
-            to_text(node, src)?,
-            to_text(&kind, src)?,
+            node.to_text(src)?,
+            &kind.to_text(src)?,
         );
         some_vec![Violation::from_node(msg, &kind)]
     }

@@ -1,4 +1,4 @@
-use crate::ast::to_text;
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -21,7 +21,7 @@ impl Rule for OldStyleArrayLiteral {
 
 impl ASTRule for OldStyleArrayLiteral {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        if to_text(node, src)?.starts_with("(/") {
+        if node.to_text(src)?.starts_with("(/") {
             let msg = "Array literal uses old-style syntax: prefer `[...]`";
             return some_vec!(Violation::from_node(msg, node));
         }

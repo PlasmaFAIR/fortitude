@@ -1,6 +1,4 @@
-use crate::ast::{
-    child_with_name, dtype_is_plain_number, parse_intrinsic_type, strip_line_breaks, to_text,
-};
+use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
@@ -29,14 +27,14 @@ impl Rule for StarKind {
 
 impl ASTRule for StarKind {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let dtype = parse_intrinsic_type(node)?;
+        let dtype = node.parse_intrinsic_type()?;
         // TODO: Handle characters
         if !dtype_is_plain_number(dtype.as_str()) {
             return None;
         }
         let type_node = node.child_by_field_name("type")?;
         let kind_node = type_node.child_by_field_name("kind")?;
-        let size = to_text(&kind_node, src)?;
+        let size = kind_node.to_text(src)?;
         if !size.starts_with('*') {
             return None;
         }
@@ -44,8 +42,8 @@ impl ASTRule for StarKind {
         // Tidy up the kind spec so it's just e.g. '*8'
         let size = strip_line_breaks(size).replace([' ', '\t'], "");
 
-        let literal = child_with_name(&kind_node, "number_literal")?;
-        let kind = to_text(&literal, src)?;
+        let literal = kind_node.child_with_name("number_literal")?;
+        let kind = literal.to_text(src)?;
         // TODO: Better suggestion, rather than use integer literal
         let msg = format!("{dtype}{size} is non-standard, use {dtype}({kind})");
         some_vec![Violation::from_node(msg, &kind_node)]
