@@ -16,10 +16,10 @@ impl Rule for AssumedSize {
     fn explain(&self) -> &'static str {
         "
         Assumed size dummy arguments declared with a star `*` as the size should be
-        avoided, and assumed shape with a colon `:` should be used instead. There are
-        several downsides to assumed size, the main one being that the compiler is
-        not able to determine the array bounds, so it is not possible to check for
-        array overruns or to use the array in whole-array expressions.
+        avoided. There are several downsides to assumed size, the main one being
+        that the compiler is not able to determine the array bounds, so it is not
+        possible to check for array overruns or to use the array in whole-array 
+        expressions.
 
         Instead, prefer assumed shape arguments, as the compiler is able to keep track of
         the upper bounds automatically, and pass this information under the hood. It also
