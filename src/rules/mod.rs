@@ -23,6 +23,7 @@ register_rules! {
     (Category::Typing, "T012", AST, typing::literal_kinds::LiteralKindSuffix, LiteralKindSuffix),
     (Category::Typing, "T021", AST, typing::star_kinds::StarKind, StarKind),
     (Category::Typing, "T031", AST, typing::intent::MissingIntent, MissingIntent),
+    (Category::Typing, "T041", AST, typing::assumed_size::AssumedSize, AssumedSize),
     (Category::Precision, "P001", AST, precision::kind_suffixes::NoRealSuffix, NoRealSuffix),
     (Category::Precision, "P011", AST, precision::double_precision::DoublePrecision, DoublePrecision),
     (Category::Modules, "M001", AST, modules::external_functions::ExternalFunction, ExternalFunction),
