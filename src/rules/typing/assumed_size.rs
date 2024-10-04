@@ -19,7 +19,28 @@ impl Rule for AssumedSize {
         avoided, and assumed shape with a colon `:` should be used instead. There are
         several downsides to assumed size, the main one being that the compiler is
         not able to determine the array bounds, so it is not possible to check for
-        array overruns.
+        array overruns or to use the array in whole-array expressions.
+
+        Instead, prefer assumed shape arguments, as the compiler is able to keep track of
+        the upper bounds automatically, and pass this information under the hood. It also
+        allows use of whole-array expressions, such as `a = b + c`, where `a, b, c` are
+        all arrays of the same shape.
+
+        Instead of:
+
+        ```
+        subroutine process_array(array)
+            integer, dimension(*), intent(in) :: array
+            ...
+        ```
+
+        use:
+
+        ```
+        subroutine process_array(array)
+            integer, dimension(:), intent(in) :: array
+            ...
+        ```
         "
     }
 }
