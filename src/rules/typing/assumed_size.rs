@@ -156,15 +156,20 @@ impl ASTRule for AssumedSizeCharacterIntent {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
-        // - `character*(*)` -- this is valid, but should be a separate warning
 
         let declaration = node
             .ancestors()
             .find(|parent| parent.kind() == "variable_declaration")?;
 
         // Only applies to `character`
-        if let Some(dtype) = declaration.parse_intrinsic_type() {
-            if dtype.to_lowercase() != "character" {
+        if declaration.parse_intrinsic_type()?.to_lowercase() != "character" {
+            return None;
+        }
+
+        // Handle `character*(*)` elsewhere -- note this just skips emitting a warning
+        // for the first `*`, we'll still get one for the second `*`, but this is desired
+        if let Some(sibling) = node.next_named_sibling() {
+            if sibling.kind() == "assumed_size" {
                 return None;
             }
         }
@@ -202,6 +207,62 @@ impl ASTRule for AssumedSizeCharacterIntent {
             .map(|name| {
                 let msg =
                     format!("character '{name}' has assumed size but does not have `intent(in)`");
+                Violation::from_node(msg, node)
+            })
+            .collect_vec();
+
+        Some(all_decls)
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
+        vec!["assumed_size"]
+    }
+}
+
+pub struct DeprecatedAssumedSizeCharacter {}
+
+impl Rule for DeprecatedAssumedSizeCharacter {
+    fn new(_settings: &Settings) -> Self {
+        Self {}
+    }
+
+    fn explain(&self) -> &'static str {
+        "
+        The syntax `character*(*)` is a deprecated form of `character(len=*)`. Prefer the
+        second form.
+        "
+    }
+}
+
+impl ASTRule for DeprecatedAssumedSizeCharacter {
+    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+        let declaration = node
+            .ancestors()
+            .find(|parent| parent.kind() == "variable_declaration")?;
+
+        // Only applies to `character`
+        if declaration.parse_intrinsic_type()?.to_lowercase() != "character" {
+            return None;
+        }
+
+        // Are we immediately (modulo whitespace) in front of `(...)`?
+        if node.next_sibling()?.kind() != "(" {
+            return None;
+        }
+
+        // Collect all declarations on this line
+        let all_decls = declaration
+            .children_by_field_name("declarator", &mut declaration.walk())
+            .filter_map(|declarator| {
+                let identifier = match declarator.kind() {
+                    "identifier" => Some(declarator),
+                    "sized_declarator" => declarator.child_with_name("identifier"),
+                    _ => None,
+                }?;
+                identifier.to_text(src)
+            })
+            .map(|name| {
+                let msg = format!("character '{name}' uses deprecated syntax for assumed size");
                 Violation::from_node(msg, node)
             })
             .collect_vec();
@@ -294,11 +355,51 @@ mod tests {
         ]
         .iter()
         .map(|(line, col, variable)| {
-            let msg = format!("character '{variable}' has assumed size but does not have `intent(in)`");
+            let msg =
+                format!("character '{variable}' has assumed size but does not have `intent(in)`");
             violation!(&msg, *line, *col)
         })
         .collect();
         let rule = AssumedSizeCharacterIntent::new(&default_settings());
+        let actual = rule.apply(source.as_str())?;
+        assert_eq!(actual, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_deprecated_assumed_size_character() -> anyhow::Result<()> {
+        // test case from stylist
+        let source = dedent(
+            "
+            program cases
+            contains
+              subroutine char_input(a, b, c, d, e, f)
+                character * ( * ), intent(in) :: a
+                character*(*), intent(in) :: b
+                character*(len=*), intent(in) :: c
+                character*(3), intent(in) :: d
+                character*(MAX_LEN), intent(in) :: e
+                ! these are ok
+                character(*, kind) :: f
+                character(len=*, kind=4) :: g
+              end subroutine char_input
+            end program cases
+            ",
+        );
+        let expected: Vec<Violation> = [
+            (5, 15, "a"),
+            (6, 14, "b"),
+            (7, 14, "c"),
+            (8, 14, "d"),
+            (9, 14, "e"),
+        ]
+        .iter()
+        .map(|(line, col, variable)| {
+            let msg = format!("character '{variable}' uses deprecated syntax for assumed size");
+            violation!(&msg, *line, *col)
+        })
+        .collect();
+        let rule = DeprecatedAssumedSizeCharacter::new(&default_settings());
         let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
