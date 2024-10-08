@@ -63,6 +63,7 @@ impl ASTRule for AssumedSize {
                 return None;
             }
         }
+
         // Assumed size ok for parameters
         if declaration
             .children_by_field_name("attribute", &mut declaration.walk())
@@ -96,6 +97,113 @@ impl ASTRule for AssumedSize {
                 identifier.to_text(src)
             })
             .map(|name| Violation::from_node(format!("'{name}' has assumed size"), node))
+            .collect_vec();
+
+        Some(all_decls)
+    }
+
+    fn entrypoints(&self) -> Vec<&'static str> {
+        vec!["assumed_size"]
+    }
+}
+
+pub struct AssumedSizeCharacterIntent {}
+
+impl Rule for AssumedSizeCharacterIntent {
+    fn new(_settings: &Settings) -> Self {
+        Self {}
+    }
+
+    fn explain(&self) -> &'static str {
+        "
+        Character dummy arguments with an assumed size should only have `intent(in)`, as
+        this can cause data loss with `intent([in]out)`. For example:
+
+        ```
+        program example
+          character(len=3) :: short_text
+          call set_text(short_text)
+          print*, short_text
+        contains
+          subroutine set_text(text)
+            character(*), intent(out) :: text
+            text = \"longer than 3 characters\"
+          end subroutine set_text
+        end program
+        ```
+
+        Here, `short_text` will only contain the truncated \"lon\".
+
+        To handle dynamically setting `character` sizes, use `allocatable` instead:
+
+        ```
+        program example
+          character(len=3) :: short_text
+          call set_text(short_text)
+          print*, short_text
+        contains
+          subroutine set_text(text)
+            character(len=:), allocatable, intent(out) :: text
+            text = \"longer than 3 characters\"
+          end subroutine set_text
+        end program
+        ```
+        "
+    }
+}
+
+impl ASTRule for AssumedSizeCharacterIntent {
+    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+        // TODO: This warning will also catch:
+        // - non-dummy arguments -- these are always invalid, should be a separate warning?
+        // - `character*(*)` -- this is valid, but should be a separate warning
+
+        let declaration = node
+            .ancestors()
+            .find(|parent| parent.kind() == "variable_declaration")?;
+
+        // Only applies to `character`
+        if let Some(dtype) = declaration.parse_intrinsic_type() {
+            if dtype.to_lowercase() != "character" {
+                return None;
+            }
+        }
+
+        let attrs_as_text = declaration
+            .children_by_field_name("attribute", &mut declaration.walk())
+            .filter_map(|attr| attr.to_text(src))
+            .map(|attr| attr.to_lowercase())
+            .collect_vec();
+
+        // Assumed size ok for parameters
+        if attrs_as_text.iter().any(|attr| attr == "parameter") {
+            return None;
+        }
+
+        // Ok for `intent(in)` only
+        if let Some(intent) = attrs_as_text.iter().find(|attr| attr.starts_with("intent")) {
+            let intent = intent.split_whitespace().collect_vec().join("");
+            if intent == "intent(in)" {
+                return None;
+            }
+        }
+
+        // Collect all declarations on this line
+        let all_decls = declaration
+            .children_by_field_name("declarator", &mut declaration.walk())
+            .filter_map(|declarator| {
+                let identifier = match declarator.kind() {
+                    "identifier" => Some(declarator),
+                    "sized_declarator" => declarator.child_with_name("identifier"),
+                    _ => None,
+                }?;
+                identifier.to_text(src)
+            })
+            .map(|name| {
+                let msg =
+                    format!("character '{name}' has assumed size but does not have `intent(in)`");
+                Violation::from_node(msg, node)
+            })
             .collect_vec();
 
         Some(all_decls)
@@ -147,6 +255,50 @@ mod tests {
         })
         .collect();
         let rule = AssumedSize::new(&default_settings());
+        let actual = rule.apply(source.as_str())?;
+        assert_eq!(actual, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_assumed_size_character_intent() -> anyhow::Result<()> {
+        // test case from stylist
+        let source = dedent(
+            "
+            program cases
+              ! A char array outside a function or subroutine, no exception
+              character (*) :: autochar_glob
+            contains
+              subroutine char_input(autochar_in, autochar_inout, autochar_out, fixedchar)
+                ! A char array with proper intent, no exception
+                character(*), intent(in)       :: autochar_in
+                ! A char array with disallowed intent, exception
+                character(*), intent(inout)    :: autochar_inout
+                ! A char array with disallowed intent, exception
+                character(len=*), intent(out)  :: autochar_out
+                ! A char array not passed as a parameter, no exception
+                character(*)                   :: autochar_var
+                ! A char array with fixed length, no exception
+                character(len=10), intent(out) :: fixedchar
+                ! A declaration with non-intent attribute, no exception
+                character(len=*), parameter :: alt_attr = 'sample'
+              end subroutine char_input
+            end program cases
+            ",
+        );
+        let expected: Vec<Violation> = [
+            (4, 14, "autochar_glob"),
+            (10, 15, "autochar_inout"),
+            (12, 19, "autochar_out"),
+            (14, 15, "autochar_var"),
+        ]
+        .iter()
+        .map(|(line, col, variable)| {
+            let msg = format!("character '{variable}' has assumed size but does not have `intent(in)`");
+            violation!(&msg, *line, *col)
+        })
+        .collect();
+        let rule = AssumedSizeCharacterIntent::new(&default_settings());
         let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())

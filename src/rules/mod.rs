@@ -24,6 +24,7 @@ register_rules! {
     (Category::Typing, "T021", AST, typing::star_kinds::StarKind, StarKind),
     (Category::Typing, "T031", AST, typing::intent::MissingIntent, MissingIntent),
     (Category::Typing, "T041", AST, typing::assumed_size::AssumedSize, AssumedSize),
+    (Category::Typing, "T042", AST, typing::assumed_size::AssumedSizeCharacterIntent, AssumedSizeCharacterIntent),
     (Category::Typing, "T051", AST, typing::init_decls::InitialisationInDeclaration, InitialisationInDeclaration),
     (Category::Precision, "P001", AST, precision::kind_suffixes::NoRealSuffix, NoRealSuffix),
     (Category::Precision, "P011", AST, precision::double_precision::DoublePrecision, DoublePrecision),
