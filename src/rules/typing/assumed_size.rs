@@ -18,7 +18,7 @@ impl Rule for AssumedSize {
         Assumed size dummy arguments declared with a star `*` as the size should be
         avoided. There are several downsides to assumed size, the main one being
         that the compiler is not able to determine the array bounds, so it is not
-        possible to check for array overruns or to use the array in whole-array 
+        possible to check for array overruns or to use the array in whole-array
         expressions.
 
         Instead, prefer assumed shape arguments, as the compiler is able to keep track of
@@ -41,6 +41,10 @@ impl Rule for AssumedSize {
             integer, dimension(:), intent(in) :: array
             ...
         ```
+
+        Note that this doesn't apply to `character` types, where `character(len=*)` is
+        actually the most appropriate specification for `intent(in)` arguments! This is
+        because `character(len=:)` must be either a `pointer` or `allocatable`.
         "
     }
 }
@@ -51,6 +55,14 @@ impl ASTRule for AssumedSize {
             .ancestors()
             .find(|parent| parent.kind() == "variable_declaration")?;
 
+        // Deal with `character([len=]*)` elsewhere
+        if let Some(dtype) = declaration.parse_intrinsic_type() {
+            let is_character = dtype.to_lowercase() == "character";
+            let is_kind = node.ancestors().any(|parent| parent.kind() == "kind");
+            if is_character && is_kind {
+                return None;
+            }
+        }
         // Assumed size ok for parameters
         if declaration
             .children_by_field_name("attribute", &mut declaration.walk())
@@ -106,12 +118,15 @@ mod tests {
     fn test_assumed_size() -> anyhow::Result<()> {
         let source = dedent(
             "
-            subroutine assumed_size_dimension(array, n, m, l, o, p, options, thing)
+            subroutine assumed_size_dimension(array, n, m, l, o, p, options, thing, q)
               integer, intent(in) :: n, m
               integer, dimension(n, m, *), intent(in) :: array
               integer, intent(in) :: l(*), o, p(*)
-              character(len=*) :: options
-              character(*) :: thing
+              ! warning must be on the array part for characters
+              character(len=*), dimension(*) :: options
+              character(*) :: thing(*)
+              ! this is ok
+              character(*), intent(in) :: q
               ! following are ok because they're parameters
               integer, dimension(*), parameter :: param = [1, 2, 3]
               character(*), dimension(*), parameter :: param_char = ['hello']
@@ -122,8 +137,8 @@ mod tests {
             (4, 28, "array"),
             (5, 28, "l"),
             (5, 37, "p"),
-            (6, 17, "options"),
-            (7, 13, "thing"),
+            (7, 31, "options"),
+            (8, 25, "thing"),
         ]
         .iter()
         .map(|(line, col, variable)| {
