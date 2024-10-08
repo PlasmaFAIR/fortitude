@@ -47,9 +47,9 @@ impl Rule for AssumedSize {
 
 impl ASTRule for AssumedSize {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        // Assumed size nodes ok when used in 'character(len=*)' or 'character(*)'.
-        // They also appear twice in 'character*(*)', but this old syntax should be
-        // caught by a different rule to this.
+        // Assumed size ok when used in 'character(len=*)' or 'character(*)'.
+        // Also ok in 'character*(*)', even if this syntax should be avoided
+        // for other reasons!
         // No other types can have assumed size in their kinds, so it's sufficient
         // to exit early if 'kind' is a parent node.
         if node.ancestors().any(|parent| parent.kind() == "kind") {
