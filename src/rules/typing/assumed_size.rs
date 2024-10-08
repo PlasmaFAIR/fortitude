@@ -47,6 +47,15 @@ impl Rule for AssumedSize {
 
 impl ASTRule for AssumedSize {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+        // Assumed size nodes ok when used in 'character(len=*)' or 'character(*)'.
+        // They also appear twice in 'character*(*)', but this old syntax should be
+        // caught by a different rule to this.
+        // No other types can have assumed size in their kinds, so it's sufficient
+        // to exit early if 'kind' is a parent node.
+        if node.ancestors().any(|parent| parent.kind() == "kind") {
+            return None;
+        }
+
         let declaration = node
             .ancestors()
             .find(|parent| parent.kind() == "variable_declaration")?;
@@ -110,8 +119,14 @@ mod tests {
               integer, intent(in) :: n, m
               integer, dimension(n, m, *), intent(in) :: array
               integer, intent(in) :: l(*), o, p(*)
+              ! following are ok because this is correct for character lens
+              ! (although the last version should be caught by a different rule!)
               character(len=*) :: options
               character(*) :: thing
+              character*(*) :: dont_do_this
+              ! these should still be caught
+              character(*), dimension(*) :: char_array_1
+              character*(*) :: char_array_2(*)
               ! following are ok because they're parameters
               integer, dimension(*), parameter :: param = [1, 2, 3]
               character(*), dimension(*), parameter :: param_char = ['hello']
@@ -122,8 +137,8 @@ mod tests {
             (4, 28, "array"),
             (5, 28, "l"),
             (5, 37, "p"),
-            (6, 17, "options"),
-            (7, 13, "thing"),
+            (12, 27, "char_array_1"),
+            (13, 33, "char_array_2"),
         ]
         .iter()
         .map(|(line, col, variable)| {
