@@ -21,6 +21,7 @@ register_rules! {
     (Category::Typing, "T003", AST, typing::implicit_typing::SuperfluousImplicitNone, SuperfluousImplicitNone),
     (Category::Typing, "T011", AST, typing::literal_kinds::LiteralKind, LiteralKind),
     (Category::Typing, "T012", AST, typing::literal_kinds::LiteralKindSuffix, LiteralKindSuffix),
+    (Category::Typing, "T015", AST, typing::implicit_kinds::ImplicitRealKind, ImplicitRealKind),
     (Category::Typing, "T021", AST, typing::star_kinds::StarKind, StarKind),
     (Category::Typing, "T031", AST, typing::intent::MissingIntent, MissingIntent),
     (Category::Typing, "T041", AST, typing::assumed_size::AssumedSize, AssumedSize),
