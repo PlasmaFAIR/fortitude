@@ -21,7 +21,6 @@ register_rules! {
     (Category::Typing, "T003", AST, typing::implicit_typing::SuperfluousImplicitNone, SuperfluousImplicitNone),
     (Category::Typing, "T011", AST, typing::literal_kinds::LiteralKind, LiteralKind),
     (Category::Typing, "T012", AST, typing::literal_kinds::LiteralKindSuffix, LiteralKindSuffix),
-    (Category::Typing, "T015", AST, typing::implicit_kinds::ImplicitRealKind, ImplicitRealKind),
     (Category::Typing, "T021", AST, typing::star_kinds::StarKind, StarKind),
     (Category::Typing, "T031", AST, typing::intent::MissingIntent, MissingIntent),
     (Category::Typing, "T041", AST, typing::assumed_size::AssumedSize, AssumedSize),
@@ -30,6 +29,7 @@ register_rules! {
     (Category::Typing, "T051", AST, typing::init_decls::InitialisationInDeclaration, InitialisationInDeclaration),
     (Category::Precision, "P001", AST, precision::kind_suffixes::NoRealSuffix, NoRealSuffix),
     (Category::Precision, "P011", AST, precision::double_precision::DoublePrecision, DoublePrecision),
+    (Category::Precision, "P021", AST, precision::implicit_kinds::ImplicitRealKind, ImplicitRealKind),
     (Category::Modules, "M001", AST, modules::external_functions::ExternalFunction, ExternalFunction),
     (Category::Modules, "M011", AST, modules::use_statements::UseAll, UseAll)
 }
