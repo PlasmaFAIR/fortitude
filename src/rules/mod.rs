@@ -29,6 +29,7 @@ register_rules! {
     (Category::Typing, "T051", AST, typing::init_decls::InitialisationInDeclaration, InitialisationInDeclaration),
     (Category::Precision, "P001", AST, precision::kind_suffixes::NoRealSuffix, NoRealSuffix),
     (Category::Precision, "P011", AST, precision::double_precision::DoublePrecision, DoublePrecision),
+    (Category::Precision, "P021", AST, precision::implicit_kinds::ImplicitRealKind, ImplicitRealKind),
     (Category::Modules, "M001", AST, modules::external_functions::ExternalFunction, ExternalFunction),
     (Category::Modules, "M011", AST, modules::use_statements::UseAll, UseAll)
 }

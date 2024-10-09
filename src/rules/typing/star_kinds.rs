@@ -27,13 +27,12 @@ impl Rule for StarKind {
 
 impl ASTRule for StarKind {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let dtype = node.parse_intrinsic_type()?;
+        let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Handle characters
         if !dtype_is_plain_number(dtype.as_str()) {
             return None;
         }
-        let type_node = node.child_by_field_name("type")?;
-        let kind_node = type_node.child_by_field_name("kind")?;
+        let kind_node = node.child_by_field_name("kind")?;
         let size = kind_node.to_text(src)?;
         if !size.starts_with('*') {
             return None;
@@ -50,7 +49,7 @@ impl ASTRule for StarKind {
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
-        vec!["variable_declaration", "function_statement"]
+        vec!["intrinsic_type"]
     }
 }
 

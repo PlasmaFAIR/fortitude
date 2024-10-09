@@ -72,14 +72,13 @@ impl Rule for LiteralKind {
 
 impl ASTRule for LiteralKind {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let dtype = node.parse_intrinsic_type()?;
+        let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Deal with characters
         if !dtype_is_plain_number(dtype.as_str()) {
             return None;
         }
 
-        let type_node = node.child_by_field_name("type")?;
-        let kind_node = type_node.child_by_field_name("kind")?;
+        let kind_node = node.child_by_field_name("kind")?;
         let literal_value = integer_literal_kind(&kind_node, src)?;
         // TODO: Can we recommend the "correct" size? Although
         // non-standard, `real*8` _usually_ means `real(real64)`
@@ -91,7 +90,7 @@ impl ASTRule for LiteralKind {
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
-        vec!["variable_declaration", "function_statement"]
+        vec!["intrinsic_type"]
     }
 }
 
