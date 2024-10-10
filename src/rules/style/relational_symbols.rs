@@ -1,22 +1,18 @@
-use std::collections::BTreeMap;
-
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
-use lazy_static::lazy_static;
 use tree_sitter::Node;
 
-lazy_static! {
-    static ref RELATIONAL_NAMES: BTreeMap<&'static str, &'static str> = {
-        BTreeMap::from([
-            (".gt.", ">"),
-            (".ge.", ">="),
-            (".lt.", "<"),
-            (".le.", "<="),
-            (".eq.", "=="),
-            (".ne.", "/="),
-        ])
-    };
+fn map_relational_symbols(name: &str) -> Option<&'static str> {
+    match name {
+        ".gt." => Some(">"),
+        ".ge." => Some(">="),
+        ".lt." => Some("<"),
+        ".le." => Some("<="),
+        ".eq." => Some("=="),
+        ".ne." => Some("/="),
+        _ => None,
+    }
 }
 
 pub struct RelationalSymbol {}
@@ -38,7 +34,7 @@ impl ASTRule for RelationalSymbol {
     fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
         let relation = node.child(1)?;
         let symbol = relation.to_text(src)?.to_lowercase();
-        let new_symbol = RELATIONAL_NAMES.get(symbol.as_str())?;
+        let new_symbol = map_relational_symbols(symbol.as_str())?;
         let msg = format!("old style relational symbol '{symbol}', prefer '{new_symbol}'");
         some_vec![Violation::from_node(msg, &relation)]
     }
@@ -57,7 +53,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_old_style_array_literal() -> anyhow::Result<()> {
+    fn test_relational_symbol() -> anyhow::Result<()> {
         let source = dedent(
             "
             program test
