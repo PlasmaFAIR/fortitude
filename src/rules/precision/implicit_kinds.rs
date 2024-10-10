@@ -49,7 +49,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_star_kind() -> anyhow::Result<()> {
+    fn test_implicit_real_kind() -> anyhow::Result<()> {
         let source = dedent(
             "
             real function my_func(a, b, c, d, e)       ! catch
