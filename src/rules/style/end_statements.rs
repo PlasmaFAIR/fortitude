@@ -58,6 +58,8 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
 
 impl ASTRule for UnnamedEndStatement {
     fn check<'a>(&self, node: &'a Node, src: &'a str) -> Option<Vec<Violation>> {
+        // TODO Also check for optionally labelled constructs like 'do' or 'select'
+
         // If end node is named, move on.
         // Not catching incorrect end statement name here, as the compiler should
         // do that for us.
