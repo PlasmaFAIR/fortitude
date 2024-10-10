@@ -16,7 +16,7 @@ register_rules! {
     (Category::Style, "S021", AST, style::exit_labels::MissingExitOrCycleLabel, MissingExitOrCycleLabel),
     (Category::Style, "S041", AST, style::old_style_array_literal::OldStyleArrayLiteral, OldStyleArrayLiteral),
     (Category::Style, "S051", AST, style::relational_operators::DeprecatedRelationalOperator, DeprecatedRelationalOperator),
-    (Category::Style, "S061", AST, style::end_statements::AbbreviatedEndStatement, AbbreviatedEndStatement),
+    (Category::Style, "S061", AST, style::end_statements::UnnamedEndStatement, UnnamedEndStatement),
     (Category::Style, "S101", TEXT, style::whitespace::TrailingWhitespace, TrailingWhitespace),
     (Category::Typing, "T001", AST, typing::implicit_typing::ImplicitTyping, ImplicitTyping),
     (Category::Typing, "T002", AST, typing::implicit_typing::InterfaceImplicitTyping, InterfaceImplicitTyping),

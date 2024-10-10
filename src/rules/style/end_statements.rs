@@ -3,9 +3,9 @@ use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
 
-pub struct AbbreviatedEndStatement {}
+pub struct UnnamedEndStatement {}
 
-impl Rule for AbbreviatedEndStatement {
+impl Rule for UnnamedEndStatement {
     fn new(_settings: &Settings) -> Self {
         Self {}
     }
@@ -37,85 +37,55 @@ impl Rule for AbbreviatedEndStatement {
         end module
         ```
 
-        Similar rules apply for submodules, programs, functions, subroutines, and
-        derived types.
+        Similar rules apply for many other Fortran statements
         "
     }
 }
 
-fn map_start_statement(kind: &str) -> &'static str {
+/// Maps declaration kinds to its name and the kind of the declaration statement node
+fn map_declaration(kind: &str) -> (&'static str, &'static str) {
     match kind {
-        "module" => "module_statement",
-        "submodule" => "submodule_statement",
-        "program" => "program_statement",
-        "function" => "function_statement",
-        "subroutine" => "subroutine_statement",
-        "module_procedure" => "module_procedure_statement",
-        "derived_type_definition" => "derived_type_statement",
+        "module" => ("module", "module_statement"),
+        "submodule" => ("submodule", "submodule_statement"),
+        "program" => ("program", "program_statement"),
+        "function" => ("function", "function_statement"),
+        "subroutine" => ("subroutine", "subroutine_statement"),
+        "module_procedure" => ("procedure", "module_procedure_statement"),
+        "derived_type_definition" => ("type", "derived_type_statement"),
         _ => unreachable!("Invalid entrypoint for AbbreviatedEndStatement"),
     }
 }
 
-fn map_end_statement(kind: &str) -> &'static str {
-    match kind {
-        "module" => "end_module_statement",
-        "submodule" => "end_submodule_statement",
-        "program" => "end_program_statement",
-        "function" => "end_function_statement",
-        "subroutine" => "end_subroutine_statement",
-        "module_procedure" => "end_module_procedure_statement",
-        "derived_type_definition" => "end_type_statement",
-        _ => unreachable!("Invalid entrypoint for AbbreviatedEndStatement"),
-    }
-}
-
-fn map_statement_type(kind: &str) -> &'static str {
-    match kind {
-        "module" => "module",
-        "submodule" => "submodule",
-        "program" => "program",
-        "function" => "function",
-        "subroutine" => "subroutine",
-        "module_procedure" => "procedure",
-        "derived_type_definition" => "type",
-        _ => unreachable!("Invalid entrypoint for AbbreviatedEndStatement"),
-    }
-}
-
-impl ASTRule for AbbreviatedEndStatement {
+impl ASTRule for UnnamedEndStatement {
     fn check<'a>(&self, node: &'a Node, src: &'a str) -> Option<Vec<Violation>> {
-        let kind = node.kind();
-        let end_kind = map_end_statement(kind);
-        let end_node = node.child_with_name(end_kind)?;
-
         // If end node is named, move on.
         // Not catching incorrect end statement name here, as the compiler should
         // do that for us.
-        if end_node.child_with_name("name").is_some() {
+        if node.child_with_name("name").is_some() {
             return None;
         }
 
-        let start_kind = map_start_statement(kind);
-        let start_node = node.child_with_name(start_kind)?;
-        let name_kind = match kind {
-            "derived_type_definition" => "type_name",
+        let declaration = node.parent()?;
+        let (statement, statement_kind) = map_declaration(declaration.kind());
+        let statement_node = declaration.child_with_name(statement_kind)?;
+        let name_kind = match statement_kind {
+            "derived_type_statement" => "type_name",
             _ => "name",
         };
-        let name = start_node.child_with_name(name_kind)?.to_text(src)?;
-        let statement = map_statement_type(kind);
+        let name = statement_node.child_with_name(name_kind)?.to_text(src)?;
         let msg = format!("end statement should read 'end {statement} {name}'");
-        some_vec![Violation::from_node(msg, &end_node)]
+        some_vec![Violation::from_node(msg, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
         vec![
-            "module",
-            "submodule",
-            "program",
-            "function",
-            "subroutine",
-            "module_procedure",
-            "derived_type_definition",
+            "end_module_statement",
+            "end_submodule_statement",
+            "end_program_statement",
+            "end_function_statement",
+            "end_subroutine_statement",
+            "end_module_procedure_statement",
+            "end_type_statement",
         ]
     }
 }
@@ -129,7 +99,7 @@ mod tests {
     use textwrap::dedent;
 
     #[test]
-    fn test_abbreviated_end_statement() -> anyhow::Result<()> {
+    fn test_unnamed_end_statement() -> anyhow::Result<()> {
         let source = dedent(
             "
             module mymod1
@@ -196,13 +166,13 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (14, 1, "module", "mymod1"),
             (6, 3, "type", "mytype"),
             (10, 3, "subroutine", "mysub1"),
-            (27, 1, "module", "mymod2"),
+            (14, 1, "module", "mymod1"),
             (23, 3, "function", "myfunc1"),
-            (46, 1, "submodule", "mysub1"),
+            (27, 1, "module", "mymod2"),
             (45, 3, "procedure", "foo"),
+            (46, 1, "submodule", "mysub1"),
             (52, 1, "submodule", "mysub2"),
             (62, 1, "program", "myprog"),
         ]
@@ -212,7 +182,7 @@ mod tests {
             violation!(msg, *line, *col)
         })
         .collect();
-        let rule = AbbreviatedEndStatement::new(&default_settings());
+        let rule = UnnamedEndStatement::new(&default_settings());
         let actual = rule.apply(source.as_str())?;
         assert_eq!(actual, expected);
         Ok(())
