@@ -1,6 +1,6 @@
 [package]
 name = "fortitude"
-version = "0.2.0"
+version = "0.3.0"
 description = "A Fortran linter, written in Rust and installable with Python"
 authors = ["Liam Pattinson <liampattinson@gmail.com>"]
 edition = "2021"
