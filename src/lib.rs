@@ -135,15 +135,15 @@ pub trait TextRule: Rule {
 
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait ASTRule: Rule {
-    fn check(&self, node: &tree_sitter::Node, source: &str) -> Option<Vec<Violation>>;
+    fn check(&self, node: &tree_sitter::Node, source: &SourceFile) -> Option<Vec<Violation>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints(&self) -> Vec<&'static str>;
 
     /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(&self, source: &str) -> anyhow::Result<Vec<Violation>> {
+    fn apply(&self, source: &SourceFile) -> anyhow::Result<Vec<Violation>> {
         let entrypoints = self.entrypoints();
-        Ok(parse(source)?
+        Ok(parse(source.source_text())?
             .root_node()
             .named_descendants()
             .filter(|x| entrypoints.contains(&x.kind()))

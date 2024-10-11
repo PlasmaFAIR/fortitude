@@ -2,6 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
+use ruff_source_file::SourceFile;
 
 /// Rules for catching missing intent
 
@@ -33,7 +34,8 @@ impl Rule for MissingIntent {
 }
 
 impl ASTRule for MissingIntent {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         // Names of all the dummy arguments
         let parameters: Vec<&str> = node
             .child_by_field_name("parameters")?
@@ -111,10 +113,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_missing_intent() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             integer function foo(a, b, c)
               use mod
@@ -129,7 +132,7 @@ mod tests {
               integer :: g
             end subroutine
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [
             (4, 14, "function", "a"),
             (4, 17, "function", "c"),
@@ -143,7 +146,7 @@ mod tests {
         })
         .collect();
         let rule = MissingIntent::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

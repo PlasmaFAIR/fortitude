@@ -2,6 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
+use ruff_source_file::SourceFile;
 
 pub struct OldStyleArrayLiteral {}
 
@@ -20,8 +21,8 @@ impl Rule for OldStyleArrayLiteral {
 }
 
 impl ASTRule for OldStyleArrayLiteral {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        if node.to_text(src)?.starts_with("(/") {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        if node.to_text(src.source_text())?.starts_with("(/") {
             let msg = "Array literal uses old-style syntax: prefer `[...]`";
             return some_vec!(Violation::from_node(msg, node));
         }
@@ -40,10 +41,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_old_style_array_literal() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             program test
               integer :: a(3) = (/1, 2, 3/)
@@ -60,7 +62,7 @@ mod tests {
               /)
              end program test
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [(3, 21), (4, 21), (9, 18), (10, 11)]
             .iter()
             .map(|(line, col)| {
@@ -69,7 +71,7 @@ mod tests {
             })
             .collect();
         let rule = OldStyleArrayLiteral::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

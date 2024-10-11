@@ -2,6 +2,8 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
+use ruff_source_file::SourceFile;
+
 /// Defines rules that raise errors if implicit typing is in use.
 
 fn implicit_statement_is_none(node: &Node) -> bool {
@@ -34,7 +36,7 @@ impl Rule for ImplicitTyping {
 }
 
 impl ASTRule for ImplicitTyping {
-    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
         if !child_is_implicit_none(node) {
             let msg = format!("{} missing 'implicit none'", node.kind());
             return some_vec![Violation::from_node(msg, node)];
@@ -63,7 +65,7 @@ impl Rule for InterfaceImplicitTyping {
 }
 
 impl ASTRule for InterfaceImplicitTyping {
-    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
             let msg = format!("interface {} missing 'implicit none'", node.kind());
@@ -93,7 +95,7 @@ impl Rule for SuperfluousImplicitNone {
 }
 
 impl ASTRule for SuperfluousImplicitNone {
-    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
         if !implicit_statement_is_none(node) {
             return None;
         }
@@ -132,10 +134,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_implicit_typing() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             module my_module
                 parameter(N = 1)
@@ -145,7 +148,7 @@ mod tests {
                 write(*,*) 42
             end program
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [(2, 1, "module"), (6, 1, "program")]
             .iter()
             .map(|(line, col, kind)| {
@@ -154,14 +157,14 @@ mod tests {
             })
             .collect();
         let rule = ImplicitTyping::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
     fn test_implicit_none() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             module my_module
                 implicit none
@@ -178,17 +181,17 @@ mod tests {
                 write(*,*) x
             end program
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = vec![];
         let rule = ImplicitTyping::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
     fn test_interface_implicit_typing() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             module my_module
                 implicit none
@@ -209,7 +212,7 @@ mod tests {
                 write(*,*) 42
             end program
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [(5, 9, "function"), (14, 9, "subroutine")]
             .iter()
             .map(|(line, col, kind)| {
@@ -218,14 +221,14 @@ mod tests {
             })
             .collect();
         let rule = InterfaceImplicitTyping::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
     fn test_interface_implicit_none() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             module my_module
                 implicit none
@@ -248,17 +251,17 @@ mod tests {
                 write(*,*) 42
             end program
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = vec![];
         let rule = InterfaceImplicitTyping::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
     fn test_superfluous_implicit_none() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             module my_module
                 implicit none
@@ -293,7 +296,7 @@ mod tests {
                 end subroutine
             end program
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [
             (6, 9, "module"),
             (11, 9, "module"),
@@ -307,14 +310,14 @@ mod tests {
         })
         .collect();
         let rule = SuperfluousImplicitNone::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
     fn test_no_superfluous_implicit_none() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             module my_module
                 implicit none
@@ -353,10 +356,10 @@ mod tests {
                 end subroutine
             end program
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = vec![];
         let rule = SuperfluousImplicitNone::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

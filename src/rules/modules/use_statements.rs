@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// Defines rules that check whether `use` statements are used correctly.
@@ -35,7 +36,7 @@ impl Rule for UseAll {
 }
 
 impl ASTRule for UseAll {
-    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
         if node.child_with_name("included_items").is_none() {
             let msg = "'use' statement missing 'only' clause";
             return some_vec![Violation::from_node(msg, node)];
@@ -54,21 +55,26 @@ mod tests {
     use crate::settings::default_settings;
     use crate::violation;
     use pretty_assertions::assert_eq;
+    use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
 
     #[test]
     fn test_use_all() -> anyhow::Result<()> {
-        let source = dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             module my_module
                 use, intrinsic :: iso_fortran_env, only: real32
                 use, intrinsic :: iso_c_binding
             end module
             ",
-        );
+            ),
+        )
+        .finish();
         let expected = vec![violation!("'use' statement missing 'only' clause", 4, 5)];
         let rule = UseAll::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

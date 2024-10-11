@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 pub struct MissingExitOrCycleLabel {}
@@ -29,7 +30,8 @@ impl Rule for MissingExitOrCycleLabel {
 }
 
 impl ASTRule for MissingExitOrCycleLabel {
-    fn check<'a>(&self, node: &'a Node, src: &'a str) -> Option<Vec<Violation>> {
+    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         // Skip unlabelled loops
         let label = node
             .child_with_name("block_label_start_expression")?
@@ -62,10 +64,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_missing_exit_label() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             program test
               label1: do
@@ -112,7 +115,7 @@ mod tests {
               end do
             end program test
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [
             (5, 7, "exit", "label1"),
             (10, 17, "exit", "label2"),
@@ -125,7 +128,7 @@ mod tests {
         })
         .collect();
         let rule = MissingExitOrCycleLabel::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

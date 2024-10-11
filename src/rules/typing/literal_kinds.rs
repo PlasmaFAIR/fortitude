@@ -2,6 +2,8 @@ use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
+use ruff_source_file::SourceFile;
+
 /// Defines rules that discourage the use of raw number literals as kinds, as this can result in
 /// non-portable code.
 
@@ -71,7 +73,8 @@ impl Rule for LiteralKind {
 }
 
 impl ASTRule for LiteralKind {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Deal with characters
         if !dtype_is_plain_number(dtype.as_str()) {
@@ -157,7 +160,8 @@ impl Rule for LiteralKindSuffix {
 }
 
 impl ASTRule for LiteralKindSuffix {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
             return None;
@@ -182,10 +186,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_literal_kind() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             integer(8) function add_if(x, y, z)
               integer :: w
@@ -213,7 +218,7 @@ mod tests {
               complex_add = y + x
             end function
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [
             (2, 9, "integer", 8),
             (4, 16, "integer", 2),
@@ -231,14 +236,14 @@ mod tests {
         })
         .collect();
         let rule = LiteralKind::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
     fn test_literal_kind_suffix() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
@@ -248,7 +253,7 @@ mod tests {
             real(dp), parameter :: x4 = 9.876_8
             real(sp), parameter :: x5 = 2.468_sp
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [(4, 38, "1.234567_4", "4"), (7, 35, "9.876_8", "8")]
             .iter()
             .map(|(line, col, num, kind)| {
@@ -259,7 +264,7 @@ mod tests {
             })
             .collect();
         let rule = LiteralKindSuffix::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

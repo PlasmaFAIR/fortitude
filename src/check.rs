@@ -104,7 +104,7 @@ fn check_file(
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for (code, rule) in rules {
-                if let Some(violation) = rule.check(&node, file.source_text()) {
+                if let Some(violation) = rule.check(&node, &file) {
                     for v in violation {
                         violations.push((code.to_string(), v));
                     }

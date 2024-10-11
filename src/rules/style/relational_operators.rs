@@ -2,6 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
+use ruff_source_file::SourceFile;
 
 fn map_relational_symbols(name: &str) -> Option<&'static str> {
     match name {
@@ -32,9 +33,9 @@ impl Rule for DeprecatedRelationalOperator {
 }
 
 impl ASTRule for DeprecatedRelationalOperator {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
         let relation = node.child(1)?;
-        let symbol = relation.to_text(src)?.to_lowercase();
+        let symbol = relation.to_text(src.source_text())?.to_lowercase();
         let new_symbol = map_relational_symbols(symbol.as_str())?;
         let msg =
             format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead");
@@ -53,10 +54,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_relational_symbol() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             program test
               if (0 .gt. 1) error stop
@@ -66,7 +68,7 @@ mod tests {
               if (2 /= 2) error stop  ! OK
             end program test
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [
             (3, 9, ".gt.", ">"),
             (4, 9, ".le.", "<="),
@@ -81,7 +83,7 @@ mod tests {
         })
         .collect();
         let rule = DeprecatedRelationalOperator::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

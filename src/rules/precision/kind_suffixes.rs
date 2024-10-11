@@ -3,6 +3,7 @@ use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use lazy_regex::regex_is_match;
 use tree_sitter::Node;
+use ruff_source_file::SourceFile;
 /// Defines rule to ensure real precision is explicit, as this avoids accidental loss of precision.
 
 pub struct NoRealSuffix {}
@@ -53,12 +54,12 @@ impl Rule for NoRealSuffix {
 }
 
 impl ASTRule for NoRealSuffix {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with a different
         // rule.
-        let txt = node.to_text(src)?;
+        let txt = node.to_text(src.source_text())?;
         if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
             let msg = format!("real literal {} missing kind suffix", txt);
             return some_vec![Violation::from_node(msg, node)];
@@ -78,10 +79,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_no_real_suffix() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
@@ -98,7 +100,7 @@ mod tests {
             real(sp), parameter :: y2 = 1.2e3
 
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [
             (4, 29, "1.234567"),
             (7, 29, "9.876"),
@@ -116,7 +118,7 @@ mod tests {
         })
         .collect();
         let rule = NoRealSuffix::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

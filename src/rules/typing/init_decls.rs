@@ -2,6 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
+use ruff_source_file::SourceFile;
 
 /// Rules for catching assumed size variables
 
@@ -73,7 +74,8 @@ impl Rule for InitialisationInDeclaration {
 }
 
 impl ASTRule for InitialisationInDeclaration {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
             ["function", "subroutine", "module_procedure"].contains(&parent.kind())
@@ -109,10 +111,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_init_decl() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             module test
               integer :: global = 0  ! Ok at module level
@@ -137,7 +140,7 @@ mod tests {
 
             end module test
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [
             (11, 14, "foo"),
             (20, 19, "bar"),
@@ -150,7 +153,7 @@ mod tests {
         })
         .collect();
         let rule = InitialisationInDeclaration::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

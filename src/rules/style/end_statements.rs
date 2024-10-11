@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 pub struct UnnamedEndStatement {}
@@ -57,7 +58,7 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
 }
 
 impl ASTRule for UnnamedEndStatement {
-    fn check<'a>(&self, node: &'a Node, src: &'a str) -> Option<Vec<Violation>> {
+    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Violation>> {
         // TODO Also check for optionally labelled constructs like 'do' or 'select'
 
         // If end node is named, move on.
@@ -74,7 +75,7 @@ impl ASTRule for UnnamedEndStatement {
             "derived_type_statement" => "type_name",
             _ => "name",
         };
-        let name = statement_node.child_with_name(name_kind)?.to_text(src)?;
+        let name = statement_node.child_with_name(name_kind)?.to_text(src.source_text())?;
         let msg = format!("end statement should read 'end {statement} {name}'");
         some_vec![Violation::from_node(msg, node)]
     }
@@ -99,10 +100,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_unnamed_end_statement() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             module mymod1
               implicit none
@@ -166,7 +168,7 @@ mod tests {
               write (*,*) 'hello world'
             end                             ! catch this
             ",
-        );
+        )).finish();
         let expected: Vec<Violation> = [
             (6, 3, "type", "mytype"),
             (10, 3, "subroutine", "mysub1"),
@@ -185,7 +187,7 @@ mod tests {
         })
         .collect();
         let rule = UnnamedEndStatement::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

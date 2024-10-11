@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 /// Defines rules to avoid the 'double precision' and 'double complex' types.
 
@@ -43,8 +44,8 @@ impl Rule for DoublePrecision {
 }
 
 impl ASTRule for DoublePrecision {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let txt = node.to_text(src)?.to_lowercase();
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let txt = node.to_text(src.source_text())?.to_lowercase();
         if let Some(msg) = double_precision_err_msg(txt.as_str()) {
             return some_vec![Violation::from_node(msg.as_str(), node)];
         }
@@ -62,12 +63,15 @@ mod tests {
     use crate::settings::default_settings;
     use crate::violation;
     use pretty_assertions::assert_eq;
+    use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
 
     #[test]
     fn test_double_precision() -> anyhow::Result<()> {
-        let source = dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             double precision function double(x)
               double precision, intent(in) :: x
               double = 2 * x
@@ -85,7 +89,9 @@ mod tests {
               complex_mul = x * y
             end function
             ",
-        );
+            ),
+        )
+        .finish();
         let expected: Vec<Violation> = [
             (2, 1, "double precision"),
             (3, 3, "double precision"),
@@ -101,7 +107,7 @@ mod tests {
         })
         .collect();
         let rule = DoublePrecision::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

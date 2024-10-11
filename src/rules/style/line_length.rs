@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn test_line_too_long() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             program test
               use some_really_long_module_name, only : integer_working_precision
@@ -77,8 +77,7 @@ mod tests {
               integer(integer_working_precision), parameter, dimension(1) :: a = [1]
             end program test
             ",
-        );
-        let file = SourceFileBuilder::new("test", source.as_str()).finish();
+        )).finish();
 
         let line_length = 20;
         let short_line_settings = Settings { line_length };
@@ -93,7 +92,7 @@ mod tests {
             })
             .collect();
         let rule = LineTooLong::new(&short_line_settings);
-        let actual = rule.check(&file);
+        let actual = rule.check(&source);
         assert_eq!(actual, expected);
         Ok(())
     }

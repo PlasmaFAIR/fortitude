@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 /// Defines rules that require the user to explicitly specify the kinds of any reals.
 pub struct ImplicitRealKind {}
@@ -20,8 +21,8 @@ impl Rule for ImplicitRealKind {
 }
 
 impl ASTRule for ImplicitRealKind {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let dtype = node.child(0)?.to_text(src)?.to_lowercase();
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let dtype = node.child(0)?.to_text(src.source_text())?.to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
             return None;
@@ -46,11 +47,12 @@ mod tests {
     use crate::settings::default_settings;
     use crate::violation;
     use pretty_assertions::assert_eq;
+    use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
 
     #[test]
     fn test_implicit_real_kind() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             real function my_func(a, b, c, d, e)       ! catch
               real, intent(in) :: a                    ! catch
@@ -62,7 +64,7 @@ mod tests {
               myfunc = a
             end function my_func
             ",
-        );
+        )).finish();
 
         let expected: Vec<Violation> = [(2, 1, "real"), (3, 3, "real"), (6, 3, "complex")]
             .iter()
@@ -73,7 +75,7 @@ mod tests {
             .collect();
 
         let rule = ImplicitRealKind::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
 
         Ok(())

@@ -2,6 +2,7 @@ use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use tree_sitter::Node;
+use ruff_source_file::SourceFile;
 /// Defines rules that discourage the use of the non-standard kind specifiers such as
 /// `int*4` or `real*8`. Also prefers the use of `character(len=*)` to
 /// `character*(*)`, as although the latter is permitted by the standard, the former is
@@ -26,7 +27,8 @@ impl Rule for StarKind {
 }
 
 impl ASTRule for StarKind {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Handle characters
         if !dtype_is_plain_number(dtype.as_str()) {
@@ -60,10 +62,11 @@ mod tests {
     use crate::violation;
     use pretty_assertions::assert_eq;
     use textwrap::dedent;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_star_kind() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = SourceFileBuilder::new("test", dedent(
             "
             integer*8 function add_if(x, y, z)
               integer(kind=2), intent(in) :: x
@@ -86,7 +89,7 @@ mod tests {
               real = real * 8
             end subroutine
             ",
-        );
+        )).finish();
 
         let expected: Vec<Violation> = [
             (2, 8, "integer*8", "integer(8)"),
@@ -104,7 +107,7 @@ mod tests {
         .collect();
 
         let rule = StarKind::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
 
         Ok(())
