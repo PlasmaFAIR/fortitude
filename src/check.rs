@@ -9,6 +9,7 @@ use crate::violation;
 use crate::{Diagnostic, Violation};
 use colored::Colorize;
 use itertools::{chain, join};
+use ruff_source_file::SourceFileBuilder;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -86,22 +87,24 @@ fn check_file(
         }
     }
 
-    // Perform plain text analysis
     let source = read_to_string(path)?;
+    let file = SourceFileBuilder::new(path.to_string_lossy().as_ref(), source.as_str()).finish();
+
+    // Perform plain text analysis
     for (code, rule) in text_rules {
         violations.extend(
-            rule.check(&source)
+            rule.check(&file)
                 .iter()
                 .map(|x| (code.to_string(), x.clone())),
         );
     }
 
     // Perform AST analysis
-    let tree = parse(&source)?;
+    let tree = parse(file.source_text())?;
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for (code, rule) in rules {
-                if let Some(violation) = rule.check(&node, &source) {
+                if let Some(violation) = rule.check(&node, file.source_text()) {
                     for v in violation {
                         violations.push((code.to_string(), v));
                     }

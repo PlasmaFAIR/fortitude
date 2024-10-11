@@ -1,3 +1,5 @@
+use ruff_source_file::SourceFile;
+
 use crate::settings::Settings;
 use crate::violation;
 use crate::{Rule, TextRule, Violation};
@@ -20,9 +22,9 @@ impl Rule for TrailingWhitespace {
 }
 
 impl TextRule for TrailingWhitespace {
-    fn check(&self, source: &str) -> Vec<Violation> {
+    fn check(&self, source: &SourceFile) -> Vec<Violation> {
         let mut violations = Vec::new();
-        for (idx, line) in source.split('\n').enumerate() {
+        for (idx, line) in source.source_text().split('\n').enumerate() {
             if line.ends_with(&[' ', '\t']) {
                 violations.push(violation!(
                     "trailing whitespace",
@@ -41,6 +43,7 @@ mod tests {
     use crate::settings::default_settings;
     use crate::violation;
     use pretty_assertions::assert_eq;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_trailing_whitespace() -> anyhow::Result<()> {
@@ -58,12 +61,14 @@ program test
    
 end program test
 ";
+        let file = SourceFileBuilder::new("test", source).finish();
+
         let expected: Vec<Violation> = [(2, 13), (4, 24), (8, 4), (9, 1)]
             .iter()
             .map(|(line, col)| violation!("trailing whitespace", *line, *col))
             .collect();
         let rule = TrailingWhitespace::new(&default_settings());
-        let actual = rule.check(source);
+        let actual = rule.check(&file);
         assert_eq!(actual, expected);
         Ok(())
     }

@@ -7,6 +7,7 @@ mod settings;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
+use ruff_source_file::SourceFile;
 use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
@@ -129,7 +130,7 @@ pub trait PathRule: Rule {
 
 /// Implemented by rules that analyse lines of code directly, using regex or otherwise.
 pub trait TextRule: Rule {
-    fn check(&self, source: &str) -> Vec<Violation>;
+    fn check(&self, source: &SourceFile) -> Vec<Violation>;
 }
 
 /// Implemented by rules that analyse the abstract syntax tree.

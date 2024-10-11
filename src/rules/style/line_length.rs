@@ -2,6 +2,7 @@ use crate::settings::Settings;
 use crate::violation;
 use crate::{Rule, TextRule, Violation};
 use lazy_regex::regex_is_match;
+use ruff_source_file::SourceFile;
 /// Defines rules that govern line length.
 
 pub struct LineTooLong {
@@ -36,9 +37,9 @@ impl Rule for LineTooLong {
 }
 
 impl TextRule for LineTooLong {
-    fn check(&self, source: &str) -> Vec<Violation> {
+    fn check(&self, source: &SourceFile) -> Vec<Violation> {
         let mut violations = Vec::new();
-        for (idx, line) in source.split('\n').enumerate() {
+        for (idx, line) in source.source_text().split('\n').enumerate() {
             let len = line.len();
             if len > self.line_length {
                 // Are we ending on a string or comment? If so, we'll allow it through, as it may
@@ -63,6 +64,7 @@ mod tests {
     use super::*;
     use crate::violation;
     use pretty_assertions::assert_eq;
+    use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
 
     #[test]
@@ -76,6 +78,8 @@ mod tests {
             end program test
             ",
         );
+        let file = SourceFileBuilder::new("test", source.as_str()).finish();
+
         let line_length = 20;
         let short_line_settings = Settings { line_length };
         let expected: Vec<Violation> = [(3, line_length, 68), (5, line_length, 72)]
@@ -89,7 +93,7 @@ mod tests {
             })
             .collect();
         let rule = LineTooLong::new(&short_line_settings);
-        let actual = rule.check(source.as_str());
+        let actual = rule.check(&file);
         assert_eq!(actual, expected);
         Ok(())
     }
