@@ -9,7 +9,7 @@ use crate::violation;
 use crate::{Diagnostic, Violation};
 use colored::Colorize;
 use itertools::{chain, join};
-use ruff_source_file::SourceFileBuilder;
+use ruff_source_file::{SourceFile, SourceFileBuilder};
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -77,6 +77,7 @@ fn check_file(
     text_rules: &TextRuleMap,
     ast_entrypoints: &ASTEntryPointMap,
     path: &Path,
+    file: &SourceFile,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
     // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     let mut violations = Vec::new();
@@ -87,13 +88,10 @@ fn check_file(
         }
     }
 
-    let source = read_to_string(path)?;
-    let file = SourceFileBuilder::new(path.to_string_lossy().as_ref(), source.as_str()).finish();
-
     // Perform plain text analysis
     for (code, rule) in text_rules {
         violations.extend(
-            rule.check(&file)
+            rule.check(file)
                 .iter()
                 .map(|x| (code.to_string(), x.clone())),
         );
@@ -104,7 +102,7 @@ fn check_file(
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for (code, rule) in rules {
-                if let Some(violation) = rule.check(&node, &file) {
+                if let Some(violation) = rule.check(&node, file) {
                     for v in violation {
                         violations.push((code.to_string(), v));
                     }
@@ -127,8 +125,15 @@ pub fn check(args: CheckArgs) -> i32 {
             let text_rules = text_rule_map(&rules, &settings);
             let ast_entrypoints = ast_entrypoint_map(&rules, &settings);
             let mut total_errors = 0;
-            for file in get_files(&args.files) {
-                match check_file(&path_rules, &text_rules, &ast_entrypoints, &file) {
+            for path in get_files(&args.files) {
+                // FIXME!!
+                let source = read_to_string(&path).unwrap();
+                // FIXME: also check file length can be represented as
+                // u32, as rest of code now assumes that
+                let file = SourceFileBuilder::new(path.to_string_lossy().as_ref(), source.as_str())
+                    .finish();
+
+                match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
                     Ok(violations) => {
                         let mut diagnostics: Vec<Diagnostic> = violations
                             .into_iter()

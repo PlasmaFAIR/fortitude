@@ -1,7 +1,6 @@
 use ruff_source_file::SourceFile;
 
 use crate::settings::Settings;
-use crate::violation;
 use crate::{Rule, TextRule, Violation};
 /// Defines rules that enforce widely accepted whitespace rules.
 
@@ -26,10 +25,12 @@ impl TextRule for TrailingWhitespace {
         let mut violations = Vec::new();
         for (idx, line) in source.source_text().split('\n').enumerate() {
             if line.ends_with(&[' ', '\t']) {
-                violations.push(violation!(
+                violations.push(Violation::from_line_start_end_col(
                     "trailing whitespace",
-                    idx + 1,
-                    line.trim_end().len() + 1
+                    source,
+                    idx,
+                    line.trim_end().len(),
+                    line.len(),
                 ));
             }
         }

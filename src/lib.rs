@@ -7,11 +7,12 @@ mod settings;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
-use ruff_source_file::SourceFile;
+use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
+use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 // Rule categories and identity codes
 // ----------------------------------
@@ -60,7 +61,7 @@ impl Category {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ViolationPosition {
     None,
-    LineCol((usize, usize)),
+    Range(TextRange),
 }
 
 // This type is created when a rule is broken. As not all broken rules come with a
@@ -71,22 +72,41 @@ pub struct Violation {
     /// Description of the error.
     message: String,
     /// The location at which the error was detected.
-    position: ViolationPosition,
+    range: ViolationPosition,
 }
 
 impl Violation {
-    pub fn new<T: AsRef<str>>(message: T, position: ViolationPosition) -> Self {
+    pub fn new<T: AsRef<str>>(message: T, range: ViolationPosition) -> Self {
         Self {
             message: String::from(message.as_ref()),
-            position,
+            range,
         }
     }
 
     pub fn from_node<T: AsRef<str>>(message: T, node: &tree_sitter::Node) -> Self {
-        let position = node.start_position();
         Violation::new(
             message,
-            ViolationPosition::LineCol((position.row + 1, position.column + 1)),
+            ViolationPosition::Range(TextRange::new(
+                TextSize::try_from(node.start_byte()).unwrap(),
+                TextSize::try_from(node.end_byte()).unwrap(),
+            )),
+        )
+    }
+
+    pub fn from_line_start_end_col<T: AsRef<str>>(
+        message: T,
+        source: &SourceFile,
+        line: usize,
+        start_col: usize,
+        end_col: usize,
+    ) -> Self {
+        let source_code = source.to_source_code();
+        let line_offset = source_code.line_start(OneIndexed::from_zero_indexed(line));
+        let start_offset = line_offset + TextSize::try_from(start_col).unwrap();
+        let end_offset = line_offset + TextSize::try_from(end_col).unwrap();
+        Violation::new(
+            message,
+            ViolationPosition::Range(TextRange::new(start_offset, end_offset)),
         )
     }
 
@@ -94,8 +114,8 @@ impl Violation {
         self.message.as_str()
     }
 
-    pub fn position(&self) -> ViolationPosition {
-        self.position
+    pub fn range(&self) -> ViolationPosition {
+        self.range
     }
 }
 
@@ -103,9 +123,6 @@ impl Violation {
 macro_rules! violation {
     ($msg:expr) => {
         $crate::Violation::new($msg, $crate::ViolationPosition::None)
-    };
-    ($msg:expr, $line:expr, $col:expr) => {
-        $crate::Violation::new($msg, $crate::ViolationPosition::LineCol(($line, $col)))
     };
 }
 
@@ -158,145 +175,144 @@ pub trait ASTRule: Rule {
 
 /// Reports of each violation. They are pretty-printable and sortable.
 #[derive(Eq)]
-pub struct Diagnostic {
+pub struct Diagnostic<'a> {
     /// The file where an error was reported.
-    path: PathBuf,
+    file: &'a SourceFile,
     /// The rule code that was violated, expressed as a string.
     code: String,
     /// The specific violation detected
     violation: Violation,
 }
 
-impl Diagnostic {
-    pub fn new<P, S>(path: P, code: S, violation: &Violation) -> Self
+impl<'a> Diagnostic<'a> {
+    pub fn new<S>(file: &'a SourceFile, code: S, violation: &Violation) -> Self
     where
-        P: AsRef<Path>,
         S: AsRef<str>,
     {
         Self {
-            path: path.as_ref().to_path_buf(),
+            file,
             code: code.as_ref().to_string(),
             violation: violation.clone(),
         }
     }
 
-    fn orderable(&self) -> (&Path, usize, usize, &str) {
-        match self.violation.position() {
-            ViolationPosition::None => (self.path.as_path(), 0, 0, self.code.as_str()),
-            ViolationPosition::LineCol((line, col)) => {
-                (self.path.as_path(), line, col, self.code.as_str())
-            }
+    fn orderable(&self) -> (&str, usize, usize, &str) {
+        match self.violation.range() {
+            ViolationPosition::None => (self.file.name(), 0, 0, self.code.as_str()),
+            ViolationPosition::Range(range) => (
+                self.file.name(),
+                range.start().into(),
+                range.end().into(),
+                self.code.as_str(),
+            ),
         }
     }
 }
 
-impl Ord for Diagnostic {
+impl<'a> Ord for Diagnostic<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.orderable().cmp(&other.orderable())
     }
 }
 
-impl PartialOrd for Diagnostic {
+impl<'a> PartialOrd for Diagnostic<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl PartialEq for Diagnostic {
+impl<'a> PartialEq for Diagnostic<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.orderable() == other.orderable()
     }
 }
 
-impl fmt::Display for Diagnostic {
+impl<'a> fmt::Display for Diagnostic<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let path = self.path.to_string_lossy().bold();
+        let path = self.file.name().bold();
         let code = self.code.bold().bright_red();
         let message = self.violation.message();
-        match self.violation.position() {
+        match self.violation.range() {
             ViolationPosition::None => {
                 write!(f, "{}: {} {}", path, code, message)
             }
-            ViolationPosition::LineCol((line, col)) => {
-                format_violation_line_col(self, f, line, col, message, &path, &code)
+            ViolationPosition::Range(range) => {
+                format_violation_line_col(self, f, &range, message, &path, &code)
             }
         }
     }
-}
-
-/// Read filename into vec of strings
-fn read_lines(filename: &PathBuf) -> Vec<String> {
-    std::fs::read_to_string(filename)
-        .unwrap() // panic on possible file-reading errors
-        .lines() // split the string into an iterator of string slices
-        .map(String::from) // make each slice into a string
-        .collect() // gather them together into a vector
 }
 
 fn format_violation_line_col(
     diagnostic: &Diagnostic,
     f: &mut fmt::Formatter,
-    line: usize,
-    col: usize,
+    range: &TextRange,
     message: &str,
     path: &ColoredString,
     code: &ColoredString,
 ) -> fmt::Result {
-    let lines = read_lines(&diagnostic.path);
-    let mut start_index = line.saturating_sub(2).max(1);
+    let source_code = diagnostic.file.to_source_code();
+    let content_start_index = source_code.line_index(range.start());
+    let mut start_index = content_start_index.saturating_sub(2);
 
     // Trim leading empty lines.
-    while start_index < line {
-        if !lines[start_index.saturating_sub(1)].trim().is_empty() {
+    while start_index < content_start_index {
+        if !source_code.line_text(start_index).trim().is_empty() {
             break;
         }
         start_index = start_index.saturating_add(1);
     }
 
-    let mut end_index = line.saturating_add(2).min(lines.len());
+    let content_end_index = source_code.line_index(range.end());
+    let mut end_index = content_end_index
+        .saturating_add(2)
+        .min(OneIndexed::from_zero_indexed(source_code.line_count()));
 
     // Trim leading empty lines.
-    while end_index > line {
-        if !lines[end_index.saturating_sub(1)].trim().is_empty() {
+    while end_index > content_end_index {
+        if !source_code.line_text(end_index).trim().is_empty() {
             break;
         }
         end_index = end_index.saturating_sub(1);
     }
 
-    let content_slice = lines[start_index.saturating_sub(1)..end_index]
-        .iter()
-        .fold(String::default(), |acc, line| format!("{acc}{line}\n"));
+    let start_offset = source_code.line_start(start_index);
+    let end_offset = source_code.line_end(end_index);
 
-    // Annotations are done by offset, so we need to count line
-    // lengths... including the newline character, which doesn't
-    // appear in `lines`!
-    let offset_up_to_line = lines[start_index.saturating_sub(1)..line.saturating_sub(1)]
-        .iter()
-        .fold(0, |acc, line| acc + line.chars().count() + 1);
-
-    // Something really weird going on here, where I can't get it to
-    // put the annotation in the first column: it's either in column 2
-    // or the end of the previous line. But does appear to be right
-    // for other columns!
-    let label_offset = offset_up_to_line + col.saturating_sub(1);
+    let source = source_code.slice(TextRange::new(start_offset, end_offset));
+    let message_range = range - start_offset;
+    
+    let start_char = source[TextRange::up_to(message_range.start())].chars().count();
+    let end_char = source[TextRange::up_to(message_range.end())].chars().count();
 
     // Some annoyance here: we *have* to have some level prefix to our
     // message. Might be fixed in future version of annotate-snippets
     // -- or we use an earlier version with more control.
     // Also, we could use `.origin(path)` to get the filename and
     // line:col automatically, but see above about off-by-one error
-    let message_line = format!("{}:{}:{}: {} {}", path, line, col, code, message);
-    let snippet = Level::Warning.title(&message_line).snippet(
-        Snippet::source(&content_slice)
-            .line_start(start_index)
-            .annotation(
-                Level::Error
-                    .span(label_offset..label_offset.saturating_add(1))
-                    .label(code),
-            ),
+
+    // let message_line = format!("{path}:{st}:{}: {} {}", path, line, col, code, message);
+    let snippet = Level::Warning.title(message).snippet(
+        Snippet::source(source)
+            .origin(path)
+            .line_start(start_index.to_zero_indexed())
+            .annotation(Level::Error.span(start_char..end_char).label(code)),
     );
 
     let renderer = Renderer::styled();
     let source_block = renderer.render(snippet);
     writeln!(f, "{}", source_block)
+}
+
+pub trait SourceLocationToOffset {
+    fn line_location(&self, row: usize, column: u32) -> SourceLocation;
+}
+
+impl SourceLocationToOffset for SourceFile {
+    fn line_location(&self, row: usize, column: u32) -> SourceLocation {
+        let source_code = self.to_source_code();
+        let offset =
+            source_code.line_start(OneIndexed::from_zero_indexed(row)) + TextSize::new(column);
+        source_code.source_location(offset)
+    }
 }

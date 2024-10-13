@@ -1,5 +1,4 @@
 use crate::settings::Settings;
-use crate::violation;
 use crate::{Rule, TextRule, Violation};
 use lazy_regex::regex_is_match;
 use ruff_source_file::SourceFile;
@@ -52,7 +51,7 @@ impl TextRule for LineTooLong {
                     "line length of {}, exceeds maximum {}",
                     len, self.line_length
                 );
-                violations.push(violation!(&msg, idx + 1, self.line_length));
+                violations.push(Violation::from_line_start_end_col(msg, source, idx, self.line_length, len))
             }
         }
         violations
