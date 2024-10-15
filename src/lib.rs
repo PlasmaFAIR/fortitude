@@ -93,17 +93,20 @@ impl Violation {
         )
     }
 
-    pub fn from_line_start_end_col<T: AsRef<str>>(
+    /// Create new `Violation` from zero-index start/end line/column numbers
+    pub fn from_start_end_line_col<T: AsRef<str>>(
         message: T,
         source: &SourceFile,
-        line: usize,
+        start_line: usize,
         start_col: usize,
+        end_line: usize,
         end_col: usize,
     ) -> Self {
         let source_code = source.to_source_code();
-        let line_offset = source_code.line_start(OneIndexed::from_zero_indexed(line));
-        let start_offset = line_offset + TextSize::try_from(start_col).unwrap();
-        let end_offset = line_offset + TextSize::try_from(end_col).unwrap();
+        let start_line_offset = source_code.line_start(OneIndexed::from_zero_indexed(start_line));
+        let start_offset = start_line_offset + TextSize::try_from(start_col).unwrap();
+        let end_line_offset = source_code.line_start(OneIndexed::from_zero_indexed(end_line));
+        let end_offset = end_line_offset + TextSize::try_from(end_col).unwrap();
         Violation::new(
             message,
             ViolationPosition::Range(TextRange::new(start_offset, end_offset)),
@@ -281,9 +284,13 @@ fn format_violation_line_col(
 
     let source = source_code.slice(TextRange::new(start_offset, end_offset));
     let message_range = range - start_offset;
-    
-    let start_char = source[TextRange::up_to(message_range.start())].chars().count();
-    let end_char = source[TextRange::up_to(message_range.end())].chars().count();
+
+    let start_char = source[TextRange::up_to(message_range.start())]
+        .chars()
+        .count();
+    let end_char = source[TextRange::up_to(message_range.end())]
+        .chars()
+        .count();
 
     // Some annoyance here: we *have* to have some level prefix to our
     // message. Might be fixed in future version of annotate-snippets

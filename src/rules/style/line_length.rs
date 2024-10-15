@@ -51,7 +51,14 @@ impl TextRule for LineTooLong {
                     "line length of {}, exceeds maximum {}",
                     len, self.line_length
                 );
-                violations.push(Violation::from_line_start_end_col(msg, source, idx, self.line_length, len))
+                violations.push(Violation::from_start_end_line_col(
+                    msg,
+                    source,
+                    idx,
+                    self.line_length,
+                    idx,
+                    len,
+                ))
             }
         }
         violations
@@ -61,32 +68,38 @@ impl TextRule for LineTooLong {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::violation;
     use pretty_assertions::assert_eq;
     use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
 
     #[test]
     fn test_line_too_long() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             program test
               use some_really_long_module_name, only : integer_working_precision
               implicit none
               integer(integer_working_precision), parameter, dimension(1) :: a = [1]
             end program test
             ",
-        )).finish();
+            ),
+        )
+        .finish();
 
         let line_length = 20;
         let short_line_settings = Settings { line_length };
-        let expected: Vec<Violation> = [(3, line_length, 68), (5, line_length, 72)]
+        let expected: Vec<Violation> = [(2, line_length, 2, 68, 68), (4, line_length, 4, 72, 72)]
             .iter()
-            .map(|(line, col, length)| {
-                violation!(
+            .map(|(start_line, start_col, end_line, end_col, length)| {
+                Violation::from_start_end_line_col(
                     format!("line length of {length}, exceeds maximum {line_length}"),
-                    *line,
-                    *col
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
                 )
             })
             .collect();

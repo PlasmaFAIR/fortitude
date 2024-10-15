@@ -45,15 +45,16 @@ impl ASTRule for ImplicitRealKind {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
     use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
 
     #[test]
     fn test_implicit_real_kind() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             real function my_func(a, b, c, d, e)       ! catch
               real, intent(in) :: a                    ! catch
               real(4), intent(in) :: b                 ! ignore
@@ -64,15 +65,27 @@ mod tests {
               myfunc = a
             end function my_func
             ",
-        )).finish();
+            ),
+        )
+        .finish();
 
-        let expected: Vec<Violation> = [(2, 1, "real"), (3, 3, "real"), (6, 3, "complex")]
-            .iter()
-            .map(|(line, col, dtype)| {
-                let msg = format!("{dtype} has implicit kind");
-                violation!(&msg, *line, *col)
-            })
-            .collect();
+        let expected: Vec<Violation> = [
+            (1, 0, 1, 4, "real"),
+            (2, 2, 2, 6, "real"),
+            (5, 2, 5, 9, "complex"),
+        ]
+        .iter()
+        .map(|(start_line, start_col, end_line, end_col, dtype)| {
+            Violation::from_start_end_line_col(
+                format!("{dtype} has implicit kind"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
+        })
+        .collect();
 
         let rule = ImplicitRealKind::new(&default_settings());
         let actual = rule.apply(&source)?;

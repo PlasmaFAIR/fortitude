@@ -1,8 +1,8 @@
 use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
-use tree_sitter::Node;
 use ruff_source_file::SourceFile;
+use tree_sitter::Node;
 /// Defines rules that discourage the use of the non-standard kind specifiers such as
 /// `int*4` or `real*8`. Also prefers the use of `character(len=*)` to
 /// `character*(*)`, as although the latter is permitted by the standard, the former is
@@ -59,15 +59,16 @@ impl ASTRule for StarKind {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
     use ruff_source_file::SourceFileBuilder;
+    use textwrap::dedent;
 
     #[test]
     fn test_star_kind() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             integer*8 function add_if(x, y, z)
               integer(kind=2), intent(in) :: x
               integer *4, intent(in) :: y
@@ -89,20 +90,28 @@ mod tests {
               real = real * 8
             end subroutine
             ",
-        )).finish();
+            ),
+        )
+        .finish();
 
         let expected: Vec<Violation> = [
-            (2, 8, "integer*8", "integer(8)"),
-            (4, 11, "integer*4", "integer(4)"),
-            (5, 10, "logical*4", "logical(4)"),
-            (6, 11, "real*8", "real(8)"),
-            (17, 8, "real*4", "real(4)"),
-            (18, 12, "complex*8", "complex(8)"),
+            (1, 7, 1, 9, "integer*8", "integer(8)"),
+            (3, 10, 3, 12, "integer*4", "integer(4)"),
+            (4, 9, 4, 14, "logical*4", "logical(4)"),
+            (5, 10, 6, 4, "real*8", "real(8)"),
+            (16, 7, 16, 10, "real*4", "real(4)"),
+            (17, 11, 17, 15, "complex*8", "complex(8)"),
         ]
         .iter()
-        .map(|(line, col, from, to)| {
-            let msg = format!("{from} is non-standard, use {to}");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, from, to)| {
+            Violation::from_start_end_line_col(
+                format!("{from} is non-standard, use {to}"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
 

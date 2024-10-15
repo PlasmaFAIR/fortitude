@@ -1,8 +1,8 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
-use tree_sitter::Node;
 use ruff_source_file::SourceFile;
+use tree_sitter::Node;
 
 /// Rules for catching assumed size variables
 
@@ -108,15 +108,16 @@ impl ASTRule for InitialisationInDeclaration {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
     use ruff_source_file::SourceFileBuilder;
+    use textwrap::dedent;
 
     #[test]
     fn test_init_decl() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             module test
               integer :: global = 0  ! Ok at module level
 
@@ -140,16 +141,24 @@ mod tests {
 
             end module test
             ",
-        )).finish();
+            ),
+        )
+        .finish();
         let expected: Vec<Violation> = [
-            (11, 14, "foo"),
-            (20, 19, "bar"),
-            (20, 35, "zapp"),
+            (10, 13, 10, 20, "foo"),
+            (19, 18, 19, 25, "bar"),
+            (19, 34, 19, 42, "zapp"),
         ]
         .iter()
-        .map(|(line, col, variable)| {
-            let msg = format!("'{variable}' is initialised in its declaration and has no explicit `save` or `parameter` attribute");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, variable)| {
+            Violation::from_start_end_line_col(
+                format!("'{variable}' is initialised in its declaration and has no explicit `save` or `parameter` attribute"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = InitialisationInDeclaration::new(&default_settings());

@@ -43,7 +43,6 @@ impl ASTRule for ExternalFunction {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
     use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
@@ -67,11 +66,17 @@ mod tests {
             ),
         )
         .finish();
-        let expected: Vec<Violation> = [(2, 1, "function"), (7, 1, "subroutine")]
+        let expected: Vec<Violation> = [(2, 1, 2, 1, "function"), (7, 1, 7, 1, "subroutine")]
             .iter()
-            .map(|(line, col, kind)| {
-                let msg = format!("{} not contained within (sub)module or program", kind);
-                violation!(&msg, *line, *col)
+            .map(|(start_line, start_col, end_line, end_col, kind)| {
+                Violation::from_start_end_line_col(
+                    format!("{kind} not contained within (sub)module or program"),
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
             })
             .collect();
         let rule = ExternalFunction::new(&default_settings());

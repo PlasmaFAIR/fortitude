@@ -61,7 +61,6 @@ impl ASTRule for DoublePrecision {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
     use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
@@ -93,17 +92,23 @@ mod tests {
         )
         .finish();
         let expected: Vec<Violation> = [
-            (2, 1, "double precision"),
-            (3, 3, "double precision"),
-            (8, 3, "double precision"),
-            (13, 3, "double precision"),
-            (14, 3, "double complex"),
-            (15, 3, "double complex"),
+            (1, 0, 1, 16, "double precision"),
+            (2, 2, 2, 18, "double precision"),
+            (7, 2, 7, 18, "double precision"),
+            (12, 2, 12, 18, "double precision"),
+            (13, 2, 13, 16, "double complex"),
+            (14, 2, 14, 16, "double complex"),
         ]
         .iter()
-        .map(|(line, col, kind)| {
-            let msg = double_precision_err_msg(kind).unwrap();
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, kind)| {
+            Violation::from_start_end_line_col(
+                double_precision_err_msg(kind).unwrap(),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = DoublePrecision::new(&default_settings());

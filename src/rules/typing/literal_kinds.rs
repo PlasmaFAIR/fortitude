@@ -1,8 +1,8 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
-use tree_sitter::Node;
 use ruff_source_file::SourceFile;
+use tree_sitter::Node;
 
 /// Defines rules that discourage the use of raw number literals as kinds, as this can result in
 /// non-portable code.
@@ -183,15 +183,16 @@ impl ASTRule for LiteralKindSuffix {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
     use ruff_source_file::SourceFileBuilder;
+    use textwrap::dedent;
 
     #[test]
     fn test_literal_kind() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             integer(8) function add_if(x, y, z)
               integer :: w
               integer(kind=2), intent(in) :: x
@@ -218,21 +219,27 @@ mod tests {
               complex_add = y + x
             end function
             ",
-        )).finish();
+            ),
+        )
+        .finish();
         let expected: Vec<Violation> = [
-            (2, 9, "integer", 8),
-            (4, 16, "integer", 2),
-            (6, 16, "logical", 4),
-            (16, 8, "real", 8),
-            (17, 11, "complex", 4),
-            (24, 16, "complex", 4),
+            (1, 8, 1, 9, "integer", 8),
+            (3, 15, 3, 16, "integer", 2),
+            (5, 15, 5, 16, "logical", 4),
+            (15, 7, 15, 8, "real", 8),
+            (16, 10, 16, 11, "complex", 4),
+            (23, 15, 23, 16, "complex", 4),
         ]
         .iter()
-        .map(|(line, col, kind, literal)| {
-            let msg = format!(
-                "{kind} kind set with number literal '{literal}', use 'iso_fortran_env' parameter",
-            );
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, kind, literal)| {
+            Violation::from_start_end_line_col(
+                format!("{kind} kind set with number literal '{literal}', use 'iso_fortran_env' parameter"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = LiteralKind::new(&default_settings());
@@ -243,8 +250,10 @@ mod tests {
 
     #[test]
     fn test_literal_kind_suffix() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
             real(sp), parameter :: x1 = 1.234567_4
@@ -253,16 +262,25 @@ mod tests {
             real(dp), parameter :: x4 = 9.876_8
             real(sp), parameter :: x5 = 2.468_sp
             ",
-        )).finish();
-        let expected: Vec<Violation> = [(4, 38, "1.234567_4", "4"), (7, 35, "9.876_8", "8")]
-            .iter()
-            .map(|(line, col, num, kind)| {
-                let msg = format!(
-                    "'{num}' has literal suffix '{kind}', use 'iso_fortran_env' parameter",
-                );
-                violation!(&msg, *line, *col)
-            })
-            .collect();
+            ),
+        )
+        .finish();
+        let expected: Vec<Violation> = [
+            (3, 37, 3, 38, "1.234567_4", "4"),
+            (6, 34, 6, 35, "9.876_8", "8"),
+        ]
+        .iter()
+        .map(|(start_line, start_col, end_line, end_col, num, kind)| {
+            Violation::from_start_end_line_col(
+                format!("'{num}' has literal suffix '{kind}', use 'iso_fortran_env' parameter",),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
+        })
+        .collect();
         let rule = LiteralKindSuffix::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);

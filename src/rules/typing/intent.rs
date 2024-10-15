@@ -1,8 +1,8 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
-use tree_sitter::Node;
 use ruff_source_file::SourceFile;
+use tree_sitter::Node;
 
 /// Rules for catching missing intent
 
@@ -110,15 +110,16 @@ impl ASTRule for MissingIntent {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
     use ruff_source_file::SourceFileBuilder;
+    use textwrap::dedent;
 
     #[test]
     fn test_missing_intent() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             integer function foo(a, b, c)
               use mod
               integer :: a, c(2), f
@@ -132,17 +133,25 @@ mod tests {
               integer :: g
             end subroutine
             ",
-        )).finish();
+            ),
+        )
+        .finish();
         let expected: Vec<Violation> = [
-            (4, 14, "function", "a"),
-            (4, 17, "function", "c"),
-            (9, 23, "subroutine", "d"),
-            (10, 27, "subroutine", "e"),
+            (3, 13, 3, 14, "function", "a"),
+            (3, 16, 3, 20, "function", "c"),
+            (8, 22, 8, 23, "subroutine", "d"),
+            (9, 26, 9, 33, "subroutine", "e"),
         ]
         .iter()
-        .map(|(line, col, entity, arg)| {
-            let msg = format!("{entity} argument '{arg}' missing 'intent' attribute");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, entity, arg)| {
+            Violation::from_start_end_line_col(
+                format!("{entity} argument '{arg}' missing 'intent' attribute"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = MissingIntent::new(&default_settings());

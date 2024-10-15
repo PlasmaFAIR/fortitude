@@ -53,7 +53,6 @@ impl ASTRule for UseAll {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
     use ruff_source_file::SourceFileBuilder;
     use textwrap::dedent;
@@ -72,7 +71,14 @@ mod tests {
             ),
         )
         .finish();
-        let expected = vec![violation!("'use' statement missing 'only' clause", 4, 5)];
+        let expected = vec![Violation::from_start_end_line_col(
+            "'use' statement missing 'only' clause",
+            &source,
+            3,
+            4,
+            3,
+            35,
+        )];
         let rule = UseAll::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);

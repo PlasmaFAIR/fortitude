@@ -61,15 +61,16 @@ impl ASTRule for MissingExitOrCycleLabel {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
     use ruff_source_file::SourceFileBuilder;
+    use textwrap::dedent;
 
     #[test]
     fn test_missing_exit_label() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             program test
               label1: do
                 if (.true.) then
@@ -115,17 +116,27 @@ mod tests {
               end do
             end program test
             ",
-        )).finish();
+            ),
+        )
+        .finish();
         let expected: Vec<Violation> = [
-            (5, 7, "exit", "label1"),
-            (10, 17, "exit", "label2"),
-            (29, 19, "cycle", "inner"),
+            (4, 6, 4, 10, "exit", "label1"),
+            (9, 16, 9, 20, "exit", "label2"),
+            (28, 18, 28, 23, "cycle", "inner"),
         ]
         .iter()
-        .map(|(line, col, stmt_kind, label)| {
-            let msg = format!("'{stmt_kind}' statement in named 'do' loop missing label '{label}'");
-            violation!(msg, *line, *col)
-        })
+        .map(
+            |(start_line, start_col, end_line, end_col, stmt_kind, label)| {
+                Violation::from_start_end_line_col(
+                    format!("'{stmt_kind}' statement in named 'do' loop missing label '{label}'"),
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
+            },
+        )
         .collect();
         let rule = MissingExitOrCycleLabel::new(&default_settings());
         let actual = rule.apply(&source)?;

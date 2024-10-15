@@ -2,8 +2,8 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use itertools::Itertools;
-use tree_sitter::Node;
 use ruff_source_file::SourceFile;
+use tree_sitter::Node;
 
 /// Rules for catching assumed size variables
 
@@ -283,15 +283,16 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
     use ruff_source_file::SourceFileBuilder;
+    use textwrap::dedent;
 
     #[test]
     fn test_assumed_size() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             subroutine assumed_size_dimension(array, n, m, l, o, p, options, thing, q)
               integer, intent(in) :: n, m
               integer, dimension(n, m, *), intent(in) :: array
@@ -306,18 +307,26 @@ mod tests {
               character(*), dimension(*), parameter :: param_char = ['hello']
             end subroutine assumed_size_dimension
             ",
-        )).finish();
+            ),
+        )
+        .finish();
         let expected: Vec<Violation> = [
-            (4, 28, "array"),
-            (5, 28, "l"),
-            (5, 37, "p"),
-            (7, 31, "options"),
-            (8, 25, "thing"),
+            (3, 27, 3, 28, "array"),
+            (4, 27, 4, 28, "l"),
+            (4, 36, 4, 37, "p"),
+            (6, 30, 6, 31, "options"),
+            (7, 24, 7, 25, "thing"),
         ]
         .iter()
-        .map(|(line, col, variable)| {
-            let msg = format!("'{variable}' has assumed size");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, variable)| {
+            Violation::from_start_end_line_col(
+                format!("'{variable}' has assumed size"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = AssumedSize::new(&default_settings());
@@ -329,8 +338,10 @@ mod tests {
     #[test]
     fn test_assumed_size_character_intent() -> anyhow::Result<()> {
         // test case from stylist
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             program cases
               ! A char array outside a function or subroutine, no exception
               character (*) :: autochar_glob
@@ -351,18 +362,25 @@ mod tests {
               end subroutine char_input
             end program cases
             ",
-        )).finish();
+            ),
+        )
+        .finish();
         let expected: Vec<Violation> = [
-            (4, 14, "autochar_glob"),
-            (10, 15, "autochar_inout"),
-            (12, 19, "autochar_out"),
-            (14, 15, "autochar_var"),
+            (3, 13, 3, 14, "autochar_glob"),
+            (9, 14, 9, 15, "autochar_inout"),
+            (11, 18, 11, 19, "autochar_out"),
+            (13, 14, 13, 15, "autochar_var"),
         ]
         .iter()
-        .map(|(line, col, variable)| {
-            let msg =
-                format!("character '{variable}' has assumed size but does not have `intent(in)`");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, variable)| {
+            Violation::from_start_end_line_col(
+                format!("character '{variable}' has assumed size but does not have `intent(in)`"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = AssumedSizeCharacterIntent::new(&default_settings());
@@ -374,8 +392,10 @@ mod tests {
     #[test]
     fn test_deprecated_assumed_size_character() -> anyhow::Result<()> {
         // test case from stylist
-        let source = SourceFileBuilder::new("test", dedent(
-            "
+        let source = SourceFileBuilder::new(
+            "test",
+            dedent(
+                "
             program cases
             contains
               subroutine char_input(a, b, c, d, e, f)
@@ -390,18 +410,26 @@ mod tests {
               end subroutine char_input
             end program cases
             ",
-        )).finish();
+            ),
+        )
+        .finish();
         let expected: Vec<Violation> = [
-            (5, 15, "a"),
-            (6, 14, "b"),
-            (7, 14, "c"),
-            (8, 14, "d"),
-            (9, 14, "e"),
+            (4, 14, 4, 15, "a"),
+            (5, 13, 5, 14, "b"),
+            (6, 13, 6, 14, "c"),
+            (7, 13, 7, 14, "d"),
+            (8, 13, 8, 14, "e"),
         ]
         .iter()
-        .map(|(line, col, variable)| {
-            let msg = format!("character '{variable}' uses deprecated syntax for assumed size");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, variable)| {
+            Violation::from_start_end_line_col(
+                format!("character '{variable}' uses deprecated syntax for assumed size"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = DeprecatedAssumedSizeCharacter::new(&default_settings());
