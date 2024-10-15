@@ -29,7 +29,8 @@ impl ASTRule for ExternalFunction {
                 "{} not contained within (sub)module or program",
                 node.kind()
             );
-            return some_vec![Violation::from_node(msg, node)];
+            let procedure_stmt = node.child(0)?;
+            return some_vec![Violation::from_node(msg, &procedure_stmt)];
         }
         None
     }
@@ -66,7 +67,7 @@ mod tests {
             ),
         )
         .finish();
-        let expected: Vec<Violation> = [(2, 1, 2, 1, "function"), (7, 1, 7, 1, "subroutine")]
+        let expected: Vec<Violation> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
                 Violation::from_start_end_line_col(

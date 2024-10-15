@@ -39,7 +39,8 @@ impl ASTRule for ImplicitTyping {
     fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
         if !child_is_implicit_none(node) {
             let msg = format!("{} missing 'implicit none'", node.kind());
-            return some_vec![Violation::from_node(msg, node)];
+            let block_stmt = node.child(0)?;
+            return some_vec![Violation::from_node(msg, &block_stmt)];
         }
         None
     }
@@ -69,7 +70,8 @@ impl ASTRule for InterfaceImplicitTyping {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
             let msg = format!("interface {} missing 'implicit none'", node.kind());
-            return some_vec![Violation::from_node(msg, node)];
+            let interface_stmt = node.child(0)?;
+            return some_vec![Violation::from_node(msg, &interface_stmt)];
         }
         None
     }
@@ -152,7 +154,7 @@ mod tests {
             ),
         )
         .finish();
-        let expected: Vec<Violation> = [(1, 0, 1, 1, "module"), (5, 0, 5, 1, "program")]
+        let expected: Vec<Violation> = [(0, 1, 0, 17, "module"), (5, 0, 5, 18, "program")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
                 Violation::from_start_end_line_col(
@@ -230,7 +232,7 @@ mod tests {
             ),
         )
         .finish();
-        let expected: Vec<Violation> = [(4, 8, 4, 21, "function"), (13, 8, 13, 21, "subroutine")]
+        let expected: Vec<Violation> = [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
                 Violation::from_start_end_line_col(
