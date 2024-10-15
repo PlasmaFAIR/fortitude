@@ -52,25 +52,19 @@ impl ASTRule for UseAll {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_use_all() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module my_module
                 use, intrinsic :: iso_fortran_env, only: real32
                 use, intrinsic :: iso_c_binding
             end module
             ",
-            ),
-        )
-        .finish();
+        );
         let expected = vec![Violation::from_start_end_line_col(
             "'use' statement missing 'only' clause",
             &source,

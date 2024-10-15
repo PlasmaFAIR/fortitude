@@ -43,17 +43,13 @@ impl ASTRule for ExternalFunction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_function_not_in_module() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             integer function double(x)
               integer, intent(in) :: x
               double = 2 * x
@@ -64,9 +60,7 @@ mod tests {
               x = 3 * x
             end subroutine
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
@@ -88,10 +82,8 @@ mod tests {
 
     #[test]
     fn test_function_in_module() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module my_module
                 implicit none
             contains
@@ -106,9 +98,7 @@ mod tests {
                 end subroutine
             end module
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = vec![];
         let rule = ExternalFunction::new(&default_settings());
         let actual = rule.apply(&source)?;

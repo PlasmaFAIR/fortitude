@@ -75,17 +75,13 @@ impl ASTRule for NoRealSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_no_real_suffix() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
             real(sp), parameter :: x1 = 1.234567
@@ -101,9 +97,7 @@ mod tests {
             real(sp), parameter :: y2 = 1.2e3
 
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (3, 28, 3, 36, "1.234567"),
             (6, 28, 6, 33, "9.876"),

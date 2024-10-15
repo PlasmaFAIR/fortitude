@@ -132,17 +132,13 @@ impl ASTRule for SuperfluousImplicitNone {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_implicit_typing() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module my_module
                 parameter(N = 1)
             end module
@@ -151,9 +147,7 @@ mod tests {
                 write(*,*) 42
             end program
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [(0, 1, 0, 17, "module"), (5, 0, 5, 18, "program")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
@@ -175,10 +169,8 @@ mod tests {
 
     #[test]
     fn test_implicit_none() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module my_module
                 implicit none
             contains
@@ -194,9 +186,7 @@ mod tests {
                 write(*,*) x
             end program
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = vec![];
         let rule = ImplicitTyping::new(&default_settings());
         let actual = rule.apply(&source)?;
@@ -206,10 +196,8 @@ mod tests {
 
     #[test]
     fn test_interface_implicit_typing() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module my_module
                 implicit none
                 interface
@@ -229,9 +217,7 @@ mod tests {
                 write(*,*) 42
             end program
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
@@ -253,10 +239,8 @@ mod tests {
 
     #[test]
     fn test_interface_implicit_none() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module my_module
                 implicit none
                 interface
@@ -278,9 +262,7 @@ mod tests {
                 write(*,*) 42
             end program
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = vec![];
         let rule = InterfaceImplicitTyping::new(&default_settings());
         let actual = rule.apply(&source)?;
@@ -290,10 +272,8 @@ mod tests {
 
     #[test]
     fn test_superfluous_implicit_none() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module my_module
                 implicit none
             contains
@@ -327,9 +307,7 @@ mod tests {
                 end subroutine
             end program
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (5, 8, 5, 21, "module"),
             (10, 8, 10, 21, "module"),
@@ -356,10 +334,8 @@ mod tests {
 
     #[test]
     fn test_no_superfluous_implicit_none() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module my_module
                 implicit none
 
@@ -397,9 +373,7 @@ mod tests {
                 end subroutine
             end program
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = vec![];
         let rule = SuperfluousImplicitNone::new(&default_settings());
         let actual = rule.apply(&source)?;

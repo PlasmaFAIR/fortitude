@@ -60,17 +60,13 @@ impl ASTRule for MissingExitOrCycleLabel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_missing_exit_label() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             program test
               label1: do
                 if (.true.) then
@@ -116,9 +112,7 @@ mod tests {
               end do
             end program test
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (4, 6, 4, 10, "exit", "label1"),
             (9, 16, 9, 20, "exit", "label2"),

@@ -58,17 +58,13 @@ impl ASTRule for StarKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_star_kind() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             integer*8 function add_if(x, y, z)
               integer(kind=2), intent(in) :: x
               integer *4, intent(in) :: y
@@ -90,9 +86,7 @@ mod tests {
               real = real * 8
             end subroutine
             ",
-            ),
-        )
-        .finish();
+        );
 
         let expected: Vec<Violation> = [
             (1, 7, 1, 9, "integer*8", "integer(8)"),

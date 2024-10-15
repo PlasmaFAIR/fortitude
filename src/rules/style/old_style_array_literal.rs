@@ -37,17 +37,13 @@ impl ASTRule for OldStyleArrayLiteral {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_old_style_array_literal() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             program test
               integer :: a(3) = (/1, 2, 3/)
               integer :: b(3) = (/ &
@@ -63,9 +59,7 @@ mod tests {
               /)
              end program test
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (2, 20, 2, 31),
             (3, 20, 7, 4),

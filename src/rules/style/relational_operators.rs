@@ -50,17 +50,13 @@ impl ASTRule for DeprecatedRelationalOperator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_relational_symbol() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             program test
               if (0 .gt. 1) error stop
               if (1 .le. 0) error stop
@@ -69,9 +65,7 @@ mod tests {
               if (2 /= 2) error stop  ! OK
             end program test
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> =
             [
                 (2, 8, 2, 12, ".gt.", ">"),

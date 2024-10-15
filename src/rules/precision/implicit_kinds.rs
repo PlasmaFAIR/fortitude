@@ -44,17 +44,13 @@ impl ASTRule for ImplicitRealKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_implicit_real_kind() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             real function my_func(a, b, c, d, e)       ! catch
               real, intent(in) :: a                    ! catch
               real(4), intent(in) :: b                 ! ignore
@@ -65,9 +61,7 @@ mod tests {
               myfunc = a
             end function my_func
             ",
-            ),
-        )
-        .finish();
+        );
 
         let expected: Vec<Violation> = [
             (1, 0, 1, 4, "real"),

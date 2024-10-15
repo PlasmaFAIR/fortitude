@@ -182,17 +182,13 @@ impl ASTRule for LiteralKindSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_literal_kind() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             integer(8) function add_if(x, y, z)
               integer :: w
               integer(kind=2), intent(in) :: x
@@ -219,9 +215,7 @@ mod tests {
               complex_add = y + x
             end function
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (1, 8, 1, 9, "integer", 8),
             (3, 15, 3, 16, "integer", 2),
@@ -250,10 +244,8 @@ mod tests {
 
     #[test]
     fn test_literal_kind_suffix() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
             real(sp), parameter :: x1 = 1.234567_4
@@ -262,9 +254,7 @@ mod tests {
             real(dp), parameter :: x4 = 9.876_8
             real(sp), parameter :: x5 = 2.468_sp
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (3, 37, 3, 38, "1.234567_4", "4"),
             (6, 34, 6, 35, "9.876_8", "8"),

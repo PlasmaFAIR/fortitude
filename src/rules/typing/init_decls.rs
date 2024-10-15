@@ -107,17 +107,13 @@ impl ASTRule for InitialisationInDeclaration {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_init_decl() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module test
               integer :: global = 0  ! Ok at module level
 
@@ -141,9 +137,7 @@ mod tests {
 
             end module test
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (10, 13, 10, 20, "foo"),
             (19, 18, 19, 25, "bar"),

@@ -323,3 +323,12 @@ impl SourceLocationToOffset for SourceFile {
         source_code.source_location(offset)
     }
 }
+
+/// Simplify making a `SourceFile` in tests
+#[cfg(test)]
+pub fn test_file(source: &str) -> SourceFile {
+    use ruff_source_file::SourceFileBuilder;
+    use textwrap::dedent;
+
+    SourceFileBuilder::new("test.f90", dedent(source)).finish()
+}

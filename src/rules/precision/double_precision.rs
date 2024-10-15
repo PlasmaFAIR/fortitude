@@ -60,17 +60,13 @@ impl ASTRule for DoublePrecision {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_double_precision() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             double precision function double(x)
               double precision, intent(in) :: x
               double = 2 * x
@@ -88,9 +84,7 @@ mod tests {
               complex_mul = x * y
             end function
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (1, 0, 1, 16, "double precision"),
             (2, 2, 2, 18, "double precision"),

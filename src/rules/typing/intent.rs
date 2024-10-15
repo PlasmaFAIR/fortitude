@@ -109,17 +109,13 @@ impl ASTRule for MissingIntent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_missing_intent() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             integer function foo(a, b, c)
               use mod
               integer :: a, c(2), f
@@ -133,9 +129,7 @@ mod tests {
               integer :: g
             end subroutine
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (3, 13, 3, 14, "function", "a"),
             (3, 16, 3, 20, "function", "c"),

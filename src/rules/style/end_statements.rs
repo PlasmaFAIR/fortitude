@@ -98,17 +98,13 @@ impl ASTRule for UnnamedEndStatement {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_unnamed_end_statement() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             module mymod1
               implicit none
               type mytype
@@ -171,9 +167,7 @@ mod tests {
               write (*,*) 'hello world'
             end                             ! catch this
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (5, 2, 5, 32, "type", "mytype"),
             (9, 2, 9, 32, "subroutine", "mysub1"),

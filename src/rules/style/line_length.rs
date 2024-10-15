@@ -67,26 +67,22 @@ impl TextRule for LineTooLong {
 
 #[cfg(test)]
 mod tests {
+    use crate::test_file;
+
     use super::*;
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_line_too_long() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             program test
               use some_really_long_module_name, only : integer_working_precision
               implicit none
               integer(integer_working_precision), parameter, dimension(1) :: a = [1]
             end program test
             ",
-            ),
-        )
-        .finish();
+        );
 
         let line_length = 20;
         let short_line_settings = Settings { line_length };

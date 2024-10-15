@@ -282,17 +282,13 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use ruff_source_file::SourceFileBuilder;
-    use textwrap::dedent;
 
     #[test]
     fn test_assumed_size() -> anyhow::Result<()> {
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             subroutine assumed_size_dimension(array, n, m, l, o, p, options, thing, q)
               integer, intent(in) :: n, m
               integer, dimension(n, m, *), intent(in) :: array
@@ -307,9 +303,7 @@ mod tests {
               character(*), dimension(*), parameter :: param_char = ['hello']
             end subroutine assumed_size_dimension
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (3, 27, 3, 28, "array"),
             (4, 27, 4, 28, "l"),
@@ -338,10 +332,8 @@ mod tests {
     #[test]
     fn test_assumed_size_character_intent() -> anyhow::Result<()> {
         // test case from stylist
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             program cases
               ! A char array outside a function or subroutine, no exception
               character (*) :: autochar_glob
@@ -362,9 +354,7 @@ mod tests {
               end subroutine char_input
             end program cases
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (3, 13, 3, 14, "autochar_glob"),
             (9, 14, 9, 15, "autochar_inout"),
@@ -392,10 +382,8 @@ mod tests {
     #[test]
     fn test_deprecated_assumed_size_character() -> anyhow::Result<()> {
         // test case from stylist
-        let source = SourceFileBuilder::new(
-            "test",
-            dedent(
-                "
+        let source = test_file(
+            "
             program cases
             contains
               subroutine char_input(a, b, c, d, e, f)
@@ -410,9 +398,7 @@ mod tests {
               end subroutine char_input
             end program cases
             ",
-            ),
-        )
-        .finish();
+        );
         let expected: Vec<Violation> = [
             (4, 14, 4, 15, "a"),
             (5, 13, 5, 14, "b"),
