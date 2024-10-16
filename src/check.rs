@@ -142,6 +142,17 @@ pub fn check(args: CheckArgs) -> i32 {
 
                 let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
+                // If we can convert the total file size to u32, then
+                // we don't need to check when converting tree-sitter
+                // offsets (usize) into ruff offsets (u32)
+                if TryInto::<u32>::try_into(file.source_text().len()).is_err() {
+                    let violation = violation!(format!("File too large"));
+                    let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                    println!("{diagnostic}");
+                    total_errors += 1;
+                    continue;
+                }
+
                 match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
                     Ok(violations) => {
                         let mut diagnostics: Vec<Diagnostic> = violations
