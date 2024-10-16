@@ -296,13 +296,13 @@ fn format_violation_line_col(
     // message. Might be fixed in future version of annotate-snippets
     // -- or we use an earlier version with more control.
     // Also, we could use `.origin(path)` to get the filename and
-    // line:col automatically, but see above about off-by-one error
-
-    // let message_line = format!("{path}:{st}:{}: {} {}", path, line, col, code, message);
-    let snippet = Level::Warning.title(message).snippet(
+    // line:col automatically, but there is currently a bug in the
+    // library when annotating the start of the line
+    let SourceLocation { row, column } = source_code.source_location(range.start());
+    let message_line = format!("{path}:{row}:{column}: {code} {message}");
+    let snippet = Level::Warning.title(&message_line).snippet(
         Snippet::source(source)
-            .origin(path)
-            .line_start(start_index.to_zero_indexed())
+            .line_start(start_index.get())
             .annotation(Level::Error.span(start_char..end_char).label(code)),
     );
 
