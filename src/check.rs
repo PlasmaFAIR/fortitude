@@ -10,7 +10,6 @@ use crate::{Diagnostic, Violation};
 use colored::Colorize;
 use itertools::{chain, join};
 use ruff_source_file::{SourceFile, SourceFileBuilder};
-use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
@@ -114,6 +113,27 @@ fn check_file(
     Ok(violations)
 }
 
+/// Wrapper around `std::fs::read_to_string` with some extra error
+/// checking.
+///
+/// Check that the file length is representable as `u32` so
+/// that we don't need to check when converting tree-sitter offsets
+/// (usize) into ruff offsets (u32)
+fn read_to_string(path: &Path) -> std::io::Result<String> {
+    let metadata = path.metadata()?;
+    let file_length = metadata.len();
+
+    if TryInto::<u32>::try_into(file_length).is_err() {
+        #[allow(non_snake_case)]
+        let length_in_GiB = file_length as f64 / 1024.0 / 1024.0 / 1024.0;
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("larger than maximum 4 GiB ({length_in_GiB} GiB)"),
+        ));
+    }
+    std::fs::read_to_string(path)
+}
+
 /// Check all files, report issues found, and return error code.
 pub fn check(args: CheckArgs) -> i32 {
     let settings = Settings {
@@ -141,17 +161,6 @@ pub fn check(args: CheckArgs) -> i32 {
                 };
 
                 let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
-
-                // If we can convert the total file size to u32, then
-                // we don't need to check when converting tree-sitter
-                // offsets (usize) into ruff offsets (u32)
-                if TryInto::<u32>::try_into(file.source_text().len()).is_err() {
-                    let violation = violation!(format!("File too large"));
-                    let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
-                    println!("{diagnostic}");
-                    total_errors += 1;
-                    continue;
-                }
 
                 match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
                     Ok(violations) => {
