@@ -240,13 +240,13 @@ impl<'a> fmt::Display for Diagnostic<'a> {
                 write!(f, "{}: {} {}", path, code, message)
             }
             ViolationPosition::Range(range) => {
-                format_violation_line_col(self, f, &range, message, &path, &code)
+                format_violation(self, f, &range, message, &path, &code)
             }
         }
     }
 }
 
-fn format_violation_line_col(
+fn format_violation(
     diagnostic: &Diagnostic,
     f: &mut fmt::Formatter,
     range: &TextRange,
