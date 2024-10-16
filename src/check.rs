@@ -126,12 +126,21 @@ pub fn check(args: CheckArgs) -> i32 {
             let ast_entrypoints = ast_entrypoint_map(&rules, &settings);
             let mut total_errors = 0;
             for path in get_files(&args.files) {
-                // FIXME!!
-                let source = read_to_string(&path).unwrap();
-                // FIXME: also check file length can be represented as
-                // u32, as rest of code now assumes that
-                let file = SourceFileBuilder::new(path.to_string_lossy().as_ref(), source.as_str())
-                    .finish();
+                let filename = path.to_string_lossy();
+                let empty_file = SourceFileBuilder::new(filename.as_ref(), "").finish();
+
+                let source = match read_to_string(&path) {
+                    Ok(source) => source,
+                    Err(error) => {
+                        let violation = violation!(format!("Error opening file: {error}"));
+                        let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                        println!("{diagnostic}");
+                        total_errors += 1;
+                        continue;
+                    }
+                };
+
+                let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
                 match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
                     Ok(violations) => {
@@ -146,10 +155,9 @@ pub fn check(args: CheckArgs) -> i32 {
                         total_errors += diagnostics.len();
                     }
                     Err(msg) => {
-                        let err_msg = format!("Failed to process: {}", msg);
-                        let violation = violation!(&err_msg);
-                        let diagnostic = Diagnostic::new(&file, "E000", &violation);
-                        println!("{}", diagnostic);
+                        let violation = violation!(format!("Failed to process: {msg}"));
+                        let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                        println!("{diagnostic}");
                         total_errors += 1;
                     }
                 }
