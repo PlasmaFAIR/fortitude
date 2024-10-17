@@ -2,6 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use lazy_regex::regex_is_match;
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 /// Defines rule to ensure real precision is explicit, as this avoids accidental loss of precision.
 
@@ -53,12 +54,12 @@ impl Rule for NoRealSuffix {
 }
 
 impl ASTRule for NoRealSuffix {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with a different
         // rule.
-        let txt = node.to_text(src)?;
+        let txt = node.to_text(src.source_text())?;
         if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
             let msg = format!("real literal {} missing kind suffix", txt);
             return some_vec![Violation::from_node(msg, node)];
@@ -74,14 +75,12 @@ impl ASTRule for NoRealSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_no_real_suffix() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
@@ -100,23 +99,29 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (4, 29, "1.234567"),
-            (7, 29, "9.876"),
-            (9, 29, "2."),
-            (10, 29, ".0"),
-            (11, 29, "1E2"),
-            (12, 29, ".1e2"),
-            (13, 29, "1.E2"),
-            (14, 29, "1.2e3"),
+            (3, 28, 3, 36, "1.234567"),
+            (6, 28, 6, 33, "9.876"),
+            (8, 28, 8, 30, "2."),
+            (9, 28, 9, 30, ".0"),
+            (10, 28, 10, 31, "1E2"),
+            (11, 28, 11, 32, ".1e2"),
+            (12, 28, 12, 32, "1.E2"),
+            (13, 28, 13, 33, "1.2e3"),
         ]
         .iter()
-        .map(|(line, col, num)| {
-            let msg = format!("real literal {} missing kind suffix", num);
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, num)| {
+            Violation::from_start_end_line_col(
+                format!("real literal {num} missing kind suffix"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = NoRealSuffix::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

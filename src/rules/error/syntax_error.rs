@@ -1,5 +1,6 @@
 use crate::settings::Settings;
 use crate::{some_vec, ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// Rules that check for syntax errors.
@@ -25,7 +26,7 @@ impl Rule for SyntaxError {
 }
 
 impl ASTRule for SyntaxError {
-    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
         some_vec![Violation::from_node("syntax_error", node)]
     }
 

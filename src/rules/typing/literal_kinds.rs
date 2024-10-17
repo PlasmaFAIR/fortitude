@@ -1,7 +1,9 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
+
 /// Defines rules that discourage the use of raw number literals as kinds, as this can result in
 /// non-portable code.
 
@@ -71,7 +73,8 @@ impl Rule for LiteralKind {
 }
 
 impl ASTRule for LiteralKind {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Deal with characters
         if !dtype_is_plain_number(dtype.as_str()) {
@@ -157,7 +160,8 @@ impl Rule for LiteralKindSuffix {
 }
 
 impl ASTRule for LiteralKindSuffix {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
             return None;
@@ -178,14 +182,12 @@ impl ASTRule for LiteralKindSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_literal_kind() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             integer(8) function add_if(x, y, z)
               integer :: w
@@ -215,30 +217,34 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (2, 9, "integer", 8),
-            (4, 16, "integer", 2),
-            (6, 16, "logical", 4),
-            (16, 8, "real", 8),
-            (17, 11, "complex", 4),
-            (24, 16, "complex", 4),
+            (1, 8, 1, 9, "integer", 8),
+            (3, 15, 3, 16, "integer", 2),
+            (5, 15, 5, 16, "logical", 4),
+            (15, 7, 15, 8, "real", 8),
+            (16, 10, 16, 11, "complex", 4),
+            (23, 15, 23, 16, "complex", 4),
         ]
         .iter()
-        .map(|(line, col, kind, literal)| {
-            let msg = format!(
-                "{kind} kind set with number literal '{literal}', use 'iso_fortran_env' parameter",
-            );
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, kind, literal)| {
+            Violation::from_start_end_line_col(
+                format!("{kind} kind set with number literal '{literal}', use 'iso_fortran_env' parameter"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = LiteralKind::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
     fn test_literal_kind_suffix() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 
@@ -249,17 +255,24 @@ mod tests {
             real(sp), parameter :: x5 = 2.468_sp
             ",
         );
-        let expected: Vec<Violation> = [(4, 38, "1.234567_4", "4"), (7, 35, "9.876_8", "8")]
-            .iter()
-            .map(|(line, col, num, kind)| {
-                let msg = format!(
-                    "'{num}' has literal suffix '{kind}', use 'iso_fortran_env' parameter",
-                );
-                violation!(&msg, *line, *col)
-            })
-            .collect();
+        let expected: Vec<Violation> = [
+            (3, 37, 3, 38, "1.234567_4", "4"),
+            (6, 34, 6, 35, "9.876_8", "8"),
+        ]
+        .iter()
+        .map(|(start_line, start_col, end_line, end_col, num, kind)| {
+            Violation::from_start_end_line_col(
+                format!("'{num}' has literal suffix '{kind}', use 'iso_fortran_env' parameter",),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
+        })
+        .collect();
         let rule = LiteralKindSuffix::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

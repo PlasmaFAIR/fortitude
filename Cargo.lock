@@ -165,6 +165,8 @@ dependencies = [
  "lazy-regex",
  "lazy_static",
  "pretty_assertions",
+ "ruff_source_file",
+ "ruff_text_size",
  "textwrap",
  "tree-sitter",
  "tree-sitter-fortran",
@@ -289,6 +291,21 @@ name = "regex-syntax"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a66a03ae7c801facd77a29370b4faec201768915ac14a721ba36f20bc9c209b"
+
+[[package]]
+name = "ruff_source_file"
+version = "0.0.0"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.6.8#ae39ce56c0cc1f8ac15f980c0b457b16b67c1f2a"
+dependencies = [
+ "memchr",
+ "once_cell",
+ "ruff_text_size",
+]
+
+[[package]]
+name = "ruff_text_size"
+version = "0.0.0"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.6.8#ae39ce56c0cc1f8ac15f980c0b457b16b67c1f2a"
 
 [[package]]
 name = "same-file"

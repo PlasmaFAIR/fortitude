@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 pub struct OldStyleArrayLiteral {}
@@ -20,8 +21,8 @@ impl Rule for OldStyleArrayLiteral {
 }
 
 impl ASTRule for OldStyleArrayLiteral {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        if node.to_text(src)?.starts_with("(/") {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        if node.to_text(src.source_text())?.starts_with("(/") {
             let msg = "Array literal uses old-style syntax: prefer `[...]`";
             return some_vec!(Violation::from_node(msg, node));
         }
@@ -36,14 +37,12 @@ impl ASTRule for OldStyleArrayLiteral {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_old_style_array_literal() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             program test
               integer :: a(3) = (/1, 2, 3/)
@@ -61,15 +60,26 @@ mod tests {
              end program test
             ",
         );
-        let expected: Vec<Violation> = [(3, 21), (4, 21), (9, 18), (10, 11)]
-            .iter()
-            .map(|(line, col)| {
-                let msg = "Array literal uses old-style syntax: prefer `[...]`";
-                violation!(&msg, *line, *col)
-            })
-            .collect();
+        let expected: Vec<Violation> = [
+            (2, 20, 2, 31),
+            (3, 20, 7, 4),
+            (8, 17, 8, 28),
+            (9, 10, 13, 4),
+        ]
+        .iter()
+        .map(|(start_line, start_col, end_line, end_col)| {
+            Violation::from_start_end_line_col(
+                "Array literal uses old-style syntax: prefer `[...]`",
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
+        })
+        .collect();
         let rule = OldStyleArrayLiteral::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

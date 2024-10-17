@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// Rules for catching missing intent
@@ -33,7 +34,8 @@ impl Rule for MissingIntent {
 }
 
 impl ASTRule for MissingIntent {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         // Names of all the dummy arguments
         let parameters: Vec<&str> = node
             .child_by_field_name("parameters")?
@@ -107,14 +109,12 @@ impl ASTRule for MissingIntent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_missing_intent() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             integer function foo(a, b, c)
               use mod
@@ -131,19 +131,25 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (4, 14, "function", "a"),
-            (4, 17, "function", "c"),
-            (9, 23, "subroutine", "d"),
-            (10, 27, "subroutine", "e"),
+            (3, 13, 3, 14, "function", "a"),
+            (3, 16, 3, 20, "function", "c"),
+            (8, 22, 8, 23, "subroutine", "d"),
+            (9, 26, 9, 33, "subroutine", "e"),
         ]
         .iter()
-        .map(|(line, col, entity, arg)| {
-            let msg = format!("{entity} argument '{arg}' missing 'intent' attribute");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, entity, arg)| {
+            Violation::from_start_end_line_col(
+                format!("{entity} argument '{arg}' missing 'intent' attribute"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = MissingIntent::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

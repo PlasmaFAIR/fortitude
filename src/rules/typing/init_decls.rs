@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// Rules for catching assumed size variables
@@ -73,7 +74,8 @@ impl Rule for InitialisationInDeclaration {
 }
 
 impl ASTRule for InitialisationInDeclaration {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
             ["function", "subroutine", "module_procedure"].contains(&parent.kind())
@@ -105,14 +107,12 @@ impl ASTRule for InitialisationInDeclaration {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_init_decl() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             module test
               integer :: global = 0  ! Ok at module level
@@ -139,18 +139,24 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (11, 14, "foo"),
-            (20, 19, "bar"),
-            (20, 35, "zapp"),
+            (10, 13, 10, 20, "foo"),
+            (19, 18, 19, 25, "bar"),
+            (19, 34, 19, 42, "zapp"),
         ]
         .iter()
-        .map(|(line, col, variable)| {
-            let msg = format!("'{variable}' is initialised in its declaration and has no explicit `save` or `parameter` attribute");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, variable)| {
+            Violation::from_start_end_line_col(
+                format!("'{variable}' is initialised in its declaration and has no explicit `save` or `parameter` attribute"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = InitialisationInDeclaration::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

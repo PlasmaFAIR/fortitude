@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 /// Defines rules that require the user to explicitly specify the kinds of any reals.
 pub struct ImplicitRealKind {}
@@ -20,8 +21,8 @@ impl Rule for ImplicitRealKind {
 }
 
 impl ASTRule for ImplicitRealKind {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let dtype = node.child(0)?.to_text(src)?.to_lowercase();
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let dtype = node.child(0)?.to_text(src.source_text())?.to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
             return None;
@@ -43,14 +44,12 @@ impl ASTRule for ImplicitRealKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_implicit_real_kind() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             real function my_func(a, b, c, d, e)       ! catch
               real, intent(in) :: a                    ! catch
@@ -64,16 +63,26 @@ mod tests {
             ",
         );
 
-        let expected: Vec<Violation> = [(2, 1, "real"), (3, 3, "real"), (6, 3, "complex")]
-            .iter()
-            .map(|(line, col, dtype)| {
-                let msg = format!("{dtype} has implicit kind");
-                violation!(&msg, *line, *col)
-            })
-            .collect();
+        let expected: Vec<Violation> = [
+            (1, 0, 1, 4, "real"),
+            (2, 2, 2, 6, "real"),
+            (5, 2, 5, 9, "complex"),
+        ]
+        .iter()
+        .map(|(start_line, start_col, end_line, end_col, dtype)| {
+            Violation::from_start_end_line_col(
+                format!("{dtype} has implicit kind"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
+        })
+        .collect();
 
         let rule = ImplicitRealKind::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
 
         Ok(())

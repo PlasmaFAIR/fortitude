@@ -9,7 +9,7 @@ use crate::violation;
 use crate::{Diagnostic, Violation};
 use colored::Colorize;
 use itertools::{chain, join};
-use std::fs::read_to_string;
+use ruff_source_file::{SourceFile, SourceFileBuilder};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
@@ -76,6 +76,7 @@ fn check_file(
     text_rules: &TextRuleMap,
     ast_entrypoints: &ASTEntryPointMap,
     path: &Path,
+    file: &SourceFile,
 ) -> anyhow::Result<Vec<(String, Violation)>> {
     // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     let mut violations = Vec::new();
@@ -87,21 +88,20 @@ fn check_file(
     }
 
     // Perform plain text analysis
-    let source = read_to_string(path)?;
     for (code, rule) in text_rules {
         violations.extend(
-            rule.check(&source)
+            rule.check(file)
                 .iter()
                 .map(|x| (code.to_string(), x.clone())),
         );
     }
 
     // Perform AST analysis
-    let tree = parse(&source)?;
+    let tree = parse(file.source_text())?;
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for (code, rule) in rules {
-                if let Some(violation) = rule.check(&node, &source) {
+                if let Some(violation) = rule.check(&node, file) {
                     for v in violation {
                         violations.push((code.to_string(), v));
                     }
@@ -111,6 +111,27 @@ fn check_file(
     }
 
     Ok(violations)
+}
+
+/// Wrapper around `std::fs::read_to_string` with some extra error
+/// checking.
+///
+/// Check that the file length is representable as `u32` so
+/// that we don't need to check when converting tree-sitter offsets
+/// (usize) into ruff offsets (u32)
+fn read_to_string(path: &Path) -> std::io::Result<String> {
+    let metadata = path.metadata()?;
+    let file_length = metadata.len();
+
+    if TryInto::<u32>::try_into(file_length).is_err() {
+        #[allow(non_snake_case)]
+        let length_in_GiB = file_length as f64 / 1024.0 / 1024.0 / 1024.0;
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("larger than maximum 4 GiB ({length_in_GiB} GiB)"),
+        ));
+    }
+    std::fs::read_to_string(path)
 }
 
 /// Check all files, report issues found, and return error code.
@@ -124,8 +145,24 @@ pub fn check(args: CheckArgs) -> i32 {
             let text_rules = text_rule_map(&rules, &settings);
             let ast_entrypoints = ast_entrypoint_map(&rules, &settings);
             let mut total_errors = 0;
-            for file in get_files(&args.files) {
-                match check_file(&path_rules, &text_rules, &ast_entrypoints, &file) {
+            for path in get_files(&args.files) {
+                let filename = path.to_string_lossy();
+                let empty_file = SourceFileBuilder::new(filename.as_ref(), "").finish();
+
+                let source = match read_to_string(&path) {
+                    Ok(source) => source,
+                    Err(error) => {
+                        let violation = violation!(format!("Error opening file: {error}"));
+                        let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                        println!("{diagnostic}");
+                        total_errors += 1;
+                        continue;
+                    }
+                };
+
+                let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
+
+                match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
                     Ok(violations) => {
                         let mut diagnostics: Vec<Diagnostic> = violations
                             .into_iter()
@@ -138,10 +175,9 @@ pub fn check(args: CheckArgs) -> i32 {
                         total_errors += diagnostics.len();
                     }
                     Err(msg) => {
-                        let err_msg = format!("Failed to process: {}", msg);
-                        let violation = violation!(&err_msg);
-                        let diagnostic = Diagnostic::new(&file, "E000", &violation);
-                        println!("{}", diagnostic);
+                        let violation = violation!(format!("Failed to process: {msg}"));
+                        let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                        println!("{diagnostic}");
                         total_errors += 1;
                     }
                 }

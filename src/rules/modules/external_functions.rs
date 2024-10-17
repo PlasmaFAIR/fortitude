@@ -1,5 +1,6 @@
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// Defines rules that check whether functions and subroutines are defined within modules (or one
@@ -22,13 +23,14 @@ impl Rule for ExternalFunction {
 }
 
 impl ASTRule for ExternalFunction {
-    fn check(&self, node: &Node, _src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
         if node.parent()?.kind() == "translation_unit" {
             let msg = format!(
                 "{} not contained within (sub)module or program",
                 node.kind()
             );
-            return some_vec![Violation::from_node(msg, node)];
+            let procedure_stmt = node.child(0)?;
+            return some_vec![Violation::from_node(msg, &procedure_stmt)];
         }
         None
     }
@@ -41,14 +43,12 @@ impl ASTRule for ExternalFunction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_function_not_in_module() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             integer function double(x)
               integer, intent(in) :: x
@@ -61,22 +61,28 @@ mod tests {
             end subroutine
             ",
         );
-        let expected: Vec<Violation> = [(2, 1, "function"), (7, 1, "subroutine")]
+        let expected: Vec<Violation> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
             .iter()
-            .map(|(line, col, kind)| {
-                let msg = format!("{} not contained within (sub)module or program", kind);
-                violation!(&msg, *line, *col)
+            .map(|(start_line, start_col, end_line, end_col, kind)| {
+                Violation::from_start_end_line_col(
+                    format!("{kind} not contained within (sub)module or program"),
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
             })
             .collect();
         let rule = ExternalFunction::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
 
     #[test]
     fn test_function_in_module() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             module my_module
                 implicit none
@@ -95,7 +101,7 @@ mod tests {
         );
         let expected: Vec<Violation> = vec![];
         let rule = ExternalFunction::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

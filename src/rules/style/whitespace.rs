@@ -1,5 +1,6 @@
+use ruff_source_file::SourceFile;
+
 use crate::settings::Settings;
-use crate::violation;
 use crate::{Rule, TextRule, Violation};
 /// Defines rules that enforce widely accepted whitespace rules.
 
@@ -20,14 +21,17 @@ impl Rule for TrailingWhitespace {
 }
 
 impl TextRule for TrailingWhitespace {
-    fn check(&self, source: &str) -> Vec<Violation> {
+    fn check(&self, source: &SourceFile) -> Vec<Violation> {
         let mut violations = Vec::new();
-        for (idx, line) in source.split('\n').enumerate() {
+        for (idx, line) in source.source_text().split('\n').enumerate() {
             if line.ends_with(&[' ', '\t']) {
-                violations.push(violation!(
+                violations.push(Violation::from_start_end_line_col(
                     "trailing whitespace",
-                    idx + 1,
-                    line.trim_end().len() + 1
+                    source,
+                    idx,
+                    line.trim_end().len(),
+                    idx,
+                    line.len(),
                 ));
             }
         }
@@ -39,8 +43,8 @@ impl TextRule for TrailingWhitespace {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
     use pretty_assertions::assert_eq;
+    use ruff_source_file::SourceFileBuilder;
 
     #[test]
     fn test_trailing_whitespace() -> anyhow::Result<()> {
@@ -54,16 +58,27 @@ program test
     1, &
     2, &
     3 &
-  ]	
+  ]    
    
 end program test
 ";
-        let expected: Vec<Violation> = [(2, 13), (4, 24), (8, 4), (9, 1)]
+        let file = SourceFileBuilder::new("test", source).finish();
+
+        let expected: Vec<Violation> = [(0, 13, 0, 15), (3, 23, 3, 24), (7, 3, 7, 7), (8, 0, 8, 3)]
             .iter()
-            .map(|(line, col)| violation!("trailing whitespace", *line, *col))
+            .map(|(start_line, start_col, end_line, end_col)| {
+                Violation::from_start_end_line_col(
+                    "trailing whitespace",
+                    &file,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
+            })
             .collect();
         let rule = TrailingWhitespace::new(&default_settings());
-        let actual = rule.check(source);
+        let actual = rule.check(&file);
         assert_eq!(actual, expected);
         Ok(())
     }

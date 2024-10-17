@@ -2,6 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
 use itertools::Itertools;
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// Rules for catching assumed size variables
@@ -50,7 +51,8 @@ impl Rule for AssumedSize {
 }
 
 impl ASTRule for AssumedSize {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         let declaration = node
             .ancestors()
             .find(|parent| parent.kind() == "variable_declaration")?;
@@ -153,7 +155,8 @@ impl Rule for AssumedSizeCharacterIntent {
 }
 
 impl ASTRule for AssumedSizeCharacterIntent {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
 
@@ -235,7 +238,8 @@ impl Rule for DeprecatedAssumedSizeCharacter {
 }
 
 impl ASTRule for DeprecatedAssumedSizeCharacter {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         let declaration = node
             .ancestors()
             .find(|parent| parent.kind() == "variable_declaration")?;
@@ -278,14 +282,12 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_assumed_size() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             subroutine assumed_size_dimension(array, n, m, l, o, p, options, thing, q)
               integer, intent(in) :: n, m
@@ -303,20 +305,26 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (4, 28, "array"),
-            (5, 28, "l"),
-            (5, 37, "p"),
-            (7, 31, "options"),
-            (8, 25, "thing"),
+            (3, 27, 3, 28, "array"),
+            (4, 27, 4, 28, "l"),
+            (4, 36, 4, 37, "p"),
+            (6, 30, 6, 31, "options"),
+            (7, 24, 7, 25, "thing"),
         ]
         .iter()
-        .map(|(line, col, variable)| {
-            let msg = format!("'{variable}' has assumed size");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, variable)| {
+            Violation::from_start_end_line_col(
+                format!("'{variable}' has assumed size"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = AssumedSize::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -324,7 +332,7 @@ mod tests {
     #[test]
     fn test_assumed_size_character_intent() -> anyhow::Result<()> {
         // test case from stylist
-        let source = dedent(
+        let source = test_file(
             "
             program cases
               ! A char array outside a function or subroutine, no exception
@@ -348,20 +356,25 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (4, 14, "autochar_glob"),
-            (10, 15, "autochar_inout"),
-            (12, 19, "autochar_out"),
-            (14, 15, "autochar_var"),
+            (3, 13, 3, 14, "autochar_glob"),
+            (9, 14, 9, 15, "autochar_inout"),
+            (11, 18, 11, 19, "autochar_out"),
+            (13, 14, 13, 15, "autochar_var"),
         ]
         .iter()
-        .map(|(line, col, variable)| {
-            let msg =
-                format!("character '{variable}' has assumed size but does not have `intent(in)`");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, variable)| {
+            Violation::from_start_end_line_col(
+                format!("character '{variable}' has assumed size but does not have `intent(in)`"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = AssumedSizeCharacterIntent::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -369,7 +382,7 @@ mod tests {
     #[test]
     fn test_deprecated_assumed_size_character() -> anyhow::Result<()> {
         // test case from stylist
-        let source = dedent(
+        let source = test_file(
             "
             program cases
             contains
@@ -387,20 +400,26 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (5, 15, "a"),
-            (6, 14, "b"),
-            (7, 14, "c"),
-            (8, 14, "d"),
-            (9, 14, "e"),
+            (4, 14, 4, 15, "a"),
+            (5, 13, 5, 14, "b"),
+            (6, 13, 6, 14, "c"),
+            (7, 13, 7, 14, "d"),
+            (8, 13, 8, 14, "e"),
         ]
         .iter()
-        .map(|(line, col, variable)| {
-            let msg = format!("character '{variable}' uses deprecated syntax for assumed size");
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, variable)| {
+            Violation::from_start_end_line_col(
+                format!("character '{variable}' uses deprecated syntax for assumed size"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = DeprecatedAssumedSizeCharacter::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

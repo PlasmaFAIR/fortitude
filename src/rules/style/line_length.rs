@@ -1,7 +1,7 @@
 use crate::settings::Settings;
-use crate::violation;
 use crate::{Rule, TextRule, Violation};
 use lazy_regex::regex_is_match;
+use ruff_source_file::SourceFile;
 /// Defines rules that govern line length.
 
 pub struct LineTooLong {
@@ -36,9 +36,9 @@ impl Rule for LineTooLong {
 }
 
 impl TextRule for LineTooLong {
-    fn check(&self, source: &str) -> Vec<Violation> {
+    fn check(&self, source: &SourceFile) -> Vec<Violation> {
         let mut violations = Vec::new();
-        for (idx, line) in source.split('\n').enumerate() {
+        for (idx, line) in source.source_text().split('\n').enumerate() {
             let len = line.len();
             if len > self.line_length {
                 // Are we ending on a string or comment? If so, we'll allow it through, as it may
@@ -51,7 +51,14 @@ impl TextRule for LineTooLong {
                     "line length of {}, exceeds maximum {}",
                     len, self.line_length
                 );
-                violations.push(violation!(&msg, idx + 1, self.line_length));
+                violations.push(Violation::from_start_end_line_col(
+                    msg,
+                    source,
+                    idx,
+                    self.line_length,
+                    idx,
+                    len,
+                ))
             }
         }
         violations
@@ -60,14 +67,14 @@ impl TextRule for LineTooLong {
 
 #[cfg(test)]
 mod tests {
+    use crate::test_file;
+
     use super::*;
-    use crate::violation;
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_line_too_long() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             program test
               use some_really_long_module_name, only : integer_working_precision
@@ -76,20 +83,24 @@ mod tests {
             end program test
             ",
         );
+
         let line_length = 20;
         let short_line_settings = Settings { line_length };
-        let expected: Vec<Violation> = [(3, line_length, 68), (5, line_length, 72)]
+        let expected: Vec<Violation> = [(2, line_length, 2, 68, 68), (4, line_length, 4, 72, 72)]
             .iter()
-            .map(|(line, col, length)| {
-                violation!(
+            .map(|(start_line, start_col, end_line, end_col, length)| {
+                Violation::from_start_end_line_col(
                     format!("line length of {length}, exceeds maximum {line_length}"),
-                    *line,
-                    *col
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
                 )
             })
             .collect();
         let rule = LineTooLong::new(&short_line_settings);
-        let actual = rule.check(source.as_str());
+        let actual = rule.check(&source);
         assert_eq!(actual, expected);
         Ok(())
     }

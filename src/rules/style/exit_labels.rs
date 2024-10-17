@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 pub struct MissingExitOrCycleLabel {}
@@ -29,7 +30,8 @@ impl Rule for MissingExitOrCycleLabel {
 }
 
 impl ASTRule for MissingExitOrCycleLabel {
-    fn check<'a>(&self, node: &'a Node, src: &'a str) -> Option<Vec<Violation>> {
+    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Violation>> {
+        let src = src.source_text();
         // Skip unlabelled loops
         let label = node
             .child_with_name("block_label_start_expression")?
@@ -58,14 +60,12 @@ impl ASTRule for MissingExitOrCycleLabel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_missing_exit_label() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             program test
               label1: do
@@ -114,18 +114,26 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (5, 7, "exit", "label1"),
-            (10, 17, "exit", "label2"),
-            (29, 19, "cycle", "inner"),
+            (4, 6, 4, 10, "exit", "label1"),
+            (9, 16, 9, 20, "exit", "label2"),
+            (28, 18, 28, 23, "cycle", "inner"),
         ]
         .iter()
-        .map(|(line, col, stmt_kind, label)| {
-            let msg = format!("'{stmt_kind}' statement in named 'do' loop missing label '{label}'");
-            violation!(msg, *line, *col)
-        })
+        .map(
+            |(start_line, start_col, end_line, end_col, stmt_kind, label)| {
+                Violation::from_start_end_line_col(
+                    format!("'{stmt_kind}' statement in named 'do' loop missing label '{label}'"),
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
+            },
+        )
         .collect();
         let rule = MissingExitOrCycleLabel::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

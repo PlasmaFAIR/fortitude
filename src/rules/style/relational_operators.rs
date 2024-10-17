@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 fn map_relational_symbols(name: &str) -> Option<&'static str> {
@@ -32,9 +33,9 @@ impl Rule for DeprecatedRelationalOperator {
 }
 
 impl ASTRule for DeprecatedRelationalOperator {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
         let relation = node.child(1)?;
-        let symbol = relation.to_text(src)?.to_lowercase();
+        let symbol = relation.to_text(src.source_text())?.to_lowercase();
         let new_symbol = map_relational_symbols(symbol.as_str())?;
         let msg =
             format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead");
@@ -49,14 +50,12 @@ impl ASTRule for DeprecatedRelationalOperator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_relational_symbol() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             program test
               if (0 .gt. 1) error stop
@@ -67,21 +66,29 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<Violation> = [
-            (3, 9, ".gt.", ">"),
-            (4, 9, ".le.", "<="),
-            (5, 8, ".eq.", "=="),
-            (5, 19, ".ne.", "/="),
-        ]
-        .iter()
-        .map(|(line, col, symbol, new_symbol)| {
-            let msg =
-                format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead");
-            violation!(&msg, *line, *col)
-        })
-        .collect();
+        let expected: Vec<Violation> =
+            [
+                (2, 8, 2, 12, ".gt.", ">"),
+                (3, 8, 3, 12, ".le.", "<="),
+                (4, 7, 4, 11, ".eq.", "=="),
+                (4, 18, 4, 22, ".ne.", "/="),
+            ]
+            .iter()
+            .map(
+                |(start_line, start_col, end_line, end_col, symbol, new_symbol)| {
+                    Violation::from_start_end_line_col(
+                format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead"),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
+                },
+            )
+            .collect();
         let rule = DeprecatedRelationalOperator::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

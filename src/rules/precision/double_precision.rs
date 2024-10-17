@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, Rule, Violation};
+use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 /// Defines rules to avoid the 'double precision' and 'double complex' types.
 
@@ -43,8 +44,8 @@ impl Rule for DoublePrecision {
 }
 
 impl ASTRule for DoublePrecision {
-    fn check(&self, node: &Node, src: &str) -> Option<Vec<Violation>> {
-        let txt = node.to_text(src)?.to_lowercase();
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+        let txt = node.to_text(src.source_text())?.to_lowercase();
         if let Some(msg) = double_precision_err_msg(txt.as_str()) {
             return some_vec![Violation::from_node(msg.as_str(), node)];
         }
@@ -59,14 +60,12 @@ impl ASTRule for DoublePrecision {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
-    use crate::violation;
+    use crate::{settings::default_settings, test_file};
     use pretty_assertions::assert_eq;
-    use textwrap::dedent;
 
     #[test]
     fn test_double_precision() -> anyhow::Result<()> {
-        let source = dedent(
+        let source = test_file(
             "
             double precision function double(x)
               double precision, intent(in) :: x
@@ -87,21 +86,27 @@ mod tests {
             ",
         );
         let expected: Vec<Violation> = [
-            (2, 1, "double precision"),
-            (3, 3, "double precision"),
-            (8, 3, "double precision"),
-            (13, 3, "double precision"),
-            (14, 3, "double complex"),
-            (15, 3, "double complex"),
+            (1, 0, 1, 16, "double precision"),
+            (2, 2, 2, 18, "double precision"),
+            (7, 2, 7, 18, "double precision"),
+            (12, 2, 12, 18, "double precision"),
+            (13, 2, 13, 16, "double complex"),
+            (14, 2, 14, 16, "double complex"),
         ]
         .iter()
-        .map(|(line, col, kind)| {
-            let msg = double_precision_err_msg(kind).unwrap();
-            violation!(&msg, *line, *col)
+        .map(|(start_line, start_col, end_line, end_col, kind)| {
+            Violation::from_start_end_line_col(
+                double_precision_err_msg(kind).unwrap(),
+                &source,
+                *start_line,
+                *start_col,
+                *end_line,
+                *end_col,
+            )
         })
         .collect();
         let rule = DoublePrecision::new(&default_settings());
-        let actual = rule.apply(source.as_str())?;
+        let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
