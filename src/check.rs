@@ -7,10 +7,12 @@ use crate::rules::{
 use crate::settings::Settings;
 use crate::violation;
 use crate::{Diagnostic, Violation};
+use anyhow::Result;
 use colored::Colorize;
 use itertools::{chain, join};
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use std::path::{Path, PathBuf};
+use std::process::ExitCode;
 use walkdir::WalkDir;
 
 /// Get the list of active rules for this session.
@@ -135,7 +137,7 @@ fn read_to_string(path: &Path) -> std::io::Result<String> {
 }
 
 /// Check all files, report issues found, and return error code.
-pub fn check(args: CheckArgs) -> i32 {
+pub fn check(args: CheckArgs) -> Result<ExitCode> {
     let settings = Settings {
         line_length: args.line_length,
     };
@@ -183,18 +185,18 @@ pub fn check(args: CheckArgs) -> i32 {
                 }
             }
             if total_errors == 0 {
-                0
+                Ok(ExitCode::SUCCESS)
             } else {
                 let err_no = format!("Number of errors: {}", total_errors.to_string().bold());
                 let info = "For more information, run:";
                 let explain = format!("{} {}", "fortitude explain", "[ERROR_CODES]".bold());
                 println!("\n-- {}\n-- {}\n\n    {}\n", err_no, info, explain);
-                1
+                Ok(ExitCode::FAILURE)
             }
         }
         Err(msg) => {
             eprintln!("{}: {}", "ERROR".bright_red(), msg);
-            1
+            Ok(ExitCode::FAILURE)
         }
     }
 }

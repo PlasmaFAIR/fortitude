@@ -52,6 +52,27 @@ fortitude --help
 fortitude check --help
 ```
 
+## Configuration
+
+Fortitude will look for either a `fortitude.toml` or `fpm.toml` file in the
+current directory, or one of its parents. If using `fortitude.toml`, settings
+should be under the command name:
+
+```toml
+[check]
+ignore = ["S001", "S051"]
+line-length = 132
+```
+
+For `fpm.toml` files, this has to be additionally nested under the
+`extra.fortitude` table:
+
+```toml
+[extra.fortitude.check]
+ignore = ["S001", "S051"]
+line-length = 132
+```
+
 ## Contributing
 
 Please feel free to add or suggest new rules or comment on the layout of the project
@@ -65,3 +86,7 @@ conduct](CODE_OF_CONDUCT.md) before contributing.
 
 This work is distributed under the MIT License. See [`LICENSE`](LICENSE) for more
 information.
+
+Fortitude is inspired by, and uses parts from
+[ruff](https://github.com/astral-sh/ruff), used under the MIT licence. See
+[`LICENSE`](LICENSE) for more information.
