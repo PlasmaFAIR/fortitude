@@ -106,8 +106,8 @@ pub fn settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
 /// exists. Adapated from ruff
 pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     for directory in path.as_ref().ancestors() {
-        if let Some(pyproject) = settings_toml(directory)? {
-            return Ok(Some(pyproject));
+        if let Some(settings) = settings_toml(directory)? {
+            return Ok(Some(settings));
         }
     }
     Ok(None)
