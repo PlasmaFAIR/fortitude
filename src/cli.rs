@@ -120,7 +120,7 @@ fn from_clap_config_subsection<P: AsRef<Path>>(path: P) -> Result<Cli> {
         let config = std::fs::read_to_string(path)?.parse::<Table>()?;
 
         // Unwrap should be ok here because we've already checked this
-        // file as these tables
+        // file has these tables
         let extra = &config["extra"].as_table().unwrap();
         let fortitude = &extra["fortitude"].as_table().unwrap();
         fortitude.to_string()
@@ -144,5 +144,37 @@ pub fn parse_args() -> Result<Cli> {
         from_clap_config_subsection(toml_file)
     } else {
         Ok(args)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use anyhow::{Context, Result};
+    use tempfile::TempDir;
+
+    use super::*;
+
+    #[test]
+    fn find_and_check_fpm_toml() -> Result<()> {
+        let tempdir = TempDir::new()?;
+        let fpm_toml = tempdir.path().join("fpm.toml");
+        fs::write(
+            fpm_toml,
+            r#"
+some-stuff = 1
+other-things = "hello"
+
+[extra.fortitude.check]
+ignore = ["T001"]
+"#,
+        )?;
+
+        let fpm = find_settings_toml(tempdir.path())?.context("Failed to find fpm.toml")?;
+        let enabled = fortitude_enabled(fpm)?;
+        assert!(enabled);
+
+        Ok(())
     }
 }
