@@ -65,3 +65,7 @@ conduct](CODE_OF_CONDUCT.md) before contributing.
 
 This work is distributed under the MIT License. See [`LICENSE`](LICENSE) for more
 information.
+
+Fortitude is inspired by, and uses parts from
+[ruff](https://github.com/astral-sh/ruff), used under the MIT licence. See
+[`LICENSE`](LICENSE) for more information.
