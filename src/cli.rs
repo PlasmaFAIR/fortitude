@@ -153,6 +153,7 @@ mod tests {
 
     use anyhow::{Context, Result};
     use tempfile::TempDir;
+    use textwrap::dedent;
 
     use super::*;
 
@@ -162,13 +163,15 @@ mod tests {
         let fpm_toml = tempdir.path().join("fpm.toml");
         fs::write(
             fpm_toml,
-            r#"
-some-stuff = 1
-other-things = "hello"
+            dedent(
+                r#"
+                some-stuff = 1
+                other-things = "hello"
 
-[extra.fortitude.check]
-ignore = ["T001"]
-"#,
+                [extra.fortitude.check]
+                ignore = ["T001"]
+                "#,
+            ),
         )?;
 
         let fpm = find_settings_toml(tempdir.path())?.context("Failed to find fpm.toml")?;
