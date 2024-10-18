@@ -11,9 +11,9 @@ pub struct Cli {
     #[clap(subcommand)]
     pub command: SubCommands,
 
-    /// Config file to read
-    #[arg()]
-    pub config_file: Option<String>,
+    /// Path to a TOML configuration file
+    #[arg(long)]
+    pub config_file: Option<PathBuf>,
 }
 
 #[derive(Debug, Subcommand, ClapConfig, Clone, PartialEq)]
@@ -134,9 +134,15 @@ fn from_clap_config_subsection<P: AsRef<Path>>(path: P) -> Result<Cli> {
 }
 
 pub fn parse_args() -> Result<Cli> {
+    let args = Cli::parse();
+
+    if args.config_file.is_some() {
+        return from_clap_config_subsection(args.config_file.unwrap());
+    }
+
     if let Some(toml_file) = find_settings_toml(".")? {
         from_clap_config_subsection(toml_file)
     } else {
-        Ok(Cli::parse())
+        Ok(args)
     }
 }
