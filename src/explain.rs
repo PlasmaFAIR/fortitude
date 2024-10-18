@@ -1,9 +1,9 @@
 use std::process::ExitCode;
 
-use anyhow::Result;
 use crate::cli::ExplainArgs;
 use crate::rules::{explain_rule, full_ruleset, RuleSet};
 use crate::settings::default_settings;
+use anyhow::Result;
 use colored::Colorize;
 use textwrap::dedent;
 

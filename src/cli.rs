@@ -117,8 +117,7 @@ fn from_clap_config_subsection<P: AsRef<Path>>(path: P) -> Result<Cli> {
     let matches = <Cli as CommandFactory>::command().get_matches();
 
     let config_str = if path.as_ref().ends_with("fpm.toml") {
-        let config = std::fs::read_to_string(path)?
-            .parse::<Table>()?;
+        let config = std::fs::read_to_string(path)?.parse::<Table>()?;
 
         // Unwrap should be ok here because we've already checked this
         // file as these tables

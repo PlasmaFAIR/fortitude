@@ -10,12 +10,8 @@ fn main() -> ExitCode {
         Err(_) => return ExitCode::FAILURE,
     };
     let status = match args.command {
-        SubCommands::Check(args) => {
-            check(args)
-        }
-        SubCommands::Explain(args) => {
-            explain(args)
-        }
+        SubCommands::Check(args) => check(args),
+        SubCommands::Explain(args) => explain(args),
     };
     match status {
         Ok(code) => code,
