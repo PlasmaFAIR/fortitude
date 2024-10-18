@@ -102,7 +102,7 @@ pub fn settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
-/// Find the path to the `pyproject.toml` or `ruff.toml` file, if such a file
+/// Find the path to the `fpm.toml` or `fortitude.toml` file, if such a file
 /// exists. Adapated from ruff
 pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     for directory in path.as_ref().ancestors() {
