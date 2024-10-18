@@ -1,3 +1,6 @@
+use std::process::ExitCode;
+
+use anyhow::Result;
 use crate::cli::ExplainArgs;
 use crate::rules::{explain_rule, full_ruleset, RuleSet};
 use crate::settings::default_settings;
@@ -19,7 +22,7 @@ fn ruleset(args: &ExplainArgs) -> anyhow::Result<RuleSet> {
 }
 
 /// Check all files, report issues found, and return error code.
-pub fn explain(args: ExplainArgs) -> i32 {
+pub fn explain(args: ExplainArgs) -> Result<ExitCode> {
     match ruleset(&args) {
         Ok(rules) => {
             let mut outputs = Vec::new();
@@ -37,11 +40,11 @@ pub fn explain(args: ExplainArgs) -> i32 {
             for (code, desc) in outputs {
                 println!("{}\n{}", code, desc);
             }
-            0
+            Ok(ExitCode::SUCCESS)
         }
         Err(msg) => {
             eprintln!("{}: {}", "ERROR".bright_red(), msg);
-            1
+            Ok(ExitCode::FAILURE)
         }
     }
 }
