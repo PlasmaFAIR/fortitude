@@ -5,6 +5,11 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use toml::Table;
 
+/// Default extensions to check
+const FORTRAN_EXTS: &[&str] = &[
+    "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
+];
+
 #[derive(Debug, Parser, ClapConfig)]
 #[command(version, about)]
 pub struct Cli {
@@ -48,6 +53,9 @@ pub struct CheckArgs {
     /// Set the maximum allowable line length.
     #[arg(long, default_value = "100")]
     pub line_length: usize,
+    /// File extensions to check
+    #[arg(long, value_delimiter = ',', default_values = FORTRAN_EXTS)]
+    pub file_extensions: Vec<String>,
 }
 
 // These are just helper structs to let us quickly work out if there's
