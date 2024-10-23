@@ -40,20 +40,17 @@ fn ruleset(args: &CheckArgs) -> anyhow::Result<RuleSet> {
 
 /// Helper function used with `filter` to select only paths that end in a Fortran extension.
 /// Includes non-standard extensions, as these should be reported.
-fn filter_fortran_extensions(path: &Path) -> bool {
-    const FORTRAN_EXTS: &[&str] = &[
-        "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
-    ];
+fn filter_fortran_extensions<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
     if let Some(ext) = path.extension() {
         // Can't use '&[&str].contains()', as extensions are of type OsStr
-        FORTRAN_EXTS.iter().any(|&x| x == ext)
+        extensions.iter().any(|x| x.as_ref() == ext)
     } else {
         false
     }
 }
 
 /// Expand the input list of files to include all Fortran files.
-fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
+fn get_files<S: AsRef<str>>(files_in: &Vec<PathBuf>, extensions: &[S]) -> Vec<PathBuf> {
     let mut paths = Vec::new();
     for path in files_in {
         if path.is_dir() {
@@ -63,7 +60,7 @@ fn get_files(files_in: &Vec<PathBuf>) -> Vec<PathBuf> {
                     .into_iter()
                     .filter_map(|x| x.ok())
                     .map(|x| x.path().to_path_buf())
-                    .filter(|x| filter_fortran_extensions(x.as_path())),
+                    .filter(|x| filter_fortran_extensions(x.as_path(), extensions)),
             );
         } else {
             paths.push(path.to_path_buf());
@@ -147,7 +144,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
             let text_rules = text_rule_map(&rules, &settings);
             let ast_entrypoints = ast_entrypoint_map(&rules, &settings);
             let mut total_errors = 0;
-            for path in get_files(&args.files) {
+            for path in get_files(&args.files, &args.file_extensions) {
                 let filename = path.to_string_lossy();
                 let empty_file = SourceFileBuilder::new(filename.as_ref(), "").finish();
 
