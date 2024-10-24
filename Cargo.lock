@@ -204,7 +204,7 @@ checksum = "e8c02a5121d4ea3eb16a80748c74f5549a5665e4c21333c6098f283870fbdea6"
 
 [[package]]
 name = "fortitude"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "annotate-snippets",
  "anyhow",
