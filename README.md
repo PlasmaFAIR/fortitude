@@ -20,10 +20,11 @@ Fortitude can be installed directly into your Python environment:
 pip install fortitude-lint
 ```
 
-It is also available as a pure Rust project:
+It can also be installed as a pure Rust project:
 
 ```bash
-cargo install fortitude
+git clone https://github.com/PlasmaFAIR/fortitude
+cargo install --path fortitude
 ```
 
 ## Usage
