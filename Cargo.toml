@@ -26,7 +26,7 @@ serde = { version = "1.0.210", features = ["derive"] }
 textwrap = "0.16.0"
 toml = "0.8.19"
 tree-sitter = "~0.23.0"
-tree-sitter-fortran = "0.1.0"
+tree-sitter-fortran = "0.2.0"
 walkdir = "2.4.0"
 
 [dev-dependencies]
