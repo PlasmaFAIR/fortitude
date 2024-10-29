@@ -376,17 +376,16 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 [[package]]
 name = "ruff_source_file"
 version = "0.0.0"
-source = "git+https://github.com/astral-sh/ruff.git?tag=0.6.8#ae39ce56c0cc1f8ac15f980c0b457b16b67c1f2a"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
 dependencies = [
  "memchr",
- "once_cell",
  "ruff_text_size",
 ]
 
 [[package]]
 name = "ruff_text_size"
 version = "0.0.0"
-source = "git+https://github.com/astral-sh/ruff.git?tag=0.6.8#ae39ce56c0cc1f8ac15f980c0b457b16b67c1f2a"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
 
 [[package]]
 name = "rustix"
