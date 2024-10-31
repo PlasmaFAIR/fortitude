@@ -1,75 +1,88 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FortitudeViolation, Rule};
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-/// Rules for catching assumed size variables
+/// ## What it does
+/// Checks for local variables with implicit `save`
+///
+/// ## Why is this bad?
+/// Initialising procedure local variables in their declaration gives them an
+/// implicit `save` attribute: the initialisation is only done on the first call
+/// to the procedure, and the variable retains its value on exit.
+///
+/// ## Examples
+/// For example, this subroutine:
+///
+/// ```fortran
+/// subroutine example()
+///   integer :: var = 1
+///   print*, var
+///   var = var + 1
+/// end subroutine example
+/// ```
+///
+/// when called twice:
+///
+/// ```fortran
+/// call example()
+/// call example()
+/// ```
+///
+/// prints `1 2`, when it might be expected to print `1 1`.
+///
+/// Adding the `save` attribute makes it clear that this is the intention:
+///
+/// ```fortran
+/// subroutine example()
+///   integer, save :: var = 1
+///   print*, var
+///   var = var + 1
+/// end subroutine example
+/// ```
+///
+/// Unfortunately, in Fortran there is no way to disable this behaviour, and so if it
+/// is not intended, it's necessary to have a separate assignment statement:
+///
+/// ```fortran
+/// subroutine example()
+///   integer :: var
+///   var = 1
+///   print*, var
+///   var = var + 1
+/// end subroutine example
+/// ```
+///
+/// If the variable's value is intended to be constant, then use the `parameter`
+/// attribute instead:
+///
+/// ```fortran
+/// subroutine example()
+///   integer, parameter :: var = 1
+///   print*, var
+/// end subroutine example
+/// ```
+#[violation]
+pub struct InitialisationInDeclaration {
+    name: String,
+}
 
-pub struct InitialisationInDeclaration {}
+impl Violation for InitialisationInDeclaration {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("'{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute")
+    }
+}
 
 impl Rule for InitialisationInDeclaration {
     fn new(_settings: &Settings) -> Self {
-        InitialisationInDeclaration {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Initialising procedure local variables in their declaration gives them an
-        implicit `save` attribute: the initialisation is only done on the first call
-        to the procedure, and the variable retains its value on exit.
-
-        For example, this subroutine:
-
-        ```
-        subroutine example()
-          integer :: var = 1
-          print*, var
-          var = var + 1
-        end subroutine example
-        ```
-
-        when called twice:
-
-        ```
-        call example()
-        call example()
-        ```
-
-        prints `1 2`, when it might be expected to print `1 1`.
-
-        Adding the `save` attribute makes it clear that this is the intention:
-
-        ```
-        subroutine example()
-          integer, save :: var = 1
-          print*, var
-          var = var + 1
-        end subroutine example
-        ```
-
-        Unfortunately, in Fortran there is no way to disable this behaviour, and so if it
-        is not intended, it's necessary to have a separate assignment statement:
-
-        ```
-        subroutine example()
-          integer :: var
-          var = 1
-          print*, var
-          var = var + 1
-        end subroutine example
-        ```
-
-        If the variable's value is intended to be constant, then use the `parameter`
-        attribute instead:
-
-        ```
-        subroutine example()
-          integer, parameter :: var = 1
-          print*, var
-        end subroutine example
-        ```
-        "
+        InitialisationInDeclaration {
+            name: String::default(),
+        }
     }
 }
 
@@ -94,9 +107,8 @@ impl ASTRule for InitialisationInDeclaration {
             return None;
         }
 
-        let name = node.child_by_field_name("left")?.to_text(src)?;
-        let msg = format!("'{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute");
-        some_vec![FortitudeViolation::from_node(msg, node)]
+        let name = node.child_by_field_name("left")?.to_text(src)?.to_string();
+        some_vec![FortitudeViolation::from_node(Self { name }.message(), node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -146,7 +158,10 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
             FortitudeViolation::from_start_end_line_col(
-                format!("'{variable}' is initialised in its declaration and has no explicit `save` or `parameter` attribute"),
+                InitialisationInDeclaration {
+                    name: variable.to_string(),
+                }
+                .message(),
                 &source,
                 *start_line,
                 *start_col,

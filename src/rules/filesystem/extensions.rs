@@ -1,37 +1,45 @@
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
+
 use crate::settings::Settings;
 use crate::{FortitudeViolation, PathRule, Rule};
 use std::path::Path;
-/// Defines rule that enforces use of standard file extensions.
 
+/// ## What it does
+/// Checks for use of standard file extensions.
+///
+/// ## Why is it bad?
+/// The standard file extensions for modern (free-form) Fortran are '.f90' or  '.F90'.
+/// Forms that reference later Fortran standards such as '.f08' or '.F95' may be rejected
+/// by some compilers and build tools.
+#[violation]
 pub struct NonStandardFileExtension {}
+
+impl Violation for NonStandardFileExtension {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        format!("file extension should be '.f90' or '.F90'")
+    }
+}
 
 impl Rule for NonStandardFileExtension {
     fn new(_settings: &Settings) -> Self {
         NonStandardFileExtension {}
     }
-
-    fn explain(&self) -> &'static str {
-        "
-        The standard file extensions for modern (free-form) Fortran are '.f90' or  '.F90'.
-        Forms that reference later Fortran standards such as '.f08' or '.F95' may be rejected
-        by some compilers and build tools.
-        "
-    }
 }
 
 impl PathRule for NonStandardFileExtension {
     fn check(&self, path: &Path) -> Option<FortitudeViolation> {
-        let msg: &str = "file extension should be '.f90' or '.F90'";
         match path.extension() {
             Some(ext) => {
                 // Must check like this as ext is an OsStr
                 if ["f90", "F90"].iter().any(|&x| x == ext) {
                     None
                 } else {
-                    Some(FortitudeViolation::new_no_range(msg))
+                    Some(FortitudeViolation::new_no_range(self.message()))
                 }
             }
-            None => Some(FortitudeViolation::new_no_range(msg)),
+            None => Some(FortitudeViolation::new_no_range(self.message())),
         }
     }
 }
@@ -47,9 +55,7 @@ mod tests {
         let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
             rule.check(path),
-            Some(FortitudeViolation::new_no_range(
-                "file extension should be '.f90' or '.F90'"
-            )),
+            Some(FortitudeViolation::new_no_range(rule.message())),
         );
     }
 
@@ -59,9 +65,7 @@ mod tests {
         let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
             rule.check(path),
-            Some(FortitudeViolation::new_no_range(
-                "file extension should be '.f90' or '.F90'"
-            )),
+            Some(FortitudeViolation::new_no_range(rule.message())),
         );
     }
 

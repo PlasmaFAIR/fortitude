@@ -1,6 +1,8 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FortitudeViolation, Rule};
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -20,25 +22,39 @@ fn child_is_implicit_none(node: &Node) -> bool {
     false
 }
 
-pub struct ImplicitTyping {}
+/// ## What does it do?
+/// Checks for missing `implicit none`
+///
+/// ## Why is this bad?
+/// 'implicit none' should be used in all modules and programs, as implicit typing
+/// reduces the readability of code and increases the chances of typing errors.
+#[violation]
+pub struct ImplicitTyping {
+    entity: String,
+}
 
-impl Rule for ImplicitTyping {
-    fn new(_settings: &Settings) -> Self {
-        ImplicitTyping {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        'implicit none' should be used in all modules and programs, as implicit typing
-        reduces the readability of code and increases the chances of typing errors.
-        "
+impl Violation for ImplicitTyping {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { entity } = self;
+        format!("{entity} missing 'implicit none'")
     }
 }
 
+impl Rule for ImplicitTyping {
+    fn new(_settings: &Settings) -> Self {
+        ImplicitTyping {
+            entity: String::default(),
+        }
+    }
+}
 impl ASTRule for ImplicitTyping {
     fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if !child_is_implicit_none(node) {
-            let msg = format!("{} missing 'implicit none'", node.kind());
+            let msg = Self {
+                entity: node.kind().to_string(),
+            }
+            .message();
             let block_stmt = node.child(0)?;
             return some_vec![FortitudeViolation::from_node(msg, &block_stmt)];
         }
@@ -50,18 +66,30 @@ impl ASTRule for ImplicitTyping {
     }
 }
 
-pub struct InterfaceImplicitTyping {}
+/// ## What it does
+/// Checks for missing `implicit none` in interfaces
+///
+/// ## Why is this bad?
+/// Interface functions and subroutines require 'implicit none', even if they are
+/// inside a module that uses 'implicit none'.
+#[violation]
+pub struct InterfaceImplicitTyping {
+    name: String,
+}
+
+impl Violation for InterfaceImplicitTyping {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("interface '{name}' missing 'implicit none'")
+    }
+}
 
 impl Rule for InterfaceImplicitTyping {
     fn new(_settings: &Settings) -> Self {
-        InterfaceImplicitTyping {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Interface functions and subroutines require 'implicit none', even if they are
-        inside a module that uses 'implicit none'.
-        "
+        InterfaceImplicitTyping {
+            name: String::default(),
+        }
     }
 }
 
@@ -69,7 +97,7 @@ impl ASTRule for InterfaceImplicitTyping {
     fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
-            let msg = format!("interface {} missing 'implicit none'", node.kind());
+            let msg = Self { name: node.kind().to_string() }.message();
             let interface_stmt = node.child(0)?;
             return some_vec![FortitudeViolation::from_node(msg, &interface_stmt)];
         }
@@ -81,18 +109,30 @@ impl ASTRule for InterfaceImplicitTyping {
     }
 }
 
-pub struct SuperfluousImplicitNone {}
+/// ## What it does
+/// Checks for unnecessary `implicit none` in module procedures
+///
+/// ## Why is this bad?
+/// If a module has 'implicit none' set, it is not necessary to set it in contained
+/// functions and subroutines (except when using interfaces).
+#[violation]
+pub struct SuperfluousImplicitNone {
+    entity: String,
+}
+
+impl Violation for SuperfluousImplicitNone {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { entity } = self;
+        format!("'implicit none' set on the enclosing {entity}")
+    }
+}
 
 impl Rule for SuperfluousImplicitNone {
     fn new(_settings: &Settings) -> Self {
-        SuperfluousImplicitNone {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        If a module has 'implicit none' set, it is not necessary to set it in contained
-        functions and subroutines (except when using interfaces).
-        "
+        SuperfluousImplicitNone {
+            entity: String::default(),
+        }
     }
 }
 
@@ -108,8 +148,13 @@ impl ASTRule for SuperfluousImplicitNone {
                 match kind {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
                         if child_is_implicit_none(&ancestor) {
-                            let msg = format!("'implicit none' set on the enclosing {}", kind,);
-                            return some_vec![FortitudeViolation::from_node(msg, node)];
+                            return some_vec![FortitudeViolation::from_node(
+                                Self {
+                                    entity: kind.to_string()
+                                }
+                                .message(),
+                                node
+                            )];
                         }
                     }
                     "interface" => {
@@ -152,7 +197,10 @@ mod tests {
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
                 FortitudeViolation::from_start_end_line_col(
-                    format!("{kind} missing 'implicit none'"),
+                    ImplicitTyping {
+                        entity: kind.to_string(),
+                    }
+                    .message(),
                     &source,
                     *start_line,
                     *start_col,
@@ -223,7 +271,10 @@ mod tests {
                 .iter()
                 .map(|(start_line, start_col, end_line, end_col, kind)| {
                     FortitudeViolation::from_start_end_line_col(
-                        format!("interface {kind} missing 'implicit none'"),
+                        InterfaceImplicitTyping {
+                            name: kind.to_string(),
+                        }
+                        .message(),
                         &source,
                         *start_line,
                         *start_col,
@@ -318,7 +369,10 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, kind)| {
             FortitudeViolation::from_start_end_line_col(
-                format!("'implicit none' set on the enclosing {kind}"),
+                SuperfluousImplicitNone {
+                    entity: kind.to_string(),
+                }
+                .message(),
                 &source,
                 *start_line,
                 *start_col,

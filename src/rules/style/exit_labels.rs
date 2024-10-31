@@ -1,34 +1,47 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FortitudeViolation, Rule};
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-pub struct MissingExitOrCycleLabel {}
+/// ## What does it do?
+/// When using `exit` or `cycle` in a named `do` loop, the `exit`/`cycle` statement
+/// should use the loop name
+///
+/// ## Example
+/// ```fortran
+/// name: do
+///   exit name
+/// end do name
+/// ```
+///
+/// Using named loops is particularly useful for nested or complicated loops, as it
+/// helps the reader keep track of the flow of logic. It's also the only way to `exit`
+/// or `cycle` outer loops from within inner ones.
+#[violation]
+pub struct MissingExitOrCycleLabel {
+    name: String,
+    label: String,
+}
 
-impl Rule for MissingExitOrCycleLabel {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        When using `exit` or `cycle` in a named `do` loop, the `exit`/`cycle` statement
-        should use the loop name
-
-        ```
-        name: do
-          exit name
-        end do name
-        ```
-
-        Using named loops is particularly useful for nested or complicated loops, as it
-        helps the reader keep track of the flow of logic. It's also the only way to `exit`
-        or `cycle` outer loops from within inner ones.
-        "
+impl Violation for MissingExitOrCycleLabel {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name, label } = self;
+        format!("'{name}' statement in named 'do' loop missing label '{label}'")
     }
 }
 
+impl Rule for MissingExitOrCycleLabel {
+    fn new(_settings: &Settings) -> Self {
+        Self {
+            name: String::default(),
+            label: String::default(),
+        }
+    }
+}
 impl ASTRule for MissingExitOrCycleLabel {
     fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
@@ -44,7 +57,11 @@ impl ASTRule for MissingExitOrCycleLabel {
             .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
-                let msg = format!("'{name}' statement in named 'do' loop missing label '{label}'");
+                let msg = Self {
+                    name: name.to_string(),
+                    label: label.to_string(),
+                }
+                .message();
                 FortitudeViolation::from_node(msg, &stmt)
             })
             .collect();
@@ -122,7 +139,11 @@ mod tests {
         .map(
             |(start_line, start_col, end_line, end_col, stmt_kind, label)| {
                 FortitudeViolation::from_start_end_line_col(
-                    format!("'{stmt_kind}' statement in named 'do' loop missing label '{label}'"),
+                    MissingExitOrCycleLabel {
+                        name: stmt_kind.to_string(),
+                        label: label.to_string(),
+                    }
+                    .message(),
                     &source,
                     *start_line,
                     *start_col,

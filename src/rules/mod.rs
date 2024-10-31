@@ -1,3 +1,4 @@
+#![allow(clippy::useless_format)]
 /// A collection of all rules, and utilities to select a subset at runtime.
 mod error;
 mod filesystem;

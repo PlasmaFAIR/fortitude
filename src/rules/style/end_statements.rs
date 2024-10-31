@@ -1,45 +1,61 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FortitudeViolation, Rule};
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-pub struct UnnamedEndStatement {}
+/// ## What does it do?
+/// Checks that `end` statements include the type of construct they're ending
+///
+/// ## Why is this bad?
+/// End statements should specify what kind of construct they're ending, and the
+/// name of that construct. For example, prefer this:
+///
+/// ```fortran
+/// module mymodule
+///   ...
+/// end module mymodule
+/// ```
+///
+/// To this:
+///
+/// ```fortran
+/// module mymodule
+///   ...
+/// end
+/// ```
+///
+/// Or this:
+///
+/// ```fortran
+/// module mymodule
+///   ...
+/// end module
+/// ```
+///
+/// Similar rules apply for many other Fortran statements
+#[violation]
+pub struct UnnamedEndStatement {
+    statement: String,
+    name: String,
+}
+
+impl Violation for UnnamedEndStatement {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let UnnamedEndStatement { statement, name } = self;
+        format!("end statement should read 'end {statement} {name}'")
+    }
+}
 
 impl Rule for UnnamedEndStatement {
     fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        End statements should specify what kind of construct they're ending, and the
-        name of that construct. For example, prefer this:
-
-        ```
-        module mymodule
-          ...
-        end module mymodule
-        ```
-
-        To this:
-
-        ```
-        module mymodule
-          ...
-        end
-        ```
-
-        Or this:
-
-        ```
-        module mymodule
-          ...
-        end module
-        ```
-
-        Similar rules apply for many other Fortran statements
-        "
+        Self {
+            statement: String::default(),
+            name: String::default(),
+        }
     }
 }
 
@@ -78,7 +94,11 @@ impl ASTRule for UnnamedEndStatement {
         let name = statement_node
             .child_with_name(name_kind)?
             .to_text(src.source_text())?;
-        let msg = format!("end statement should read 'end {statement} {name}'");
+        let msg = Self {
+            statement: statement.to_string(),
+            name: name.to_string(),
+        }
+        .message();
         some_vec![FortitudeViolation::from_node(msg, node)]
     }
 
@@ -183,7 +203,11 @@ mod tests {
         .map(
             |(start_line, start_col, end_line, end_col, statement, name)| {
                 FortitudeViolation::from_start_end_line_col(
-                    format!("end statement should read 'end {statement} {name}'"),
+                    UnnamedEndStatement {
+                        statement: statement.to_string(),
+                        name: name.to_string(),
+                    }
+                    .message(),
                     &source,
                     *start_line,
                     *start_col,

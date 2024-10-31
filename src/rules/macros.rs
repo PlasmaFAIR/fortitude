@@ -174,9 +174,9 @@ macro_rules! register_rules {
         }
 
         // Print the help text for a rule.
-        pub fn explain_rule<'a>(code: &'a str, settings: &'a Settings) -> &'a str {
+        pub fn explain_rule<'a>(code: &'a str) -> &'a str {
             match code {
-                $($codes => {$rules::new(&settings).explain()})+
+                $($codes => {$rules::explanation().unwrap()})+
                 _ => {
                     ""
                 }

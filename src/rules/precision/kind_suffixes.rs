@@ -2,54 +2,64 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FortitudeViolation, Rule};
 use lazy_regex::regex_is_match;
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
-/// Defines rule to ensure real precision is explicit, as this avoids accidental loss of precision.
 
-pub struct NoRealSuffix {}
+/// Defines rule to ensure real precision is explicit, as this avoids accidental loss of precision.
+/// Floating point literals use the default 'real' kind unless given an explicit
+/// kind suffix. This can cause surprising loss of precision:
+/// 
+/// ```fortran
+/// use, intrinsic :: iso_fortran_env, only: dp => real64
+/// 
+/// real(dp), parameter :: pi_1 = 3.14159265358979
+/// real(dp), parameter :: pi_2 = 3.14159265358979_dp
+/// 
+/// print *, pi_1  ! Gives: 3.1415927410125732 
+/// print *, pi_2  ! Gives: 3.1415926535897900
+/// ```
+/// 
+/// There are many cases where the difference in precision doesn't matter, such
+/// as the following operations:
+/// 
+/// ```fortran
+/// real(dp) :: x, y
+/// 
+/// x = 1.0
+/// x = 10.0 * y
+/// ```
+/// 
+/// However, even for 'nice' numbers, it's possible to accidentally lose
+/// precision in surprising ways:
+/// 
+/// ```fortran
+/// x = y * sqrt(2.0)
+/// ```
+/// 
+/// Ideally this rule should check how the number is used in a local expression
+/// and determine whether precision loss is a real risk, but in its current
+/// implementation it instead requires all real literals to have an explicit
+/// kind suffix.
+#[violation]
+pub struct NoRealSuffix {
+    literal: String,
+}
+
+impl Violation for NoRealSuffix {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let NoRealSuffix { literal } = self;
+        format!("real literal {literal} missing kind suffix")
+    }
+}
 
 impl Rule for NoRealSuffix {
     fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Floating point literals use the default 'real' kind unless given an explicit
-        kind suffix. This can cause surprising loss of precision:
-
-        ```
-        use, intrinsic :: iso_fortran_env, only: dp => real64
-
-        real(dp), parameter :: pi_1 = 3.14159265358979
-        real(dp), parameter :: pi_2 = 3.14159265358979_dp
-
-        print *, pi_1  ! Gives: 3.1415927410125732 
-        print *, pi_2  ! Gives: 3.1415926535897900
-        ```
-
-        There are many cases where the difference in precision doesn't matter, such
-        as the following operations:
-
-        ```
-        real(dp) :: x, y
-
-        x = 1.0
-        x = 10.0 * y
-        ```
-
-        However, even for 'nice' numbers, it's possible to accidentally lose
-        precision in surprising ways:
-
-        ```
-        x = y * sqrt(2.0)
-        ```
-
-        Ideally this rule should check how the number is used in a local expression
-        and determine whether precision loss is a real risk, but in its current
-        implementation it instead requires all real literals to have an explicit
-        kind suffix.
-        "
+        Self {
+            literal: String::default(),
+        }
     }
 }
 
@@ -61,7 +71,10 @@ impl ASTRule for NoRealSuffix {
         // rule.
         let txt = node.to_text(src.source_text())?;
         if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
-            let msg = format!("real literal {} missing kind suffix", txt);
+            let msg = NoRealSuffix {
+                literal: txt.to_string(),
+            }
+            .message();
             return some_vec![FortitudeViolation::from_node(msg, node)];
         }
         None
@@ -111,7 +124,10 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, num)| {
             FortitudeViolation::from_start_end_line_col(
-                format!("real literal {num} missing kind suffix"),
+                NoRealSuffix {
+                    literal: num.to_string(),
+                }
+                .message(),
                 &source,
                 *start_line,
                 *start_col,

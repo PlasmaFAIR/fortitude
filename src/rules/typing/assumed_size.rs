@@ -2,54 +2,65 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FortitudeViolation, Rule};
 use itertools::Itertools;
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-/// Rules for catching assumed size variables
+/// ## What does it do?
+/// Checks for assumed size variables
+///
+/// ## Why is this bad?
+/// Assumed size dummy arguments declared with a star `*` as the size should be
+/// avoided. There are several downsides to assumed size, the main one being
+/// that the compiler is not able to determine the array bounds, so it is not
+/// possible to check for array overruns or to use the array in whole-array
+/// expressions.
+///
+/// Instead, prefer assumed shape arguments, as the compiler is able to keep track of
+/// the upper bounds automatically, and pass this information under the hood. It also
+/// allows use of whole-array expressions, such as `a = b + c`, where `a, b, c` are
+/// all arrays of the same shape.
+///
+/// Instead of:
+///
+/// ```fortran
+/// subroutine process_array(array)
+///     integer, dimension(*), intent(in) :: array
+///     ...
+/// ```
+///
+/// use:
+///
+/// ```fortran
+/// subroutine process_array(array)
+///     integer, dimension(:), intent(in) :: array
+///     ...
+/// ```
+///
+/// Note that this doesn't apply to `character` types, where `character(len=*)` is
+/// actually the most appropriate specification for `intent(in)` arguments! This is
+/// because `character(len=:)` must be either a `pointer` or `allocatable`.
+#[violation]
+pub struct AssumedSize {
+    name: String,
+}
 
-pub struct AssumedSize {}
-
-impl Rule for AssumedSize {
-    fn new(_settings: &Settings) -> Self {
-        AssumedSize {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Assumed size dummy arguments declared with a star `*` as the size should be
-        avoided. There are several downsides to assumed size, the main one being
-        that the compiler is not able to determine the array bounds, so it is not
-        possible to check for array overruns or to use the array in whole-array
-        expressions.
-
-        Instead, prefer assumed shape arguments, as the compiler is able to keep track of
-        the upper bounds automatically, and pass this information under the hood. It also
-        allows use of whole-array expressions, such as `a = b + c`, where `a, b, c` are
-        all arrays of the same shape.
-
-        Instead of:
-
-        ```
-        subroutine process_array(array)
-            integer, dimension(*), intent(in) :: array
-            ...
-        ```
-
-        use:
-
-        ```
-        subroutine process_array(array)
-            integer, dimension(:), intent(in) :: array
-            ...
-        ```
-
-        Note that this doesn't apply to `character` types, where `character(len=*)` is
-        actually the most appropriate specification for `intent(in)` arguments! This is
-        because `character(len=:)` must be either a `pointer` or `allocatable`.
-        "
+impl Violation for AssumedSize {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("'{name}' has assumed size")
     }
 }
 
+impl Rule for AssumedSize {
+    fn new(_settings: &Settings) -> Self {
+        AssumedSize {
+            name: String::default(),
+        }
+    }
+}
 impl ASTRule for AssumedSize {
     fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
@@ -81,8 +92,8 @@ impl ASTRule for AssumedSize {
             .find(|parent| parent.kind() == "sized_declarator")
         {
             let identifier = sized_decl.child_with_name("identifier")?;
-            let name = identifier.to_text(src)?;
-            let msg = format!("'{name}' has assumed size");
+            let name = identifier.to_text(src)?.to_string();
+            let msg = Self { name }.message();
             return some_vec![FortitudeViolation::from_node(msg, node)];
         }
 
@@ -98,7 +109,8 @@ impl ASTRule for AssumedSize {
                 }?;
                 identifier.to_text(src)
             })
-            .map(|name| FortitudeViolation::from_node(format!("'{name}' has assumed size"), node))
+            .map(|name| name.to_string())
+            .map(|name| FortitudeViolation::from_node(Self { name }.message(), node))
             .collect_vec();
 
         Some(all_decls)
@@ -109,51 +121,62 @@ impl ASTRule for AssumedSize {
     }
 }
 
-pub struct AssumedSizeCharacterIntent {}
+/// ## What does it do?
+/// Checks `character` dummy arguments have `intent(in)` only
+///
+/// ## Why is this bad?
+/// Character dummy arguments with an assumed size should only have `intent(in)`, as
+/// this can cause data loss with `intent([in]out)`. For example:
+///
+/// ```fortran
+/// program example
+///   character(len=3) :: short_text
+///   call set_text(short_text)
+///   print*, short_text
+/// contains
+///   subroutine set_text(text)
+///     character(*), intent(out) :: text
+///     text = \"longer than 3 characters\"
+///   end subroutine set_text
+/// end program
+/// ```
+///
+/// Here, `short_text` will only contain the truncated \"lon\".
+///
+/// To handle dynamically setting `character` sizes, use `allocatable` instead:
+///
+/// ```fortran
+/// program example
+///   character(len=3) :: short_text
+///   call set_text(short_text)
+///   print*, short_text
+/// contains
+///   subroutine set_text(text)
+///     character(len=:), allocatable, intent(out) :: text
+///     text = \"longer than 3 characters\"
+///   end subroutine set_text
+/// end program
+/// ```
+#[violation]
+pub struct AssumedSizeCharacterIntent {
+    name: String,
+}
 
-impl Rule for AssumedSizeCharacterIntent {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Character dummy arguments with an assumed size should only have `intent(in)`, as
-        this can cause data loss with `intent([in]out)`. For example:
-
-        ```
-        program example
-          character(len=3) :: short_text
-          call set_text(short_text)
-          print*, short_text
-        contains
-          subroutine set_text(text)
-            character(*), intent(out) :: text
-            text = \"longer than 3 characters\"
-          end subroutine set_text
-        end program
-        ```
-
-        Here, `short_text` will only contain the truncated \"lon\".
-
-        To handle dynamically setting `character` sizes, use `allocatable` instead:
-
-        ```
-        program example
-          character(len=3) :: short_text
-          call set_text(short_text)
-          print*, short_text
-        contains
-          subroutine set_text(text)
-            character(len=:), allocatable, intent(out) :: text
-            text = \"longer than 3 characters\"
-          end subroutine set_text
-        end program
-        ```
-        "
+impl Violation for AssumedSizeCharacterIntent {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("character '{name}' has assumed size but does not have `intent(in)`")
     }
 }
 
+impl Rule for AssumedSizeCharacterIntent {
+    fn new(_settings: &Settings) -> Self {
+        Self {
+            name: String::default(),
+        }
+    }
+}
 impl ASTRule for AssumedSizeCharacterIntent {
     fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
@@ -207,9 +230,9 @@ impl ASTRule for AssumedSizeCharacterIntent {
                 }?;
                 identifier.to_text(src)
             })
+            .map(|name| name.to_string())
             .map(|name| {
-                let msg =
-                    format!("character '{name}' has assumed size but does not have `intent(in)`");
+                let msg = Self { name }.message();
                 FortitudeViolation::from_node(msg, node)
             })
             .collect_vec();
@@ -222,21 +245,32 @@ impl ASTRule for AssumedSizeCharacterIntent {
     }
 }
 
-pub struct DeprecatedAssumedSizeCharacter {}
+/// ## What does it do?
+/// Checks for deprecated declarations of `character`
+///
+/// ## Why is this bad?
+/// The syntax `character*(*)` is a deprecated form of `character(len=*)`. Prefer the
+/// second form.
+#[violation]
+pub struct DeprecatedAssumedSizeCharacter {
+    name: String,
+}
 
-impl Rule for DeprecatedAssumedSizeCharacter {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        The syntax `character*(*)` is a deprecated form of `character(len=*)`. Prefer the
-        second form.
-        "
+impl Violation for DeprecatedAssumedSizeCharacter {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("character '{name}' uses deprecated syntax for assumed size")
     }
 }
 
+impl Rule for DeprecatedAssumedSizeCharacter {
+    fn new(_settings: &Settings) -> Self {
+        Self {
+            name: String::default(),
+        }
+    }
+}
 impl ASTRule for DeprecatedAssumedSizeCharacter {
     fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
@@ -265,8 +299,9 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
                 }?;
                 identifier.to_text(src)
             })
+            .map(|name| name.to_string())
             .map(|name| {
-                let msg = format!("character '{name}' uses deprecated syntax for assumed size");
+                let msg = Self { name }.message();
                 FortitudeViolation::from_node(msg, node)
             })
             .collect_vec();
@@ -314,7 +349,10 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
             FortitudeViolation::from_start_end_line_col(
-                format!("'{variable}' has assumed size"),
+                AssumedSize {
+                    name: variable.to_string(),
+                }
+                .message(),
                 &source,
                 *start_line,
                 *start_col,
@@ -364,7 +402,10 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
             FortitudeViolation::from_start_end_line_col(
-                format!("character '{variable}' has assumed size but does not have `intent(in)`"),
+                AssumedSizeCharacterIntent {
+                    name: variable.to_string(),
+                }
+                .message(),
                 &source,
                 *start_line,
                 *start_col,
@@ -409,7 +450,10 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
             FortitudeViolation::from_start_end_line_col(
-                format!("character '{variable}' uses deprecated syntax for assumed size"),
+                DeprecatedAssumedSizeCharacter {
+                    name: variable.to_string(),
+                }
+                .message(),
                 &source,
                 *start_line,
                 *start_col,

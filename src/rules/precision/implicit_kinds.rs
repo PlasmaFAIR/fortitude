@@ -1,22 +1,36 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FortitudeViolation, Rule};
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
-/// Defines rules that require the user to explicitly specify the kinds of any reals.
-pub struct ImplicitRealKind {}
+
+/// ## What it does
+/// Checks that `real` variables have their kind explicitly specified
+///
+/// ## Why is this bad?
+/// Real variable declarations without an explicit kind will have a compiler/platform
+/// dependent precision, which hurts portability and may lead to surprising loss of
+/// precision in some cases.
+#[violation]
+pub struct ImplicitRealKind {
+    dtype: String,
+}
+
+impl Violation for ImplicitRealKind {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let ImplicitRealKind { dtype } = self;
+        format!("{dtype} has implicit kind")
+    }
+}
 
 impl Rule for ImplicitRealKind {
     fn new(_settings: &Settings) -> Self {
-        ImplicitRealKind {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Real variable declarations without an explicit kind will have a compiler/platform
-        dependent precision, which hurts portability and may lead to surprising loss of
-        precision in some cases.
-        "
+        ImplicitRealKind {
+            dtype: String::default(),
+        }
     }
 }
 
@@ -32,7 +46,7 @@ impl ASTRule for ImplicitRealKind {
             return None;
         }
 
-        let msg = format!("{dtype} has implicit kind");
+        let msg = ImplicitRealKind { dtype }.message();
         some_vec![FortitudeViolation::from_node(msg, node)]
     }
 
@@ -71,7 +85,10 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, dtype)| {
             FortitudeViolation::from_start_end_line_col(
-                format!("{dtype} has implicit kind"),
+                ImplicitRealKind {
+                    dtype: dtype.to_string(),
+                }
+                .message(),
                 &source,
                 *start_line,
                 *start_col,

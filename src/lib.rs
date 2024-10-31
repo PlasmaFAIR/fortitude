@@ -137,10 +137,6 @@ pub trait Rule {
     fn new(settings: &Settings) -> Self
     where
         Self: Sized;
-
-    /// Return text explaining what the rule tests for, why this is important, and how the user
-    /// might fix it.
-    fn explain(&self) -> &'static str;
 }
 
 /// Implemented by rules that act directly on the file path.

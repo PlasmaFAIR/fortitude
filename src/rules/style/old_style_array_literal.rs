@@ -1,30 +1,37 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FortitudeViolation, Rule};
+use ruff_diagnostics::Violation;
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
+/// ## What does it do?
+/// Checks for old style array literals
+///
+/// ## Why is this bad?
+/// Fortran 2003 introduced a shorter syntax for array literals: `[...]`. While the
+/// older style, `(/.../)`, is still valid, the F2003 style is shorter and easier to
+/// match.
+#[violation]
 pub struct OldStyleArrayLiteral {}
+
+impl Violation for OldStyleArrayLiteral {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        format!("Array literal uses old-style syntax: prefer `[...]`")
+    }
+}
 
 impl Rule for OldStyleArrayLiteral {
     fn new(_settings: &Settings) -> Self {
         Self {}
     }
-
-    fn explain(&self) -> &'static str {
-        "
-        Fortran 2003 introduced a shorter syntax for array literals: `[...]`. While the
-        older style, `(/.../)`, is still valid, the F2003 style is shorter and easier to
-        match.
-        "
-    }
 }
-
 impl ASTRule for OldStyleArrayLiteral {
     fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if node.to_text(src.source_text())?.starts_with("(/") {
-            let msg = "Array literal uses old-style syntax: prefer `[...]`";
-            return some_vec!(FortitudeViolation::from_node(msg, node));
+            return some_vec!(FortitudeViolation::from_node(Self {}.message(), node));
         }
         None
     }
@@ -69,7 +76,7 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col)| {
             FortitudeViolation::from_start_end_line_col(
-                "Array literal uses old-style syntax: prefer `[...]`",
+                OldStyleArrayLiteral{}.message(),
                 &source,
                 *start_line,
                 *start_col,
