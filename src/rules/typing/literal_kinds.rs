@@ -1,6 +1,6 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -73,7 +73,7 @@ impl Rule for LiteralKind {
 }
 
 impl ASTRule for LiteralKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Deal with characters
@@ -89,7 +89,7 @@ impl ASTRule for LiteralKind {
             "{dtype} kind set with number literal '{}', use 'iso_fortran_env' parameter",
             literal_value.to_text(src)?
         );
-        some_vec![Violation::from_node(msg, &literal_value)]
+        some_vec![FortitudeViolation::from_node(msg, &literal_value)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -160,7 +160,7 @@ impl Rule for LiteralKindSuffix {
 }
 
 impl ASTRule for LiteralKindSuffix {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
@@ -171,7 +171,7 @@ impl ASTRule for LiteralKindSuffix {
             node.to_text(src)?,
             &kind.to_text(src)?,
         );
-        some_vec![Violation::from_node(msg, &kind)]
+        some_vec![FortitudeViolation::from_node(msg, &kind)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -216,7 +216,7 @@ mod tests {
             end function
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (1, 8, 1, 9, "integer", 8),
             (3, 15, 3, 16, "integer", 2),
             (5, 15, 5, 16, "logical", 4),
@@ -226,7 +226,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, kind, literal)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("{kind} kind set with number literal '{literal}', use 'iso_fortran_env' parameter"),
                 &source,
                 *start_line,
@@ -255,13 +255,13 @@ mod tests {
             real(sp), parameter :: x5 = 2.468_sp
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (3, 37, 3, 38, "1.234567_4", "4"),
             (6, 34, 6, 35, "9.876_8", "8"),
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, num, kind)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("'{num}' has literal suffix '{kind}', use 'iso_fortran_env' parameter",),
                 &source,
                 *start_line,

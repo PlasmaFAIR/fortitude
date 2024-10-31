@@ -68,14 +68,14 @@ pub enum ViolationPosition {
 // line number or column, it is recommended to use the `violation!` macro to create
 // these, or the `from_node()` function when creating them from `tree_sitter` queries.
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct Violation {
+pub struct FortitudeViolation {
     /// Description of the error.
     message: String,
     /// The location at which the error was detected.
     range: ViolationPosition,
 }
 
-impl Violation {
+impl FortitudeViolation {
     pub fn new<T: AsRef<str>>(message: T, range: ViolationPosition) -> Self {
         Self {
             message: String::from(message.as_ref()),
@@ -84,7 +84,7 @@ impl Violation {
     }
 
     pub fn from_node<T: AsRef<str>>(message: T, node: &tree_sitter::Node) -> Self {
-        Violation::new(
+        FortitudeViolation::new(
             message,
             ViolationPosition::Range(TextRange::new(
                 TextSize::try_from(node.start_byte()).unwrap(),
@@ -107,7 +107,7 @@ impl Violation {
         let start_offset = start_line_offset + TextSize::try_from(start_col).unwrap();
         let end_line_offset = source_code.line_start(OneIndexed::from_zero_indexed(end_line));
         let end_offset = end_line_offset + TextSize::try_from(end_col).unwrap();
-        Violation::new(
+        FortitudeViolation::new(
             message,
             ViolationPosition::Range(TextRange::new(start_offset, end_offset)),
         )
@@ -125,7 +125,7 @@ impl Violation {
 #[macro_export]
 macro_rules! violation {
     ($msg:expr) => {
-        $crate::Violation::new($msg, $crate::ViolationPosition::None)
+        $crate::FortitudeViolation::new($msg, $crate::ViolationPosition::None)
     };
 }
 
@@ -145,23 +145,23 @@ pub trait Rule {
 
 /// Implemented by rules that act directly on the file path.
 pub trait PathRule: Rule {
-    fn check(&self, path: &Path) -> Option<Violation>;
+    fn check(&self, path: &Path) -> Option<FortitudeViolation>;
 }
 
 /// Implemented by rules that analyse lines of code directly, using regex or otherwise.
 pub trait TextRule: Rule {
-    fn check(&self, source: &SourceFile) -> Vec<Violation>;
+    fn check(&self, source: &SourceFile) -> Vec<FortitudeViolation>;
 }
 
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait ASTRule: Rule {
-    fn check(&self, node: &tree_sitter::Node, source: &SourceFile) -> Option<Vec<Violation>>;
+    fn check(&self, node: &tree_sitter::Node, source: &SourceFile) -> Option<Vec<FortitudeViolation>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints(&self) -> Vec<&'static str>;
 
     /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(&self, source: &SourceFile) -> anyhow::Result<Vec<Violation>> {
+    fn apply(&self, source: &SourceFile) -> anyhow::Result<Vec<FortitudeViolation>> {
         let entrypoints = self.entrypoints();
         Ok(parse(source.source_text())?
             .root_node()
@@ -178,17 +178,17 @@ pub trait ASTRule: Rule {
 
 /// Reports of each violation. They are pretty-printable and sortable.
 #[derive(Eq)]
-pub struct Diagnostic<'a> {
+pub struct FortitudeDiagnostic<'a> {
     /// The file where an error was reported.
     file: &'a SourceFile,
     /// The rule code that was violated, expressed as a string.
     code: String,
     /// The specific violation detected
-    violation: Violation,
+    violation: FortitudeViolation,
 }
 
-impl<'a> Diagnostic<'a> {
-    pub fn new<S>(file: &'a SourceFile, code: S, violation: &Violation) -> Self
+impl<'a> FortitudeDiagnostic<'a> {
+    pub fn new<S>(file: &'a SourceFile, code: S, violation: &FortitudeViolation) -> Self
     where
         S: AsRef<str>,
     {
@@ -212,25 +212,25 @@ impl<'a> Diagnostic<'a> {
     }
 }
 
-impl<'a> Ord for Diagnostic<'a> {
+impl<'a> Ord for FortitudeDiagnostic<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.orderable().cmp(&other.orderable())
     }
 }
 
-impl<'a> PartialOrd for Diagnostic<'a> {
+impl<'a> PartialOrd for FortitudeDiagnostic<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<'a> PartialEq for Diagnostic<'a> {
+impl<'a> PartialEq for FortitudeDiagnostic<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.orderable() == other.orderable()
     }
 }
 
-impl<'a> fmt::Display for Diagnostic<'a> {
+impl<'a> fmt::Display for FortitudeDiagnostic<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let path = self.file.name().bold();
         let code = self.code.bold().bright_red();
@@ -247,7 +247,7 @@ impl<'a> fmt::Display for Diagnostic<'a> {
 }
 
 fn format_violation(
-    diagnostic: &Diagnostic,
+    diagnostic: &FortitudeDiagnostic,
     f: &mut fmt::Formatter,
     range: &TextRange,
     message: &str,

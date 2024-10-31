@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{some_vec, ASTRule, Rule, Violation};
+use crate::{some_vec, ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -26,8 +26,8 @@ impl Rule for SyntaxError {
 }
 
 impl ASTRule for SyntaxError {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
-        some_vec![Violation::from_node("syntax_error", node)]
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+        some_vec![FortitudeViolation::from_node("syntax_error", node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

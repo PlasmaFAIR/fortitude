@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 /// Defines rules to avoid the 'double precision' and 'double complex' types.
@@ -44,10 +44,10 @@ impl Rule for DoublePrecision {
 }
 
 impl ASTRule for DoublePrecision {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let txt = node.to_text(src.source_text())?.to_lowercase();
         if let Some(msg) = double_precision_err_msg(txt.as_str()) {
-            return some_vec![Violation::from_node(msg.as_str(), node)];
+            return some_vec![FortitudeViolation::from_node(msg.as_str(), node)];
         }
         None
     }
@@ -85,7 +85,7 @@ mod tests {
             end function
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (1, 0, 1, 16, "double precision"),
             (2, 2, 2, 18, "double precision"),
             (7, 2, 7, 18, "double precision"),
@@ -95,7 +95,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, kind)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 double_precision_err_msg(kind).unwrap(),
                 &source,
                 *start_line,

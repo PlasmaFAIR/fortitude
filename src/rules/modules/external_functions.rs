@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -23,14 +23,14 @@ impl Rule for ExternalFunction {
 }
 
 impl ASTRule for ExternalFunction {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if node.parent()?.kind() == "translation_unit" {
             let msg = format!(
                 "{} not contained within (sub)module or program",
                 node.kind()
             );
             let procedure_stmt = node.child(0)?;
-            return some_vec![Violation::from_node(msg, &procedure_stmt)];
+            return some_vec![FortitudeViolation::from_node(msg, &procedure_stmt)];
         }
         None
     }
@@ -61,10 +61,10 @@ mod tests {
             end subroutine
             ",
         );
-        let expected: Vec<Violation> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
+        let expected: Vec<FortitudeViolation> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
-                Violation::from_start_end_line_col(
+                FortitudeViolation::from_start_end_line_col(
                     format!("{kind} not contained within (sub)module or program"),
                     &source,
                     *start_line,
@@ -99,7 +99,7 @@ mod tests {
             end module
             ",
         );
-        let expected: Vec<Violation> = vec![];
+        let expected: Vec<FortitudeViolation> = vec![];
         let rule = ExternalFunction::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);

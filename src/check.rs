@@ -6,7 +6,7 @@ use crate::rules::{
 };
 use crate::settings::Settings;
 use crate::violation;
-use crate::{Diagnostic, Violation};
+use crate::{FortitudeDiagnostic, FortitudeViolation};
 use anyhow::Result;
 use colored::Colorize;
 use itertools::{chain, join};
@@ -76,7 +76,7 @@ fn check_file(
     ast_entrypoints: &ASTEntryPointMap,
     path: &Path,
     file: &SourceFile,
-) -> anyhow::Result<Vec<(String, Violation)>> {
+) -> anyhow::Result<Vec<(String, FortitudeViolation)>> {
     // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     let mut violations = Vec::new();
 
@@ -152,7 +152,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                     Ok(source) => source,
                     Err(error) => {
                         let violation = violation!(format!("Error opening file: {error}"));
-                        let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                        let diagnostic = FortitudeDiagnostic::new(&empty_file, "E000", &violation);
                         println!("{diagnostic}");
                         total_errors += 1;
                         continue;
@@ -163,9 +163,9 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
 
                 match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
                     Ok(violations) => {
-                        let mut diagnostics: Vec<Diagnostic> = violations
+                        let mut diagnostics: Vec<FortitudeDiagnostic> = violations
                             .into_iter()
-                            .map(|(c, v)| Diagnostic::new(&file, c, &v))
+                            .map(|(c, v)| FortitudeDiagnostic::new(&file, c, &v))
                             .collect();
                         if !diagnostics.is_empty() {
                             diagnostics.sort_unstable();
@@ -175,7 +175,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                     }
                     Err(msg) => {
                         let violation = violation!(format!("Failed to process: {msg}"));
-                        let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                        let diagnostic = FortitudeDiagnostic::new(&empty_file, "E000", &violation);
                         println!("{diagnostic}");
                         total_errors += 1;
                     }

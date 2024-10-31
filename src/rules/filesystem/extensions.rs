@@ -1,6 +1,6 @@
 use crate::settings::Settings;
 use crate::violation;
-use crate::{PathRule, Rule, Violation};
+use crate::{PathRule, Rule, FortitudeViolation};
 use std::path::Path;
 /// Defines rule that enforces use of standard file extensions.
 
@@ -21,7 +21,7 @@ impl Rule for NonStandardFileExtension {
 }
 
 impl PathRule for NonStandardFileExtension {
-    fn check(&self, path: &Path) -> Option<Violation> {
+    fn check(&self, path: &Path) -> Option<FortitudeViolation> {
         let msg: &str = "file extension should be '.f90' or '.F90'";
         match path.extension() {
             Some(ext) => {

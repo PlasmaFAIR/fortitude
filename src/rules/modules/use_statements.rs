@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -36,10 +36,10 @@ impl Rule for UseAll {
 }
 
 impl ASTRule for UseAll {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if node.child_with_name("included_items").is_none() {
             let msg = "'use' statement missing 'only' clause";
-            return some_vec![Violation::from_node(msg, node)];
+            return some_vec![FortitudeViolation::from_node(msg, node)];
         }
         None
     }
@@ -65,7 +65,7 @@ mod tests {
             end module
             ",
         );
-        let expected = vec![Violation::from_start_end_line_col(
+        let expected = vec![FortitudeViolation::from_start_end_line_col(
             "'use' statement missing 'only' clause",
             &source,
             3,

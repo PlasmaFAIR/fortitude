@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 /// Defines rules that require the user to explicitly specify the kinds of any reals.
@@ -21,7 +21,7 @@ impl Rule for ImplicitRealKind {
 }
 
 impl ASTRule for ImplicitRealKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let dtype = node.child(0)?.to_text(src.source_text())?.to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
@@ -33,7 +33,7 @@ impl ASTRule for ImplicitRealKind {
         }
 
         let msg = format!("{dtype} has implicit kind");
-        some_vec![Violation::from_node(msg, node)]
+        some_vec![FortitudeViolation::from_node(msg, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -63,14 +63,14 @@ mod tests {
             ",
         );
 
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (1, 0, 1, 4, "real"),
             (2, 2, 2, 6, "real"),
             (5, 2, 5, 9, "complex"),
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, dtype)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("{dtype} has implicit kind"),
                 &source,
                 *start_line,

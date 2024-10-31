@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{Rule, TextRule, Violation};
+use crate::{Rule, TextRule, FortitudeViolation};
 use lazy_regex::regex_is_match;
 use ruff_source_file::SourceFile;
 /// Defines rules that govern line length.
@@ -36,7 +36,7 @@ impl Rule for LineTooLong {
 }
 
 impl TextRule for LineTooLong {
-    fn check(&self, source: &SourceFile) -> Vec<Violation> {
+    fn check(&self, source: &SourceFile) -> Vec<FortitudeViolation> {
         let mut violations = Vec::new();
         for (idx, line) in source.source_text().split('\n').enumerate() {
             let len = line.len();
@@ -51,7 +51,7 @@ impl TextRule for LineTooLong {
                     "line length of {}, exceeds maximum {}",
                     len, self.line_length
                 );
-                violations.push(Violation::from_start_end_line_col(
+                violations.push(FortitudeViolation::from_start_end_line_col(
                     msg,
                     source,
                     idx,
@@ -86,10 +86,10 @@ mod tests {
 
         let line_length = 20;
         let short_line_settings = Settings { line_length };
-        let expected: Vec<Violation> = [(2, line_length, 2, 68, 68), (4, line_length, 4, 72, 72)]
+        let expected: Vec<FortitudeViolation> = [(2, line_length, 2, 68, 68), (4, line_length, 4, 72, 72)]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, length)| {
-                Violation::from_start_end_line_col(
+                FortitudeViolation::from_start_end_line_col(
                     format!("line length of {length}, exceeds maximum {line_length}"),
                     &source,
                     *start_line,

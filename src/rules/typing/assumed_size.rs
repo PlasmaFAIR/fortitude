@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use itertools::Itertools;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -51,7 +51,7 @@ impl Rule for AssumedSize {
 }
 
 impl ASTRule for AssumedSize {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -83,7 +83,7 @@ impl ASTRule for AssumedSize {
             let identifier = sized_decl.child_with_name("identifier")?;
             let name = identifier.to_text(src)?;
             let msg = format!("'{name}' has assumed size");
-            return some_vec![Violation::from_node(msg, node)];
+            return some_vec![FortitudeViolation::from_node(msg, node)];
         }
 
         // Collect things that look like `dimension(*)` -- this
@@ -98,7 +98,7 @@ impl ASTRule for AssumedSize {
                 }?;
                 identifier.to_text(src)
             })
-            .map(|name| Violation::from_node(format!("'{name}' has assumed size"), node))
+            .map(|name| FortitudeViolation::from_node(format!("'{name}' has assumed size"), node))
             .collect_vec();
 
         Some(all_decls)
@@ -155,7 +155,7 @@ impl Rule for AssumedSizeCharacterIntent {
 }
 
 impl ASTRule for AssumedSizeCharacterIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
@@ -210,7 +210,7 @@ impl ASTRule for AssumedSizeCharacterIntent {
             .map(|name| {
                 let msg =
                     format!("character '{name}' has assumed size but does not have `intent(in)`");
-                Violation::from_node(msg, node)
+                FortitudeViolation::from_node(msg, node)
             })
             .collect_vec();
 
@@ -238,7 +238,7 @@ impl Rule for DeprecatedAssumedSizeCharacter {
 }
 
 impl ASTRule for DeprecatedAssumedSizeCharacter {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -267,7 +267,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
             })
             .map(|name| {
                 let msg = format!("character '{name}' uses deprecated syntax for assumed size");
-                Violation::from_node(msg, node)
+                FortitudeViolation::from_node(msg, node)
             })
             .collect_vec();
 
@@ -304,7 +304,7 @@ mod tests {
             end subroutine assumed_size_dimension
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (3, 27, 3, 28, "array"),
             (4, 27, 4, 28, "l"),
             (4, 36, 4, 37, "p"),
@@ -313,7 +313,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("'{variable}' has assumed size"),
                 &source,
                 *start_line,
@@ -355,7 +355,7 @@ mod tests {
             end program cases
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (3, 13, 3, 14, "autochar_glob"),
             (9, 14, 9, 15, "autochar_inout"),
             (11, 18, 11, 19, "autochar_out"),
@@ -363,7 +363,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("character '{variable}' has assumed size but does not have `intent(in)`"),
                 &source,
                 *start_line,
@@ -399,7 +399,7 @@ mod tests {
             end program cases
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (4, 14, 4, 15, "a"),
             (5, 13, 5, 14, "b"),
             (6, 13, 6, 14, "c"),
@@ -408,7 +408,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("character '{variable}' uses deprecated syntax for assumed size"),
                 &source,
                 *start_line,

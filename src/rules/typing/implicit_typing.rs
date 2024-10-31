@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -36,11 +36,11 @@ impl Rule for ImplicitTyping {
 }
 
 impl ASTRule for ImplicitTyping {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if !child_is_implicit_none(node) {
             let msg = format!("{} missing 'implicit none'", node.kind());
             let block_stmt = node.child(0)?;
-            return some_vec![Violation::from_node(msg, &block_stmt)];
+            return some_vec![FortitudeViolation::from_node(msg, &block_stmt)];
         }
         None
     }
@@ -66,12 +66,12 @@ impl Rule for InterfaceImplicitTyping {
 }
 
 impl ASTRule for InterfaceImplicitTyping {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
             let msg = format!("interface {} missing 'implicit none'", node.kind());
             let interface_stmt = node.child(0)?;
-            return some_vec![Violation::from_node(msg, &interface_stmt)];
+            return some_vec![FortitudeViolation::from_node(msg, &interface_stmt)];
         }
         None
     }
@@ -97,7 +97,7 @@ impl Rule for SuperfluousImplicitNone {
 }
 
 impl ASTRule for SuperfluousImplicitNone {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if !implicit_statement_is_none(node) {
             return None;
         }
@@ -109,7 +109,7 @@ impl ASTRule for SuperfluousImplicitNone {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
                         if child_is_implicit_none(&ancestor) {
                             let msg = format!("'implicit none' set on the enclosing {}", kind,);
-                            return some_vec![Violation::from_node(msg, node)];
+                            return some_vec![FortitudeViolation::from_node(msg, node)];
                         }
                     }
                     "interface" => {
@@ -148,10 +148,10 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = [(0, 1, 0, 17, "module"), (5, 0, 5, 18, "program")]
+        let expected: Vec<FortitudeViolation> = [(0, 1, 0, 17, "module"), (5, 0, 5, 18, "program")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
-                Violation::from_start_end_line_col(
+                FortitudeViolation::from_start_end_line_col(
                     format!("{kind} missing 'implicit none'"),
                     &source,
                     *start_line,
@@ -187,7 +187,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = vec![];
+        let expected: Vec<FortitudeViolation> = vec![];
         let rule = ImplicitTyping::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
@@ -218,10 +218,10 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
+        let expected: Vec<FortitudeViolation> = [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
-                Violation::from_start_end_line_col(
+                FortitudeViolation::from_start_end_line_col(
                     format!("interface {kind} missing 'implicit none'"),
                     &source,
                     *start_line,
@@ -263,7 +263,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = vec![];
+        let expected: Vec<FortitudeViolation> = vec![];
         let rule = InterfaceImplicitTyping::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
@@ -308,7 +308,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (5, 8, 5, 21, "module"),
             (10, 8, 10, 21, "module"),
             (23, 8, 23, 21, "program"),
@@ -316,7 +316,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, kind)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("'implicit none' set on the enclosing {kind}"),
                 &source,
                 *start_line,
@@ -374,7 +374,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = vec![];
+        let expected: Vec<FortitudeViolation> = vec![];
         let rule = SuperfluousImplicitNone::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);

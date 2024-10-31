@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use lazy_regex::regex_is_match;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -54,7 +54,7 @@ impl Rule for NoRealSuffix {
 }
 
 impl ASTRule for NoRealSuffix {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with a different
@@ -62,7 +62,7 @@ impl ASTRule for NoRealSuffix {
         let txt = node.to_text(src.source_text())?;
         if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
             let msg = format!("real literal {} missing kind suffix", txt);
-            return some_vec![Violation::from_node(msg, node)];
+            return some_vec![FortitudeViolation::from_node(msg, node)];
         }
         None
     }
@@ -98,7 +98,7 @@ mod tests {
 
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (3, 28, 3, 36, "1.234567"),
             (6, 28, 6, 33, "9.876"),
             (8, 28, 8, 30, "2."),
@@ -110,7 +110,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, num)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("real literal {num} missing kind suffix"),
                 &source,
                 *start_line,

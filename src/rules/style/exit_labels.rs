@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -30,7 +30,7 @@ impl Rule for MissingExitOrCycleLabel {
 }
 
 impl ASTRule for MissingExitOrCycleLabel {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Violation>> {
+    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         // Skip unlabelled loops
         let label = node
@@ -38,14 +38,14 @@ impl ASTRule for MissingExitOrCycleLabel {
             .to_text(src)?
             .trim_end_matches(':');
 
-        let violations: Vec<Violation> = node
+        let violations: Vec<FortitudeViolation> = node
             .named_descendants_except(["do_loop_statement"])
             .filter(|node| node.kind() == "keyword_statement")
             .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
                 let msg = format!("'{name}' statement in named 'do' loop missing label '{label}'");
-                Violation::from_node(msg, &stmt)
+                FortitudeViolation::from_node(msg, &stmt)
             })
             .collect();
 
@@ -113,7 +113,7 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (4, 6, 4, 10, "exit", "label1"),
             (9, 16, 9, 20, "exit", "label2"),
             (28, 18, 28, 23, "cycle", "inner"),
@@ -121,7 +121,7 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, stmt_kind, label)| {
-                Violation::from_start_end_line_col(
+                FortitudeViolation::from_start_end_line_col(
                     format!("'{stmt_kind}' statement in named 'do' loop missing label '{label}'"),
                     &source,
                     *start_line,

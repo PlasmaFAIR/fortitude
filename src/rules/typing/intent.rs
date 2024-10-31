@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -34,7 +34,7 @@ impl Rule for MissingIntent {
 }
 
 impl ASTRule for MissingIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         // Names of all the dummy arguments
         let parameters: Vec<&str> = node
@@ -92,9 +92,9 @@ impl ASTRule for MissingIntent {
                         let msg = format!(
                             "{procedure_kind} argument '{name}' missing 'intent' attribute"
                         );
-                        Violation::from_node(msg, &dummy)
+                        FortitudeViolation::from_node(msg, &dummy)
                     })
-                    .collect::<Vec<Violation>>()
+                    .collect::<Vec<FortitudeViolation>>()
             })
             .collect();
 
@@ -130,7 +130,7 @@ mod tests {
             end subroutine
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (3, 13, 3, 14, "function", "a"),
             (3, 16, 3, 20, "function", "c"),
             (8, 22, 8, 23, "subroutine", "d"),
@@ -138,7 +138,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, entity, arg)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("{entity} argument '{arg}' missing 'intent' attribute"),
                 &source,
                 *start_line,

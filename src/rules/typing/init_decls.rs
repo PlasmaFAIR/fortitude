@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -74,7 +74,7 @@ impl Rule for InitialisationInDeclaration {
 }
 
 impl ASTRule for InitialisationInDeclaration {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
@@ -96,7 +96,7 @@ impl ASTRule for InitialisationInDeclaration {
 
         let name = node.child_by_field_name("left")?.to_text(src)?;
         let msg = format!("'{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute");
-        some_vec![Violation::from_node(msg, node)]
+        some_vec![FortitudeViolation::from_node(msg, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -138,14 +138,14 @@ mod tests {
             end module test
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (10, 13, 10, 20, "foo"),
             (19, 18, 19, 25, "bar"),
             (19, 34, 19, 42, "zapp"),
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("'{variable}' is initialised in its declaration and has no explicit `save` or `parameter` attribute"),
                 &source,
                 *start_line,

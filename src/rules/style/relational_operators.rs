@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -33,13 +33,13 @@ impl Rule for DeprecatedRelationalOperator {
 }
 
 impl ASTRule for DeprecatedRelationalOperator {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let relation = node.child(1)?;
         let symbol = relation.to_text(src.source_text())?.to_lowercase();
         let new_symbol = map_relational_symbols(symbol.as_str())?;
         let msg =
             format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead");
-        some_vec![Violation::from_node(msg, &relation)]
+        some_vec![FortitudeViolation::from_node(msg, &relation)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -66,7 +66,7 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<Violation> =
+        let expected: Vec<FortitudeViolation> =
             [
                 (2, 8, 2, 12, ".gt.", ">"),
                 (3, 8, 3, 12, ".le.", "<="),
@@ -76,7 +76,7 @@ mod tests {
             .iter()
             .map(
                 |(start_line, start_col, end_line, end_col, symbol, new_symbol)| {
-                    Violation::from_start_end_line_col(
+                    FortitudeViolation::from_start_end_line_col(
                 format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead"),
                 &source,
                 *start_line,

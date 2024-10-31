@@ -1,6 +1,6 @@
 use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 /// Defines rules that discourage the use of the non-standard kind specifiers such as
@@ -27,7 +27,7 @@ impl Rule for StarKind {
 }
 
 impl ASTRule for StarKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Handle characters
@@ -47,7 +47,7 @@ impl ASTRule for StarKind {
         let kind = literal.to_text(src)?;
         // TODO: Better suggestion, rather than use integer literal
         let msg = format!("{dtype}{size} is non-standard, use {dtype}({kind})");
-        some_vec![Violation::from_node(msg, &kind_node)]
+        some_vec![FortitudeViolation::from_node(msg, &kind_node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -88,7 +88,7 @@ mod tests {
             ",
         );
 
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (1, 7, 1, 9, "integer*8", "integer(8)"),
             (3, 10, 3, 12, "integer*4", "integer(4)"),
             (4, 9, 4, 14, "logical*4", "logical(4)"),
@@ -98,7 +98,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, from, to)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 format!("{from} is non-standard, use {to}"),
                 &source,
                 *start_line,

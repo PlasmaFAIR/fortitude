@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -58,7 +58,7 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
 }
 
 impl ASTRule for UnnamedEndStatement {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Violation>> {
+    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<FortitudeViolation>> {
         // TODO Also check for optionally labelled constructs like 'do' or 'select'
 
         // If end node is named, move on.
@@ -79,7 +79,7 @@ impl ASTRule for UnnamedEndStatement {
             .child_with_name(name_kind)?
             .to_text(src.source_text())?;
         let msg = format!("end statement should read 'end {statement} {name}'");
-        some_vec![Violation::from_node(msg, node)]
+        some_vec![FortitudeViolation::from_node(msg, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -168,7 +168,7 @@ mod tests {
             end                             ! catch this
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (5, 2, 5, 32, "type", "mytype"),
             (9, 2, 9, 32, "subroutine", "mysub1"),
             (13, 0, 13, 32, "module", "mymod1"),
@@ -182,7 +182,7 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, statement, name)| {
-                Violation::from_start_end_line_col(
+                FortitudeViolation::from_start_end_line_col(
                     format!("end statement should read 'end {statement} {name}'"),
                     &source,
                     *start_line,

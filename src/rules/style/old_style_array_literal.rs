@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, Rule, FortitudeViolation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -21,10 +21,10 @@ impl Rule for OldStyleArrayLiteral {
 }
 
 impl ASTRule for OldStyleArrayLiteral {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if node.to_text(src.source_text())?.starts_with("(/") {
             let msg = "Array literal uses old-style syntax: prefer `[...]`";
-            return some_vec!(Violation::from_node(msg, node));
+            return some_vec!(FortitudeViolation::from_node(msg, node));
         }
         None
     }
@@ -60,7 +60,7 @@ mod tests {
              end program test
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<FortitudeViolation> = [
             (2, 20, 2, 31),
             (3, 20, 7, 4),
             (8, 17, 8, 28),
@@ -68,7 +68,7 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col)| {
-            Violation::from_start_end_line_col(
+            FortitudeViolation::from_start_end_line_col(
                 "Array literal uses old-style syntax: prefer `[...]`",
                 &source,
                 *start_line,
