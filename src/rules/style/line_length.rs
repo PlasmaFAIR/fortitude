@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{Rule, TextRule, FortitudeViolation};
+use crate::{FortitudeViolation, Rule, TextRule};
 use lazy_regex::regex_is_match;
 use ruff_source_file::SourceFile;
 /// Defines rules that govern line length.
@@ -86,19 +86,20 @@ mod tests {
 
         let line_length = 20;
         let short_line_settings = Settings { line_length };
-        let expected: Vec<FortitudeViolation> = [(2, line_length, 2, 68, 68), (4, line_length, 4, 72, 72)]
-            .iter()
-            .map(|(start_line, start_col, end_line, end_col, length)| {
-                FortitudeViolation::from_start_end_line_col(
-                    format!("line length of {length}, exceeds maximum {line_length}"),
-                    &source,
-                    *start_line,
-                    *start_col,
-                    *end_line,
-                    *end_col,
-                )
-            })
-            .collect();
+        let expected: Vec<FortitudeViolation> =
+            [(2, line_length, 2, 68, 68), (4, line_length, 4, 72, 72)]
+                .iter()
+                .map(|(start_line, start_col, end_line, end_col, length)| {
+                    FortitudeViolation::from_start_end_line_col(
+                        format!("line length of {length}, exceeds maximum {line_length}"),
+                        &source,
+                        *start_line,
+                        *start_col,
+                        *end_line,
+                        *end_col,
+                    )
+                })
+                .collect();
         let rule = LineTooLong::new(&short_line_settings);
         let actual = rule.check(&source);
         assert_eq!(actual, expected);

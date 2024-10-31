@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{PathRule, Rule, FortitudeViolation};
+use crate::{FortitudeViolation, PathRule, Rule};
 use std::path::Path;
 /// Defines rule that enforces use of standard file extensions.
 

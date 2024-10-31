@@ -155,7 +155,11 @@ pub trait TextRule: Rule {
 
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait ASTRule: Rule {
-    fn check(&self, node: &tree_sitter::Node, source: &SourceFile) -> Option<Vec<FortitudeViolation>>;
+    fn check(
+        &self,
+        node: &tree_sitter::Node,
+        source: &SourceFile,
+    ) -> Option<Vec<FortitudeViolation>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints(&self) -> Vec<&'static str>;

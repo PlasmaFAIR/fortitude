@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, FortitudeViolation};
+use crate::{ASTRule, FortitudeViolation, Rule};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -61,19 +61,20 @@ mod tests {
             end subroutine
             ",
         );
-        let expected: Vec<FortitudeViolation> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
-            .iter()
-            .map(|(start_line, start_col, end_line, end_col, kind)| {
-                FortitudeViolation::from_start_end_line_col(
-                    format!("{kind} not contained within (sub)module or program"),
-                    &source,
-                    *start_line,
-                    *start_col,
-                    *end_line,
-                    *end_col,
-                )
-            })
-            .collect();
+        let expected: Vec<FortitudeViolation> =
+            [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
+                .iter()
+                .map(|(start_line, start_col, end_line, end_col, kind)| {
+                    FortitudeViolation::from_start_end_line_col(
+                        format!("{kind} not contained within (sub)module or program"),
+                        &source,
+                        *start_line,
+                        *start_col,
+                        *end_line,
+                        *end_col,
+                    )
+                })
+                .collect();
         let rule = ExternalFunction::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);

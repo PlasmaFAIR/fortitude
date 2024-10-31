@@ -1,6 +1,6 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, FortitudeViolation};
+use crate::{ASTRule, FortitudeViolation, Rule};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 

@@ -1,7 +1,7 @@
 use ruff_source_file::SourceFile;
 
 use crate::settings::Settings;
-use crate::{Rule, TextRule, FortitudeViolation};
+use crate::{FortitudeViolation, Rule, TextRule};
 /// Defines rules that enforce widely accepted whitespace rules.
 
 pub struct TrailingWhitespace {}
@@ -64,19 +64,20 @@ end program test
 ";
         let file = SourceFileBuilder::new("test", source).finish();
 
-        let expected: Vec<FortitudeViolation> = [(0, 13, 0, 15), (3, 23, 3, 24), (7, 3, 7, 7), (8, 0, 8, 3)]
-            .iter()
-            .map(|(start_line, start_col, end_line, end_col)| {
-                FortitudeViolation::from_start_end_line_col(
-                    "trailing whitespace",
-                    &file,
-                    *start_line,
-                    *start_col,
-                    *end_line,
-                    *end_col,
-                )
-            })
-            .collect();
+        let expected: Vec<FortitudeViolation> =
+            [(0, 13, 0, 15), (3, 23, 3, 24), (7, 3, 7, 7), (8, 0, 8, 3)]
+                .iter()
+                .map(|(start_line, start_col, end_line, end_col)| {
+                    FortitudeViolation::from_start_end_line_col(
+                        "trailing whitespace",
+                        &file,
+                        *start_line,
+                        *start_col,
+                        *end_line,
+                        *end_col,
+                    )
+                })
+                .collect();
         let rule = TrailingWhitespace::new(&default_settings());
         let actual = rule.check(&file);
         assert_eq!(actual, expected);

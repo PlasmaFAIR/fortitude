@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{some_vec, ASTRule, Rule, FortitudeViolation};
+use crate::{some_vec, ASTRule, FortitudeViolation, Rule};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 

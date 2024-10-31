@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, FortitudeViolation};
+use crate::{ASTRule, FortitudeViolation, Rule};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -218,19 +218,20 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<FortitudeViolation> = [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
-            .iter()
-            .map(|(start_line, start_col, end_line, end_col, kind)| {
-                FortitudeViolation::from_start_end_line_col(
-                    format!("interface {kind} missing 'implicit none'"),
-                    &source,
-                    *start_line,
-                    *start_col,
-                    *end_line,
-                    *end_col,
-                )
-            })
-            .collect();
+        let expected: Vec<FortitudeViolation> =
+            [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
+                .iter()
+                .map(|(start_line, start_col, end_line, end_col, kind)| {
+                    FortitudeViolation::from_start_end_line_col(
+                        format!("interface {kind} missing 'implicit none'"),
+                        &source,
+                        *start_line,
+                        *start_col,
+                        *end_line,
+                        *end_col,
+                    )
+                })
+                .collect();
         let rule = InterfaceImplicitTyping::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
