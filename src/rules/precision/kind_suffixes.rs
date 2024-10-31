@@ -10,34 +10,34 @@ use tree_sitter::Node;
 /// Defines rule to ensure real precision is explicit, as this avoids accidental loss of precision.
 /// Floating point literals use the default 'real' kind unless given an explicit
 /// kind suffix. This can cause surprising loss of precision:
-/// 
+///
 /// ```fortran
 /// use, intrinsic :: iso_fortran_env, only: dp => real64
-/// 
+///
 /// real(dp), parameter :: pi_1 = 3.14159265358979
 /// real(dp), parameter :: pi_2 = 3.14159265358979_dp
-/// 
-/// print *, pi_1  ! Gives: 3.1415927410125732 
+///
+/// print *, pi_1  ! Gives: 3.1415927410125732
 /// print *, pi_2  ! Gives: 3.1415926535897900
 /// ```
-/// 
+///
 /// There are many cases where the difference in precision doesn't matter, such
 /// as the following operations:
-/// 
+///
 /// ```fortran
 /// real(dp) :: x, y
-/// 
+///
 /// x = 1.0
 /// x = 10.0 * y
 /// ```
-/// 
+///
 /// However, even for 'nice' numbers, it's possible to accidentally lose
 /// precision in surprising ways:
-/// 
+///
 /// ```fortran
 /// x = y * sqrt(2.0)
 /// ```
-/// 
+///
 /// Ideally this rule should check how the number is used in a local expression
 /// and determine whether precision loss is a real risk, but in its current
 /// implementation it instead requires all real literals to have an explicit
@@ -70,14 +70,14 @@ impl ASTRule for NoRealSuffix {
         // Exponentiation with d or D are ignored, and should be handled with a different
         // rule.
         let txt = node.to_text(src.source_text())?;
-        if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
-            let msg = NoRealSuffix {
-                literal: txt.to_string(),
-            }
-            .message();
-            return some_vec![FortitudeViolation::from_node(msg, node)];
+        if !regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
+            return None;
         }
-        None
+        let literal = txt.to_string();
+        some_vec![FortitudeViolation::from_node(
+            NoRealSuffix { literal },
+            node
+        )]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

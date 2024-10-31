@@ -57,12 +57,13 @@ impl ASTRule for MissingExitOrCycleLabel {
             .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
-                let msg = Self {
-                    name: name.to_string(),
-                    label: label.to_string(),
-                }
-                .message();
-                FortitudeViolation::from_node(msg, &stmt)
+                FortitudeViolation::from_node(
+                    Self {
+                        name: name.to_string(),
+                        label: label.to_string(),
+                    },
+                    &stmt,
+                )
             })
             .collect();
 

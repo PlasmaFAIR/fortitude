@@ -34,7 +34,7 @@ impl Rule for SyntaxError {
 
 impl ASTRule for SyntaxError {
     fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
-        some_vec![FortitudeViolation::from_node("syntax_error", node)]
+        some_vec![FortitudeViolation::from_node(Self {}, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

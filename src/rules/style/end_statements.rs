@@ -93,13 +93,13 @@ impl ASTRule for UnnamedEndStatement {
         };
         let name = statement_node
             .child_with_name(name_kind)?
-            .to_text(src.source_text())?;
-        let msg = Self {
-            statement: statement.to_string(),
-            name: name.to_string(),
-        }
-        .message();
-        some_vec![FortitudeViolation::from_node(msg, node)]
+            .to_text(src.source_text())?
+            .to_string();
+        let statement = statement.to_string();
+        some_vec![FortitudeViolation::from_node(
+            Self { statement, name },
+            node
+        )]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

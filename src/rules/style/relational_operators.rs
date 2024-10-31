@@ -55,8 +55,10 @@ impl ASTRule for DeprecatedRelationalOperator {
             .to_lowercase()
             .to_string();
         let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
-        let msg = Self { symbol, new_symbol }.message();
-        some_vec![FortitudeViolation::from_node(msg, &relation)]
+        some_vec![FortitudeViolation::from_node(
+            Self { symbol, new_symbol },
+            &relation
+        )]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

@@ -46,8 +46,10 @@ impl ASTRule for ImplicitRealKind {
             return None;
         }
 
-        let msg = ImplicitRealKind { dtype }.message();
-        some_vec![FortitudeViolation::from_node(msg, node)]
+        some_vec![FortitudeViolation::from_node(
+            ImplicitRealKind { dtype },
+            node
+        )]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

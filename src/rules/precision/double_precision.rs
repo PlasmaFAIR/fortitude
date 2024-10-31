@@ -25,7 +25,7 @@ use tree_sitter::Node;
 /// `real(c_double)`, which may be found in the intrinsic module `iso_c_binding`.
 #[violation]
 pub struct DoublePrecision {
-    original: String,           // TODO: could be &'static str
+    original: String, // TODO: could be &'static str
     preferred: String,
 }
 
@@ -68,10 +68,10 @@ impl Rule for DoublePrecision {
 impl ASTRule for DoublePrecision {
     fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let txt = node.to_text(src.source_text())?.to_lowercase();
-        if let Some(msg) = DoublePrecision::try_new(txt) {
-            return some_vec![FortitudeViolation::from_node(msg.message(), node)];
-        }
-        None
+        some_vec![FortitudeViolation::from_node(
+            DoublePrecision::try_new(txt)?,
+            node
+        )]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

@@ -99,8 +99,10 @@ impl ASTRule for LiteralKind {
         let literal = literal_node.to_text(src)?.to_string();
         // TODO: Can we recommend the "correct" size? Although
         // non-standard, `real*8` _usually_ means `real(real64)`
-        let msg = Self { dtype, literal }.message();
-        some_vec![FortitudeViolation::from_node(msg, &literal_node)]
+        some_vec![FortitudeViolation::from_node(
+            Self { dtype, literal },
+            &literal_node
+        )]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -191,12 +193,12 @@ impl ASTRule for LiteralKindSuffix {
         if kind.kind() != "number_literal" {
             return None;
         }
-        let msg = Self {
-            literal: node.to_text(src)?.to_string(),
-            suffix: kind.to_text(src)?.to_string(),
-        }
-        .message();
-        some_vec![FortitudeViolation::from_node(msg, &kind)]
+        let literal = node.to_text(src)?.to_string();
+        let suffix = kind.to_text(src)?.to_string();
+        some_vec![FortitudeViolation::from_node(
+            Self { literal, suffix },
+            &kind
+        )]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

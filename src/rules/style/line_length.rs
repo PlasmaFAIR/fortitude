@@ -103,26 +103,28 @@ mod tests {
         let short_line_settings = Settings {
             line_length: max_length,
         };
-        let expected: Vec<FortitudeViolation> =
-            [(2, max_length, 2, 68, 68usize), (4, max_length, 4, 72, 72usize)]
-                .iter()
-                .map(
-                    |(start_line, start_col, end_line, end_col, actual_length)| {
-                        FortitudeViolation::from_start_end_line_col(
-                            LineTooLong {
-                                max_length,
-                                actual_length: *actual_length,
-                            }
-                            .message(),
-                            &source,
-                            *start_line,
-                            *start_col,
-                            *end_line,
-                            *end_col,
-                        )
-                    },
+        let expected: Vec<FortitudeViolation> = [
+            (2, max_length, 2, 68, 68usize),
+            (4, max_length, 4, 72, 72usize),
+        ]
+        .iter()
+        .map(
+            |(start_line, start_col, end_line, end_col, actual_length)| {
+                FortitudeViolation::from_start_end_line_col(
+                    LineTooLong {
+                        max_length,
+                        actual_length: *actual_length,
+                    }
+                    .message(),
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
                 )
-                .collect();
+            },
+        )
+        .collect();
         let rule = LineTooLong::new(&short_line_settings);
         let actual = rule.check(&source);
         assert_eq!(actual, expected);

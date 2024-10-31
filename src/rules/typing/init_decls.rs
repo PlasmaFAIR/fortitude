@@ -108,7 +108,7 @@ impl ASTRule for InitialisationInDeclaration {
         }
 
         let name = node.child_by_field_name("left")?.to_text(src)?.to_string();
-        some_vec![FortitudeViolation::from_node(Self { name }.message(), node)]
+        some_vec![FortitudeViolation::from_node(Self { name }, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

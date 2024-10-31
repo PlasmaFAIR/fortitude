@@ -7,12 +7,14 @@ mod settings;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
+use ruff_diagnostics::Violation;
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
+use tree_sitter::Node;
 
 // Rule categories and identity codes
 // ----------------------------------
@@ -90,9 +92,9 @@ impl FortitudeViolation {
         }
     }
 
-    pub fn from_node<T: AsRef<str>>(message: T, node: &tree_sitter::Node) -> Self {
-        FortitudeViolation::new(
-            message,
+    pub fn from_node(violation: impl Violation, node: &Node) -> Self {
+        Self::new(
+            violation.message(),
             ViolationPosition::Range(TextRange::new(
                 TextSize::try_from(node.start_byte()).unwrap(),
                 TextSize::try_from(node.end_byte()).unwrap(),
@@ -153,7 +155,7 @@ pub trait TextRule: Rule {
 pub trait ASTRule: Rule {
     fn check(
         &self,
-        node: &tree_sitter::Node,
+        node: &Node,
         source: &SourceFile,
     ) -> Option<Vec<FortitudeViolation>>;
 

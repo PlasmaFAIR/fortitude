@@ -37,12 +37,12 @@ impl Rule for ExternalFunction {
 impl ASTRule for ExternalFunction {
     fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if node.parent()?.kind() == "translation_unit" {
-            let msg = ExternalFunction {
-                procedure: node.kind().to_string(),
-            }
-            .message();
             let procedure_stmt = node.child(0)?;
-            return some_vec![FortitudeViolation::from_node(msg, &procedure_stmt)];
+            let procedure = node.kind().to_string();
+            return some_vec![FortitudeViolation::from_node(
+                ExternalFunction { procedure },
+                &procedure_stmt
+            )];
         }
         None
     }

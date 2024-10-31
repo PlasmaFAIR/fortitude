@@ -64,8 +64,10 @@ impl ASTRule for StarKind {
         let literal = kind_node.child_with_name("number_literal")?;
         let kind = literal.to_text(src)?.to_string();
         // TODO: Better suggestion, rather than use integer literal
-        let msg = Self { dtype, size, kind }.message();
-        some_vec![FortitudeViolation::from_node(msg, &kind_node)]
+        some_vec![FortitudeViolation::from_node(
+            Self { dtype, size, kind },
+            &kind_node
+        )]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

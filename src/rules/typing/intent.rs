@@ -103,12 +103,13 @@ impl ASTRule for MissingIntent {
                         None
                     })
                     .map(|(dummy, name)| {
-                        let msg = Self {
-                            entity: entity.to_string(),
-                            name: name.to_string(),
-                        }
-                        .message();
-                        FortitudeViolation::from_node(msg, &dummy)
+                        FortitudeViolation::from_node(
+                            Self {
+                                entity: entity.to_string(),
+                                name: name.to_string(),
+                            },
+                            &dummy,
+                        )
                     })
                     .collect::<Vec<FortitudeViolation>>()
             })
@@ -155,7 +156,11 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, entity, arg)| {
             FortitudeViolation::from_start_end_line_col(
-                MissingIntent{entity: entity.to_string(), name: arg.to_string()}.message(),
+                MissingIntent {
+                    entity: entity.to_string(),
+                    name: arg.to_string(),
+                }
+                .message(),
                 &source,
                 *start_line,
                 *start_col,

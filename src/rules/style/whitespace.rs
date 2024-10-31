@@ -34,7 +34,7 @@ impl TextRule for TrailingWhitespace {
         for (idx, line) in source.source_text().split('\n').enumerate() {
             if line.ends_with(&[' ', '\t']) {
                 violations.push(FortitudeViolation::from_start_end_line_col(
-                    Self{}.message(),
+                    Self {}.message(),
                     source,
                     idx,
                     line.trim_end().len(),
@@ -77,7 +77,7 @@ end program test
                 .iter()
                 .map(|(start_line, start_col, end_line, end_col)| {
                     FortitudeViolation::from_start_end_line_col(
-                        TrailingWhitespace{}.message(),
+                        TrailingWhitespace {}.message(),
                         &file,
                         *start_line,
                         *start_col,

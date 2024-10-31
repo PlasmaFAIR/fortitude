@@ -93,8 +93,7 @@ impl ASTRule for AssumedSize {
         {
             let identifier = sized_decl.child_with_name("identifier")?;
             let name = identifier.to_text(src)?.to_string();
-            let msg = Self { name }.message();
-            return some_vec![FortitudeViolation::from_node(msg, node)];
+            return some_vec![FortitudeViolation::from_node(Self { name }, node)];
         }
 
         // Collect things that look like `dimension(*)` -- this
@@ -110,7 +109,7 @@ impl ASTRule for AssumedSize {
                 identifier.to_text(src)
             })
             .map(|name| name.to_string())
-            .map(|name| FortitudeViolation::from_node(Self { name }.message(), node))
+            .map(|name| FortitudeViolation::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
@@ -231,10 +230,7 @@ impl ASTRule for AssumedSizeCharacterIntent {
                 identifier.to_text(src)
             })
             .map(|name| name.to_string())
-            .map(|name| {
-                let msg = Self { name }.message();
-                FortitudeViolation::from_node(msg, node)
-            })
+            .map(|name| FortitudeViolation::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
@@ -300,10 +296,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
                 identifier.to_text(src)
             })
             .map(|name| name.to_string())
-            .map(|name| {
-                let msg = Self { name }.message();
-                FortitudeViolation::from_node(msg, node)
-            })
+            .map(|name| FortitudeViolation::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)

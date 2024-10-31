@@ -31,7 +31,7 @@ impl Rule for OldStyleArrayLiteral {
 impl ASTRule for OldStyleArrayLiteral {
     fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if node.to_text(src.source_text())?.starts_with("(/") {
-            return some_vec!(FortitudeViolation::from_node(Self {}.message(), node));
+            return some_vec!(FortitudeViolation::from_node(Self {}, node));
         }
         None
     }
@@ -76,7 +76,7 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col)| {
             FortitudeViolation::from_start_end_line_col(
-                OldStyleArrayLiteral{}.message(),
+                OldStyleArrayLiteral {}.message(),
                 &source,
                 *start_line,
                 *start_col,

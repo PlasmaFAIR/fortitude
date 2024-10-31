@@ -46,7 +46,7 @@ impl Rule for UseAll {
 impl ASTRule for UseAll {
     fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if node.child_with_name("included_items").is_none() {
-            return some_vec![FortitudeViolation::from_node(self.message(), node)];
+            return some_vec![FortitudeViolation::from_node(UseAll {}, node)];
         }
         None
     }

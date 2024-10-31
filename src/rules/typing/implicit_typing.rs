@@ -51,12 +51,9 @@ impl Rule for ImplicitTyping {
 impl ASTRule for ImplicitTyping {
     fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         if !child_is_implicit_none(node) {
-            let msg = Self {
-                entity: node.kind().to_string(),
-            }
-            .message();
+            let entity = node.kind().to_string();
             let block_stmt = node.child(0)?;
-            return some_vec![FortitudeViolation::from_node(msg, &block_stmt)];
+            return some_vec![FortitudeViolation::from_node(Self { entity }, &block_stmt)];
         }
         None
     }
@@ -97,9 +94,12 @@ impl ASTRule for InterfaceImplicitTyping {
     fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
-            let msg = Self { name: node.kind().to_string() }.message();
+            let name = node.kind().to_string();
             let interface_stmt = node.child(0)?;
-            return some_vec![FortitudeViolation::from_node(msg, &interface_stmt)];
+            return some_vec![FortitudeViolation::from_node(
+                Self { name },
+                &interface_stmt
+            )];
         }
         None
     }
@@ -147,15 +147,11 @@ impl ASTRule for SuperfluousImplicitNone {
                 let kind = ancestor.kind();
                 match kind {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
-                        if child_is_implicit_none(&ancestor) {
-                            return some_vec![FortitudeViolation::from_node(
-                                Self {
-                                    entity: kind.to_string()
-                                }
-                                .message(),
-                                node
-                            )];
+                        if !child_is_implicit_none(&ancestor) {
+                            continue;
                         }
+                        let entity = kind.to_string();
+                        return some_vec![FortitudeViolation::from_node(Self { entity }, node)];
                     }
                     "interface" => {
                         break;
