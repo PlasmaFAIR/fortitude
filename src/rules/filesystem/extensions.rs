@@ -1,5 +1,4 @@
 use crate::settings::Settings;
-use crate::violation;
 use crate::{PathRule, Rule, FortitudeViolation};
 use std::path::Path;
 /// Defines rule that enforces use of standard file extensions.
@@ -29,10 +28,10 @@ impl PathRule for NonStandardFileExtension {
                 if ["f90", "F90"].iter().any(|&x| x == ext) {
                     None
                 } else {
-                    Some(violation!(msg))
+                    Some(FortitudeViolation::new_no_range(msg))
                 }
             }
-            None => Some(violation!(msg)),
+            None => Some(FortitudeViolation::new_no_range(msg)),
         }
     }
 }
@@ -41,7 +40,6 @@ impl PathRule for NonStandardFileExtension {
 mod tests {
     use super::*;
     use crate::settings::default_settings;
-    use crate::violation;
 
     #[test]
     fn test_bad_file_extension() {
@@ -49,7 +47,9 @@ mod tests {
         let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
             rule.check(path),
-            Some(violation!["file extension should be '.f90' or '.F90'"]),
+            Some(FortitudeViolation::new_no_range(
+                "file extension should be '.f90' or '.F90'"
+            )),
         );
     }
 
@@ -59,7 +59,9 @@ mod tests {
         let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
             rule.check(path),
-            Some(violation!["file extension should be '.f90' or '.F90'"]),
+            Some(FortitudeViolation::new_no_range(
+                "file extension should be '.f90' or '.F90'"
+            )),
         );
     }
 

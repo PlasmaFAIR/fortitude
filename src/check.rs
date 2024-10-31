@@ -5,7 +5,6 @@ use crate::rules::{
     ASTEntryPointMap, PathRuleMap, RuleSet, TextRuleMap,
 };
 use crate::settings::Settings;
-use crate::violation;
 use crate::{FortitudeDiagnostic, FortitudeViolation};
 use anyhow::Result;
 use colored::Colorize;
@@ -151,7 +150,9 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                 let source = match read_to_string(&path) {
                     Ok(source) => source,
                     Err(error) => {
-                        let violation = violation!(format!("Error opening file: {error}"));
+                        let violation = FortitudeViolation::new_no_range(format!(
+                            "Error opening file: {error}"
+                        ));
                         let diagnostic = FortitudeDiagnostic::new(&empty_file, "E000", &violation);
                         println!("{diagnostic}");
                         total_errors += 1;
@@ -174,7 +175,8 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         total_errors += diagnostics.len();
                     }
                     Err(msg) => {
-                        let violation = violation!(format!("Failed to process: {msg}"));
+                        let violation =
+                            FortitudeViolation::new_no_range(format!("Failed to process: {msg}"));
                         let diagnostic = FortitudeDiagnostic::new(&empty_file, "E000", &violation);
                         println!("{diagnostic}");
                         total_errors += 1;

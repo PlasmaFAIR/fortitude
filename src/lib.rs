@@ -83,6 +83,13 @@ impl FortitudeViolation {
         }
     }
 
+    pub fn new_no_range<T: AsRef<str>>(message: T) -> Self {
+        Self {
+            message: String::from(message.as_ref()),
+            range: ViolationPosition::None,
+        }
+    }
+
     pub fn from_node<T: AsRef<str>>(message: T, node: &tree_sitter::Node) -> Self {
         FortitudeViolation::new(
             message,
@@ -120,13 +127,6 @@ impl FortitudeViolation {
     pub fn range(&self) -> ViolationPosition {
         self.range
     }
-}
-
-#[macro_export]
-macro_rules! violation {
-    ($msg:expr) => {
-        $crate::FortitudeViolation::new($msg, $crate::ViolationPosition::None)
-    };
 }
 
 // Rule trait
