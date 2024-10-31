@@ -1,8 +1,8 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
+use crate::{ASTRule, FromTSNode, Rule};
 use lazy_regex::regex_is_match;
-use ruff_diagnostics::Violation;
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -64,7 +64,7 @@ impl Rule for NoRealSuffix {
 }
 
 impl ASTRule for NoRealSuffix {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with a different
@@ -74,10 +74,7 @@ impl ASTRule for NoRealSuffix {
             return None;
         }
         let literal = txt.to_string();
-        some_vec![FortitudeViolation::from_node(
-            NoRealSuffix { literal },
-            node
-        )]
+        some_vec![Diagnostic::from_node(NoRealSuffix { literal }, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -88,7 +85,7 @@ impl ASTRule for NoRealSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -111,7 +108,7 @@ mod tests {
 
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (3, 28, 3, 36, "1.234567"),
             (6, 28, 6, 33, "9.876"),
             (8, 28, 8, 30, "2."),
@@ -123,11 +120,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, num)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 NoRealSuffix {
                     literal: num.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,

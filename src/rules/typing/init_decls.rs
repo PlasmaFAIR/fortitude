@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -87,7 +87,7 @@ impl Rule for InitialisationInDeclaration {
 }
 
 impl ASTRule for InitialisationInDeclaration {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
@@ -108,7 +108,7 @@ impl ASTRule for InitialisationInDeclaration {
         }
 
         let name = node.child_by_field_name("left")?.to_text(src)?.to_string();
-        some_vec![FortitudeViolation::from_node(Self { name }, node)]
+        some_vec![Diagnostic::from_node(Self { name }, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -119,7 +119,7 @@ impl ASTRule for InitialisationInDeclaration {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -150,18 +150,17 @@ mod tests {
             end module test
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (10, 13, 10, 20, "foo"),
             (19, 18, 19, 25, "bar"),
             (19, 34, 19, 42, "zapp"),
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 InitialisationInDeclaration {
                     name: variable.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,

@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -49,11 +49,11 @@ impl Rule for ImplicitTyping {
     }
 }
 impl ASTRule for ImplicitTyping {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !child_is_implicit_none(node) {
             let entity = node.kind().to_string();
             let block_stmt = node.child(0)?;
-            return some_vec![FortitudeViolation::from_node(Self { entity }, &block_stmt)];
+            return some_vec![Diagnostic::from_node(Self { entity }, &block_stmt)];
         }
         None
     }
@@ -91,15 +91,12 @@ impl Rule for InterfaceImplicitTyping {
 }
 
 impl ASTRule for InterfaceImplicitTyping {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
             let name = node.kind().to_string();
             let interface_stmt = node.child(0)?;
-            return some_vec![FortitudeViolation::from_node(
-                Self { name },
-                &interface_stmt
-            )];
+            return some_vec![Diagnostic::from_node(Self { name }, &interface_stmt)];
         }
         None
     }
@@ -137,7 +134,7 @@ impl Rule for SuperfluousImplicitNone {
 }
 
 impl ASTRule for SuperfluousImplicitNone {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !implicit_statement_is_none(node) {
             return None;
         }
@@ -151,7 +148,7 @@ impl ASTRule for SuperfluousImplicitNone {
                             continue;
                         }
                         let entity = kind.to_string();
-                        return some_vec![FortitudeViolation::from_node(Self { entity }, node)];
+                        return some_vec![Diagnostic::from_node(Self { entity }, node)];
                     }
                     "interface" => {
                         break;
@@ -173,7 +170,7 @@ impl ASTRule for SuperfluousImplicitNone {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -189,14 +186,13 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<FortitudeViolation> = [(0, 1, 0, 17, "module"), (5, 0, 5, 18, "program")]
+        let expected: Vec<_> = [(0, 1, 0, 17, "module"), (5, 0, 5, 18, "program")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
-                FortitudeViolation::from_start_end_line_col(
+                Diagnostic::from_start_end_line_col(
                     ImplicitTyping {
                         entity: kind.to_string(),
-                    }
-                    .message(),
+                    },
                     &source,
                     *start_line,
                     *start_col,
@@ -231,7 +227,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<FortitudeViolation> = vec![];
+        let expected: Vec<Diagnostic> = vec![];
         let rule = ImplicitTyping::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
@@ -262,23 +258,21 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<FortitudeViolation> =
-            [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
-                .iter()
-                .map(|(start_line, start_col, end_line, end_col, kind)| {
-                    FortitudeViolation::from_start_end_line_col(
-                        InterfaceImplicitTyping {
-                            name: kind.to_string(),
-                        }
-                        .message(),
-                        &source,
-                        *start_line,
-                        *start_col,
-                        *end_line,
-                        *end_col,
-                    )
-                })
-                .collect();
+        let expected: Vec<_> = [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
+            .iter()
+            .map(|(start_line, start_col, end_line, end_col, kind)| {
+                Diagnostic::from_start_end_line_col(
+                    InterfaceImplicitTyping {
+                        name: kind.to_string(),
+                    },
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
+            })
+            .collect();
         let rule = InterfaceImplicitTyping::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
@@ -311,7 +305,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<FortitudeViolation> = vec![];
+        let expected: Vec<Diagnostic> = vec![];
         let rule = InterfaceImplicitTyping::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
@@ -356,7 +350,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (5, 8, 5, 21, "module"),
             (10, 8, 10, 21, "module"),
             (23, 8, 23, 21, "program"),
@@ -364,11 +358,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, kind)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 SuperfluousImplicitNone {
                     entity: kind.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -425,7 +418,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<FortitudeViolation> = vec![];
+        let expected: Vec<Diagnostic> = vec![];
         let rule = SuperfluousImplicitNone::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);

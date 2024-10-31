@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -43,7 +43,7 @@ impl Rule for MissingExitOrCycleLabel {
     }
 }
 impl ASTRule for MissingExitOrCycleLabel {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Skip unlabelled loops
         let label = node
@@ -51,13 +51,13 @@ impl ASTRule for MissingExitOrCycleLabel {
             .to_text(src)?
             .trim_end_matches(':');
 
-        let violations: Vec<FortitudeViolation> = node
+        let violations: Vec<Diagnostic> = node
             .named_descendants_except(["do_loop_statement"])
             .filter(|node| node.kind() == "keyword_statement")
             .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
-                FortitudeViolation::from_node(
+                Diagnostic::from_node(
                     Self {
                         name: name.to_string(),
                         label: label.to_string(),
@@ -78,7 +78,7 @@ impl ASTRule for MissingExitOrCycleLabel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -131,7 +131,7 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (4, 6, 4, 10, "exit", "label1"),
             (9, 16, 9, 20, "exit", "label2"),
             (28, 18, 28, 23, "cycle", "inner"),
@@ -139,12 +139,11 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, stmt_kind, label)| {
-                FortitudeViolation::from_start_end_line_col(
+                Diagnostic::from_start_end_line_col(
                     MissingExitOrCycleLabel {
                         name: stmt_kind.to_string(),
                         label: label.to_string(),
-                    }
-                    .message(),
+                    },
                     &source,
                     *start_line,
                     *start_col,

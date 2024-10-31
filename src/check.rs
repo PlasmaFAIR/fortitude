@@ -9,6 +9,7 @@ use crate::{FortitudeDiagnostic, FortitudeViolation};
 use anyhow::Result;
 use colored::Colorize;
 use itertools::{chain, join};
+use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -75,7 +76,7 @@ fn check_file(
     ast_entrypoints: &ASTEntryPointMap,
     path: &Path,
     file: &SourceFile,
-) -> anyhow::Result<Vec<(String, FortitudeViolation)>> {
+) -> anyhow::Result<Vec<(String, Diagnostic)>> {
     // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     let mut violations = Vec::new();
 
@@ -164,9 +165,9 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
 
                 match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
                     Ok(violations) => {
-                        let mut diagnostics: Vec<FortitudeDiagnostic> = violations
+                        let mut diagnostics: Vec<_> = violations
                             .into_iter()
-                            .map(|(c, v)| FortitudeDiagnostic::new(&file, c, &v))
+                            .map(|(c, v)| FortitudeDiagnostic::from_ruff(&file, c, &v))
                             .collect();
                         if !diagnostics.is_empty() {
                             diagnostics.sort_unstable();

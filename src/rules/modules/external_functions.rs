@@ -1,6 +1,6 @@
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -35,11 +35,11 @@ impl Rule for ExternalFunction {
 }
 
 impl ASTRule for ExternalFunction {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.parent()?.kind() == "translation_unit" {
             let procedure_stmt = node.child(0)?;
             let procedure = node.kind().to_string();
-            return some_vec![FortitudeViolation::from_node(
+            return some_vec![Diagnostic::from_node(
                 ExternalFunction { procedure },
                 &procedure_stmt
             )];
@@ -55,7 +55,7 @@ impl ASTRule for ExternalFunction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -73,24 +73,21 @@ mod tests {
             end subroutine
             ",
         );
-        let expected: Vec<FortitudeViolation> =
-            [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
-                .iter()
-                .map(|(start_line, start_col, end_line, end_col, kind)| {
-                    let msg = ExternalFunction {
+        let expected: Vec<_> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
+            .iter()
+            .map(|(start_line, start_col, end_line, end_col, kind)| {
+                Diagnostic::from_start_end_line_col(
+                    ExternalFunction {
                         procedure: kind.to_string(),
-                    }
-                    .message();
-                    FortitudeViolation::from_start_end_line_col(
-                        msg,
-                        &source,
-                        *start_line,
-                        *start_col,
-                        *end_line,
-                        *end_col,
-                    )
-                })
-                .collect();
+                    },
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
+            })
+            .collect();
         let rule = ExternalFunction::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);
@@ -116,7 +113,7 @@ mod tests {
             end module
             ",
         );
-        let expected: Vec<FortitudeViolation> = vec![];
+        let expected: Vec<Diagnostic> = vec![];
         let rule = ExternalFunction::new(&default_settings());
         let actual = rule.apply(&source)?;
         assert_eq!(actual, expected);

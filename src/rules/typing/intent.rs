@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -20,7 +20,7 @@ use tree_sitter::Node;
 ///
 /// Arguments with `intent(out)` are output variables, and their value on
 /// entry into the routine can be safely ignored.
-////
+///
 /// Finally, `intent(inout)` arguments can be both read and modified by the
 /// routine. If an `intent` is not specified, it will default to
 /// `intent(inout)`.
@@ -48,7 +48,7 @@ impl Rule for MissingIntent {
 }
 
 impl ASTRule for MissingIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Names of all the dummy arguments
         let parameters: Vec<&str> = node
@@ -103,7 +103,7 @@ impl ASTRule for MissingIntent {
                         None
                     })
                     .map(|(dummy, name)| {
-                        FortitudeViolation::from_node(
+                        Diagnostic::from_node(
                             Self {
                                 entity: entity.to_string(),
                                 name: name.to_string(),
@@ -111,7 +111,7 @@ impl ASTRule for MissingIntent {
                             &dummy,
                         )
                     })
-                    .collect::<Vec<FortitudeViolation>>()
+                    .collect::<Vec<Diagnostic>>()
             })
             .collect();
 
@@ -126,7 +126,7 @@ impl ASTRule for MissingIntent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -147,7 +147,7 @@ mod tests {
             end subroutine
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (3, 13, 3, 14, "function", "a"),
             (3, 16, 3, 20, "function", "c"),
             (8, 22, 8, 23, "subroutine", "d"),
@@ -155,12 +155,11 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, entity, arg)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 MissingIntent {
                     entity: entity.to_string(),
                     name: arg.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,

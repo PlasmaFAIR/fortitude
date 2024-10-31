@@ -1,7 +1,7 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -86,7 +86,7 @@ impl Rule for LiteralKind {
 }
 
 impl ASTRule for LiteralKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Deal with characters
@@ -99,7 +99,7 @@ impl ASTRule for LiteralKind {
         let literal = literal_node.to_text(src)?.to_string();
         // TODO: Can we recommend the "correct" size? Although
         // non-standard, `real*8` _usually_ means `real(real64)`
-        some_vec![FortitudeViolation::from_node(
+        some_vec![Diagnostic::from_node(
             Self { dtype, literal },
             &literal_node
         )]
@@ -187,7 +187,7 @@ impl Rule for LiteralKindSuffix {
 }
 
 impl ASTRule for LiteralKindSuffix {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
@@ -195,10 +195,7 @@ impl ASTRule for LiteralKindSuffix {
         }
         let literal = node.to_text(src)?.to_string();
         let suffix = kind.to_text(src)?.to_string();
-        some_vec![FortitudeViolation::from_node(
-            Self { literal, suffix },
-            &kind
-        )]
+        some_vec![Diagnostic::from_node(Self { literal, suffix }, &kind)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -209,7 +206,7 @@ impl ASTRule for LiteralKindSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -243,7 +240,7 @@ mod tests {
             end function
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (1, 8, 1, 9, "integer", 8),
             (3, 15, 3, 16, "integer", 2),
             (5, 15, 5, 16, "logical", 4),
@@ -254,12 +251,11 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, kind, literal)| {
-                FortitudeViolation::from_start_end_line_col(
+                Diagnostic::from_start_end_line_col(
                     LiteralKind {
                         dtype: kind.to_string(),
                         literal: literal.to_string(),
-                    }
-                    .message(),
+                    },
                     &source,
                     *start_line,
                     *start_col,
@@ -288,18 +284,17 @@ mod tests {
             real(sp), parameter :: x5 = 2.468_sp
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (3, 37, 3, 38, "1.234567_4", "4"),
             (6, 34, 6, 35, "9.876_8", "8"),
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, num, kind)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 LiteralKindSuffix {
                     literal: num.to_string(),
                     suffix: kind.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,

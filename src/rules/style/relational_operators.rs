@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -48,14 +48,14 @@ impl Rule for DeprecatedRelationalOperator {
     }
 }
 impl ASTRule for DeprecatedRelationalOperator {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
         let symbol = relation
             .to_text(src.source_text())?
             .to_lowercase()
             .to_string();
         let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
-        some_vec![FortitudeViolation::from_node(
+        some_vec![Diagnostic::from_node(
             Self { symbol, new_symbol },
             &relation
         )]
@@ -69,7 +69,7 @@ impl ASTRule for DeprecatedRelationalOperator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (2, 8, 2, 12, ".gt.", ">"),
             (3, 8, 3, 12, ".le.", "<="),
             (4, 7, 4, 11, ".eq.", "=="),
@@ -94,12 +94,11 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, symbol, new_symbol)| {
-                FortitudeViolation::from_start_end_line_col(
+                Diagnostic::from_start_end_line_col(
                     DeprecatedRelationalOperator {
                         symbol: symbol.to_string(),
                         new_symbol: new_symbol.to_string(),
-                    }
-                    .message(),
+                    },
                     &source,
                     *start_line,
                     *start_col,

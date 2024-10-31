@@ -7,7 +7,7 @@ mod settings;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
-use ruff_diagnostics::Violation;
+use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
@@ -78,13 +78,6 @@ pub struct FortitudeViolation {
 }
 
 impl FortitudeViolation {
-    pub fn new<T: AsRef<str>>(message: T, range: ViolationPosition) -> Self {
-        Self {
-            message: String::from(message.as_ref()),
-            range,
-        }
-    }
-
     pub fn new_no_range<T: AsRef<str>>(message: T) -> Self {
         Self {
             message: String::from(message.as_ref()),
@@ -92,19 +85,46 @@ impl FortitudeViolation {
         }
     }
 
-    pub fn from_node(violation: impl Violation, node: &Node) -> Self {
-        Self::new(
-            violation.message(),
-            ViolationPosition::Range(TextRange::new(
-                TextSize::try_from(node.start_byte()).unwrap(),
-                TextSize::try_from(node.end_byte()).unwrap(),
-            )),
-        )
+    pub fn message(&self) -> &str {
+        self.message.as_str()
     }
 
+    pub fn range(&self) -> ViolationPosition {
+        self.range
+    }
+}
+
+pub trait FromTSNode {
+    fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self;
+}
+
+impl FromTSNode for Diagnostic {
+    fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
+        Self::new(
+            violation,
+            TextRange::new(
+                TextSize::try_from(node.start_byte()).unwrap(),
+                TextSize::try_from(node.end_byte()).unwrap(),
+            ),
+        )
+    }
+}
+
+pub trait FromStartEndLineCol {
     /// Create new `Violation` from zero-index start/end line/column numbers
-    pub fn from_start_end_line_col<T: AsRef<str>>(
-        message: T,
+    fn from_start_end_line_col<T: Into<DiagnosticKind>>(
+        kind: T,
+        source: &SourceFile,
+        start_line: usize,
+        start_col: usize,
+        end_line: usize,
+        end_col: usize,
+    ) -> Self;
+}
+
+impl FromStartEndLineCol for Diagnostic {
+    fn from_start_end_line_col<T: Into<DiagnosticKind>>(
+        kind: T,
         source: &SourceFile,
         start_line: usize,
         start_col: usize,
@@ -116,18 +136,7 @@ impl FortitudeViolation {
         let start_offset = start_line_offset + TextSize::try_from(start_col).unwrap();
         let end_line_offset = source_code.line_start(OneIndexed::from_zero_indexed(end_line));
         let end_offset = end_line_offset + TextSize::try_from(end_col).unwrap();
-        FortitudeViolation::new(
-            message,
-            ViolationPosition::Range(TextRange::new(start_offset, end_offset)),
-        )
-    }
-
-    pub fn message(&self) -> &str {
-        self.message.as_str()
-    }
-
-    pub fn range(&self) -> ViolationPosition {
-        self.range
+        Diagnostic::new(kind, TextRange::new(start_offset, end_offset))
     }
 }
 
@@ -143,27 +152,23 @@ pub trait Rule {
 
 /// Implemented by rules that act directly on the file path.
 pub trait PathRule: Rule {
-    fn check(&self, path: &Path) -> Option<FortitudeViolation>;
+    fn check(&self, path: &Path) -> Option<Diagnostic>;
 }
 
 /// Implemented by rules that analyse lines of code directly, using regex or otherwise.
 pub trait TextRule: Rule {
-    fn check(&self, source: &SourceFile) -> Vec<FortitudeViolation>;
+    fn check(&self, source: &SourceFile) -> Vec<Diagnostic>;
 }
 
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait ASTRule: Rule {
-    fn check(
-        &self,
-        node: &Node,
-        source: &SourceFile,
-    ) -> Option<Vec<FortitudeViolation>>;
+    fn check(&self, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints(&self) -> Vec<&'static str>;
 
     /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(&self, source: &SourceFile) -> anyhow::Result<Vec<FortitudeViolation>> {
+    fn apply(&self, source: &SourceFile) -> anyhow::Result<Vec<Diagnostic>> {
         let entrypoints = self.entrypoints();
         Ok(parse(source.source_text())?
             .root_node()
@@ -198,6 +203,22 @@ impl<'a> FortitudeDiagnostic<'a> {
             file,
             code: code.as_ref().to_string(),
             violation: violation.clone(),
+        }
+    }
+
+    pub fn from_ruff<S: AsRef<str>>(
+        file: &'a SourceFile,
+        code: S,
+        diagnostic: &Diagnostic,
+    ) -> Self {
+        Self {
+            file,
+            code: code.as_ref().to_string(),
+            violation: FortitudeViolation {
+                message: diagnostic.kind.body.clone(),
+                // TODO: handle TextRange::default case for file extensions
+                range: ViolationPosition::Range(diagnostic.range),
+            },
         }
     }
 

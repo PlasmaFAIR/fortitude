@@ -1,7 +1,7 @@
 use crate::settings::Settings;
-use crate::{some_vec, ASTRule, FortitudeViolation, Rule};
+use crate::{some_vec, ASTRule, FromTSNode, Rule};
 
-use ruff_diagnostics::Violation;
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -33,8 +33,8 @@ impl Rule for SyntaxError {
 }
 
 impl ASTRule for SyntaxError {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
-        some_vec![FortitudeViolation::from_node(Self {}, node)]
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        some_vec![Diagnostic::from_node(Self {}, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {

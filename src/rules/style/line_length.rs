@@ -1,7 +1,7 @@
 use crate::settings::Settings;
-use crate::{FortitudeViolation, Rule, TextRule};
+use crate::{FromStartEndLineCol, Rule, TextRule};
 use lazy_regex::regex_is_match;
-use ruff_diagnostics::Violation;
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 /// Defines rules that govern line length.
@@ -49,8 +49,9 @@ impl Rule for LineTooLong {
         }
     }
 }
+
 impl TextRule for LineTooLong {
-    fn check(&self, source: &SourceFile) -> Vec<FortitudeViolation> {
+    fn check(&self, source: &SourceFile) -> Vec<Diagnostic> {
         let mut violations = Vec::new();
         for (idx, line) in source.source_text().split('\n').enumerate() {
             let actual_length = line.len();
@@ -61,13 +62,11 @@ impl TextRule for LineTooLong {
                 if regex_is_match!(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#, line) {
                     continue;
                 }
-                let msg = Self {
-                    max_length: self.max_length,
-                    actual_length,
-                }
-                .message();
-                violations.push(FortitudeViolation::from_start_end_line_col(
-                    msg,
+                violations.push(Diagnostic::from_start_end_line_col(
+                    Self {
+                        max_length: self.max_length,
+                        actual_length,
+                    },
                     source,
                     idx,
                     self.max_length,
@@ -103,19 +102,18 @@ mod tests {
         let short_line_settings = Settings {
             line_length: max_length,
         };
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<Diagnostic> = [
             (2, max_length, 2, 68, 68usize),
             (4, max_length, 4, 72, 72usize),
         ]
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, actual_length)| {
-                FortitudeViolation::from_start_end_line_col(
+                Diagnostic::from_start_end_line_col(
                     LineTooLong {
                         max_length,
                         actual_length: *actual_length,
-                    }
-                    .message(),
+                    },
                     &source,
                     *start_line,
                     *start_col,

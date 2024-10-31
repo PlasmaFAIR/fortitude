@@ -1,7 +1,7 @@
 use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -45,7 +45,7 @@ impl Rule for StarKind {
 }
 
 impl ASTRule for StarKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Handle characters
@@ -64,7 +64,7 @@ impl ASTRule for StarKind {
         let literal = kind_node.child_with_name("number_literal")?;
         let kind = literal.to_text(src)?.to_string();
         // TODO: Better suggestion, rather than use integer literal
-        some_vec![FortitudeViolation::from_node(
+        some_vec![Diagnostic::from_node(
             Self { dtype, size, kind },
             &kind_node
         )]
@@ -78,7 +78,7 @@ impl ASTRule for StarKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -108,7 +108,7 @@ mod tests {
             ",
         );
 
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (1, 7, 1, 9, "integer", "*8", "8"),
             (3, 10, 3, 12, "integer", "*4", "4"),
             (4, 9, 4, 14, "logical", "*4", "4"),
@@ -119,13 +119,12 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, dtype, size, kind)| {
-                FortitudeViolation::from_start_end_line_col(
+                Diagnostic::from_start_end_line_col(
                     StarKind {
                         dtype: dtype.to_string(),
                         size: size.to_string(),
                         kind: kind.to_string(),
-                    }
-                    .message(),
+                    },
                     &source,
                     *start_line,
                     *start_col,

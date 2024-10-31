@@ -1,8 +1,9 @@
-use ruff_diagnostics::Violation;
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
+use ruff_text_size::TextRange;
 
 use crate::settings::Settings;
-use crate::{FortitudeViolation, PathRule, Rule};
+use crate::{PathRule, Rule};
 use std::path::Path;
 
 /// ## What it does
@@ -29,17 +30,17 @@ impl Rule for NonStandardFileExtension {
 }
 
 impl PathRule for NonStandardFileExtension {
-    fn check(&self, path: &Path) -> Option<FortitudeViolation> {
+    fn check(&self, path: &Path) -> Option<Diagnostic> {
         match path.extension() {
             Some(ext) => {
                 // Must check like this as ext is an OsStr
                 if ["f90", "F90"].iter().any(|&x| x == ext) {
                     None
                 } else {
-                    Some(FortitudeViolation::new_no_range(self.message()))
+                    Some(Diagnostic::new(Self {}, TextRange::default()))
                 }
             }
-            None => Some(FortitudeViolation::new_no_range(self.message())),
+            None => Some(Diagnostic::new(Self {}, TextRange::default())),
         }
     }
 }
@@ -55,7 +56,10 @@ mod tests {
         let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
             rule.check(path),
-            Some(FortitudeViolation::new_no_range(rule.message())),
+            Some(Diagnostic::new(
+                NonStandardFileExtension {},
+                TextRange::default()
+            )),
         );
     }
 
@@ -65,7 +69,10 @@ mod tests {
         let rule = NonStandardFileExtension::new(&default_settings());
         assert_eq!(
             rule.check(path),
-            Some(FortitudeViolation::new_no_range(rule.message())),
+            Some(Diagnostic::new(
+                NonStandardFileExtension {},
+                TextRange::default()
+            )),
         );
     }
 

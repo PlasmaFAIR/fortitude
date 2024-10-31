@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -29,9 +29,9 @@ impl Rule for OldStyleArrayLiteral {
     }
 }
 impl ASTRule for OldStyleArrayLiteral {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.to_text(src.source_text())?.starts_with("(/") {
-            return some_vec!(FortitudeViolation::from_node(Self {}, node));
+            return some_vec!(Diagnostic::from_node(Self {}, node));
         }
         None
     }
@@ -44,7 +44,7 @@ impl ASTRule for OldStyleArrayLiteral {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -67,7 +67,7 @@ mod tests {
              end program test
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (2, 20, 2, 31),
             (3, 20, 7, 4),
             (8, 17, 8, 28),
@@ -75,8 +75,8 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col)| {
-            FortitudeViolation::from_start_end_line_col(
-                OldStyleArrayLiteral {}.message(),
+            Diagnostic::from_start_end_line_col(
+                OldStyleArrayLiteral {},
                 &source,
                 *start_line,
                 *start_col,

@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -66,12 +66,9 @@ impl Rule for DoublePrecision {
 }
 
 impl ASTRule for DoublePrecision {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let txt = node.to_text(src.source_text())?.to_lowercase();
-        some_vec![FortitudeViolation::from_node(
-            DoublePrecision::try_new(txt)?,
-            node
-        )]
+        some_vec![Diagnostic::from_node(DoublePrecision::try_new(txt)?, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -82,7 +79,7 @@ impl ASTRule for DoublePrecision {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -107,7 +104,7 @@ mod tests {
             end function
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (1, 0, 1, 16, "double precision"),
             (2, 2, 2, 18, "double precision"),
             (7, 2, 7, 18, "double precision"),
@@ -118,8 +115,8 @@ mod tests {
         .iter()
         .map(|(start_line, start_col, end_line, end_col, kind)| {
             let msg = DoublePrecision::try_new(kind).unwrap();
-            FortitudeViolation::from_start_end_line_col(
-                msg.message(),
+            Diagnostic::from_start_end_line_col(
+                msg,
                 &source,
                 *start_line,
                 *start_col,

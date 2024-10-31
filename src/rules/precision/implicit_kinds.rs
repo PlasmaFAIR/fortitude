@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -35,7 +35,7 @@ impl Rule for ImplicitRealKind {
 }
 
 impl ASTRule for ImplicitRealKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let dtype = node.child(0)?.to_text(src.source_text())?.to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
@@ -46,10 +46,7 @@ impl ASTRule for ImplicitRealKind {
             return None;
         }
 
-        some_vec![FortitudeViolation::from_node(
-            ImplicitRealKind { dtype },
-            node
-        )]
+        some_vec![Diagnostic::from_node(ImplicitRealKind { dtype }, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -60,7 +57,7 @@ impl ASTRule for ImplicitRealKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -79,18 +76,17 @@ mod tests {
             ",
         );
 
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (1, 0, 1, 4, "real"),
             (2, 2, 2, 6, "real"),
             (5, 2, 5, 9, "complex"),
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, dtype)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 ImplicitRealKind {
                     dtype: dtype.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,

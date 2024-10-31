@@ -1,8 +1,8 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
+use crate::{ASTRule, FromTSNode, Rule};
 use itertools::Itertools;
-use ruff_diagnostics::Violation;
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -62,7 +62,7 @@ impl Rule for AssumedSize {
     }
 }
 impl ASTRule for AssumedSize {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -93,7 +93,7 @@ impl ASTRule for AssumedSize {
         {
             let identifier = sized_decl.child_with_name("identifier")?;
             let name = identifier.to_text(src)?.to_string();
-            return some_vec![FortitudeViolation::from_node(Self { name }, node)];
+            return some_vec![Diagnostic::from_node(Self { name }, node)];
         }
 
         // Collect things that look like `dimension(*)` -- this
@@ -109,7 +109,7 @@ impl ASTRule for AssumedSize {
                 identifier.to_text(src)
             })
             .map(|name| name.to_string())
-            .map(|name| FortitudeViolation::from_node(Self { name }, node))
+            .map(|name| Diagnostic::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
@@ -177,7 +177,7 @@ impl Rule for AssumedSizeCharacterIntent {
     }
 }
 impl ASTRule for AssumedSizeCharacterIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
@@ -230,7 +230,7 @@ impl ASTRule for AssumedSizeCharacterIntent {
                 identifier.to_text(src)
             })
             .map(|name| name.to_string())
-            .map(|name| FortitudeViolation::from_node(Self { name }, node))
+            .map(|name| Diagnostic::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
@@ -268,7 +268,7 @@ impl Rule for DeprecatedAssumedSizeCharacter {
     }
 }
 impl ASTRule for DeprecatedAssumedSizeCharacter {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -296,7 +296,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
                 identifier.to_text(src)
             })
             .map(|name| name.to_string())
-            .map(|name| FortitudeViolation::from_node(Self { name }, node))
+            .map(|name| Diagnostic::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
@@ -310,7 +310,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -332,7 +332,7 @@ mod tests {
             end subroutine assumed_size_dimension
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (3, 27, 3, 28, "array"),
             (4, 27, 4, 28, "l"),
             (4, 36, 4, 37, "p"),
@@ -341,11 +341,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 AssumedSize {
                     name: variable.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -386,7 +385,7 @@ mod tests {
             end program cases
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (3, 13, 3, 14, "autochar_glob"),
             (9, 14, 9, 15, "autochar_inout"),
             (11, 18, 11, 19, "autochar_out"),
@@ -394,11 +393,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 AssumedSizeCharacterIntent {
                     name: variable.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -433,7 +431,7 @@ mod tests {
             end program cases
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (4, 14, 4, 15, "a"),
             (5, 13, 5, 14, "b"),
             (6, 13, 6, 14, "c"),
@@ -442,11 +440,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            FortitudeViolation::from_start_end_line_col(
+            Diagnostic::from_start_end_line_col(
                 DeprecatedAssumedSizeCharacter {
                     name: variable.to_string(),
-                }
-                .message(),
+                },
                 &source,
                 *start_line,
                 *start_col,

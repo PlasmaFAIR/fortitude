@@ -1,9 +1,9 @@
-use ruff_diagnostics::Violation;
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 
 use crate::settings::Settings;
-use crate::{FortitudeViolation, Rule, TextRule};
+use crate::{FromStartEndLineCol, Rule, TextRule};
 /// Defines rules that enforce widely accepted whitespace rules.
 
 /// ## What does it do?
@@ -29,12 +29,12 @@ impl Rule for TrailingWhitespace {
     }
 }
 impl TextRule for TrailingWhitespace {
-    fn check(&self, source: &SourceFile) -> Vec<FortitudeViolation> {
+    fn check(&self, source: &SourceFile) -> Vec<Diagnostic> {
         let mut violations = Vec::new();
         for (idx, line) in source.source_text().split('\n').enumerate() {
-            if line.ends_with(&[' ', '\t']) {
-                violations.push(FortitudeViolation::from_start_end_line_col(
-                    Self {}.message(),
+            if line.ends_with([' ', '\t']) {
+                violations.push(Diagnostic::from_start_end_line_col(
+                    Self {},
                     source,
                     idx,
                     line.trim_end().len(),
@@ -72,12 +72,12 @@ end program test
 ";
         let file = SourceFileBuilder::new("test", source).finish();
 
-        let expected: Vec<FortitudeViolation> =
+        let expected: Vec<Diagnostic> =
             [(0, 13, 0, 15), (3, 23, 3, 24), (7, 3, 7, 7), (8, 0, 8, 3)]
                 .iter()
                 .map(|(start_line, start_col, end_line, end_col)| {
-                    FortitudeViolation::from_start_end_line_col(
-                        TrailingWhitespace {}.message(),
+                    Diagnostic::from_start_end_line_col(
+                        TrailingWhitespace {},
                         &file,
                         *start_line,
                         *start_col,

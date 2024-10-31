@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -74,7 +74,7 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
 }
 
 impl ASTRule for UnnamedEndStatement {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Diagnostic>> {
         // TODO Also check for optionally labelled constructs like 'do' or 'select'
 
         // If end node is named, move on.
@@ -96,10 +96,7 @@ impl ASTRule for UnnamedEndStatement {
             .to_text(src.source_text())?
             .to_string();
         let statement = statement.to_string();
-        some_vec![FortitudeViolation::from_node(
-            Self { statement, name },
-            node
-        )]
+        some_vec![Diagnostic::from_node(Self { statement, name }, node)]
     }
 
     fn entrypoints(&self) -> Vec<&'static str> {
@@ -118,7 +115,7 @@ impl ASTRule for UnnamedEndStatement {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -188,7 +185,7 @@ mod tests {
             end                             ! catch this
             ",
         );
-        let expected: Vec<FortitudeViolation> = [
+        let expected: Vec<_> = [
             (5, 2, 5, 32, "type", "mytype"),
             (9, 2, 9, 32, "subroutine", "mysub1"),
             (13, 0, 13, 32, "module", "mymod1"),
@@ -202,12 +199,11 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, statement, name)| {
-                FortitudeViolation::from_start_end_line_col(
+                Diagnostic::from_start_end_line_col(
                     UnnamedEndStatement {
                         statement: statement.to_string(),
                         name: name.to_string(),
-                    }
-                    .message(),
+                    },
                     &source,
                     *start_line,
                     *start_col,

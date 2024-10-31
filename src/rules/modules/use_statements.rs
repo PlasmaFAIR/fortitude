@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FortitudeViolation, Rule};
-use ruff_diagnostics::Violation;
+use crate::{ASTRule, FromTSNode, Rule};
+use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -44,9 +44,9 @@ impl Rule for UseAll {
 }
 
 impl ASTRule for UseAll {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<FortitudeViolation>> {
+    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.child_with_name("included_items").is_none() {
-            return some_vec![FortitudeViolation::from_node(UseAll {}, node)];
+            return some_vec![Diagnostic::from_node(UseAll {}, node)];
         }
         None
     }
@@ -59,7 +59,7 @@ impl ASTRule for UseAll {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -72,8 +72,8 @@ mod tests {
             end module
             ",
         );
-        let expected = vec![FortitudeViolation::from_start_end_line_col(
-            UseAll {}.message(),
+        let expected = vec![Diagnostic::from_start_end_line_col(
+            UseAll {},
             &source,
             3,
             4,
