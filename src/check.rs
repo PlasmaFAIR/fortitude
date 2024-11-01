@@ -5,7 +5,7 @@ use crate::rules::{
     text_rule_map, ASTEntryPointMap, PathRuleMap, RuleSet, TextRuleMap,
 };
 use crate::settings::Settings;
-use crate::FortitudeDiagnostic;
+use crate::DiagnosticMessage;
 use anyhow::Result;
 use colored::Colorize;
 use itertools::{chain, join};
@@ -159,7 +159,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                             TextRange::default(),
                         );
                         let diagnostic =
-                            FortitudeDiagnostic::from_ruff(&empty_file, "E000", &violation);
+                            DiagnosticMessage::from_ruff(&empty_file, "E000", violation);
                         println!("{diagnostic}");
                         total_errors += 1;
                         continue;
@@ -172,7 +172,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                     Ok(violations) => {
                         let mut diagnostics: Vec<_> = violations
                             .into_iter()
-                            .map(|(c, v)| FortitudeDiagnostic::from_ruff(&file, c, &v))
+                            .map(|(c, v)| DiagnosticMessage::from_ruff(&file, c, v))
                             .collect();
                         if !diagnostics.is_empty() {
                             diagnostics.sort_unstable();
@@ -188,7 +188,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                             TextRange::default(),
                         );
                         let diagnostic =
-                            FortitudeDiagnostic::from_ruff(&empty_file, "E000", &violation);
+                            DiagnosticMessage::from_ruff(&empty_file, "E000", violation);
                         println!("{diagnostic}");
                         total_errors += 1;
                     }

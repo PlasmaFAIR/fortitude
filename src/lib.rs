@@ -9,7 +9,7 @@ use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
-use ruff_text_size::{TextRange, TextSize};
+use ruff_text_size::{Ranged, TextRange, TextSize};
 use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
@@ -58,26 +58,6 @@ impl Category {
 
 // Violation type
 // --------------
-
-/// This type is created when a rule is broken. As not all broken rules come with a
-/// line number or column, in which case use `TextRange::default()` as the `range`
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub struct FortitudeViolation {
-    /// Description of the error.
-    message: String,
-    /// The location at which the error was detected.
-    range: TextRange,
-}
-
-impl FortitudeViolation {
-    pub fn message(&self) -> &str {
-        self.message.as_str()
-    }
-
-    pub fn range(&self) -> TextRange {
-        self.range
-    }
-}
 
 pub trait FromTSNode {
     fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self;
@@ -169,76 +149,60 @@ pub trait ASTRule: Rule {
 // ---------------------
 
 /// Reports of each violation. They are pretty-printable and sortable.
-#[derive(Eq)]
-pub struct FortitudeDiagnostic<'a> {
+#[derive(Debug, PartialEq, Eq)]
+pub struct DiagnosticMessage<'a> {
+    kind: DiagnosticKind,
+    range: TextRange,
     /// The file where an error was reported.
     file: &'a SourceFile,
     /// The rule code that was violated, expressed as a string.
     code: String,
-    /// The specific violation detected
-    violation: FortitudeViolation,
 }
 
-impl<'a> FortitudeDiagnostic<'a> {
-    pub fn from_ruff<S: AsRef<str>>(
-        file: &'a SourceFile,
-        code: S,
-        diagnostic: &Diagnostic,
-    ) -> Self {
+impl<'a> DiagnosticMessage<'a> {
+    pub fn from_ruff<S: AsRef<str>>(file: &'a SourceFile, code: S, diagnostic: Diagnostic) -> Self {
         Self {
+            kind: diagnostic.kind,
             file,
             code: code.as_ref().to_string(),
-            violation: FortitudeViolation {
-                message: diagnostic.kind.body.clone(),
-                range: diagnostic.range,
-            },
+            range: diagnostic.range,
         }
     }
-
-    fn orderable(&self) -> (&str, usize, usize, &str) {
-        (
-            self.file.name(),
-            self.violation.range.start().into(),
-            self.violation.range.end().into(),
-            self.code.as_str(),
-        )
-    }
 }
 
-impl<'a> Ord for FortitudeDiagnostic<'a> {
+impl<'a> Ord for DiagnosticMessage<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.orderable().cmp(&other.orderable())
+        (self.file, self.range.start()).cmp(&(other.file, other.range.start()))
     }
 }
 
-impl<'a> PartialOrd for FortitudeDiagnostic<'a> {
+impl<'a> PartialOrd for DiagnosticMessage<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<'a> PartialEq for FortitudeDiagnostic<'a> {
-    fn eq(&self, other: &Self) -> bool {
-        self.orderable() == other.orderable()
+impl<'a> Ranged for DiagnosticMessage<'a> {
+    fn range(&self) -> TextRange {
+        self.range
     }
 }
 
-impl<'a> fmt::Display for FortitudeDiagnostic<'a> {
+impl<'a> fmt::Display for DiagnosticMessage<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let path = self.file.name().bold();
         let code = self.code.bold().bright_red();
-        let message = self.violation.message();
-        let range = self.violation.range();
-        if range != TextRange::default() {
-            format_violation(self, f, &range, message, &path, &code)
+        let message = self.kind.body.as_str();
+        if self.range != TextRange::default() {
+            format_violation(self, f, &self.range, message, &path, &code)
         } else {
-            write!(f, "{}: {} {}", path, code, message)
+            write!(f, "{path}: {code} {message}")
         }
     }
 }
 
 fn format_violation(
-    diagnostic: &FortitudeDiagnostic,
+    diagnostic: &DiagnosticMessage,
     f: &mut fmt::Formatter,
     range: &TextRange,
     message: &str,
