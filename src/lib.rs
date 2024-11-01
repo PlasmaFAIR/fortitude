@@ -59,37 +59,22 @@ impl Category {
 // Violation type
 // --------------
 
-/// The location within a file at which a violation was detected
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ViolationPosition {
-    None,
-    Range(TextRange),
-}
-
-// This type is created when a rule is broken. As not all broken rules come with a
-// line number or column, it is recommended to use the `violation!` macro to create
-// these, or the `from_node()` function when creating them from `tree_sitter` queries.
+/// This type is created when a rule is broken. As not all broken rules come with a
+/// line number or column, in which case use `TextRange::default()` as the `range`
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct FortitudeViolation {
     /// Description of the error.
     message: String,
     /// The location at which the error was detected.
-    range: ViolationPosition,
+    range: TextRange,
 }
 
 impl FortitudeViolation {
-    pub fn new_no_range<T: AsRef<str>>(message: T) -> Self {
-        Self {
-            message: String::from(message.as_ref()),
-            range: ViolationPosition::None,
-        }
-    }
-
     pub fn message(&self) -> &str {
         self.message.as_str()
     }
 
-    pub fn range(&self) -> ViolationPosition {
+    pub fn range(&self) -> TextRange {
         self.range
     }
 }
@@ -205,22 +190,18 @@ impl<'a> FortitudeDiagnostic<'a> {
             code: code.as_ref().to_string(),
             violation: FortitudeViolation {
                 message: diagnostic.kind.body.clone(),
-                // TODO: handle TextRange::default case for file extensions
-                range: ViolationPosition::Range(diagnostic.range),
+                range: diagnostic.range,
             },
         }
     }
 
     fn orderable(&self) -> (&str, usize, usize, &str) {
-        match self.violation.range() {
-            ViolationPosition::None => (self.file.name(), 0, 0, self.code.as_str()),
-            ViolationPosition::Range(range) => (
-                self.file.name(),
-                range.start().into(),
-                range.end().into(),
-                self.code.as_str(),
-            ),
-        }
+        (
+            self.file.name(),
+            self.violation.range.start().into(),
+            self.violation.range.end().into(),
+            self.code.as_str(),
+        )
     }
 }
 
@@ -247,17 +228,11 @@ impl<'a> fmt::Display for FortitudeDiagnostic<'a> {
         let path = self.file.name().bold();
         let code = self.code.bold().bright_red();
         let message = self.violation.message();
-        match self.violation.range() {
-            ViolationPosition::None => {
-                write!(f, "{}: {} {}", path, code, message)
-            }
-            ViolationPosition::Range(range) => {
-                if range == TextRange::default() {
-                    write!(f, "{}: {} {}", path, code, message)
-                } else {
-                    format_violation(self, f, &range, message, &path, &code)
-                }
-            }
+        let range = self.violation.range();
+        if range != TextRange::default() {
+            format_violation(self, f, &range, message, &path, &code)
+        } else {
+            write!(f, "{}: {} {}", path, code, message)
         }
     }
 }
