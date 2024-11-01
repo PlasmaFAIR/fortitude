@@ -302,19 +302,6 @@ fn format_violation(
     writeln!(f, "{}", source_block)
 }
 
-pub trait SourceLocationToOffset {
-    fn line_location(&self, row: usize, column: u32) -> SourceLocation;
-}
-
-impl SourceLocationToOffset for SourceFile {
-    fn line_location(&self, row: usize, column: u32) -> SourceLocation {
-        let source_code = self.to_source_code();
-        let offset =
-            source_code.line_start(OneIndexed::from_zero_indexed(row)) + TextSize::new(column);
-        source_code.source_location(offset)
-    }
-}
-
 /// Simplify making a `SourceFile` in tests
 #[cfg(test)]
 pub fn test_file(source: &str) -> SourceFile {
