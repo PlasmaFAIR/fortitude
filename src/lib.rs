@@ -195,17 +195,6 @@ pub struct FortitudeDiagnostic<'a> {
 }
 
 impl<'a> FortitudeDiagnostic<'a> {
-    pub fn new<S>(file: &'a SourceFile, code: S, violation: &FortitudeViolation) -> Self
-    where
-        S: AsRef<str>,
-    {
-        Self {
-            file,
-            code: code.as_ref().to_string(),
-            violation: violation.clone(),
-        }
-    }
-
     pub fn from_ruff<S: AsRef<str>>(
         file: &'a SourceFile,
         code: S,

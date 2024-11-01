@@ -1,16 +1,17 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::CheckArgs;
 use crate::rules::{
-    ast_entrypoint_map, default_ruleset, full_ruleset, path_rule_map, text_rule_map,
-    ASTEntryPointMap, PathRuleMap, RuleSet, TextRuleMap,
+    ast_entrypoint_map, default_ruleset, error::ioerror::IOError, full_ruleset, path_rule_map,
+    text_rule_map, ASTEntryPointMap, PathRuleMap, RuleSet, TextRuleMap,
 };
 use crate::settings::Settings;
-use crate::{FortitudeDiagnostic, FortitudeViolation};
+use crate::FortitudeDiagnostic;
 use anyhow::Result;
 use colored::Colorize;
 use itertools::{chain, join};
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
+use ruff_text_size::TextRange;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use walkdir::WalkDir;
@@ -151,10 +152,14 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                 let source = match read_to_string(&path) {
                     Ok(source) => source,
                     Err(error) => {
-                        let violation = FortitudeViolation::new_no_range(format!(
-                            "Error opening file: {error}"
-                        ));
-                        let diagnostic = FortitudeDiagnostic::new(&empty_file, "E000", &violation);
+                        let violation = Diagnostic::new(
+                            IOError {
+                                message: format!("Error opening file: {error}"),
+                            },
+                            TextRange::default(),
+                        );
+                        let diagnostic =
+                            FortitudeDiagnostic::from_ruff(&empty_file, "E000", &violation);
                         println!("{diagnostic}");
                         total_errors += 1;
                         continue;
@@ -176,9 +181,14 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         total_errors += diagnostics.len();
                     }
                     Err(msg) => {
-                        let violation =
-                            FortitudeViolation::new_no_range(format!("Failed to process: {msg}"));
-                        let diagnostic = FortitudeDiagnostic::new(&empty_file, "E000", &violation);
+                        let violation = Diagnostic::new(
+                            IOError {
+                                message: format!("Failed to process: {msg}"),
+                            },
+                            TextRange::default(),
+                        );
+                        let diagnostic =
+                            FortitudeDiagnostic::from_ruff(&empty_file, "E000", &violation);
                         println!("{diagnostic}");
                         total_errors += 1;
                     }
