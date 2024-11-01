@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{some_vec, ASTRule, FromTSNode, Rule};
+use crate::{some_vec, ASTRule, FromASTNode, Rule};
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};

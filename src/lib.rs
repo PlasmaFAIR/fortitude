@@ -59,11 +59,11 @@ impl Category {
 // Violation type
 // --------------
 
-pub trait FromTSNode {
+pub trait FromASTNode {
     fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self;
 }
 
-impl FromTSNode for Diagnostic {
+impl FromASTNode for Diagnostic {
     fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
         Self::new(
             violation,
