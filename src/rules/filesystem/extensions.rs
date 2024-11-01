@@ -3,7 +3,7 @@ use ruff_macros::{derive_message_formats, violation};
 use ruff_text_size::TextRange;
 
 use crate::settings::Settings;
-use crate::{PathRule, Rule};
+use crate::PathRule;
 use std::path::Path;
 
 /// ## What it does
@@ -20,12 +20,6 @@ impl Violation for NonStandardFileExtension {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("file extension should be '.f90' or '.F90'")
-    }
-}
-
-impl Rule for NonStandardFileExtension {
-    fn new(_settings: &Settings) -> Self {
-        NonStandardFileExtension {}
     }
 }
 

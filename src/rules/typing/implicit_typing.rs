@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -40,14 +40,6 @@ impl Violation for ImplicitTyping {
         format!("{entity} missing 'implicit none'")
     }
 }
-
-impl Rule for ImplicitTyping {
-    fn new(_settings: &Settings) -> Self {
-        ImplicitTyping {
-            entity: String::default(),
-        }
-    }
-}
 impl ASTRule for ImplicitTyping {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !child_is_implicit_none(node) {
@@ -79,14 +71,6 @@ impl Violation for InterfaceImplicitTyping {
     fn message(&self) -> String {
         let Self { name } = self;
         format!("interface '{name}' missing 'implicit none'")
-    }
-}
-
-impl Rule for InterfaceImplicitTyping {
-    fn new(_settings: &Settings) -> Self {
-        InterfaceImplicitTyping {
-            name: String::default(),
-        }
     }
 }
 
@@ -122,14 +106,6 @@ impl Violation for SuperfluousImplicitNone {
     fn message(&self) -> String {
         let Self { entity } = self;
         format!("'implicit none' set on the enclosing {entity}")
-    }
-}
-
-impl Rule for SuperfluousImplicitNone {
-    fn new(_settings: &Settings) -> Self {
-        SuperfluousImplicitNone {
-            entity: String::default(),
-        }
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -31,16 +31,6 @@ impl Violation for StarKind {
     fn message(&self) -> String {
         let Self { dtype, size, kind } = self;
         format!("{dtype}{size} is non-standard, use {dtype}({kind})")
-    }
-}
-
-impl Rule for StarKind {
-    fn new(_settings: &Settings) -> Self {
-        StarKind {
-            dtype: String::default(),
-            size: String::default(),
-            kind: String::default(),
-        }
     }
 }
 

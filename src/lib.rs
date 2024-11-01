@@ -108,25 +108,18 @@ impl FromStartEndLineCol for Diagnostic {
 // Rule trait
 // ----------
 
-/// Implemented by all rules.
-pub trait Rule {
-    fn new(settings: &Settings) -> Self
-    where
-        Self: Sized;
-}
-
 /// Implemented by rules that act directly on the file path.
-pub trait PathRule: Rule {
+pub trait PathRule {
     fn check(settings: &Settings, path: &Path) -> Option<Diagnostic>;
 }
 
 /// Implemented by rules that analyse lines of code directly, using regex or otherwise.
-pub trait TextRule: Rule {
+pub trait TextRule {
     fn check(settings: &Settings, source: &SourceFile) -> Vec<Diagnostic>;
 }
 
 /// Implemented by rules that analyse the abstract syntax tree.
-pub trait ASTRule: Rule {
+pub trait ASTRule {
     fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.

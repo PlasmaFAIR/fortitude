@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -34,12 +34,6 @@ impl Violation for UseAll {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("'use' statement missing 'only' clause")
-    }
-}
-
-impl Rule for UseAll {
-    fn new(_settings: &Settings) -> Self {
-        UseAll {}
     }
 }
 

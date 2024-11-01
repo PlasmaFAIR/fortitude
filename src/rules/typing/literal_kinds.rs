@@ -1,6 +1,6 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -73,15 +73,6 @@ impl Violation for LiteralKind {
     fn message(&self) -> String {
         let Self { dtype, literal } = self;
         format!("{dtype} kind set with number literal '{literal}', use 'iso_fortran_env' parameter",)
-    }
-}
-
-impl Rule for LiteralKind {
-    fn new(_settings: &Settings) -> Self {
-        LiteralKind {
-            dtype: String::default(),
-            literal: String::default(),
-        }
     }
 }
 
@@ -174,15 +165,6 @@ impl Violation for LiteralKindSuffix {
     fn message(&self) -> String {
         let Self { literal, suffix } = self;
         format!("'{literal}' has literal suffix '{suffix}', use 'iso_fortran_env' parameter")
-    }
-}
-
-impl Rule for LiteralKindSuffix {
-    fn new(_settings: &Settings) -> Self {
-        LiteralKindSuffix {
-            literal: String::default(),
-            suffix: String::default(),
-        }
     }
 }
 

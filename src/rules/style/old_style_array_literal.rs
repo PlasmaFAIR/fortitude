@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -20,12 +20,6 @@ impl Violation for OldStyleArrayLiteral {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("Array literal uses old-style syntax: prefer `[...]`")
-    }
-}
-
-impl Rule for OldStyleArrayLiteral {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
     }
 }
 impl ASTRule for OldStyleArrayLiteral {

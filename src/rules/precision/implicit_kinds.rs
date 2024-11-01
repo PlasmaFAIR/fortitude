@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -23,14 +23,6 @@ impl Violation for ImplicitRealKind {
     fn message(&self) -> String {
         let ImplicitRealKind { dtype } = self;
         format!("{dtype} has implicit kind")
-    }
-}
-
-impl Rule for ImplicitRealKind {
-    fn new(_settings: &Settings) -> Self {
-        ImplicitRealKind {
-            dtype: String::default(),
-        }
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
@@ -52,14 +52,6 @@ impl Violation for NoRealSuffix {
     fn message(&self) -> String {
         let NoRealSuffix { literal } = self;
         format!("real literal {literal} missing kind suffix")
-    }
-}
-
-impl Rule for NoRealSuffix {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            literal: String::default(),
-        }
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -35,15 +35,6 @@ impl Violation for MissingIntent {
     fn message(&self) -> String {
         let Self { entity, name } = self;
         format!("{entity} argument '{name}' missing 'intent' attribute")
-    }
-}
-
-impl Rule for MissingIntent {
-    fn new(_settings: &Settings) -> Self {
-        MissingIntent {
-            entity: String::default(),
-            name: String::default(),
-        }
     }
 }
 

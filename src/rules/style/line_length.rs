@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{FromStartEndLineCol, Rule, TextRule};
+use crate::{FromStartEndLineCol, TextRule};
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
@@ -38,15 +38,6 @@ impl Violation for LineTooLong {
             actual_length,
         } = self;
         format!("line length of {actual_length}, exceeds maximum {max_length}")
-    }
-}
-
-impl Rule for LineTooLong {
-    fn new(settings: &Settings) -> Self {
-        LineTooLong {
-            max_length: settings.line_length,
-            actual_length: 0,
-        }
     }
 }
 

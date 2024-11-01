@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -47,15 +47,6 @@ impl Violation for UnnamedEndStatement {
     fn message(&self) -> String {
         let UnnamedEndStatement { statement, name } = self;
         format!("end statement should read 'end {statement} {name}'")
-    }
-}
-
-impl Rule for UnnamedEndStatement {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            statement: String::default(),
-            name: String::default(),
-        }
     }
 }
 

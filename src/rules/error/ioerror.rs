@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::settings::Settings;
-use crate::{PathRule, Rule};
+use crate::PathRule;
 use std::path::Path;
 
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -42,14 +42,6 @@ impl Violation for IOError {
     fn message(&self) -> String {
         let IOError { message } = self;
         format!("{message}")
-    }
-}
-
-impl Rule for IOError {
-    fn new(_settings: &Settings) -> Self {
-        IOError {
-            message: String::default(),
-        }
     }
 }
 

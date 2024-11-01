@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -31,15 +31,6 @@ impl Violation for MissingExitOrCycleLabel {
     fn message(&self) -> String {
         let Self { name, label } = self;
         format!("'{name}' statement in named 'do' loop missing label '{label}'")
-    }
-}
-
-impl Rule for MissingExitOrCycleLabel {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            name: String::default(),
-            label: String::default(),
-        }
     }
 }
 impl ASTRule for MissingExitOrCycleLabel {

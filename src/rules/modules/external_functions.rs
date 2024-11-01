@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -23,14 +23,6 @@ impl Violation for ExternalFunction {
     fn message(&self) -> String {
         let ExternalFunction { procedure } = self;
         format!("{procedure} not contained within (sub)module or program")
-    }
-}
-
-impl Rule for ExternalFunction {
-    fn new(_settings: &Settings) -> Self {
-        ExternalFunction {
-            procedure: String::default(),
-        }
     }
 }
 

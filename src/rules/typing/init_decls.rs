@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -75,14 +75,6 @@ impl Violation for InitialisationInDeclaration {
     fn message(&self) -> String {
         let Self { name } = self;
         format!("'{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute")
-    }
-}
-
-impl Rule for InitialisationInDeclaration {
-    fn new(_settings: &Settings) -> Self {
-        InitialisationInDeclaration {
-            name: String::default(),
-        }
     }
 }
 

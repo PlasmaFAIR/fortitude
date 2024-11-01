@@ -3,7 +3,7 @@ use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 
 use crate::settings::Settings;
-use crate::{FromStartEndLineCol, Rule, TextRule};
+use crate::{FromStartEndLineCol, TextRule};
 /// Defines rules that enforce widely accepted whitespace rules.
 
 /// ## What does it do?
@@ -20,12 +20,6 @@ impl Violation for TrailingWhitespace {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("trailing whitespace")
-    }
-}
-
-impl Rule for TrailingWhitespace {
-    fn new(_settings: &Settings) -> Self {
-        TrailingWhitespace {}
     }
 }
 impl TextRule for TrailingWhitespace {

@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
@@ -51,14 +51,6 @@ impl Violation for AssumedSize {
     fn message(&self) -> String {
         let Self { name } = self;
         format!("'{name}' has assumed size")
-    }
-}
-
-impl Rule for AssumedSize {
-    fn new(_settings: &Settings) -> Self {
-        AssumedSize {
-            name: String::default(),
-        }
     }
 }
 impl ASTRule for AssumedSize {
@@ -168,14 +160,6 @@ impl Violation for AssumedSizeCharacterIntent {
         format!("character '{name}' has assumed size but does not have `intent(in)`")
     }
 }
-
-impl Rule for AssumedSizeCharacterIntent {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            name: String::default(),
-        }
-    }
-}
 impl ASTRule for AssumedSizeCharacterIntent {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
@@ -257,14 +241,6 @@ impl Violation for DeprecatedAssumedSizeCharacter {
     fn message(&self) -> String {
         let Self { name } = self;
         format!("character '{name}' uses deprecated syntax for assumed size")
-    }
-}
-
-impl Rule for DeprecatedAssumedSizeCharacter {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            name: String::default(),
-        }
     }
 }
 impl ASTRule for DeprecatedAssumedSizeCharacter {

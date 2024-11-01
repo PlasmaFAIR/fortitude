@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -53,15 +53,6 @@ impl Violation for DoublePrecision {
             preferred,
         } = self;
         format!("prefer '{preferred}' to '{original}' (see 'iso_fortran_env')")
-    }
-}
-
-impl Rule for DoublePrecision {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            original: String::default(),
-            preferred: String::default(),
-        }
     }
 }
 

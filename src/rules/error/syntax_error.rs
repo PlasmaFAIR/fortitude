@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{some_vec, ASTRule, FromASTNode, Rule};
+use crate::{some_vec, ASTRule, FromASTNode};
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
@@ -23,12 +23,6 @@ impl Violation for SyntaxError {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("Syntax error")
-    }
-}
-
-impl Rule for SyntaxError {
-    fn new(_settings: &Settings) -> Self {
-        SyntaxError {}
     }
 }
 
