@@ -55,7 +55,7 @@ impl Rule for IOError {
 
 // Need to implement some kind of rule, although we only raise this manually
 impl PathRule for IOError {
-    fn check(&self, _path: &Path) -> Option<Diagnostic> {
+    fn check(_settings: &Settings, _path: &Path) -> Option<Diagnostic> {
         None
     }
 }

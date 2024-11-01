@@ -48,7 +48,7 @@ impl Rule for DeprecatedRelationalOperator {
     }
 }
 impl ASTRule for DeprecatedRelationalOperator {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
         let symbol = relation
             .to_text(src.source_text())?
@@ -61,7 +61,7 @@ impl ASTRule for DeprecatedRelationalOperator {
         )]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["relational_expression"]
     }
 }
@@ -69,7 +69,7 @@ impl ASTRule for DeprecatedRelationalOperator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -108,8 +108,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = DeprecatedRelationalOperator::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = DeprecatedRelationalOperator::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

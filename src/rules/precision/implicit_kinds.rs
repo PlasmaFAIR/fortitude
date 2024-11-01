@@ -35,7 +35,7 @@ impl Rule for ImplicitRealKind {
 }
 
 impl ASTRule for ImplicitRealKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let dtype = node.child(0)?.to_text(src.source_text())?.to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
@@ -49,7 +49,7 @@ impl ASTRule for ImplicitRealKind {
         some_vec![Diagnostic::from_node(ImplicitRealKind { dtype }, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["intrinsic_type"]
     }
 }
@@ -57,7 +57,7 @@ impl ASTRule for ImplicitRealKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -95,9 +95,7 @@ mod tests {
             )
         })
         .collect();
-
-        let rule = ImplicitRealKind::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = ImplicitRealKind::apply(&source)?;
         assert_eq!(actual, expected);
 
         Ok(())

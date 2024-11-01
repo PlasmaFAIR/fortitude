@@ -45,7 +45,7 @@ impl Rule for StarKind {
 }
 
 impl ASTRule for StarKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Handle characters
@@ -70,7 +70,7 @@ impl ASTRule for StarKind {
         )]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["intrinsic_type"]
     }
 }
@@ -78,7 +78,7 @@ impl ASTRule for StarKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -135,8 +135,7 @@ mod tests {
         )
         .collect();
 
-        let rule = StarKind::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = StarKind::apply(&source)?;
         assert_eq!(actual, expected);
 
         Ok(())

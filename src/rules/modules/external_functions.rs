@@ -35,7 +35,7 @@ impl Rule for ExternalFunction {
 }
 
 impl ASTRule for ExternalFunction {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.parent()?.kind() == "translation_unit" {
             let procedure_stmt = node.child(0)?;
             let procedure = node.kind().to_string();
@@ -47,7 +47,7 @@ impl ASTRule for ExternalFunction {
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["function", "subroutine"]
     }
 }
@@ -55,7 +55,7 @@ impl ASTRule for ExternalFunction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -88,8 +88,7 @@ mod tests {
                 )
             })
             .collect();
-        let rule = ExternalFunction::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = ExternalFunction::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -114,8 +113,7 @@ mod tests {
             ",
         );
         let expected: Vec<Diagnostic> = vec![];
-        let rule = ExternalFunction::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = ExternalFunction::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

@@ -77,12 +77,13 @@ fn check_file(
     ast_entrypoints: &ASTEntryPointMap,
     path: &Path,
     file: &SourceFile,
+    settings: &Settings,
 ) -> anyhow::Result<Vec<(String, Diagnostic)>> {
     // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     let mut violations = Vec::new();
 
     for (code, rule) in path_rules {
-        if let Some(violation) = rule.check(path) {
+        if let Some(violation) = rule(settings, path) {
             violations.push((code.to_string(), violation));
         }
     }
@@ -90,7 +91,7 @@ fn check_file(
     // Perform plain text analysis
     for (code, rule) in text_rules {
         violations.extend(
-            rule.check(file)
+            rule(settings, file)
                 .iter()
                 .map(|x| (code.to_string(), x.clone())),
         );
@@ -101,7 +102,7 @@ fn check_file(
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for (code, rule) in rules {
-                if let Some(violation) = rule.check(&node, file) {
+                if let Some(violation) = rule(settings, &node, file) {
                     for v in violation {
                         violations.push((code.to_string(), v));
                     }
@@ -141,9 +142,9 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
     };
     match ruleset(&args) {
         Ok(rules) => {
-            let path_rules = path_rule_map(&rules, &settings);
-            let text_rules = text_rule_map(&rules, &settings);
-            let ast_entrypoints = ast_entrypoint_map(&rules, &settings);
+            let path_rules = path_rule_map(&rules);
+            let text_rules = text_rule_map(&rules);
+            let ast_entrypoints = ast_entrypoint_map(&rules);
             let mut total_errors = 0;
             for path in get_files(&args.files, &args.file_extensions) {
                 let filename = path.to_string_lossy();
@@ -166,7 +167,14 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
 
                 let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
-                match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
+                match check_file(
+                    &path_rules,
+                    &text_rules,
+                    &ast_entrypoints,
+                    &path,
+                    &file,
+                    &settings,
+                ) {
                     Ok(violations) => {
                         let mut diagnostics: Vec<_> = violations
                             .into_iter()

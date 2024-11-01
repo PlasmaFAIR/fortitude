@@ -48,7 +48,7 @@ impl Rule for MissingIntent {
 }
 
 impl ASTRule for MissingIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Names of all the dummy arguments
         let parameters: Vec<&str> = node
@@ -118,7 +118,7 @@ impl ASTRule for MissingIntent {
         Some(violations)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["function_statement", "subroutine_statement"]
     }
 }
@@ -126,7 +126,7 @@ impl ASTRule for MissingIntent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -168,8 +168,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = MissingIntent::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = MissingIntent::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

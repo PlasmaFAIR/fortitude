@@ -43,7 +43,11 @@ impl Rule for MissingExitOrCycleLabel {
     }
 }
 impl ASTRule for MissingExitOrCycleLabel {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Skip unlabelled loops
         let label = node
@@ -70,7 +74,7 @@ impl ASTRule for MissingExitOrCycleLabel {
         Some(violations)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["do_loop_statement"]
     }
 }
@@ -78,7 +82,7 @@ impl ASTRule for MissingExitOrCycleLabel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -153,8 +157,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = MissingExitOrCycleLabel::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = MissingExitOrCycleLabel::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

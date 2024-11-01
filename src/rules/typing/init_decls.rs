@@ -87,7 +87,7 @@ impl Rule for InitialisationInDeclaration {
 }
 
 impl ASTRule for InitialisationInDeclaration {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
@@ -111,7 +111,7 @@ impl ASTRule for InitialisationInDeclaration {
         some_vec![Diagnostic::from_node(Self { name }, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["init_declarator"]
     }
 }
@@ -119,7 +119,7 @@ impl ASTRule for InitialisationInDeclaration {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -169,8 +169,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = InitialisationInDeclaration::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = InitialisationInDeclaration::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

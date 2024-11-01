@@ -62,7 +62,7 @@ impl Rule for AssumedSize {
     }
 }
 impl ASTRule for AssumedSize {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -115,7 +115,7 @@ impl ASTRule for AssumedSize {
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
@@ -177,7 +177,7 @@ impl Rule for AssumedSizeCharacterIntent {
     }
 }
 impl ASTRule for AssumedSizeCharacterIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
@@ -236,7 +236,7 @@ impl ASTRule for AssumedSizeCharacterIntent {
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
@@ -268,7 +268,7 @@ impl Rule for DeprecatedAssumedSizeCharacter {
     }
 }
 impl ASTRule for DeprecatedAssumedSizeCharacter {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -302,7 +302,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
@@ -310,7 +310,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -353,8 +353,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = AssumedSize::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = AssumedSize::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -405,8 +404,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = AssumedSizeCharacterIntent::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = AssumedSizeCharacterIntent::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -452,8 +450,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = DeprecatedAssumedSizeCharacter::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = DeprecatedAssumedSizeCharacter::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

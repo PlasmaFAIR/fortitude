@@ -74,7 +74,11 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
 }
 
 impl ASTRule for UnnamedEndStatement {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         // TODO Also check for optionally labelled constructs like 'do' or 'select'
 
         // If end node is named, move on.
@@ -99,7 +103,7 @@ impl ASTRule for UnnamedEndStatement {
         some_vec![Diagnostic::from_node(Self { statement, name }, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec![
             "end_module_statement",
             "end_submodule_statement",
@@ -115,7 +119,7 @@ impl ASTRule for UnnamedEndStatement {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -213,8 +217,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = UnnamedEndStatement::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = UnnamedEndStatement::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

@@ -64,7 +64,7 @@ impl Rule for NoRealSuffix {
 }
 
 impl ASTRule for NoRealSuffix {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with a different
@@ -77,7 +77,7 @@ impl ASTRule for NoRealSuffix {
         some_vec![Diagnostic::from_node(NoRealSuffix { literal }, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["number_literal"]
     }
 }
@@ -85,7 +85,7 @@ impl ASTRule for NoRealSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -132,8 +132,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = NoRealSuffix::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = NoRealSuffix::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

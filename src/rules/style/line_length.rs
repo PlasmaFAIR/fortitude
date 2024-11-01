@@ -51,11 +51,12 @@ impl Rule for LineTooLong {
 }
 
 impl TextRule for LineTooLong {
-    fn check(&self, source: &SourceFile) -> Vec<Diagnostic> {
+    fn check(settings: &Settings, source: &SourceFile) -> Vec<Diagnostic> {
+        let max_length = settings.line_length;
         let mut violations = Vec::new();
         for (idx, line) in source.source_text().split('\n').enumerate() {
             let actual_length = line.len();
-            if actual_length > self.max_length {
+            if actual_length > max_length {
                 // Are we ending on a string or comment? If so, we'll allow it through, as it may
                 // contain something like a long URL that cannot be reasonably split across multiple
                 // lines.
@@ -64,12 +65,12 @@ impl TextRule for LineTooLong {
                 }
                 violations.push(Diagnostic::from_start_end_line_col(
                     Self {
-                        max_length: self.max_length,
+                        max_length,
                         actual_length,
                     },
                     source,
                     idx,
-                    self.max_length,
+                    max_length,
                     idx,
                     actual_length,
                 ))
@@ -123,8 +124,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = LineTooLong::new(&short_line_settings);
-        let actual = rule.check(&source);
+        let actual = LineTooLong::check(&short_line_settings, &source);
         assert_eq!(actual, expected);
         Ok(())
     }

@@ -29,7 +29,7 @@ impl Rule for TrailingWhitespace {
     }
 }
 impl TextRule for TrailingWhitespace {
-    fn check(&self, source: &SourceFile) -> Vec<Diagnostic> {
+    fn check(_settings: &Settings, source: &SourceFile) -> Vec<Diagnostic> {
         let mut violations = Vec::new();
         for (idx, line) in source.source_text().split('\n').enumerate() {
             if line.ends_with([' ', '\t']) {
@@ -86,8 +86,7 @@ end program test
                     )
                 })
                 .collect();
-        let rule = TrailingWhitespace::new(&default_settings());
-        let actual = rule.check(&file);
+        let actual = TrailingWhitespace::check(&default_settings(), &file);
         assert_eq!(actual, expected);
         Ok(())
     }
