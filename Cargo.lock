@@ -217,6 +217,7 @@ dependencies = [
  "clap",
  "clap_config",
  "colored",
+ "fortitude_macros",
  "itertools 0.12.1",
  "lazy-regex",
  "lazy_static",
@@ -232,6 +233,15 @@ dependencies = [
  "tree-sitter",
  "tree-sitter-fortran",
  "walkdir",
+]
+
+[[package]]
+name = "fortitude_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

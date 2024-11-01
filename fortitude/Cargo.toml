@@ -17,6 +17,7 @@ anyhow = "1.0.79"
 clap = { version = "4.4.16", features = ["derive"] }
 clap_config = "0.1.1"
 colored = "2.1.0"
+fortitude_macros = { version = "0.1.0", path = "../fortitude_macros" }
 itertools = "0.12.0"
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"

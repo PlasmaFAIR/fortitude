@@ -1,5 +1,5 @@
 [workspace]
-members = ["fortitude"]
+members = ["fortitude", "fortitude_macros"]
 resolver = "2"
 
 [workspace.package]
