@@ -152,14 +152,12 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                 let source = match read_to_string(&path) {
                     Ok(source) => source,
                     Err(error) => {
-                        let violation = Diagnostic::new(
-                            IOError {
-                                message: format!("Error opening file: {error}"),
-                            },
-                            TextRange::default(),
+                        let message = format!("Error opening file: {error}");
+                        let diagnostic = DiagnosticMessage::from_ruff(
+                            &empty_file,
+                            "E000",
+                            Diagnostic::new(IOError { message }, TextRange::default()),
                         );
-                        let diagnostic =
-                            DiagnosticMessage::from_ruff(&empty_file, "E000", violation);
                         println!("{diagnostic}");
                         total_errors += 1;
                         continue;
@@ -181,14 +179,12 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         total_errors += diagnostics.len();
                     }
                     Err(msg) => {
-                        let violation = Diagnostic::new(
-                            IOError {
-                                message: format!("Failed to process: {msg}"),
-                            },
-                            TextRange::default(),
+                        let message = format!("Failed to process: {msg}");
+                        let diagnostic = DiagnosticMessage::from_ruff(
+                            &empty_file,
+                            "E000",
+                            Diagnostic::new(IOError { message }, TextRange::default()),
                         );
-                        let diagnostic =
-                            DiagnosticMessage::from_ruff(&empty_file, "E000", violation);
                         println!("{diagnostic}");
                         total_errors += 1;
                     }
