@@ -252,7 +252,11 @@ impl<'a> fmt::Display for FortitudeDiagnostic<'a> {
                 write!(f, "{}: {} {}", path, code, message)
             }
             ViolationPosition::Range(range) => {
-                format_violation(self, f, &range, message, &path, &code)
+                if range == TextRange::default() {
+                    write!(f, "{}: {} {}", path, code, message)
+                } else {
+                    format_violation(self, f, &range, message, &path, &code)
+                }
             }
         }
     }
