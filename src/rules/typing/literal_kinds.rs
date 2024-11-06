@@ -1,6 +1,6 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -76,17 +76,8 @@ impl Violation for LiteralKind {
     }
 }
 
-impl Rule for LiteralKind {
-    fn new(_settings: &Settings) -> Self {
-        LiteralKind {
-            dtype: String::default(),
-            literal: String::default(),
-        }
-    }
-}
-
 impl ASTRule for LiteralKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Deal with characters
@@ -105,7 +96,7 @@ impl ASTRule for LiteralKind {
         )]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["intrinsic_type"]
     }
 }
@@ -177,17 +168,8 @@ impl Violation for LiteralKindSuffix {
     }
 }
 
-impl Rule for LiteralKindSuffix {
-    fn new(_settings: &Settings) -> Self {
-        LiteralKindSuffix {
-            literal: String::default(),
-            suffix: String::default(),
-        }
-    }
-}
-
 impl ASTRule for LiteralKindSuffix {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
@@ -198,7 +180,7 @@ impl ASTRule for LiteralKindSuffix {
         some_vec![Diagnostic::from_node(Self { literal, suffix }, &kind)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["number_literal"]
     }
 }
@@ -206,7 +188,7 @@ impl ASTRule for LiteralKindSuffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -265,8 +247,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = LiteralKind::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = LiteralKind::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -303,8 +284,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = LiteralKindSuffix::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = LiteralKindSuffix::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

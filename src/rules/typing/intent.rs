@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -38,17 +38,8 @@ impl Violation for MissingIntent {
     }
 }
 
-impl Rule for MissingIntent {
-    fn new(_settings: &Settings) -> Self {
-        MissingIntent {
-            entity: String::default(),
-            name: String::default(),
-        }
-    }
-}
-
 impl ASTRule for MissingIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Names of all the dummy arguments
         let parameters: Vec<&str> = node
@@ -118,7 +109,7 @@ impl ASTRule for MissingIntent {
         Some(violations)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["function_statement", "subroutine_statement"]
     }
 }
@@ -126,7 +117,7 @@ impl ASTRule for MissingIntent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -168,8 +159,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = MissingIntent::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = MissingIntent::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

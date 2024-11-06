@@ -1,6 +1,6 @@
 use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -34,18 +34,8 @@ impl Violation for StarKind {
     }
 }
 
-impl Rule for StarKind {
-    fn new(_settings: &Settings) -> Self {
-        StarKind {
-            dtype: String::default(),
-            size: String::default(),
-            kind: String::default(),
-        }
-    }
-}
-
 impl ASTRule for StarKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Handle characters
@@ -70,7 +60,7 @@ impl ASTRule for StarKind {
         )]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["intrinsic_type"]
     }
 }
@@ -78,7 +68,7 @@ impl ASTRule for StarKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -135,8 +125,7 @@ mod tests {
         )
         .collect();
 
-        let rule = StarKind::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = StarKind::apply(&source)?;
         assert_eq!(actual, expected);
 
         Ok(())

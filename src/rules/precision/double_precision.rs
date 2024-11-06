@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -56,22 +56,13 @@ impl Violation for DoublePrecision {
     }
 }
 
-impl Rule for DoublePrecision {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            original: String::default(),
-            preferred: String::default(),
-        }
-    }
-}
-
 impl ASTRule for DoublePrecision {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let txt = node.to_text(src.source_text())?.to_lowercase();
         some_vec![Diagnostic::from_node(DoublePrecision::try_new(txt)?, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["intrinsic_type"]
     }
 }
@@ -79,7 +70,7 @@ impl ASTRule for DoublePrecision {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -125,8 +116,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = DoublePrecision::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = DoublePrecision::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

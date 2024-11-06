@@ -3,7 +3,7 @@ use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 
 use crate::settings::Settings;
-use crate::{FromStartEndLineCol, Rule, TextRule};
+use crate::{FromStartEndLineCol, TextRule};
 /// Defines rules that enforce widely accepted whitespace rules.
 
 /// ## What does it do?
@@ -22,14 +22,8 @@ impl Violation for TrailingWhitespace {
         format!("trailing whitespace")
     }
 }
-
-impl Rule for TrailingWhitespace {
-    fn new(_settings: &Settings) -> Self {
-        TrailingWhitespace {}
-    }
-}
 impl TextRule for TrailingWhitespace {
-    fn check(&self, source: &SourceFile) -> Vec<Diagnostic> {
+    fn check(_settings: &Settings, source: &SourceFile) -> Vec<Diagnostic> {
         let mut violations = Vec::new();
         for (idx, line) in source.source_text().split('\n').enumerate() {
             if line.ends_with([' ', '\t']) {
@@ -86,8 +80,7 @@ end program test
                     )
                 })
                 .collect();
-        let rule = TrailingWhitespace::new(&default_settings());
-        let actual = rule.check(&file);
+        let actual = TrailingWhitespace::check(&default_settings(), &file);
         assert_eq!(actual, expected);
         Ok(())
     }

@@ -10,7 +10,7 @@ use colored::{ColoredString, Colorize};
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{Ranged, TextRange, TextSize};
-use settings::Settings;
+use settings::{default_settings, Settings};
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
@@ -108,38 +108,32 @@ impl FromStartEndLineCol for Diagnostic {
 // Rule trait
 // ----------
 
-/// Implemented by all rules.
-pub trait Rule {
-    fn new(settings: &Settings) -> Self
-    where
-        Self: Sized;
-}
-
 /// Implemented by rules that act directly on the file path.
-pub trait PathRule: Rule {
-    fn check(&self, path: &Path) -> Option<Diagnostic>;
+pub trait PathRule {
+    fn check(settings: &Settings, path: &Path) -> Option<Diagnostic>;
 }
 
 /// Implemented by rules that analyse lines of code directly, using regex or otherwise.
-pub trait TextRule: Rule {
-    fn check(&self, source: &SourceFile) -> Vec<Diagnostic>;
+pub trait TextRule {
+    fn check(settings: &Settings, source: &SourceFile) -> Vec<Diagnostic>;
 }
 
 /// Implemented by rules that analyse the abstract syntax tree.
-pub trait ASTRule: Rule {
-    fn check(&self, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>>;
+pub trait ASTRule {
+    fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
-    fn entrypoints(&self) -> Vec<&'static str>;
+    fn entrypoints() -> Vec<&'static str>;
 
     /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(&self, source: &SourceFile) -> anyhow::Result<Vec<Diagnostic>> {
-        let entrypoints = self.entrypoints();
+    fn apply(source: &SourceFile) -> anyhow::Result<Vec<Diagnostic>> {
+        let entrypoints = Self::entrypoints();
+        let default_settings = default_settings();
         Ok(parse(source.source_text())?
             .root_node()
             .named_descendants()
             .filter(|x| entrypoints.contains(&x.kind()))
-            .filter_map(|x| self.check(&x, source))
+            .filter_map(|x| Self::check(&default_settings, &x, source))
             .flatten()
             .collect())
     }

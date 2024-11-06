@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -40,16 +40,8 @@ impl Violation for ImplicitTyping {
         format!("{entity} missing 'implicit none'")
     }
 }
-
-impl Rule for ImplicitTyping {
-    fn new(_settings: &Settings) -> Self {
-        ImplicitTyping {
-            entity: String::default(),
-        }
-    }
-}
 impl ASTRule for ImplicitTyping {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !child_is_implicit_none(node) {
             let entity = node.kind().to_string();
             let block_stmt = node.child(0)?;
@@ -58,7 +50,7 @@ impl ASTRule for ImplicitTyping {
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["module", "submodule", "program"]
     }
 }
@@ -82,16 +74,8 @@ impl Violation for InterfaceImplicitTyping {
     }
 }
 
-impl Rule for InterfaceImplicitTyping {
-    fn new(_settings: &Settings) -> Self {
-        InterfaceImplicitTyping {
-            name: String::default(),
-        }
-    }
-}
-
 impl ASTRule for InterfaceImplicitTyping {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
             let name = node.kind().to_string();
@@ -101,7 +85,7 @@ impl ASTRule for InterfaceImplicitTyping {
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["function", "subroutine"]
     }
 }
@@ -125,16 +109,8 @@ impl Violation for SuperfluousImplicitNone {
     }
 }
 
-impl Rule for SuperfluousImplicitNone {
-    fn new(_settings: &Settings) -> Self {
-        SuperfluousImplicitNone {
-            entity: String::default(),
-        }
-    }
-}
-
 impl ASTRule for SuperfluousImplicitNone {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !implicit_statement_is_none(node) {
             return None;
         }
@@ -162,7 +138,7 @@ impl ASTRule for SuperfluousImplicitNone {
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["implicit_statement"]
     }
 }
@@ -170,7 +146,7 @@ impl ASTRule for SuperfluousImplicitNone {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -201,8 +177,7 @@ mod tests {
                 )
             })
             .collect();
-        let rule = ImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = ImplicitTyping::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -228,8 +203,7 @@ mod tests {
             ",
         );
         let expected: Vec<Diagnostic> = vec![];
-        let rule = ImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = ImplicitTyping::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -273,8 +247,7 @@ mod tests {
                 )
             })
             .collect();
-        let rule = InterfaceImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = InterfaceImplicitTyping::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -306,8 +279,7 @@ mod tests {
             ",
         );
         let expected: Vec<Diagnostic> = vec![];
-        let rule = InterfaceImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = InterfaceImplicitTyping::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -370,8 +342,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = SuperfluousImplicitNone::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = SuperfluousImplicitNone::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -419,8 +390,7 @@ mod tests {
             ",
         );
         let expected: Vec<Diagnostic> = vec![];
-        let rule = SuperfluousImplicitNone::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = SuperfluousImplicitNone::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

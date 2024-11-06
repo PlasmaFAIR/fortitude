@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -38,17 +38,8 @@ impl Violation for DeprecatedRelationalOperator {
         format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead")
     }
 }
-
-impl Rule for DeprecatedRelationalOperator {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            symbol: String::default(),
-            new_symbol: String::default(),
-        }
-    }
-}
 impl ASTRule for DeprecatedRelationalOperator {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
         let symbol = relation
             .to_text(src.source_text())?
@@ -61,7 +52,7 @@ impl ASTRule for DeprecatedRelationalOperator {
         )]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["relational_expression"]
     }
 }
@@ -69,7 +60,7 @@ impl ASTRule for DeprecatedRelationalOperator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -108,8 +99,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = DeprecatedRelationalOperator::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = DeprecatedRelationalOperator::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

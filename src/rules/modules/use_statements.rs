@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -37,21 +37,15 @@ impl Violation for UseAll {
     }
 }
 
-impl Rule for UseAll {
-    fn new(_settings: &Settings) -> Self {
-        UseAll {}
-    }
-}
-
 impl ASTRule for UseAll {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.child_with_name("included_items").is_none() {
             return some_vec![Diagnostic::from_node(UseAll {}, node)];
         }
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["use_statement"]
     }
 }
@@ -59,7 +53,7 @@ impl ASTRule for UseAll {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -80,8 +74,7 @@ mod tests {
             3,
             35,
         )];
-        let rule = UseAll::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = UseAll::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

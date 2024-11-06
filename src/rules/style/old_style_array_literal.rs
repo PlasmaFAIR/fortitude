@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -22,21 +22,15 @@ impl Violation for OldStyleArrayLiteral {
         format!("Array literal uses old-style syntax: prefer `[...]`")
     }
 }
-
-impl Rule for OldStyleArrayLiteral {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-}
 impl ASTRule for OldStyleArrayLiteral {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.to_text(src.source_text())?.starts_with("(/") {
             return some_vec!(Diagnostic::from_node(Self {}, node));
         }
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["array_literal"]
     }
 }
@@ -44,7 +38,7 @@ impl ASTRule for OldStyleArrayLiteral {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -85,8 +79,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = OldStyleArrayLiteral::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = OldStyleArrayLiteral::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
@@ -53,16 +53,8 @@ impl Violation for AssumedSize {
         format!("'{name}' has assumed size")
     }
 }
-
-impl Rule for AssumedSize {
-    fn new(_settings: &Settings) -> Self {
-        AssumedSize {
-            name: String::default(),
-        }
-    }
-}
 impl ASTRule for AssumedSize {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -115,7 +107,7 @@ impl ASTRule for AssumedSize {
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
@@ -168,16 +160,8 @@ impl Violation for AssumedSizeCharacterIntent {
         format!("character '{name}' has assumed size but does not have `intent(in)`")
     }
 }
-
-impl Rule for AssumedSizeCharacterIntent {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            name: String::default(),
-        }
-    }
-}
 impl ASTRule for AssumedSizeCharacterIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
@@ -236,7 +220,7 @@ impl ASTRule for AssumedSizeCharacterIntent {
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
@@ -259,16 +243,8 @@ impl Violation for DeprecatedAssumedSizeCharacter {
         format!("character '{name}' uses deprecated syntax for assumed size")
     }
 }
-
-impl Rule for DeprecatedAssumedSizeCharacter {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            name: String::default(),
-        }
-    }
-}
 impl ASTRule for DeprecatedAssumedSizeCharacter {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -302,7 +278,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
@@ -310,7 +286,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -353,8 +329,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = AssumedSize::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = AssumedSize::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -405,8 +380,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = AssumedSizeCharacterIntent::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = AssumedSizeCharacterIntent::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -452,8 +426,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = DeprecatedAssumedSizeCharacter::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = DeprecatedAssumedSizeCharacter::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -50,15 +50,6 @@ impl Violation for UnnamedEndStatement {
     }
 }
 
-impl Rule for UnnamedEndStatement {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            statement: String::default(),
-            name: String::default(),
-        }
-    }
-}
-
 /// Maps declaration kinds to its name and the kind of the declaration statement node
 fn map_declaration(kind: &str) -> (&'static str, &'static str) {
     match kind {
@@ -74,7 +65,11 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
 }
 
 impl ASTRule for UnnamedEndStatement {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         // TODO Also check for optionally labelled constructs like 'do' or 'select'
 
         // If end node is named, move on.
@@ -99,7 +94,7 @@ impl ASTRule for UnnamedEndStatement {
         some_vec![Diagnostic::from_node(Self { statement, name }, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec![
             "end_module_statement",
             "end_submodule_statement",
@@ -115,7 +110,7 @@ impl ASTRule for UnnamedEndStatement {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -213,8 +208,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = UnnamedEndStatement::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = UnnamedEndStatement::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

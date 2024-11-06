@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode, Rule};
+use crate::{ASTRule, FromASTNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -33,17 +33,12 @@ impl Violation for MissingExitOrCycleLabel {
         format!("'{name}' statement in named 'do' loop missing label '{label}'")
     }
 }
-
-impl Rule for MissingExitOrCycleLabel {
-    fn new(_settings: &Settings) -> Self {
-        Self {
-            name: String::default(),
-            label: String::default(),
-        }
-    }
-}
 impl ASTRule for MissingExitOrCycleLabel {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Skip unlabelled loops
         let label = node
@@ -70,7 +65,7 @@ impl ASTRule for MissingExitOrCycleLabel {
         Some(violations)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["do_loop_statement"]
     }
 }
@@ -78,7 +73,7 @@ impl ASTRule for MissingExitOrCycleLabel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file, FromStartEndLineCol};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -153,8 +148,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = MissingExitOrCycleLabel::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = MissingExitOrCycleLabel::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
