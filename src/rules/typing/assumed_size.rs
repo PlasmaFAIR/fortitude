@@ -1,57 +1,60 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
 use itertools::Itertools;
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-/// Rules for catching assumed size variables
-
-pub struct AssumedSize {}
-
-impl Rule for AssumedSize {
-    fn new(_settings: &Settings) -> Self {
-        AssumedSize {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Assumed size dummy arguments declared with a star `*` as the size should be
-        avoided. There are several downsides to assumed size, the main one being
-        that the compiler is not able to determine the array bounds, so it is not
-        possible to check for array overruns or to use the array in whole-array
-        expressions.
-
-        Instead, prefer assumed shape arguments, as the compiler is able to keep track of
-        the upper bounds automatically, and pass this information under the hood. It also
-        allows use of whole-array expressions, such as `a = b + c`, where `a, b, c` are
-        all arrays of the same shape.
-
-        Instead of:
-
-        ```
-        subroutine process_array(array)
-            integer, dimension(*), intent(in) :: array
-            ...
-        ```
-
-        use:
-
-        ```
-        subroutine process_array(array)
-            integer, dimension(:), intent(in) :: array
-            ...
-        ```
-
-        Note that this doesn't apply to `character` types, where `character(len=*)` is
-        actually the most appropriate specification for `intent(in)` arguments! This is
-        because `character(len=:)` must be either a `pointer` or `allocatable`.
-        "
-    }
+/// ## What does it do?
+/// Checks for assumed size variables
+///
+/// ## Why is this bad?
+/// Assumed size dummy arguments declared with a star `*` as the size should be
+/// avoided. There are several downsides to assumed size, the main one being
+/// that the compiler is not able to determine the array bounds, so it is not
+/// possible to check for array overruns or to use the array in whole-array
+/// expressions.
+///
+/// Instead, prefer assumed shape arguments, as the compiler is able to keep track of
+/// the upper bounds automatically, and pass this information under the hood. It also
+/// allows use of whole-array expressions, such as `a = b + c`, where `a, b, c` are
+/// all arrays of the same shape.
+///
+/// Instead of:
+///
+/// ```fortran
+/// subroutine process_array(array)
+///     integer, dimension(*), intent(in) :: array
+///     ...
+/// ```
+///
+/// use:
+///
+/// ```fortran
+/// subroutine process_array(array)
+///     integer, dimension(:), intent(in) :: array
+///     ...
+/// ```
+///
+/// Note that this doesn't apply to `character` types, where `character(len=*)` is
+/// actually the most appropriate specification for `intent(in)` arguments! This is
+/// because `character(len=:)` must be either a `pointer` or `allocatable`.
+#[violation]
+pub struct AssumedSize {
+    name: String,
 }
 
+impl Violation for AssumedSize {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("'{name}' has assumed size")
+    }
+}
 impl ASTRule for AssumedSize {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -81,9 +84,8 @@ impl ASTRule for AssumedSize {
             .find(|parent| parent.kind() == "sized_declarator")
         {
             let identifier = sized_decl.child_with_name("identifier")?;
-            let name = identifier.to_text(src)?;
-            let msg = format!("'{name}' has assumed size");
-            return some_vec![Violation::from_node(msg, node)];
+            let name = identifier.to_text(src)?.to_string();
+            return some_vec![Diagnostic::from_node(Self { name }, node)];
         }
 
         // Collect things that look like `dimension(*)` -- this
@@ -98,64 +100,68 @@ impl ASTRule for AssumedSize {
                 }?;
                 identifier.to_text(src)
             })
-            .map(|name| Violation::from_node(format!("'{name}' has assumed size"), node))
+            .map(|name| name.to_string())
+            .map(|name| Diagnostic::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
 
-pub struct AssumedSizeCharacterIntent {}
-
-impl Rule for AssumedSizeCharacterIntent {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Character dummy arguments with an assumed size should only have `intent(in)`, as
-        this can cause data loss with `intent([in]out)`. For example:
-
-        ```
-        program example
-          character(len=3) :: short_text
-          call set_text(short_text)
-          print*, short_text
-        contains
-          subroutine set_text(text)
-            character(*), intent(out) :: text
-            text = \"longer than 3 characters\"
-          end subroutine set_text
-        end program
-        ```
-
-        Here, `short_text` will only contain the truncated \"lon\".
-
-        To handle dynamically setting `character` sizes, use `allocatable` instead:
-
-        ```
-        program example
-          character(len=3) :: short_text
-          call set_text(short_text)
-          print*, short_text
-        contains
-          subroutine set_text(text)
-            character(len=:), allocatable, intent(out) :: text
-            text = \"longer than 3 characters\"
-          end subroutine set_text
-        end program
-        ```
-        "
-    }
+/// ## What does it do?
+/// Checks `character` dummy arguments have `intent(in)` only
+///
+/// ## Why is this bad?
+/// Character dummy arguments with an assumed size should only have `intent(in)`, as
+/// this can cause data loss with `intent([in]out)`. For example:
+///
+/// ```fortran
+/// program example
+///   character(len=3) :: short_text
+///   call set_text(short_text)
+///   print*, short_text
+/// contains
+///   subroutine set_text(text)
+///     character(*), intent(out) :: text
+///     text = \"longer than 3 characters\"
+///   end subroutine set_text
+/// end program
+/// ```
+///
+/// Here, `short_text` will only contain the truncated \"lon\".
+///
+/// To handle dynamically setting `character` sizes, use `allocatable` instead:
+///
+/// ```fortran
+/// program example
+///   character(len=3) :: short_text
+///   call set_text(short_text)
+///   print*, short_text
+/// contains
+///   subroutine set_text(text)
+///     character(len=:), allocatable, intent(out) :: text
+///     text = \"longer than 3 characters\"
+///   end subroutine set_text
+/// end program
+/// ```
+#[violation]
+pub struct AssumedSizeCharacterIntent {
+    name: String,
 }
 
+impl Violation for AssumedSizeCharacterIntent {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("character '{name}' has assumed size but does not have `intent(in)`")
+    }
+}
 impl ASTRule for AssumedSizeCharacterIntent {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
@@ -207,38 +213,38 @@ impl ASTRule for AssumedSizeCharacterIntent {
                 }?;
                 identifier.to_text(src)
             })
-            .map(|name| {
-                let msg =
-                    format!("character '{name}' has assumed size but does not have `intent(in)`");
-                Violation::from_node(msg, node)
-            })
+            .map(|name| name.to_string())
+            .map(|name| Diagnostic::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
 
-pub struct DeprecatedAssumedSizeCharacter {}
-
-impl Rule for DeprecatedAssumedSizeCharacter {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        The syntax `character*(*)` is a deprecated form of `character(len=*)`. Prefer the
-        second form.
-        "
-    }
+/// ## What does it do?
+/// Checks for deprecated declarations of `character`
+///
+/// ## Why is this bad?
+/// The syntax `character*(*)` is a deprecated form of `character(len=*)`. Prefer the
+/// second form.
+#[violation]
+pub struct DeprecatedAssumedSizeCharacter {
+    name: String,
 }
 
+impl Violation for DeprecatedAssumedSizeCharacter {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("character '{name}' uses deprecated syntax for assumed size")
+    }
+}
 impl ASTRule for DeprecatedAssumedSizeCharacter {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -265,16 +271,14 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
                 }?;
                 identifier.to_text(src)
             })
-            .map(|name| {
-                let msg = format!("character '{name}' uses deprecated syntax for assumed size");
-                Violation::from_node(msg, node)
-            })
+            .map(|name| name.to_string())
+            .map(|name| Diagnostic::from_node(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["assumed_size"]
     }
 }
@@ -282,7 +286,7 @@ impl ASTRule for DeprecatedAssumedSizeCharacter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -304,7 +308,7 @@ mod tests {
             end subroutine assumed_size_dimension
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (3, 27, 3, 28, "array"),
             (4, 27, 4, 28, "l"),
             (4, 36, 4, 37, "p"),
@@ -313,8 +317,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            Violation::from_start_end_line_col(
-                format!("'{variable}' has assumed size"),
+            Diagnostic::from_start_end_line_col(
+                AssumedSize {
+                    name: variable.to_string(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -323,8 +329,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = AssumedSize::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = AssumedSize::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -355,7 +360,7 @@ mod tests {
             end program cases
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (3, 13, 3, 14, "autochar_glob"),
             (9, 14, 9, 15, "autochar_inout"),
             (11, 18, 11, 19, "autochar_out"),
@@ -363,8 +368,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            Violation::from_start_end_line_col(
-                format!("character '{variable}' has assumed size but does not have `intent(in)`"),
+            Diagnostic::from_start_end_line_col(
+                AssumedSizeCharacterIntent {
+                    name: variable.to_string(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -373,8 +380,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = AssumedSizeCharacterIntent::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = AssumedSizeCharacterIntent::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -399,7 +405,7 @@ mod tests {
             end program cases
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (4, 14, 4, 15, "a"),
             (5, 13, 5, 14, "b"),
             (6, 13, 6, 14, "c"),
@@ -408,8 +414,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            Violation::from_start_end_line_col(
-                format!("character '{variable}' uses deprecated syntax for assumed size"),
+            Diagnostic::from_start_end_line_col(
+                DeprecatedAssumedSizeCharacter {
+                    name: variable.to_string(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -418,8 +426,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = DeprecatedAssumedSizeCharacter::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = DeprecatedAssumedSizeCharacter::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

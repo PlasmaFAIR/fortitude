@@ -1,80 +1,85 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-/// Rules for catching assumed size variables
+/// ## What it does
+/// Checks for local variables with implicit `save`
+///
+/// ## Why is this bad?
+/// Initialising procedure local variables in their declaration gives them an
+/// implicit `save` attribute: the initialisation is only done on the first call
+/// to the procedure, and the variable retains its value on exit.
+///
+/// ## Examples
+/// For example, this subroutine:
+///
+/// ```fortran
+/// subroutine example()
+///   integer :: var = 1
+///   print*, var
+///   var = var + 1
+/// end subroutine example
+/// ```
+///
+/// when called twice:
+///
+/// ```fortran
+/// call example()
+/// call example()
+/// ```
+///
+/// prints `1 2`, when it might be expected to print `1 1`.
+///
+/// Adding the `save` attribute makes it clear that this is the intention:
+///
+/// ```fortran
+/// subroutine example()
+///   integer, save :: var = 1
+///   print*, var
+///   var = var + 1
+/// end subroutine example
+/// ```
+///
+/// Unfortunately, in Fortran there is no way to disable this behaviour, and so if it
+/// is not intended, it's necessary to have a separate assignment statement:
+///
+/// ```fortran
+/// subroutine example()
+///   integer :: var
+///   var = 1
+///   print*, var
+///   var = var + 1
+/// end subroutine example
+/// ```
+///
+/// If the variable's value is intended to be constant, then use the `parameter`
+/// attribute instead:
+///
+/// ```fortran
+/// subroutine example()
+///   integer, parameter :: var = 1
+///   print*, var
+/// end subroutine example
+/// ```
+#[violation]
+pub struct InitialisationInDeclaration {
+    name: String,
+}
 
-pub struct InitialisationInDeclaration {}
-
-impl Rule for InitialisationInDeclaration {
-    fn new(_settings: &Settings) -> Self {
-        InitialisationInDeclaration {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Initialising procedure local variables in their declaration gives them an
-        implicit `save` attribute: the initialisation is only done on the first call
-        to the procedure, and the variable retains its value on exit.
-
-        For example, this subroutine:
-
-        ```
-        subroutine example()
-          integer :: var = 1
-          print*, var
-          var = var + 1
-        end subroutine example
-        ```
-
-        when called twice:
-
-        ```
-        call example()
-        call example()
-        ```
-
-        prints `1 2`, when it might be expected to print `1 1`.
-
-        Adding the `save` attribute makes it clear that this is the intention:
-
-        ```
-        subroutine example()
-          integer, save :: var = 1
-          print*, var
-          var = var + 1
-        end subroutine example
-        ```
-
-        Unfortunately, in Fortran there is no way to disable this behaviour, and so if it
-        is not intended, it's necessary to have a separate assignment statement:
-
-        ```
-        subroutine example()
-          integer :: var
-          var = 1
-          print*, var
-          var = var + 1
-        end subroutine example
-        ```
-
-        If the variable's value is intended to be constant, then use the `parameter`
-        attribute instead:
-
-        ```
-        subroutine example()
-          integer, parameter :: var = 1
-          print*, var
-        end subroutine example
-        ```
-        "
+impl Violation for InitialisationInDeclaration {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("'{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute")
     }
 }
 
 impl ASTRule for InitialisationInDeclaration {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
@@ -94,12 +99,11 @@ impl ASTRule for InitialisationInDeclaration {
             return None;
         }
 
-        let name = node.child_by_field_name("left")?.to_text(src)?;
-        let msg = format!("'{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute");
-        some_vec![Violation::from_node(msg, node)]
+        let name = node.child_by_field_name("left")?.to_text(src)?.to_string();
+        some_vec![Diagnostic::from_node(Self { name }, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["init_declarator"]
     }
 }
@@ -107,7 +111,7 @@ impl ASTRule for InitialisationInDeclaration {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -138,15 +142,17 @@ mod tests {
             end module test
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (10, 13, 10, 20, "foo"),
             (19, 18, 19, 25, "bar"),
             (19, 34, 19, 42, "zapp"),
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, variable)| {
-            Violation::from_start_end_line_col(
-                format!("'{variable}' is initialised in its declaration and has no explicit `save` or `parameter` attribute"),
+            Diagnostic::from_start_end_line_col(
+                InitialisationInDeclaration {
+                    name: variable.to_string(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -155,8 +161,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = InitialisationInDeclaration::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = InitialisationInDeclaration::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

@@ -1,5 +1,6 @@
+#![allow(clippy::useless_format)]
 /// A collection of all rules, and utilities to select a subset at runtime.
-mod error;
+pub(crate) mod error; // Public so we can use `IOError` in other places
 mod filesystem;
 #[macro_use]
 mod macros;
@@ -10,6 +11,7 @@ mod typing;
 use crate::register_rules;
 
 register_rules! {
+    (Category::Error, "E000", PATH, error::ioerror::IOError, IoError),
     (Category::Error, "E001", AST, error::syntax_error::SyntaxError, SyntaxError),
     (Category::Filesystem, "F001", PATH, filesystem::extensions::NonStandardFileExtension, NonStandardFileExtension),
     (Category::Style, "S001", TEXT, style::line_length::LineTooLong, LineTooLong),

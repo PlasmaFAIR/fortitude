@@ -7,12 +7,14 @@ mod settings;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
+use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
-use ruff_text_size::{TextRange, TextSize};
-use settings::Settings;
+use ruff_text_size::{Ranged, TextRange, TextSize};
+use settings::{default_settings, Settings};
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
+use tree_sitter::Node;
 
 // Rule categories and identity codes
 // ----------------------------------
@@ -57,45 +59,37 @@ impl Category {
 // Violation type
 // --------------
 
-/// The location within a file at which a violation was detected
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ViolationPosition {
-    None,
-    Range(TextRange),
+pub trait FromASTNode {
+    fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self;
 }
 
-// This type is created when a rule is broken. As not all broken rules come with a
-// line number or column, it is recommended to use the `violation!` macro to create
-// these, or the `from_node()` function when creating them from `tree_sitter` queries.
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub struct Violation {
-    /// Description of the error.
-    message: String,
-    /// The location at which the error was detected.
-    range: ViolationPosition,
-}
-
-impl Violation {
-    pub fn new<T: AsRef<str>>(message: T, range: ViolationPosition) -> Self {
-        Self {
-            message: String::from(message.as_ref()),
-            range,
-        }
-    }
-
-    pub fn from_node<T: AsRef<str>>(message: T, node: &tree_sitter::Node) -> Self {
-        Violation::new(
-            message,
-            ViolationPosition::Range(TextRange::new(
+impl FromASTNode for Diagnostic {
+    fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
+        Self::new(
+            violation,
+            TextRange::new(
                 TextSize::try_from(node.start_byte()).unwrap(),
                 TextSize::try_from(node.end_byte()).unwrap(),
-            )),
+            ),
         )
     }
+}
 
+pub trait FromStartEndLineCol {
     /// Create new `Violation` from zero-index start/end line/column numbers
-    pub fn from_start_end_line_col<T: AsRef<str>>(
-        message: T,
+    fn from_start_end_line_col<T: Into<DiagnosticKind>>(
+        kind: T,
+        source: &SourceFile,
+        start_line: usize,
+        start_col: usize,
+        end_line: usize,
+        end_col: usize,
+    ) -> Self;
+}
+
+impl FromStartEndLineCol for Diagnostic {
+    fn from_start_end_line_col<T: Into<DiagnosticKind>>(
+        kind: T,
         source: &SourceFile,
         start_line: usize,
         start_col: usize,
@@ -107,67 +101,39 @@ impl Violation {
         let start_offset = start_line_offset + TextSize::try_from(start_col).unwrap();
         let end_line_offset = source_code.line_start(OneIndexed::from_zero_indexed(end_line));
         let end_offset = end_line_offset + TextSize::try_from(end_col).unwrap();
-        Violation::new(
-            message,
-            ViolationPosition::Range(TextRange::new(start_offset, end_offset)),
-        )
+        Diagnostic::new(kind, TextRange::new(start_offset, end_offset))
     }
-
-    pub fn message(&self) -> &str {
-        self.message.as_str()
-    }
-
-    pub fn range(&self) -> ViolationPosition {
-        self.range
-    }
-}
-
-#[macro_export]
-macro_rules! violation {
-    ($msg:expr) => {
-        $crate::Violation::new($msg, $crate::ViolationPosition::None)
-    };
 }
 
 // Rule trait
 // ----------
 
-/// Implemented by all rules.
-pub trait Rule {
-    fn new(settings: &Settings) -> Self
-    where
-        Self: Sized;
-
-    /// Return text explaining what the rule tests for, why this is important, and how the user
-    /// might fix it.
-    fn explain(&self) -> &'static str;
-}
-
 /// Implemented by rules that act directly on the file path.
-pub trait PathRule: Rule {
-    fn check(&self, path: &Path) -> Option<Violation>;
+pub trait PathRule {
+    fn check(settings: &Settings, path: &Path) -> Option<Diagnostic>;
 }
 
 /// Implemented by rules that analyse lines of code directly, using regex or otherwise.
-pub trait TextRule: Rule {
-    fn check(&self, source: &SourceFile) -> Vec<Violation>;
+pub trait TextRule {
+    fn check(settings: &Settings, source: &SourceFile) -> Vec<Diagnostic>;
 }
 
 /// Implemented by rules that analyse the abstract syntax tree.
-pub trait ASTRule: Rule {
-    fn check(&self, node: &tree_sitter::Node, source: &SourceFile) -> Option<Vec<Violation>>;
+pub trait ASTRule {
+    fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
-    fn entrypoints(&self) -> Vec<&'static str>;
+    fn entrypoints() -> Vec<&'static str>;
 
     /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(&self, source: &SourceFile) -> anyhow::Result<Vec<Violation>> {
-        let entrypoints = self.entrypoints();
+    fn apply(source: &SourceFile) -> anyhow::Result<Vec<Diagnostic>> {
+        let entrypoints = Self::entrypoints();
+        let default_settings = default_settings();
         Ok(parse(source.source_text())?
             .root_node()
             .named_descendants()
             .filter(|x| entrypoints.contains(&x.kind()))
-            .filter_map(|x| self.check(&x, source))
+            .filter_map(|x| Self::check(&default_settings, &x, source))
             .flatten()
             .collect())
     }
@@ -177,77 +143,60 @@ pub trait ASTRule: Rule {
 // ---------------------
 
 /// Reports of each violation. They are pretty-printable and sortable.
-#[derive(Eq)]
-pub struct Diagnostic<'a> {
+#[derive(Debug, PartialEq, Eq)]
+pub struct DiagnosticMessage<'a> {
+    kind: DiagnosticKind,
+    range: TextRange,
     /// The file where an error was reported.
     file: &'a SourceFile,
     /// The rule code that was violated, expressed as a string.
     code: String,
-    /// The specific violation detected
-    violation: Violation,
 }
 
-impl<'a> Diagnostic<'a> {
-    pub fn new<S>(file: &'a SourceFile, code: S, violation: &Violation) -> Self
-    where
-        S: AsRef<str>,
-    {
+impl<'a> DiagnosticMessage<'a> {
+    pub fn from_ruff<S: AsRef<str>>(file: &'a SourceFile, code: S, diagnostic: Diagnostic) -> Self {
         Self {
+            kind: diagnostic.kind,
             file,
             code: code.as_ref().to_string(),
-            violation: violation.clone(),
-        }
-    }
-
-    fn orderable(&self) -> (&str, usize, usize, &str) {
-        match self.violation.range() {
-            ViolationPosition::None => (self.file.name(), 0, 0, self.code.as_str()),
-            ViolationPosition::Range(range) => (
-                self.file.name(),
-                range.start().into(),
-                range.end().into(),
-                self.code.as_str(),
-            ),
+            range: diagnostic.range,
         }
     }
 }
 
-impl<'a> Ord for Diagnostic<'a> {
+impl<'a> Ord for DiagnosticMessage<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.orderable().cmp(&other.orderable())
+        (self.file, self.range.start()).cmp(&(other.file, other.range.start()))
     }
 }
 
-impl<'a> PartialOrd for Diagnostic<'a> {
+impl<'a> PartialOrd for DiagnosticMessage<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<'a> PartialEq for Diagnostic<'a> {
-    fn eq(&self, other: &Self) -> bool {
-        self.orderable() == other.orderable()
+impl<'a> Ranged for DiagnosticMessage<'a> {
+    fn range(&self) -> TextRange {
+        self.range
     }
 }
 
-impl<'a> fmt::Display for Diagnostic<'a> {
+impl<'a> fmt::Display for DiagnosticMessage<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let path = self.file.name().bold();
         let code = self.code.bold().bright_red();
-        let message = self.violation.message();
-        match self.violation.range() {
-            ViolationPosition::None => {
-                write!(f, "{}: {} {}", path, code, message)
-            }
-            ViolationPosition::Range(range) => {
-                format_violation(self, f, &range, message, &path, &code)
-            }
+        let message = self.kind.body.as_str();
+        if self.range != TextRange::default() {
+            format_violation(self, f, &self.range, message, &path, &code)
+        } else {
+            write!(f, "{path}: {code} {message}")
         }
     }
 }
 
 fn format_violation(
-    diagnostic: &Diagnostic,
+    diagnostic: &DiagnosticMessage,
     f: &mut fmt::Formatter,
     range: &TextRange,
     message: &str,
@@ -309,19 +258,6 @@ fn format_violation(
     let renderer = Renderer::styled();
     let source_block = renderer.render(snippet);
     writeln!(f, "{}", source_block)
-}
-
-pub trait SourceLocationToOffset {
-    fn line_location(&self, row: usize, column: u32) -> SourceLocation;
-}
-
-impl SourceLocationToOffset for SourceFile {
-    fn line_location(&self, row: usize, column: u32) -> SourceLocation {
-        let source_code = self.to_source_code();
-        let offset =
-            source_code.line_start(OneIndexed::from_zero_indexed(row)) + TextSize::new(column);
-        source_code.source_location(offset)
-    }
 }
 
 /// Simplify making a `SourceFile` in tests

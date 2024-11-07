@@ -1,16 +1,17 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::CheckArgs;
 use crate::rules::{
-    ast_entrypoint_map, default_ruleset, full_ruleset, path_rule_map, text_rule_map,
-    ASTEntryPointMap, PathRuleMap, RuleSet, TextRuleMap,
+    ast_entrypoint_map, default_ruleset, error::ioerror::IOError, full_ruleset, path_rule_map,
+    text_rule_map, ASTEntryPointMap, PathRuleMap, RuleSet, TextRuleMap,
 };
 use crate::settings::Settings;
-use crate::violation;
-use crate::{Diagnostic, Violation};
+use crate::DiagnosticMessage;
 use anyhow::Result;
 use colored::Colorize;
 use itertools::{chain, join};
+use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
+use ruff_text_size::TextRange;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use walkdir::WalkDir;
@@ -76,12 +77,13 @@ fn check_file(
     ast_entrypoints: &ASTEntryPointMap,
     path: &Path,
     file: &SourceFile,
-) -> anyhow::Result<Vec<(String, Violation)>> {
+    settings: &Settings,
+) -> anyhow::Result<Vec<(String, Diagnostic)>> {
     // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
     let mut violations = Vec::new();
 
     for (code, rule) in path_rules {
-        if let Some(violation) = rule.check(path) {
+        if let Some(violation) = rule(settings, path) {
             violations.push((code.to_string(), violation));
         }
     }
@@ -89,7 +91,7 @@ fn check_file(
     // Perform plain text analysis
     for (code, rule) in text_rules {
         violations.extend(
-            rule.check(file)
+            rule(settings, file)
                 .iter()
                 .map(|x| (code.to_string(), x.clone())),
         );
@@ -100,7 +102,7 @@ fn check_file(
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for (code, rule) in rules {
-                if let Some(violation) = rule.check(&node, file) {
+                if let Some(violation) = rule(settings, &node, file) {
                     for v in violation {
                         violations.push((code.to_string(), v));
                     }
@@ -140,9 +142,9 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
     };
     match ruleset(&args) {
         Ok(rules) => {
-            let path_rules = path_rule_map(&rules, &settings);
-            let text_rules = text_rule_map(&rules, &settings);
-            let ast_entrypoints = ast_entrypoint_map(&rules, &settings);
+            let path_rules = path_rule_map(&rules);
+            let text_rules = text_rule_map(&rules);
+            let ast_entrypoints = ast_entrypoint_map(&rules);
             let mut total_errors = 0;
             for path in get_files(&args.files, &args.file_extensions) {
                 let filename = path.to_string_lossy();
@@ -151,8 +153,12 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                 let source = match read_to_string(&path) {
                     Ok(source) => source,
                     Err(error) => {
-                        let violation = violation!(format!("Error opening file: {error}"));
-                        let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                        let message = format!("Error opening file: {error}");
+                        let diagnostic = DiagnosticMessage::from_ruff(
+                            &empty_file,
+                            "E000",
+                            Diagnostic::new(IOError { message }, TextRange::default()),
+                        );
                         println!("{diagnostic}");
                         total_errors += 1;
                         continue;
@@ -161,11 +167,18 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
 
                 let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
-                match check_file(&path_rules, &text_rules, &ast_entrypoints, &path, &file) {
+                match check_file(
+                    &path_rules,
+                    &text_rules,
+                    &ast_entrypoints,
+                    &path,
+                    &file,
+                    &settings,
+                ) {
                     Ok(violations) => {
-                        let mut diagnostics: Vec<Diagnostic> = violations
+                        let mut diagnostics: Vec<_> = violations
                             .into_iter()
-                            .map(|(c, v)| Diagnostic::new(&file, c, &v))
+                            .map(|(c, v)| DiagnosticMessage::from_ruff(&file, c, v))
                             .collect();
                         if !diagnostics.is_empty() {
                             diagnostics.sort_unstable();
@@ -174,8 +187,12 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         total_errors += diagnostics.len();
                     }
                     Err(msg) => {
-                        let violation = violation!(format!("Failed to process: {msg}"));
-                        let diagnostic = Diagnostic::new(&empty_file, "E000", &violation);
+                        let message = format!("Failed to process: {msg}");
+                        let diagnostic = DiagnosticMessage::from_ruff(
+                            &empty_file,
+                            "E000",
+                            Diagnostic::new(IOError { message }, TextRange::default()),
+                        );
                         println!("{diagnostic}");
                         total_errors += 1;
                     }

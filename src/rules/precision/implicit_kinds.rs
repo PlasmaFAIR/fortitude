@@ -1,27 +1,33 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
-/// Defines rules that require the user to explicitly specify the kinds of any reals.
-pub struct ImplicitRealKind {}
 
-impl Rule for ImplicitRealKind {
-    fn new(_settings: &Settings) -> Self {
-        ImplicitRealKind {}
-    }
+/// ## What it does
+/// Checks that `real` variables have their kind explicitly specified
+///
+/// ## Why is this bad?
+/// Real variable declarations without an explicit kind will have a compiler/platform
+/// dependent precision, which hurts portability and may lead to surprising loss of
+/// precision in some cases.
+#[violation]
+pub struct ImplicitRealKind {
+    dtype: String,
+}
 
-    fn explain(&self) -> &'static str {
-        "
-        Real variable declarations without an explicit kind will have a compiler/platform
-        dependent precision, which hurts portability and may lead to surprising loss of
-        precision in some cases.
-        "
+impl Violation for ImplicitRealKind {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let ImplicitRealKind { dtype } = self;
+        format!("{dtype} has implicit kind")
     }
 }
 
 impl ASTRule for ImplicitRealKind {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let dtype = node.child(0)?.to_text(src.source_text())?.to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
@@ -32,11 +38,10 @@ impl ASTRule for ImplicitRealKind {
             return None;
         }
 
-        let msg = format!("{dtype} has implicit kind");
-        some_vec![Violation::from_node(msg, node)]
+        some_vec![Diagnostic::from_node(ImplicitRealKind { dtype }, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["intrinsic_type"]
     }
 }
@@ -44,7 +49,7 @@ impl ASTRule for ImplicitRealKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -63,15 +68,17 @@ mod tests {
             ",
         );
 
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (1, 0, 1, 4, "real"),
             (2, 2, 2, 6, "real"),
             (5, 2, 5, 9, "complex"),
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, dtype)| {
-            Violation::from_start_end_line_col(
-                format!("{dtype} has implicit kind"),
+            Diagnostic::from_start_end_line_col(
+                ImplicitRealKind {
+                    dtype: dtype.to_string(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -80,9 +87,7 @@ mod tests {
             )
         })
         .collect();
-
-        let rule = ImplicitRealKind::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = ImplicitRealKind::apply(&source)?;
         assert_eq!(actual, expected);
 
         Ok(())

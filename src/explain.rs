@@ -2,7 +2,6 @@ use std::process::ExitCode;
 
 use crate::cli::ExplainArgs;
 use crate::rules::{explain_rule, full_ruleset, RuleSet};
-use crate::settings::default_settings;
 use anyhow::Result;
 use colored::Colorize;
 use textwrap::dedent;
@@ -26,11 +25,10 @@ pub fn explain(args: ExplainArgs) -> Result<ExitCode> {
     match ruleset(&args) {
         Ok(rules) => {
             let mut outputs = Vec::new();
-            let settings = default_settings();
             for rule in rules {
                 outputs.push((
                     format!("{} {}", "#".bright_red(), rule.bright_red()),
-                    dedent(explain_rule(rule, &settings)),
+                    dedent(explain_rule(rule)),
                 ));
             }
             outputs.sort_by(|a, b| {

@@ -1,35 +1,36 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
+/// ## What does it do?
+/// Checks for old style array literals
+///
+/// ## Why is this bad?
+/// Fortran 2003 introduced a shorter syntax for array literals: `[...]`. While the
+/// older style, `(/.../)`, is still valid, the F2003 style is shorter and easier to
+/// match.
+#[violation]
 pub struct OldStyleArrayLiteral {}
 
-impl Rule for OldStyleArrayLiteral {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Fortran 2003 introduced a shorter syntax for array literals: `[...]`. While the
-        older style, `(/.../)`, is still valid, the F2003 style is shorter and easier to
-        match.
-        "
+impl Violation for OldStyleArrayLiteral {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        format!("Array literal uses old-style syntax: prefer `[...]`")
     }
 }
-
 impl ASTRule for OldStyleArrayLiteral {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.to_text(src.source_text())?.starts_with("(/") {
-            let msg = "Array literal uses old-style syntax: prefer `[...]`";
-            return some_vec!(Violation::from_node(msg, node));
+            return some_vec!(Diagnostic::from_node(Self {}, node));
         }
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["array_literal"]
     }
 }
@@ -37,7 +38,7 @@ impl ASTRule for OldStyleArrayLiteral {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -60,7 +61,7 @@ mod tests {
              end program test
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (2, 20, 2, 31),
             (3, 20, 7, 4),
             (8, 17, 8, 28),
@@ -68,8 +69,8 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col)| {
-            Violation::from_start_end_line_col(
-                "Array literal uses old-style syntax: prefer `[...]`",
+            Diagnostic::from_start_end_line_col(
+                OldStyleArrayLiteral {},
                 &source,
                 *start_line,
                 *start_col,
@@ -78,8 +79,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = OldStyleArrayLiteral::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = OldStyleArrayLiteral::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

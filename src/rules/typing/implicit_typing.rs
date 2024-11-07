@@ -1,6 +1,8 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -20,84 +22,95 @@ fn child_is_implicit_none(node: &Node) -> bool {
     false
 }
 
-pub struct ImplicitTyping {}
-
-impl Rule for ImplicitTyping {
-    fn new(_settings: &Settings) -> Self {
-        ImplicitTyping {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        'implicit none' should be used in all modules and programs, as implicit typing
-        reduces the readability of code and increases the chances of typing errors.
-        "
-    }
+/// ## What does it do?
+/// Checks for missing `implicit none`
+///
+/// ## Why is this bad?
+/// 'implicit none' should be used in all modules and programs, as implicit typing
+/// reduces the readability of code and increases the chances of typing errors.
+#[violation]
+pub struct ImplicitTyping {
+    entity: String,
 }
 
+impl Violation for ImplicitTyping {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { entity } = self;
+        format!("{entity} missing 'implicit none'")
+    }
+}
 impl ASTRule for ImplicitTyping {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !child_is_implicit_none(node) {
-            let msg = format!("{} missing 'implicit none'", node.kind());
+            let entity = node.kind().to_string();
             let block_stmt = node.child(0)?;
-            return some_vec![Violation::from_node(msg, &block_stmt)];
+            return some_vec![Diagnostic::from_node(Self { entity }, &block_stmt)];
         }
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["module", "submodule", "program"]
     }
 }
 
-pub struct InterfaceImplicitTyping {}
+/// ## What it does
+/// Checks for missing `implicit none` in interfaces
+///
+/// ## Why is this bad?
+/// Interface functions and subroutines require 'implicit none', even if they are
+/// inside a module that uses 'implicit none'.
+#[violation]
+pub struct InterfaceImplicitTyping {
+    name: String,
+}
 
-impl Rule for InterfaceImplicitTyping {
-    fn new(_settings: &Settings) -> Self {
-        InterfaceImplicitTyping {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Interface functions and subroutines require 'implicit none', even if they are
-        inside a module that uses 'implicit none'.
-        "
+impl Violation for InterfaceImplicitTyping {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("interface '{name}' missing 'implicit none'")
     }
 }
 
 impl ASTRule for InterfaceImplicitTyping {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let parent = node.parent()?;
         if parent.kind() == "interface" && !child_is_implicit_none(node) {
-            let msg = format!("interface {} missing 'implicit none'", node.kind());
+            let name = node.kind().to_string();
             let interface_stmt = node.child(0)?;
-            return some_vec![Violation::from_node(msg, &interface_stmt)];
+            return some_vec![Diagnostic::from_node(Self { name }, &interface_stmt)];
         }
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["function", "subroutine"]
     }
 }
 
-pub struct SuperfluousImplicitNone {}
+/// ## What it does
+/// Checks for unnecessary `implicit none` in module procedures
+///
+/// ## Why is this bad?
+/// If a module has 'implicit none' set, it is not necessary to set it in contained
+/// functions and subroutines (except when using interfaces).
+#[violation]
+pub struct SuperfluousImplicitNone {
+    entity: String,
+}
 
-impl Rule for SuperfluousImplicitNone {
-    fn new(_settings: &Settings) -> Self {
-        SuperfluousImplicitNone {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        If a module has 'implicit none' set, it is not necessary to set it in contained
-        functions and subroutines (except when using interfaces).
-        "
+impl Violation for SuperfluousImplicitNone {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { entity } = self;
+        format!("'implicit none' set on the enclosing {entity}")
     }
 }
 
 impl ASTRule for SuperfluousImplicitNone {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !implicit_statement_is_none(node) {
             return None;
         }
@@ -107,10 +120,11 @@ impl ASTRule for SuperfluousImplicitNone {
                 let kind = ancestor.kind();
                 match kind {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
-                        if child_is_implicit_none(&ancestor) {
-                            let msg = format!("'implicit none' set on the enclosing {}", kind,);
-                            return some_vec![Violation::from_node(msg, node)];
+                        if !child_is_implicit_none(&ancestor) {
+                            continue;
                         }
+                        let entity = kind.to_string();
+                        return some_vec![Diagnostic::from_node(Self { entity }, node)];
                     }
                     "interface" => {
                         break;
@@ -124,7 +138,7 @@ impl ASTRule for SuperfluousImplicitNone {
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["implicit_statement"]
     }
 }
@@ -132,7 +146,7 @@ impl ASTRule for SuperfluousImplicitNone {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -148,11 +162,13 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = [(0, 1, 0, 17, "module"), (5, 0, 5, 18, "program")]
+        let expected: Vec<_> = [(0, 1, 0, 17, "module"), (5, 0, 5, 18, "program")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
-                Violation::from_start_end_line_col(
-                    format!("{kind} missing 'implicit none'"),
+                Diagnostic::from_start_end_line_col(
+                    ImplicitTyping {
+                        entity: kind.to_string(),
+                    },
                     &source,
                     *start_line,
                     *start_col,
@@ -161,8 +177,7 @@ mod tests {
                 )
             })
             .collect();
-        let rule = ImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = ImplicitTyping::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -187,9 +202,8 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = vec![];
-        let rule = ImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let expected: Vec<Diagnostic> = vec![];
+        let actual = ImplicitTyping::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -218,11 +232,13 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
+        let expected: Vec<_> = [(4, 8, 4, 34, "function"), (13, 8, 13, 29, "subroutine")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
-                Violation::from_start_end_line_col(
-                    format!("interface {kind} missing 'implicit none'"),
+                Diagnostic::from_start_end_line_col(
+                    InterfaceImplicitTyping {
+                        name: kind.to_string(),
+                    },
                     &source,
                     *start_line,
                     *start_col,
@@ -231,8 +247,7 @@ mod tests {
                 )
             })
             .collect();
-        let rule = InterfaceImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = InterfaceImplicitTyping::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -263,9 +278,8 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = vec![];
-        let rule = InterfaceImplicitTyping::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let expected: Vec<Diagnostic> = vec![];
+        let actual = InterfaceImplicitTyping::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -308,7 +322,7 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (5, 8, 5, 21, "module"),
             (10, 8, 10, 21, "module"),
             (23, 8, 23, 21, "program"),
@@ -316,8 +330,10 @@ mod tests {
         ]
         .iter()
         .map(|(start_line, start_col, end_line, end_col, kind)| {
-            Violation::from_start_end_line_col(
-                format!("'implicit none' set on the enclosing {kind}"),
+            Diagnostic::from_start_end_line_col(
+                SuperfluousImplicitNone {
+                    entity: kind.to_string(),
+                },
                 &source,
                 *start_line,
                 *start_col,
@@ -326,8 +342,7 @@ mod tests {
             )
         })
         .collect();
-        let rule = SuperfluousImplicitNone::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = SuperfluousImplicitNone::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -374,9 +389,8 @@ mod tests {
             end program
             ",
         );
-        let expected: Vec<Violation> = vec![];
-        let rule = SuperfluousImplicitNone::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let expected: Vec<Diagnostic> = vec![];
+        let actual = SuperfluousImplicitNone::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

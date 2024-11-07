@@ -1,45 +1,52 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-pub struct UnnamedEndStatement {}
+/// ## What does it do?
+/// Checks that `end` statements include the type of construct they're ending
+///
+/// ## Why is this bad?
+/// End statements should specify what kind of construct they're ending, and the
+/// name of that construct. For example, prefer this:
+///
+/// ```fortran
+/// module mymodule
+///   ...
+/// end module mymodule
+/// ```
+///
+/// To this:
+///
+/// ```fortran
+/// module mymodule
+///   ...
+/// end
+/// ```
+///
+/// Or this:
+///
+/// ```fortran
+/// module mymodule
+///   ...
+/// end module
+/// ```
+///
+/// Similar rules apply for many other Fortran statements
+#[violation]
+pub struct UnnamedEndStatement {
+    statement: String,
+    name: String,
+}
 
-impl Rule for UnnamedEndStatement {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        End statements should specify what kind of construct they're ending, and the
-        name of that construct. For example, prefer this:
-
-        ```
-        module mymodule
-          ...
-        end module mymodule
-        ```
-
-        To this:
-
-        ```
-        module mymodule
-          ...
-        end
-        ```
-
-        Or this:
-
-        ```
-        module mymodule
-          ...
-        end module
-        ```
-
-        Similar rules apply for many other Fortran statements
-        "
+impl Violation for UnnamedEndStatement {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let UnnamedEndStatement { statement, name } = self;
+        format!("end statement should read 'end {statement} {name}'")
     }
 }
 
@@ -58,7 +65,11 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
 }
 
 impl ASTRule for UnnamedEndStatement {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Violation>> {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         // TODO Also check for optionally labelled constructs like 'do' or 'select'
 
         // If end node is named, move on.
@@ -77,12 +88,13 @@ impl ASTRule for UnnamedEndStatement {
         };
         let name = statement_node
             .child_with_name(name_kind)?
-            .to_text(src.source_text())?;
-        let msg = format!("end statement should read 'end {statement} {name}'");
-        some_vec![Violation::from_node(msg, node)]
+            .to_text(src.source_text())?
+            .to_string();
+        let statement = statement.to_string();
+        some_vec![Diagnostic::from_node(Self { statement, name }, node)]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec![
             "end_module_statement",
             "end_submodule_statement",
@@ -98,7 +110,7 @@ impl ASTRule for UnnamedEndStatement {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -168,7 +180,7 @@ mod tests {
             end                             ! catch this
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (5, 2, 5, 32, "type", "mytype"),
             (9, 2, 9, 32, "subroutine", "mysub1"),
             (13, 0, 13, 32, "module", "mymod1"),
@@ -182,8 +194,11 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, statement, name)| {
-                Violation::from_start_end_line_col(
-                    format!("end statement should read 'end {statement} {name}'"),
+                Diagnostic::from_start_end_line_col(
+                    UnnamedEndStatement {
+                        statement: statement.to_string(),
+                        name: name.to_string(),
+                    },
                     &source,
                     *start_line,
                     *start_col,
@@ -193,8 +208,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = UnnamedEndStatement::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = UnnamedEndStatement::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

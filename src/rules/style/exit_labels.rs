@@ -1,36 +1,44 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-pub struct MissingExitOrCycleLabel {}
-
-impl Rule for MissingExitOrCycleLabel {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        When using `exit` or `cycle` in a named `do` loop, the `exit`/`cycle` statement
-        should use the loop name
-
-        ```
-        name: do
-          exit name
-        end do name
-        ```
-
-        Using named loops is particularly useful for nested or complicated loops, as it
-        helps the reader keep track of the flow of logic. It's also the only way to `exit`
-        or `cycle` outer loops from within inner ones.
-        "
-    }
+/// ## What does it do?
+/// When using `exit` or `cycle` in a named `do` loop, the `exit`/`cycle` statement
+/// should use the loop name
+///
+/// ## Example
+/// ```fortran
+/// name: do
+///   exit name
+/// end do name
+/// ```
+///
+/// Using named loops is particularly useful for nested or complicated loops, as it
+/// helps the reader keep track of the flow of logic. It's also the only way to `exit`
+/// or `cycle` outer loops from within inner ones.
+#[violation]
+pub struct MissingExitOrCycleLabel {
+    name: String,
+    label: String,
 }
 
+impl Violation for MissingExitOrCycleLabel {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name, label } = self;
+        format!("'{name}' statement in named 'do' loop missing label '{label}'")
+    }
+}
 impl ASTRule for MissingExitOrCycleLabel {
-    fn check<'a>(&self, node: &'a Node, src: &'a SourceFile) -> Option<Vec<Violation>> {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Skip unlabelled loops
         let label = node
@@ -38,21 +46,26 @@ impl ASTRule for MissingExitOrCycleLabel {
             .to_text(src)?
             .trim_end_matches(':');
 
-        let violations: Vec<Violation> = node
+        let violations: Vec<Diagnostic> = node
             .named_descendants_except(["do_loop_statement"])
             .filter(|node| node.kind() == "keyword_statement")
             .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
-                let msg = format!("'{name}' statement in named 'do' loop missing label '{label}'");
-                Violation::from_node(msg, &stmt)
+                Diagnostic::from_node(
+                    Self {
+                        name: name.to_string(),
+                        label: label.to_string(),
+                    },
+                    &stmt,
+                )
             })
             .collect();
 
         Some(violations)
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["do_loop_statement"]
     }
 }
@@ -60,7 +73,7 @@ impl ASTRule for MissingExitOrCycleLabel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -113,7 +126,7 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<Violation> = [
+        let expected: Vec<_> = [
             (4, 6, 4, 10, "exit", "label1"),
             (9, 16, 9, 20, "exit", "label2"),
             (28, 18, 28, 23, "cycle", "inner"),
@@ -121,8 +134,11 @@ mod tests {
         .iter()
         .map(
             |(start_line, start_col, end_line, end_col, stmt_kind, label)| {
-                Violation::from_start_end_line_col(
-                    format!("'{stmt_kind}' statement in named 'do' loop missing label '{label}'"),
+                Diagnostic::from_start_end_line_col(
+                    MissingExitOrCycleLabel {
+                        name: stmt_kind.to_string(),
+                        label: label.to_string(),
+                    },
                     &source,
                     *start_line,
                     *start_col,
@@ -132,8 +148,7 @@ mod tests {
             },
         )
         .collect();
-        let rule = MissingExitOrCycleLabel::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = MissingExitOrCycleLabel::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

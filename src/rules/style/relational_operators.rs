@@ -1,6 +1,8 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -16,33 +18,41 @@ fn map_relational_symbols(name: &str) -> Option<&'static str> {
     }
 }
 
-pub struct DeprecatedRelationalOperator {}
-
-impl Rule for DeprecatedRelationalOperator {
-    fn new(_settings: &Settings) -> Self {
-        Self {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Fortran 90 introduced the traditional symbols for relational operators: `>`,
-        `>=`, `<`, and so on. Prefer these over the deprecated forms `.gt.`, `.le.`, and
-        so on.
-        "
-    }
+/// ## What does it do?
+/// Checks for deprecated relational operators
+///
+/// ## Why is this bad?
+/// Fortran 90 introduced the traditional symbols for relational operators: `>`,
+/// `>=`, `<`, and so on. Prefer these over the deprecated forms `.gt.`, `.le.`, and
+/// so on.
+#[violation]
+pub struct DeprecatedRelationalOperator {
+    symbol: String,
+    new_symbol: String,
 }
 
+impl Violation for DeprecatedRelationalOperator {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { symbol, new_symbol } = self;
+        format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead")
+    }
+}
 impl ASTRule for DeprecatedRelationalOperator {
-    fn check(&self, node: &Node, src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
-        let symbol = relation.to_text(src.source_text())?.to_lowercase();
-        let new_symbol = map_relational_symbols(symbol.as_str())?;
-        let msg =
-            format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead");
-        some_vec![Violation::from_node(msg, &relation)]
+        let symbol = relation
+            .to_text(src.source_text())?
+            .to_lowercase()
+            .to_string();
+        let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
+        some_vec![Diagnostic::from_node(
+            Self { symbol, new_symbol },
+            &relation
+        )]
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["relational_expression"]
     }
 }
@@ -50,7 +60,7 @@ impl ASTRule for DeprecatedRelationalOperator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -66,29 +76,30 @@ mod tests {
             end program test
             ",
         );
-        let expected: Vec<Violation> =
-            [
-                (2, 8, 2, 12, ".gt.", ">"),
-                (3, 8, 3, 12, ".le.", "<="),
-                (4, 7, 4, 11, ".eq.", "=="),
-                (4, 18, 4, 22, ".ne.", "/="),
-            ]
-            .iter()
-            .map(
-                |(start_line, start_col, end_line, end_col, symbol, new_symbol)| {
-                    Violation::from_start_end_line_col(
-                format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead"),
-                &source,
-                *start_line,
-                *start_col,
-                *end_line,
-                *end_col,
-            )
-                },
-            )
-            .collect();
-        let rule = DeprecatedRelationalOperator::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let expected: Vec<_> = [
+            (2, 8, 2, 12, ".gt.", ">"),
+            (3, 8, 3, 12, ".le.", "<="),
+            (4, 7, 4, 11, ".eq.", "=="),
+            (4, 18, 4, 22, ".ne.", "/="),
+        ]
+        .iter()
+        .map(
+            |(start_line, start_col, end_line, end_col, symbol, new_symbol)| {
+                Diagnostic::from_start_end_line_col(
+                    DeprecatedRelationalOperator {
+                        symbol: symbol.to_string(),
+                        new_symbol: new_symbol.to_string(),
+                    },
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
+            },
+        )
+        .collect();
+        let actual = DeprecatedRelationalOperator::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }

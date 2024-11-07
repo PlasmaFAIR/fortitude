@@ -1,41 +1,45 @@
 use crate::settings::Settings;
-use crate::{ASTRule, Rule, Violation};
+use crate::{ASTRule, FromASTNode};
+use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-/// Defines rules that check whether functions and subroutines are defined within modules (or one
+/// ## What it does
+/// Checks whether functions and subroutines are defined within modules (or one
 /// of a few acceptable alternatives).
+///
+/// ## Why is this bad?
+/// Functions and subroutines should be contained within (sub)modules or programs.
+/// Fortran compilers are unable to perform type checks and conversions on functions
+/// defined outside of these scopes, and this is a common source of bugs.
+#[violation]
+pub struct ExternalFunction {
+    procedure: String,
+}
 
-pub struct ExternalFunction {}
-
-impl Rule for ExternalFunction {
-    fn new(_settings: &Settings) -> Self {
-        ExternalFunction {}
-    }
-
-    fn explain(&self) -> &'static str {
-        "
-        Functions and subroutines should be contained within (sub)modules or programs.
-        Fortran compilers are unable to perform type checks and conversions on functions
-        defined outside of these scopes, and this is a common source of bugs.
-        "
+impl Violation for ExternalFunction {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let ExternalFunction { procedure } = self;
+        format!("{procedure} not contained within (sub)module or program")
     }
 }
 
 impl ASTRule for ExternalFunction {
-    fn check(&self, node: &Node, _src: &SourceFile) -> Option<Vec<Violation>> {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.parent()?.kind() == "translation_unit" {
-            let msg = format!(
-                "{} not contained within (sub)module or program",
-                node.kind()
-            );
             let procedure_stmt = node.child(0)?;
-            return some_vec![Violation::from_node(msg, &procedure_stmt)];
+            let procedure = node.kind().to_string();
+            return some_vec![Diagnostic::from_node(
+                ExternalFunction { procedure },
+                &procedure_stmt
+            )];
         }
         None
     }
 
-    fn entrypoints(&self) -> Vec<&'static str> {
+    fn entrypoints() -> Vec<&'static str> {
         vec!["function", "subroutine"]
     }
 }
@@ -43,7 +47,7 @@ impl ASTRule for ExternalFunction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{settings::default_settings, test_file};
+    use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -61,11 +65,13 @@ mod tests {
             end subroutine
             ",
         );
-        let expected: Vec<Violation> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
+        let expected: Vec<_> = [(1, 0, 1, 26, "function"), (6, 0, 6, 20, "subroutine")]
             .iter()
             .map(|(start_line, start_col, end_line, end_col, kind)| {
-                Violation::from_start_end_line_col(
-                    format!("{kind} not contained within (sub)module or program"),
+                Diagnostic::from_start_end_line_col(
+                    ExternalFunction {
+                        procedure: kind.to_string(),
+                    },
                     &source,
                     *start_line,
                     *start_col,
@@ -74,8 +80,7 @@ mod tests {
                 )
             })
             .collect();
-        let rule = ExternalFunction::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let actual = ExternalFunction::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -99,9 +104,8 @@ mod tests {
             end module
             ",
         );
-        let expected: Vec<Violation> = vec![];
-        let rule = ExternalFunction::new(&default_settings());
-        let actual = rule.apply(&source)?;
+        let expected: Vec<Diagnostic> = vec![];
+        let actual = ExternalFunction::apply(&source)?;
         assert_eq!(actual, expected);
         Ok(())
     }
