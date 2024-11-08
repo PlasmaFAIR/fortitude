@@ -1,5 +1,8 @@
 use anyhow::Context;
 use lazy_static::lazy_static;
+use ruff_diagnostics::Edit;
+use ruff_source_file::SourceFile;
+use ruff_text_size::{TextRange, TextSize};
 /// Contains methods to parse Fortran code into a tree-sitter Tree and utilites to simplify the
 /// navigation of a Tree.
 use std::sync::Mutex;
@@ -126,6 +129,9 @@ pub trait FortitudeNode<'tree> {
     /// Given a variable declaration or function statement, return its type if it's an intrinsic type,
     /// or None otherwise.
     fn parse_intrinsic_type(&self) -> Option<String>;
+
+    /// Return the edit required to remove this node.
+    fn edit_delete(&self, src: &SourceFile) -> Edit;
 }
 
 impl FortitudeNode<'_> for Node<'_> {
@@ -181,6 +187,14 @@ impl FortitudeNode<'_> for Node<'_> {
             return Some(grandchild.kind().to_string());
         }
         None
+    }
+
+    fn edit_delete(&self, _src: &SourceFile) -> Edit {
+        // TODO Clean up whitespace around the deleted node.
+        Edit::range_deletion(TextRange::new(
+            TextSize::try_from(self.start_byte()).unwrap(),
+            TextSize::try_from(self.end_byte()).unwrap(),
+        ))
     }
 }
 
