@@ -269,9 +269,7 @@ fn format_violation(
         // edits in the stack.
         while let Some(edit) = edits.pop() {
             // Remove content from source
-            let sl = &fixed[usize::from(range.start())..usize::from(range.end())];
-            println!("{sl}");
-            fixed.replace_range(usize::from(range.start())..usize::from(range.end()), " ");
+            fixed.replace_range(usize::from(range.start())..usize::from(range.end()), "");
             // Add in suggested content
             if let Some(content) = edit.content() {
                 fixed.insert_str(range.start().into(), content);
