@@ -38,5 +38,5 @@ bindings = "bin"
 module-name = "fortitude"
 python-source = "python"
 python-packages = ["fortitude"]
-manifest-path = "Cargo.toml"
+manifest-path = "fortitude/Cargo.toml"
 strip = true
