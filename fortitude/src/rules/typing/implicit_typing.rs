@@ -109,7 +109,7 @@ impl AlwaysFixableViolation for SuperfluousImplicitNone {
     }
 
     fn fix_title(&self) -> String {
-        "Remove superfluous 'implicit none'".to_string()
+        "Remove unnecessary 'implicit none'".to_string()
     }
 }
 

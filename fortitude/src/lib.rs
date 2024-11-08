@@ -12,6 +12,7 @@ use ruff_diagnostics::{Applicability, Diagnostic, DiagnosticKind, Fix};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{Ranged, TextRange, TextSize};
 use settings::{default_settings, Settings};
+use similar_asserts::SimpleDiff;
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
@@ -195,8 +196,9 @@ impl<'a> fmt::Display for DiagnosticMessage<'a> {
         let path = self.file.name().bold();
         let code = self.code.bold().bright_red();
         let message = self.kind.body.as_str();
+        let suggestion = &self.kind.suggestion;
         if self.range != TextRange::default() {
-            format_violation(self, f, &self.range, message, &path, &code)
+            format_violation(self, f, &self.range, message, suggestion, &path, &code)
         } else {
             write!(f, "{path}: {code} {message}")
         }
@@ -208,6 +210,7 @@ fn format_violation(
     f: &mut fmt::Formatter,
     range: &TextRange,
     message: &str,
+    suggestion: &Option<String>,
     path: &ColoredString,
     code: &ColoredString,
 ) -> fmt::Result {
@@ -263,10 +266,17 @@ fn format_violation(
             .annotation(Level::Error.span(start_char..end_char).label(code)),
     );
 
-    let renderer = Renderer::styled();
-    let source_block = renderer.render(snippet);
+    let snippet_with_footer = if let Some(s) = suggestion {
+        snippet.footer(Level::Help.title(s))
+    } else {
+        snippet
+    };
 
-    // If a fix is available, suggest this to the user
+    let renderer = Renderer::styled();
+    let source_block = renderer.render(snippet_with_footer);
+    writeln!(f, "{source_block}")?;
+
+    // If a fix is available, show diff to the user
     if let Some(fix) = &diagnostic.fix {
         let mut fixed = source_code.text().to_string();
         let mut edits = fix.edits().to_vec();
@@ -284,21 +294,17 @@ fn format_violation(
             }
         }
         let fix_msg = match fix.applicability() {
-            Applicability::DisplayOnly => "The following may correct this problem.",
-            Applicability::Unsafe => "Run with '--fix --unsafe' to correct this problem.",
-            Applicability::Safe => "Run with '--fix' to safely correct this problem.",
+            Applicability::DisplayOnly => "The following fix may correct this problem.",
+            Applicability::Unsafe => "Running with '--fix --unsafe' will apply the following fix.",
+            Applicability::Safe => "Running with '--fix' will apply the following fix.",
         };
-        // TODO Adjust snippet bounds
-        // TODO Annotate edits
-        let fixed_slice = &fixed[usize::from(start_offset)..usize::from(end_offset)];
-        let fix_snippet = Level::Help
-            .title(fix_msg)
-            .snippet(Snippet::source(fixed_slice).line_start(start_index.get()));
-        let fix_block = renderer.render(fix_snippet);
-        writeln!(f, "{source_block}\n{fix_block}")
-    } else {
-        writeln!(f, "{source_block}")
+        let fix_title = Level::Note.title(fix_msg);
+        writeln!(f, "\n{}", renderer.render(fix_title))?;
+
+        let diff = SimpleDiff::from_str(source_code.text(), &fixed, "original", "fixed");
+        write!(f, "{diff}")?;
     }
+    Ok(())
 }
 
 /// Simplify making a `SourceFile` in tests
