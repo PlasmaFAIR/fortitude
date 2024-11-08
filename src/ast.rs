@@ -131,7 +131,7 @@ pub trait FortitudeNode<'tree> {
     fn parse_intrinsic_type(&self) -> Option<String>;
 
     /// Return the edit required to remove this node.
-    fn edit_delete(&self, src: &SourceFile) -> Edit;
+    fn edit_delete(&self, source_file: &SourceFile) -> Edit;
 }
 
 impl FortitudeNode<'_> for Node<'_> {
@@ -189,12 +189,25 @@ impl FortitudeNode<'_> for Node<'_> {
         None
     }
 
-    fn edit_delete(&self, _src: &SourceFile) -> Edit {
-        // TODO Clean up whitespace around the deleted node.
-        Edit::range_deletion(TextRange::new(
-            TextSize::try_from(self.start_byte()).unwrap(),
-            TextSize::try_from(self.end_byte()).unwrap(),
-        ))
+    fn edit_delete(&self, source_file: &SourceFile) -> Edit {
+        // If deletion results in an empty line (or multiple), remove it
+        // TODO handle case where removal should also remove a preceding comma
+        let src = source_file.to_source_code();
+        let start_byte = TextSize::try_from(self.start_byte()).unwrap();
+        let end_byte = TextSize::try_from(self.end_byte()).unwrap();
+        let start_index = src.line_index(start_byte);
+        let end_index = src.line_index(end_byte);
+        let start_line = src.line_start(start_index);
+        let end_line = src.line_end(end_index);
+        let mut text = src.slice(TextRange::new(start_line, end_line)).to_string();
+        let start_offset = start_byte - start_line;
+        let end_offset = end_byte - start_line;
+        text.replace_range(usize::from(start_offset)..usize::from(end_offset), "");
+        if text.trim().is_empty() {
+            Edit::range_deletion(TextRange::new(start_line, end_line))
+        } else {
+            Edit::range_deletion(TextRange::new(start_byte, end_byte))
+        }
     }
 }
 

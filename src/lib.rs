@@ -269,7 +269,10 @@ fn format_violation(
         // edits in the stack.
         while let Some(edit) = edits.pop() {
             // Remove content from source
-            fixed.replace_range(usize::from(range.start())..usize::from(range.end()), "");
+            fixed.replace_range(
+                usize::from(edit.range().start())..usize::from(edit.range().end()),
+                "",
+            );
             // Add in suggested content
             if let Some(content) = edit.content() {
                 fixed.insert_str(range.start().into(), content);
