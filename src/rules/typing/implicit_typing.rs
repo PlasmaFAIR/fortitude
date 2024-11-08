@@ -104,7 +104,7 @@ pub struct SuperfluousImplicitNone {
 impl AlwaysFixableViolation for SuperfluousImplicitNone {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { entity, .. } = self;
+        let Self { entity } = self;
         format!("'implicit none' set on the enclosing {entity}")
     }
 
