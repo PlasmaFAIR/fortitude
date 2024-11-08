@@ -7,6 +7,7 @@ mod settings;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
+use fortitude_macros::RuleNamespace;
 use ruff_diagnostics::{Applicability, Diagnostic, DiagnosticKind, Fix};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{Ranged, TextRange, TextSize};
@@ -23,37 +24,41 @@ use tree_sitter::Node;
 
 /// The category of each rule defines the sort of problem it intends to solve.
 #[allow(dead_code)]
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, RuleNamespace)]
 pub enum Category {
     /// Failure to parse a file.
+    #[prefix = "E"]
     Error,
     /// Violation of style conventions.
+    #[prefix = "S"]
     Style,
     /// Misuse of types and kinds.
+    #[prefix = "T"]
     Typing,
     /// Failure to use modules or use them appropriately.
+    #[prefix = "M"]
     Modules,
     /// Best practices for setting floating point precision.
+    #[prefix = "P"]
     Precision,
     /// Check path names, directory structures, etc.
+    #[prefix = "F"]
     FileSystem,
 }
 
-#[allow(dead_code)]
-impl Category {
-    fn from(s: &str) -> anyhow::Result<Self> {
-        match s {
-            "E" => Ok(Self::Error),
-            "S" => Ok(Self::Style),
-            "T" => Ok(Self::Typing),
-            "M" => Ok(Self::Modules),
-            "P" => Ok(Self::Precision),
-            "F" => Ok(Self::FileSystem),
-            _ => {
-                anyhow::bail!("{} is not a rule category.", s)
-            }
-        }
-    }
+pub trait RuleNamespace: Sized {
+    /// Returns the prefix that every single code that fortitude uses to identify
+    /// rules from this category starts with.
+    fn common_prefix(&self) -> &'static str;
+
+    /// Attempts to parse the given rule code. If the prefix is recognized
+    /// returns the respective variant along with the code with the common
+    /// prefix stripped.
+    fn parse_code(code: &str) -> Option<(Self, &str)>;
+
+    fn name(&self) -> &'static str;
+
+    fn description(&self) -> &'static str;
 }
 
 // Violation type
