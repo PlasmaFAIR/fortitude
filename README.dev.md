@@ -3,7 +3,8 @@
 ## Installation from source
 
 To install from source, you must first have a working Rust environment (see
-[rustup](https://rustup.rs/)). The project may then be installed either using `pip`:
+[rustup](https://rustup.rs/)). The project may then be installed from the root directory
+using either `pip`:
 
 ```bash
 python -m venv venv # Or use your preferred virtual environment method...
@@ -14,7 +15,7 @@ pip install .[lint]
 Or using `cargo`:
 
 ```bash
-cargo install --path .
+cargo install --path fortitude
 ```
 
 ## Testing
