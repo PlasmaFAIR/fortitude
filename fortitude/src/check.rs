@@ -212,10 +212,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                 let err_no = format!("Number of errors: {}", total_errors.to_string().bold());
                 let info = "For more information, run:";
                 let explain = format!("{} {}", "fortitude explain", "[ERROR_CODES]".bold());
-                println!(
-                    "\n{}\n-- {}\n-- {}\n\n    {}\n",
-                    file_no, err_no, info, explain
-                );
+                println!("\n{}\n{}\n\n{}\n\n    {}\n", file_no, err_no, info, explain);
                 Ok(ExitCode::FAILURE)
             }
         }
