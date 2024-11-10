@@ -3,8 +3,8 @@
 ## Installation from source
 
 To install from source, you must first have a working Rust environment (see
-[rustup](https://rustup.rs/)). The project may then be installed from the root directory
-using either `pip`:
+[rustup](https://rustup.rs/)). The project may then be installed from the project
+root directory using either `pip`:
 
 ```bash
 python -m venv venv # Or use your preferred virtual environment method...
