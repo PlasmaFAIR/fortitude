@@ -146,6 +146,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
             let text_rules = text_rule_map(&rules);
             let ast_entrypoints = ast_entrypoint_map(&rules);
             let mut total_errors = 0;
+            let mut total_files = 0;
             for path in get_files(&args.files, &args.file_extensions) {
                 let filename = path.to_string_lossy();
                 let empty_file = SourceFileBuilder::new(filename.as_ref(), "").finish();
@@ -197,14 +198,24 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         total_errors += 1;
                     }
                 }
+                total_files += 1;
             }
+            let file_no = format!(
+                "fortitude: {} files scanned.",
+                total_files.to_string().bold()
+            );
             if total_errors == 0 {
+                let success = "All checks passed!".bright_green();
+                println!("\n{}\n{}\n", file_no, success);
                 Ok(ExitCode::SUCCESS)
             } else {
                 let err_no = format!("Number of errors: {}", total_errors.to_string().bold());
                 let info = "For more information, run:";
                 let explain = format!("{} {}", "fortitude explain", "[ERROR_CODES]".bold());
-                println!("\n-- {}\n-- {}\n\n    {}\n", err_no, info, explain);
+                println!(
+                    "\n{}\n-- {}\n-- {}\n\n    {}\n",
+                    file_no, err_no, info, explain
+                );
                 Ok(ExitCode::FAILURE)
             }
         }
