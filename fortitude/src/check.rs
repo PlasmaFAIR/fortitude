@@ -78,33 +78,28 @@ fn check_file(
     path: &Path,
     file: &SourceFile,
     settings: &Settings,
-) -> anyhow::Result<Vec<(String, Diagnostic)>> {
-    // TODO replace Vec<(String, Violation)> with Vec<(&str, Violation)>
+) -> anyhow::Result<Vec<Diagnostic>> {
     let mut violations = Vec::new();
 
-    for (code, rule) in path_rules {
+    for rule in path_rules.values() {
         if let Some(violation) = rule(settings, path) {
-            violations.push((code.to_string(), violation));
+            violations.push(violation);
         }
     }
 
     // Perform plain text analysis
-    for (code, rule) in text_rules {
-        violations.extend(
-            rule(settings, file)
-                .iter()
-                .map(|x| (code.to_string(), x.clone())),
-        );
+    for rule in text_rules.values() {
+        violations.extend(rule(settings, file).iter().cloned());
     }
 
     // Perform AST analysis
     let tree = parse(file.source_text())?;
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
-            for (code, rule) in rules {
+            for (_, rule) in rules {
                 if let Some(violation) = rule(settings, &node, file) {
                     for v in violation {
-                        violations.push((code.to_string(), v));
+                        violations.push(v);
                     }
                 }
             }
@@ -157,7 +152,6 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         let message = format!("Error opening file: {error}");
                         let diagnostic = DiagnosticMessage::from_ruff(
                             &empty_file,
-                            "E000",
                             Diagnostic::new(IOError { message }, TextRange::default()),
                         );
                         println!("{diagnostic}");
@@ -179,7 +173,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                     Ok(violations) => {
                         let mut diagnostics: Vec<_> = violations
                             .into_iter()
-                            .map(|(c, v)| DiagnosticMessage::from_ruff(&file, c, v))
+                            .map(|v| DiagnosticMessage::from_ruff(&file, v))
                             .collect();
                         if !diagnostics.is_empty() {
                             diagnostics.sort_unstable();
@@ -191,7 +185,6 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         let message = format!("Failed to process: {msg}");
                         let diagnostic = DiagnosticMessage::from_ruff(
                             &empty_file,
-                            "E000",
                             Diagnostic::new(IOError { message }, TextRange::default()),
                         );
                         println!("{diagnostic}");

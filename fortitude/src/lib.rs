@@ -18,6 +18,7 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
 use tree_sitter::Node;
+use crate::registry::AsRule;
 
 // Violation type
 // --------------
@@ -119,11 +120,15 @@ pub struct DiagnosticMessage<'a> {
 }
 
 impl<'a> DiagnosticMessage<'a> {
-    pub fn from_ruff<S: AsRef<str>>(file: &'a SourceFile, code: S, diagnostic: Diagnostic) -> Self {
+    pub fn from_ruff(file: &'a SourceFile, diagnostic: Diagnostic) -> Self {
+        // TODO(peter): Need `.suffix()` for now because we're currently using
+        // the literal string from the list rules, when `noqa_code` will already
+        // include the category prefix
+        let code = diagnostic.kind.rule().noqa_code().suffix().to_string();
         Self {
             kind: diagnostic.kind,
             file,
-            code: code.as_ref().to_string(),
+            code,
             range: diagnostic.range,
             fix: diagnostic.fix,
         }
