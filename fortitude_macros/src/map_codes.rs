@@ -446,8 +446,25 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
     let mut from_impls_for_diagnostic_kind = quote!();
 
+    let mut path_rule_variants = quote!();
+    let mut path_rule_from_match_arms = quote!();
+    let mut path_rule_check_match_arms = quote!();
+
+    let mut text_rule_variants = quote!();
+    let mut text_rule_from_match_arms = quote!();
+    let mut text_rule_check_match_arms = quote!();
+
+    let mut ast_rule_variants = quote!();
+    let mut ast_rule_from_match_arms = quote!();
+    let mut ast_rule_check_match_arms = quote!();
+    let mut ast_rule_entrypoint_match_arms = quote!();
+
     for RuleMeta {
-        name, attrs, path, ..
+        name,
+        attrs,
+        path,
+        kind,
+        ..
     } in input
     {
         rule_variants.extend(quote! {
@@ -466,6 +483,55 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         // Enable conversion from `DiagnosticKind` to `Rule`.
         from_impls_for_diagnostic_kind
             .extend(quote! {#(#attrs)* stringify!(#name) => Rule::#name,});
+
+        if kind.is_ident("Path") {
+            path_rule_variants.extend(quote! {
+                #(#attrs)*
+                #name,
+            });
+
+            path_rule_from_match_arms.extend(quote! {
+                #(#attrs)* Rule::#name => Ok(Self::#name),
+            });
+
+            path_rule_check_match_arms.extend(quote! {
+                #(#attrs)* Self::#name => #path::check(settings, path),
+            });
+        }
+
+        if kind.is_ident("Text") {
+            text_rule_variants.extend(quote! {
+                #(#attrs)*
+                #name,
+            });
+
+            text_rule_from_match_arms.extend(quote! {
+                #(#attrs)* Rule::#name => Ok(Self::#name),
+            });
+
+            text_rule_check_match_arms.extend(quote! {
+                #(#attrs)* Self::#name => #path::check(settings, source),
+            });
+        }
+
+        if kind.is_ident("AST") {
+            ast_rule_variants.extend(quote! {
+                #(#attrs)*
+                #name,
+            });
+
+            ast_rule_from_match_arms.extend(quote! {
+                #(#attrs)* Rule::#name => Ok(Self::#name),
+            });
+
+            ast_rule_check_match_arms.extend(quote! {
+                #(#attrs)* Self::#name => #path::check(settings, node, source),
+            });
+
+            ast_rule_entrypoint_match_arms.extend(quote! {
+                #(#attrs)* Self::#name => #path::entrypoints(),
+            });
+        }
     }
 
     quote! {
@@ -514,65 +580,140 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
                 }
             }
         }
+
+        #[derive(
+            EnumIter,
+            Debug,
+            PartialEq,
+            Eq,
+            Copy,
+            Clone,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::ruff_macros::CacheKey,
+            AsRefStr,
+            ::strum_macros::IntoStaticStr,
+        )]
+        #[repr(u16)]
+        #[strum(serialize_all = "kebab-case")]
+        pub enum PathRuleEnum { #path_rule_variants }
+
+        impl TryFrom<Rule> for PathRuleEnum {
+            type Error = &'static str;
+
+            fn try_from(rule: Rule) -> Result<Self, Self::Error> {
+                match rule {
+                    #path_rule_from_match_arms
+                    _ => Err("not a PathRule")
+                }
+            }
+        }
+
+        impl PathRuleEnum {
+            pub fn check(&self, settings: &Settings, path: &Path) -> Option<Diagnostic> {
+                match self {
+                    #path_rule_check_match_arms
+                }
+            }
+        }
+
+        #[derive(
+            EnumIter,
+            Debug,
+            PartialEq,
+            Eq,
+            Copy,
+            Clone,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::ruff_macros::CacheKey,
+            AsRefStr,
+            ::strum_macros::IntoStaticStr,
+        )]
+        #[repr(u16)]
+        #[strum(serialize_all = "kebab-case")]
+        pub enum TextRuleEnum { #text_rule_variants }
+
+        impl TryFrom<Rule> for TextRuleEnum {
+            type Error = &'static str;
+
+            fn try_from(rule: Rule) -> Result<Self, Self::Error> {
+                match rule {
+                    #text_rule_from_match_arms
+                    _ => Err("not a TextRule")
+                }
+            }
+        }
+
+        impl TextRuleEnum {
+            pub fn check(&self, settings: &Settings, source: &SourceFile) -> Vec<Diagnostic> {
+                match self {
+                    #text_rule_check_match_arms
+                }
+            }
+        }
+
+        #[derive(
+            EnumIter,
+            Debug,
+            PartialEq,
+            Eq,
+            Copy,
+            Clone,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::ruff_macros::CacheKey,
+            AsRefStr,
+            ::strum_macros::IntoStaticStr,
+        )]
+        #[repr(u16)]
+        #[strum(serialize_all = "kebab-case")]
+        pub enum ASTRuleEnum { #ast_rule_variants }
+
+        impl TryFrom<Rule> for ASTRuleEnum {
+            type Error = &'static str;
+
+            fn try_from(rule: Rule) -> Result<Self, Self::Error> {
+                match rule {
+                    #ast_rule_from_match_arms
+                    _ => Err("not an ASTRule")
+                }
+            }
+        }
+
+        impl ASTRuleEnum {
+            pub fn check(&self, settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+                match self {
+                    #ast_rule_check_match_arms
+                }
+            }
+
+            pub fn entrypoints(&self) -> Vec<&'static str> {
+                match self {
+                    #ast_rule_entrypoint_match_arms
+                }
+            }
+        }
     }
 }
 
 /// Generate the functions that enable selecting path/text/AST rules from vecs of strings
 fn generate_selection_functions<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream {
-    let mut path_rule_map_arms = quote!();
-    let mut text_rule_map_arms = quote!();
-    let mut ast_rule_map_arms = quote!();
     let mut explanation_arms = quote!();
 
     // These will be collections of literal strings
     let mut all_rules = quote!();
-    let mut path_rules = quote!();
-    let mut text_rules = quote!();
-    let mut ast_rules = quote!();
 
     // Construct match arms for the different functions
-    for RuleMeta {
-        attrs,
-        path,
-        code,
-        kind,
-        ..
-    } in input
-    {
+    for RuleMeta { path, code, .. } in input {
         explanation_arms.extend(quote! {
             #code => #path::explanation().unwrap(),
         });
 
         all_rules.extend(quote!(#code, ));
-        if kind.is_ident("Path") {
-            path_rule_map_arms.extend(quote! {
-                #(#attrs)* #code => map.insert(#code, Box::new(#path::check)),
-            });
-
-            path_rules.extend(quote!(#code, ))
-        }
-        if kind.is_ident("Text") {
-            text_rule_map_arms
-                .extend(quote! {#(#attrs)* #code => map.insert(#code, Box::new(#path::check)),});
-
-            text_rules.extend(quote!(#code, ))
-        }
-        if kind.is_ident("AST") {
-            ast_rule_map_arms.extend(quote! {#(#attrs)* #code => {
-                for entrypoint in #path::entrypoints() {
-                    match map.get_mut(entrypoint) {
-                        Some(rule_vec) => {
-                            rule_vec.push((#code, Box::new(#path::check)));
-                        }
-                        None => {
-                            map.insert(entrypoint, vec![(#code, Box::new(#path::check))]);
-                        }
-                    }
-                }
-            },});
-
-            ast_rules.extend(quote!(#code, ))
-        }
     }
 
     let output = quote!(
@@ -591,19 +732,6 @@ fn generate_selection_functions<'a>(input: impl Iterator<Item = &'a RuleMeta>) -
         const _CODES: &[&'static str; [#all_rules].len()] = &[#all_rules];
         build_set!(CODES, _CODES);
 
-        const _PATH_CODES: &[&'static str; [#path_rules].len()] = &[#path_rules];
-        build_set!(PATH_CODES, _PATH_CODES);
-
-        const _TEXT_CODES: &[&'static str; [#text_rules].len()] = &[#text_rules];
-        build_set!(TEXT_CODES, _TEXT_CODES);
-
-        const _AST_CODES: &[&'static str; [#ast_rules].len()] = &[#ast_rules];
-        build_set!(AST_CODES, _AST_CODES);
-
-        pub type PathRuleMap<'a> = BTreeMap<&'a str, Box<dyn Fn(&Settings, &Path) -> Option<Diagnostic>>>;
-        pub type TextRuleMap<'a> = BTreeMap<&'a str, Box<dyn Fn(&Settings, &SourceFile) -> Vec<Diagnostic>>>;
-        pub type ASTEntryPointMap<'a> = BTreeMap<&'a str, Vec<(&'a str, Box<dyn Fn(&Settings, &Node, &SourceFile) -> Option<Vec<Diagnostic>>>)>>;
-
         // Create a mapping of codes to rule instances that operate on paths.
         /// Returns the full set of all rules.
         pub fn full_ruleset<'a>() -> RuleSet<'a> {
@@ -616,44 +744,6 @@ fn generate_selection_functions<'a>(input: impl Iterator<Item = &'a RuleMeta>) -
             // Should add an additional macro input to toggle default or not.
             // Community feedback will be needed to determine a sensible set.
             full_ruleset()
-        }
-
-        pub fn path_rule_map<'a>(codes: &'a RuleSet<'a>) -> PathRuleMap<'a> {
-            let path_codes: RuleSet = PATH_CODES.intersection(&codes).copied().collect();
-            let mut map = PathRuleMap::new();
-            for code in path_codes {
-                match code {
-                    #path_rule_map_arms
-                    _ => continue,
-                };
-            }
-            map
-        }
-
-        /// Create a mapping of codes to rule instances that operate on lines of code directly.
-        pub fn text_rule_map<'a>(codes: &'a RuleSet<'a>) -> TextRuleMap<'a> {
-            let text_codes: RuleSet = TEXT_CODES.intersection(&codes).copied().collect();
-            let mut map = TextRuleMap::new();
-            for code in text_codes {
-                match code {
-                    #text_rule_map_arms
-                    _ => continue,
-                };
-            }
-            map
-        }
-
-        /// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
-        pub fn ast_entrypoint_map<'a>(codes: &'a RuleSet<'a>) -> ASTEntryPointMap<'a> {
-            let ast_codes: RuleSet = AST_CODES.intersection(&codes).copied().collect();
-            let mut map = ASTEntryPointMap::new();
-            for code in ast_codes {
-                match code {
-                    #ast_rule_map_arms
-                    _ => continue,
-                };
-            }
-            map
         }
 
         /// Print the help text for a rule.

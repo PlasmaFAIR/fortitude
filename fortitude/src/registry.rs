@@ -13,7 +13,8 @@ pub trait AsRule {
 
 impl Rule {
     pub fn from_code(code: &str) -> Result<Self, FromCodeError> {
-        let (category, code) = Category::parse_code(code).ok_or(FromCodeError::Unknown)?;
+        // TODO(peter): second var and lhs should be `code`
+        let (category, _) = Category::parse_code(code).ok_or(FromCodeError::Unknown)?;
         category
             .all_rules()
             .find(|rule| rule.noqa_code().suffix() == code)

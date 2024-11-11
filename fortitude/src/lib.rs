@@ -5,6 +5,7 @@ pub mod explain;
 mod registry;
 mod rules;
 mod settings;
+use crate::registry::AsRule;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
@@ -18,7 +19,6 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
 use tree_sitter::Node;
-use crate::registry::AsRule;
 
 // Violation type
 // --------------

@@ -1,23 +1,25 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::CheckArgs;
+use crate::rules::Rule;
 use crate::rules::{
-    ast_entrypoint_map, default_ruleset, error::ioerror::IOError, full_ruleset, path_rule_map,
-    text_rule_map, ASTEntryPointMap, PathRuleMap, RuleSet, TextRuleMap,
+    default_ruleset, error::ioerror::IOError, full_ruleset, ASTRuleEnum, PathRuleEnum, RuleSet,
+    TextRuleEnum,
 };
 use crate::settings::Settings;
 use crate::DiagnosticMessage;
 use anyhow::Result;
 use colored::Colorize;
-use itertools::{chain, join};
+use itertools::{chain, join, Itertools};
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use walkdir::WalkDir;
 
 /// Get the list of active rules for this session.
-fn ruleset(args: &CheckArgs) -> anyhow::Result<RuleSet> {
+fn ruleset(args: &CheckArgs) -> anyhow::Result<Vec<Rule>> {
     // TODO Check that all rules in the set are valid, use Map::difference
     let mut choices = RuleSet::new();
     if !args.select.is_empty() {
@@ -36,7 +38,13 @@ fn ruleset(args: &CheckArgs) -> anyhow::Result<RuleSet> {
     if !diff.is_empty() {
         anyhow::bail!("Unknown rule codes {:?}", diff);
     }
-    Ok(choices)
+
+    let rules: Vec<_> = choices
+        .iter()
+        .map(|code| Rule::from_code(code).unwrap())
+        .collect();
+
+    Ok(rules)
 }
 
 /// Helper function used with `filter` to select only paths that end in a Fortran extension.
@@ -72,32 +80,32 @@ fn get_files<S: AsRef<str>>(files_in: &Vec<PathBuf>, extensions: &[S]) -> Vec<Pa
 
 /// Parse a file, check it for issues, and return the report.
 fn check_file(
-    path_rules: &PathRuleMap,
-    text_rules: &TextRuleMap,
-    ast_entrypoints: &ASTEntryPointMap,
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<ASTRuleEnum>>,
     path: &Path,
     file: &SourceFile,
     settings: &Settings,
 ) -> anyhow::Result<Vec<Diagnostic>> {
     let mut violations = Vec::new();
 
-    for rule in path_rules.values() {
-        if let Some(violation) = rule(settings, path) {
+    for rule in path_rules {
+        if let Some(violation) = rule.check(settings, path) {
             violations.push(violation);
         }
     }
 
     // Perform plain text analysis
-    for rule in text_rules.values() {
-        violations.extend(rule(settings, file).iter().cloned());
+    for rule in text_rules {
+        violations.extend(rule.check(settings, file));
     }
 
     // Perform AST analysis
     let tree = parse(file.source_text())?;
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
-            for (_, rule) in rules {
-                if let Some(violation) = rule(settings, &node, file) {
+            for rule in rules {
+                if let Some(violation) = rule.check(settings, &node, file) {
                     for v in violation {
                         violations.push(v);
                     }
@@ -130,6 +138,52 @@ fn read_to_string(path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
 }
 
+fn rules_to_path_rules(rules: &[Rule]) -> Vec<PathRuleEnum> {
+    rules
+        .iter()
+        .filter_map(|rule| match TryFrom::try_from(*rule) {
+            Ok(path) => Some(path),
+            _ => None,
+        })
+        .collect_vec()
+}
+
+fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
+    rules
+        .iter()
+        .filter_map(|rule| match TryFrom::try_from(*rule) {
+            Ok(text) => Some(text),
+            _ => None,
+        })
+        .collect_vec()
+}
+
+/// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
+fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<ASTRuleEnum>> {
+    let ast_rules: Vec<ASTRuleEnum> = rules
+        .iter()
+        .filter_map(|rule| match TryFrom::try_from(*rule) {
+            Ok(ast) => Some(ast),
+            _ => None,
+        })
+        .collect();
+
+    let mut map: BTreeMap<&'a str, Vec<_>> = BTreeMap::new();
+    for rule in ast_rules {
+        for entrypoint in rule.entrypoints() {
+            match map.get_mut(entrypoint) {
+                Some(rule_vec) => {
+                    rule_vec.push(rule);
+                }
+                None => {
+                    map.insert(entrypoint, vec![rule]);
+                }
+            }
+        }
+    }
+    map
+}
+
 /// Check all files, report issues found, and return error code.
 pub fn check(args: CheckArgs) -> Result<ExitCode> {
     let settings = Settings {
@@ -137,8 +191,8 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
     };
     match ruleset(&args) {
         Ok(rules) => {
-            let path_rules = path_rule_map(&rules);
-            let text_rules = text_rule_map(&rules);
+            let path_rules = rules_to_path_rules(&rules);
+            let text_rules = rules_to_text_rules(&rules);
             let ast_entrypoints = ast_entrypoint_map(&rules);
             let mut total_errors = 0;
             let mut total_files = 0;
