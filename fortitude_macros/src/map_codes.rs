@@ -213,6 +213,10 @@ pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
 
     output.extend(generate_iter_impl(&category_to_rules, &category_idents));
 
+    output.extend(generate_selection_functions(
+        category_to_rules.values().flat_map(BTreeMap::values),
+    ));
+
     Ok(output)
 }
 
@@ -298,7 +302,7 @@ See also https://github.com/astral-sh/ruff/issues/2186.
             ..
         } = codes
             .iter()
-            .sorted_by_key(|data| data.category == "Pylint")
+            .sorted_by_key(|data| data.category == "Error")
             .next()
             .unwrap();
 
@@ -511,6 +515,157 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             }
         }
     }
+}
+
+/// Generate the functions that enable selecting path/text/AST rules from vecs of strings
+fn generate_selection_functions<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream {
+    let mut path_rule_map_arms = quote!();
+    let mut text_rule_map_arms = quote!();
+    let mut ast_rule_map_arms = quote!();
+    let mut explanation_arms = quote!();
+
+    // These will be collections of literal strings
+    let mut all_rules = quote!();
+    let mut path_rules = quote!();
+    let mut text_rules = quote!();
+    let mut ast_rules = quote!();
+
+    // Construct match arms for the different functions
+    for RuleMeta {
+        attrs,
+        path,
+        code,
+        kind,
+        ..
+    } in input
+    {
+        explanation_arms.extend(quote! {
+            #code => #path::explanation().unwrap(),
+        });
+
+        all_rules.extend(quote!(#code, ));
+        if kind.is_ident("Path") {
+            path_rule_map_arms.extend(quote! {
+                #(#attrs)* #code => map.insert(#code, Box::new(#path::check)),
+            });
+
+            path_rules.extend(quote!(#code, ))
+        }
+        if kind.is_ident("Text") {
+            text_rule_map_arms
+                .extend(quote! {#(#attrs)* #code => map.insert(#code, Box::new(#path::check)),});
+
+            text_rules.extend(quote!(#code, ))
+        }
+        if kind.is_ident("AST") {
+            ast_rule_map_arms.extend(quote! {#(#attrs)* #code => {
+                for entrypoint in #path::entrypoints() {
+                    match map.get_mut(entrypoint) {
+                        Some(rule_vec) => {
+                            rule_vec.push((#code, Box::new(#path::check)));
+                        }
+                        None => {
+                            map.insert(entrypoint, vec![(#code, Box::new(#path::check))]);
+                        }
+                    }
+                }
+            },});
+
+            ast_rules.extend(quote!(#code, ))
+        }
+    }
+
+    let output = quote!(
+        use lazy_static::lazy_static;
+        use std::collections::{BTreeSet, BTreeMap};
+        use std::path::Path;
+        use ruff_diagnostics::Diagnostic;
+        use ruff_source_file::SourceFile;
+        use tree_sitter::Node;
+        use crate::{ASTRule, PathRule, TextRule};
+        use crate::settings::Settings;
+
+        pub type RuleSet<'a> = BTreeSet<&'a str>;
+
+        // String literals of all rule codes
+        const _CODES: &[&'static str; [#all_rules].len()] = &[#all_rules];
+        build_set!(CODES, _CODES);
+
+        const _PATH_CODES: &[&'static str; [#path_rules].len()] = &[#path_rules];
+        build_set!(PATH_CODES, _PATH_CODES);
+
+        const _TEXT_CODES: &[&'static str; [#text_rules].len()] = &[#text_rules];
+        build_set!(TEXT_CODES, _TEXT_CODES);
+
+        const _AST_CODES: &[&'static str; [#ast_rules].len()] = &[#ast_rules];
+        build_set!(AST_CODES, _AST_CODES);
+
+        pub type PathRuleMap<'a> = BTreeMap<&'a str, Box<dyn Fn(&Settings, &Path) -> Option<Diagnostic>>>;
+        pub type TextRuleMap<'a> = BTreeMap<&'a str, Box<dyn Fn(&Settings, &SourceFile) -> Vec<Diagnostic>>>;
+        pub type ASTEntryPointMap<'a> = BTreeMap<&'a str, Vec<(&'a str, Box<dyn Fn(&Settings, &Node, &SourceFile) -> Option<Vec<Diagnostic>>>)>>;
+
+        // Create a mapping of codes to rule instances that operate on paths.
+        /// Returns the full set of all rules.
+        pub fn full_ruleset<'a>() -> RuleSet<'a> {
+            CODES.clone()
+        }
+
+        /// Returns the set of rules that are activated by default, expressed as strings.
+        pub fn default_ruleset<'a>() -> RuleSet<'a> {
+            // Currently all rules are activated by default.
+            // Should add an additional macro input to toggle default or not.
+            // Community feedback will be needed to determine a sensible set.
+            full_ruleset()
+        }
+
+        pub fn path_rule_map<'a>(codes: &'a RuleSet<'a>) -> PathRuleMap<'a> {
+            let path_codes: RuleSet = PATH_CODES.intersection(&codes).copied().collect();
+            let mut map = PathRuleMap::new();
+            for code in path_codes {
+                match code {
+                    #path_rule_map_arms
+                    _ => continue,
+                };
+            }
+            map
+        }
+
+        /// Create a mapping of codes to rule instances that operate on lines of code directly.
+        pub fn text_rule_map<'a>(codes: &'a RuleSet<'a>) -> TextRuleMap<'a> {
+            let text_codes: RuleSet = TEXT_CODES.intersection(&codes).copied().collect();
+            let mut map = TextRuleMap::new();
+            for code in text_codes {
+                match code {
+                    #text_rule_map_arms
+                    _ => continue,
+                };
+            }
+            map
+        }
+
+        /// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
+        pub fn ast_entrypoint_map<'a>(codes: &'a RuleSet<'a>) -> ASTEntryPointMap<'a> {
+            let ast_codes: RuleSet = AST_CODES.intersection(&codes).copied().collect();
+            let mut map = ASTEntryPointMap::new();
+            for code in ast_codes {
+                match code {
+                    #ast_rule_map_arms
+                    _ => continue,
+                };
+            }
+            map
+        }
+
+        /// Print the help text for a rule.
+        pub fn explain_rule(code: &str) -> &str {
+            match code {
+                #explanation_arms
+                _ => ""
+            }
+        }
+    );
+
+    output
 }
 
 impl Parse for RuleMeta {
