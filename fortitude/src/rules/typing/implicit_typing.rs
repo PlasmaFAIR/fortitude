@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{ASTRule, FromASTNode};
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -101,16 +101,20 @@ pub struct SuperfluousImplicitNone {
     entity: String,
 }
 
-impl Violation for SuperfluousImplicitNone {
+impl AlwaysFixableViolation for SuperfluousImplicitNone {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { entity } = self;
         format!("'implicit none' set on the enclosing {entity}")
     }
+
+    fn fix_title(&self) -> String {
+        "Remove unnecessary 'implicit none'".to_string()
+    }
 }
 
 impl ASTRule for SuperfluousImplicitNone {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !implicit_statement_is_none(node) {
             return None;
         }
@@ -124,7 +128,10 @@ impl ASTRule for SuperfluousImplicitNone {
                             continue;
                         }
                         let entity = kind.to_string();
-                        return some_vec![Diagnostic::from_node(Self { entity }, node)];
+                        let fix = Fix::safe_edit(node.edit_delete(src));
+                        return some_vec![
+                            Diagnostic::from_node(Self { entity }, node).with_fix(fix)
+                        ];
                     }
                     "interface" => {
                         break;
@@ -148,6 +155,8 @@ mod tests {
     use super::*;
     use crate::{test_file, FromStartEndLineCol};
     use pretty_assertions::assert_eq;
+    use ruff_diagnostics::Edit;
+    use ruff_text_size::{TextRange, TextSize};
 
     #[test]
     fn test_implicit_typing() -> anyhow::Result<()> {
@@ -323,24 +332,30 @@ mod tests {
             ",
         );
         let expected: Vec<_> = [
-            (5, 8, 5, 21, "module"),
-            (10, 8, 10, 21, "module"),
-            (23, 8, 23, 21, "program"),
-            (28, 8, 28, 21, "program"),
+            (5, 8, 5, 21, 76u32, 98u32, "module"),
+            (10, 8, 10, 21, 195u32, 217u32, "module"),
+            (23, 8, 23, 21, 400u32, 422u32, "program"),
+            (28, 8, 28, 21, 521u32, 543u32, "program"),
         ]
         .iter()
-        .map(|(start_line, start_col, end_line, end_col, kind)| {
-            Diagnostic::from_start_end_line_col(
-                SuperfluousImplicitNone {
-                    entity: kind.to_string(),
-                },
-                &source,
-                *start_line,
-                *start_col,
-                *end_line,
-                *end_col,
-            )
-        })
+        .map(
+            |(start_line, start_col, end_line, end_col, start_byte, end_byte, kind)| {
+                Diagnostic::from_start_end_line_col(
+                    SuperfluousImplicitNone {
+                        entity: kind.to_string(),
+                    },
+                    &source,
+                    *start_line,
+                    *start_col,
+                    *end_line,
+                    *end_col,
+                )
+                .with_fix(Fix::safe_edit(Edit::range_deletion(TextRange::new(
+                    TextSize::from(*start_byte),
+                    TextSize::from(*end_byte),
+                ))))
+            },
+        )
         .collect();
         let actual = SuperfluousImplicitNone::apply(&source)?;
         assert_eq!(actual, expected);

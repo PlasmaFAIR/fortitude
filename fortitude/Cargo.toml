@@ -26,6 +26,7 @@ ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", ve
 ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 serde = { version = "1.0.210", features = ["derive"] }
+similar-asserts = "1.6.0"
 textwrap = "0.16.0"
 toml = "0.8.19"
 tree-sitter = "~0.23.0"

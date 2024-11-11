@@ -8,10 +8,11 @@ use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
 use fortitude_macros::RuleNamespace;
-use ruff_diagnostics::{Diagnostic, DiagnosticKind};
+use ruff_diagnostics::{Applicability, Diagnostic, DiagnosticKind, Fix};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{Ranged, TextRange, TextSize};
 use settings::{default_settings, Settings};
+use similar_asserts::SimpleDiff;
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
@@ -156,6 +157,8 @@ pub struct DiagnosticMessage<'a> {
     file: &'a SourceFile,
     /// The rule code that was violated, expressed as a string.
     code: String,
+    /// The suggested fix for the violation.
+    fix: Option<Fix>,
 }
 
 impl<'a> DiagnosticMessage<'a> {
@@ -165,6 +168,7 @@ impl<'a> DiagnosticMessage<'a> {
             file,
             code: code.as_ref().to_string(),
             range: diagnostic.range,
+            fix: diagnostic.fix,
         }
     }
 }
@@ -192,8 +196,9 @@ impl<'a> fmt::Display for DiagnosticMessage<'a> {
         let path = self.file.name().bold();
         let code = self.code.bold().bright_red();
         let message = self.kind.body.as_str();
+        let suggestion = &self.kind.suggestion;
         if self.range != TextRange::default() {
-            format_violation(self, f, &self.range, message, &path, &code)
+            format_violation(self, f, &self.range, message, suggestion, &path, &code)
         } else {
             write!(f, "{path}: {code} {message}")
         }
@@ -205,6 +210,7 @@ fn format_violation(
     f: &mut fmt::Formatter,
     range: &TextRange,
     message: &str,
+    suggestion: &Option<String>,
     path: &ColoredString,
     code: &ColoredString,
 ) -> fmt::Result {
@@ -225,7 +231,7 @@ fn format_violation(
         .saturating_add(2)
         .min(OneIndexed::from_zero_indexed(source_code.line_count()));
 
-    // Trim leading empty lines.
+    // Trim following empty lines.
     while end_index > content_end_index {
         if !source_code.line_text(end_index).trim().is_empty() {
             break;
@@ -260,9 +266,45 @@ fn format_violation(
             .annotation(Level::Error.span(start_char..end_char).label(code)),
     );
 
+    let snippet_with_footer = if let Some(s) = suggestion {
+        snippet.footer(Level::Help.title(s))
+    } else {
+        snippet
+    };
+
     let renderer = Renderer::styled();
-    let source_block = renderer.render(snippet);
-    writeln!(f, "{}", source_block)
+    let source_block = renderer.render(snippet_with_footer);
+    writeln!(f, "{source_block}")?;
+
+    // If a fix is available, show diff to the user
+    if let Some(fix) = &diagnostic.fix {
+        let mut fixed = source_code.text().to_string();
+        let mut edits = fix.edits().to_vec();
+        // Edits are sorted, and we must apply them in reverse order to avoid invalidating other
+        // edits in the stack.
+        while let Some(edit) = edits.pop() {
+            // Remove content from source
+            fixed.replace_range(
+                usize::from(edit.range().start())..usize::from(edit.range().end()),
+                "",
+            );
+            // Add in suggested content
+            if let Some(content) = edit.content() {
+                fixed.insert_str(range.start().into(), content);
+            }
+        }
+        let fix_msg = match fix.applicability() {
+            Applicability::DisplayOnly => "The following fix may correct this problem.",
+            Applicability::Unsafe => "Running with '--fix --unsafe' will apply the following fix.",
+            Applicability::Safe => "Running with '--fix' will apply the following fix.",
+        };
+        let fix_title = Level::Note.title(fix_msg);
+        writeln!(f, "\n{}", renderer.render(fix_title))?;
+
+        let diff = SimpleDiff::from_str(source_code.text(), &fixed, "original", "fixed");
+        write!(f, "{diff}")?;
+    }
+    Ok(())
 }
 
 /// Simplify making a `SourceFile` in tests
