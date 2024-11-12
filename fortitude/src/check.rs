@@ -206,13 +206,13 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
             );
             if total_errors == 0 {
                 let success = "All checks passed!".bright_green();
-                println!("\n{}\n{}\n", file_no, success);
+                println!("\n{file_no}\n{success}\n");
                 Ok(ExitCode::SUCCESS)
             } else {
                 let err_no = format!("Number of errors: {}", total_errors.to_string().bold());
                 let info = "For more information, run:";
                 let explain = format!("{} {}", "fortitude explain", "[ERROR_CODES]".bold());
-                println!("\n{}\n{}\n\n{}\n\n    {}\n", file_no, err_no, info, explain);
+                println!("\n{file_no}\n{err_no}\n\n{info}\n\n    {explain}\n");
                 Ok(ExitCode::FAILURE)
             }
         }
