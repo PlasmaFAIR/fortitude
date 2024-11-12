@@ -1,4 +1,8 @@
 /// A collection of user-modifiable settings. Should be expanded as new features are added.
+
+use std::fmt::{Display, Formatter};
+use ruff_macros::CacheKey;
+
 pub struct Settings {
     pub line_length: usize,
 }
@@ -6,4 +10,31 @@ pub struct Settings {
 #[allow(dead_code)]
 pub fn default_settings() -> Settings {
     Settings { line_length: 100 }
+}
+
+/// Toggle for rules still in preview
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, CacheKey, is_macro::Is)]
+pub enum PreviewMode {
+    #[default]
+    Disabled,
+    Enabled,
+}
+
+impl From<bool> for PreviewMode {
+    fn from(version: bool) -> Self {
+        if version {
+            PreviewMode::Enabled
+        } else {
+            PreviewMode::Disabled
+        }
+    }
+}
+
+impl Display for PreviewMode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Disabled => write!(f, "disabled"),
+            Self::Enabled => write!(f, "enabled"),
+        }
+    }
 }

@@ -1,6 +1,7 @@
 use fortitude_macros::RuleNamespace;
+use strum_macros::EnumIter;
 
-use crate::rules::Rule;
+pub use crate::rules::Rule;
 
 // Rule categories and identity codes
 // ----------------------------------
@@ -29,7 +30,7 @@ pub enum FromCodeError {
 }
 
 /// The category of each rule defines the sort of problem it intends to solve.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, RuleNamespace)]
+#[derive(EnumIter, Debug, PartialEq, Eq, Clone, Hash, RuleNamespace)]
 pub enum Category {
     /// Failure to parse a file.
     #[prefix = "E"]
