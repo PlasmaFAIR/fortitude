@@ -35,7 +35,6 @@ pub enum RuleCheckKind {
 }
 
 /// The category of each rule defines the sort of problem it intends to solve.
-#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, RuleNamespace)]
 pub enum Category {
     /// Failure to parse a file.
