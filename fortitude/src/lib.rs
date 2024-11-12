@@ -9,7 +9,6 @@ use crate::registry::AsRule;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
-use fortitude_macros::RuleNamespace;
 use ruff_diagnostics::{Applicability, Diagnostic, DiagnosticKind, Fix};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{Ranged, TextRange, TextSize};
