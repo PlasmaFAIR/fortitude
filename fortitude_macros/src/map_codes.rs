@@ -352,7 +352,7 @@ See also https://github.com/astral-sh/ruff/issues/2186.
             }
 
             pub fn is_ast(&self) -> bool {
-                matches!(self.check_kind(), RuleCheckKind::AST)
+                matches!(self.check_kind(), RuleCheckKind::Ast)
             }
 
             pub fn is_preview(&self) -> bool {
@@ -514,7 +514,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             });
         }
 
-        if kind.is_ident("AST") {
+        if kind.is_ident("Ast") {
             ast_rule_variants.extend(quote! {
                 #(#attrs)*
                 #name,

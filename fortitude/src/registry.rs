@@ -31,7 +31,7 @@ pub enum FromCodeError {
 pub enum RuleCheckKind {
     Text,
     Path,
-    AST,
+    Ast,
 }
 
 /// The category of each rule defines the sort of problem it intends to solve.
