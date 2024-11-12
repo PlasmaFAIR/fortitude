@@ -86,6 +86,9 @@ pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
     let all_rules = category_to_rules.values().flat_map(BTreeMap::values);
     let mut output = register_rules(all_rules);
 
+    // Create an enum that lets us map from `Category` variants to
+    // their prefixes, which may include subcategories (not currently
+    // used, but used in ruff)
     output.extend(quote! {
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub enum RuleCodePrefix {
@@ -107,6 +110,7 @@ pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
         }
     });
 
+    // Conversion functions from `Category` to `RuleCodePrefix` and `RuleSelector`
     for (category, rules) in &category_to_rules {
         output.extend(super::rule_code_prefix::expand(
             category,
@@ -145,6 +149,7 @@ pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
         });
     }
 
+    // Create method that lists all rules for each individual `Category`
     for (category, rules) in &category_to_rules {
         let rules_by_prefix = rules_by_prefix(rules);
 
@@ -175,6 +180,8 @@ pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
             }
         });
     }
+
+    // Add methods for creating `RuleCodePrefix` and listing subcategory rules
     output.extend(quote! {
         impl RuleCodePrefix {
             pub fn parse(category: &Category, code: &str) -> Result<Self, crate::registry::FromCodeError> {
@@ -434,6 +441,14 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         from_impls_for_diagnostic_kind
             .extend(quote! {#(#attrs)* stringify!(#name) => Rule::#name,});
 
+        // Next parts are for creating two enums for the different
+        // rule `check` signatures. This basically allows us to a)
+        // partition a list of rules into the different check kinds
+        // (path, text, ast), and b) call `rule.check(...)`. An
+        // alternative might be to have different named check
+        // functions (`check_text`, etc), and then partition based on
+        // `rule.is_text()` or similar, but this way gives us some
+        // type safety
         if kind.is_ident("Path") {
             path_rule_variants.extend(quote! {
                 #(#attrs)*
