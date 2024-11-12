@@ -2,12 +2,13 @@ mod ast;
 pub mod check;
 pub mod cli;
 pub mod explain;
+mod registry;
 mod rules;
 mod settings;
+use crate::registry::AsRule;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
-use fortitude_macros::RuleNamespace;
 use ruff_diagnostics::{Applicability, Diagnostic, DiagnosticKind, Fix};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{Ranged, TextRange, TextSize};
@@ -17,50 +18,6 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
 use tree_sitter::Node;
-
-// Rule categories and identity codes
-// ----------------------------------
-// Helps to sort rules into logical categories, and acts as a unique tag with which
-// users can switch rules on and off.
-
-/// The category of each rule defines the sort of problem it intends to solve.
-#[allow(dead_code)]
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, RuleNamespace)]
-pub enum Category {
-    /// Failure to parse a file.
-    #[prefix = "E"]
-    Error,
-    /// Violation of style conventions.
-    #[prefix = "S"]
-    Style,
-    /// Misuse of types and kinds.
-    #[prefix = "T"]
-    Typing,
-    /// Failure to use modules or use them appropriately.
-    #[prefix = "M"]
-    Modules,
-    /// Best practices for setting floating point precision.
-    #[prefix = "P"]
-    Precision,
-    /// Check path names, directory structures, etc.
-    #[prefix = "F"]
-    FileSystem,
-}
-
-pub trait RuleNamespace: Sized {
-    /// Returns the prefix that every single code that fortitude uses to identify
-    /// rules from this category starts with.
-    fn common_prefix(&self) -> &'static str;
-
-    /// Attempts to parse the given rule code. If the prefix is recognized
-    /// returns the respective variant along with the code with the common
-    /// prefix stripped.
-    fn parse_code(code: &str) -> Option<(Self, &str)>;
-
-    fn name(&self) -> &'static str;
-
-    fn description(&self) -> &'static str;
-}
 
 // Violation type
 // --------------
@@ -162,11 +119,15 @@ pub struct DiagnosticMessage<'a> {
 }
 
 impl<'a> DiagnosticMessage<'a> {
-    pub fn from_ruff<S: AsRef<str>>(file: &'a SourceFile, code: S, diagnostic: Diagnostic) -> Self {
+    pub fn from_ruff(file: &'a SourceFile, diagnostic: Diagnostic) -> Self {
+        // TODO(peter): Need `.suffix()` for now because we're currently using
+        // the literal string from the list rules, when `noqa_code` will already
+        // include the category prefix
+        let code = diagnostic.kind.rule().noqa_code().suffix().to_string();
         Self {
             kind: diagnostic.kind,
             file,
-            code: code.as_ref().to_string(),
+            code,
             range: diagnostic.range,
             fix: diagnostic.fix,
         }

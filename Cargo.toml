@@ -8,3 +8,8 @@ rust-version = "1.80"
 repository = "https://github.com/PlasmaFAIR/fortitude"
 authors = ["Liam Pattinson <liampattinson@gmail.com>"]
 license = "MIT"
+
+[workspace.dependencies]
+itertools = "0.12.0"
+strum = { version = "0.26.0", features = ["strum_macros"] }
+strum_macros = { version = "0.26.0" }

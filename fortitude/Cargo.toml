@@ -18,16 +18,20 @@ clap = { version = "4.4.16", features = ["derive"] }
 clap_config = "0.1.1"
 colored = "2.1.0"
 fortitude_macros = { version = "0.1.0", path = "../fortitude_macros" }
-itertools = "0.12.0"
+itertools = { workspace = true }
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"
+ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 serde = { version = "1.0.210", features = ["derive"] }
 similar-asserts = "1.6.0"
+strum = { workspace = true }
+strum_macros = { workspace = true }
 textwrap = "0.16.0"
+thiserror = { version = "1.0.58" }
 toml = "0.8.19"
 tree-sitter = "~0.23.0"
 tree-sitter-fortran = "0.2.0"
