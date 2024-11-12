@@ -145,23 +145,8 @@ pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
         });
     }
 
-    let mut all_codes = Vec::new();
-
     for (category, rules) in &category_to_rules {
         let rules_by_prefix = rules_by_prefix(rules);
-
-        for (prefix, rules) in &rules_by_prefix {
-            let prefix_ident = get_prefix_ident(prefix);
-            let attrs = intersection_all(rules.iter().map(|(.., attrs)| attrs.as_slice()));
-            let attrs = if attrs.is_empty() {
-                quote!()
-            } else {
-                quote!(#(#attrs)*)
-            };
-            all_codes.push(quote! {
-                #attrs Self::#category(#category::#prefix_ident)
-            });
-        }
 
         let mut prefix_into_iter_match_arms = quote!();
 
@@ -278,18 +263,7 @@ fn generate_rule_to_code(
         assert_eq!(
             codes.len(),
             1,
-            "
-{} is mapped to multiple codes.
-
-The mapping of multiple codes to one rule has been disabled due to UX concerns (it would
-be confusing if violations were reported under a different code than the code you selected).
-
-We firstly want to allow rules to be selected by their names (and report them by name),
-and before we can do that we have to rename all our rules to match our naming convention
-(see CONTRIBUTING.md) because after that change every rule rename will be a breaking change.
-
-See also https://github.com/astral-sh/ruff/issues/2186.
-",
+            "{} is mapped to multiple codes.",
             rule_name.ident
         );
 
