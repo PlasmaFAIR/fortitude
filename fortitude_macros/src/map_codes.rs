@@ -702,17 +702,11 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
 /// Generate the functions that enable selecting path/text/AST rules from vecs of strings
 fn generate_selection_functions<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream {
-    let mut explanation_arms = quote!();
-
     // These will be collections of literal strings
     let mut all_rules = quote!();
 
     // Construct match arms for the different functions
-    for RuleMeta { path, code, .. } in input {
-        explanation_arms.extend(quote! {
-            #code => #path::explanation().unwrap(),
-        });
-
+    for RuleMeta { code, .. } in input {
         all_rules.extend(quote!(#code, ));
     }
 
@@ -744,14 +738,6 @@ fn generate_selection_functions<'a>(input: impl Iterator<Item = &'a RuleMeta>) -
             // Should add an additional macro input to toggle default or not.
             // Community feedback will be needed to determine a sensible set.
             full_ruleset()
-        }
-
-        /// Print the help text for a rule.
-        pub fn explain_rule(code: &str) -> &str {
-            match code {
-                #explanation_arms
-                _ => ""
-            }
         }
     );
 
