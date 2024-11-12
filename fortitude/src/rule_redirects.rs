@@ -1,10 +1,8 @@
 /// Mappings from old rule codes to new ones.
 /// Currently just future-proofing!
-
 // Adapted from ruff
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
-
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
@@ -20,6 +18,5 @@ pub(crate) fn get_redirect(code: &str) -> Option<(&'static str, &'static str)> {
     REDIRECTS.get_key_value(code).map(|(k, v)| (*k, *v))
 }
 
-static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
-    HashMap::from_iter([])
-});
+static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> =
+    LazyLock::new(|| HashMap::from_iter([]));

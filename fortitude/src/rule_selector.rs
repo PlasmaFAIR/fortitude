@@ -1,9 +1,7 @@
 /// Utilities for selecting groups of rules
-
 // Adapted from ruff
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
-
 use std::str::FromStr;
 
 use serde::de::{self, Visitor};
@@ -11,9 +9,9 @@ use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::rules::{RuleIter, RuleCodePrefix, RuleGroup};
 use crate::registry::{Category, Rule, RuleNamespace};
 use crate::rule_redirects::get_redirect;
+use crate::rules::{RuleCodePrefix, RuleGroup, RuleIter};
 use crate::settings::PreviewMode;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -313,10 +311,10 @@ pub mod clap_completion {
     use strum::IntoEnumIterator;
 
     use crate::{
-        rules::RuleCodePrefix,
         registry::{Category, RuleNamespace},
         rule_selector::is_single_rule_selector,
         rule_selector::RuleSelector,
+        rules::RuleCodePrefix,
     };
 
     #[derive(Clone)]

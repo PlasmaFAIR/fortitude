@@ -1,7 +1,6 @@
-/// A collection of user-modifiable settings. Should be expanded as new features are added.
-
-use std::fmt::{Display, Formatter};
 use ruff_macros::CacheKey;
+/// A collection of user-modifiable settings. Should be expanded as new features are added.
+use std::fmt::{Display, Formatter};
 
 use crate::rule_selector::RuleSelector;
 
@@ -42,6 +41,4 @@ impl Display for PreviewMode {
 }
 
 /// Default rule selection
-pub const DEFAULT_SELECTORS: &[RuleSelector] = &[
-    RuleSelector::All,
-];
+pub const DEFAULT_SELECTORS: &[RuleSelector] = &[RuleSelector::All];
