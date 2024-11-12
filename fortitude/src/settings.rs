@@ -3,6 +3,8 @@
 use std::fmt::{Display, Formatter};
 use ruff_macros::CacheKey;
 
+use crate::rule_selector::RuleSelector;
+
 pub struct Settings {
     pub line_length: usize,
 }
@@ -38,3 +40,8 @@ impl Display for PreviewMode {
         }
     }
 }
+
+/// Default rule selection
+pub const DEFAULT_SELECTORS: &[RuleSelector] = &[
+    RuleSelector::All,
+];

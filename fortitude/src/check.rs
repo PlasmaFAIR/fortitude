@@ -1,48 +1,63 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::CheckArgs;
+use crate::rule_selector::{PreviewOptions, Specificity};
 use crate::rules::Rule;
-use crate::rules::{
-    default_ruleset, error::ioerror::IOError, full_ruleset, ASTRuleEnum, PathRuleEnum, RuleSet,
-    TextRuleEnum,
-};
-use crate::settings::Settings;
+use crate::rules::{error::ioerror::IOError, ASTRuleEnum, PathRuleEnum, TextRuleEnum};
+use crate::settings::{Settings, DEFAULT_SELECTORS};
 use crate::DiagnosticMessage;
 use anyhow::Result;
 use colored::Colorize;
-use itertools::{chain, join, Itertools};
+use itertools::{join, Itertools};
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use strum::IntoEnumIterator;
 use walkdir::WalkDir;
 
 /// Get the list of active rules for this session.
 fn ruleset(args: &CheckArgs) -> anyhow::Result<Vec<Rule>> {
-    // TODO Check that all rules in the set are valid, use Map::difference
-    let mut choices = RuleSet::new();
-    if !args.select.is_empty() {
-        let select: RuleSet = args.select.iter().map(|x| x.as_str()).collect();
-        choices.extend(select);
+    // TODO: Take this as an option
+    let preview = PreviewOptions::default();
+
+    // The select_set keeps track of which rules have been selected.
+    let mut select_set: BTreeSet<Rule> = if args.select.is_none() {
+        DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect()
     } else {
-        let include: RuleSet = args.include.iter().map(|x| x.as_str()).collect();
-        let ignore: RuleSet = args.ignore.iter().map(|x| x.as_str()).collect();
-        let defaults = default_ruleset();
-        choices.extend(chain(&defaults, &include));
-        for rule in &ignore {
-            choices.remove(rule);
+        BTreeSet::default()
+    };
+
+    for spec in Specificity::iter() {
+        // Iterate over rule selectors in order of specificity.
+        for selector in args
+            .select
+            .iter()
+            .flatten()
+            .filter(|s| s.specificity() == spec)
+        {
+            for rule in selector.rules(&preview) {
+                select_set.insert(rule);
+            }
+        }
+
+        for selector in args
+            .ignore
+            .iter()
+            .flatten()
+            .filter(|s| s.specificity() == spec)
+        {
+            for rule in selector.rules(&preview) {
+                select_set.remove(&rule);
+            }
         }
     }
-    let diff: Vec<_> = choices.difference(&full_ruleset()).copied().collect();
-    if !diff.is_empty() {
-        anyhow::bail!("Unknown rule codes {:?}", diff);
-    }
 
-    let rules: Vec<_> = choices
-        .iter()
-        .map(|code| Rule::from_code(code).unwrap())
-        .collect();
+    let rules = select_set.into_iter().collect_vec();
 
     Ok(rules)
 }

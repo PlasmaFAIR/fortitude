@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use toml::Table;
 
+use crate::{rule_selector::RuleSelector, RuleSelectorParser};
+
 /// Default extensions to check
 const FORTRAN_EXTS: &[&str] = &[
     "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
@@ -31,8 +33,15 @@ pub enum SubCommands {
 #[derive(Debug, clap::Parser, ClapConfig, Clone, PartialEq)]
 pub struct ExplainArgs {
     /// List of rules to explain. If omitted, explains all rules.
-    #[arg()]
-    pub rules: Vec<String>,
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub rules: Option<Vec<RuleSelector>>,
 }
 
 /// Perform static analysis on files and report issues.
@@ -45,11 +54,25 @@ pub struct CheckArgs {
     #[arg(long, value_delimiter = ',')]
     pub include: Vec<String>,
     /// Comma-separated list of rules to ignore.
-    #[arg(long, value_delimiter = ',')]
-    pub ignore: Vec<String>,
-    /// Comma-separated list of the only rules you wish to use.
-    #[arg(long, value_delimiter=',', conflicts_with_all=["include", "ignore"])]
-    pub select: Vec<String>,
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub ignore: Option<Vec<RuleSelector>>,
+    /// Comma-separated list of rule codes to enable (or ALL, to enable all rules).
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub select: Option<Vec<RuleSelector>>,
     /// Set the maximum allowable line length.
     #[arg(long, default_value = "100")]
     pub line_length: usize,

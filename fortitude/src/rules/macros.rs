@@ -1,11 +1,3 @@
-macro_rules! build_set {
-    ($name: ident, $array: ident) => {
-        lazy_static! {
-            static ref $name: BTreeSet<&'static str> = { BTreeSet::from(*$array) };
-        }
-    };
-}
-
 /// Shorthand for `Some(vec![x])`. Note that an empty argument list
 /// is forbidden -- functions should just return `None` instead
 #[macro_export]

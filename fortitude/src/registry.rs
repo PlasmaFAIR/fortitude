@@ -14,8 +14,7 @@ pub trait AsRule {
 
 impl Rule {
     pub fn from_code(code: &str) -> Result<Self, FromCodeError> {
-        // TODO(peter): second var and lhs should be `code`
-        let (category, _) = Category::parse_code(code).ok_or(FromCodeError::Unknown)?;
+        let (category, code) = Category::parse_code(code).ok_or(FromCodeError::Unknown)?;
         category
             .all_rules()
             .find(|rule| rule.noqa_code().suffix() == code)
@@ -67,4 +66,106 @@ pub trait RuleNamespace: Sized {
 
     #[allow(dead_code)]
     fn description(&self) -> &'static str;
+}
+
+pub mod clap_completion {
+    use clap::builder::{PossibleValue, TypedValueParser, ValueParserFactory};
+    use strum::IntoEnumIterator;
+
+    use crate::registry::Rule;
+
+    #[derive(Clone)]
+    pub struct RuleParser;
+
+    impl ValueParserFactory for Rule {
+        type Parser = RuleParser;
+
+        fn value_parser() -> Self::Parser {
+            RuleParser
+        }
+    }
+
+    impl TypedValueParser for RuleParser {
+        type Value = Rule;
+
+        fn parse_ref(
+            &self,
+            cmd: &clap::Command,
+            arg: Option<&clap::Arg>,
+            value: &std::ffi::OsStr,
+        ) -> Result<Self::Value, clap::Error> {
+            let value = value
+                .to_str()
+                .ok_or_else(|| clap::Error::new(clap::error::ErrorKind::InvalidUtf8))?;
+
+            Rule::from_code(value).map_err(|_| {
+                let mut error =
+                    clap::Error::new(clap::error::ErrorKind::ValueValidation).with_cmd(cmd);
+                if let Some(arg) = arg {
+                    error.insert(
+                        clap::error::ContextKind::InvalidArg,
+                        clap::error::ContextValue::String(arg.to_string()),
+                    );
+                }
+                error.insert(
+                    clap::error::ContextKind::InvalidValue,
+                    clap::error::ContextValue::String(value.to_string()),
+                );
+                error
+            })
+        }
+
+        fn possible_values(&self) -> Option<Box<dyn Iterator<Item = PossibleValue> + '_>> {
+            Some(Box::new(Rule::iter().map(|rule| {
+                let name = rule.noqa_code().to_string();
+                let help = rule.as_ref().to_string();
+                PossibleValue::new(name).help(help)
+            })))
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::mem::size_of;
+
+    use strum::IntoEnumIterator;
+
+    use super::{Category, Rule, RuleNamespace};
+
+    #[test]
+    fn documentation() {
+        for rule in Rule::iter() {
+            assert!(
+                rule.explanation().is_some(),
+                "Rule {} is missing documentation",
+                rule.as_ref()
+            );
+        }
+    }
+
+    #[test]
+    fn check_code_serialization() {
+        for rule in Rule::iter() {
+            assert!(
+                Rule::from_code(&format!("{}", rule.noqa_code())).is_ok(),
+                "{rule:?} could not be round-trip serialized."
+            );
+        }
+    }
+
+    #[test]
+    fn category_parse_code() {
+        for rule in Rule::iter() {
+            let code = format!("{}", rule.noqa_code());
+            let (category, rest) =
+                Category::parse_code(&code).unwrap_or_else(|| panic!("couldn't parse {code:?}"));
+            assert_eq!(code, format!("{}{rest}", category.common_prefix()));
+        }
+    }
+
+    #[test]
+    fn rule_size() {
+        assert_eq!(2, size_of::<Rule>());
+    }
 }

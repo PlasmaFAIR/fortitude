@@ -7,7 +7,9 @@ mod rule_redirects;
 mod rule_selector;
 mod rules;
 mod settings;
+pub use crate::registry::clap_completion::RuleParser;
 use crate::registry::AsRule;
+pub use crate::rule_selector::clap_completion::RuleSelectorParser;
 use annotate_snippets::{Level, Renderer, Snippet};
 use ast::{parse, FortitudeNode};
 use colored::{ColoredString, Colorize};
@@ -122,10 +124,7 @@ pub struct DiagnosticMessage<'a> {
 
 impl<'a> DiagnosticMessage<'a> {
     pub fn from_ruff(file: &'a SourceFile, diagnostic: Diagnostic) -> Self {
-        // TODO(peter): Need `.suffix()` for now because we're currently using
-        // the literal string from the list rules, when `noqa_code` will already
-        // include the category prefix
-        let code = diagnostic.kind.rule().noqa_code().suffix().to_string();
+        let code = diagnostic.kind.rule().noqa_code().to_string();
         Self {
             kind: diagnostic.kind,
             file,
