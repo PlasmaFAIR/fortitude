@@ -724,6 +724,17 @@ impl Parse for RuleMeta {
         let group: Path = pat_tuple.parse()?;
         let _: Token!(,) = pat_tuple.parse()?;
         let kind: Path = pat_tuple.parse()?;
+
+        let kind_is_valid = kind.is_ident("Path") || kind.is_ident("Text") || kind.is_ident("Ast");
+        if !kind_is_valid {
+            // We better have an ident here, because I don't know what else to do
+            let kind = kind.get_ident().unwrap();
+            return Err(syn::Error::new(
+                pat_tuple.span(),
+                format!("Invalid checker kind '{kind}', expected one of 'Path', 'Text', 'Ast'"),
+            ));
+        }
+
         let _: Token!(,) = pat_tuple.parse()?;
         let rule_path: Path = pat_tuple.parse()?;
         let _: Token!(,) = input.parse()?;
