@@ -38,10 +38,22 @@ fortitude check my_code.f90
 You can also call `check` on directories, and if no files are provided, `fortitude` will
 search for them from your current working directory.
 
+You can select or ignore individual rules or whole groups with
+`--select` and `--ignore`:
+
+```bash
+# Just check for missing `implicit none`
+fortitude check --select=T001
+# Ignore all styling rules
+fortitude check --ignore=S
+# Only check for typing rules, but ignore superfluous implicit none
+fortitude check --select=T --ignore=T003
+```
+
 The `explain` command can be used to get extra information about any rules:
 
 ```bash
-fortitude explain B023
+fortitude explain T001
 ```
 
 If no rules are provided, this will print all rule descriptions to the terminal.
