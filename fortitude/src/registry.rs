@@ -68,7 +68,9 @@ pub trait RuleNamespace: Sized {
     /// prefix stripped.
     fn parse_code(code: &str) -> Option<(Self, &str)>;
 
+    #[allow(dead_code)]
     fn name(&self) -> &'static str;
 
+    #[allow(dead_code)]
     fn description(&self) -> &'static str;
 }
