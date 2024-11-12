@@ -24,7 +24,7 @@ struct RuleMeta {
     category: Ident,
     /// The code associated with the rule, e.g., `"E112"`.
     code: LitStr,
-    /// The kind of checker, e.g. `RuleCheckKind::Text`
+    /// The kind of checker, e.g. `Text`
     kind: Path,
     /// The rule group identifier, e.g., `RuleGroup::Preview`.
     group: Path,
@@ -256,7 +256,6 @@ fn generate_rule_to_code(
 
     let mut rule_noqa_code_match_arms = quote!();
     let mut rule_group_match_arms = quote!();
-    let mut rule_check_match_arms = quote!();
 
     for (rule, codes) in rule_to_codes {
         let rule_name = rule.segments.last().unwrap();
@@ -272,7 +271,6 @@ fn generate_rule_to_code(
             code,
             group,
             attrs,
-            kind,
             ..
         } = codes
             .iter()
@@ -286,10 +284,6 @@ fn generate_rule_to_code(
 
         rule_group_match_arms.extend(quote! {
             #(#attrs)* Rule::#rule_name => #group,
-        });
-
-        rule_check_match_arms.extend(quote! {
-            #(#attrs)* Rule::#rule_name => RuleCheckKind::#kind,
         });
     }
 
@@ -309,24 +303,6 @@ fn generate_rule_to_code(
                 match self {
                     #rule_group_match_arms
                 }
-            }
-
-            pub fn check_kind(&self) -> RuleCheckKind {
-                match self {
-                    #rule_check_match_arms
-                }
-            }
-
-            pub fn is_path(&self) -> bool {
-                matches!(self.check_kind(), RuleCheckKind::Path)
-            }
-
-            pub fn is_text(&self) -> bool {
-                matches!(self.check_kind(), RuleCheckKind::Text)
-            }
-
-            pub fn is_ast(&self) -> bool {
-                matches!(self.check_kind(), RuleCheckKind::Ast)
             }
 
             pub fn is_preview(&self) -> bool {

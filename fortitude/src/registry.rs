@@ -28,12 +28,6 @@ pub enum FromCodeError {
     Unknown,
 }
 
-pub enum RuleCheckKind {
-    Text,
-    Path,
-    Ast,
-}
-
 /// The category of each rule defines the sort of problem it intends to solve.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, RuleNamespace)]
 pub enum Category {

@@ -8,7 +8,7 @@ mod modules;
 mod precision;
 mod style;
 mod typing;
-use crate::registry::{AsRule, Category, RuleCheckKind};
+use crate::registry::{AsRule, Category};
 
 use strum_macros::{AsRefStr, EnumIter};
 
