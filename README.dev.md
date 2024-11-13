@@ -58,8 +58,8 @@ like `AvoidLineTooLong` or `KeepLinesShort`.
 
 To make a new release, the following steps must be completed in order:
 
-- Make a new commit that updates the project version in `pyproject.toml` and
-  `Cargo.toml`.
+- Make a new commit that updates the project version in `pyproject.toml`,
+  `Cargo.toml`, and `CITATION.cff`.
   - Remember to run `cargo build` to update the `Cargo.lock` file too!
 - Open a new PR to merge this change.
 - After merging, make a new release on GitHub.
