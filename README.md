@@ -73,6 +73,7 @@ should be under the command name:
 
 ```toml
 [check]
+select = ["S", "T"]
 ignore = ["S001", "S051"]
 line-length = 132
 ```
@@ -82,8 +83,17 @@ For `fpm.toml` files, this has to be additionally nested under the
 
 ```toml
 [extra.fortitude.check]
+select = ["S", "T"]
 ignore = ["S001", "S051"]
 line-length = 132
+```
+
+You can use `--extend-select` from the command line to select additional
+rules on top of those in the configuration file.
+
+```bash
+# Selects S, T, and M categories
+fortitude check --extend-select=M
 ```
 
 ## Contributing

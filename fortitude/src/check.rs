@@ -23,7 +23,7 @@ fn ruleset(args: &CheckArgs) -> anyhow::Result<Vec<Rule>> {
     let preview = PreviewOptions::default();
 
     // The select_set keeps track of which rules have been selected.
-    let mut select_set: BTreeSet<Rule> = if args.select.is_none() {
+    let mut select_set: BTreeSet<Rule> = if args.select.is_empty() {
         DEFAULT_SELECTORS
             .iter()
             .flat_map(|selector| selector.rules(&preview))
@@ -37,7 +37,7 @@ fn ruleset(args: &CheckArgs) -> anyhow::Result<Vec<Rule>> {
         for selector in args
             .select
             .iter()
-            .flatten()
+            .chain(args.extend_select.iter())
             .filter(|s| s.specificity() == spec)
         {
             for rule in selector.rules(&preview) {
@@ -45,12 +45,7 @@ fn ruleset(args: &CheckArgs) -> anyhow::Result<Vec<Rule>> {
             }
         }
 
-        for selector in args
-            .ignore
-            .iter()
-            .flatten()
-            .filter(|s| s.specificity() == spec)
-        {
+        for selector in args.ignore.iter().filter(|s| s.specificity() == spec) {
             for rule in selector.rules(&preview) {
                 select_set.remove(&rule);
             }
@@ -282,5 +277,76 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
             eprintln!("{}: {}", "ERROR".bright_red(), msg);
             Ok(ExitCode::FAILURE)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::rule_selector::RuleSelector;
+
+    use super::*;
+
+    #[test]
+    fn empty_select() -> anyhow::Result<()> {
+        let args = CheckArgs {
+            files: vec![],
+            ignore: vec![],
+            select: vec![],
+            extend_select: vec![],
+            line_length: 100,
+            file_extensions: vec![],
+        };
+
+        let rules = ruleset(&args)?;
+
+        let preview = PreviewOptions::default();
+        let all_rules: Vec<Rule> = DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect();
+
+        assert_eq!(rules, all_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn select_one_rule() -> anyhow::Result<()> {
+        let args = CheckArgs {
+            files: vec![],
+            ignore: vec![],
+            select: vec![RuleSelector::from_str("E000")?],
+            extend_select: vec![],
+            line_length: 100,
+            file_extensions: vec![],
+        };
+
+        let rules = ruleset(&args)?;
+        let one_rules: Vec<Rule> = vec![Rule::IOError];
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn extend_select() -> anyhow::Result<()> {
+        let args = CheckArgs {
+            files: vec![],
+            ignore: vec![],
+            select: vec![RuleSelector::from_str("E000")?],
+            extend_select: vec![RuleSelector::from_str("E001")?],
+            line_length: 100,
+            file_extensions: vec![],
+        };
+
+        let rules = ruleset(&args)?;
+        let one_rules: Vec<Rule> = vec![Rule::IOError, Rule::SyntaxError];
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
     }
 }

@@ -59,7 +59,7 @@ pub struct CheckArgs {
         help_heading = "Rule selection",
         hide_possible_values = true
     )]
-    pub ignore: Option<Vec<RuleSelector>>,
+    pub ignore: Vec<RuleSelector>,
     /// Comma-separated list of rule codes to enable (or ALL, to enable all rules).
     #[arg(
         long,
@@ -69,7 +69,17 @@ pub struct CheckArgs {
         help_heading = "Rule selection",
         hide_possible_values = true
     )]
-    pub select: Option<Vec<RuleSelector>>,
+    pub select: Vec<RuleSelector>,
+    /// Like --select, but adds additional rule codes on top of those already specified.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub extend_select: Vec<RuleSelector>,
     /// Set the maximum allowable line length.
     #[arg(long, default_value = "100")]
     pub line_length: usize,
