@@ -17,7 +17,7 @@ fn ruleset(args: &ExplainArgs) -> anyhow::Result<Vec<Rule>> {
     let preview = PreviewOptions::default();
 
     // The rules_set keeps track of which rules have been selected.
-    let mut rules_set: BTreeSet<Rule> = if args.rules.is_none() {
+    let mut rules_set: BTreeSet<Rule> = if args.rules.is_empty() {
         DEFAULT_SELECTORS
             .iter()
             .flat_map(|selector| selector.rules(&preview))
@@ -26,7 +26,7 @@ fn ruleset(args: &ExplainArgs) -> anyhow::Result<Vec<Rule>> {
         BTreeSet::default()
     };
 
-    for selector in args.rules.iter().flatten() {
+    for selector in args.rules.iter() {
         for rule in selector.rules(&preview) {
             rules_set.insert(rule);
         }
@@ -71,7 +71,8 @@ pub fn explain(args: ExplainArgs) -> Result<ExitCode> {
                 }
 
                 let code = rule.noqa_code().to_string();
-                let title = format!("# {code}");
+                let name = rule.name();
+                let title = format!("# {code}: {name}\n");
                 outputs.push((title.bright_red(), dedent(body.as_str())));
             }
             outputs.sort_by(|a, b| {

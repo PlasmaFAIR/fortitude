@@ -396,6 +396,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_message_formats_match_arms = quote!();
     let mut rule_fixable_match_arms = quote!();
     let mut rule_explanation_match_arms = quote!();
+    let mut rule_name_match_arms = quote!();
 
     let mut from_impls_for_diagnostic_kind = quote!();
 
@@ -432,6 +433,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         );
         rule_explanation_match_arms
             .extend(quote! {#(#attrs)* Self::#name => #path::explanation(),});
+        rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
 
         // Enable conversion from `DiagnosticKind` to `Rule`.
         from_impls_for_diagnostic_kind
@@ -531,6 +533,11 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             /// Returns the documentation for this rule.
             pub fn explanation(&self) -> Option<&'static str> {
                 match self { #rule_explanation_match_arms }
+            }
+
+            /// Returns the name for this rule.
+            pub fn name(&self) -> &'static str {
+                match self { #rule_name_match_arms }
             }
 
             /// Returns the fix status of this rule.

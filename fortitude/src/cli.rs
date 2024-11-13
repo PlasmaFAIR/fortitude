@@ -41,7 +41,7 @@ pub struct ExplainArgs {
         help_heading = "Rule selection",
         hide_possible_values = true
     )]
-    pub rules: Option<Vec<RuleSelector>>,
+    pub rules: Vec<RuleSelector>,
 }
 
 /// Perform static analysis on files and report issues.
