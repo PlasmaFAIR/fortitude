@@ -53,10 +53,10 @@ fortitude check --select=T --ignore=T003
 The `explain` command can be used to get extra information about any rules:
 
 ```bash
-fortitude explain T001
+fortitude explain --rules=T001,T011,...
 ```
 
-If no rules are provided, this will print all rule descriptions to the terminal.
+If `--rules` is not provided, this will print all rule descriptions to the terminal.
 
 To see further commands and optional arguments, try using `--help`:
 
