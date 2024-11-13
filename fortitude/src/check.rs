@@ -1,48 +1,58 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::CheckArgs;
+use crate::rule_selector::{PreviewOptions, Specificity};
 use crate::rules::Rule;
-use crate::rules::{
-    default_ruleset, error::ioerror::IOError, full_ruleset, ASTRuleEnum, PathRuleEnum, RuleSet,
-    TextRuleEnum,
-};
-use crate::settings::Settings;
+use crate::rules::{error::ioerror::IOError, ASTRuleEnum, PathRuleEnum, TextRuleEnum};
+use crate::settings::{Settings, DEFAULT_SELECTORS};
 use crate::DiagnosticMessage;
 use anyhow::Result;
 use colored::Colorize;
-use itertools::{chain, join, Itertools};
+use itertools::{join, Itertools};
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use strum::IntoEnumIterator;
 use walkdir::WalkDir;
 
 /// Get the list of active rules for this session.
 fn ruleset(args: &CheckArgs) -> anyhow::Result<Vec<Rule>> {
-    // TODO Check that all rules in the set are valid, use Map::difference
-    let mut choices = RuleSet::new();
-    if !args.select.is_empty() {
-        let select: RuleSet = args.select.iter().map(|x| x.as_str()).collect();
-        choices.extend(select);
+    // TODO: Take this as an option
+    let preview = PreviewOptions::default();
+
+    // The select_set keeps track of which rules have been selected.
+    let mut select_set: BTreeSet<Rule> = if args.select.is_empty() {
+        DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect()
     } else {
-        let include: RuleSet = args.include.iter().map(|x| x.as_str()).collect();
-        let ignore: RuleSet = args.ignore.iter().map(|x| x.as_str()).collect();
-        let defaults = default_ruleset();
-        choices.extend(chain(&defaults, &include));
-        for rule in &ignore {
-            choices.remove(rule);
+        BTreeSet::default()
+    };
+
+    for spec in Specificity::iter() {
+        // Iterate over rule selectors in order of specificity.
+        for selector in args
+            .select
+            .iter()
+            .chain(args.extend_select.iter())
+            .filter(|s| s.specificity() == spec)
+        {
+            for rule in selector.rules(&preview) {
+                select_set.insert(rule);
+            }
+        }
+
+        for selector in args.ignore.iter().filter(|s| s.specificity() == spec) {
+            for rule in selector.rules(&preview) {
+                select_set.remove(&rule);
+            }
         }
     }
-    let diff: Vec<_> = choices.difference(&full_ruleset()).copied().collect();
-    if !diff.is_empty() {
-        anyhow::bail!("Unknown rule codes {:?}", diff);
-    }
 
-    let rules: Vec<_> = choices
-        .iter()
-        .map(|code| Rule::from_code(code).unwrap())
-        .collect();
+    let rules = select_set.into_iter().collect_vec();
 
     Ok(rules)
 }
@@ -257,8 +267,12 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                 Ok(ExitCode::SUCCESS)
             } else {
                 let err_no = format!("Number of errors: {}", total_errors.to_string().bold());
-                let info = "For more information, run:";
-                let explain = format!("{} {}", "fortitude explain", "[ERROR_CODES]".bold());
+                let info = "For more information about specific rules, run:";
+                let explain = format!(
+                    "fortitude explain --rules={},{},...",
+                    "X001".bold().bright_red(),
+                    "Y002".bold().bright_red()
+                );
                 println!("\n{file_no}\n{err_no}\n\n{info}\n\n    {explain}\n");
                 Ok(ExitCode::FAILURE)
             }
@@ -267,5 +281,76 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
             eprintln!("{}: {}", "ERROR".bright_red(), msg);
             Ok(ExitCode::FAILURE)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::rule_selector::RuleSelector;
+
+    use super::*;
+
+    #[test]
+    fn empty_select() -> anyhow::Result<()> {
+        let args = CheckArgs {
+            files: vec![],
+            ignore: vec![],
+            select: vec![],
+            extend_select: vec![],
+            line_length: 100,
+            file_extensions: vec![],
+        };
+
+        let rules = ruleset(&args)?;
+
+        let preview = PreviewOptions::default();
+        let all_rules: Vec<Rule> = DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect();
+
+        assert_eq!(rules, all_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn select_one_rule() -> anyhow::Result<()> {
+        let args = CheckArgs {
+            files: vec![],
+            ignore: vec![],
+            select: vec![RuleSelector::from_str("E000")?],
+            extend_select: vec![],
+            line_length: 100,
+            file_extensions: vec![],
+        };
+
+        let rules = ruleset(&args)?;
+        let one_rules: Vec<Rule> = vec![Rule::IOError];
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn extend_select() -> anyhow::Result<()> {
+        let args = CheckArgs {
+            files: vec![],
+            ignore: vec![],
+            select: vec![RuleSelector::from_str("E000")?],
+            extend_select: vec![RuleSelector::from_str("E001")?],
+            line_length: 100,
+            file_extensions: vec![],
+        };
+
+        let rules = ruleset(&args)?;
+        let one_rules: Vec<Rule> = vec![Rule::IOError, Rule::SyntaxError];
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
     }
 }

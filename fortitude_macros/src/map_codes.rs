@@ -205,10 +205,6 @@ pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
 
     output.extend(generate_iter_impl(&category_to_rules, &category_idents));
 
-    output.extend(generate_selection_functions(
-        category_to_rules.values().flat_map(BTreeMap::values),
-    ));
-
     Ok(output)
 }
 
@@ -400,6 +396,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_message_formats_match_arms = quote!();
     let mut rule_fixable_match_arms = quote!();
     let mut rule_explanation_match_arms = quote!();
+    let mut rule_name_match_arms = quote!();
 
     let mut from_impls_for_diagnostic_kind = quote!();
 
@@ -436,6 +433,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         );
         rule_explanation_match_arms
             .extend(quote! {#(#attrs)* Self::#name => #path::explanation(),});
+        rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
 
         // Enable conversion from `DiagnosticKind` to `Rule`.
         from_impls_for_diagnostic_kind
@@ -500,7 +498,13 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     }
 
     quote! {
-        use ruff_diagnostics::Violation;
+        use std::path::Path;
+        use ruff_diagnostics::{Diagnostic, Violation};
+        use ruff_source_file::SourceFile;
+        use tree_sitter::Node;
+        use crate::{ASTRule, PathRule, TextRule};
+        use crate::settings::Settings;
+
 
         #[derive(
             EnumIter,
@@ -529,6 +533,11 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             /// Returns the documentation for this rule.
             pub fn explanation(&self) -> Option<&'static str> {
                 match self { #rule_explanation_match_arms }
+            }
+
+            /// Returns the name for this rule.
+            pub fn name(&self) -> &'static str {
+                match self { #rule_name_match_arms }
             }
 
             /// Returns the fix status of this rule.
@@ -663,50 +672,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             }
         }
     }
-}
-
-/// Generate the functions that enable selecting path/text/AST rules from vecs of strings
-fn generate_selection_functions<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream {
-    // These will be collections of literal strings
-    let mut all_rules = quote!();
-
-    // Construct match arms for the different functions
-    for RuleMeta { code, .. } in input {
-        all_rules.extend(quote!(#code, ));
-    }
-
-    let output = quote!(
-        use lazy_static::lazy_static;
-        use std::collections::{BTreeSet, BTreeMap};
-        use std::path::Path;
-        use ruff_diagnostics::Diagnostic;
-        use ruff_source_file::SourceFile;
-        use tree_sitter::Node;
-        use crate::{ASTRule, PathRule, TextRule};
-        use crate::settings::Settings;
-
-        pub type RuleSet<'a> = BTreeSet<&'a str>;
-
-        // String literals of all rule codes
-        const _CODES: &[&'static str; [#all_rules].len()] = &[#all_rules];
-        build_set!(CODES, _CODES);
-
-        // Create a mapping of codes to rule instances that operate on paths.
-        /// Returns the full set of all rules.
-        pub fn full_ruleset<'a>() -> RuleSet<'a> {
-            CODES.clone()
-        }
-
-        /// Returns the set of rules that are activated by default, expressed as strings.
-        pub fn default_ruleset<'a>() -> RuleSet<'a> {
-            // Currently all rules are activated by default.
-            // Should add an additional macro input to toggle default or not.
-            // Community feedback will be needed to determine a sensible set.
-            full_ruleset()
-        }
-    );
-
-    output
 }
 
 impl Parse for RuleMeta {

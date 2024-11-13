@@ -38,13 +38,25 @@ fortitude check my_code.f90
 You can also call `check` on directories, and if no files are provided, `fortitude` will
 search for them from your current working directory.
 
+You can select or ignore individual rules or whole groups with
+`--select` and `--ignore`:
+
+```bash
+# Just check for missing `implicit none`
+fortitude check --select=T001
+# Ignore all styling rules
+fortitude check --ignore=S
+# Only check for typing rules, but ignore superfluous implicit none
+fortitude check --select=T --ignore=T003
+```
+
 The `explain` command can be used to get extra information about any rules:
 
 ```bash
-fortitude explain B023
+fortitude explain --rules=T001,T011,...
 ```
 
-If no rules are provided, this will print all rule descriptions to the terminal.
+If `--rules` is not provided, this will print all rule descriptions to the terminal.
 
 To see further commands and optional arguments, try using `--help`:
 
@@ -61,6 +73,7 @@ should be under the command name:
 
 ```toml
 [check]
+select = ["S", "T"]
 ignore = ["S001", "S051"]
 line-length = 132
 ```
@@ -70,8 +83,17 @@ For `fpm.toml` files, this has to be additionally nested under the
 
 ```toml
 [extra.fortitude.check]
+select = ["S", "T"]
 ignore = ["S001", "S051"]
 line-length = 132
+```
+
+You can use `--extend-select` from the command line to select additional
+rules on top of those in the configuration file.
+
+```bash
+# Selects S, T, and M categories
+fortitude check --extend-select=M
 ```
 
 ## Contributing

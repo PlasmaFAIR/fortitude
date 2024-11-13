@@ -1,29 +1,38 @@
+use std::collections::BTreeSet;
 use std::process::ExitCode;
 
 use crate::cli::ExplainArgs;
-use crate::rules::{full_ruleset, Rule, RuleSet};
+use crate::rule_selector::PreviewOptions;
+use crate::rules::Rule;
+use crate::settings::DEFAULT_SELECTORS;
 use anyhow::Result;
 use colored::Colorize;
+use itertools::Itertools;
 use ruff_diagnostics::FixAvailability;
 use textwrap::dedent;
 
 /// Get the list of active rules for this session.
 fn ruleset(args: &ExplainArgs) -> anyhow::Result<Vec<Rule>> {
-    let choices = if args.rules.is_empty() {
-        full_ruleset()
+    // TODO: Take this as an option
+    let preview = PreviewOptions::default();
+
+    // The rules_set keeps track of which rules have been selected.
+    let mut rules_set: BTreeSet<Rule> = if args.rules.is_empty() {
+        DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect()
     } else {
-        let choices: RuleSet = args.rules.iter().map(|x| x.as_str()).collect();
-        let diff: Vec<_> = choices.difference(&full_ruleset()).copied().collect();
-        if !diff.is_empty() {
-            anyhow::bail!("Unknown rule codes {:?}", diff);
-        }
-        choices
+        BTreeSet::default()
     };
-    // unwrap ok here because we've already checked for valid codes
-    let rules: Vec<_> = choices
-        .iter()
-        .map(|code| Rule::from_code(code).unwrap())
-        .collect();
+
+    for selector in args.rules.iter() {
+        for rule in selector.rules(&preview) {
+            rules_set.insert(rule);
+        }
+    }
+    let rules = rules_set.into_iter().collect_vec();
+
     Ok(rules)
 }
 
@@ -61,8 +70,9 @@ pub fn explain(args: ExplainArgs) -> Result<ExitCode> {
                     }
                 }
 
-                let code = rule.noqa_code().suffix().to_string();
-                let title = format!("# {code}");
+                let code = rule.noqa_code().to_string();
+                let name = rule.name();
+                let title = format!("# {code}: {name}\n");
                 outputs.push((title.bright_red(), dedent(body.as_str())));
             }
             outputs.sort_by(|a, b| {
