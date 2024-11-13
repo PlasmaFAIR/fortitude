@@ -50,9 +50,6 @@ pub struct CheckArgs {
     /// List of files to analyze
     #[arg(default_value = ".")]
     pub files: Vec<PathBuf>,
-    /// Comma-separated list of extra rules to include.
-    #[arg(long, value_delimiter = ',')]
-    pub include: Vec<String>,
     /// Comma-separated list of rules to ignore.
     #[arg(
         long,
