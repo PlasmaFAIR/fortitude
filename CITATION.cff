@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Pattinson"
+  given-names: "Liam"
+  orcid: "https://orcid.org/0000-0001-8604-6904"
+- family-names: Hill
+  given-names: Peter
+  orcid: "https://orcid.org/0000-0003-3092-1858"
+title: "fortitude"
+version: 0.4.0
+date-released: 2024-10-24
+url: "https://github.com/PlasmaFAIR/fortitude"
