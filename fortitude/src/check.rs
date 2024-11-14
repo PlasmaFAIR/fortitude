@@ -269,7 +269,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                 let err_no = format!("Number of errors: {}", total_errors.to_string().bold());
                 let info = "For more information about specific rules, run:";
                 let explain = format!(
-                    "fortitude explain --rules={},{},...",
+                    "fortitude explain {},{},...",
                     "X001".bold().bright_red(),
                     "Y002".bold().bright_red()
                 );
