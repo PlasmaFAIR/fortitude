@@ -60,11 +60,11 @@ The `explain` command can be used to get extra information about any rules:
 # Print extra information for all rules
 fortitude explain
 # Only get information for selected rules
-fortitude explain --rules=T001,T011
+fortitude explain T001,T011
 # Print information on all style rules
-fortitude explain --rules=S
+fortitude explain S
 # Rules and categories can also be referred to by name
-fortitude explain --rules=style,superfluous-implicit-none
+fortitude explain style,superfluous-implicit-none
 ```
 
 To see further commands and optional arguments, try using `--help`:
