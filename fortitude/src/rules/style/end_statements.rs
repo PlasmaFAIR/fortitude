@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode};
+use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -64,7 +64,7 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
     }
 }
 
-impl ASTRule for UnnamedEndStatement {
+impl AstRule for UnnamedEndStatement {
     fn check<'a>(
         _settings: &Settings,
         node: &'a Node,

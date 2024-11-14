@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode};
+use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -37,7 +37,7 @@ impl Violation for UseAll {
     }
 }
 
-impl ASTRule for UseAll {
+impl AstRule for UseAll {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.child_with_name("included_items").is_none() {
             return some_vec![Diagnostic::from_node(UseAll {}, node)];

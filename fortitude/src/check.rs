@@ -2,7 +2,7 @@ use crate::ast::{parse, FortitudeNode};
 use crate::cli::CheckArgs;
 use crate::rule_selector::{PreviewOptions, Specificity};
 use crate::rules::Rule;
-use crate::rules::{error::ioerror::IOError, ASTRuleEnum, PathRuleEnum, TextRuleEnum};
+use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{Settings, DEFAULT_SELECTORS};
 use crate::DiagnosticMessage;
 use anyhow::Result;
@@ -92,7 +92,7 @@ fn get_files<S: AsRef<str>>(files_in: &Vec<PathBuf>, extensions: &[S]) -> Vec<Pa
 fn check_file(
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
-    ast_entrypoints: &BTreeMap<&str, Vec<ASTRuleEnum>>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
     settings: &Settings,
@@ -169,8 +169,8 @@ fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
 }
 
 /// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
-fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<ASTRuleEnum>> {
-    let ast_rules: Vec<ASTRuleEnum> = rules
+fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
+    let ast_rules: Vec<AstRuleEnum> = rules
         .iter()
         .filter_map(|rule| match TryFrom::try_from(*rule) {
             Ok(ast) => Some(ast),
@@ -216,7 +216,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         let message = format!("Error opening file: {error}");
                         let diagnostic = DiagnosticMessage::from_ruff(
                             &empty_file,
-                            Diagnostic::new(IOError { message }, TextRange::default()),
+                            Diagnostic::new(IoError { message }, TextRange::default()),
                         );
                         println!("{diagnostic}");
                         total_errors += 1;
@@ -249,7 +249,7 @@ pub fn check(args: CheckArgs) -> Result<ExitCode> {
                         let message = format!("Failed to process: {msg}");
                         let diagnostic = DiagnosticMessage::from_ruff(
                             &empty_file,
-                            Diagnostic::new(IOError { message }, TextRange::default()),
+                            Diagnostic::new(IoError { message }, TextRange::default()),
                         );
                         println!("{diagnostic}");
                         total_errors += 1;
@@ -328,7 +328,7 @@ mod tests {
         };
 
         let rules = ruleset(&args)?;
-        let one_rules: Vec<Rule> = vec![Rule::IOError];
+        let one_rules: Vec<Rule> = vec![Rule::IoError];
 
         assert_eq!(rules, one_rules);
 
@@ -347,7 +347,7 @@ mod tests {
         };
 
         let rules = ruleset(&args)?;
-        let one_rules: Vec<Rule> = vec![Rule::IOError, Rule::SyntaxError];
+        let one_rules: Vec<Rule> = vec![Rule::IoError, Rule::SyntaxError];
 
         assert_eq!(rules, one_rules);
 

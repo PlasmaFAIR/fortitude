@@ -502,7 +502,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         use ruff_diagnostics::{Diagnostic, Violation};
         use ruff_source_file::SourceFile;
         use tree_sitter::Node;
-        use crate::{ASTRule, PathRule, TextRule};
+        use crate::{AstRule, PathRule, TextRule};
         use crate::settings::Settings;
 
 
@@ -645,20 +645,20 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         )]
         #[repr(u16)]
         #[strum(serialize_all = "kebab-case")]
-        pub enum ASTRuleEnum { #ast_rule_variants }
+        pub enum AstRuleEnum { #ast_rule_variants }
 
-        impl TryFrom<Rule> for ASTRuleEnum {
+        impl TryFrom<Rule> for AstRuleEnum {
             type Error = &'static str;
 
             fn try_from(rule: Rule) -> Result<Self, Self::Error> {
                 match rule {
                     #ast_rule_from_match_arms
-                    _ => Err("not an ASTRule")
+                    _ => Err("not an AstRule")
                 }
             }
         }
 
-        impl ASTRuleEnum {
+        impl AstRuleEnum {
             pub fn check(&self, settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
                 match self {
                     #ast_rule_check_match_arms

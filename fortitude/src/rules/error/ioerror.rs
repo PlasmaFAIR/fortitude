@@ -14,7 +14,7 @@ use ruff_macros::{derive_message_formats, violation};
 /// from disk.
 ///
 /// ## Why is this bad?
-/// An `IOError` indicates an error in the development setup. For example, the user may
+/// An `IoError` indicates an error in the development setup. For example, the user may
 /// not have permissions to read a given file, or the filesystem may contain a broken
 /// symlink.
 ///
@@ -32,21 +32,21 @@ use ruff_macros::{derive_message_formats, violation};
 /// - [UNIX Permissions introduction](https://mason.gmu.edu/~montecin/UNIXpermiss.htm)
 /// - [Command Line Basics: Symbolic Links](https://www.digitalocean.com/community/tutorials/workflow-symbolic-links)
 #[violation]
-pub struct IOError {
+pub struct IoError {
     pub message: String,
 }
 
 /// E000
-impl Violation for IOError {
+impl Violation for IoError {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let IOError { message } = self;
+        let IoError { message } = self;
         format!("{message}")
     }
 }
 
 // Need to implement some kind of rule, although we only raise this manually
-impl PathRule for IOError {
+impl PathRule for IoError {
     fn check(_settings: &Settings, _path: &Path) -> Option<Diagnostic> {
         None
     }

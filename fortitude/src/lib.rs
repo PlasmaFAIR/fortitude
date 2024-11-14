@@ -26,11 +26,11 @@ use tree_sitter::Node;
 // Violation type
 // --------------
 
-pub trait FromASTNode {
+pub trait FromAstNode {
     fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self;
 }
 
-impl FromASTNode for Diagnostic {
+impl FromAstNode for Diagnostic {
     fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
         Self::new(
             violation,
@@ -86,7 +86,7 @@ pub trait TextRule {
 }
 
 /// Implemented by rules that analyse the abstract syntax tree.
-pub trait ASTRule {
+pub trait AstRule {
     fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.

@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode};
+use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -56,7 +56,7 @@ impl Violation for DoublePrecision {
     }
 }
 
-impl ASTRule for DoublePrecision {
+impl AstRule for DoublePrecision {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let txt = node.to_text(src.source_text())?.to_lowercase();
         some_vec![Diagnostic::from_node(DoublePrecision::try_new(txt)?, node)]

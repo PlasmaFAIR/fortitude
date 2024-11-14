@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{some_vec, ASTRule, FromASTNode};
+use crate::{some_vec, AstRule, FromAstNode};
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
@@ -26,7 +26,7 @@ impl Violation for SyntaxError {
     }
 }
 
-impl ASTRule for SyntaxError {
+impl AstRule for SyntaxError {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         some_vec![Diagnostic::from_node(Self {}, node)]
     }

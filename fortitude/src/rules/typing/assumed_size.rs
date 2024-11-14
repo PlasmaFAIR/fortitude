@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode};
+use crate::{AstRule, FromAstNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
@@ -53,7 +53,7 @@ impl Violation for AssumedSize {
         format!("'{name}' has assumed size")
     }
 }
-impl ASTRule for AssumedSize {
+impl AstRule for AssumedSize {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
@@ -160,7 +160,7 @@ impl Violation for AssumedSizeCharacterIntent {
         format!("character '{name}' has assumed size but does not have `intent(in)`")
     }
 }
-impl ASTRule for AssumedSizeCharacterIntent {
+impl AstRule for AssumedSizeCharacterIntent {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // TODO: This warning will also catch:
@@ -243,7 +243,7 @@ impl Violation for DeprecatedAssumedSizeCharacter {
         format!("character '{name}' uses deprecated syntax for assumed size")
     }
 }
-impl ASTRule for DeprecatedAssumedSizeCharacter {
+impl AstRule for DeprecatedAssumedSizeCharacter {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
