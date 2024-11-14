@@ -66,6 +66,11 @@ pub trait RuleNamespace: Sized {
 
     #[allow(dead_code)]
     fn description(&self) -> &'static str;
+
+    /// Try to build a category from a string. These should match the category
+    /// names within the enum, though are converted to lower-kebab-case.
+    #[allow(dead_code)]
+    fn from_alias(s: &str) -> Result<Self, String>;
 }
 
 pub mod clap_completion {
