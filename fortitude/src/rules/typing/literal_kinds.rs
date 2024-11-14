@@ -1,6 +1,6 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode};
+use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -76,7 +76,7 @@ impl Violation for LiteralKind {
     }
 }
 
-impl ASTRule for LiteralKind {
+impl AstRule for LiteralKind {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
@@ -168,7 +168,7 @@ impl Violation for LiteralKindSuffix {
     }
 }
 
-impl ASTRule for LiteralKindSuffix {
+impl AstRule for LiteralKindSuffix {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let kind = node.child_by_field_name("kind")?;

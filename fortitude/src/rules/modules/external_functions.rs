@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode};
+use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -26,7 +26,7 @@ impl Violation for ExternalFunction {
     }
 }
 
-impl ASTRule for ExternalFunction {
+impl AstRule for ExternalFunction {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.parent()?.kind() == "translation_unit" {
             let procedure_stmt = node.child(0)?;

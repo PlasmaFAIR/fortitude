@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode};
+use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -38,7 +38,7 @@ impl Violation for MissingIntent {
     }
 }
 
-impl ASTRule for MissingIntent {
+impl AstRule for MissingIntent {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Names of all the dummy arguments

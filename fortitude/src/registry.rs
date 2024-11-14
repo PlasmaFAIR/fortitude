@@ -155,6 +155,14 @@ mod tests {
     }
 
     #[test]
+    fn check_code_from_alias() -> Result<(), String> {
+        for rule in Rule::iter() {
+            assert_eq!(rule, Rule::from_alias(rule.alias())?);
+        }
+        Ok(())
+    }
+
+    #[test]
     fn category_parse_code() {
         for rule in Rule::iter() {
             let code = format!("{}", rule.noqa_code());

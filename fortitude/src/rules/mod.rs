@@ -1,6 +1,6 @@
 #![allow(clippy::useless_format)]
 /// A collection of all rules, and utilities to select a subset at runtime.
-pub(crate) mod error; // Public so we can use `IOError` in other places
+pub(crate) mod error; // Public so we can use `IoError` in other places
 mod filesystem;
 #[macro_use]
 mod macros;
@@ -70,7 +70,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
     #[rustfmt::skip]
     Some(match (category, code) {
-        (Error, "000") => (RuleGroup::Stable, Path, error::ioerror::IOError),
+        (Error, "000") => (RuleGroup::Stable, Path, error::ioerror::IoError),
         (Error, "001") => (RuleGroup::Stable, Ast, error::syntax_error::SyntaxError),
 
         (Filesystem, "001") => (RuleGroup::Stable, Path, filesystem::extensions::NonStandardFileExtension),

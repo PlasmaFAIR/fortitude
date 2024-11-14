@@ -71,7 +71,7 @@ pub fn explain(args: ExplainArgs) -> Result<ExitCode> {
                 }
 
                 let code = rule.noqa_code().to_string();
-                let name = rule.name();
+                let name = rule.alias();
                 let title = format!("# {code}: {name}\n");
                 outputs.push((title.bright_red(), dedent(body.as_str())));
             }

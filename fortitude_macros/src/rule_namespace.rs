@@ -95,9 +95,11 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
 
     for (prefix, field) in parsed {
         let ret_str = quote!(rest);
-        if_statements.extend(quote! {if let Some(rest) = code.strip_prefix(#prefix) {
-            return Some((#ident::#field, #ret_str));
-        }});
+        if_statements.extend(quote! {
+            if let Some(rest) = code.strip_prefix(#prefix) {
+                return Some((#ident::#field, #ret_str));
+            }
+        });
     }
 
     Ok(quote! {

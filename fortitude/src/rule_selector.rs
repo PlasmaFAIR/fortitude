@@ -65,6 +65,12 @@ impl FromStr for RuleSelector {
                     None => (s, None),
                 };
 
+                // If passed full name of rule, use the equivalent code instead.
+                if let Ok(rule) = Rule::from_alias(s) {
+                    let c = rule.noqa_code().to_string();
+                    return Self::from_str(c.as_str());
+                }
+
                 let (category, code) =
                     Category::parse_code(s).ok_or_else(|| ParseError::Unknown(s.to_string()))?;
 

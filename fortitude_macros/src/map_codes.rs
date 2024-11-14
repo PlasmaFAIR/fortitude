@@ -4,6 +4,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 
+use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
@@ -33,6 +34,8 @@ struct RuleMeta {
     path: Path,
     /// The rule attributes, e.g. for feature gates
     attrs: Vec<Attribute>,
+    /// A human-friendly name for the rule.
+    alias: String,
 }
 
 pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
@@ -397,6 +400,8 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_fixable_match_arms = quote!();
     let mut rule_explanation_match_arms = quote!();
     let mut rule_name_match_arms = quote!();
+    let mut rule_alias_match_arms = quote!();
+    let mut from_alias_match_arms = quote!();
 
     let mut from_impls_for_diagnostic_kind = quote!();
 
@@ -418,6 +423,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         attrs,
         path,
         kind,
+        alias,
         ..
     } in input
     {
@@ -434,6 +440,8 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         rule_explanation_match_arms
             .extend(quote! {#(#attrs)* Self::#name => #path::explanation(),});
         rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
+        rule_alias_match_arms.extend(quote! {#(#attrs)* Self::#name => #alias,});
+        from_alias_match_arms.extend(quote! {#(#attrs)* #alias => Ok(Self::#name),});
 
         // Enable conversion from `DiagnosticKind` to `Rule`.
         from_impls_for_diagnostic_kind
@@ -502,7 +510,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         use ruff_diagnostics::{Diagnostic, Violation};
         use ruff_source_file::SourceFile;
         use tree_sitter::Node;
-        use crate::{ASTRule, PathRule, TextRule};
+        use crate::{AstRule, PathRule, TextRule};
         use crate::settings::Settings;
 
 
@@ -540,10 +548,24 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
                 match self { #rule_name_match_arms }
             }
 
+            /// Returns the human-friendly name for this rule.
+            pub fn alias(&self) -> &'static str {
+                match self { #rule_alias_match_arms }
+            }
+
             /// Returns the fix status of this rule.
             pub const fn fixable(&self) -> ruff_diagnostics::FixAvailability {
                 match self { #rule_fixable_match_arms }
             }
+
+            /// Generate rule from a human-readable alias
+            pub fn from_alias(s: &str) -> Result<Self, String> {
+                match s {
+                    #from_alias_match_arms
+                    _ => Err(format!("Unknown rule name: {s}"))
+                }
+            }
+
         }
 
         impl AsRule for ruff_diagnostics::DiagnosticKind {
@@ -645,20 +667,20 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         )]
         #[repr(u16)]
         #[strum(serialize_all = "kebab-case")]
-        pub enum ASTRuleEnum { #ast_rule_variants }
+        pub enum AstRuleEnum { #ast_rule_variants }
 
-        impl TryFrom<Rule> for ASTRuleEnum {
+        impl TryFrom<Rule> for AstRuleEnum {
             type Error = &'static str;
 
             fn try_from(rule: Rule) -> Result<Self, Self::Error> {
                 match rule {
                     #ast_rule_from_match_arms
-                    _ => Err("not an ASTRule")
+                    _ => Err("not an AstRule")
                 }
             }
         }
 
-        impl ASTRuleEnum {
+        impl AstRuleEnum {
             pub fn check(&self, settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
                 match self {
                     #ast_rule_check_match_arms
@@ -704,6 +726,7 @@ impl Parse for RuleMeta {
         let rule_path: Path = pat_tuple.parse()?;
         let _: Token!(,) = input.parse()?;
         let rule_name = rule_path.segments.last().unwrap().ident.clone();
+        let alias = rule_name.to_string().to_case(Case::Kebab);
         Ok(RuleMeta {
             name: rule_name,
             category,
@@ -712,6 +735,7 @@ impl Parse for RuleMeta {
             kind,
             path: rule_path,
             attrs,
+            alias,
         })
     }
 }

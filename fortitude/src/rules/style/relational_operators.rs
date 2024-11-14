@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{ASTRule, FromASTNode};
+use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
@@ -38,7 +38,7 @@ impl Violation for DeprecatedRelationalOperator {
         format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead")
     }
 }
-impl ASTRule for DeprecatedRelationalOperator {
+impl AstRule for DeprecatedRelationalOperator {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
         let symbol = relation
