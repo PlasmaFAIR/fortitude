@@ -66,7 +66,7 @@ impl FromStr for RuleSelector {
                 };
 
                 // If passed full name of rule, use the equivalent code instead.
-                if let Ok(rule) = Rule::from_alias(s) {
+                if let Ok(rule) = Rule::from_str(s) {
                     let c = rule.noqa_code().to_string();
                     return Self::from_str(c.as_str());
                 }

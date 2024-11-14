@@ -1,5 +1,5 @@
 use fortitude_macros::RuleNamespace;
-use strum_macros::EnumIter;
+use std::str::FromStr; // Needed by strum_macros
 
 pub use crate::rules::Rule;
 
@@ -29,7 +29,23 @@ pub enum FromCodeError {
 }
 
 /// The category of each rule defines the sort of problem it intends to solve.
-#[derive(EnumIter, Debug, PartialEq, Eq, Clone, Hash, RuleNamespace)]
+#[derive(
+    Debug,
+    PartialEq,
+    Eq,
+    Clone,
+    Hash,
+    PartialOrd,
+    Ord,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumIter,
+    strum_macros::EnumString,
+    strum_macros::IntoStaticStr,
+    RuleNamespace,
+)]
+#[repr(u16)]
+#[strum(serialize_all = "kebab-case")]
 pub enum Category {
     /// Failure to parse a file.
     #[prefix = "E"]
@@ -66,11 +82,6 @@ pub trait RuleNamespace: Sized {
 
     #[allow(dead_code)]
     fn description(&self) -> &'static str;
-
-    /// Try to build a category from a string. These should match the category
-    /// names within the enum, though are converted to lower-kebab-case.
-    #[allow(dead_code)]
-    fn from_alias(s: &str) -> Result<Self, String>;
 }
 
 pub mod clap_completion {
@@ -157,14 +168,6 @@ mod tests {
                 "{rule:?} could not be round-trip serialized."
             );
         }
-    }
-
-    #[test]
-    fn check_code_from_alias() -> Result<(), String> {
-        for rule in Rule::iter() {
-            assert_eq!(rule, Rule::from_alias(rule.alias())?);
-        }
-        Ok(())
     }
 
     #[test]

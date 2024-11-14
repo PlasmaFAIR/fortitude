@@ -10,8 +10,6 @@ mod style;
 mod typing;
 use crate::registry::{AsRule, Category};
 
-use strum_macros::{AsRefStr, EnumIter};
-
 use std::fmt::Formatter;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
