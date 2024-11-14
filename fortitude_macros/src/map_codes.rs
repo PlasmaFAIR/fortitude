@@ -401,6 +401,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_explanation_match_arms = quote!();
     let mut rule_name_match_arms = quote!();
     let mut rule_alias_match_arms = quote!();
+    let mut from_alias_match_arms = quote!();
 
     let mut from_impls_for_diagnostic_kind = quote!();
 
@@ -439,7 +440,8 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         rule_explanation_match_arms
             .extend(quote! {#(#attrs)* Self::#name => #path::explanation(),});
         rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
-        rule_alias_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#alias),});
+        rule_alias_match_arms.extend(quote! {#(#attrs)* Self::#name => #alias,});
+        from_alias_match_arms.extend(quote! {#(#attrs)* #alias => Ok(Self::#name),});
 
         // Enable conversion from `DiagnosticKind` to `Rule`.
         from_impls_for_diagnostic_kind
@@ -555,6 +557,15 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             pub const fn fixable(&self) -> ruff_diagnostics::FixAvailability {
                 match self { #rule_fixable_match_arms }
             }
+
+            /// Generate rule from a human-readable alias
+            pub fn from_alias(s: &str) -> Result<Self, String> {
+                match s {
+                    #from_alias_match_arms
+                    _ => Err(format!("Unknown rule name: {s}"))
+                }
+            }
+
         }
 
         impl AsRule for ruff_diagnostics::DiagnosticKind {
