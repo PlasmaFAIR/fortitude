@@ -34,7 +34,6 @@ pub enum SubCommands {
 pub struct ExplainArgs {
     /// List of rules to explain. If omitted, explains all rules.
     #[arg(
-        long,
         value_delimiter = ',',
         value_name = "RULE_CODE",
         value_parser = RuleSelectorParser,
