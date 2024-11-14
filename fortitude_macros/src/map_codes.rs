@@ -4,6 +4,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 
+use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
@@ -33,6 +34,8 @@ struct RuleMeta {
     path: Path,
     /// The rule attributes, e.g. for feature gates
     attrs: Vec<Attribute>,
+    /// A human-friendly name for the rule.
+    alias: String,
 }
 
 pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
@@ -397,6 +400,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_fixable_match_arms = quote!();
     let mut rule_explanation_match_arms = quote!();
     let mut rule_name_match_arms = quote!();
+    let mut rule_alias_match_arms = quote!();
 
     let mut from_impls_for_diagnostic_kind = quote!();
 
@@ -418,6 +422,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         attrs,
         path,
         kind,
+        alias,
         ..
     } in input
     {
@@ -434,6 +439,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         rule_explanation_match_arms
             .extend(quote! {#(#attrs)* Self::#name => #path::explanation(),});
         rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
+        rule_alias_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#alias),});
 
         // Enable conversion from `DiagnosticKind` to `Rule`.
         from_impls_for_diagnostic_kind
@@ -538,6 +544,11 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             /// Returns the name for this rule.
             pub fn name(&self) -> &'static str {
                 match self { #rule_name_match_arms }
+            }
+
+            /// Returns the human-friendly name for this rule.
+            pub fn alias(&self) -> &'static str {
+                match self { #rule_alias_match_arms }
             }
 
             /// Returns the fix status of this rule.
@@ -704,6 +715,7 @@ impl Parse for RuleMeta {
         let rule_path: Path = pat_tuple.parse()?;
         let _: Token!(,) = input.parse()?;
         let rule_name = rule_path.segments.last().unwrap().ident.clone();
+        let alias = rule_name.to_string().to_case(Case::Kebab);
         Ok(RuleMeta {
             name: rule_name,
             category,
@@ -712,6 +724,7 @@ impl Parse for RuleMeta {
             kind,
             path: rule_path,
             attrs,
+            alias,
         })
     }
 }
