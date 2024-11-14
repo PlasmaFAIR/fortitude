@@ -5,6 +5,7 @@
 use std::cmp::Reverse;
 use std::collections::HashSet;
 
+use convert_case::{Case, Casing};
 use quote::quote;
 use syn::spanned::Spanned;
 use syn::{Data, DataEnum, DeriveInput, Error, ExprLit, Lit, Meta, MetaNameValue};
@@ -26,6 +27,7 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
 
     let mut common_prefix_match_arms = quote!();
     let mut name_match_arms = quote!();
+    let mut alias_match_arms = quote!();
     let mut description_match_arms = quote!();
 
     let mut all_prefixes = HashSet::new();
@@ -71,9 +73,11 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
         };
 
         let variant_ident = variant.ident;
-        description_match_arms.extend(quote! { Self::#variant_ident => stringify!(#doc_attr), });
+        let variant_alias = variant_ident.to_string().to_case(Case::Kebab);
 
+        description_match_arms.extend(quote! { Self::#variant_ident => stringify!(#doc_attr),});
         name_match_arms.extend(quote! {Self::#variant_ident => stringify!(#variant_ident),});
+        alias_match_arms.extend(quote! {#variant_alias => Ok(Self::#variant_ident),});
 
         for lit in &prefixes {
             parsed.push((lit.clone(), variant_ident.clone()));
@@ -106,6 +110,9 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
         #[automatically_derived]
         impl crate::registry::RuleNamespace for #ident {
             fn parse_code(code: &str) -> Option<(Self, &str)> {
+                if let Ok(variant) = Self::from_alias(code) {
+                    return Some((variant, ""));
+                }
                 #if_statements
                 None
             }
@@ -120,6 +127,13 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
 
             fn description(&self) -> &'static str {
                 match self { #description_match_arms }
+            }
+
+            fn from_alias(s: &str) -> Result<Self, String> {
+                match s {
+                    #alias_match_arms
+                    _ => Err(format!("Unknown rule namespace: {s}"))
+                }
             }
         }
     })

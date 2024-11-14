@@ -44,19 +44,28 @@ You can select or ignore individual rules or whole groups with
 ```bash
 # Just check for missing `implicit none`
 fortitude check --select=T001
+# Also check for missing `implicit none` in interfaces
+fortitude check --select=T001,T002
 # Ignore all styling rules
 fortitude check --ignore=S
 # Only check for typing rules, but ignore superfluous implicit none
 fortitude check --select=T --ignore=T003
+# Rules and categories can also be referred to by name
+fortitude check --select=typing --ignore=superfluous-implicit-none
 ```
 
 The `explain` command can be used to get extra information about any rules:
 
 ```bash
-fortitude explain --rules=T001,T011,...
+# Print extra information for all rules
+fortitude explain
+# Only get information for selected rules
+fortitude explain --rules=T001,T011
+# Print information on all style rules
+fortitude explain --rules=S
+# Rules and categories can also be referred to by name
+fortitude explain --rules=style,superfluous-implicit-none
 ```
-
-If `--rules` is not provided, this will print all rule descriptions to the terminal.
 
 To see further commands and optional arguments, try using `--help`:
 
