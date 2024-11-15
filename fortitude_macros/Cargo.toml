@@ -7,7 +7,10 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
+clap = { workspace = true }
+heck = "0.5.0"
 proc-macro2 = "1.0.89"
 quote = "1.0.37"
-syn = "2.0.86"
+serde = { workspace = true }
+syn = { version = "2.0.86", features = ["full"] }
 itertools = { workspace = true }

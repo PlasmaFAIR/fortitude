@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use clap::{CommandFactory, Parser, Subcommand};
-use clap_config::ClapConfig;
+use fortitude_macros::ClapConfig;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use toml::Table;

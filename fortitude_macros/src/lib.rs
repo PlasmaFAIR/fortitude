@@ -1,3 +1,4 @@
+mod clap_config;
 mod map_codes;
 mod rule_code_prefix;
 mod rule_namespace;
@@ -12,6 +13,12 @@ pub fn derive_rule_namespace(input: TokenStream) -> TokenStream {
     rule_namespace::derive_impl(input)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
+}
+
+#[proc_macro_derive(ClapConfig, attributes(clap_config))]
+pub fn derive_clapconfig(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    clap_config::derive_impl(input)
 }
 
 #[proc_macro_attribute]

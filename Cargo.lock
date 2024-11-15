@@ -280,9 +280,12 @@ dependencies = [
 name = "fortitude_macros"
 version = "0.1.0"
 dependencies = [
+ "clap",
+ "heck",
  "itertools 0.12.1",
  "proc-macro2",
  "quote",
+ "serde",
  "syn",
 ]
 

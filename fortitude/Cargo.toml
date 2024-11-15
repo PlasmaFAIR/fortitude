@@ -17,7 +17,7 @@ exclude = [".*", "test.f90"]
 [dependencies]
 annotate-snippets = "0.11.4"
 anyhow = "1.0.79"
-clap = { version = "4.4.16", features = ["derive", "string"] }
+clap = { workspace = true }
 clap_config = "0.1.1"
 colored = "2.1.0"
 fortitude_macros = { version = "0.1.0", path = "../fortitude_macros" }
@@ -30,7 +30,7 @@ ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
-serde = { version = "1.0.210", features = ["derive"] }
+serde = { workspace = true }
 similar-asserts = "1.6.0"
 strum = { workspace = true }
 strum_macros = { workspace = true }
