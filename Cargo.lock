@@ -150,21 +150,6 @@ dependencies = [
  "anstyle",
  "clap_lex",
  "strsim",
- "terminal_size",
-]
-
-[[package]]
-name = "clap_config"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46efb9cbf691f5505d0b7b2c8055aec0c9a770eaac8a06834b6d84b5be93279a"
-dependencies = [
- "clap",
- "heck",
- "proc-macro2",
- "quote",
- "serde",
- "syn",
 ]
 
 [[package]]
@@ -294,7 +279,6 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "clap",
- "clap_config",
  "colored",
  "fortitude_macros",
  "insta",
@@ -851,16 +835,6 @@ dependencies = [
  "cfg-if",
  "fastrand",
  "once_cell",
- "rustix",
- "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "terminal_size"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f599bd7ca042cfdf8f4512b277c02ba102247820f9d9d4a9f521f496751a6ef"
-dependencies = [
  "rustix",
  "windows-sys 0.59.0",
 ]

@@ -18,7 +18,7 @@ use colored::{ColoredString, Colorize};
 use ruff_diagnostics::{Diagnostic, DiagnosticKind, Fix};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{Ranged, TextRange, TextSize};
-use settings::{Settings};
+use settings::Settings;
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;

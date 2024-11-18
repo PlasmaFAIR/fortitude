@@ -10,9 +10,7 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Self {
-        Self {
-            line_length: 100,
-        }
+        Self { line_length: 100 }
     }
 }
 

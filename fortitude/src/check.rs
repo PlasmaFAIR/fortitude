@@ -1,29 +1,115 @@
 use crate::ast::{parse, FortitudeNode};
-use crate::cli::CheckArgs;
-use crate::rule_selector::{PreviewOptions, Specificity};
+use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
+use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{Settings, DEFAULT_SELECTORS};
 use crate::DiagnosticMessage;
-use anyhow::Result;
+
+use anyhow::{Context, Result};
 use colored::Colorize;
 use itertools::{join, Itertools};
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use strum::IntoEnumIterator;
+use toml::Table;
 use walkdir::WalkDir;
 
+// These are just helper structs to let us quickly work out if there's
+// a fortitude section in an fpm.toml file
+#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+struct Fpm {
+    extra: Option<Extra>,
+}
+
+#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+struct Extra {
+    fortitude: Option<CheckSection>,
+}
+
+#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+struct CheckSection {
+    check: Option<CheckArgs>,
+}
+
+// Adapted from ruff
+fn parse_fpm_toml<P: AsRef<Path>>(path: P) -> Result<Fpm> {
+    let contents = std::fs::read_to_string(path.as_ref())
+        .with_context(|| format!("Failed to read {}", path.as_ref().display()))?;
+    toml::from_str(&contents)
+        .with_context(|| format!("Failed to parse {}", path.as_ref().display()))
+}
+
+pub fn fortitude_enabled<P: AsRef<Path>>(path: P) -> Result<bool> {
+    let fpm = parse_fpm_toml(path)?;
+    Ok(fpm.extra.and_then(|extra| extra.fortitude).is_some())
+}
+
+/// Return the path to the `fpm.toml` or `fortitude.toml` file in a given
+/// directory. Adapated from ruff
+pub fn settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
+    // Check for `.fortitude.toml`.
+    let fortitude_toml = path.as_ref().join(".fortitude.toml");
+    if fortitude_toml.is_file() {
+        return Ok(Some(fortitude_toml));
+    }
+
+    // Check for `fortitude.toml`.
+    let fortitude_toml = path.as_ref().join("fortitude.toml");
+    if fortitude_toml.is_file() {
+        return Ok(Some(fortitude_toml));
+    }
+
+    // Check for `fpm.toml`.
+    let fpm_toml = path.as_ref().join("fpm.toml");
+    if fpm_toml.is_file() && fortitude_enabled(&fpm_toml)? {
+        return Ok(Some(fpm_toml));
+    }
+
+    Ok(None)
+}
+
+/// Find the path to the `fpm.toml` or `fortitude.toml` file, if such a file
+/// exists. Adapated from ruff
+pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
+    for directory in path.as_ref().ancestors() {
+        if let Some(settings) = settings_toml(directory)? {
+            return Ok(Some(settings));
+        }
+    }
+    Ok(None)
+}
+
+fn from_clap_config_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> {
+    let config_str = if path.as_ref().ends_with("fpm.toml") {
+        let config = std::fs::read_to_string(path)?.parse::<Table>()?;
+
+        // Unwrap should be ok here because we've already checked this
+        // file has these tables
+        let extra = &config["extra"].as_table().unwrap();
+        let fortitude = &extra["fortitude"].as_table().unwrap();
+        fortitude.to_string()
+    } else {
+        std::fs::read_to_string(path)?
+    };
+
+    let config: CheckSection = toml::from_str(&config_str)?;
+
+    Ok(config)
+}
+
 /// Get the list of active rules for this session.
-fn ruleset(args: &CheckArgs) -> anyhow::Result<Vec<Rule>> {
+fn ruleset(args: RuleSelection) -> anyhow::Result<Vec<Rule>> {
     // TODO: Take this as an option
     let preview = PreviewOptions::default();
 
     // The select_set keeps track of which rules have been selected.
-    let mut select_set: BTreeSet<Rule> = if args.select.is_empty() {
+    let mut select_set: BTreeSet<Rule> = if args.select.is_none() {
         DEFAULT_SELECTORS
             .iter()
             .flat_map(|selector| selector.rules(&preview))
@@ -37,6 +123,7 @@ fn ruleset(args: &CheckArgs) -> anyhow::Result<Vec<Rule>> {
         for selector in args
             .select
             .iter()
+            .flatten()
             .chain(args.extend_select.iter())
             .filter(|s| s.specificity() == spec)
         {
@@ -194,19 +281,81 @@ pub(crate) fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<As
     map
 }
 
+#[derive(Default, Debug)]
+pub struct CheckSettings {
+    pub files: Vec<PathBuf>,
+    pub ignore: Vec<RuleSelector>,
+    pub select: Option<Vec<RuleSelector>>,
+    pub extend_select: Vec<RuleSelector>,
+    pub line_length: usize,
+    pub file_extensions: Vec<String>,
+}
+
+impl From<Option<CheckSection>> for CheckSettings {
+    fn from(value: Option<CheckSection>) -> Self {
+        match value {
+            Some(value) => match value.check {
+                Some(value) => Self {
+                    files: value.files.unwrap_or(vec![PathBuf::from(".")]),
+                    ignore: value.ignore.unwrap_or_default(),
+                    select: value.select,
+                    extend_select: value.extend_select.unwrap_or_default(),
+                    line_length: value.line_length.unwrap_or(Settings::default().line_length),
+                    file_extensions: value
+                        .file_extensions
+                        .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
+                },
+                None => Self::default(),
+            },
+            None => Self::default(),
+        }
+    }
+}
+
+// Taken from Ruff
+#[derive(Clone, Debug, Default)]
+pub struct RuleSelection {
+    pub select: Option<Vec<RuleSelector>>,
+    pub ignore: Vec<RuleSelector>,
+    pub extend_select: Vec<RuleSelector>,
+}
+
 /// Check all files, report issues found, and return error code.
-pub fn check(args: CheckArgs) -> Result<ExitCode> {
+pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
+    let file_settings: CheckSettings = if global_options.config_file.is_some() {
+        Some(from_clap_config_subsection(
+            global_options.config_file.as_ref().unwrap(),
+        )?)
+    } else if let Some(toml_file) = find_settings_toml(".")? {
+        Some(from_clap_config_subsection(toml_file)?)
+    } else {
+        None
+    }
+    .into();
+
+    let files = &args.files.unwrap_or(file_settings.files);
+    let file_extensions = &args
+        .file_extensions
+        .unwrap_or(file_settings.file_extensions);
+
     let settings = Settings {
-        line_length: args.line_length,
+        line_length: args.line_length.unwrap_or(file_settings.line_length),
     };
-    match ruleset(&args) {
+
+    let rule_selection = RuleSelection {
+        select: args.select.or(file_settings.select),
+        ignore: args.ignore.unwrap_or(file_settings.ignore),
+        extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
+    };
+
+    match ruleset(rule_selection) {
         Ok(rules) => {
             let path_rules = rules_to_path_rules(&rules);
             let text_rules = rules_to_text_rules(&rules);
             let ast_entrypoints = ast_entrypoint_map(&rules);
             let mut total_errors = 0;
             let mut total_files = 0;
-            for path in get_files(&args.files, &args.file_extensions) {
+            for path in get_files(files, file_extensions) {
                 let filename = path.to_string_lossy();
                 let empty_file = SourceFileBuilder::new(filename.as_ref(), "").finish();
 
@@ -294,16 +443,13 @@ mod tests {
 
     #[test]
     fn empty_select() -> anyhow::Result<()> {
-        let args = CheckArgs {
-            files: vec![],
+        let args = RuleSelection {
             ignore: vec![],
-            select: vec![],
+            select: None,
             extend_select: vec![],
-            line_length: 100,
-            file_extensions: vec![],
         };
 
-        let rules = ruleset(&args)?;
+        let rules = ruleset(args)?;
 
         let preview = PreviewOptions::default();
         let all_rules: Vec<Rule> = DEFAULT_SELECTORS
@@ -318,16 +464,13 @@ mod tests {
 
     #[test]
     fn select_one_rule() -> anyhow::Result<()> {
-        let args = CheckArgs {
-            files: vec![],
+        let args = RuleSelection {
             ignore: vec![],
-            select: vec![RuleSelector::from_str("E000")?],
+            select: Some(vec![RuleSelector::from_str("E000")?]),
             extend_select: vec![],
-            line_length: 100,
-            file_extensions: vec![],
         };
 
-        let rules = ruleset(&args)?;
+        let rules = ruleset(args)?;
         let one_rules: Vec<Rule> = vec![Rule::IoError];
 
         assert_eq!(rules, one_rules);
@@ -337,19 +480,46 @@ mod tests {
 
     #[test]
     fn extend_select() -> anyhow::Result<()> {
-        let args = CheckArgs {
-            files: vec![],
+        let args = RuleSelection {
             ignore: vec![],
-            select: vec![RuleSelector::from_str("E000")?],
+            select: Some(vec![RuleSelector::from_str("E000")?]),
             extend_select: vec![RuleSelector::from_str("E001")?],
-            line_length: 100,
-            file_extensions: vec![],
         };
 
-        let rules = ruleset(&args)?;
+        let rules = ruleset(args)?;
         let one_rules: Vec<Rule> = vec![Rule::IoError, Rule::SyntaxError];
 
         assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    use std::fs;
+
+    use anyhow::{Context, Result};
+    use tempfile::TempDir;
+    use textwrap::dedent;
+
+    #[test]
+    fn find_and_check_fpm_toml() -> Result<()> {
+        let tempdir = TempDir::new()?;
+        let fpm_toml = tempdir.path().join("fpm.toml");
+        fs::write(
+            fpm_toml,
+            dedent(
+                r#"
+                some-stuff = 1
+                other-things = "hello"
+
+                [extra.fortitude.check]
+                ignore = ["T001"]
+                "#,
+            ),
+        )?;
+
+        let fpm = find_settings_toml(tempdir.path())?.context("Failed to find fpm.toml")?;
+        let enabled = fortitude_enabled(fpm)?;
+        assert!(enabled);
 
         Ok(())
     }
