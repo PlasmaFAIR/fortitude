@@ -54,22 +54,22 @@ like `AvoidLineTooLong` or `KeepLinesShort`.
 #### Rule testing: fixtures and snapshots
 
 To test rules, Fortitude uses snapshots of Fortitude's output for a given file (fixture). Generally, there
-will be one file per rule (e.g., `E402.py`), and each file will contain all necessary examples of
+will be one file per rule (e.g., `E402.f90`), and each file will contain all necessary examples of
 both violations and non-violations. `cargo insta review` will generate a snapshot file containing
 Fortitude's output for each fixture, which you can then commit alongside your changes.
 
 Once you've completed the code for the rule itself, you can define tests with the following steps:
 
-1. Add a Python file to `fortitude/resources/test/fixtures/[category]` that contains the code you
-    want to test. The file name should match the rule name (e.g., `E402.py`), and it should include
+1. Add a Fortran file to `fortitude/resources/test/fixtures/[category]` that contains the code you
+    want to test. The file name should match the rule name (e.g., `E402.f90`), and it should include
     examples of both violations and non-violations.
 
 1. Run Fortitude locally against your file and verify the output is as expected. Once you're satisfied
     with the output (you see the violations you expect, and no others), proceed to the next step.
-    For example, if you're adding a new rule named `T402`, you would run:
+    For example, if you're adding a new rule named `E402`, you would run:
 
     ```shell
-    cargo run -- check fortitude/resources/test/fixtures/typing/T402.f90 --select T402
+    cargo run -- check fortitude/resources/test/fixtures/typing/E402.f90 --select E402
     ```
 
     **Note:** Only a subset of rules are enabled by default. When testing a new rule, ensure that
