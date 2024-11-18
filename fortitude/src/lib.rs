@@ -234,7 +234,12 @@ fn format_violation(
         snippet
     };
 
-    let renderer = Renderer::styled();
+    // Disable colours for tests, if the user requests it via env var, or non-tty
+    let renderer = if !cfg!(test) && colored::control::SHOULD_COLORIZE.should_colorize() {
+        Renderer::styled()
+    } else {
+        Renderer::plain()
+    };
     let source_block = renderer.render(snippet_with_footer);
     writeln!(f, "{source_block}")?;
 
