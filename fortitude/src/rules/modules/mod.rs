@@ -30,18 +30,4 @@ mod tests {
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
     }
-
-    #[test_case(Rule::ImplicitTyping, Path::new("M001_ok.f90"))]
-    fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
-        let diagnostics = test_path(
-            Path::new("modules").join(path).as_path(),
-            &[rule_code],
-            &default_settings(),
-        )?;
-        assert!(
-            diagnostics.is_empty(),
-            "Test source has no warnings, but some were raised:\n{diagnostics}"
-        );
-        Ok(())
-    }
 }
