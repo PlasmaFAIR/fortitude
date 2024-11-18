@@ -49,33 +49,3 @@ impl AstRule for UseAll {
         vec!["use_statement"]
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{test_file, FromStartEndLineCol};
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn test_use_all() -> anyhow::Result<()> {
-        let source = test_file(
-            "
-            module my_module
-                use, intrinsic :: iso_fortran_env, only: real32
-                use, intrinsic :: iso_c_binding
-            end module
-            ",
-        );
-        let expected = vec![Diagnostic::from_start_end_line_col(
-            UseAll {},
-            &source,
-            3,
-            4,
-            3,
-            35,
-        )];
-        let actual = UseAll::apply(&source)?;
-        assert_eq!(actual, expected);
-        Ok(())
-    }
-}

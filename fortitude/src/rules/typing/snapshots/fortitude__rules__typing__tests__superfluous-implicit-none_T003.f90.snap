@@ -1,0 +1,96 @@
+---
+source: fortitude/src/rules/typing/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+warning: ./resources/test/fixtures/typing/T003.f90:5:5: T003 'implicit none' set on the enclosing module
+  |
+3 | contains
+4 |   integer function myfunc(x)
+5 |     implicit none
+  |     ^^^^^^^^^^^^^ T003
+6 |     integer, intent(in) :: x
+7 |     myfunc = x * 2
+  |
+  = help: Remove unnecessary 'implicit none'
+
+note: Running with '--fix' will apply the following fix.
+Differences (-original|+fixed):
+ module my_module
+   implicit none
+ contains
+   integer function myfunc(x)
+-    implicit none
+     integer, intent(in) :: x
+     myfunc = x * 2
+   end function myfunc
+   subroutine mysub(x)
+
+warning: ./resources/test/fixtures/typing/T003.f90:10:5: T003 'implicit none' set on the enclosing module
+   |
+ 8 |   end function myfunc
+ 9 |   subroutine mysub(x)
+10 |     implicit none
+   |     ^^^^^^^^^^^^^ T003
+11 |     integer, intent(inout) :: x
+12 |     x = x * 2
+   |
+   = help: Remove unnecessary 'implicit none'
+
+note: Running with '--fix' will apply the following fix.
+Differences (-original|+fixed):
+     integer, intent(in) :: x
+     myfunc = x * 2
+   end function myfunc
+   subroutine mysub(x)
+-    implicit none
+     integer, intent(inout) :: x
+     x = x * 2
+   end subroutine mysub
+ end module my_module
+
+warning: ./resources/test/fixtures/typing/T003.f90:23:5: T003 'implicit none' set on the enclosing program
+   |
+21 | contains
+22 |   integer function myfunc2(x)
+23 |     implicit none
+   |     ^^^^^^^^^^^^^ T003
+24 |     integer, intent(in) :: x
+25 |     myfunc2 = x * 2
+   |
+   = help: Remove unnecessary 'implicit none'
+
+note: Running with '--fix' will apply the following fix.
+Differences (-original|+fixed):
+   write(*,*) 42
+ 
+ contains
+   integer function myfunc2(x)
+-    implicit none
+     integer, intent(in) :: x
+     myfunc2 = x * 2
+   end function myfunc2
+   subroutine mysub2(x)
+
+warning: ./resources/test/fixtures/typing/T003.f90:28:5: T003 'implicit none' set on the enclosing program
+   |
+26 |   end function myfunc2
+27 |   subroutine mysub2(x)
+28 |     implicit none
+   |     ^^^^^^^^^^^^^ T003
+29 |     integer, intent(inout) :: x
+30 |     x = x * 2
+   |
+   = help: Remove unnecessary 'implicit none'
+
+note: Running with '--fix' will apply the following fix.
+Differences (-original|+fixed):
+     integer, intent(in) :: x
+     myfunc2 = x * 2
+   end function myfunc2
+   subroutine mysub2(x)
+-    implicit none
+     integer, intent(inout) :: x
+     x = x * 2
+   end subroutine mysub2
+ end program my_program

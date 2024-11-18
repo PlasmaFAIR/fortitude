@@ -1,0 +1,13 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+warning: ./resources/test/fixtures/style/S001.f90:2:101: S001 line length of 222, exceeds maximum 100
+  |
+1 | ...
+2 | ...ally_really_really_really_really_really_really_really_really_really_really_long_module_name, only : integer_working_precision
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
+3 | ...
+4 | ...
+  |

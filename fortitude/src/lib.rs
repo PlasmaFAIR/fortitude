@@ -7,6 +7,8 @@ mod rule_redirects;
 mod rule_selector;
 mod rules;
 mod settings;
+#[cfg(test)]
+mod test;
 pub use crate::registry::clap_completion::RuleParser;
 use crate::registry::AsRule;
 pub use crate::rule_selector::clap_completion::RuleSelectorParser;
@@ -155,8 +157,15 @@ impl<'a> Ranged for DiagnosticMessage<'a> {
 
 impl<'a> fmt::Display for DiagnosticMessage<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let path = self.file.name().bold();
-        let code = self.code.bold().bright_red();
+        let mut path: ColoredString = self.file.name().bold();
+        let mut code: ColoredString = self.code.bold().bright_red();
+
+        // Disable colours for tests, if the user requests it via env var, or non-tty
+        if cfg!(test) || !colored::control::SHOULD_COLORIZE.should_colorize() {
+            path = path.clear();
+            code = code.clear();
+        };
+
         let message = self.kind.body.as_str();
         let suggestion = &self.kind.suggestion;
         if self.range != TextRange::default() {
@@ -268,6 +277,7 @@ fn format_violation(
         let fix_title = Level::Note.title(fix_msg);
         writeln!(f, "\n{}", renderer.render(fix_title))?;
 
+        // FIXME: turn off colour in tests?
         let diff = SimpleDiff::from_str(source_code.text(), &fixed, "original", "fixed");
         write!(f, "{diff}")?;
     }

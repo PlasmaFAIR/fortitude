@@ -48,6 +48,7 @@ insta-cmd = "0.6.0"
 predicates = "3.1.2"
 pretty_assertions = "1.4.1"
 tempfile = "3.13.0"
+test-case = "3.3.1"
 
 [profile.dev.package]
 insta.opt-level = 3
