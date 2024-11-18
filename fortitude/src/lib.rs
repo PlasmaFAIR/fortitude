@@ -18,7 +18,7 @@ use colored::{ColoredString, Colorize};
 use ruff_diagnostics::{Diagnostic, DiagnosticKind, Fix};
 use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
 use ruff_text_size::{Ranged, TextRange, TextSize};
-use settings::{default_settings, Settings};
+use settings::{Settings};
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::Path;
@@ -96,12 +96,11 @@ pub trait AstRule {
     /// Apply a rule over some text, generating all violations raised as a result.
     fn apply(source: &SourceFile) -> anyhow::Result<Vec<Diagnostic>> {
         let entrypoints = Self::entrypoints();
-        let default_settings = default_settings();
         Ok(parse(source.source_text())?
             .root_node()
             .named_descendants()
             .filter(|x| entrypoints.contains(&x.kind()))
-            .filter_map(|x| Self::check(&default_settings, &x, source))
+            .filter_map(|x| Self::check(&Settings::default(), &x, source))
             .flatten()
             .collect())
     }

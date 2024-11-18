@@ -15,7 +15,7 @@ mod tests {
     use test_case::test_case;
 
     use crate::registry::Rule;
-    use crate::settings::default_settings;
+    use crate::settings::Settings;
     use crate::test::test_path;
 
     #[test_case(Rule::ExternalFunction, Path::new("M001.f90"))]
@@ -25,7 +25,7 @@ mod tests {
         let diagnostics = test_path(
             Path::new("modules").join(path).as_path(),
             &[rule_code],
-            &default_settings(),
+            &Settings::default(),
         )?;
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
