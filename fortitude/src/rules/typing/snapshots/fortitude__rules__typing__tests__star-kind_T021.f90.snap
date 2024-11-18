@@ -1,0 +1,63 @@
+---
+source: fortitude/src/rules/typing/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+warning: ./resources/test/fixtures/typing/T021.f90:1:8: T021 integer*8 is non-standard, use integer(8)
+  |
+1 | integer*8 function add_if(x, y, z)
+  |        ^^ T021
+2 |   integer(kind=2), intent(in) :: x
+3 |   integer *4, intent(in) :: y
+  |
+
+warning: ./resources/test/fixtures/typing/T021.f90:3:11: T021 integer*4 is non-standard, use integer(4)
+  |
+1 | integer*8 function add_if(x, y, z)
+2 |   integer(kind=2), intent(in) :: x
+3 |   integer *4, intent(in) :: y
+  |           ^^ T021
+4 |   logical*   4, intent(in) :: z
+5 |   real    * &
+  |
+
+warning: ./resources/test/fixtures/typing/T021.f90:4:10: T021 logical*4 is non-standard, use logical(4)
+  |
+2 |   integer(kind=2), intent(in) :: x
+3 |   integer *4, intent(in) :: y
+4 |   logical*   4, intent(in) :: z
+  |          ^^^^^ T021
+5 |   real    * &
+6 |        8 :: t
+  |
+
+warning: ./resources/test/fixtures/typing/T021.f90:5:11: T021 real*8 is non-standard, use real(8)
+  |
+3 |     integer *4, intent(in) :: y
+4 |     logical*   4, intent(in) :: z
+5 |     real    * &
+  |  ___________^
+6 | |        8 :: t
+  | |________^ T021
+7 |   
+8 |     if (x == 2) then
+  |
+
+warning: ./resources/test/fixtures/typing/T021.f90:16:8: T021 real*4 is non-standard, use real(4)
+   |
+15 | subroutine complex_mul(x, real)
+16 |   real * 4, intent(in) :: x
+   |        ^^^ T021
+17 |   complex  *  8, intent(inout) :: real
+18 |   ! This would be a false positive with purely regexp based linting
+   |
+
+warning: ./resources/test/fixtures/typing/T021.f90:17:12: T021 complex*8 is non-standard, use complex(8)
+   |
+15 | subroutine complex_mul(x, real)
+16 |   real * 4, intent(in) :: x
+17 |   complex  *  8, intent(inout) :: real
+   |            ^^^^ T021
+18 |   ! This would be a false positive with purely regexp based linting
+19 |   real = real * 8
+   |

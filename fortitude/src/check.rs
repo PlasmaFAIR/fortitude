@@ -89,7 +89,7 @@ fn get_files<S: AsRef<str>>(files_in: &Vec<PathBuf>, extensions: &[S]) -> Vec<Pa
 }
 
 /// Parse a file, check it for issues, and return the report.
-fn check_file(
+pub(crate) fn check_file(
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -133,7 +133,7 @@ fn check_file(
 /// Check that the file length is representable as `u32` so
 /// that we don't need to check when converting tree-sitter offsets
 /// (usize) into ruff offsets (u32)
-fn read_to_string(path: &Path) -> std::io::Result<String> {
+pub(crate) fn read_to_string(path: &Path) -> std::io::Result<String> {
     let metadata = path.metadata()?;
     let file_length = metadata.len();
 
@@ -148,7 +148,7 @@ fn read_to_string(path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
 }
 
-fn rules_to_path_rules(rules: &[Rule]) -> Vec<PathRuleEnum> {
+pub(crate) fn rules_to_path_rules(rules: &[Rule]) -> Vec<PathRuleEnum> {
     rules
         .iter()
         .filter_map(|rule| match TryFrom::try_from(*rule) {
@@ -158,7 +158,7 @@ fn rules_to_path_rules(rules: &[Rule]) -> Vec<PathRuleEnum> {
         .collect_vec()
 }
 
-fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
+pub(crate) fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
     rules
         .iter()
         .filter_map(|rule| match TryFrom::try_from(*rule) {
@@ -169,7 +169,7 @@ fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
 }
 
 /// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
-fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
+pub(crate) fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
     let ast_rules: Vec<AstRuleEnum> = rules
         .iter()
         .filter_map(|rule| match TryFrom::try_from(*rule) {

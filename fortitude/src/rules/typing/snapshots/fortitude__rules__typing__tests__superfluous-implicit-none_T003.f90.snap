@@ -1,0 +1,48 @@
+---
+source: fortitude/src/rules/typing/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+warning: ./resources/test/fixtures/typing/T003.f90:5:5: T003 'implicit none' set on the enclosing module
+  |
+3 | contains
+4 |   integer function myfunc(x)
+5 |     implicit none
+  |     ^^^^^^^^^^^^^ T003
+6 |     integer, intent(in) :: x
+7 |     myfunc = x * 2
+  |
+  = help: Remove unnecessary 'implicit none'
+
+warning: ./resources/test/fixtures/typing/T003.f90:10:5: T003 'implicit none' set on the enclosing module
+   |
+ 8 |   end function myfunc
+ 9 |   subroutine mysub(x)
+10 |     implicit none
+   |     ^^^^^^^^^^^^^ T003
+11 |     integer, intent(inout) :: x
+12 |     x = x * 2
+   |
+   = help: Remove unnecessary 'implicit none'
+
+warning: ./resources/test/fixtures/typing/T003.f90:23:5: T003 'implicit none' set on the enclosing program
+   |
+21 | contains
+22 |   integer function myfunc2(x)
+23 |     implicit none
+   |     ^^^^^^^^^^^^^ T003
+24 |     integer, intent(in) :: x
+25 |     myfunc2 = x * 2
+   |
+   = help: Remove unnecessary 'implicit none'
+
+warning: ./resources/test/fixtures/typing/T003.f90:28:5: T003 'implicit none' set on the enclosing program
+   |
+26 |   end function myfunc2
+27 |   subroutine mysub2(x)
+28 |     implicit none
+   |     ^^^^^^^^^^^^^ T003
+29 |     integer, intent(inout) :: x
+30 |     x = x * 2
+   |
+   = help: Remove unnecessary 'implicit none'

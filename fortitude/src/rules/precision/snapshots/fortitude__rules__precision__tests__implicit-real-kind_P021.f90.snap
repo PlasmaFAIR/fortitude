@@ -1,0 +1,30 @@
+---
+source: fortitude/src/rules/precision/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+warning: ./resources/test/fixtures/precision/P021.f90:1:1: P021 real has implicit kind
+  |
+1 | real function my_func(a, b, c, d, e)       ! catch
+  | ^^^^ P021
+2 |   real, intent(in) :: a                    ! catch
+3 |   real(4), intent(in) :: b                 ! ignore
+  |
+
+warning: ./resources/test/fixtures/precision/P021.f90:2:3: P021 real has implicit kind
+  |
+1 | real function my_func(a, b, c, d, e)       ! catch
+2 |   real, intent(in) :: a                    ! catch
+  |   ^^^^ P021
+3 |   real(4), intent(in) :: b                 ! ignore
+4 |   integer, intent(in) :: c                 ! ignore
+  |
+
+warning: ./resources/test/fixtures/precision/P021.f90:5:3: P021 complex has implicit kind
+  |
+3 |   real(4), intent(in) :: b                 ! ignore
+4 |   integer, intent(in) :: c                 ! ignore
+5 |   complex, intent(in) :: d                 ! catch
+  |   ^^^^^^^ P021
+6 |   complex(8), intent(in) :: e              ! ignore
+  |

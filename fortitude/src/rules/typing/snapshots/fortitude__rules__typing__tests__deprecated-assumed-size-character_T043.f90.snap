@@ -1,0 +1,54 @@
+---
+source: fortitude/src/rules/typing/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+warning: ./resources/test/fixtures/typing/T043.f90:4:15: T043 character 'a' uses deprecated syntax for assumed size
+  |
+2 | contains
+3 |   subroutine char_input(a, b, c, d, e, f)
+4 |     character * ( * ), intent(in) :: a
+  |               ^ T043
+5 |     character*(*), intent(in) :: b
+6 |     character*(len=*), intent(in) :: c
+  |
+
+warning: ./resources/test/fixtures/typing/T043.f90:5:14: T043 character 'b' uses deprecated syntax for assumed size
+  |
+3 |   subroutine char_input(a, b, c, d, e, f)
+4 |     character * ( * ), intent(in) :: a
+5 |     character*(*), intent(in) :: b
+  |              ^ T043
+6 |     character*(len=*), intent(in) :: c
+7 |     character*(3), intent(in) :: d
+  |
+
+warning: ./resources/test/fixtures/typing/T043.f90:6:14: T043 character 'c' uses deprecated syntax for assumed size
+  |
+4 |     character * ( * ), intent(in) :: a
+5 |     character*(*), intent(in) :: b
+6 |     character*(len=*), intent(in) :: c
+  |              ^ T043
+7 |     character*(3), intent(in) :: d
+8 |     character*(MAX_LEN), intent(in) :: e
+  |
+
+warning: ./resources/test/fixtures/typing/T043.f90:7:14: T043 character 'd' uses deprecated syntax for assumed size
+  |
+5 |     character*(*), intent(in) :: b
+6 |     character*(len=*), intent(in) :: c
+7 |     character*(3), intent(in) :: d
+  |              ^ T043
+8 |     character*(MAX_LEN), intent(in) :: e
+9 |     ! these are ok
+  |
+
+warning: ./resources/test/fixtures/typing/T043.f90:8:14: T043 character 'e' uses deprecated syntax for assumed size
+   |
+ 6 |     character*(len=*), intent(in) :: c
+ 7 |     character*(3), intent(in) :: d
+ 8 |     character*(MAX_LEN), intent(in) :: e
+   |              ^ T043
+ 9 |     ! these are ok
+10 |     character(*, kind) :: f
+   |

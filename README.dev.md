@@ -26,14 +26,11 @@ Unit tests can be run by calling:
 cargo test
 ```
 
-Integration testing is currently being performed manually using the file `test.f90`:
+You'll also need [Insta](https://insta.rs/docs/) to update snapshot tests:
 
-```bash
-fortitude check test.f90
+```shell
+cargo install cargo-insta
 ```
-
-The test suite is still in need of work, and we hope to include automated integration
-tests soon.
 
 ## Linting and Formatting
 
@@ -53,6 +50,42 @@ Fortitude should be categorised appropriately and their name should describe the
 the rule is intended to fix. Words such as 'forbid' should be omitted. For example, the
 name for the rule that warns of overly long lines is `LineTooLong`, and not something
 like `AvoidLineTooLong` or `KeepLinesShort`.
+
+#### Rule testing: fixtures and snapshots
+
+To test rules, Fortitude uses snapshots of Fortitude's output for a given file (fixture). Generally, there
+will be one file per rule (e.g., `E402.f90`), and each file will contain all necessary examples of
+both violations and non-violations. `cargo insta review` will generate a snapshot file containing
+Fortitude's output for each fixture, which you can then commit alongside your changes.
+
+Once you've completed the code for the rule itself, you can define tests with the following steps:
+
+1. Add a Fortran file to `fortitude/resources/test/fixtures/[category]` that contains the code you
+    want to test. The file name should match the rule name (e.g., `E402.f90`), and it should include
+    examples of both violations and non-violations.
+
+1. Run Fortitude locally against your file and verify the output is as expected. Once you're satisfied
+    with the output (you see the violations you expect, and no others), proceed to the next step.
+    For example, if you're adding a new rule named `E402`, you would run:
+
+    ```shell
+    cargo run -- check fortitude/resources/test/fixtures/typing/E402.f90 --select E402
+    ```
+
+    **Note:** Only a subset of rules are enabled by default. When testing a new rule, ensure that
+    you activate it by adding `--select ${rule_code}` to the command.
+
+1. Add the test to the relevant `fortitude/src/rules/[category]/mod.rs` file. If you're contributing
+    a rule to a pre-existing set, you should be able to find a similar example to pattern-match
+    against. If you're adding a new category, you'll need to create a new `mod.rs` file (see,
+    e.g., `fortitude/src/rules/typing/mod.rs`)
+
+1. Run `cargo test`. Your test will fail, but you'll be prompted to follow-up
+    with `cargo insta review`. Run `cargo insta review`, review and accept the generated snapshot,
+    then commit the snapshot file alongside the rest of your changes.
+
+1. Run `cargo test` again to ensure that your test passes.
+
 
 ## Making New Releases
 
