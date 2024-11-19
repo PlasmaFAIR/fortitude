@@ -85,7 +85,9 @@ pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
-fn from_clap_config_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> {
+/// Read either the "extra.fortitude" table from "fpm.toml", or the
+/// whole "fortitude.toml" file
+fn from_toml_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> {
     let config_str = if path.as_ref().ends_with("fpm.toml") {
         let config = std::fs::read_to_string(path)?.parse::<Table>()?;
 
@@ -101,6 +103,47 @@ fn from_clap_config_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> 
     let config: CheckSection = toml::from_str(&config_str)?;
 
     Ok(config)
+}
+
+// This is our "known good" intermediate settings struct after we've
+// read the config file, but before we've overridden it from the CLI
+#[derive(Default, Debug)]
+pub struct CheckSettings {
+    pub files: Vec<PathBuf>,
+    pub ignore: Vec<RuleSelector>,
+    pub select: Option<Vec<RuleSelector>>,
+    pub extend_select: Vec<RuleSelector>,
+    pub line_length: usize,
+    pub file_extensions: Vec<String>,
+}
+
+/// Read either fpm.toml or fortitude.toml into our "known good" file
+/// settings struct
+fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
+    let filename = match config_file {
+        Some(filename) => filename.clone(),
+        None => match find_settings_toml(".")? {
+            Some(filename) => filename,
+            None => {
+                return Ok(CheckSettings::default());
+            }
+        },
+    };
+
+    let settings = match from_toml_subsection(filename)?.check {
+        Some(value) => CheckSettings {
+            files: value.files.unwrap_or(vec![PathBuf::from(".")]),
+            ignore: value.ignore.unwrap_or_default(),
+            select: value.select,
+            extend_select: value.extend_select.unwrap_or_default(),
+            line_length: value.line_length.unwrap_or(Settings::default().line_length),
+            file_extensions: value
+                .file_extensions
+                .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
+        },
+        None => CheckSettings::default(),
+    };
+    Ok(settings)
 }
 
 /// Get the list of active rules for this session.
@@ -281,37 +324,6 @@ pub(crate) fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<As
     map
 }
 
-#[derive(Default, Debug)]
-pub struct CheckSettings {
-    pub files: Vec<PathBuf>,
-    pub ignore: Vec<RuleSelector>,
-    pub select: Option<Vec<RuleSelector>>,
-    pub extend_select: Vec<RuleSelector>,
-    pub line_length: usize,
-    pub file_extensions: Vec<String>,
-}
-
-impl From<Option<CheckSection>> for CheckSettings {
-    fn from(value: Option<CheckSection>) -> Self {
-        match value {
-            Some(value) => match value.check {
-                Some(value) => Self {
-                    files: value.files.unwrap_or(vec![PathBuf::from(".")]),
-                    ignore: value.ignore.unwrap_or_default(),
-                    select: value.select,
-                    extend_select: value.extend_select.unwrap_or_default(),
-                    line_length: value.line_length.unwrap_or(Settings::default().line_length),
-                    file_extensions: value
-                        .file_extensions
-                        .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
-                },
-                None => Self::default(),
-            },
-            None => Self::default(),
-        }
-    }
-}
-
 // Taken from Ruff
 #[derive(Clone, Debug, Default)]
 pub struct RuleSelection {
@@ -322,17 +334,10 @@ pub struct RuleSelection {
 
 /// Check all files, report issues found, and return error code.
 pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
-    let file_settings: CheckSettings = if global_options.config_file.is_some() {
-        Some(from_clap_config_subsection(
-            global_options.config_file.as_ref().unwrap(),
-        )?)
-    } else if let Some(toml_file) = find_settings_toml(".")? {
-        Some(from_clap_config_subsection(toml_file)?)
-    } else {
-        None
-    }
-    .into();
-
+    // First we need to find and read any config file
+    let file_settings = parse_config_file(&global_options.config_file)?;
+    // Now, we can override settings from the config file with options
+    // from the CLI
     let files = &args.files.unwrap_or(file_settings.files);
     let file_extensions = &args
         .file_extensions
@@ -344,9 +349,13 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let rule_selection = RuleSelection {
         select: args.select.or(file_settings.select),
+        // TODO: CLI ignore should _extend_ file ignore
         ignore: args.ignore.unwrap_or(file_settings.ignore),
         extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
     };
+
+    // At this point, we've assembled all our settings, and we're
+    // ready to check the project
 
     let rules = ruleset(rule_selection)?;
 
