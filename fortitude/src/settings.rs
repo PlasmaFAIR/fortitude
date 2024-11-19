@@ -8,9 +8,10 @@ pub struct Settings {
     pub line_length: usize,
 }
 
-#[allow(dead_code)]
-pub fn default_settings() -> Settings {
-    Settings { line_length: 100 }
+impl Default for Settings {
+    fn default() -> Self {
+        Self { line_length: 100 }
+    }
 }
 
 /// Toggle for rules still in preview

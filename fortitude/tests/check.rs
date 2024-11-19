@@ -45,6 +45,37 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
 }
 
 #[test]
+fn unknown_name_in_config() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let config_file = tempdir.path().join("fpm.toml");
+    fs::write(
+        &config_file,
+        r#"
+[extra.fortitude.check]
+unknown-key = 1
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
+                         .arg("check")
+                         .arg("no-file.f90"),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: TOML parse error at line 2, column 1
+      |
+    2 | unknown-key = 1
+      | ^^^^^^^^^^^
+    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `line-length`, `file-extensions`
+    ");
+    Ok(())
+}
+
+#[test]
 fn check_all() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let test_file = tempdir.path().join("test.f90");

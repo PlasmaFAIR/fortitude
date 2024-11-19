@@ -42,13 +42,12 @@ impl PathRule for NonStandardFileExtension {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::default_settings;
 
     #[test]
     fn test_bad_file_extension() {
         let path = Path::new("my/dir/to/file.f95");
         assert_eq!(
-            NonStandardFileExtension::check(&default_settings(), path),
+            NonStandardFileExtension::check(&Settings::default(), path),
             Some(Diagnostic::new(
                 NonStandardFileExtension {},
                 TextRange::default()
@@ -60,7 +59,7 @@ mod tests {
     fn test_missing_file_extension() {
         let path = Path::new("my/dir/to/file");
         assert_eq!(
-            NonStandardFileExtension::check(&default_settings(), path),
+            NonStandardFileExtension::check(&Settings::default(), path),
             Some(Diagnostic::new(
                 NonStandardFileExtension {},
                 TextRange::default()
@@ -73,11 +72,11 @@ mod tests {
         let path1 = Path::new("my/dir/to/file.f90");
         let path2 = Path::new("my/dir/to/file.F90");
         assert_eq!(
-            NonStandardFileExtension::check(&default_settings(), path1),
+            NonStandardFileExtension::check(&Settings::default(), path1),
             None
         );
         assert_eq!(
-            NonStandardFileExtension::check(&default_settings(), path2),
+            NonStandardFileExtension::check(&Settings::default(), path2),
             None
         );
     }

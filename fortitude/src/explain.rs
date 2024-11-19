@@ -38,55 +38,49 @@ fn ruleset(args: &ExplainArgs) -> anyhow::Result<Vec<Rule>> {
 
 /// Check all files, report issues found, and return error code.
 pub fn explain(args: ExplainArgs) -> Result<ExitCode> {
-    match ruleset(&args) {
-        Ok(rules) => {
-            let mut outputs = Vec::new();
-            for rule in rules {
-                let mut body = String::new();
-                let fix_availability = rule.fixable();
-                if matches!(
-                    fix_availability,
-                    FixAvailability::Always | FixAvailability::Sometimes
-                ) {
-                    body.push_str(&fix_availability.to_string());
-                    body.push('\n');
-                    body.push('\n');
-                }
-                if rule.is_preview() {
-                    body.push_str(
-                        r"This rule is in preview and is not stable. The `--preview` flag is required for use.",
-                    );
-                    body.push('\n');
-                    body.push('\n');
-                }
+    let rules = ruleset(&args)?;
 
-                if let Some(explanation) = rule.explanation() {
-                    body.push_str(explanation);
-                } else {
-                    body.push_str("Message formats:");
-                    for format in rule.message_formats() {
-                        body.push('\n');
-                        body.push_str(&format!("* {format}"));
-                    }
-                }
+    let mut outputs = Vec::new();
+    for rule in rules {
+        let mut body = String::new();
+        let fix_availability = rule.fixable();
+        if matches!(
+            fix_availability,
+            FixAvailability::Always | FixAvailability::Sometimes
+        ) {
+            body.push_str(&fix_availability.to_string());
+            body.push('\n');
+            body.push('\n');
+        }
+        if rule.is_preview() {
+            body.push_str(
+                r"This rule is in preview and is not stable. The `--preview` flag is required for use.",
+            );
+            body.push('\n');
+            body.push('\n');
+        }
 
-                let code = rule.noqa_code().to_string();
-                let name = rule.as_ref();
-                let title = format!("# {code}: {name}\n");
-                outputs.push((title.bright_red(), dedent(body.as_str())));
+        if let Some(explanation) = rule.explanation() {
+            body.push_str(explanation);
+        } else {
+            body.push_str("Message formats:");
+            for format in rule.message_formats() {
+                body.push('\n');
+                body.push_str(&format!("* {format}"));
             }
-            outputs.sort_by(|a, b| {
-                let ((a_code, _), (b_code, _)) = (a, b);
-                a_code.cmp(b_code)
-            });
-            for (code, desc) in outputs {
-                println!("{}\n{}", code, desc);
-            }
-            Ok(ExitCode::SUCCESS)
         }
-        Err(msg) => {
-            eprintln!("{}: {}", "ERROR".bright_red(), msg);
-            Ok(ExitCode::FAILURE)
-        }
+
+        let code = rule.noqa_code().to_string();
+        let name = rule.as_ref();
+        let title = format!("# {code}: {name}\n");
+        outputs.push((title.bright_red(), dedent(body.as_str())));
     }
+    outputs.sort_by(|a, b| {
+        let ((a_code, _), (b_code, _)) = (a, b);
+        a_code.cmp(b_code)
+    });
+    for (code, desc) in outputs {
+        println!("{}\n{}", code, desc);
+    }
+    Ok(ExitCode::SUCCESS)
 }

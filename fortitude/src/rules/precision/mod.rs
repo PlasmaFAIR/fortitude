@@ -12,7 +12,7 @@ mod tests {
     use test_case::test_case;
 
     use crate::registry::Rule;
-    use crate::settings::default_settings;
+    use crate::settings::Settings;
     use crate::test::test_path;
 
     #[test_case(Rule::NoRealSuffix, Path::new("P001.f90"))]
@@ -23,7 +23,7 @@ mod tests {
         let diagnostics = test_path(
             Path::new("precision").join(path).as_path(),
             &[rule_code],
-            &default_settings(),
+            &Settings::default(),
         )?;
         assert_snapshot!(snapshot, diagnostics);
         Ok(())

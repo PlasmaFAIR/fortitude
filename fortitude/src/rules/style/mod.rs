@@ -15,7 +15,7 @@ mod tests {
     use test_case::test_case;
 
     use crate::registry::Rule;
-    use crate::settings::{default_settings, Settings};
+    use crate::settings::Settings;
     use crate::test::test_path;
 
     #[test_case(Rule::LineTooLong, Path::new("S001.f90"))]
@@ -29,7 +29,7 @@ mod tests {
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),
             &[rule_code],
-            &default_settings(),
+            &Settings::default(),
         )?;
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
@@ -41,7 +41,7 @@ mod tests {
         #[allow(clippy::needless_update)]
         let settings = Settings {
             line_length: 20,
-            ..default_settings()
+            ..Settings::default()
         };
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),
