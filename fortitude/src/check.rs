@@ -4,7 +4,7 @@ use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{Settings, DEFAULT_SELECTORS};
-use crate::DiagnosticMessage;
+use crate::message::DiagnosticMessage;
 
 use anyhow::{Context, Result};
 use colored::Colorize;

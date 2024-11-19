@@ -10,7 +10,7 @@ use crate::{
     },
     rules::Rule,
     settings::Settings,
-    DiagnosticMessage,
+    message::DiagnosticMessage,
 };
 
 pub(crate) fn test_resource_path(path: impl AsRef<Path>) -> std::path::PathBuf {
