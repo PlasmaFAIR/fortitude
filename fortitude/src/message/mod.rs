@@ -2,7 +2,7 @@ use crate::registry::AsRule;
 use annotate_snippets::{Level, Renderer, Snippet};
 use colored::{ColoredString, Colorize};
 use ruff_diagnostics::{Diagnostic, DiagnosticKind, Fix};
-use ruff_source_file::{OneIndexed, SourceFile, SourceLocation};
+use ruff_source_file::{OneIndexed, SourceFile, SourceFileBuilder, SourceLocation};
 use ruff_text_size::{Ranged, TextRange};
 use std::cmp::Ordering;
 use std::fmt;
@@ -27,6 +27,17 @@ impl DiagnosticMessage {
         Self {
             kind: diagnostic.kind,
             file: file.clone(),
+            code,
+            range: diagnostic.range,
+            fix: diagnostic.fix,
+        }
+    }
+
+    pub fn from_error<S: AsRef<str>>(filename: S, diagnostic: Diagnostic) -> Self {
+        let code = diagnostic.kind.rule().noqa_code().to_string();
+        Self {
+            kind: diagnostic.kind,
+            file: SourceFileBuilder::new(filename.as_ref(), "").finish(),
             code,
             range: diagnostic.range,
             fix: diagnostic.fix,

@@ -366,14 +366,13 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let mut total_files = 0;
     for path in get_files(files, file_extensions) {
         let filename = path.to_string_lossy();
-        let empty_file = SourceFileBuilder::new(filename.as_ref(), "").finish();
 
         let source = match read_to_string(&path) {
             Ok(source) => source,
             Err(error) => {
                 let message = format!("Error opening file: {error}");
-                let diagnostic = DiagnosticMessage::from_ruff(
-                    &empty_file,
+                let diagnostic = DiagnosticMessage::from_error(
+                    filename,
                     Diagnostic::new(IoError { message }, TextRange::default()),
                 );
                 println!("{diagnostic}");
@@ -405,8 +404,8 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             }
             Err(msg) => {
                 let message = format!("Failed to process: {msg}");
-                let diagnostic = DiagnosticMessage::from_ruff(
-                    &empty_file,
+                let diagnostic = DiagnosticMessage::from_error(
+                    filename,
                     Diagnostic::new(IoError { message }, TextRange::default()),
                 );
                 println!("{diagnostic}");
