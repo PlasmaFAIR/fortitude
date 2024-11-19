@@ -10,23 +10,23 @@ use std::fmt;
 
 /// Reports of each violation. They are pretty-printable and sortable.
 #[derive(Debug, PartialEq, Eq)]
-pub struct DiagnosticMessage<'a> {
+pub struct DiagnosticMessage {
     kind: DiagnosticKind,
     range: TextRange,
     /// The file where an error was reported.
-    file: &'a SourceFile,
+    file: SourceFile,
     /// The rule code that was violated, expressed as a string.
     code: String,
     /// The suggested fix for the violation.
     fix: Option<Fix>,
 }
 
-impl<'a> DiagnosticMessage<'a> {
-    pub fn from_ruff(file: &'a SourceFile, diagnostic: Diagnostic) -> Self {
+impl DiagnosticMessage {
+    pub fn from_ruff(file: &SourceFile, diagnostic: Diagnostic) -> Self {
         let code = diagnostic.kind.rule().noqa_code().to_string();
         Self {
             kind: diagnostic.kind,
-            file,
+            file: file.clone(),
             code,
             range: diagnostic.range,
             fix: diagnostic.fix,
@@ -34,25 +34,25 @@ impl<'a> DiagnosticMessage<'a> {
     }
 }
 
-impl<'a> Ord for DiagnosticMessage<'a> {
+impl Ord for DiagnosticMessage {
     fn cmp(&self, other: &Self) -> Ordering {
-        (self.file, self.range.start()).cmp(&(other.file, other.range.start()))
+        (&self.file, self.range.start()).cmp(&(&other.file, other.range.start()))
     }
 }
 
-impl<'a> PartialOrd for DiagnosticMessage<'a> {
+impl PartialOrd for DiagnosticMessage {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<'a> Ranged for DiagnosticMessage<'a> {
+impl Ranged for DiagnosticMessage {
     fn range(&self) -> TextRange {
         self.range
     }
 }
 
-impl<'a> fmt::Display for DiagnosticMessage<'a> {
+impl fmt::Display for DiagnosticMessage {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut path: ColoredString = self.file.name().bold();
         let mut code: ColoredString = self.code.bold().bright_red();
