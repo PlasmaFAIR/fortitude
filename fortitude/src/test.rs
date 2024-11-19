@@ -8,9 +8,9 @@ use crate::{
     check::{
         ast_entrypoint_map, check_file, read_to_string, rules_to_path_rules, rules_to_text_rules,
     },
+    message::DiagnosticMessage,
     rules::Rule,
     settings::Settings,
-    message::DiagnosticMessage,
 };
 
 pub(crate) fn test_resource_path(path: impl AsRef<Path>) -> std::path::PathBuf {

@@ -7,7 +7,6 @@ use ruff_text_size::{Ranged, TextRange};
 use std::cmp::Ordering;
 use std::fmt;
 
-
 /// Reports of each violation. They are pretty-printable and sortable.
 #[derive(Debug, PartialEq, Eq)]
 pub struct DiagnosticMessage {

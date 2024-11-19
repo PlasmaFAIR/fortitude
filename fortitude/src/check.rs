@@ -1,14 +1,14 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
+use crate::message::DiagnosticMessage;
 use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{Settings, DEFAULT_SELECTORS};
-use crate::message::DiagnosticMessage;
 
 use anyhow::{Context, Result};
 use colored::Colorize;
-use itertools::{join, Itertools};
+use itertools::Itertools;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
@@ -362,58 +362,60 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let path_rules = rules_to_path_rules(&rules);
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
-    let mut total_errors = 0;
-    let mut total_files = 0;
-    for path in get_files(files, file_extensions) {
-        let filename = path.to_string_lossy();
 
-        let source = match read_to_string(&path) {
-            Ok(source) => source,
-            Err(error) => {
-                let message = format!("Error opening file: {error}");
-                let diagnostic = DiagnosticMessage::from_error(
-                    filename,
-                    Diagnostic::new(IoError { message }, TextRange::default()),
-                );
-                println!("{diagnostic}");
-                total_errors += 1;
-                continue;
-            }
-        };
+    let diagnostics_per_file = get_files(files, file_extensions)
+        .iter()
+        .map(|path| {
+            let filename = path.to_string_lossy();
 
-        let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
+            let source = match read_to_string(path) {
+                Ok(source) => source,
+                Err(error) => {
+                    let message = format!("Error opening file: {error}");
+                    return vec![DiagnosticMessage::from_error(
+                        filename,
+                        Diagnostic::new(IoError { message }, TextRange::default()),
+                    )];
+                }
+            };
 
-        match check_file(
-            &path_rules,
-            &text_rules,
-            &ast_entrypoints,
-            &path,
-            &file,
-            &settings,
-        ) {
-            Ok(violations) => {
-                let mut diagnostics: Vec<_> = violations
+            let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
+
+            match check_file(
+                &path_rules,
+                &text_rules,
+                &ast_entrypoints,
+                path,
+                &file,
+                &settings,
+            ) {
+                Ok(violations) => violations
                     .into_iter()
                     .map(|v| DiagnosticMessage::from_ruff(&file, v))
-                    .collect();
-                if !diagnostics.is_empty() {
-                    diagnostics.sort_unstable();
-                    println!("{}", join(&diagnostics, "\n"));
+                    .collect_vec(),
+                Err(msg) => {
+                    let message = format!("Failed to process: {msg}");
+                    vec![DiagnosticMessage::from_error(
+                        filename,
+                        Diagnostic::new(IoError { message }, TextRange::default()),
+                    )]
                 }
-                total_errors += diagnostics.len();
             }
-            Err(msg) => {
-                let message = format!("Failed to process: {msg}");
-                let diagnostic = DiagnosticMessage::from_error(
-                    filename,
-                    Diagnostic::new(IoError { message }, TextRange::default()),
-                );
-                println!("{diagnostic}");
-                total_errors += 1;
-            }
-        }
-        total_files += 1;
+        })
+        .collect_vec();
+
+    let total_files = diagnostics_per_file.len();
+    let diagnostics = diagnostics_per_file
+        .iter()
+        .flatten()
+        .sorted_unstable()
+        .collect_vec();
+    let total_errors = diagnostics.len();
+
+    for d in diagnostics {
+        println!("{d}");
     }
+
     let file_no = format!(
         "fortitude: {} files scanned.",
         total_files.to_string().bold()
