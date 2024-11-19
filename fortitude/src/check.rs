@@ -1,19 +1,20 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
 use crate::message::DiagnosticMessage;
+use crate::printer::Printer;
 use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{Settings, DEFAULT_SELECTORS};
 
 use anyhow::{Context, Result};
-use colored::Colorize;
 use itertools::Itertools;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use strum::IntoEnumIterator;
@@ -363,9 +364,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let diagnostics_per_file = get_files(files, file_extensions)
+    let diagnostics = get_files(files, file_extensions)
         .iter()
-        .map(|path| {
+        .flat_map(|path| {
             let filename = path.to_string_lossy();
 
             let source = match read_to_string(path) {
@@ -402,37 +403,18 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                 }
             }
         })
-        .collect_vec();
-
-    let total_files = diagnostics_per_file.len();
-    let diagnostics = diagnostics_per_file
-        .iter()
-        .flatten()
         .sorted_unstable()
         .collect_vec();
+
     let total_errors = diagnostics.len();
 
-    for d in diagnostics {
-        println!("{d}");
-    }
+    let mut writer = Box::new(io::stdout());
 
-    let file_no = format!(
-        "fortitude: {} files scanned.",
-        total_files.to_string().bold()
-    );
+    Printer::new().write_once(&diagnostics, &mut writer)?;
+
     if total_errors == 0 {
-        let success = "All checks passed!".bright_green();
-        println!("\n{file_no}\n{success}\n");
         Ok(ExitCode::SUCCESS)
     } else {
-        let err_no = format!("Number of errors: {}", total_errors.to_string().bold());
-        let info = "For more information about specific rules, run:";
-        let explain = format!(
-            "fortitude explain {},{},...",
-            "X001".bold().bright_red(),
-            "Y002".bold().bright_red()
-        );
-        println!("\n{file_no}\n{err_no}\n\n{info}\n\n    {explain}\n");
         Ok(ExitCode::FAILURE)
     }
 }

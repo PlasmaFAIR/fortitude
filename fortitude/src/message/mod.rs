@@ -42,6 +42,10 @@ impl DiagnosticMessage {
             fix: diagnostic.fix,
         }
     }
+
+    pub fn filename(&self) -> &str {
+        self.file.name()
+    }
 }
 
 impl Ord for DiagnosticMessage {

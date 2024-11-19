@@ -3,6 +3,7 @@ pub mod check;
 pub mod cli;
 pub mod explain;
 mod message;
+mod printer;
 mod registry;
 mod rule_redirects;
 mod rule_selector;
