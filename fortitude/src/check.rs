@@ -1,11 +1,11 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
 use crate::message::DiagnosticMessage;
-use crate::printer::Printer;
+use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{Settings, DEFAULT_SELECTORS};
+use crate::settings::{OutputFormat, Settings, DEFAULT_SELECTORS};
 
 use anyhow::{Context, Result};
 use itertools::Itertools;
@@ -116,6 +116,7 @@ pub struct CheckSettings {
     pub extend_select: Vec<RuleSelector>,
     pub line_length: usize,
     pub file_extensions: Vec<String>,
+    pub output_format: OutputFormat,
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -141,6 +142,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             file_extensions: value
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
+            output_format: value.output_format.unwrap_or_default(),
         },
         None => CheckSettings::default(),
     };
@@ -355,6 +357,8 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
     };
 
+    let output_format = args.output_format.unwrap_or(file_settings.output_format);
+
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
@@ -410,7 +414,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let mut writer = Box::new(io::stdout());
 
-    Printer::new().write_once(&diagnostics, &mut writer)?;
+    let flags = PrinterFlags::SHOW_VIOLATIONS | PrinterFlags::SHOW_FIX_SUMMARY;
+
+    Printer::new(output_format, flags).write_once(&diagnostics, &mut writer)?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)

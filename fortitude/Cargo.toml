@@ -15,15 +15,21 @@ categories = ["command-line-utilities", "development-tools"]
 exclude = [".*", "test.f90"]
 
 [dependencies]
-annotate-snippets = "0.11.4"
+annotate-snippets = { git = "https://github.com/PlasmaFAIR/annotate-snippets-rs.git", branch = "level-none" }
 anyhow = "1.0.79"
-clap = { version = "4.4.16", features = ["derive", "string"] }
+bitflags = "2.6.0"
+clap = { version = "4.4.16", features = ["derive", "string", "env"] }
 colored = "2.1.0"
 fortitude_macros = { version = "0.1.0", path = "../fortitude_macros" }
 is-macro = "0.3.7"
 itertools = { workspace = true }
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"
+path-absolutize = { version = "3.1.1", features = [
+    "once_cell_cache",
+    "use_unix_paths_on_wasm",
+]}
+pathdiff = { version = "0.2.1" }
 ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }

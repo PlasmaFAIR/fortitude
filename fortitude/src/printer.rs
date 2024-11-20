@@ -1,15 +1,32 @@
 use std::{collections::BTreeSet, io::Write};
 
 use anyhow::Result;
+use bitflags::bitflags;
 use colored::Colorize;
 
-use crate::message::DiagnosticMessage;
+use crate::message::{DiagnosticMessage, Emitter, TextEmitter};
+use crate::settings::OutputFormat;
 
-pub(crate) struct Printer {}
+bitflags! {
+    #[derive(Default, Debug, Copy, Clone)]
+    pub(crate) struct Flags: u8 {
+        /// Whether to show violations when emitting diagnostics.
+        const SHOW_VIOLATIONS = 0b0000_0001;
+        /// Whether to show a summary of the fixed violations when emitting diagnostics.
+        const SHOW_FIX_SUMMARY = 0b0000_0100;
+        /// Whether to show a diff of each fixed violation when emitting diagnostics.
+        const SHOW_FIX_DIFF = 0b0000_1000;
+    }
+}
+
+pub(crate) struct Printer {
+    format: OutputFormat,
+    flags: Flags,
+}
 
 impl Printer {
-    pub(crate) fn new() -> Self {
-        Self {}
+    pub(crate) fn new(format: OutputFormat, flags: Flags) -> Self {
+        Self { format, flags }
     }
 
     fn write_summary_text(
@@ -49,12 +66,19 @@ impl Printer {
         diagnostics: &[DiagnosticMessage],
         writer: &mut dyn Write,
     ) -> Result<()> {
-        for d in diagnostics {
-            writeln!(writer, "{d}")?;
+        match self.format {
+            OutputFormat::Concise | OutputFormat::Full => {
+                TextEmitter::default()
+                    .with_show_fix_status(true)
+                    .with_show_fix_diff(self.flags.intersects(Flags::SHOW_FIX_DIFF))
+                    .with_show_source(self.format == OutputFormat::Full)
+                    .with_unsafe_fixes(crate::settings::UnsafeFixes::Hint)
+                    .emit(writer, diagnostics)?;
+                self.write_summary_text(writer, diagnostics)?;
+            }
         }
 
-        self.write_summary_text(writer, diagnostics)?;
-
+        writer.flush()?;
         Ok(())
     }
 }

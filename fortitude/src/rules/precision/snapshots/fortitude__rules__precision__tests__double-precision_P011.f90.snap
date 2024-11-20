@@ -3,7 +3,7 @@ source: fortitude/src/rules/precision/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/precision/P011.f90:1:1: P011 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
+./resources/test/fixtures/precision/P011.f90:1:1: P011 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
   |
 1 | double precision function double(x)
   | ^^^^^^^^^^^^^^^^ P011
@@ -11,7 +11,7 @@ warning: ./resources/test/fixtures/precision/P011.f90:1:1: P011 prefer 'real(rea
 3 |   double = 2 * x
   |
 
-warning: ./resources/test/fixtures/precision/P011.f90:2:3: P011 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
+./resources/test/fixtures/precision/P011.f90:2:3: P011 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
   |
 1 | double precision function double(x)
 2 |   double precision, intent(in) :: x
@@ -20,7 +20,7 @@ warning: ./resources/test/fixtures/precision/P011.f90:2:3: P011 prefer 'real(rea
 4 | end function double
   |
 
-warning: ./resources/test/fixtures/precision/P011.f90:7:3: P011 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
+./resources/test/fixtures/precision/P011.f90:7:3: P011 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
   |
 6 | subroutine triple(x)
 7 |   double precision, intent(inout) :: x
@@ -29,7 +29,7 @@ warning: ./resources/test/fixtures/precision/P011.f90:7:3: P011 prefer 'real(rea
 9 | end subroutine triple
   |
 
-warning: ./resources/test/fixtures/precision/P011.f90:12:3: P011 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
+./resources/test/fixtures/precision/P011.f90:12:3: P011 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
    |
 11 | function complex_mul(x, y)
 12 |   double precision, intent(in) :: x
@@ -38,7 +38,7 @@ warning: ./resources/test/fixtures/precision/P011.f90:12:3: P011 prefer 'real(re
 14 |   double complex :: complex_mul
    |
 
-warning: ./resources/test/fixtures/precision/P011.f90:13:3: P011 prefer 'complex(real64)' to 'double complex' (see 'iso_fortran_env')
+./resources/test/fixtures/precision/P011.f90:13:3: P011 prefer 'complex(real64)' to 'double complex' (see 'iso_fortran_env')
    |
 11 | function complex_mul(x, y)
 12 |   double precision, intent(in) :: x
@@ -48,7 +48,7 @@ warning: ./resources/test/fixtures/precision/P011.f90:13:3: P011 prefer 'complex
 15 |   complex_mul = x * y
    |
 
-warning: ./resources/test/fixtures/precision/P011.f90:14:3: P011 prefer 'complex(real64)' to 'double complex' (see 'iso_fortran_env')
+./resources/test/fixtures/precision/P011.f90:14:3: P011 prefer 'complex(real64)' to 'double complex' (see 'iso_fortran_env')
    |
 12 |   double precision, intent(in) :: x
 13 |   double complex, intent(in) :: y

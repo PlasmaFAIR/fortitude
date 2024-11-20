@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::{rule_selector::RuleSelector, RuleSelectorParser};
+use crate::{rule_selector::RuleSelector, settings::OutputFormat, RuleSelectorParser};
 
 /// Default extensions to check
 pub const FORTRAN_EXTS: &[&str] = &[
@@ -90,4 +90,9 @@ pub struct CheckArgs {
     /// File extensions to check
     #[arg(long, value_delimiter = ',', default_values = FORTRAN_EXTS)]
     pub file_extensions: Option<Vec<String>>,
+
+    /// Output serialization format for violations.
+    /// The default serialization format is "full".
+    #[arg(long, value_enum, env = "FORTITUDE_OUTPUT_FORMAT")]
+    pub output_format: Option<OutputFormat>,
 }

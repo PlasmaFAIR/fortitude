@@ -3,7 +3,7 @@ source: fortitude/src/rules/modules/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/modules/M001.f90:1:1: M001 function not contained within (sub)module or program
+./resources/test/fixtures/modules/M001.f90:1:1: M001 function not contained within (sub)module or program
   |
 1 | integer function double(x)
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^ M001
@@ -11,10 +11,10 @@ warning: ./resources/test/fixtures/modules/M001.f90:1:1: M001 function not conta
 3 |   double = 2 * x
   |
 
-warning: ./resources/test/fixtures/modules/M001.f90:6:1: M001 subroutine not contained within (sub)module or program
+./resources/test/fixtures/modules/M001.f90:6:1: M001 subroutine not contained within (sub)module or program
   |
 4 | end function double
-5 | 
+5 |
 6 | subroutine triple(x)
   | ^^^^^^^^^^^^^^^^^^^^ M001
 7 |   integer, intent(inout) :: x

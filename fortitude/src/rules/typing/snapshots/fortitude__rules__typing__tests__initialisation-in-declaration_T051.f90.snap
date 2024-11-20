@@ -3,7 +3,7 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/typing/T051.f90:10:16: T051 'foo' is initialised in its declaration and has no explicit `save` or `parameter` attribute
+./resources/test/fixtures/typing/T051.f90:10:16: T051 'foo' is initialised in its declaration and has no explicit `save` or `parameter` attribute
    |
  9 |   subroutine init_decl1()
 10 |     integer :: foo = 1
@@ -11,7 +11,7 @@ warning: ./resources/test/fixtures/typing/T051.f90:10:16: T051 'foo' is initiali
 11 |   end subroutine init_decl1
    |
 
-warning: ./resources/test/fixtures/typing/T051.f90:19:21: T051 'bar' is initialised in its declaration and has no explicit `save` or `parameter` attribute
+./resources/test/fixtures/typing/T051.f90:19:21: T051 'bar' is initialised in its declaration and has no explicit `save` or `parameter` attribute
    |
 18 |   subroutine init_decl3()
 19 |     integer :: foo, bar = 1, quazz, zapp = 2
@@ -19,7 +19,7 @@ warning: ./resources/test/fixtures/typing/T051.f90:19:21: T051 'bar' is initiali
 20 |   end subroutine init_decl3
    |
 
-warning: ./resources/test/fixtures/typing/T051.f90:19:37: T051 'zapp' is initialised in its declaration and has no explicit `save` or `parameter` attribute
+./resources/test/fixtures/typing/T051.f90:19:37: T051 'zapp' is initialised in its declaration and has no explicit `save` or `parameter` attribute
    |
 18 |   subroutine init_decl3()
 19 |     integer :: foo, bar = 1, quazz, zapp = 2

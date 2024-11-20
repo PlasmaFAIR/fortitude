@@ -1,0 +1,30 @@
+---
+source: fortitude/src/message/text.rs
+expression: content
+snapshot_kind: text
+---
+test.f90:6:5: T003 [*] 'implicit none' set on the enclosing module
+  |
+4 | contains
+5 |   subroutine foo
+6 |     implicit none
+  |     ^^^^^^^^^^^^^ T003
+7 |   end subroutine
+8 | end module
+  |
+  = help: Remove unnecessary 'implicit none'
+
+test.f90:7:3: S061 end statement should read 'end subroutine foo'
+  |
+5 |   subroutine foo
+6 |     implicit none
+7 |   end subroutine
+  |   ^^^^^^^^^^^^^^ S061
+8 | end module
+  |
+
+star_kind.f90:1:8: T021 integer*4 is non-standard, use integer(4)
+  |
+1 | integer*4 foo; end
+  |        ^ T021
+  |

@@ -2,6 +2,7 @@ mod ast;
 pub mod check;
 pub mod cli;
 pub mod explain;
+mod fs;
 mod message;
 mod printer;
 mod registry;
@@ -11,6 +12,7 @@ mod rules;
 mod settings;
 #[cfg(test)]
 mod test;
+mod text_helpers;
 pub use crate::registry::clap_completion::RuleParser;
 pub use crate::rule_selector::clap_completion::RuleSelectorParser;
 use ast::{parse, FortitudeNode};

@@ -3,7 +3,7 @@ source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/style/S061.f90:5:3: S061 end statement should read 'end type mytype'
+./resources/test/fixtures/style/S061.f90:5:3: S061 end statement should read 'end type mytype'
   |
 3 |   type mytype
 4 |     integer :: x
@@ -13,7 +13,7 @@ warning: ./resources/test/fixtures/style/S061.f90:5:3: S061 end statement should
 7 |   subroutine mysub1()
   |
 
-warning: ./resources/test/fixtures/style/S061.f90:9:3: S061 end statement should read 'end subroutine mysub1'
+./resources/test/fixtures/style/S061.f90:9:3: S061 end statement should read 'end subroutine mysub1'
    |
  7 |   subroutine mysub1()
  8 |     write (*,*) 'hello world'
@@ -23,7 +23,7 @@ warning: ./resources/test/fixtures/style/S061.f90:9:3: S061 end statement should
 11 |     write (*,*) 'hello world'
    |
 
-warning: ./resources/test/fixtures/style/S061.f90:13:1: S061 end statement should read 'end module mymod1'
+./resources/test/fixtures/style/S061.f90:13:1: S061 end statement should read 'end module mymod1'
    |
 11 |     write (*,*) 'hello world'
 12 |   end subroutine mysub2         ! ignore this
@@ -33,7 +33,7 @@ warning: ./resources/test/fixtures/style/S061.f90:13:1: S061 end statement shoul
 15 |   implicit none
    |
 
-warning: ./resources/test/fixtures/style/S061.f90:22:3: S061 end statement should read 'end function myfunc1'
+./resources/test/fixtures/style/S061.f90:22:3: S061 end statement should read 'end function myfunc1'
    |
 20 |   integer function myfunc1()
 21 |     myfunc1 = 1
@@ -43,7 +43,7 @@ warning: ./resources/test/fixtures/style/S061.f90:22:3: S061 end statement shoul
 24 |     myfunc2 = 1
    |
 
-warning: ./resources/test/fixtures/style/S061.f90:26:1: S061 end statement should read 'end module mymod2'
+./resources/test/fixtures/style/S061.f90:26:1: S061 end statement should read 'end module mymod2'
    |
 24 |     myfunc2 = 1
 25 |   end function myfunc2          ! ignore this
@@ -53,7 +53,7 @@ warning: ./resources/test/fixtures/style/S061.f90:26:1: S061 end statement shoul
 28 |   interface
    |
 
-warning: ./resources/test/fixtures/style/S061.f90:44:3: S061 end statement should read 'end procedure foo'
+./resources/test/fixtures/style/S061.f90:44:3: S061 end statement should read 'end procedure foo'
    |
 42 |   module procedure foo
 43 |     x = 1
@@ -63,7 +63,7 @@ warning: ./resources/test/fixtures/style/S061.f90:44:3: S061 end statement shoul
 46 | submodule (mymod3) mysub2
    |
 
-warning: ./resources/test/fixtures/style/S061.f90:45:1: S061 end statement should read 'end submodule mysub1'
+./resources/test/fixtures/style/S061.f90:45:1: S061 end statement should read 'end submodule mysub1'
    |
 43 |     x = 1
 44 |   end procedure                 ! catch this
@@ -73,7 +73,7 @@ warning: ./resources/test/fixtures/style/S061.f90:45:1: S061 end statement shoul
 47 | contains
    |
 
-warning: ./resources/test/fixtures/style/S061.f90:51:1: S061 end statement should read 'end submodule mysub2'
+./resources/test/fixtures/style/S061.f90:51:1: S061 end statement should read 'end submodule mysub2'
    |
 49 |     x = 1
 50 |   end procedure bar             ! ignore this
@@ -83,7 +83,7 @@ warning: ./resources/test/fixtures/style/S061.f90:51:1: S061 end statement shoul
 53 | contains
    |
 
-warning: ./resources/test/fixtures/style/S061.f90:61:1: S061 end statement should read 'end program myprog'
+./resources/test/fixtures/style/S061.f90:61:1: S061 end statement should read 'end program myprog'
    |
 59 |   implicit none
 60 |   write (*,*) 'hello world'

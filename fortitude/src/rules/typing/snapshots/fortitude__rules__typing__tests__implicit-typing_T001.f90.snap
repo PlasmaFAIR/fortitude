@@ -3,7 +3,7 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/typing/T001.f90:1:1: T001 module missing 'implicit none'
+./resources/test/fixtures/typing/T001.f90:1:1: T001 module missing 'implicit none'
   |
 1 | module my_module
   | ^^^^^^^^^^^^^^^^ T001
@@ -11,10 +11,10 @@ warning: ./resources/test/fixtures/typing/T001.f90:1:1: T001 module missing 'imp
 3 | end module my_module
   |
 
-warning: ./resources/test/fixtures/typing/T001.f90:5:1: T001 program missing 'implicit none'
+./resources/test/fixtures/typing/T001.f90:5:1: T001 program missing 'implicit none'
   |
 3 | end module my_module
-4 | 
+4 |
 5 | program my_program
   | ^^^^^^^^^^^^^^^^^^ T001
 6 |   write(*,*) 42

@@ -3,7 +3,7 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/typing/T003.f90:5:5: T003 'implicit none' set on the enclosing module
+./resources/test/fixtures/typing/T003.f90:5:5: T003 [*] 'implicit none' set on the enclosing module
   |
 3 | contains
 4 |   integer function myfunc(x)
@@ -14,7 +14,7 @@ warning: ./resources/test/fixtures/typing/T003.f90:5:5: T003 'implicit none' set
   |
   = help: Remove unnecessary 'implicit none'
 
-warning: ./resources/test/fixtures/typing/T003.f90:10:5: T003 'implicit none' set on the enclosing module
+./resources/test/fixtures/typing/T003.f90:10:5: T003 [*] 'implicit none' set on the enclosing module
    |
  8 |   end function myfunc
  9 |   subroutine mysub(x)
@@ -25,7 +25,7 @@ warning: ./resources/test/fixtures/typing/T003.f90:10:5: T003 'implicit none' se
    |
    = help: Remove unnecessary 'implicit none'
 
-warning: ./resources/test/fixtures/typing/T003.f90:23:5: T003 'implicit none' set on the enclosing program
+./resources/test/fixtures/typing/T003.f90:23:5: T003 [*] 'implicit none' set on the enclosing program
    |
 21 | contains
 22 |   integer function myfunc2(x)
@@ -36,7 +36,7 @@ warning: ./resources/test/fixtures/typing/T003.f90:23:5: T003 'implicit none' se
    |
    = help: Remove unnecessary 'implicit none'
 
-warning: ./resources/test/fixtures/typing/T003.f90:28:5: T003 'implicit none' set on the enclosing program
+./resources/test/fixtures/typing/T003.f90:28:5: T003 [*] 'implicit none' set on the enclosing program
    |
 26 |   end function myfunc2
 27 |   subroutine mysub2(x)
