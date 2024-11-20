@@ -28,7 +28,7 @@ use tree_sitter::Node;
 /// precision), `real(dp)` (double precision), and `real(qp)` (quadruple precision),
 /// using:
 ///
-/// ```fortran
+/// ```f90
 /// use, intrinsic :: iso_fortran_env, only: sp => real32, &
 ///                                          dp => real64, &
 ///                                          qp => real128
@@ -36,7 +36,7 @@ use tree_sitter::Node;
 ///
 /// Or alternatively:
 ///
-/// ```fortran
+/// ```f90
 /// integer, parameter :: sp = selected_real_kind(6, 37)
 /// integer, parameter :: dp = selected_real_kind(15, 307)
 /// integer, parameter :: qp = selected_real_kind(33, 4931)
@@ -47,7 +47,7 @@ use tree_sitter::Node;
 ///
 /// Integer sizes may be set similarly:
 ///
-/// ```fortran
+/// ```f90
 /// integer, parameter :: i1 = selected_int_kind(2)  ! 8 bits
 /// integer, parameter :: i2 = selected_int_kind(4)  ! 16 bits
 /// integer, parameter :: i4 = selected_int_kind(9)  ! 32 bits
@@ -56,7 +56,7 @@ use tree_sitter::Node;
 ///
 /// Or:
 ///
-/// ```fortran
+/// ```f90
 /// use, intrinsic :: iso_fortran_env, only: i1 => int8, &
 ///                                          i2 => int16, &
 ///                                          i4 => int32, &
@@ -137,20 +137,20 @@ fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
 /// precision of the type, as kind numbers are not specified in the Fortran
 /// standards. It is recommended to use parameter types from `iso_fortran_env`:
 ///
-/// ```fortran
+/// ```f90
 /// use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
 /// ```
 ///
 /// or alternatively:
 ///
-/// ```fortran
+/// ```f90
 /// integer, parameter :: sp => selected_real_kind(6, 37)
 /// integer, parameter :: dp => selected_real_kind(15, 307)
 /// ```
 ///
 /// Floating point constants can then be specified as follows:
 ///
-/// ```fortran
+/// ```f90
 /// real(sp), parameter :: sqrt2 = 1.41421_sp
 /// real(dp), parameter :: pi = 3.14159265358979_dp
 /// ```

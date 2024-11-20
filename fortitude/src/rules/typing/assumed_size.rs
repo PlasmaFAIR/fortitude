@@ -24,7 +24,7 @@ use tree_sitter::Node;
 ///
 /// Instead of:
 ///
-/// ```fortran
+/// ```f90
 /// subroutine process_array(array)
 ///     integer, dimension(*), intent(in) :: array
 ///     ...
@@ -32,7 +32,7 @@ use tree_sitter::Node;
 ///
 /// use:
 ///
-/// ```fortran
+/// ```f90
 /// subroutine process_array(array)
 ///     integer, dimension(:), intent(in) :: array
 ///     ...
@@ -119,7 +119,7 @@ impl AstRule for AssumedSize {
 /// Character dummy arguments with an assumed size should only have `intent(in)`, as
 /// this can cause data loss with `intent([in]out)`. For example:
 ///
-/// ```fortran
+/// ```f90
 /// program example
 ///   character(len=3) :: short_text
 ///   call set_text(short_text)
@@ -136,7 +136,7 @@ impl AstRule for AssumedSize {
 ///
 /// To handle dynamically setting `character` sizes, use `allocatable` instead:
 ///
-/// ```fortran
+/// ```f90
 /// program example
 ///   character(len=3) :: short_text
 ///   call set_text(short_text)

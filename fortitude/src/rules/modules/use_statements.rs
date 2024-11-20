@@ -16,7 +16,7 @@ use tree_sitter::Node;
 /// components you intend to use:
 ///
 /// ## Example
-/// ```fortran
+/// ```f90
 /// ! Not recommended
 /// use, intrinsic :: iso_fortran_env
 ///

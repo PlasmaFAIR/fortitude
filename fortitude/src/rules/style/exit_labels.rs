@@ -11,7 +11,7 @@ use tree_sitter::Node;
 /// should use the loop name
 ///
 /// ## Example
-/// ```fortran
+/// ```f90
 /// name: do
 ///   exit name
 /// end do name
