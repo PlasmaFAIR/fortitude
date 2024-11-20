@@ -19,7 +19,7 @@ annotate-snippets = { git = "https://github.com/PlasmaFAIR/annotate-snippets-rs.
 anyhow = "1.0.79"
 bitflags = "2.6.0"
 clap = { version = "4.4.16", features = ["derive", "string", "env"] }
-colored = "2.1.0"
+colored = { workspace = true }
 fortitude_macros = { version = "0.1.0", path = "../fortitude_macros" }
 is-macro = "0.3.7"
 itertools = { workspace = true }
@@ -48,6 +48,8 @@ walkdir = "2.4.0"
 
 [dev-dependencies]
 assert_cmd = "2.0.16"
+# Disable colored output in tests
+colored = { workspace = true, features = ["no-color"] }
 insta = { version = "1.41.1", features = ["filters"] }
 insta-cmd = "0.6.0"
 predicates = "3.1.2"
