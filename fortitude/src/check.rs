@@ -9,6 +9,7 @@ use crate::settings::{OutputFormat, Settings, DEFAULT_SELECTORS};
 
 use anyhow::{Context, Result};
 use itertools::Itertools;
+use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
@@ -368,8 +369,8 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let diagnostics = get_files(files, file_extensions)
-        .iter()
+    let mut diagnostics: Vec<_> = get_files(files, file_extensions)
+        .par_iter()
         .flat_map(|path| {
             let filename = path.to_string_lossy();
 
@@ -407,8 +408,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                 }
             }
         })
-        .sorted_unstable()
-        .collect_vec();
+        .collect();
+
+    diagnostics.par_sort_unstable();
 
     let total_errors = diagnostics.len();
 

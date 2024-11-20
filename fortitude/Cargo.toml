@@ -30,6 +30,7 @@ path-absolutize = { version = "3.1.1", features = [
     "use_unix_paths_on_wasm",
 ]}
 pathdiff = { version = "0.2.1" }
+rayon = "1.10.0"
 ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0", features = ["serde"] }
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
