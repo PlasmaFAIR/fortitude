@@ -29,14 +29,20 @@ cargo install --path fortitude
 
 ## Usage
 
-Fortitude can lint your project using the `check` command:
+Fortitude can lint your whole project under the working directory
+using the `check` command:
 
 ```bash
-fortitude check my_code.f90
+fortitude check
 ```
 
-You can also call `check` on directories, and if no files are provided, `fortitude` will
-search for them from your current working directory.
+You can also call `check` on individual files, globs, and
+directories. You can configure what extensions `fortitude` searches
+for in directories with `--file-extensions`:
+
+```bash
+fortitude check src --file-extensions=f90,fpp
+```
 
 You can select or ignore individual rules or whole groups with
 `--select` and `--ignore`:
