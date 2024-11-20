@@ -24,12 +24,6 @@ use tree_sitter::Node;
 /// - `use, intrinsic :: iso_fortran_env, only: dp => real64`
 /// - `integer, parameter :: dp = selected_real_kind(15, 307)`
 ///
-/// To select a `real` with the same precision as `double precision`, the kind
-/// may be set from a floating point literal constant using `d` or `D` to denote
-/// the exponent:
-///
-/// - `integer, parameter :: dp = kind(0.0d0)
-///
 /// For code that should be compatible with C, you should instead use
 /// `real(c_double)`, which may be found in the intrinsic module `iso_c_binding`.
 ///
