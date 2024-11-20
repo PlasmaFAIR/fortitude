@@ -1,5 +1,7 @@
+pub use json::JsonEmitter;
 pub use text::TextEmitter;
 
+mod json;
 mod text;
 
 use std::cmp::Ordering;

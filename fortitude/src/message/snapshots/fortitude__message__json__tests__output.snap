@@ -1,0 +1,65 @@
+---
+source: fortitude/src/message/json.rs
+expression: content
+snapshot_kind: text
+---
+[
+  {
+    "code": "T003",
+    "end_location": {
+      "column": 18,
+      "row": 6
+    },
+    "filename": "test.f90",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 18,
+            "row": 6
+          },
+          "location": {
+            "column": 5,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unnecessary 'implicit none'"
+    },
+    "location": {
+      "column": 5,
+      "row": 6
+    },
+    "message": "'implicit none' set on the enclosing module"
+  },
+  {
+    "code": "S061",
+    "end_location": {
+      "column": 17,
+      "row": 7
+    },
+    "filename": "test.f90",
+    "fix": null,
+    "location": {
+      "column": 3,
+      "row": 7
+    },
+    "message": "end statement should read 'end subroutine foo'"
+  },
+  {
+    "code": "T021",
+    "end_location": {
+      "column": 9,
+      "row": 1
+    },
+    "filename": "star_kind.f90",
+    "fix": null,
+    "location": {
+      "column": 8,
+      "row": 1
+    },
+    "message": "integer*4 is non-standard, use integer(4)"
+  }
+]

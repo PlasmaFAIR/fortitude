@@ -31,11 +31,12 @@ path-absolutize = { version = "3.1.1", features = [
 ]}
 pathdiff = { version = "0.2.1" }
 ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
-ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
+ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0", features = ["serde"] }
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
-ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
+ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0", features = ["serde"] }
 ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 serde = { version = "1.0.210", features = ["derive"] }
+serde_json = { workspace = true }
 similar-asserts = "1.6.0"
 strum = { workspace = true }
 strum_macros = { workspace = true }

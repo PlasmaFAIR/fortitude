@@ -4,7 +4,7 @@ use anyhow::Result;
 use bitflags::bitflags;
 use colored::Colorize;
 
-use crate::message::{DiagnosticMessage, Emitter, TextEmitter};
+use crate::message::{DiagnosticMessage, Emitter, JsonEmitter, TextEmitter};
 use crate::settings::OutputFormat;
 
 bitflags! {
@@ -75,6 +75,9 @@ impl Printer {
                     .with_unsafe_fixes(crate::settings::UnsafeFixes::Hint)
                     .emit(writer, diagnostics)?;
                 self.write_summary_text(writer, diagnostics)?;
+            }
+            OutputFormat::Json => {
+                JsonEmitter.emit(writer, diagnostics)?;
             }
         }
 

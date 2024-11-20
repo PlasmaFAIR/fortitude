@@ -297,6 +297,7 @@ dependencies = [
  "ruff_source_file",
  "ruff_text_size",
  "serde",
+ "serde_json",
  "similar-asserts",
  "strum",
  "strum_macros",
@@ -661,6 +662,7 @@ dependencies = [
  "is-macro",
  "log",
  "ruff_text_size",
+ "serde",
 ]
 
 [[package]]
@@ -693,12 +695,16 @@ source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413
 dependencies = [
  "memchr",
  "ruff_text_size",
+ "serde",
 ]
 
 [[package]]
 name = "ruff_text_size"
 version = "0.0.0"
 source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "rustix"
