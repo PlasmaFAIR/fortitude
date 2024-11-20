@@ -3,7 +3,7 @@ source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/style/S001_line_length_20.f90:2:21: S001 line length of 68, exceeds maximum 20
+./resources/test/fixtures/style/S001_line_length_20.f90:2:21: S001 line length of 68, exceeds maximum 20
   |
 1 | program test
 2 |   use some_really_long_module_name, only : integer_working_precision
@@ -12,7 +12,7 @@ warning: ./resources/test/fixtures/style/S001_line_length_20.f90:2:21: S001 line
 4 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
   |
 
-warning: ./resources/test/fixtures/style/S001_line_length_20.f90:4:21: S001 line length of 72, exceeds maximum 20
+./resources/test/fixtures/style/S001_line_length_20.f90:4:21: S001 line length of 72, exceeds maximum 20
   |
 2 |   use some_really_long_module_name, only : integer_working_precision
 3 |   implicit none

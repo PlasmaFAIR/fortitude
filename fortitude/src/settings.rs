@@ -1,4 +1,6 @@
+use ruff_diagnostics::Applicability;
 use ruff_macros::CacheKey;
+use serde::{Deserialize, Serialize};
 /// A collection of user-modifiable settings. Should be expanded as new features are added.
 use std::fmt::{Display, Formatter};
 
@@ -43,3 +45,87 @@ impl Display for PreviewMode {
 
 /// Default rule selection
 pub const DEFAULT_SELECTORS: &[RuleSelector] = &[RuleSelector::All];
+
+/// Toggle for unsafe fixes.
+/// `Hint` will not apply unsafe fixes but a message will be shown when they are available.
+/// `Disabled` will not apply unsafe fixes or show a message.
+/// `Enabled` will apply unsafe fixes.
+#[derive(Debug, Copy, Clone, CacheKey, Default, PartialEq, Eq, is_macro::Is)]
+pub enum UnsafeFixes {
+    #[default]
+    Hint,
+    Disabled,
+    Enabled,
+}
+
+impl Display for UnsafeFixes {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Hint => "hint",
+                Self::Disabled => "disabled",
+                Self::Enabled => "enabled",
+            }
+        )
+    }
+}
+
+impl From<bool> for UnsafeFixes {
+    fn from(value: bool) -> Self {
+        if value {
+            UnsafeFixes::Enabled
+        } else {
+            UnsafeFixes::Disabled
+        }
+    }
+}
+
+impl UnsafeFixes {
+    pub fn required_applicability(&self) -> Applicability {
+        match self {
+            Self::Enabled => Applicability::Unsafe,
+            Self::Disabled | Self::Hint => Applicability::Safe,
+        }
+    }
+}
+
+#[derive(
+    Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Default, clap::ValueEnum,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum OutputFormat {
+    Concise,
+    #[default]
+    Full,
+    Json,
+    // JsonLines,
+    // Junit,
+    // Grouped,
+    // Github,
+    // Gitlab,
+    // Pylint,
+    // Rdjson,
+    // Azure,
+    // Sarif,
+}
+
+impl Display for OutputFormat {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Concise => write!(f, "concise"),
+            Self::Full => write!(f, "full"),
+            Self::Json => write!(f, "json"),
+            // Self::JsonLines => write!(f, "json_lines"),
+            // Self::Junit => write!(f, "junit"),
+            // Self::Grouped => write!(f, "grouped"),
+            // Self::Github => write!(f, "github"),
+            // Self::Gitlab => write!(f, "gitlab"),
+            // Self::Pylint => write!(f, "pylint"),
+            // Self::Rdjson => write!(f, "rdjson"),
+            // Self::Azure => write!(f, "azure"),
+            // Self::Sarif => write!(f, "sarif"),
+        }
+    }
+}

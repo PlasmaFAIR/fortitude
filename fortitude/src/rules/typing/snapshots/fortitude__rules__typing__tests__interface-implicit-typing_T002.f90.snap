@@ -3,7 +3,7 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/typing/T002.f90:4:5: T002 interface 'function' missing 'implicit none'
+./resources/test/fixtures/typing/T002.f90:4:5: T002 interface 'function' missing 'implicit none'
   |
 2 |   implicit none
 3 |   interface
@@ -13,7 +13,7 @@ warning: ./resources/test/fixtures/typing/T002.f90:4:5: T002 interface 'function
 6 |     end function myfunc
   |
 
-warning: ./resources/test/fixtures/typing/T002.f90:13:5: T002 interface 'subroutine' missing 'implicit none'
+./resources/test/fixtures/typing/T002.f90:13:5: T002 interface 'subroutine' missing 'implicit none'
    |
 11 |   implicit none
 12 |   interface

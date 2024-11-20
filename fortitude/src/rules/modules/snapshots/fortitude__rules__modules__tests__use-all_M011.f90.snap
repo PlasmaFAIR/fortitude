@@ -3,7 +3,7 @@ source: fortitude/src/rules/modules/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/modules/M011.f90:3:3: M011 'use' statement missing 'only' clause
+./resources/test/fixtures/modules/M011.f90:3:3: M011 'use' statement missing 'only' clause
   |
 1 | module my_module
 2 |   use, intrinsic :: iso_fortran_env, only: real32

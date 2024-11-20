@@ -29,9 +29,9 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    test/file/doesnt/exist.f90: E000 Error opening file: No such file or directory (os error 2)
+    test/file/doesnt/exist.f90:1:1: E000 Error opening file: No such file or directory (os error 2)
 
-    fortitude: 0 files scanned.
+    fortitude: 1 files scanned.
     Number of errors: 1
 
     For more information about specific rules, run:
@@ -70,7 +70,7 @@ unknown-key = 1
       |
     2 | unknown-key = 1
       | ^^^^^^^^^^^
-    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `line-length`, `file-extensions`
+    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `line-length`, `file-extensions`, `output-format`
     ");
     Ok(())
 }
@@ -96,7 +96,7 @@ end program
     success: false
     exit_code: 1
     ----- stdout -----
-    warning: [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] T001 program missing 'implicit none'
       |
     2 | program test
       | ^^^^^^^^^^^^ T001
@@ -104,7 +104,7 @@ end program
     4 | end program
       |
 
-    warning: [TEMP_FILE] T021 logical*4 is non-standard, use logical(4)
+    [TEMP_FILE] T021 logical*4 is non-standard, use logical(4)
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
@@ -112,7 +112,7 @@ end program
     4 | end program
       |
 
-    warning: [TEMP_FILE] T011 logical kind set with number literal '4', use 'iso_fortran_env' parameter
+    [TEMP_FILE] T011 logical kind set with number literal '4', use 'iso_fortran_env' parameter
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
@@ -120,7 +120,7 @@ end program
     4 | end program
       |
 
-    warning: [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 end statement should read 'end program test'
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
@@ -164,7 +164,7 @@ end program
     success: false
     exit_code: 1
     ----- stdout -----
-    warning: [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] T001 program missing 'implicit none'
       |
     2 | program test
       | ^^^^^^^^^^^^ T001
@@ -172,7 +172,7 @@ end program
     4 | end program
       |
 
-    warning: [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 end statement should read 'end program test'
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
@@ -225,7 +225,7 @@ select = ["T001", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    warning: [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] T001 program missing 'implicit none'
       |
     2 | program test
       | ^^^^^^^^^^^^ T001
@@ -233,7 +233,7 @@ select = ["T001", "style"]
     4 | end program
       |
 
-    warning: [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 end statement should read 'end program test'
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
@@ -288,7 +288,7 @@ select = ["T001"]
     success: false
     exit_code: 1
     ----- stdout -----
-    warning: [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] T001 program missing 'implicit none'
       |
     2 | program test
       | ^^^^^^^^^^^^ T001
@@ -296,7 +296,7 @@ select = ["T001"]
     4 | end program
       |
 
-    warning: [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 end statement should read 'end program test'
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
@@ -349,7 +349,7 @@ select = ["T001", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    warning: [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] T001 program missing 'implicit none'
       |
     2 | program test
       | ^^^^^^^^^^^^ T001
@@ -357,7 +357,7 @@ select = ["T001", "style"]
     4 | end program
       |
 
-    warning: [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 end statement should read 'end program test'
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.

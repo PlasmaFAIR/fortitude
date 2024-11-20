@@ -14,11 +14,10 @@ dependencies = [
 [[package]]
 name = "annotate-snippets"
 version = "0.11.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24e35ed54e5ea7997c14ed4c70ba043478db1112e98263b3b035907aa197d991"
+source = "git+https://github.com/PlasmaFAIR/annotate-snippets-rs.git?branch=level-none#3e1ae5fadf250c5183653dc5d9db2ca79ecffd7d"
 dependencies = [
  "anstyle",
- "unicode-width",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]
@@ -278,6 +277,7 @@ dependencies = [
  "annotate-snippets",
  "anyhow",
  "assert_cmd",
+ "bitflags",
  "clap",
  "colored",
  "fortitude_macros",
@@ -287,6 +287,8 @@ dependencies = [
  "itertools 0.12.1",
  "lazy-regex",
  "lazy_static",
+ "path-absolutize",
+ "pathdiff",
  "predicates",
  "pretty_assertions",
  "ruff_cache",
@@ -295,6 +297,7 @@ dependencies = [
  "ruff_source_file",
  "ruff_text_size",
  "serde",
+ "serde_json",
  "similar-asserts",
  "strum",
  "strum_macros",
@@ -518,6 +521,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
 
 [[package]]
+name = "path-absolutize"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4af381fe79fa195b4909485d99f73a80792331df0625188e707854f0b3383f5"
+dependencies = [
+ "path-dedot",
+]
+
+[[package]]
+name = "path-dedot"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07ba0ad7e047712414213ff67533e6dd477af0a4e1d14fb52343e53d30ea9397"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
+name = "pathdiff"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d61c5ce1153ab5b689d0c074c4e7fc613e942dfb7dd9eea5ab202d2ad91fe361"
+
+[[package]]
 name = "predicates"
 version = "3.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -635,6 +662,7 @@ dependencies = [
  "is-macro",
  "log",
  "ruff_text_size",
+ "serde",
 ]
 
 [[package]]
@@ -667,12 +695,16 @@ source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413
 dependencies = [
  "memchr",
  "ruff_text_size",
+ "serde",
 ]
 
 [[package]]
 name = "ruff_text_size"
 version = "0.0.0"
 source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "rustix"
@@ -886,7 +918,7 @@ checksum = "23d434d3f8967a09480fb04132ebe0a3e088c173e6d0ee7897abbdf4eab0f8b9"
 dependencies = [
  "smawk",
  "unicode-linebreak",
- "unicode-width",
+ "unicode-width 0.1.14",
 ]
 
 [[package]]
@@ -994,6 +1026,12 @@ name = "unicode-width"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
+
+[[package]]
+name = "unicode-width"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fc81956842c57dac11422a97c3b8195a1ff727f06e85c84ed2e8aa277c9a0fd"
 
 [[package]]
 name = "utf8parse"

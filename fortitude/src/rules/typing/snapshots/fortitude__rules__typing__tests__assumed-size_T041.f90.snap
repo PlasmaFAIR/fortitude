@@ -3,7 +3,7 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-warning: ./resources/test/fixtures/typing/T041.f90:3:28: T041 'array' has assumed size
+./resources/test/fixtures/typing/T041.f90:3:28: T041 'array' has assumed size
   |
 1 | subroutine assumed_size_dimension(array, n, m, l, o, p, options, thing, q)
 2 |   integer, intent(in) :: n, m
@@ -13,7 +13,7 @@ warning: ./resources/test/fixtures/typing/T041.f90:3:28: T041 'array' has assume
 5 |   ! warning must be on the array part for characters
   |
 
-warning: ./resources/test/fixtures/typing/T041.f90:4:28: T041 'l' has assumed size
+./resources/test/fixtures/typing/T041.f90:4:28: T041 'l' has assumed size
   |
 2 |   integer, intent(in) :: n, m
 3 |   integer, dimension(n, m, *), intent(in) :: array
@@ -23,7 +23,7 @@ warning: ./resources/test/fixtures/typing/T041.f90:4:28: T041 'l' has assumed si
 6 |   character(len=*), dimension(*) :: options
   |
 
-warning: ./resources/test/fixtures/typing/T041.f90:4:37: T041 'p' has assumed size
+./resources/test/fixtures/typing/T041.f90:4:37: T041 'p' has assumed size
   |
 2 |   integer, intent(in) :: n, m
 3 |   integer, dimension(n, m, *), intent(in) :: array
@@ -33,7 +33,7 @@ warning: ./resources/test/fixtures/typing/T041.f90:4:37: T041 'p' has assumed si
 6 |   character(len=*), dimension(*) :: options
   |
 
-warning: ./resources/test/fixtures/typing/T041.f90:6:31: T041 'options' has assumed size
+./resources/test/fixtures/typing/T041.f90:6:31: T041 'options' has assumed size
   |
 4 |   integer, intent(in) :: l(*), o, p(*)
 5 |   ! warning must be on the array part for characters
@@ -43,7 +43,7 @@ warning: ./resources/test/fixtures/typing/T041.f90:6:31: T041 'options' has assu
 8 |   ! this is ok
   |
 
-warning: ./resources/test/fixtures/typing/T041.f90:7:25: T041 'thing' has assumed size
+./resources/test/fixtures/typing/T041.f90:7:25: T041 'thing' has assumed size
   |
 5 |   ! warning must be on the array part for characters
 6 |   character(len=*), dimension(*) :: options

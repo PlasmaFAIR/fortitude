@@ -1,16 +1,16 @@
 use std::path::Path;
 
 use anyhow::Result;
-use itertools::join;
+use itertools::Itertools;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 
 use crate::{
     check::{
         ast_entrypoint_map, check_file, read_to_string, rules_to_path_rules, rules_to_text_rules,
     },
+    message::{DiagnosticMessage, Emitter, TextEmitter},
     rules::Rule,
     settings::Settings,
-    DiagnosticMessage,
 };
 
 pub(crate) fn test_resource_path(path: impl AsRef<Path>) -> std::path::PathBuf {
@@ -52,11 +52,22 @@ pub(crate) fn test_contents(
             if violations.is_empty() {
                 return String::new();
             }
-            let strings = violations
+            let diagnostics = violations
                 .into_iter()
                 .map(|v| DiagnosticMessage::from_ruff(file, v))
-                .map(|d| d.to_string());
-            join(strings, "\n")
+                .collect_vec();
+
+            let mut output = Vec::new();
+
+            TextEmitter::default()
+                .with_show_fix_status(true)
+                .with_show_fix_diff(true)
+                .with_show_source(true)
+                .with_unsafe_fixes(crate::settings::UnsafeFixes::Enabled)
+                .emit(&mut output, &diagnostics)
+                .unwrap();
+
+            String::from_utf8(output).unwrap()
         }
         Err(msg) => {
             panic!("Failed to process: {msg}");

@@ -1,19 +1,20 @@
 use crate::ast::{parse, FortitudeNode};
 use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
+use crate::message::DiagnosticMessage;
+use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{Settings, DEFAULT_SELECTORS};
-use crate::DiagnosticMessage;
+use crate::settings::{OutputFormat, Settings, DEFAULT_SELECTORS};
 
 use anyhow::{Context, Result};
-use colored::Colorize;
-use itertools::{join, Itertools};
+use itertools::Itertools;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use strum::IntoEnumIterator;
@@ -115,6 +116,7 @@ pub struct CheckSettings {
     pub extend_select: Vec<RuleSelector>,
     pub line_length: usize,
     pub file_extensions: Vec<String>,
+    pub output_format: OutputFormat,
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -140,6 +142,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             file_extensions: value
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
+            output_format: value.output_format.unwrap_or_default(),
         },
         None => CheckSettings::default(),
     };
@@ -354,6 +357,8 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
     };
 
+    let output_format = args.output_format.unwrap_or(file_settings.output_format);
+
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
@@ -362,76 +367,60 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let path_rules = rules_to_path_rules(&rules);
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
-    let mut total_errors = 0;
-    let mut total_files = 0;
-    for path in get_files(files, file_extensions) {
-        let filename = path.to_string_lossy();
-        let empty_file = SourceFileBuilder::new(filename.as_ref(), "").finish();
 
-        let source = match read_to_string(&path) {
-            Ok(source) => source,
-            Err(error) => {
-                let message = format!("Error opening file: {error}");
-                let diagnostic = DiagnosticMessage::from_ruff(
-                    &empty_file,
-                    Diagnostic::new(IoError { message }, TextRange::default()),
-                );
-                println!("{diagnostic}");
-                total_errors += 1;
-                continue;
-            }
-        };
+    let diagnostics = get_files(files, file_extensions)
+        .iter()
+        .flat_map(|path| {
+            let filename = path.to_string_lossy();
 
-        let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
+            let source = match read_to_string(path) {
+                Ok(source) => source,
+                Err(error) => {
+                    let message = format!("Error opening file: {error}");
+                    return vec![DiagnosticMessage::from_error(
+                        filename,
+                        Diagnostic::new(IoError { message }, TextRange::default()),
+                    )];
+                }
+            };
 
-        match check_file(
-            &path_rules,
-            &text_rules,
-            &ast_entrypoints,
-            &path,
-            &file,
-            &settings,
-        ) {
-            Ok(violations) => {
-                let mut diagnostics: Vec<_> = violations
+            let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
+
+            match check_file(
+                &path_rules,
+                &text_rules,
+                &ast_entrypoints,
+                path,
+                &file,
+                &settings,
+            ) {
+                Ok(violations) => violations
                     .into_iter()
                     .map(|v| DiagnosticMessage::from_ruff(&file, v))
-                    .collect();
-                if !diagnostics.is_empty() {
-                    diagnostics.sort_unstable();
-                    println!("{}", join(&diagnostics, "\n"));
+                    .collect_vec(),
+                Err(msg) => {
+                    let message = format!("Failed to process: {msg}");
+                    vec![DiagnosticMessage::from_error(
+                        filename,
+                        Diagnostic::new(IoError { message }, TextRange::default()),
+                    )]
                 }
-                total_errors += diagnostics.len();
             }
-            Err(msg) => {
-                let message = format!("Failed to process: {msg}");
-                let diagnostic = DiagnosticMessage::from_ruff(
-                    &empty_file,
-                    Diagnostic::new(IoError { message }, TextRange::default()),
-                );
-                println!("{diagnostic}");
-                total_errors += 1;
-            }
-        }
-        total_files += 1;
-    }
-    let file_no = format!(
-        "fortitude: {} files scanned.",
-        total_files.to_string().bold()
-    );
+        })
+        .sorted_unstable()
+        .collect_vec();
+
+    let total_errors = diagnostics.len();
+
+    let mut writer = Box::new(io::stdout());
+
+    let flags = PrinterFlags::SHOW_VIOLATIONS | PrinterFlags::SHOW_FIX_SUMMARY;
+
+    Printer::new(output_format, flags).write_once(&diagnostics, &mut writer)?;
+
     if total_errors == 0 {
-        let success = "All checks passed!".bright_green();
-        println!("\n{file_no}\n{success}\n");
         Ok(ExitCode::SUCCESS)
     } else {
-        let err_no = format!("Number of errors: {}", total_errors.to_string().bold());
-        let info = "For more information about specific rules, run:";
-        let explain = format!(
-            "fortitude explain {},{},...",
-            "X001".bold().bright_red(),
-            "Y002".bold().bright_red()
-        );
-        println!("\n{file_no}\n{err_no}\n\n{info}\n\n    {explain}\n");
         Ok(ExitCode::FAILURE)
     }
 }

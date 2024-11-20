@@ -60,6 +60,16 @@ fortitude check --select=T --ignore=T003
 fortitude check --select=typing --ignore=superfluous-implicit-none
 ```
 
+Use `--output-format=concise` to get shorter output:
+
+```bash
+$ fortitude check --concise
+test.f90:2:1: M001 function not contained within (sub)module or program
+test.f90:5:1: S061 end statement should read 'end function double'
+test.f90:7:1: M001 subroutine not contained within (sub)module or program
+test.f90:8:3: P021 real has implicit kind
+```
+
 The `explain` command can be used to get extra information about any rules:
 
 ```bash
