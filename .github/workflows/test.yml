@@ -22,3 +22,27 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+
+  cargo-install:
+    name: Test cargo installation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check cargo install
+      run: |
+        cargo install --path fortitude
+        fortitude --help
+
+  pip-install:
+    name: Test pip installation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Check pip install
+      run: |
+        pip install .
+        fortitude --help
