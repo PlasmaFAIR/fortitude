@@ -6,7 +6,7 @@ use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
-/// Checks whether functions and subroutines are defined within modules (or one
+/// Checks for any functions and subroutines not defined within modules (or one
 /// of a few acceptable alternatives).
 ///
 /// ## Why is this bad?
