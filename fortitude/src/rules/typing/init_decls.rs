@@ -17,7 +17,7 @@ use tree_sitter::Node;
 /// ## Examples
 /// For example, this subroutine:
 ///
-/// ```fortran
+/// ```f90
 /// subroutine example()
 ///   integer :: var = 1
 ///   print*, var
@@ -27,7 +27,7 @@ use tree_sitter::Node;
 ///
 /// when called twice:
 ///
-/// ```fortran
+/// ```f90
 /// call example()
 /// call example()
 /// ```
@@ -36,7 +36,7 @@ use tree_sitter::Node;
 ///
 /// Adding the `save` attribute makes it clear that this is the intention:
 ///
-/// ```fortran
+/// ```f90
 /// subroutine example()
 ///   integer, save :: var = 1
 ///   print*, var
@@ -47,7 +47,7 @@ use tree_sitter::Node;
 /// Unfortunately, in Fortran there is no way to disable this behaviour, and so if it
 /// is not intended, it's necessary to have a separate assignment statement:
 ///
-/// ```fortran
+/// ```f90
 /// subroutine example()
 ///   integer :: var
 ///   var = 1
@@ -59,7 +59,7 @@ use tree_sitter::Node;
 /// If the variable's value is intended to be constant, then use the `parameter`
 /// attribute instead:
 ///
-/// ```fortran
+/// ```f90
 /// subroutine example()
 ///   integer, parameter :: var = 1
 ///   print*, var

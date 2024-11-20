@@ -13,7 +13,7 @@ use tree_sitter::Node;
 /// End statements should specify what kind of construct they're ending, and the
 /// name of that construct. For example, prefer this:
 ///
-/// ```fortran
+/// ```f90
 /// module mymodule
 ///   ...
 /// end module mymodule
@@ -21,7 +21,7 @@ use tree_sitter::Node;
 ///
 /// To this:
 ///
-/// ```fortran
+/// ```f90
 /// module mymodule
 ///   ...
 /// end
@@ -29,7 +29,7 @@ use tree_sitter::Node;
 ///
 /// Or this:
 ///
-/// ```fortran
+/// ```f90
 /// module mymodule
 ///   ...
 /// end module
