@@ -1,4 +1,4 @@
-use crate::ast::{parse, FortitudeNode};
+use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
@@ -20,6 +20,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use strum::IntoEnumIterator;
 use toml::Table;
+use tree_sitter::Parser;
 use walkdir::WalkDir;
 
 // These are just helper structs to let us quickly work out if there's
@@ -245,7 +246,13 @@ pub(crate) fn check_file(
     }
 
     // Perform AST analysis
-    let tree = parse(file.source_text())?;
+    let mut parser = Parser::new();
+    parser
+        .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        .context("Error loading Fortran grammar")?;
+    let tree = parser
+        .parse(file.source_text(), None)
+        .context("Failed to parse")?;
     for node in tree.root_node().named_descendants() {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for rule in rules {

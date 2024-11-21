@@ -15,13 +15,14 @@ mod test;
 mod text_helpers;
 pub use crate::registry::clap_completion::RuleParser;
 pub use crate::rule_selector::clap_completion::RuleSelectorParser;
-use ast::{parse, FortitudeNode};
+use anyhow::Context;
+use ast::FortitudeNode;
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
 use std::path::Path;
-use tree_sitter::Node;
+use tree_sitter::{Node, Parser};
 
 // Violation type
 // --------------
@@ -95,7 +96,14 @@ pub trait AstRule {
     /// Apply a rule over some text, generating all violations raised as a result.
     fn apply(source: &SourceFile) -> anyhow::Result<Vec<Diagnostic>> {
         let entrypoints = Self::entrypoints();
-        Ok(parse(source.source_text())?
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+        let tree = parser
+            .parse(source.source_text(), None)
+            .context("Failed to parse")?;
+        Ok(tree
             .root_node()
             .named_descendants()
             .filter(|x| entrypoints.contains(&x.kind()))
