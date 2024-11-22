@@ -377,13 +377,19 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
+    let files = get_files(files, file_extensions);
+
     let progress_bar_style = if colored::control::SHOULD_COLORIZE.should_colorize() {
         // Make progress bar with:
         // - 60 char width (60)
         // - Bright cyan colour for the filled part (51)
         // - Dark blue colour for the unfilled part (4)
         // Colours use some 8-bit representation
-        ProgressStyle::with_template("[{elapsed_precise}] {bar:60.51/4} {pos:>7}/{len:7}")
+        let file_digits = files.len().to_string().len();
+        let style_template = format!(
+            "{{prefix}} {{pos:>{file_digits}}}/{{len}} {{bar:60.51/4}} [{{elapsed_precise}}]"
+        );
+        ProgressStyle::with_template(style_template.as_str())
             .unwrap()
             .progress_chars("━━━")
         // Liam: An alternative I quite like: .progress_chars("▰▰▰")
@@ -393,9 +399,10 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         ProgressStyle::with_template("").unwrap()
     };
 
-    let mut diagnostics: Vec<_> = get_files(files, file_extensions)
+    let mut diagnostics: Vec<_> = files
         .par_iter()
         .progress_with_style(progress_bar_style)
+        .with_prefix("Checking file:")
         .flat_map(|path| {
             let filename = path.to_string_lossy();
 
