@@ -15,7 +15,7 @@ mod test;
 mod text_helpers;
 pub use crate::registry::clap_completion::RuleParser;
 pub use crate::rule_selector::clap_completion::RuleSelectorParser;
-use ast::{parse, FortitudeNode};
+
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::{TextRange, TextSize};
@@ -91,18 +91,6 @@ pub trait AstRule {
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints() -> Vec<&'static str>;
-
-    /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(source: &SourceFile) -> anyhow::Result<Vec<Diagnostic>> {
-        let entrypoints = Self::entrypoints();
-        Ok(parse(source.source_text())?
-            .root_node()
-            .named_descendants()
-            .filter(|x| entrypoints.contains(&x.kind()))
-            .filter_map(|x| Self::check(&Settings::default(), &x, source))
-            .flatten()
-            .collect())
-    }
 }
 
 /// Simplify making a `SourceFile` in tests

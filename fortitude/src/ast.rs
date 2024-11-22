@@ -1,38 +1,9 @@
-use anyhow::Context;
-use lazy_static::lazy_static;
 use ruff_diagnostics::Edit;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 /// Contains methods to parse Fortran code into a tree-sitter Tree and utilites to simplify the
 /// navigation of a Tree.
-use std::sync::Mutex;
-use tree_sitter::{Language, Node, Parser, Tree, TreeCursor};
-
-lazy_static! {
-    static ref PARSER: Mutex<Parser> = {
-        let parser = Mutex::new(Parser::new());
-        parser
-            .lock()
-            .unwrap()
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
-            .expect("Error loading Fortran grammar");
-        parser
-    };
-}
-
-/// Parse a Fortran string and return the root note to the AST.
-pub fn parse<S: AsRef<str>>(source: S) -> anyhow::Result<Tree> {
-    PARSER
-        .lock()
-        .unwrap()
-        .parse(source.as_ref(), None)
-        .context("Failed to parse")
-}
-
-/// Access the language of the parser.
-pub fn language() -> Language {
-    PARSER.lock().unwrap().language().unwrap()
-}
+use tree_sitter::{Node, TreeCursor};
 
 pub struct DepthFirstIterator<'a> {
     cursor: TreeCursor<'a>,
@@ -59,7 +30,7 @@ impl<'a> Iterator for DepthFirstIterator<'a> {
 
 pub struct DepthFirstIteratorExcept<'a> {
     cursor: TreeCursor<'a>,
-    exceptions: Vec<u16>,
+    exceptions: Vec<String>, // TODO Use kind ids instead
 }
 
 impl<'a> Iterator for DepthFirstIteratorExcept<'a> {
@@ -67,7 +38,10 @@ impl<'a> Iterator for DepthFirstIteratorExcept<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // ignore exception list if we're at a depth of 0
-        if (self.cursor.depth() == 0 || !self.exceptions.contains(&self.cursor.node().kind_id()))
+        if (self.cursor.depth() == 0
+            || !self
+                .exceptions
+                .contains(&self.cursor.node().kind().to_string()))
             && self.cursor.goto_first_child()
         {
             return Some(self.cursor.node());
@@ -149,14 +123,9 @@ impl FortitudeNode<'_> for Node<'_> {
     where
         I: IntoIterator<Item = &'tree str>,
     {
-        let lang = language();
-        let exception_ids: Vec<_> = exceptions
-            .into_iter()
-            .map(|x| lang.id_for_node_kind(x, true))
-            .collect();
         DepthFirstIteratorExcept {
             cursor: self.walk(),
-            exceptions: exception_ids,
+            exceptions: exceptions.into_iter().map(|x| x.to_string()).collect(),
         }
     }
 
