@@ -378,11 +378,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
     let progress_bar_style = if colored::control::SHOULD_COLORIZE.should_colorize() {
-        ProgressStyle::with_template(
-            "[{elapsed_precise}] {bar:60.cyan/blue} {pos:>7}/{len:7} {msg}",
-        )
-        .unwrap()
-        .progress_chars("━━━")
+        ProgressStyle::with_template("[{elapsed_precise}] {bar:60.cyan/blue} {pos:>7}/{len:7}")
+            .unwrap()
+            .progress_chars("━━━")
         // Liam: An alternative I quite like: .progress_chars("▰▰▰")
     } else {
         ProgressStyle::with_template("").unwrap()
