@@ -95,6 +95,7 @@ impl From<&LogLevelArgs> for LogLevel {
 pub enum SubCommands {
     Check(CheckArgs),
     Explain(ExplainArgs),
+    Format(FormatArgs),
     /// Generate shell completion.
     #[clap(hide = true)]
     GenerateShellCompletion {
@@ -328,4 +329,23 @@ pub struct CheckArgs {
     /// Show counts for every rule with at least one violation.
     #[arg(long)]
     pub statistics: bool,
+}
+
+/// EXPERIMENTAL! Format files, printing to stdout
+#[derive(Debug, clap::Parser, Deserialize, Clone, PartialEq, Eq)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct FormatArgs {
+    /// List of files or directories to format. Directories are searched recursively for
+    /// Fortran files. The `--file-extensions` option can be used to control which files
+    /// are included in the search.
+    #[arg(default_value = ".")]
+    pub files: Option<Vec<PathBuf>>,
+    /// File extensions to format
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "EXTENSION",
+        help_heading = "File selection"
+    )]
+    pub file_extensions: Option<Vec<String>>,
 }

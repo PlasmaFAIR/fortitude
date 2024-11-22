@@ -7,6 +7,7 @@ use colored::Colorize;
 use fortitude::check::check;
 use fortitude::cli::{Cli, SubCommands};
 use fortitude::explain::explain;
+use fortitude::format::format;
 use fortitude::logging::set_up_logging;
 
 fn main() -> Result<ExitCode> {
@@ -17,6 +18,7 @@ fn main() -> Result<ExitCode> {
     let status = match args.command {
         SubCommands::Check(check_args) => check(check_args, &args.global_options),
         SubCommands::Explain(args) => explain(args),
+        SubCommands::Format(args) => format(args),
         SubCommands::GenerateShellCompletion { shell } => {
             shell.generate(&mut Cli::command(), &mut stdout());
             return Ok(ExitCode::SUCCESS);

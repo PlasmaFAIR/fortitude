@@ -145,6 +145,7 @@ pub fn set_up_logging(level: LogLevel) -> Result<()> {
         })
         .level(level.level_filter())
         .level_for("globset", log::LevelFilter::Warn)
+        .level_for("topiary_core", log::LevelFilter::Warn)
         .chain(std::io::stderr())
         .apply()?;
     Ok(())

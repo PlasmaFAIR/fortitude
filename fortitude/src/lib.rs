@@ -8,6 +8,7 @@ mod configuration;
 mod diagnostics;
 pub mod explain;
 mod fix;
+pub mod format;
 mod fs;
 pub mod locator;
 pub mod logging;

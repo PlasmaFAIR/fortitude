@@ -50,6 +50,8 @@ strum_macros = { workspace = true }
 textwrap = { workspace = true }
 thiserror = { version = "1.0.58" }
 toml = "0.8.19"
+topiary-core = { version = "0.6.0" }
+topiary-tree-sitter-facade = { version = "0.6.0" }
 tree-sitter = "~0.24.0"
 tree-sitter-fortran = "0.5.1"
 unicode-width = "0.2.0"
@@ -57,6 +59,7 @@ url = { version = "2.5.0" }
 globset = "0.4.15"
 log = "0.4.22"
 fern = "0.7.1"
+walkdir = "2.4.0"
 
 [dev-dependencies]
 assert_cmd = "2.0.16"
