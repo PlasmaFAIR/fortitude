@@ -3,41 +3,41 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/typing/T031.f90:3:14: T031 function argument 'a' missing 'intent' attribute
-  |
-1 | integer function foo(a, b, c)
-2 |   use mod
-3 |   integer :: a, c(2), f
-  |              ^ T031
-4 |   integer, dimension(:), intent(in) :: b
-5 | end function foo
-  |
-
-./resources/test/fixtures/typing/T031.f90:3:17: T031 function argument 'c' missing 'intent' attribute
-  |
-1 | integer function foo(a, b, c)
-2 |   use mod
-3 |   integer :: a, c(2), f
-  |                 ^^^^ T031
-4 |   integer, dimension(:), intent(in) :: b
-5 | end function foo
-  |
-
-./resources/test/fixtures/typing/T031.f90:8:23: T031 subroutine argument 'd' missing 'intent' attribute
+./resources/test/fixtures/typing/T031.f90:11:16: T031 function argument 'a' missing 'intent' attribute
    |
- 7 | subroutine bar(d, e, f)
- 8 |   integer, pointer :: d
-   |                       ^ T031
- 9 |   integer, allocatable :: e(:, :)
-10 |   type(integer(kind=int64)), intent(inout) :: f
+ 9 |   integer function foo(a, b, c, p)
+10 |     use mod
+11 |     integer :: a, c(2), f
+   |                ^ T031
+12 |     integer, dimension(:), intent(in) :: b
+13 |     procedure(sub) :: p         ! must not have `intent`
    |
 
-./resources/test/fixtures/typing/T031.f90:9:27: T031 subroutine argument 'e' missing 'intent' attribute
+./resources/test/fixtures/typing/T031.f90:11:19: T031 function argument 'c' missing 'intent' attribute
    |
- 7 | subroutine bar(d, e, f)
- 8 |   integer, pointer :: d
- 9 |   integer, allocatable :: e(:, :)
-   |                           ^^^^^^^ T031
-10 |   type(integer(kind=int64)), intent(inout) :: f
-11 |   integer :: g
+ 9 |   integer function foo(a, b, c, p)
+10 |     use mod
+11 |     integer :: a, c(2), f
+   |                   ^^^^ T031
+12 |     integer, dimension(:), intent(in) :: b
+13 |     procedure(sub) :: p         ! must not have `intent`
+   |
+
+./resources/test/fixtures/typing/T031.f90:17:25: T031 subroutine argument 'd' missing 'intent' attribute
+   |
+16 |   subroutine bar(d, e, f)
+17 |     integer, pointer :: d
+   |                         ^ T031
+18 |     integer, allocatable :: e(:, :)
+19 |     type(integer(kind=int64)), intent(inout) :: f
+   |
+
+./resources/test/fixtures/typing/T031.f90:18:29: T031 subroutine argument 'e' missing 'intent' attribute
+   |
+16 |   subroutine bar(d, e, f)
+17 |     integer, pointer :: d
+18 |     integer, allocatable :: e(:, :)
+   |                             ^^^^^^^ T031
+19 |     type(integer(kind=int64)), intent(inout) :: f
+20 |     integer :: g
    |

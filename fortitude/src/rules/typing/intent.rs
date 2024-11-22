@@ -53,9 +53,10 @@ impl AstRule for MissingIntent {
 
         // Logic here is:
         // 1. find variable declarations
-        // 2. filter to the declarations that don't have an `intent`
-        // 3. filter to the ones that contain any of the dummy arguments
-        // 4. collect into a vec of violations
+        // 2. ignore `procedure` arguments
+        // 3. filter to the declarations that don't have an `intent`
+        // 4. filter to the ones that contain any of the dummy arguments
+        // 5. collect into a vec of violations
         //
         // We filter by missing intent first, so we only have to
         // filter by the dummy args once -- otherwise we either catch
@@ -64,6 +65,13 @@ impl AstRule for MissingIntent {
         let violations = parent
             .named_children(&mut parent.walk())
             .filter(|child| child.kind() == "variable_declaration")
+            .filter(|decl| {
+                if let Some(type_) = decl.child_by_field_name("type") {
+                    type_.kind() != "procedure"
+                } else {
+                    false
+                }
+            })
             .filter(|decl| {
                 !decl
                     .children_by_field_name("attribute", &mut decl.walk())
