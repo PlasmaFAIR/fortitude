@@ -387,7 +387,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         // Colours use some 8-bit representation
         let file_digits = files.len().to_string().len();
         let style_template = format!(
-            "{{prefix}} {{pos:>{file_digits}}}/{{len}} {{bar:60.51/4}} [{{elapsed_precise}}] ETA: [{{eta_precise}}]"
+            "{{prefix}} {{pos:>{file_digits}}}/{{len}} {{bar:60.51/4}} [{{elapsed_precise}}]"
         );
         ProgressStyle::with_template(style_template.as_str())
             .unwrap()
