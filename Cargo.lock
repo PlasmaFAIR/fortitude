@@ -406,6 +406,7 @@ dependencies = [
  "number_prefix",
  "portable-atomic",
  "rayon",
+ "unicode-segmentation",
  "unicode-width 0.2.0",
  "web-time",
 ]

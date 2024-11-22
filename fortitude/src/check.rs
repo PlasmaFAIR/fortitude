@@ -378,11 +378,18 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
     let progress_bar_style = if colored::control::SHOULD_COLORIZE.should_colorize() {
-        ProgressStyle::with_template("[{elapsed_precise}] {bar:60.cyan/blue} {pos:>7}/{len:7}")
+        // Make progress bar with:
+        // - 60 char width (60)
+        // - Bright cyan colour for the filled part (51)
+        // - Dark blue colour for the unfilled part (4)
+        // Colours use some 8-bit representation
+        ProgressStyle::with_template("[{elapsed_precise}] {bar:60.51/4} {pos:>7}/{len:7}")
             .unwrap()
             .progress_chars("━━━")
         // Liam: An alternative I quite like: .progress_chars("▰▰▰")
     } else {
+        // Don't make a bar when writing to file
+        // TODO Make a simpler bar when writing to non-colour terminals?
         ProgressStyle::with_template("").unwrap()
     };
 
