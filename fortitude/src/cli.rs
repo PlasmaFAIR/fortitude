@@ -51,7 +51,9 @@ pub struct ExplainArgs {
 #[derive(Debug, clap::Parser, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct CheckArgs {
-    /// List of files to analyze
+    /// List of files or directories to check. Directories are searched recursively for
+    /// Fortran files. The `--file-extensions` option can be used to control which files
+    /// are included in the search.
     #[arg(default_value = ".")]
     pub files: Option<Vec<PathBuf>>,
     /// Comma-separated list of rules to ignore.
