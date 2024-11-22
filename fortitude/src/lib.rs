@@ -15,14 +15,13 @@ mod test;
 mod text_helpers;
 pub use crate::registry::clap_completion::RuleParser;
 pub use crate::rule_selector::clap_completion::RuleSelectorParser;
-use anyhow::Context;
-use ast::FortitudeNode;
+
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
 use std::path::Path;
-use tree_sitter::{Node, Parser};
+use tree_sitter::Node;
 
 // Violation type
 // --------------
@@ -92,25 +91,6 @@ pub trait AstRule {
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints() -> Vec<&'static str>;
-
-    /// Apply a rule over some text, generating all violations raised as a result.
-    fn apply(source: &SourceFile) -> anyhow::Result<Vec<Diagnostic>> {
-        let entrypoints = Self::entrypoints();
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
-            .context("Error loading Fortran grammar")?;
-        let tree = parser
-            .parse(source.source_text(), None)
-            .context("Failed to parse")?;
-        Ok(tree
-            .root_node()
-            .named_descendants()
-            .filter(|x| entrypoints.contains(&x.kind()))
-            .filter_map(|x| Self::check(&Settings::default(), &x, source))
-            .flatten()
-            .collect())
-    }
 }
 
 /// Simplify making a `SourceFile` in tests
