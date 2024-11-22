@@ -8,6 +8,7 @@ use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleE
 use crate::settings::{OutputFormat, Settings, DEFAULT_SELECTORS};
 
 use anyhow::{Context, Result};
+use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
@@ -376,8 +377,20 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
+    let progress_bar_style = if colored::control::SHOULD_COLORIZE.should_colorize() {
+        ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:60.cyan/blue} {pos:>7}/{len:7} {msg}",
+        )
+        .unwrap()
+        .progress_chars("━━━")
+        // Liam: An alternative I quite like: .progress_chars("▰▰▰")
+    } else {
+        ProgressStyle::with_template("").unwrap()
+    };
+
     let mut diagnostics: Vec<_> = get_files(files, file_extensions)
         .par_iter()
+        .progress_with_style(progress_bar_style)
         .flat_map(|path| {
             let filename = path.to_string_lossy();
 
