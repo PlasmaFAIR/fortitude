@@ -70,7 +70,7 @@ unknown-key = 1
       |
     2 | unknown-key = 1
       | ^^^^^^^^^^^
-    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `line-length`, `file-extensions`, `output-format`
+    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `line-length`, `file-extensions`, `output-format`, `no-progress-bar`
     ");
     Ok(())
 }

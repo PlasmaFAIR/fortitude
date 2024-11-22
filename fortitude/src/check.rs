@@ -120,6 +120,7 @@ pub struct CheckSettings {
     pub line_length: usize,
     pub file_extensions: Vec<String>,
     pub output_format: OutputFormat,
+    pub no_progress_bar: bool,
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -146,6 +147,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
             output_format: value.output_format.unwrap_or_default(),
+            no_progress_bar: value.no_progress_bar.unwrap_or_default(),
         },
         None => CheckSettings::default(),
     };
@@ -368,6 +370,10 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
 
+    let no_progress_bar = args
+        .no_progress_bar
+        .unwrap_or(file_settings.no_progress_bar);
+
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
@@ -379,25 +385,26 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let files = get_files(files, file_extensions);
 
-    let progress_bar_style = if colored::control::SHOULD_COLORIZE.should_colorize() {
-        // Make progress bar with:
-        // - 60 char width (60)
-        // - Bright cyan colour for the filled part (51)
-        // - Dark blue colour for the unfilled part (4)
-        // Colours use some 8-bit representation
-        let file_digits = files.len().to_string().len();
-        let style_template = format!(
-            "{{prefix}} {{pos:>{file_digits}}}/{{len}} {{bar:60.51/4}} [{{elapsed_precise}}]"
-        );
-        ProgressStyle::with_template(style_template.as_str())
-            .unwrap()
-            .progress_chars("━━━")
-        // Liam: An alternative I quite like: .progress_chars("▰▰▰")
-    } else {
-        // Don't make a bar when writing to file
-        // TODO Make a simpler bar when writing to non-colour terminals?
-        ProgressStyle::with_template("").unwrap()
-    };
+    let progress_bar_style =
+        if !no_progress_bar && colored::control::SHOULD_COLORIZE.should_colorize() {
+            // Make progress bar with:
+            // - 60 char width (60)
+            // - Bright cyan colour for the filled part (51)
+            // - Dark blue colour for the unfilled part (4)
+            // Colours use some 8-bit representation
+            let file_digits = files.len().to_string().len();
+            let style_template = format!(
+                "{{prefix}} {{pos:>{file_digits}}}/{{len}} {{bar:60.51/4}} [{{elapsed_precise}}]"
+            );
+            ProgressStyle::with_template(style_template.as_str())
+                .unwrap()
+                .progress_chars("━━━")
+            // Liam: An alternative I quite like: .progress_chars("▰▰▰")
+        } else {
+            // Don't make a bar when writing to file
+            // TODO Make a simpler bar when writing to non-colour terminals?
+            ProgressStyle::with_template("").unwrap()
+        };
 
     let mut diagnostics: Vec<_> = files
         .par_iter()

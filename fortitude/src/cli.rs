@@ -97,4 +97,8 @@ pub struct CheckArgs {
     /// The default serialization format is "full".
     #[arg(long, value_enum, env = "FORTITUDE_OUTPUT_FORMAT")]
     pub output_format: Option<OutputFormat>,
+
+    /// Switch off the progress bar.
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    pub no_progress_bar: Option<bool>,
 }
