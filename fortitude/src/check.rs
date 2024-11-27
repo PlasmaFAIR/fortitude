@@ -5,7 +5,7 @@ use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{OutputFormat, Settings, DEFAULT_SELECTORS};
+use crate::settings::{OutputFormat, PreviewMode, Settings, DEFAULT_SELECTORS};
 
 use anyhow::{Context, Result};
 use itertools::Itertools;
@@ -108,6 +108,18 @@ fn from_toml_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> {
     Ok(config)
 }
 
+/// Resolve `--foo` and `--no-foo` arguments
+fn resolve_bool_arg(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
+    let yes = yes.unwrap_or_default();
+    let no = no.unwrap_or_default();
+    match (yes, no) {
+        (true, false) => Some(true),
+        (false, true) => Some(false),
+        (false, false) => None,
+        (..) => unreachable!("Clap should make this impossible"),
+    }
+}
+
 // This is our "known good" intermediate settings struct after we've
 // read the config file, but before we've overridden it from the CLI
 #[derive(Default, Debug)]
@@ -119,6 +131,7 @@ pub struct CheckSettings {
     pub line_length: usize,
     pub file_extensions: Vec<String>,
     pub output_format: OutputFormat,
+    pub preview: PreviewMode,
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -145,6 +158,9 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
             output_format: value.output_format.unwrap_or_default(),
+            preview: resolve_bool_arg(value.preview, value.no_preview)
+                .map(PreviewMode::from)
+                .unwrap_or_default(),
         },
         None => CheckSettings::default(),
     };
@@ -152,9 +168,11 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
 }
 
 /// Get the list of active rules for this session.
-fn ruleset(args: RuleSelection) -> anyhow::Result<Vec<Rule>> {
-    // TODO: Take this as an option
-    let preview = PreviewOptions::default();
+fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<Vec<Rule>> {
+    let preview = PreviewOptions {
+        mode: *preview,
+        require_explicit: false,
+    };
 
     // The select_set keeps track of which rules have been selected.
     let mut select_set: BTreeSet<Rule> = if args.select.is_none() {
@@ -366,11 +384,14 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     };
 
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
+    let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
+        .map(PreviewMode::from)
+        .unwrap_or(file_settings.preview);
 
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
-    let rules = ruleset(rule_selection)?;
+    let rules = ruleset(rule_selection, &preview_mode)?;
 
     let path_rules = rules_to_path_rules(&rules);
     let text_rules = rules_to_text_rules(&rules);
@@ -450,9 +471,35 @@ mod tests {
             extend_select: vec![],
         };
 
-        let rules = ruleset(args)?;
-
+        let preview_mode = PreviewMode::default();
+        let rules = ruleset(args, &preview_mode)?;
         let preview = PreviewOptions::default();
+
+        let all_rules: Vec<Rule> = DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect();
+
+        assert_eq!(rules, all_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn empty_select_with_preview() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: None,
+            extend_select: vec![],
+        };
+
+        let preview_mode = PreviewMode::Enabled;
+        let rules = ruleset(args, &preview_mode)?;
+        let preview = PreviewOptions {
+            mode: preview_mode,
+            require_explicit: false,
+        };
+
         let all_rules: Vec<Rule> = DEFAULT_SELECTORS
             .iter()
             .flat_map(|selector| selector.rules(&preview))
@@ -471,8 +518,43 @@ mod tests {
             extend_select: vec![],
         };
 
-        let rules = ruleset(args)?;
+        let preview_mode = PreviewMode::default();
+        let rules = ruleset(args, &preview_mode)?;
         let one_rules: Vec<Rule> = vec![Rule::IoError];
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn select_one_preview_rule_without_preview() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: Some(vec![RuleSelector::from_str("E9904")?]),
+            extend_select: vec![],
+        };
+
+        let preview_mode = PreviewMode::default();
+        let rules = ruleset(args, &preview_mode)?;
+        let one_rules: Vec<Rule> = vec![];
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn select_one_preview_rule_with_preview() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: Some(vec![RuleSelector::from_str("E9904")?]),
+            extend_select: vec![],
+        };
+
+        let preview_mode = PreviewMode::Enabled;
+        let rules = ruleset(args, &preview_mode)?;
+        let one_rules: Vec<Rule> = vec![Rule::PreviewTestRule];
 
         assert_eq!(rules, one_rules);
 
@@ -487,7 +569,8 @@ mod tests {
             extend_select: vec![RuleSelector::from_str("E001")?],
         };
 
-        let rules = ruleset(args)?;
+        let preview_mode = PreviewMode::default();
+        let rules = ruleset(args, &preview_mode)?;
         let one_rules: Vec<Rule> = vec![Rule::IoError, Rule::SyntaxError];
 
         assert_eq!(rules, one_rules);
