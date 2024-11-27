@@ -57,3 +57,46 @@ impl AstRule for MissingAccessibilityStatement {
         vec!["module_statement"]
     }
 }
+
+/// ## What it does
+/// Checks if the default accessibility in modules is set to `public`
+///
+/// ## Why is this bad?
+/// The `public` statement makes all entities (variables, types, procedures)
+/// public by default. This decreases encapsulation and makes it more likely to
+/// accidentally expose more than necessary.
+#[violation]
+pub struct DefaultPublicAccessibility {
+    name: String,
+}
+
+impl Violation for DefaultPublicAccessibility {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        format!("module '{}' has default `public` accessibility", self.name)
+    }
+}
+
+impl AstRule for DefaultPublicAccessibility {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let module = node.parent()?;
+
+        let public_statement = module.child_with_name("public_statement")?;
+
+        // Bare `public` statement`
+        if public_statement.named_child(0).is_none() {
+            let name = node.named_child(0)?.to_text(src.source_text())?.to_string();
+            return some_vec![Diagnostic::from_node(
+                DefaultPublicAccessibility { name },
+                node
+            )];
+        }
+
+
+        None
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["module_statement"]
+    }
+}

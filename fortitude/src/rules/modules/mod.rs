@@ -22,6 +22,7 @@ mod tests {
     #[test_case(Rule::ExternalFunction, Path::new("M001.f90"))]
     #[test_case(Rule::UseAll, Path::new("M011.f90"))]
     #[test_case(Rule::MissingAccessibilityStatement, Path::new("M021.f90"))]
+    #[test_case(Rule::DefaultPublicAccessibility, Path::new("M022.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

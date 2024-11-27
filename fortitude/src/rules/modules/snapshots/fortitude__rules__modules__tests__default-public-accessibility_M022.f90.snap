@@ -1,0 +1,14 @@
+---
+source: fortitude/src/rules/modules/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/modules/M022.f90:8:1: M022 module 'bad_module' has default `public` accessibility
+   |
+ 6 | end module good_module
+ 7 |
+ 8 | module bad_module
+   | ^^^^^^^^^^^^^^^^^ M022
+ 9 |   ! This is bad
+10 |   public
+   |
