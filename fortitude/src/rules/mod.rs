@@ -99,6 +99,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Modules, "001") => (RuleGroup::Stable, Ast, modules::external_functions::ExternalFunction),
         (Modules, "011") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
+        (Modules, "021") => (RuleGroup::Stable, Ast, modules::private_statement::MissingPrivateStatement),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason
