@@ -2,7 +2,9 @@ use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::{rule_selector::RuleSelector, settings::OutputFormat, RuleSelectorParser};
+use crate::{
+    rule_selector::RuleSelector, settings::OutputFormat, settings::ProgressBar, RuleSelectorParser,
+};
 
 /// Default extensions to check
 pub const FORTRAN_EXTS: &[&str] = &[
@@ -104,4 +106,9 @@ pub struct CheckArgs {
     pub preview: Option<bool>,
     #[clap(long, overrides_with("preview"), hide = true)]
     pub no_preview: Option<bool>,
+
+    /// Progress bar settings.
+    /// Options are "off" (default), "ascii", and "fancy"
+    #[arg(long, value_enum)]
+    pub progress_bar: Option<ProgressBar>,
 }

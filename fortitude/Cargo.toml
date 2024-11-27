@@ -22,6 +22,7 @@ clap = { version = "4.4.16", features = ["derive", "string", "env"] }
 colored = { workspace = true }
 fortitude_macros = { version = "0.1.0", path = "../fortitude_macros" }
 is-macro = "0.3.7"
+indicatif = { version = "0.17.9", features = ["rayon", "improved_unicode"] }
 itertools = { workspace = true }
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"

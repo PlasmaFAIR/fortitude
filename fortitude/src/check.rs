@@ -5,9 +5,10 @@ use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{OutputFormat, PreviewMode, Settings, DEFAULT_SELECTORS};
+use crate::settings::{OutputFormat, PreviewMode, ProgressBar, Settings, DEFAULT_SELECTORS};
 
 use anyhow::{Context, Result};
+use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
@@ -131,6 +132,7 @@ pub struct CheckSettings {
     pub line_length: usize,
     pub file_extensions: Vec<String>,
     pub output_format: OutputFormat,
+    pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
 }
 
@@ -158,6 +160,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
             output_format: value.output_format.unwrap_or_default(),
+            progress_bar: value.progress_bar.unwrap_or_default(),
             preview: resolve_bool_arg(value.preview, value.no_preview)
                 .map(PreviewMode::from)
                 .unwrap_or_default(),
@@ -388,6 +391,12 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         .map(PreviewMode::from)
         .unwrap_or(file_settings.preview);
 
+    let mut progress_bar = args.progress_bar.unwrap_or(file_settings.progress_bar);
+    // Override progress bar settings if not using colour terminal
+    if progress_bar == ProgressBar::Fancy && !colored::control::SHOULD_COLORIZE.should_colorize() {
+        progress_bar = ProgressBar::Ascii;
+    }
+
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
@@ -397,8 +406,36 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let mut diagnostics: Vec<_> = get_files(files, file_extensions)
+    let files = get_files(files, file_extensions);
+    let file_digits = files.len().to_string().len();
+    let progress_bar_style = match progress_bar {
+        ProgressBar::Fancy => {
+            // Make progress bar with 60 char width, bright cyan colour (51)
+            // Colours use some 8-bit representation
+            let style_template = format!(
+                "{{prefix}} {{pos:>{file_digits}}}/{{len}} [{{bar:60.51}}] [{{elapsed_precise}}]"
+            );
+            ProgressStyle::with_template(style_template.as_str())
+                .unwrap()
+                .progress_chars("━╸ ")
+            // Alt: sub-character resolution "█▉▊▋▌▍▎▏  "
+        }
+        ProgressBar::Ascii => {
+            // Same as fancy, but without colours and using basic characters
+            let style_template = format!(
+                "{{prefix}} {{pos:>{file_digits}}}/{{len}} [{{bar:60}}] [{{elapsed_precise}}]"
+            );
+            ProgressStyle::with_template(style_template.as_str())
+                .unwrap()
+                .progress_chars("=> ")
+        }
+        ProgressBar::Off => ProgressStyle::with_template("").unwrap(),
+    };
+
+    let mut diagnostics: Vec<_> = files
         .par_iter()
+        .progress_with_style(progress_bar_style)
+        .with_prefix("Checking file:")
         .flat_map(|path| {
             let filename = path.to_string_lossy();
 

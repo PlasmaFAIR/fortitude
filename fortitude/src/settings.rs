@@ -91,6 +91,32 @@ impl UnsafeFixes {
     }
 }
 
+/// Toggle for progress bar
+#[derive(
+    Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Default, clap::ValueEnum,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum ProgressBar {
+    #[default]
+    Off,
+    Fancy,
+    Ascii,
+}
+
+impl Display for ProgressBar {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Off => "off",
+                Self::Fancy => "fancy",
+                Self::Ascii => "ascii",
+            }
+        )
+    }
+}
+
 #[derive(
     Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Default, clap::ValueEnum,
 )]
