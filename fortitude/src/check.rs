@@ -5,7 +5,7 @@ use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{OutputFormat, Settings, DEFAULT_SELECTORS};
+use crate::settings::{OutputFormat, ProgressBar, Settings, DEFAULT_SELECTORS};
 
 use anyhow::{Context, Result};
 use indicatif::{ParallelProgressIterator, ProgressStyle};
@@ -120,7 +120,7 @@ pub struct CheckSettings {
     pub line_length: usize,
     pub file_extensions: Vec<String>,
     pub output_format: OutputFormat,
-    pub no_progress_bar: bool,
+    pub progress_bar: ProgressBar,
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -147,7 +147,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
             output_format: value.output_format.unwrap_or_default(),
-            no_progress_bar: value.no_progress_bar.unwrap_or_default(),
+            progress_bar: value.progress_bar.unwrap_or_default(),
         },
         None => CheckSettings::default(),
     };
@@ -369,10 +369,12 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     };
 
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
+    let mut progress_bar = args.progress_bar.unwrap_or(file_settings.progress_bar);
 
-    let no_progress_bar = args
-        .no_progress_bar
-        .unwrap_or(file_settings.no_progress_bar);
+    // Override progress bar settings if not using colour terminal
+    if progress_bar == ProgressBar::Fancy && !colored::control::SHOULD_COLORIZE.should_colorize() {
+        progress_bar = ProgressBar::Ascii;
+    }
 
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
@@ -384,27 +386,30 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
     let files = get_files(files, file_extensions);
-
-    let progress_bar_style =
-        if !no_progress_bar && colored::control::SHOULD_COLORIZE.should_colorize() {
-            // Make progress bar with:
-            // - 60 char width (60)
-            // - Bright cyan colour for the filled part (51)
-            // - Dark blue colour for the unfilled part (4)
+    let file_digits = files.len().to_string().len();
+    let progress_bar_style = match progress_bar {
+        ProgressBar::Fancy => {
+            // Make progress bar with 60 char width, bright cyan colour (51)
             // Colours use some 8-bit representation
-            let file_digits = files.len().to_string().len();
             let style_template = format!(
-                "{{prefix}} {{pos:>{file_digits}}}/{{len}} {{bar:60.51/4}} [{{elapsed_precise}}]"
+                "{{prefix}} {{pos:>{file_digits}}}/{{len}} [{{bar:60.51}}] [{{elapsed_precise}}]"
             );
             ProgressStyle::with_template(style_template.as_str())
                 .unwrap()
-                .progress_chars("━━━")
-            // Liam: An alternative I quite like: .progress_chars("▰▰▰")
-        } else {
-            // Don't make a bar when writing to file
-            // TODO Make a simpler bar when writing to non-colour terminals?
-            ProgressStyle::with_template("").unwrap()
-        };
+                .progress_chars("━╸ ")
+            // Alt: sub-character resolution "█▉▊▋▌▍▎▏  "
+        }
+        ProgressBar::Ascii => {
+            // Same as fancy, but without colours and using basic characters
+            let style_template = format!(
+                "{{prefix}} {{pos:>{file_digits}}}/{{len}} [{{bar:60}}] [{{elapsed_precise}}]"
+            );
+            ProgressStyle::with_template(style_template.as_str())
+                .unwrap()
+                .progress_chars("=> ")
+        }
+        ProgressBar::Off => ProgressStyle::with_template("").unwrap(),
+    };
 
     let mut diagnostics: Vec<_> = files
         .par_iter()

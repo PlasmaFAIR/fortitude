@@ -2,7 +2,9 @@ use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::{rule_selector::RuleSelector, settings::OutputFormat, RuleSelectorParser};
+use crate::{
+    rule_selector::RuleSelector, settings::OutputFormat, settings::ProgressBar, RuleSelectorParser,
+};
 
 /// Default extensions to check
 pub const FORTRAN_EXTS: &[&str] = &[
@@ -98,7 +100,8 @@ pub struct CheckArgs {
     #[arg(long, value_enum, env = "FORTITUDE_OUTPUT_FORMAT")]
     pub output_format: Option<OutputFormat>,
 
-    /// Switch off the progress bar.
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    pub no_progress_bar: Option<bool>,
+    /// Progress bar settings.
+    /// Options are "off" (default), "ascii", and "fancy"
+    #[arg(long, value_enum)]
+    pub progress_bar: Option<ProgressBar>,
 }
