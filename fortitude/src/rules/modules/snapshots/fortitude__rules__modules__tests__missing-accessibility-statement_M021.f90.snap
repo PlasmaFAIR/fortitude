@@ -1,0 +1,24 @@
+---
+source: fortitude/src/rules/modules/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/modules/M021.f90:20:1: M021 module 'bad_module' missing default accessibility statement
+   |
+18 | end module ok_module2
+19 |
+20 | module bad_module
+   | ^^^^^^^^^^^^^^^^^ M021
+21 |   ! This is bad
+22 | end module bad_module
+   |
+
+./resources/test/fixtures/modules/M021.f90:24:1: M021 module 'only_some_private_module' missing default accessibility statement
+   |
+22 | end module bad_module
+23 |
+24 | module only_some_private_module
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ M021
+25 |   ! This is bad
+26 |   private :: foo
+   |

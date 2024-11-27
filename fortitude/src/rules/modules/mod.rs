@@ -1,5 +1,5 @@
+pub mod accessibility_statements;
 pub mod external_functions;
-pub mod private_statement;
 pub mod use_statements;
 
 // TODO should be private by default, with explicit public interface
@@ -21,7 +21,7 @@ mod tests {
 
     #[test_case(Rule::ExternalFunction, Path::new("M001.f90"))]
     #[test_case(Rule::UseAll, Path::new("M011.f90"))]
-    #[test_case(Rule::MissingPrivateStatement, Path::new("M021.f90"))]
+    #[test_case(Rule::MissingAccessibilityStatement, Path::new("M021.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

@@ -7,7 +7,7 @@ use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
-/// Checks for missing `private` statements in modules
+/// Checks for missing `private` or `public` accessibility statements in modules
 ///
 /// ## Why is this bad?
 /// The `private` statement makes all entities (variables, types, procedures)
@@ -15,28 +15,41 @@ use tree_sitter::Node;
 /// available. As well as improving encapsulation between modules, this also
 /// makes it possible to detect unused entities.
 #[violation]
-pub struct MissingPrivateStatement {
+pub struct MissingAccessibilityStatement {
     name: String,
 }
 
-impl Violation for MissingPrivateStatement {
+impl Violation for MissingAccessibilityStatement {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("module '{}' missing 'private' statement", self.name)
+        format!("module '{}' missing default accessibility statement", self.name)
     }
 }
 
-impl AstRule for MissingPrivateStatement {
+impl AstRule for MissingAccessibilityStatement {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let module = node.parent()?;
 
-        if module.child_with_name("private_statement").is_none() {
+        let bare_private_statement = match module.child_with_name("private_statement") {
+            Some(statement) => statement.named_child(0).is_none(),
+            None => false,
+        };
+                
+        let bare_public_statement = match module.child_with_name("public_statement") {
+            Some(statement) => statement.named_child(0).is_none(),
+            None => false,
+        };
+
+        // No statement whatsoever
+        if !bare_private_statement && !bare_public_statement {
             let name = node.named_child(0)?.to_text(src.source_text())?.to_string();
             return some_vec![Diagnostic::from_node(
-                MissingPrivateStatement { name },
+                MissingAccessibilityStatement { name },
                 node
             )];
         }
+
+
         None
     }
 
