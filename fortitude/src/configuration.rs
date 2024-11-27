@@ -1,5 +1,5 @@
 use crate::cli::CheckArgs;
-use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FIXED_EXTS, FORTRAN_EXTS};
+use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FIXED_FORTRAN_EXTS, FORTRAN_EXTS};
 use crate::options::{ExitUnlabelledLoopOptions, Options};
 use crate::registry::RuleNamespace;
 use crate::rule_redirects::get_redirect;
@@ -180,7 +180,10 @@ impl Default for Configuration {
             per_file_ignores: Default::default(),
             line_length: Settings::default().check.line_length,
             file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
-            fixed_extensions: FIXED_EXTS.iter().map(|ext| ext.to_string()).collect(),
+            fixed_extensions: FIXED_FORTRAN_EXTS
+                .iter()
+                .map(|ext| ext.to_string())
+                .collect(),
             fix: Default::default(),
             fix_only: Default::default(),
             show_fixes: Default::default(),
@@ -221,9 +224,12 @@ impl Configuration {
             file_extensions: check
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
-            fixed_extensions: check
-                .fixed_extensions
-                .unwrap_or(FIXED_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
+            fixed_extensions: check.fixed_extensions.unwrap_or(
+                FIXED_FORTRAN_EXTS
+                    .iter()
+                    .map(|ext| ext.to_string())
+                    .collect_vec(),
+            ),
             fix: check.fix.unwrap_or_default(),
             fix_only: check.fix_only.unwrap_or_default(),
             show_fixes: check.show_fixes.unwrap_or_default(),

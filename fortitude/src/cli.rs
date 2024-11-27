@@ -94,6 +94,7 @@ impl From<&LogLevelArgs> for LogLevel {
 #[derive(Debug, Subcommand)]
 pub enum SubCommands {
     Check(CheckArgs),
+    ConvertFixed(ConvertFixedArgs),
     Explain(ExplainArgs),
     /// Generate shell completion.
     #[clap(hide = true)]
@@ -337,4 +338,28 @@ pub struct CheckArgs {
     /// Show counts for every rule with at least one violation.
     #[arg(long)]
     pub statistics: bool,
+}
+
+/// Convert fixed form files to free form
+#[derive(Debug, clap::Parser, Deserialize, Clone, PartialEq, Eq)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct ConvertFixedArgs {
+    /// List of files or directories to convert. Directories are searched recursively for
+    /// Fortran files. The `--file-extensions` option can be used to control which files
+    /// are included in the search.
+    #[arg(default_value = ".")]
+    pub files: Option<Vec<PathBuf>>,
+
+    /// File extensions to check
+    #[arg(long, value_delimiter = ',')]
+    pub file_extensions: Option<Vec<String>>,
+
+    /// List of paths, used to omit files and/or directories from conversion.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "FILE_PATTERN",
+        help_heading = "File selection"
+    )]
+    pub exclude: Option<Vec<FilePattern>>,
 }
