@@ -10,7 +10,7 @@ use crate::{
     },
     message::{DiagnosticMessage, Emitter, TextEmitter},
     rules::Rule,
-    settings::Settings,
+    settings::{FixMode, Settings, UnsafeFixes},
 };
 
 pub(crate) fn test_resource_path(path: impl AsRef<Path>) -> std::path::PathBuf {
@@ -47,6 +47,8 @@ pub(crate) fn test_contents(
         path,
         file,
         settings,
+        FixMode::Generate,
+        UnsafeFixes::Hint,
     ) {
         Ok(violations) => {
             if violations.is_empty() {

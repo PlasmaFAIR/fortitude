@@ -9,7 +9,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use ruff_diagnostics::{Diagnostic, Edit, Fix, IsolationLevel, SourceMap};
 use ruff_text_size::{Ranged, TextLen, TextRange, TextSize};
-use ruff_source_file::Locator;
+use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
 
 use crate::registry::{AsRule, Rule};
 use crate::settings::UnsafeFixes;
@@ -20,10 +20,11 @@ pub type FixTable = FxHashMap<Rule, usize>;
 
 pub(crate) struct FixResult {
     /// The resulting source code, after applying all fixes.
-    pub(crate) code: String,
+    pub(crate) code: SourceFile,
     /// The number of fixes applied for each [`Rule`].
     pub(crate) fixes: FixTable,
     /// Source map for the fixed source code.
+    #[allow(dead_code)]
     pub(crate) source_map: SourceMap,
 }
 
@@ -32,6 +33,7 @@ pub(crate) fn fix_file(
     diagnostics: &[Diagnostic],
     locator: &Locator,
     unsafe_fixes: UnsafeFixes,
+    name: &str,
 ) -> Option<FixResult> {
     let required_applicability = unsafe_fixes.required_applicability();
 
@@ -48,7 +50,7 @@ pub(crate) fn fix_file(
     if with_fixes.peek().is_none() {
         None
     } else {
-        Some(apply_fixes(with_fixes, locator))
+        Some(apply_fixes(with_fixes, locator, name))
     }
 }
 
@@ -56,6 +58,7 @@ pub(crate) fn fix_file(
 fn apply_fixes<'a>(
     diagnostics: impl Iterator<Item = &'a Diagnostic>,
     locator: &'a Locator<'a>,
+    name: &str
 ) -> FixResult {
     let mut output = String::with_capacity(locator.len());
     let mut last_pos: Option<TextSize> = None;
@@ -123,8 +126,12 @@ fn apply_fixes<'a>(
     let slice = locator.after(last_pos.unwrap_or_default());
     output.push_str(slice);
 
+    // TODO: Should be able to reuse locator here? Or don't store a
+    // SourceFile in FixResult, store something else?
+    let source_file = SourceFileBuilder::new(name, output).finish();
+
     FixResult {
-        code: output,
+        code: source_file,
         fixes: fixed,
         source_map,
     }
@@ -166,8 +173,8 @@ mod tests {
             code,
             fixes,
             source_map,
-        } = apply_fixes(diagnostics.iter(), &locator);
-        assert_eq!(code, "");
+        } = apply_fixes(diagnostics.iter(), &locator, "test.f90");
+        assert_eq!(code.source_text(), "");
         assert_eq!(fixes.values().sum::<usize>(), 0);
         assert!(source_map.markers().is_empty());
     }
@@ -190,9 +197,9 @@ print("hello world")
             code,
             fixes,
             source_map,
-        } = apply_fixes(diagnostics.iter(), &locator);
+        } = apply_fixes(diagnostics.iter(), &locator, "test.f90");
         assert_eq!(
-            code,
+            code.source_text(),
             r#"
 import os
 import sys
@@ -229,9 +236,9 @@ class A(object):
             code,
             fixes,
             source_map,
-        } = apply_fixes(diagnostics.iter(), &locator);
+        } = apply_fixes(diagnostics.iter(), &locator, "test.f90");
         assert_eq!(
-            code,
+            code.source_text(),
             r"
 class A(Bar):
     ...
@@ -262,9 +269,9 @@ class A(object):
             code,
             fixes,
             source_map,
-        } = apply_fixes(diagnostics.iter(), &locator);
+        } = apply_fixes(diagnostics.iter(), &locator, "test.f90");
         assert_eq!(
-            code,
+            code.source_text(),
             r"
 class A:
     ...
@@ -298,10 +305,10 @@ class A(object, object, object):
             code,
             fixes,
             source_map,
-        } = apply_fixes(diagnostics.iter(), &locator);
+        } = apply_fixes(diagnostics.iter(), &locator, "test.f90");
 
         assert_eq!(
-            code,
+            code.source_text(),
             r"
 class A(object):
     ...
@@ -337,9 +344,9 @@ class A(object):
             code,
             fixes,
             source_map,
-        } = apply_fixes(diagnostics.iter(), &locator);
+        } = apply_fixes(diagnostics.iter(), &locator, "test.f90");
         assert_eq!(
-            code,
+            code.source_text(),
             r"
 class A:
     ...

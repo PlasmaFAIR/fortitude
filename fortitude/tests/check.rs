@@ -70,7 +70,7 @@ unknown-key = 1
       |
     2 | unknown-key = 1
       | ^^^^^^^^^^^
-    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `line-length`, `file-extensions`, `output-format`, `preview`, `no-preview`, `progress-bar`
+    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `line-length`, `file-extensions`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `diff`, `output-format`, `preview`, `no-preview`, `progress-bar`
     ");
     Ok(())
 }
@@ -376,5 +376,72 @@ select = ["T001", "style"]
 
     ----- stderr -----
     ");
+    Ok(())
+}
+
+#[test]
+fn apply_fixes() -> anyhow::Result<()>  {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none
+  real i
+  i = 4.0
+contains
+  subroutine bar
+    implicit none
+  end subroutine bar
+end program foo
+"#,
+        )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--preview")
+                         .arg("--fix")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] P021 real has implicit kind
+      |
+    2 | program foo
+    3 |   implicit none
+    4 |   real i
+      |   ^^^^ P021
+    5 |   i = 4.0
+    6 | contains
+      |
+
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    let expected = r#"
+program foo
+  implicit none
+  real :: i
+  i = 4.0
+contains
+  subroutine bar
+  end subroutine bar
+end program foo
+"#.to_string();
+
+    let transformed = fs::read_to_string(&test_file)?;
+    assert_eq!(transformed, expected);
+
     Ok(())
 }

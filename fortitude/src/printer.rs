@@ -9,7 +9,7 @@ use crate::message::{
     JsonEmitter, JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter,
     TextEmitter,
 };
-use crate::settings::OutputFormat;
+use crate::settings::{FixMode, OutputFormat, UnsafeFixes};
 
 bitflags! {
     #[derive(Default, Debug, Copy, Clone)]
@@ -26,11 +26,23 @@ bitflags! {
 pub(crate) struct Printer {
     format: OutputFormat,
     flags: Flags,
+    fix_mode: FixMode,
+    unsafe_fixes: UnsafeFixes,
 }
 
 impl Printer {
-    pub(crate) fn new(format: OutputFormat, flags: Flags) -> Self {
-        Self { format, flags }
+    pub(crate) fn new(
+        format: OutputFormat,
+        flags: Flags,
+        fix_mode: FixMode,
+        unsafe_fixes: UnsafeFixes,
+    ) -> Self {
+        Self {
+            format,
+            flags,
+            fix_mode,
+            unsafe_fixes,
+        }
     }
 
     fn write_summary_text(
@@ -83,6 +95,8 @@ impl Printer {
     ) -> Result<()> {
         // TODO: implement tracking of fixables
 
+        let fixables = FixableStatistics::try_from(diagnostics, self.unsafe_fixes);
+
         match self.format {
             OutputFormat::Concise | OutputFormat::Full => {
                 TextEmitter::default()
@@ -101,8 +115,8 @@ impl Printer {
             }
             OutputFormat::Grouped => {
                 GroupedEmitter::default()
-                    .with_show_fix_status(true)
-                    .with_unsafe_fixes(crate::settings::UnsafeFixes::Hint)
+                    .with_show_fix_status(show_fix_status(self.fix_mode, fixables.as_ref()))
+                    .with_unsafe_fixes(self.unsafe_fixes)
                     .emit(writer, diagnostics)?;
 
                 // if self.flags.intersects(Flags::SHOW_FIX_SUMMARY) {
@@ -139,5 +153,55 @@ impl Printer {
 
         writer.flush()?;
         Ok(())
+    }
+}
+
+/// Return `true` if the [`Printer`] should indicate that a rule is fixable.
+fn show_fix_status(fix_mode: FixMode, fixables: Option<&FixableStatistics>) -> bool {
+    // If we're in application mode, avoid indicating that a rule is fixable.
+    // If the specific violation were truly fixable, it would've been fixed in
+    // this pass! (We're occasionally unable to determine whether a specific
+    // violation is fixable without trying to fix it, so if fix is not
+    // enabled, we may inadvertently indicate that a rule is fixable.)
+    (!fix_mode.is_apply()) && fixables.is_some_and(FixableStatistics::any_applicable_fixes)
+}
+
+/// Statistics for [applicable][ruff_diagnostics::Applicability] fixes.
+#[derive(Debug)]
+struct FixableStatistics {
+    applicable: u32,
+    inapplicable_unsafe: u32,
+}
+
+impl FixableStatistics {
+    fn try_from(diagnostics: &[DiagnosticMessage], unsafe_fixes: UnsafeFixes) -> Option<Self> {
+        let mut applicable = 0;
+        let mut inapplicable_unsafe = 0;
+
+        for message in diagnostics.iter() {
+            if let Some(fix) = message.fix() {
+                if fix.applies(unsafe_fixes.required_applicability()) {
+                    applicable += 1;
+                } else {
+                    // Do not include inapplicable fixes at other levels that do not provide an opt-in
+                    if fix.applicability().is_unsafe() {
+                        inapplicable_unsafe += 1;
+                    }
+                }
+            }
+        }
+
+        if applicable == 0 && inapplicable_unsafe == 0 {
+            None
+        } else {
+            Some(Self {
+                applicable,
+                inapplicable_unsafe,
+            })
+        }
+    }
+
+    fn any_applicable_fixes(&self) -> bool {
+        self.applicable > 0
     }
 }
