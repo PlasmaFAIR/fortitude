@@ -14,7 +14,10 @@ use textwrap::dedent;
 /// Get the list of active rules for this session.
 fn ruleset(args: &ExplainArgs) -> anyhow::Result<Vec<Rule>> {
     // TODO: Take this as an option
-    let preview = PreviewOptions::default();
+    let preview = PreviewOptions {
+        mode: crate::settings::PreviewMode::Enabled,
+        require_explicit: false,
+    };
 
     // The rules_set keeps track of which rules have been selected.
     let mut rules_set: BTreeSet<Rule> = if args.rules.is_empty() {
