@@ -22,7 +22,10 @@ pub struct MissingAccessibilityStatement {
 impl Violation for MissingAccessibilityStatement {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("module '{}' missing default accessibility statement", self.name)
+        format!(
+            "module '{}' missing default accessibility statement",
+            self.name
+        )
     }
 }
 
@@ -34,7 +37,7 @@ impl AstRule for MissingAccessibilityStatement {
             Some(statement) => statement.named_child(0).is_none(),
             None => false,
         };
-                
+
         let bare_public_statement = match module.child_with_name("public_statement") {
             Some(statement) => statement.named_child(0).is_none(),
             None => false,
@@ -48,7 +51,6 @@ impl AstRule for MissingAccessibilityStatement {
                 node
             )];
         }
-
 
         None
     }
@@ -91,7 +93,6 @@ impl AstRule for DefaultPublicAccessibility {
                 node
             )];
         }
-
 
         None
     }
