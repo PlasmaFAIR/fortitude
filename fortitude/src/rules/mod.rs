@@ -7,6 +7,7 @@ mod macros;
 mod modules;
 mod precision;
 mod style;
+mod testing;
 mod typing;
 use crate::registry::{AsRule, Category};
 
@@ -98,5 +99,32 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Modules, "001") => (RuleGroup::Stable, Ast, modules::external_functions::ExternalFunction),
         (Modules, "011") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
+
+        // Rules for testing fortitude
+        // Couldn't get a separate `Testing` category working for some reason
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9900") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRule),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9901") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleSafeFix),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9902") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleUnsafeFix),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9903") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleDisplayOnlyFix),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9904") => (RuleGroup::Preview, Test, testing::test_rules::PreviewTestRule),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9905") => (RuleGroup::Deprecated, Test, testing::test_rules::DeprecatedTestRule),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9906") => (RuleGroup::Deprecated, Test, testing::test_rules::AnotherDeprecatedTestRule),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9907") => (RuleGroup::Removed, Test, testing::test_rules::RemovedTestRule),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9908") => (RuleGroup::Removed, Test, testing::test_rules::AnotherRemovedTestRule),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9909") => (RuleGroup::Removed, Test, testing::test_rules::RedirectedFromTestRule),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9910") => (RuleGroup::Stable, Test, testing::test_rules::RedirectedToTestRule),
+        #[cfg(any(feature = "test-rules", test))]
+        (Error, "9911") => (RuleGroup::Removed, Test, testing::test_rules::RedirectedFromPrefixTestRule),
     })
 }

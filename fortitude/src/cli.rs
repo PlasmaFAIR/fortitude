@@ -100,6 +100,13 @@ pub struct CheckArgs {
     #[arg(long, value_enum, env = "FORTITUDE_OUTPUT_FORMAT")]
     pub output_format: Option<OutputFormat>,
 
+    /// Enable preview mode; checks will include unstable rules and fixes.
+    /// Use `--no-preview` to disable.
+    #[arg(long, overrides_with("no_preview"))]
+    pub preview: Option<bool>,
+    #[clap(long, overrides_with("preview"), hide = true)]
+    pub no_preview: Option<bool>,
+
     /// Progress bar settings.
     /// Options are "off" (default), "ascii", and "fancy"
     #[arg(long, value_enum)]
