@@ -1,15 +1,15 @@
 #![allow(clippy::useless_format)]
 /// A collection of all rules, and utilities to select a subset at runtime.
-pub(crate) mod error; // Public so we can use `IoError` in other places
-mod filesystem;
+pub(crate) mod error;
+pub(crate) mod filesystem;
 #[macro_use]
 mod macros;
-mod modules;
-mod obsolescent;
-mod precision;
-mod style;
-mod testing;
-mod typing;
+pub(crate) mod modules;
+pub(crate) mod obsolescent;
+pub(crate) mod precision;
+pub(crate) mod style;
+pub(crate) mod testing;
+pub(crate) mod typing;
 use crate::registry::{AsRule, Category};
 
 use std::fmt::Formatter;
