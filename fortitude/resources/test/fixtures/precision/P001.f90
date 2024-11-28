@@ -18,6 +18,7 @@ program test
   real(dp), parameter :: l = 1.23456d1 ! Okay: Ignore d exponent
   real(dp), parameter :: m = 1.23456D3 ! Okay: Ignore D exponent
   real(dp), parameter :: n = 2e39 ! Bad: Magnitude doesn't fit in single precision
+  real(dp), parameter :: o = -(+(-(((3.141592654))))) ! Bad: Loss of precision, horrible declaration
   
   complex(dp), parameter :: ca = (0.0, 0.0) ! Okay: No loss of precision
   complex(dp), parameter :: cb = (-17745.0, 16429.0) ! Okay: No loss of precision
@@ -33,6 +34,7 @@ program test
   complex(dp), parameter :: cl = (1.23456d1, 37d2) ! Okay: Ignore d exponent
   complex(dp), parameter :: cm = (1.23456D3, 37D2) ! Okay: Ignore D exponent
   complex(dp), parameter :: cn = (2e39, 0e0) ! Bad: Magnitude doesn't fit in single precision
+  real(dp), parameter :: co = -(+(-(-3.141592654, +5.182647))) ! Bad: Loss of precision, horrible declaration
 
   real(dp) :: p, q, x, y, z
   complex(dp) :: cp, cq, cx, cy, cz

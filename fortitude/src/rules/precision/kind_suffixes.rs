@@ -82,10 +82,10 @@ impl AstRule for NoRealSuffix {
 
         // Determine the immediate context in which we've found the literal.
         let mut parent = node.parent()?;
-        if parent.kind() == "unary_expression" {
-            parent = parent.parent()?;
-        }
-        if parent.kind() == "complex_literal" {
+        while matches!(
+            parent.kind(),
+            "unary_expression" | "parenthesized_expression" | "complex_literal"
+        ) {
             parent = parent.parent()?;
         }
         let grandparent = parent.parent()?;
