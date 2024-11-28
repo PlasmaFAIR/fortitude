@@ -25,27 +25,34 @@ use tree_sitter::Node;
 /// print *, pi_2  ! Gives: 3.1415926535897900
 /// ```
 ///
-/// There are many cases where the difference in precision doesn't matter, such
-/// as the following operations:
+/// There are cases where the difference in precision doesn't matter, such
+/// as:
 ///
 /// ```f90
 /// real(dp) :: x, y
 ///
 /// x = 1.0
-/// x = 10.0 * y
+/// y = real(2.0, kind=dp)
 /// ```
 ///
-/// However, even for 'nice' numbers, it's possible to accidentally lose
-/// precision in surprising ways:
+/// A case where a missing suffix may be intentional is when using a `kind`
+/// statement:
 ///
 /// ```f90
-/// x = y * sqrt(2.0)
+/// integer, parameter :: sp = kind(0.0)
 /// ```
 ///
-/// Ideally, this rule should check how the number is used in a local expression
-/// and determine whether precision loss is a real risk, but in its current
-/// implementation it instead requires all real literals to have an explicit
-/// kind suffix.
+/// This rule will try to avoid catching these case. However, even for 'nice'
+/// numbers, it's possible to accidentally lose precision in surprising ways:
+///
+/// ```f90
+/// real(dp) :: x
+///
+/// x = sqrt(2.0)
+/// ```
+///
+/// This rule will therefore require an explicit kind statement in the majority
+/// of cases where a floating point literal is found in an expression.
 ///
 /// ## References
 /// - [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/en/learn/best_practices/floating_point/)
@@ -72,6 +79,45 @@ impl AstRule for NoRealSuffix {
         if !regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
             return None;
         }
+
+        // Ok if being used in a kind statement
+        if let Some(call_expression) = node.ancestors().find(|x| x.kind() == "call_expression") {
+            if let Some(identifier) = call_expression.child_with_name("identifier") {
+                if identifier.to_text(src.source_text())?.to_lowercase() == "kind" {
+                    return None;
+                }
+            }
+        }
+
+        // Ok if being used in a direct assignment, provided no loss of precision
+        // can occur.
+        // FIXME Need a better precision loss test!
+        let value_64: f64 = txt.parse().ok()?;
+        let value_32: f32 = txt.parse().ok()?;
+        let no_loss = (value_32 as f64) == value_64;
+        let parent_kind = node.parent()?.kind();
+        if matches!(parent_kind, "assignment_statement" | "init_declarator") && no_loss {
+            return None;
+        }
+
+        // Ok if being used _directly_ in a type cast and no loss of precision can
+        // occur.
+        // First parent must be "argument_list", second must be "call_expression"
+        let grandparent = node.parent()?.parent()?;
+        if grandparent.kind() == "call_expression" {
+            if let Some(identifier) = grandparent.child_with_name("identifier") {
+                let name = identifier.to_text(src.source_text())?.to_lowercase();
+                if no_loss
+                    && matches!(
+                        name.as_str(),
+                        "real" | "complex" | "dbl" | "integer" | "logical"
+                    )
+                {
+                    return None;
+                }
+            }
+        }
+
         let literal = txt.to_string();
         some_vec![Diagnostic::from_node(NoRealSuffix { literal }, node)]
     }

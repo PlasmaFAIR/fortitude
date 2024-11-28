@@ -3,81 +3,71 @@ source: fortitude/src/rules/precision/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/precision/P001.f90:4:31: P001 real literal 1.234567 missing kind suffix
-  |
-2 |   use, intrinsic :: iso_fortran_env, only: sp => real32, dp => real64
-3 |
-4 |   real(sp), parameter :: x1 = 1.234567
-  |                               ^^^^^^^^ P001
-5 |   real(dp), parameter :: x2 = 1.234567_dp
-6 |   real(dp), parameter :: x3 = 1.789d3 ! rule should ignore d exponentiation
-  |
-
-./resources/test/fixtures/precision/P001.f90:7:31: P001 real literal 9.876 missing kind suffix
-  |
-5 |   real(dp), parameter :: x2 = 1.234567_dp
-6 |   real(dp), parameter :: x3 = 1.789d3 ! rule should ignore d exponentiation
-7 |   real(dp), parameter :: x4 = 9.876
-  |                               ^^^^^ P001
-8 |   real(sp), parameter :: x5 = 2.468_sp
-9 |   real(sp), parameter :: x6 = 2.
-  |
-
-./resources/test/fixtures/precision/P001.f90:9:31: P001 real literal 2. missing kind suffix
+./resources/test/fixtures/precision/P001.f90:9:30: P001 real literal 1.23456 missing kind suffix
    |
- 7 |   real(dp), parameter :: x4 = 9.876
- 8 |   real(sp), parameter :: x5 = 2.468_sp
- 9 |   real(sp), parameter :: x6 = 2.
-   |                               ^^ P001
-10 |   real(sp), parameter :: x7 = .0
-11 |   real(sp), parameter :: x8 = 1E2
+ 7 |   real(sp), parameter :: c = 1.0e10 ! Okay: No loss of precision, e exponent
+ 8 |   real(sp), parameter :: d = 2.0E10 ! Okay: No loss of precision, E exponent
+ 9 |   real(sp), parameter :: e = 1.23456 ! Bad: Loss of precision
+   |                              ^^^^^^^ P001
+10 |   real(sp), parameter :: f = 1.23456e1 ! Bad: Loss of precision, e exponent
+11 |   real(sp), parameter :: g = 1.23456E1 ! Bad: Loss of precision, E exponent
    |
 
-./resources/test/fixtures/precision/P001.f90:10:31: P001 real literal .0 missing kind suffix
+./resources/test/fixtures/precision/P001.f90:10:30: P001 real literal 1.23456e1 missing kind suffix
    |
- 8 |   real(sp), parameter :: x5 = 2.468_sp
- 9 |   real(sp), parameter :: x6 = 2.
-10 |   real(sp), parameter :: x7 = .0
-   |                               ^^ P001
-11 |   real(sp), parameter :: x8 = 1E2
-12 |   real(sp), parameter :: x9 = .1e2
-   |
-
-./resources/test/fixtures/precision/P001.f90:11:31: P001 real literal 1E2 missing kind suffix
-   |
- 9 |   real(sp), parameter :: x6 = 2.
-10 |   real(sp), parameter :: x7 = .0
-11 |   real(sp), parameter :: x8 = 1E2
-   |                               ^^^ P001
-12 |   real(sp), parameter :: x9 = .1e2
-13 |   real(sp), parameter :: y1 = 1.E2
+ 8 |   real(sp), parameter :: d = 2.0E10 ! Okay: No loss of precision, E exponent
+ 9 |   real(sp), parameter :: e = 1.23456 ! Bad: Loss of precision
+10 |   real(sp), parameter :: f = 1.23456e1 ! Bad: Loss of precision, e exponent
+   |                              ^^^^^^^^^ P001
+11 |   real(sp), parameter :: g = 1.23456E1 ! Bad: Loss of precision, E exponent
+12 |   real(dp), parameter :: h = 1.23456_dp ! Okay: Kind suffix
    |
 
-./resources/test/fixtures/precision/P001.f90:12:31: P001 real literal .1e2 missing kind suffix
+./resources/test/fixtures/precision/P001.f90:11:30: P001 real literal 1.23456E1 missing kind suffix
    |
-10 |   real(sp), parameter :: x7 = .0
-11 |   real(sp), parameter :: x8 = 1E2
-12 |   real(sp), parameter :: x9 = .1e2
-   |                               ^^^^ P001
-13 |   real(sp), parameter :: y1 = 1.E2
-14 |   real(sp), parameter :: y2 = 1.2e3
-   |
-
-./resources/test/fixtures/precision/P001.f90:13:31: P001 real literal 1.E2 missing kind suffix
-   |
-11 |   real(sp), parameter :: x8 = 1E2
-12 |   real(sp), parameter :: x9 = .1e2
-13 |   real(sp), parameter :: y1 = 1.E2
-   |                               ^^^^ P001
-14 |   real(sp), parameter :: y2 = 1.2e3
-15 | end program test
+ 9 |   real(sp), parameter :: e = 1.23456 ! Bad: Loss of precision
+10 |   real(sp), parameter :: f = 1.23456e1 ! Bad: Loss of precision, e exponent
+11 |   real(sp), parameter :: g = 1.23456E1 ! Bad: Loss of precision, E exponent
+   |                              ^^^^^^^^^ P001
+12 |   real(dp), parameter :: h = 1.23456_dp ! Okay: Kind suffix
+13 |   real(sp), parameter :: i = 1.23456_sp ! Okay: Loss of precision, but we're explicit
    |
 
-./resources/test/fixtures/precision/P001.f90:14:31: P001 real literal 1.2e3 missing kind suffix
+./resources/test/fixtures/precision/P001.f90:19:12: P001 real literal 2.0 missing kind suffix
    |
-12 |   real(sp), parameter :: x9 = .1e2
-13 |   real(sp), parameter :: y1 = 1.E2
-14 |   real(sp), parameter :: y2 = 1.2e3
-   |                               ^^^^^ P001
-15 | end program test
+17 |   real(dp) :: p, q, x, y, z
+18 |
+19 |   x = sqrt(2.0) ! Bad: Loss of precision
+   |            ^^^ P001
+20 |   y = real(1.0, kind=dp) ! Okay: Type cast with no loss of precision
+21 |   z = real(1.0 + 1.0, kind=dp) ! Bad: Type cast from expression, possible l.o.p
+   |
+
+./resources/test/fixtures/precision/P001.f90:21:12: P001 real literal 1.0 missing kind suffix
+   |
+19 |   x = sqrt(2.0) ! Bad: Loss of precision
+20 |   y = real(1.0, kind=dp) ! Okay: Type cast with no loss of precision
+21 |   z = real(1.0 + 1.0, kind=dp) ! Bad: Type cast from expression, possible l.o.p
+   |            ^^^ P001
+22 |   p = real(5.0, kind=dp) ! Okay: Type cast with no loss of precision
+23 |   q = real(1.2345678, kind=dp) ! Bad: Type cast with loss of precision
+   |
+
+./resources/test/fixtures/precision/P001.f90:21:18: P001 real literal 1.0 missing kind suffix
+   |
+19 |   x = sqrt(2.0) ! Bad: Loss of precision
+20 |   y = real(1.0, kind=dp) ! Okay: Type cast with no loss of precision
+21 |   z = real(1.0 + 1.0, kind=dp) ! Bad: Type cast from expression, possible l.o.p
+   |                  ^^^ P001
+22 |   p = real(5.0, kind=dp) ! Okay: Type cast with no loss of precision
+23 |   q = real(1.2345678, kind=dp) ! Bad: Type cast with loss of precision
+   |
+
+./resources/test/fixtures/precision/P001.f90:23:12: P001 real literal 1.2345678 missing kind suffix
+   |
+21 |   z = real(1.0 + 1.0, kind=dp) ! Bad: Type cast from expression, possible l.o.p
+22 |   p = real(5.0, kind=dp) ! Okay: Type cast with no loss of precision
+23 |   q = real(1.2345678, kind=dp) ! Bad: Type cast with loss of precision
+   |            ^^^^^^^^^ P001
+24 | end program test
    |
