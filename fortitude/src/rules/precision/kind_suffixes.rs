@@ -80,39 +80,36 @@ impl AstRule for NoRealSuffix {
             return None;
         }
 
-        // Ok if being used in a kind statement
-        if let Some(call_expression) = node.ancestors().find(|x| x.kind() == "call_expression") {
-            if let Some(identifier) = call_expression.child_with_name("identifier") {
-                if identifier.to_text(src.source_text())?.to_lowercase() == "kind" {
-                    return None;
-                }
-            }
-        }
+        let parent = node.parent()?;
+        let grandparent = parent.parent()?;
 
-        // Ok if being used in a direct assignment, provided no loss of precision
-        // can occur.
+        // Check for loss of precision
         // FIXME: This precision loss test isn't the most reliable
         let value_64: f64 = txt.parse().ok()?;
         let value_32: f32 = txt.parse().ok()?;
         let no_loss = value_64 == 0.0
             || (((value_32 as f64) - value_64) / value_64).abs() < 2.0 * f64::EPSILON;
-        let parent_kind = node.parent()?.kind();
-        if matches!(parent_kind, "assignment_statement" | "init_declarator") && no_loss {
+
+        // Ok if being used in a direct assignment, provided no loss of precision
+        // can occur.
+        if matches!(parent.kind(), "assignment_statement" | "init_declarator") && no_loss {
             return None;
         }
 
-        // Ok if being used _directly_ in a type cast and no loss of precision can
-        // occur.
-        // First parent must be "argument_list", second must be "call_expression"
-        let grandparent = node.parent()?.parent()?;
+        // Ok if being used in a kind statement or a type cast.
+        // In the latter case, warnings should still be raised if precision would be
+        // lost.
+        // If it's the sole argument in a function call, the first parent must be
+        // "argument_list", and the second must be "call_expression".
         if grandparent.kind() == "call_expression" {
             if let Some(identifier) = grandparent.child_with_name("identifier") {
                 let name = identifier.to_text(src.source_text())?.to_lowercase();
-                if no_loss
-                    && matches!(
-                        name.as_str(),
-                        "real" | "complex" | "dbl" | "integer" | "logical"
-                    )
+                if name == "kind"
+                    || (no_loss
+                        && matches!(
+                            name.as_str(),
+                            "real" | "complex" | "dbl" | "integer" | "logical"
+                        ))
                 {
                     return None;
                 }
