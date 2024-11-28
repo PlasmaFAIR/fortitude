@@ -91,10 +91,11 @@ impl AstRule for NoRealSuffix {
 
         // Ok if being used in a direct assignment, provided no loss of precision
         // can occur.
-        // FIXME Need a better precision loss test!
+        // FIXME: This precision loss test isn't the most reliable
         let value_64: f64 = txt.parse().ok()?;
         let value_32: f32 = txt.parse().ok()?;
-        let no_loss = (value_32 as f64) == value_64;
+        let no_loss = value_64 == 0.0
+            || (((value_32 as f64) - value_64) / value_64).abs() < 2.0 * f64::EPSILON;
         let parent_kind = node.parent()?.kind();
         if matches!(parent_kind, "assignment_statement" | "init_declarator") && no_loss {
             return None;

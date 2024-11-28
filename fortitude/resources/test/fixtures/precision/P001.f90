@@ -4,6 +4,7 @@ program test
   integer, parameter :: sp = kind(0.0) ! Okay: Permissible in a kind statement
 
   real(dp), parameter :: a = 0.0 ! Okay: No loss of precision
+  real(dp), parameter :: b = 17745.0 ! Okay: No loss of precision
   real(sp), parameter :: c = 1.0e10 ! Okay: No loss of precision, e exponent
   real(sp), parameter :: d = 2.0E10 ! Okay: No loss of precision, E exponent
   real(sp), parameter :: e = 1.23456 ! Bad: Loss of precision
@@ -20,5 +21,5 @@ program test
   y = real(1.0, kind=dp) ! Okay: Type cast with no loss of precision
   z = real(1.0 + 1.0, kind=dp) ! Bad: Type cast from expression, possible l.o.p
   p = real(5.0, kind=dp) ! Okay: Type cast with no loss of precision
-  q = real(1.2345678, kind=dp) ! Bad: Type cast with loss of precision
+  q = real(1.23456, kind=dp) ! Bad: Type cast with loss of precision
 end program test
