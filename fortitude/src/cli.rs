@@ -102,9 +102,9 @@ pub struct CheckArgs {
 
     /// Enable preview mode; checks will include unstable rules and fixes.
     /// Use `--no-preview` to disable.
-    #[arg(long, overrides_with("no_preview"))]
+    #[arg(long, overrides_with("no_preview"), action = clap::ArgAction::SetTrue)]
     pub preview: Option<bool>,
-    #[clap(long, overrides_with("preview"), hide = true)]
+    #[clap(long, overrides_with("preview"), hide = true, action = clap::ArgAction::SetTrue)]
     pub no_preview: Option<bool>,
 
     /// Progress bar settings.
