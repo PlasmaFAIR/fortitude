@@ -80,7 +80,14 @@ impl AstRule for NoRealSuffix {
             return None;
         }
 
-        let parent = node.parent()?;
+        // Determine the immediate context in which we've found the literal.
+        let mut parent = node.parent()?;
+        if parent.kind() == "unary_expression" {
+            parent = parent.parent()?;
+        }
+        if parent.kind() == "complex_literal" {
+            parent = parent.parent()?;
+        }
         let grandparent = parent.parent()?;
 
         // Check for loss of precision
@@ -106,10 +113,7 @@ impl AstRule for NoRealSuffix {
                 let name = identifier.to_text(src.source_text())?.to_lowercase();
                 if name == "kind"
                     || (no_loss
-                        && matches!(
-                            name.as_str(),
-                            "real" | "complex" | "dbl" | "integer" | "logical"
-                        ))
+                        && matches!(name.as_str(), "real" | "cmplx" | "dbl" | "int" | "logical"))
                 {
                     return None;
                 }
