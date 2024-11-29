@@ -59,7 +59,7 @@ use tree_sitter::Node;
 ///   i = 1
 /// end subroutine s
 /// ```
-//.
+///
 /// ## References
 /// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
 ///   Incorporating Fortran 2018_, Oxford University Press, Appendix B
