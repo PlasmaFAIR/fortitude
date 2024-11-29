@@ -3,22 +3,24 @@ source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S071.f90:3:3: S071 variable declaration missing '::'
+./resources/test/fixtures/style/S071.f90:3:3: S071 [*] variable declaration missing '::'
   |
 1 | program test
 2 |   implicit none
 3 |   real these, are
   |   ^^^^^^^^^^^^^^^ S071
-4 |   type(real(kind=kind(1.0d0))) all, bad
+4 |   type(real(kind=kind(1.0d0))) all(42), bad
 5 |   integer :: but, these_ones, are_fine
   |
+  = help: Add '::'
 
-./resources/test/fixtures/style/S071.f90:4:3: S071 variable declaration missing '::'
+./resources/test/fixtures/style/S071.f90:4:3: S071 [*] variable declaration missing '::'
   |
 2 |   implicit none
 3 |   real these, are
-4 |   type(real(kind=kind(1.0d0))) all, bad
-  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S071
+4 |   type(real(kind=kind(1.0d0))) all(42), bad
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S071
 5 |   integer :: but, these_ones, are_fine
 6 | end program test
   |
+  = help: Add '::'

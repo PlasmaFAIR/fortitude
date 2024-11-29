@@ -1,9 +1,10 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
+use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -15,10 +16,14 @@ use tree_sitter::Node;
 #[violation]
 pub struct MissingDoubleColon {}
 
-impl Violation for MissingDoubleColon {
+impl AlwaysFixableViolation for MissingDoubleColon {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("variable declaration missing '::'")
+    }
+
+    fn fix_title(&self) -> String {
+        "Add '::'".to_string()
     }
 }
 impl AstRule for MissingDoubleColon {
@@ -28,7 +33,10 @@ impl AstRule for MissingDoubleColon {
             .filter_map(|child| child.to_text(src.source_text()))
             .all(|child| child != "::")
         {
-            some_vec!(Diagnostic::from_node(Self {}, node))
+            let first_decl = node.child_by_field_name("declarator")?;
+            let start_pos = TextSize::try_from(first_decl.start_byte()).unwrap();
+            let fix = Fix::safe_edit(Edit::insertion(":: ".to_string(), start_pos));
+            some_vec!(Diagnostic::from_node(Self {}, node).with_fix(fix))
         } else {
             None
         }
