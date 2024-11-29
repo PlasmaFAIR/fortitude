@@ -1,0 +1,14 @@
+---
+source: fortitude/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB001.f90:8:7: OB001 statement functions are obsolescent, prefer internal functions
+   |
+ 6 | !     ..
+ 7 | !     .. Statement Function Definitions ..
+ 8 |       CABS1( ZDUM ) = ABS( REAL( ZDUM ) ) + ABS( AIMAG( ZDUM ) )
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ OB001
+ 9 |
+10 | !     .. Parameters ..
+   |
