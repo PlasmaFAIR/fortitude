@@ -45,8 +45,8 @@ strum_macros = { workspace = true }
 textwrap = "0.16.0"
 thiserror = { version = "1.0.58" }
 toml = "0.8.19"
-tree-sitter = "~0.23.0"
-tree-sitter-fortran = "0.2.0"
+tree-sitter = "~0.24.0"
+tree-sitter-fortran = "0.3.0"
 walkdir = "2.4.0"
 
 [dev-dependencies]
