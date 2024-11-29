@@ -1,3 +1,4 @@
+pub mod double_colon_in_decl;
 pub mod end_statements;
 pub mod exit_labels;
 pub mod line_length;
@@ -23,6 +24,7 @@ mod tests {
     #[test_case(Rule::OldStyleArrayLiteral, Path::new("S041.f90"))]
     #[test_case(Rule::DeprecatedRelationalOperator, Path::new("S051.f90"))]
     #[test_case(Rule::UnnamedEndStatement, Path::new("S061.f90"))]
+    #[test_case(Rule::MissingDoubleColon, Path::new("S071.f90"))]
     #[test_case(Rule::TrailingWhitespace, Path::new("S101.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
