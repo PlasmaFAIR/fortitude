@@ -65,6 +65,9 @@ pub enum Category {
     /// Check path names, directory structures, etc.
     #[prefix = "F"]
     Filesystem,
+    /// Obsolescent features
+    #[prefix = "OB"]
+    Obsolescent,
 }
 
 pub trait RuleNamespace: Sized {
