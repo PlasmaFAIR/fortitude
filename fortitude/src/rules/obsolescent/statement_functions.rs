@@ -31,6 +31,11 @@ use tree_sitter::Node;
 ///     f = x**2 + x
 ///   end function f
 /// ```
+///
+/// ## References
+/// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
+///   Incorporating Fortran 2018_, Oxford University Press, Appendix B
+///   'Obsolescent and Deleted Features'
 #[violation]
 pub struct StatementFunction {}
 
