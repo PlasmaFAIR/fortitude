@@ -96,6 +96,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Obsolescent, "001") => (RuleGroup::Preview, Ast, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Preview, Ast, obsolescent::common_blocks::CommonBlock),
+        (Obsolescent, "021") => (RuleGroup::Preview, Ast, obsolescent::entry_statement::EntryStatement),
 
         (Precision, "001") => (RuleGroup::Stable, Ast, precision::kind_suffixes::NoRealSuffix),
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),

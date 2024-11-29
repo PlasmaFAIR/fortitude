@@ -1,0 +1,23 @@
+---
+source: fortitude/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB021.f90:7:8: OB021 entry statements are obsolescent, use module procedures with generic interface
+  |
+5 |        RETURN
+6 |
+7 |        ENTRY SUB2(A, B, C)
+  |        ^^^^^^^^^^^^^^^^^^^ OB021
+8 |        RETURN
+  |
+
+./resources/test/fixtures/obsolescent/OB021.f90:10:8: OB021 entry statements are obsolescent, use module procedures with generic interface
+   |
+ 8 |        RETURN
+ 9 |
+10 |        ENTRY SUB3
+   |        ^^^^^^^^^^ OB021
+11 |        RETURN
+12 |        END
+   |
