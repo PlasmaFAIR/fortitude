@@ -80,6 +80,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "041") => (RuleGroup::Stable, Ast, style::old_style_array_literal::OldStyleArrayLiteral),
         (Style, "051") => (RuleGroup::Stable, Ast, style::relational_operators::DeprecatedRelationalOperator),
         (Style, "061") => (RuleGroup::Stable, Ast, style::end_statements::UnnamedEndStatement),
+        (Style, "071") => (RuleGroup::Preview, Ast, style::double_colon_in_decl::MissingDoubleColon),
         (Style, "101") => (RuleGroup::Stable, Text, style::whitespace::TrailingWhitespace),
 
         (Typing, "001") => (RuleGroup::Stable, Ast, typing::implicit_typing::ImplicitTyping),
