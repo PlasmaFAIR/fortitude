@@ -94,7 +94,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Typing, "043") => (RuleGroup::Stable, Ast, typing::assumed_size::DeprecatedAssumedSizeCharacter),
         (Typing, "051") => (RuleGroup::Stable, Ast, typing::init_decls::InitialisationInDeclaration),
 
-        (Obsolescent, "001") => (RuleGroup::Stable, Ast, obsolescent::statement_functions::StatementFunction),
+        (Obsolescent, "001") => (RuleGroup::Preview, Ast, obsolescent::statement_functions::StatementFunction),
 
         (Precision, "001") => (RuleGroup::Stable, Ast, precision::kind_suffixes::NoRealSuffix),
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),
