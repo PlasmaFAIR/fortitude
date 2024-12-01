@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, io::Write};
+use std::io::Write;
 
 use anyhow::Result;
 use bitflags::bitflags;
@@ -33,14 +33,24 @@ impl Printer {
         &self,
         writer: &mut dyn Write,
         diagnostics: &[DiagnosticMessage],
+        num_files: usize,
     ) -> Result<()> {
-        let diagnostics_by_file: BTreeSet<_> = diagnostics.iter().map(|d| d.filename()).collect();
-        let total_files = diagnostics_by_file.len();
+        // IO Errors indicate that we failed to read a file
+        let num_failed = diagnostics.iter().filter(|x| x.name() == "IoError").count();
+        let total_files = num_files - num_failed;
 
-        let file_no = format!(
-            "fortitude: {} files scanned.",
-            total_files.to_string().bold()
-        );
+        let file_no = if num_failed == 0 {
+            format!(
+                "fortitude: {} files scanned.",
+                total_files.to_string().bold()
+            )
+        } else {
+            format!(
+                "fortitude: {} files scanned, {} could not be read.",
+                total_files.to_string().bold(),
+                num_failed.to_string().bold(),
+            )
+        };
 
         let total_errors = diagnostics.len();
 
@@ -63,6 +73,7 @@ impl Printer {
 
     pub(crate) fn write_once(
         &self,
+        num_files: usize,
         diagnostics: &[DiagnosticMessage],
         writer: &mut dyn Write,
     ) -> Result<()> {
@@ -74,7 +85,7 @@ impl Printer {
                     .with_show_source(self.format == OutputFormat::Full)
                     .with_unsafe_fixes(crate::settings::UnsafeFixes::Hint)
                     .emit(writer, diagnostics)?;
-                self.write_summary_text(writer, diagnostics)?;
+                self.write_summary_text(writer, diagnostics, num_files)?;
             }
             OutputFormat::Json => {
                 JsonEmitter.emit(writer, diagnostics)?;

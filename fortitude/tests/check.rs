@@ -31,7 +31,7 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
     ----- stdout -----
     test/file/doesnt/exist.f90:1:1: E000 Error opening file: No such file or directory (os error 2)
 
-    fortitude: 1 files scanned.
+    fortitude: 0 files scanned, 1 could not be read.
     Number of errors: 1
 
     For more information about specific rules, run:
