@@ -5,8 +5,8 @@ use bitflags::bitflags;
 use colored::Colorize;
 
 use crate::message::{
-    DiagnosticMessage, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
-    SarifEmitter, TextEmitter,
+    AzureEmitter, DiagnosticMessage, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter,
+    JsonEmitter, SarifEmitter, TextEmitter,
 };
 use crate::settings::OutputFormat;
 
@@ -118,6 +118,9 @@ impl Printer {
             }
             OutputFormat::Sarif => {
                 SarifEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Azure => {
+                AzureEmitter.emit(writer, diagnostics)?;
             }
         }
 

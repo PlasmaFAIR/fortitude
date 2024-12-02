@@ -1,0 +1,8 @@
+---
+source: fortitude/src/message/azure.rs
+expression: content
+snapshot_kind: text
+---
+##vso[task.logissue type=error;sourcepath=test.f90;linenumber=6;columnnumber=5;code=T003;]'implicit none' set on the enclosing module
+##vso[task.logissue type=error;sourcepath=test.f90;linenumber=7;columnnumber=3;code=S061;]end statement should read 'end subroutine foo'
+##vso[task.logissue type=error;sourcepath=star_kind.f90;linenumber=1;columnnumber=8;code=T021;]integer*4 is non-standard, use integer(4)

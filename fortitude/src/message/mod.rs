@@ -1,3 +1,4 @@
+pub use azure::AzureEmitter;
 pub use github::GithubEmitter;
 pub use gitlab::GitlabEmitter;
 pub use grouped::GroupedEmitter;
@@ -5,6 +6,7 @@ pub use json::JsonEmitter;
 pub use sarif::SarifEmitter;
 pub use text::TextEmitter;
 
+mod azure;
 mod diff;
 mod github;
 mod gitlab;
