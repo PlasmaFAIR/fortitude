@@ -1,0 +1,8 @@
+---
+source: fortitude/src/message/github.rs
+expression: content
+snapshot_kind: text
+---
+::error title=Fortitude (T003),file=test.f90,line=6,col=5,endLine=6,endColumn=18::test.f90:6:5: T003 'implicit none' set on the enclosing module
+::error title=Fortitude (S061),file=test.f90,line=7,col=3,endLine=7,endColumn=17::test.f90:7:3: S061 end statement should read 'end subroutine foo'
+::error title=Fortitude (T021),file=star_kind.f90,line=1,col=8,endLine=1,endColumn=9::star_kind.f90:1:8: T021 integer*4 is non-standard, use integer(4)

@@ -1,8 +1,10 @@
+pub use github::GithubEmitter;
 pub use json::JsonEmitter;
 pub use sarif::SarifEmitter;
 pub use text::TextEmitter;
 
 mod diff;
+mod github;
 mod json;
 mod sarif;
 mod text;
