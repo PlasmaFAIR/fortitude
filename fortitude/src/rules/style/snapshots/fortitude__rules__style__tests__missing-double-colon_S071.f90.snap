@@ -14,6 +14,15 @@ snapshot_kind: text
   |
   = help: Add '::'
 
+ℹ Safe fix
+1 1 | program test
+2 2 |   implicit none
+3   |-  real these, are
+  3 |+  real :: these, are
+4 4 |   type(real(kind=kind(1.0d0))) all(42), bad
+5 5 |   integer :: but, these_ones, are_fine
+6 6 | end program test
+
 ./resources/test/fixtures/style/S071.f90:4:3: S071 [*] variable declaration missing '::'
   |
 2 |   implicit none
@@ -24,3 +33,12 @@ snapshot_kind: text
 6 | end program test
   |
   = help: Add '::'
+
+ℹ Safe fix
+1 1 | program test
+2 2 |   implicit none
+3 3 |   real these, are
+4   |-  type(real(kind=kind(1.0d0))) all(42), bad
+  4 |+  type(real(kind=kind(1.0d0))) :: all(42), bad
+5 5 |   integer :: but, these_ones, are_fine
+6 6 | end program test

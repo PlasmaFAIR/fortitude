@@ -362,6 +362,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shadow-rs",
+ "similar",
  "similar-asserts",
  "strum",
  "strum_macros",

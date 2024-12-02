@@ -40,6 +40,7 @@ ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1
 ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { workspace = true }
+similar = { version = "2.4.0", features = ["inline"] }
 similar-asserts = "1.6.0"
 shadow-rs = { version = "0.36.0", default-features = false }
 strum = { workspace = true }

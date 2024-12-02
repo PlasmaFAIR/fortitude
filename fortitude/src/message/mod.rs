@@ -1,6 +1,7 @@
 pub use json::JsonEmitter;
 pub use text::TextEmitter;
 
+mod diff;
 mod json;
 mod text;
 

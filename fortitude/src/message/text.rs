@@ -14,7 +14,7 @@ use ruff_text_size::{Ranged, TextRange};
 
 use crate::fs::relativize_path;
 // use crate::line_width::{IndentWidth, LineWidthBuilder};
-// use crate::message::diff::Diff;
+use crate::message::diff::Diff;
 use crate::message::Emitter;
 use crate::settings::UnsafeFixes;
 use crate::text_helpers::ShowNonprinting;
@@ -104,11 +104,11 @@ impl Emitter for TextEmitter {
                 }
             }
 
-            // if self.flags.intersects(EmitterFlags::SHOW_FIX_DIFF) {
-            //     if let Some(diff) = Diff::from_message(message) {
-            //         writeln!(writer, "{diff}")?;
-            //     }
-            // }
+            if self.flags.intersects(EmitterFlags::SHOW_FIX_DIFF) {
+                if let Some(diff) = Diff::from_message(message) {
+                    writeln!(writer, "{diff}")?;
+                }
+            }
         }
 
         Ok(())
