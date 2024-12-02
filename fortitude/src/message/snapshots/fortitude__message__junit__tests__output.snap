@@ -1,0 +1,21 @@
+---
+source: fortitude/src/message/junit.rs
+expression: content
+snapshot_kind: text
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="fortitude" tests="3" failures="3" errors="0">
+    <testsuite name="star_kind.f90" tests="1" disabled="0" errors="0" failures="1" package="org.plasmafair.fortitude">
+        <testcase name="org.plasmafair.fortitude.T021" classname="star_kind" line="1" column="8">
+            <failure message="integer*4 is non-standard, use integer(4)">line 1, col 8, integer*4 is non-standard, use integer(4)</failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="test.f90" tests="2" disabled="0" errors="0" failures="2" package="org.plasmafair.fortitude">
+        <testcase name="org.plasmafair.fortitude.T003" classname="test" line="6" column="5">
+            <failure message="&apos;implicit none&apos; set on the enclosing module">line 6, col 5, &apos;implicit none&apos; set on the enclosing module</failure>
+        </testcase>
+        <testcase name="org.plasmafair.fortitude.S061" classname="test" line="7" column="3">
+            <failure message="end statement should read &apos;end subroutine foo&apos;">line 7, col 3, end statement should read &apos;end subroutine foo&apos;</failure>
+        </testcase>
+    </testsuite>
+</testsuites>

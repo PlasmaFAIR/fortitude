@@ -6,7 +6,7 @@ use colored::Colorize;
 
 use crate::message::{
     AzureEmitter, DiagnosticMessage, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter,
-    JsonEmitter, JsonLinesEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
+    JsonEmitter, JsonLinesEmitter, JunitEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
 };
 use crate::settings::OutputFormat;
 
@@ -127,6 +127,9 @@ impl Printer {
             }
             OutputFormat::Rdjson => {
                 RdjsonEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Junit => {
+                JunitEmitter.emit(writer, diagnostics)?;
             }
         }
 
