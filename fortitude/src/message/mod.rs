@@ -49,7 +49,6 @@ impl DiagnosticMessage {
     }
 
     /// Returns the name used to represent the diagnostic.
-    #[allow(dead_code)]
     pub fn name(&self) -> &str {
         &self.kind.name
     }

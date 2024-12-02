@@ -483,7 +483,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let flags = PrinterFlags::SHOW_VIOLATIONS | PrinterFlags::SHOW_FIX_SUMMARY;
 
-    Printer::new(output_format, flags).write_once(&diagnostics, &mut writer)?;
+    Printer::new(output_format, flags).write_once(files.len(), &diagnostics, &mut writer)?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)
