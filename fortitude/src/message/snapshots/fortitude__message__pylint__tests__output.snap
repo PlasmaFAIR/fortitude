@@ -1,0 +1,8 @@
+---
+source: fortitude/src/message/pylint.rs
+expression: content
+snapshot_kind: text
+---
+test.f90:6: [T003] 'implicit none' set on the enclosing module
+test.f90:7: [S061] end statement should read 'end subroutine foo'
+star_kind.f90:1: [T021] integer*4 is non-standard, use integer(4)
