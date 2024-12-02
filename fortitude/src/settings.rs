@@ -134,7 +134,7 @@ pub enum OutputFormat {
     // Pylint,
     // Rdjson,
     // Azure,
-    // Sarif,
+    Sarif,
 }
 
 impl Display for OutputFormat {
@@ -151,7 +151,7 @@ impl Display for OutputFormat {
             // Self::Pylint => write!(f, "pylint"),
             // Self::Rdjson => write!(f, "rdjson"),
             // Self::Azure => write!(f, "azure"),
-            // Self::Sarif => write!(f, "sarif"),
+            Self::Sarif => write!(f, "sarif"),
         }
     }
 }

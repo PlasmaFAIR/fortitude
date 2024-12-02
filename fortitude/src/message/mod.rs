@@ -1,8 +1,10 @@
 pub use json::JsonEmitter;
+pub use sarif::SarifEmitter;
 pub use text::TextEmitter;
 
 mod diff;
 mod json;
+mod sarif;
 mod text;
 
 use std::cmp::Ordering;

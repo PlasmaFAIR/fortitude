@@ -50,6 +50,7 @@ thiserror = { version = "1.0.58" }
 toml = "0.8.19"
 tree-sitter = "~0.24.0"
 tree-sitter-fortran = "0.3.0"
+url = { version = "2.5.0" }
 walkdir = "2.4.0"
 
 [build-dependencies]
@@ -59,7 +60,7 @@ shadow-rs = { version = "0.36.0", default-features = false }
 assert_cmd = "2.0.16"
 # Disable colored output in tests
 colored = { workspace = true, features = ["no-color"] }
-insta = { version = "1.41.1", features = ["filters"] }
+insta = { version = "1.41.1", features = ["filters", "json", "redactions"] }
 insta-cmd = "0.6.0"
 predicates = "3.1.2"
 pretty_assertions = "1.4.1"
