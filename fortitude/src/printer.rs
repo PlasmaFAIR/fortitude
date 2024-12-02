@@ -5,7 +5,8 @@ use bitflags::bitflags;
 use colored::Colorize;
 
 use crate::message::{
-    DiagnosticMessage, Emitter, GithubEmitter, GroupedEmitter, JsonEmitter, SarifEmitter, TextEmitter
+    DiagnosticMessage, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
+    SarifEmitter, TextEmitter,
 };
 use crate::settings::OutputFormat;
 
@@ -93,6 +94,9 @@ impl Printer {
             }
             OutputFormat::Github => {
                 GithubEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Gitlab => {
+                GitlabEmitter::default().emit(writer, diagnostics)?;
             }
             OutputFormat::Grouped => {
                 GroupedEmitter::default()

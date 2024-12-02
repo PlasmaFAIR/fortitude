@@ -1,4 +1,5 @@
 pub use github::GithubEmitter;
+pub use gitlab::GitlabEmitter;
 pub use grouped::GroupedEmitter;
 pub use json::JsonEmitter;
 pub use sarif::SarifEmitter;
@@ -6,6 +7,7 @@ pub use text::TextEmitter;
 
 mod diff;
 mod github;
+mod gitlab;
 mod grouped;
 mod json;
 mod sarif;
