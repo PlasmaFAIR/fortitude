@@ -1,0 +1,11 @@
+---
+source: fortitude/src/message/grouped.rs
+expression: content
+snapshot_kind: text
+---
+star_kind.f90:
+  1:8 T021 integer*4 is non-standard, use integer(4)
+
+test.f90:
+  6:5 T003 'implicit none' set on the enclosing module
+  7:3 S061 end statement should read 'end subroutine foo'

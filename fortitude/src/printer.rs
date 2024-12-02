@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use colored::Colorize;
 
 use crate::message::{
-    DiagnosticMessage, Emitter, GithubEmitter, JsonEmitter, SarifEmitter, TextEmitter,
+    DiagnosticMessage, Emitter, GithubEmitter, GroupedEmitter, JsonEmitter, SarifEmitter, TextEmitter
 };
 use crate::settings::OutputFormat;
 
@@ -79,6 +79,8 @@ impl Printer {
         diagnostics: &[DiagnosticMessage],
         writer: &mut dyn Write,
     ) -> Result<()> {
+        // TODO: implement tracking of fixables
+
         match self.format {
             OutputFormat::Concise | OutputFormat::Full => {
                 TextEmitter::default()
@@ -91,6 +93,21 @@ impl Printer {
             }
             OutputFormat::Github => {
                 GithubEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Grouped => {
+                GroupedEmitter::default()
+                    .with_show_fix_status(true)
+                    .with_unsafe_fixes(crate::settings::UnsafeFixes::Hint)
+                    .emit(writer, diagnostics)?;
+
+                // if self.flags.intersects(Flags::SHOW_FIX_SUMMARY) {
+                //     if !diagnostics.fixed.is_empty() {
+                //         writeln!(writer)?;
+                //         print_fix_summary(writer, &diagnostics.fixed)?;
+                //         writeln!(writer)?;
+                //     }
+                // }
+                self.write_summary_text(writer, diagnostics, num_files)?;
             }
             OutputFormat::Json => {
                 JsonEmitter.emit(writer, diagnostics)?;
