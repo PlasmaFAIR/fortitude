@@ -3,6 +3,7 @@ pub use github::GithubEmitter;
 pub use gitlab::GitlabEmitter;
 pub use grouped::GroupedEmitter;
 pub use json::JsonEmitter;
+pub use json_lines::JsonLinesEmitter;
 pub use sarif::SarifEmitter;
 pub use text::TextEmitter;
 
@@ -12,6 +13,7 @@ mod github;
 mod gitlab;
 mod grouped;
 mod json;
+mod json_lines;
 mod sarif;
 mod text;
 

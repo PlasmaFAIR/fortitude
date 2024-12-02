@@ -126,7 +126,7 @@ pub enum OutputFormat {
     #[default]
     Full,
     Json,
-    // JsonLines,
+    JsonLines,
     // Junit,
     Grouped,
     Github,
@@ -143,7 +143,7 @@ impl Display for OutputFormat {
             Self::Concise => write!(f, "concise"),
             Self::Full => write!(f, "full"),
             Self::Json => write!(f, "json"),
-            // Self::JsonLines => write!(f, "json_lines"),
+            Self::JsonLines => write!(f, "json_lines"),
             // Self::Junit => write!(f, "junit"),
             Self::Grouped => write!(f, "grouped"),
             Self::Github => write!(f, "github"),
