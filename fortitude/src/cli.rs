@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 use crate::{
-    rule_selector::RuleSelector, settings::OutputFormat, settings::ProgressBar, RuleSelectorParser,
+    build, rule_selector::RuleSelector, settings::OutputFormat, settings::ProgressBar,
+    RuleSelectorParser,
 };
 
 /// Default extensions to check
@@ -12,10 +13,11 @@ pub const FORTRAN_EXTS: &[&str] = &[
 ];
 
 #[derive(Debug, Parser)]
-#[command(version, about)]
+#[command(version = build::CLAP_LONG_VERSION, about)]
 pub struct Cli {
     #[clap(subcommand)]
     pub command: SubCommands,
+
     #[clap(flatten)]
     pub global_options: GlobalConfigArgs,
 }

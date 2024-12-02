@@ -13,6 +13,7 @@ license = "MIT"
 keywords = ["Fortran", "linter"]
 categories = ["command-line-utilities", "development-tools"]
 exclude = [".*", "test.f90"]
+build = "build.rs"
 
 [dependencies]
 annotate-snippets = { git = "https://github.com/PlasmaFAIR/annotate-snippets-rs.git", branch = "level-none" }
@@ -40,6 +41,7 @@ ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1",
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { workspace = true }
 similar-asserts = "1.6.0"
+shadow-rs = "0.36.0"
 strum = { workspace = true }
 strum_macros = { workspace = true }
 textwrap = "0.16.0"
@@ -48,6 +50,9 @@ toml = "0.8.19"
 tree-sitter = "~0.24.0"
 tree-sitter-fortran = "0.3.0"
 walkdir = "2.4.0"
+
+[build-dependencies]
+shadow-rs = "0.36.0"
 
 [dev-dependencies]
 assert_cmd = "2.0.16"

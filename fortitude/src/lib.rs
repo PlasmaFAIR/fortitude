@@ -20,8 +20,11 @@ use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
+use shadow_rs::shadow;
 use std::path::Path;
 use tree_sitter::Node;
+
+shadow!(build);
 
 // Violation type
 // --------------
