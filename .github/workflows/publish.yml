@@ -46,7 +46,7 @@ jobs:
           sccache: 'true'
           manylinux: auto
         env:
-          CFLAGS: -std=c99
+          CFLAGS: -std=c11
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
