@@ -1,0 +1,86 @@
+---
+source: fortitude/src/message/rdjson.rs
+expression: content
+snapshot_kind: text
+---
+{
+  "diagnostics": [
+    {
+      "code": {
+        "value": "T003"
+      },
+      "location": {
+        "path": "test.f90",
+        "range": {
+          "end": {
+            "column": 18,
+            "line": 6
+          },
+          "start": {
+            "column": 5,
+            "line": 6
+          }
+        }
+      },
+      "message": "'implicit none' set on the enclosing module",
+      "suggestions": [
+        {
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 6
+            },
+            "start": {
+              "column": 5,
+              "line": 6
+            }
+          },
+          "text": ""
+        }
+      ]
+    },
+    {
+      "code": {
+        "value": "S061"
+      },
+      "location": {
+        "path": "test.f90",
+        "range": {
+          "end": {
+            "column": 17,
+            "line": 7
+          },
+          "start": {
+            "column": 3,
+            "line": 7
+          }
+        }
+      },
+      "message": "end statement should read 'end subroutine foo'"
+    },
+    {
+      "code": {
+        "value": "T021"
+      },
+      "location": {
+        "path": "star_kind.f90",
+        "range": {
+          "end": {
+            "column": 9,
+            "line": 1
+          },
+          "start": {
+            "column": 8,
+            "line": 1
+          }
+        }
+      },
+      "message": "integer*4 is non-standard, use integer(4)"
+    }
+  ],
+  "severity": "warning",
+  "source": {
+    "name": "fortitude",
+    "url": "https://github.com/PlasmaFAIR/fortitude"
+  }
+}

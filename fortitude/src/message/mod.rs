@@ -4,6 +4,7 @@ pub use gitlab::GitlabEmitter;
 pub use grouped::GroupedEmitter;
 pub use json::JsonEmitter;
 pub use json_lines::JsonLinesEmitter;
+pub use rdjson::RdjsonEmitter;
 pub use sarif::SarifEmitter;
 pub use text::TextEmitter;
 
@@ -14,6 +15,7 @@ mod gitlab;
 mod grouped;
 mod json;
 mod json_lines;
+mod rdjson;
 mod sarif;
 mod text;
 

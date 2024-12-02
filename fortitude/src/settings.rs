@@ -132,7 +132,7 @@ pub enum OutputFormat {
     Github,
     Gitlab,
     // Pylint,
-    // Rdjson,
+    Rdjson,
     Azure,
     Sarif,
 }
@@ -149,7 +149,7 @@ impl Display for OutputFormat {
             Self::Github => write!(f, "github"),
             Self::Gitlab => write!(f, "gitlab"),
             // Self::Pylint => write!(f, "pylint"),
-            // Self::Rdjson => write!(f, "rdjson"),
+            Self::Rdjson => write!(f, "rdjson"),
             Self::Azure => write!(f, "azure"),
             Self::Sarif => write!(f, "sarif"),
         }
