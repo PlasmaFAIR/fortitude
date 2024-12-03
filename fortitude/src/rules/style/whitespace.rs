@@ -1,10 +1,10 @@
+/// Defines rules that enforce widely accepted whitespace rules.
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 
 use crate::settings::Settings;
 use crate::{FromStartEndLineCol, TextRule};
-/// Defines rules that enforce widely accepted whitespace rules.
 
 /// ## What does it do?
 /// Checks for tailing whitespace

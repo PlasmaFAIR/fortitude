@@ -1,3 +1,4 @@
+/// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
@@ -5,8 +6,6 @@ use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
-
-/// Defines rules that raise errors if implicit typing is in use.
 
 fn implicit_statement_is_none(node: &Node) -> bool {
     if let Some(child) = node.child(1) {
