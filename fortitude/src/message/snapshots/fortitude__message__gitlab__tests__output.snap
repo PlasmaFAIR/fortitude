@@ -1,0 +1,43 @@
+---
+source: fortitude/src/message/gitlab.rs
+expression: redact_fingerprint(&content)
+snapshot_kind: text
+---
+[
+  {
+    "description": "(T003) 'implicit none' set on the enclosing module",
+    "fingerprint": "<redacted>",
+    "location": {
+      "lines": {
+        "begin": 6,
+        "end": 6
+      },
+      "path": "test.f90"
+    },
+    "severity": "major"
+  },
+  {
+    "description": "(S061) end statement should read 'end subroutine foo'",
+    "fingerprint": "<redacted>",
+    "location": {
+      "lines": {
+        "begin": 7,
+        "end": 7
+      },
+      "path": "test.f90"
+    },
+    "severity": "major"
+  },
+  {
+    "description": "(T021) integer*4 is non-standard, use integer(4)",
+    "fingerprint": "<redacted>",
+    "location": {
+      "lines": {
+        "begin": 1,
+        "end": 1
+      },
+      "path": "star_kind.f90"
+    },
+    "severity": "major"
+  }
+]

@@ -1,0 +1,144 @@
+---
+source: fortitude/src/message/sarif.rs
+expression: value
+snapshot_kind: text
+---
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "results": [
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "[URI]"
+                },
+                "region": {
+                  "endColumn": 18,
+                  "endLine": 6,
+                  "startColumn": 5,
+                  "startLine": 6
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "'implicit none' set on the enclosing module"
+          },
+          "ruleId": "T003"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "[URI]"
+                },
+                "region": {
+                  "endColumn": 17,
+                  "endLine": 7,
+                  "startColumn": 3,
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "end statement should read 'end subroutine foo'"
+          },
+          "ruleId": "S061"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "[URI]"
+                },
+                "region": {
+                  "endColumn": 9,
+                  "endLine": 1,
+                  "startColumn": 8,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "integer*4 is non-standard, use integer(4)"
+          },
+          "ruleId": "T021"
+        }
+      ],
+      "tool": {
+        "driver": {
+          "informationUri": "https://github.com/PlasmaFAIR/fortitude",
+          "name": "fortitude",
+          "rules": [
+            {
+              "fullDescription": {
+                "text": "## What does it do?\nChecks that `end` statements include the type of construct they're ending\n\n## Why is this bad?\nEnd statements should specify what kind of construct they're ending, and the\nname of that construct. For example, prefer this:\n\n```f90\nmodule mymodule\n  ...\nend module mymodule\n```\n\nTo this:\n\n```f90\nmodule mymodule\n  ...\nend\n```\n\nOr this:\n\n```f90\nmodule mymodule\n  ...\nend module\n```\n\nSimilar rules apply for many other Fortran statements\n"
+              },
+              "help": {
+                "text": "end statement should read 'end {statement} {name}'"
+              },
+              "id": "S061",
+              "properties": {
+                "id": "S061",
+                "kind": "Style",
+                "name": "unnamed-end-statement",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "end statement should read 'end {statement} {name}'"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for unnecessary `implicit none` in module procedures\n\n## Why is this bad?\nIf a module has 'implicit none' set, it is not necessary to set it in contained\nfunctions and subroutines (except when using interfaces).\n"
+              },
+              "help": {
+                "text": "'implicit none' set on the enclosing {entity}"
+              },
+              "id": "T003",
+              "properties": {
+                "id": "T003",
+                "kind": "Typing",
+                "name": "superfluous-implicit-none",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "'implicit none' set on the enclosing {entity}"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for non-standard kind specifiers such as `int*4` or `real*8`\n\n## Why is this bad?\nTypes such as 'real*8' or 'integer*4' are not standard Fortran and should be\navoided. For these cases, consider instead using 'real(real64)' or\n'integer(int32)', where 'real64' and 'int32' may be found in the intrinsic\nmodule 'iso_fortran_env'. You may also wish to determine kinds using the\nbuilt-in functions 'selected_real_kind' and 'selected_int_kind'.\n\nAlso prefers the use of `character(len=*)` to\n`character*(*)`, as although the latter is permitted by the standard, the former is\nmore explicit.\n"
+              },
+              "help": {
+                "text": "{dtype}{size} is non-standard, use {dtype}({kind})"
+              },
+              "id": "T021",
+              "properties": {
+                "id": "T021",
+                "kind": "Typing",
+                "name": "star-kind",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "{dtype}{size} is non-standard, use {dtype}({kind})"
+              }
+            }
+          ],
+          "version": "[VERSION]"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}

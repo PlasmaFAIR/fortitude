@@ -1,11 +1,31 @@
+pub use azure::AzureEmitter;
+pub use github::GithubEmitter;
+pub use gitlab::GitlabEmitter;
+pub use grouped::GroupedEmitter;
 pub use json::JsonEmitter;
+pub use json_lines::JsonLinesEmitter;
+pub use junit::JunitEmitter;
+pub use pylint::PylintEmitter;
+pub use rdjson::RdjsonEmitter;
+pub use sarif::SarifEmitter;
 pub use text::TextEmitter;
 
+mod azure;
+mod diff;
+mod github;
+mod gitlab;
+mod grouped;
 mod json;
+mod json_lines;
+mod junit;
+mod pylint;
+mod rdjson;
+mod sarif;
 mod text;
 
-use std::cmp::Ordering;
+use std::collections::BTreeMap;
 use std::io::Write;
+use std::{cmp::Ordering, ops::Deref};
 
 use crate::{registry::AsRule, rules::Rule};
 use ruff_diagnostics::{Diagnostic, DiagnosticKind, Fix};
@@ -133,6 +153,35 @@ pub trait Emitter {
         writer: &mut dyn Write,
         messages: &[DiagnosticMessage],
     ) -> anyhow::Result<()>;
+}
+
+struct MessageWithLocation<'a> {
+    message: &'a DiagnosticMessage,
+    start_location: SourceLocation,
+}
+
+impl Deref for MessageWithLocation<'_> {
+    type Target = DiagnosticMessage;
+
+    fn deref(&self) -> &Self::Target {
+        self.message
+    }
+}
+
+fn group_messages_by_filename(
+    messages: &[DiagnosticMessage],
+) -> BTreeMap<&str, Vec<MessageWithLocation>> {
+    let mut grouped_messages = BTreeMap::default();
+    for message in messages {
+        grouped_messages
+            .entry(message.filename())
+            .or_insert_with(Vec::new)
+            .push(MessageWithLocation {
+                message,
+                start_location: message.compute_start_location(),
+            });
+    }
+    grouped_messages
 }
 
 #[cfg(test)]

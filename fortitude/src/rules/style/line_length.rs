@@ -1,10 +1,10 @@
+/// Defines rules that govern line length.
 use crate::settings::Settings;
 use crate::{FromStartEndLineCol, TextRule};
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
-/// Defines rules that govern line length.
 
 /// ## What does it do?
 /// Checks line length isn't too long

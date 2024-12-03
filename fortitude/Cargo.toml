@@ -32,6 +32,7 @@ path-absolutize = { version = "3.1.1", features = [
     "use_unix_paths_on_wasm",
 ]}
 pathdiff = { version = "0.2.1" }
+quick-junit = { version = "0.5.0" }
 rayon = "1.10.0"
 ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0", features = ["serde"] }
@@ -40,6 +41,7 @@ ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1
 ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { workspace = true }
+similar = { version = "2.4.0", features = ["inline"] }
 similar-asserts = "1.6.0"
 shadow-rs = { version = "0.36.0", default-features = false }
 strum = { workspace = true }
@@ -49,6 +51,7 @@ thiserror = { version = "1.0.58" }
 toml = "0.8.19"
 tree-sitter = "~0.24.0"
 tree-sitter-fortran = "0.3.0"
+url = { version = "2.5.0" }
 walkdir = "2.4.0"
 
 [build-dependencies]
@@ -58,7 +61,7 @@ shadow-rs = { version = "0.36.0", default-features = false }
 assert_cmd = "2.0.16"
 # Disable colored output in tests
 colored = { workspace = true, features = ["no-color"] }
-insta = { version = "1.41.1", features = ["filters"] }
+insta = { version = "1.41.1", features = ["filters", "json", "redactions"] }
 insta-cmd = "0.6.0"
 predicates = "3.1.2"
 pretty_assertions = "1.4.1"

@@ -4,7 +4,11 @@ use anyhow::Result;
 use bitflags::bitflags;
 use colored::Colorize;
 
-use crate::message::{DiagnosticMessage, Emitter, JsonEmitter, TextEmitter};
+use crate::message::{
+    AzureEmitter, DiagnosticMessage, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter,
+    JsonEmitter, JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter,
+    TextEmitter,
+};
 use crate::settings::OutputFormat;
 
 bitflags! {
@@ -77,6 +81,8 @@ impl Printer {
         diagnostics: &[DiagnosticMessage],
         writer: &mut dyn Write,
     ) -> Result<()> {
+        // TODO: implement tracking of fixables
+
         match self.format {
             OutputFormat::Concise | OutputFormat::Full => {
                 TextEmitter::default()
@@ -87,8 +93,47 @@ impl Printer {
                     .emit(writer, diagnostics)?;
                 self.write_summary_text(writer, diagnostics, num_files)?;
             }
+            OutputFormat::Github => {
+                GithubEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Gitlab => {
+                GitlabEmitter::default().emit(writer, diagnostics)?;
+            }
+            OutputFormat::Grouped => {
+                GroupedEmitter::default()
+                    .with_show_fix_status(true)
+                    .with_unsafe_fixes(crate::settings::UnsafeFixes::Hint)
+                    .emit(writer, diagnostics)?;
+
+                // if self.flags.intersects(Flags::SHOW_FIX_SUMMARY) {
+                //     if !diagnostics.fixed.is_empty() {
+                //         writeln!(writer)?;
+                //         print_fix_summary(writer, &diagnostics.fixed)?;
+                //         writeln!(writer)?;
+                //     }
+                // }
+                self.write_summary_text(writer, diagnostics, num_files)?;
+            }
             OutputFormat::Json => {
                 JsonEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Sarif => {
+                SarifEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Azure => {
+                AzureEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::JsonLines => {
+                JsonLinesEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Rdjson => {
+                RdjsonEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Junit => {
+                JunitEmitter.emit(writer, diagnostics)?;
+            }
+            OutputFormat::Pylint => {
+                PylintEmitter.emit(writer, diagnostics)?;
             }
         }
 
