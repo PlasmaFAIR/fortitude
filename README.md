@@ -107,6 +107,36 @@ Number of errors: 2 (2 fixed, 0 remaining)
 
 Run `fortitude explain` to see which rules have fixes available.
 
+### Preview
+
+> [!NOTE]
+> Added in v0.6.0
+
+Some fortitude rules are only available through an opt-in preview
+mode to give the community some time to evaluate them and provide
+feedback. To enable preview rules, pass the `--preview` flag to
+`check`,
+
+```console
+$ fortitude check --preview
+```
+
+or to enable more permanently, set it in your `fpm.toml`:
+
+```toml
+[extra.fortitude.check]
+preview = true
+```
+
+or `fortitude.toml`:
+
+```toml
+[check]
+preview = true
+```
+
+Run `fortitude explain` to see which rules are in preview mode.
+
 ## Configuration
 
 Fortitude will look for either a `fortitude.toml` or `fpm.toml` file in the
