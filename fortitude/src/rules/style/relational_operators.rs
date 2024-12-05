@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -31,11 +31,16 @@ pub struct DeprecatedRelationalOperator {
     new_symbol: String,
 }
 
-impl Violation for DeprecatedRelationalOperator {
+impl AlwaysFixableViolation for DeprecatedRelationalOperator {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { symbol, new_symbol } = self;
         format!("deprecated relational operator '{symbol}', prefer '{new_symbol}' instead")
+    }
+
+    fn fix_title(&self) -> String {
+        let Self { new_symbol, .. } = self;
+        format!("Use '{new_symbol}'")
     }
 }
 impl AstRule for DeprecatedRelationalOperator {
@@ -46,10 +51,10 @@ impl AstRule for DeprecatedRelationalOperator {
             .to_lowercase()
             .to_string();
         let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
-        some_vec![Diagnostic::from_node(
-            Self { symbol, new_symbol },
-            &relation
-        )]
+
+        let fix = Fix::safe_edit(relation.edit_replacement(new_symbol.clone()));
+
+        some_vec![Diagnostic::from_node(Self { symbol, new_symbol }, &relation).with_fix(fix)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
