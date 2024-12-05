@@ -90,6 +90,23 @@ fortitude --help
 fortitude check --help
 ```
 
+### Fixes
+
+> [!NOTE]
+> Added in v0.6.0
+
+Fortitude can automatically fix some lint warnings, such unnecessary
+`implicit none` statements, missing double-colons in variable
+declarations, and more. Just pass the `--fix` flag to `check`:
+
+```console
+$ fortitude check --fix
+fortitude: 1 files scanned.
+Number of errors: 2 (2 fixed, 0 remaining)
+```
+
+Run `fortitude explain` to see which rules have fixes available.
+
 ## Configuration
 
 Fortitude will look for either a `fortitude.toml` or `fpm.toml` file in the
