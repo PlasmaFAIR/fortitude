@@ -1,9 +1,10 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
+use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 fn map_relational_symbols(name: &str) -> Option<&'static str> {
@@ -46,10 +47,15 @@ impl AstRule for DeprecatedRelationalOperator {
             .to_lowercase()
             .to_string();
         let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
-        some_vec![Diagnostic::from_node(
-            Self { symbol, new_symbol },
-            &relation
-        )]
+
+        let edit = Edit::replacement(
+            new_symbol.clone(),
+            TextSize::try_from(relation.start_byte()).unwrap(),
+            TextSize::try_from(relation.end_byte()).unwrap(),
+        );
+        let fix = Fix::safe_edit(edit);
+
+        some_vec![Diagnostic::from_node(Self { symbol, new_symbol }, &relation).with_fix(fix)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
