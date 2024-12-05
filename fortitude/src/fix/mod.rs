@@ -8,8 +8,8 @@ use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use ruff_diagnostics::{Diagnostic, Edit, Fix, IsolationLevel, SourceMap};
-use ruff_text_size::{Ranged, TextLen, TextRange, TextSize};
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
+use ruff_text_size::{Ranged, TextLen, TextRange, TextSize};
 
 use crate::registry::{AsRule, Rule};
 use crate::settings::UnsafeFixes;
@@ -58,7 +58,7 @@ pub(crate) fn fix_file(
 fn apply_fixes<'a>(
     diagnostics: impl Iterator<Item = &'a Diagnostic>,
     locator: &'a Locator<'a>,
-    name: &str
+    name: &str,
 ) -> FixResult {
     let mut output = String::with_capacity(locator.len());
     let mut last_pos: Option<TextSize> = None;
@@ -157,7 +157,7 @@ mod tests {
         edit.into_iter()
             .map(|edit| Diagnostic {
                 // The choice of rule here is arbitrary.
-                kind: UseAll{}.into(),
+                kind: UseAll {}.into(),
                 range: edit.range(),
                 fix: Some(Fix::safe_edit(edit)),
                 parent: None,

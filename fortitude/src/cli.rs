@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, ArgAction::SetTrue};
+use clap::{ArgAction::SetTrue, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

@@ -380,7 +380,7 @@ select = ["T001", "style"]
 }
 
 #[test]
-fn apply_fixes() -> anyhow::Result<()>  {
+fn apply_fixes() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let test_file = tempdir.path().join("test.f90");
     fs::write(
@@ -396,7 +396,7 @@ contains
   end subroutine bar
 end program foo
 "#,
-        )?;
+    )?;
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
@@ -438,7 +438,8 @@ contains
   subroutine bar
   end subroutine bar
 end program foo
-"#.to_string();
+"#
+    .to_string();
 
     let transformed = fs::read_to_string(&test_file)?;
     assert_eq!(transformed, expected);
