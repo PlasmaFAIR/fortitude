@@ -158,8 +158,6 @@ impl Printer {
         diagnostics: &Diagnostics,
         writer: &mut dyn Write,
     ) -> Result<()> {
-        // TODO: implement tracking of fixables
-
         let fixables = FixableStatistics::try_from(diagnostics, self.unsafe_fixes);
 
         match self.format {
