@@ -3,15 +3,23 @@ source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S101.f90:1:13: S101 trailing whitespace
+./resources/test/fixtures/style/S101.f90:1:13: S101 [*] trailing whitespace
   |
 1 | program test  
   |             ^^ S101
 2 |   implicit none
 3 |   integer :: a(3) = [ & 
   |
+  = help: Remove trailing whitespace
 
-./resources/test/fixtures/style/S101.f90:3:24: S101 trailing whitespace
+ℹ Safe fix
+1   |-program test  
+  1 |+program test
+2 2 |   implicit none
+3 3 |   integer :: a(3) = [ & 
+4 4 |     1, &
+
+./resources/test/fixtures/style/S101.f90:3:24: S101 [*] trailing whitespace
   |
 1 | program test  
 2 |   implicit none
@@ -20,8 +28,18 @@ snapshot_kind: text
 4 |     1, &
 5 |     2, &
   |
+  = help: Remove trailing whitespace
 
-./resources/test/fixtures/style/S101.f90:7:4: S101 trailing whitespace
+ℹ Safe fix
+1 1 | program test  
+2 2 |   implicit none
+3   |-  integer :: a(3) = [ & 
+  3 |+  integer :: a(3) = [ &
+4 4 |     1, &
+5 5 |     2, &
+6 6 |     3 &
+
+./resources/test/fixtures/style/S101.f90:7:4: S101 [*] trailing whitespace
   |
 5 |     2, &
 6 |     3 &
@@ -30,8 +48,18 @@ snapshot_kind: text
 8 |    
 9 | end program test
   |
+  = help: Remove trailing whitespace
 
-./resources/test/fixtures/style/S101.f90:8:1: S101 trailing whitespace
+ℹ Safe fix
+4 4 |     1, &
+5 5 |     2, &
+6 6 |     3 &
+7   |-  ]    
+  7 |+  ]
+8 8 |    
+9 9 | end program test
+
+./resources/test/fixtures/style/S101.f90:8:1: S101 [*] trailing whitespace
   |
 6 |     3 &
 7 |   ]    
@@ -39,3 +67,12 @@ snapshot_kind: text
   | ^^^ S101
 9 | end program test
   |
+  = help: Remove trailing whitespace
+
+ℹ Safe fix
+5 5 |     2, &
+6 6 |     3 &
+7 7 |   ]    
+8   |-   
+  8 |+
+9 9 | end program test

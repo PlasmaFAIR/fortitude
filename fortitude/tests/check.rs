@@ -136,6 +136,7 @@ end program
 
         fortitude explain X001,Y002,...
 
+    [*] 1 fixable with the `--fix` option.
 
     ----- stderr -----
     ");
