@@ -106,6 +106,9 @@ pub trait FortitudeNode<'tree> {
 
     /// Return the edit required to remove this node.
     fn edit_delete(&self, source_file: &SourceFile) -> Edit;
+
+    /// Creates an edit that inserts `content`, replacing the whole node
+    fn edit_replacement(&self, content: String) -> Edit;
 }
 
 impl FortitudeNode<'_> for Node<'_> {
@@ -177,6 +180,14 @@ impl FortitudeNode<'_> for Node<'_> {
         } else {
             Edit::range_deletion(TextRange::new(start_byte, end_byte))
         }
+    }
+
+    fn edit_replacement(&self, content: String) -> Edit {
+        Edit::replacement(
+            content,
+            TextSize::try_from(self.start_byte()).unwrap(),
+            TextSize::try_from(self.end_byte()).unwrap(),
+        )
     }
 }
 
