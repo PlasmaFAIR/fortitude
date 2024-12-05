@@ -121,10 +121,6 @@ pub struct CheckArgs {
     pub fix_only: Option<bool>,
     #[clap(long, overrides_with("fix_only"), hide = true, action = SetTrue)]
     pub no_fix_only: Option<bool>,
-    /// Avoid writing any fixed files back; instead, output a diff for each changed file to stdout, and exit 0 if there are no diffs.
-    /// Implies `--fix-only`.
-    #[arg(long, conflicts_with = "show_fixes", action = SetTrue)]
-    pub diff: Option<bool>,
 
     /// Output serialization format for violations.
     /// The default serialization format is "full".

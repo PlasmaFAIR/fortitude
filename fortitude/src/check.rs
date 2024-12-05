@@ -144,7 +144,6 @@ pub struct CheckSettings {
     pub file_extensions: Vec<String>,
     pub fix: bool,
     pub fix_only: bool,
-    pub diff: bool,
     pub show_fixes: bool,
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
@@ -177,7 +176,6 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
             fix: resolve_bool_arg(value.fix, value.no_fix).unwrap_or_default(),
             fix_only: resolve_bool_arg(value.fix_only, value.no_fix_only).unwrap_or_default(),
-            diff: value.diff.unwrap_or_default(),
             show_fixes: resolve_bool_arg(value.show_fixes, value.no_show_fixes).unwrap_or_default(),
             unsafe_fixes: resolve_bool_arg(value.unsafe_fixes, value.no_unsafe_fixes)
                 .map(UnsafeFixes::from)
@@ -653,7 +651,6 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         progress_bar = ProgressBar::Ascii;
     }
 
-    let diff = args.diff.unwrap_or(file_settings.diff);
     let fix = resolve_bool_arg(args.fix, args.no_fix).unwrap_or(file_settings.fix);
     let fix_only =
         resolve_bool_arg(args.fix_only, args.no_fix_only).unwrap_or(file_settings.fix_only);
@@ -672,9 +669,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     // - By default, applicable fixes only include [`Applicablility::Automatic`], but if
     //   `--unsafe-fixes` is set, then [`Applicablility::Suggested`] fixes are included.
 
-    let fix_mode = if diff {
-        FixMode::Diff
-    } else if fix || fix_only {
+    let fix_mode = if fix || fix_only {
         FixMode::Apply
     } else {
         FixMode::Generate

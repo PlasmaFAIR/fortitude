@@ -160,5 +160,6 @@ impl Display for OutputFormat {
 pub enum FixMode {
     Generate,
     Apply,
+    #[allow(dead_code)]
     Diff,
 }
