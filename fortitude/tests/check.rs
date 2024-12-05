@@ -104,13 +104,14 @@ end program
     4 | end program
       |
 
-    [TEMP_FILE] T021 logical*4 is non-standard, use logical(4)
+    [TEMP_FILE] T021 [*] 'logical*4' uses non-standard syntax
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
       |          ^^ T021
     4 | end program
       |
+      = help: Replace with 'logical(4)'
 
     [TEMP_FILE] T011 logical kind set with number literal '4', use 'iso_fortran_env' parameter
       |

@@ -1,7 +1,7 @@
 use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -26,11 +26,16 @@ pub struct StarKind {
     kind: String,
 }
 
-impl Violation for StarKind {
+impl AlwaysFixableViolation for StarKind {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { dtype, size, kind } = self;
-        format!("{dtype}{size} is non-standard, use {dtype}({kind})")
+        let Self { dtype, size, .. } = self;
+        format!("'{dtype}{size}' uses non-standard syntax")
+    }
+
+    fn fix_title(&self) -> String {
+        let Self { dtype, kind, .. } = self;
+        format!("Replace with '{dtype}({kind})'")
     }
 }
 
@@ -53,11 +58,9 @@ impl AstRule for StarKind {
 
         let literal = kind_node.child_with_name("number_literal")?;
         let kind = literal.to_text(src)?.to_string();
-        // TODO: Better suggestion, rather than use integer literal
-        some_vec![Diagnostic::from_node(
-            Self { dtype, size, kind },
-            &kind_node
-        )]
+        let replacement = format!("{dtype}({kind})");
+        let fix = Fix::safe_edit(node.edit_replacement(replacement));
+        some_vec![Diagnostic::from_node(Self { dtype, size, kind }, &kind_node).with_fix(fix)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
