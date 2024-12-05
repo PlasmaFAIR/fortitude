@@ -95,9 +95,10 @@ fortitude check --help
 > [!NOTE]
 > Added in v0.6.0
 
-Fortitude can automatically fix some lint warnings, such unnecessary
-`implicit none` statements, missing double-colons in variable
-declarations, and more. Just pass the `--fix` flag to `check`:
+Fortitude can automatically fix some lint warnings, such as
+unnecessary `implicit none` statements, missing double-colons in
+variable declarations, and more. Just pass the `--fix` flag to
+`check`:
 
 ```console
 $ fortitude check --fix
