@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
+use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
 use crate::fs;
 use crate::message::DiagnosticMessage;
@@ -274,8 +275,8 @@ pub(crate) fn check_file(
     settings: &Settings,
     fix_mode: FixMode,
     unsafe_fixes: UnsafeFixes,
-) -> anyhow::Result<Vec<Diagnostic>> {
-    let (messages, _fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+) -> anyhow::Result<Diagnostics> {
+    let (messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
             result,
             transformed,
@@ -328,7 +329,10 @@ pub(crate) fn check_file(
         (result, fixed)
     };
 
-    Ok(messages)
+    Ok(Diagnostics {
+        messages,
+        fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
+    })
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -339,7 +343,7 @@ pub(crate) fn check_only_file(
     path: &Path,
     file: &SourceFile,
     settings: &Settings,
-) -> anyhow::Result<Vec<Diagnostic>> {
+) -> anyhow::Result<Vec<DiagnosticMessage>> {
     let mut violations = Vec::new();
 
     for rule in path_rules {
@@ -373,7 +377,10 @@ pub(crate) fn check_only_file(
         }
     }
 
-    Ok(violations)
+    Ok(violations
+        .into_iter()
+        .map(|v| DiagnosticMessage::from_ruff(file, v))
+        .collect_vec())
 }
 
 const MAX_ITERATIONS: usize = 100;
@@ -382,7 +389,7 @@ pub type FixTable = FxHashMap<Rule, usize>;
 
 pub struct FixerResult<'a> {
     /// The result returned by the linter, after applying any fixes.
-    pub result: Vec<Diagnostic>,
+    pub result: Vec<DiagnosticMessage>,
     /// The resulting source code, after applying any fixes.
     pub transformed: Cow<'a, SourceFile>,
     /// The number of fixes applied for each [`Rule`].
@@ -401,7 +408,7 @@ pub(crate) fn check_and_fix_file<'a>(
     let mut transformed = Cow::Borrowed(file);
 
     // Track the number of fixed errors across iterations.
-    let mut fixed: FxHashMap<Rule, usize> = FxHashMap::default();
+    let mut fixed = FxHashMap::default();
 
     // As an escape hatch, bail after 100 iterations.
     let mut iterations = 0;
@@ -483,7 +490,10 @@ pub(crate) fn check_and_fix_file<'a>(
         };
 
         return Ok(FixerResult {
-            result: violations,
+            result: violations
+                .into_iter()
+                .map(|v| DiagnosticMessage::from_ruff(&file, v))
+                .collect_vec(),
             transformed,
             fixed,
         });
@@ -699,21 +709,21 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         ProgressBar::Off => ProgressStyle::with_template("").unwrap(),
     };
 
-    let mut diagnostics: Vec<_> = files
+    let diagnostics_per_file = files
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
-        .flat_map(|path| {
+        .map(|path| {
             let filename = path.to_string_lossy();
 
             let source = match read_to_string(path) {
                 Ok(source) => source,
                 Err(error) => {
                     let message = format!("Error opening file: {error}");
-                    return vec![DiagnosticMessage::from_error(
+                    return Diagnostics::new(vec![DiagnosticMessage::from_error(
                         filename,
                         Diagnostic::new(IoError { message }, TextRange::default()),
-                    )];
+                    )]);
                 }
             };
 
@@ -729,24 +739,27 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                 fix_mode,
                 unsafe_fixes,
             ) {
-                Ok(violations) => violations
-                    .into_iter()
-                    .map(|v| DiagnosticMessage::from_ruff(&file, v))
-                    .collect_vec(),
+                Ok(violations) => violations,
                 Err(msg) => {
                     let message = format!("Failed to process: {msg}");
-                    vec![DiagnosticMessage::from_error(
+                    Diagnostics::new(vec![DiagnosticMessage::from_error(
                         filename,
                         Diagnostic::new(IoError { message }, TextRange::default()),
-                    )]
+                    )])
                 }
             }
-        })
-        .collect();
+        });
 
-    diagnostics.par_sort_unstable();
+    let mut all_diagnostics = diagnostics_per_file
+        .fold(
+            || Diagnostics::default(),
+            |all_diagnostics, file_diagnostics| (all_diagnostics + file_diagnostics),
+        )
+        .reduce(|| Diagnostics::default(), |a, b| a + b);
 
-    let total_errors = diagnostics.len();
+    all_diagnostics.messages.par_sort_unstable();
+
+    let total_errors = all_diagnostics.messages.len();
 
     let mut writer = Box::new(io::stdout());
 
@@ -754,7 +767,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     Printer::new(output_format, flags, fix_mode, unsafe_fixes).write_once(
         files.len(),
-        &diagnostics,
+        &all_diagnostics.messages,
         &mut writer,
     )?;
 
