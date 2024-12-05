@@ -1,9 +1,10 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
+use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -27,10 +28,17 @@ pub struct MissingExitOrCycleLabel {
 }
 
 impl Violation for MissingExitOrCycleLabel {
+    const FIX_AVAILABILITY: FixAvailability = FixAvailability::Sometimes;
+
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { name, label } = self;
         format!("'{name}' statement in named 'do' loop missing label '{label}'")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let Self { label, .. } = self;
+        Some(format!("Add label '{label}'"))
     }
 }
 impl AstRule for MissingExitOrCycleLabel {
@@ -52,6 +60,13 @@ impl AstRule for MissingExitOrCycleLabel {
             .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
+                let label_with_space = format!(" {label}");
+                let edit = Edit::insertion(
+                    label_with_space,
+                    TextSize::try_from(stmt.end_byte()).unwrap(),
+                );
+                let fix = Fix::unsafe_edit(edit);
+
                 Diagnostic::from_node(
                     Self {
                         name: name.to_string(),
@@ -59,6 +74,7 @@ impl AstRule for MissingExitOrCycleLabel {
                     },
                     &stmt,
                 )
+                .with_fix(fix)
             })
             .collect();
 
