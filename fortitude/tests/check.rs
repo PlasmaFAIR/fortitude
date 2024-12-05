@@ -120,13 +120,14 @@ end program
     4 | end program
       |
 
-    [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 [*] end statement should be named.
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       | ^^^^^^^^^^^ S061
       |
+      = help: Write as 'end program test'.
 
     fortitude: 1 files scanned.
     Number of errors: 4
@@ -171,13 +172,14 @@ end program
     4 | end program
       |
 
-    [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 [*] end statement should be named.
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       | ^^^^^^^^^^^ S061
       |
+      = help: Write as 'end program test'.
 
     fortitude: 1 files scanned.
     Number of errors: 2
@@ -231,13 +233,14 @@ select = ["T001", "style"]
     4 | end program
       |
 
-    [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 [*] end statement should be named.
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       | ^^^^^^^^^^^ S061
       |
+      = help: Write as 'end program test'.
 
     fortitude: 1 files scanned.
     Number of errors: 2
@@ -293,13 +296,14 @@ select = ["T001"]
     4 | end program
       |
 
-    [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 [*] end statement should be named.
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       | ^^^^^^^^^^^ S061
       |
+      = help: Write as 'end program test'.
 
     fortitude: 1 files scanned.
     Number of errors: 2
@@ -353,13 +357,14 @@ select = ["T001", "style"]
     4 | end program
       |
 
-    [TEMP_FILE] S061 end statement should read 'end program test'
+    [TEMP_FILE] S061 [*] end statement should be named.
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       | ^^^^^^^^^^^ S061
       |
+      = help: Write as 'end program test'.
 
     fortitude: 1 files scanned.
     Number of errors: 2

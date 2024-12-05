@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -42,11 +42,15 @@ pub struct UnnamedEndStatement {
     name: String,
 }
 
-impl Violation for UnnamedEndStatement {
+impl AlwaysFixableViolation for UnnamedEndStatement {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let UnnamedEndStatement { statement, name } = self;
-        format!("end statement should read 'end {statement} {name}'")
+        format!("end statement should be named.")
+    }
+
+    fn fix_title(&self) -> String {
+        let Self { statement, name } = self;
+        format!("Write as 'end {statement} {name}'.")
     }
 }
 
@@ -91,7 +95,9 @@ impl AstRule for UnnamedEndStatement {
             .to_text(src.source_text())?
             .to_string();
         let statement = statement.to_string();
-        some_vec![Diagnostic::from_node(Self { statement, name }, node)]
+        let replacement = format!("end {statement} {name}");
+        let fix = Fix::safe_edit(node.edit_replacement(replacement));
+        some_vec![Diagnostic::from_node(Self { statement, name }, node).with_fix(fix)]
     }
 
     fn entrypoints() -> Vec<&'static str> {

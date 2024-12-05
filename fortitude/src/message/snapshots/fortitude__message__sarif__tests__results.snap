@@ -85,7 +85,7 @@ snapshot_kind: text
                 "text": "## What does it do?\nChecks that `end` statements include the type of construct they're ending\n\n## Why is this bad?\nEnd statements should specify what kind of construct they're ending, and the\nname of that construct. For example, prefer this:\n\n```f90\nmodule mymodule\n  ...\nend module mymodule\n```\n\nTo this:\n\n```f90\nmodule mymodule\n  ...\nend\n```\n\nOr this:\n\n```f90\nmodule mymodule\n  ...\nend module\n```\n\nSimilar rules apply for many other Fortran statements\n"
               },
               "help": {
-                "text": "end statement should read 'end {statement} {name}'"
+                "text": "end statement should be named."
               },
               "id": "S061",
               "properties": {
@@ -95,7 +95,7 @@ snapshot_kind: text
                 "problem.severity": "error"
               },
               "shortDescription": {
-                "text": "end statement should read 'end {statement} {name}'"
+                "text": "end statement should be named."
               }
             },
             {
