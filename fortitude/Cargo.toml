@@ -39,6 +39,7 @@ ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
 ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0", features = ["serde"] }
 ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
+rustc-hash = "2.0.0"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { workspace = true }
 similar = { version = "2.4.0", features = ["inline"] }
@@ -51,6 +52,7 @@ thiserror = { version = "1.0.58" }
 toml = "0.8.19"
 tree-sitter = "~0.24.0"
 tree-sitter-fortran = "0.3.0"
+unicode-width = "0.2.0"
 url = { version = "2.5.0" }
 walkdir = "2.4.0"
 

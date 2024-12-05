@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{ArgAction::SetTrue, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -97,6 +97,31 @@ pub struct CheckArgs {
     #[arg(long, value_delimiter = ',', default_values = FORTRAN_EXTS)]
     pub file_extensions: Option<Vec<String>>,
 
+    /// Apply fixes to resolve lint violations.
+    /// Use `--no-fix` to disable or `--unsafe-fixes` to include unsafe fixes.
+    #[arg(long, overrides_with("no_fix"), action = clap::ArgAction::SetTrue)]
+    pub fix: Option<bool>,
+    #[clap(long, overrides_with("fix"), hide = true, action = SetTrue)]
+    pub no_fix: Option<bool>,
+    /// Include fixes that may not retain the original intent of the code.
+    /// Use `--no-unsafe-fixes` to disable.
+    #[arg(long, overrides_with("no_unsafe_fixes"), action = SetTrue)]
+    pub unsafe_fixes: Option<bool>,
+    #[arg(long, overrides_with("unsafe_fixes"), hide = true, action = SetTrue)]
+    pub no_unsafe_fixes: Option<bool>,
+    /// Show an enumeration of all fixed lint violations.
+    /// Use `--no-show-fixes` to disable.
+    #[arg(long, overrides_with("no_show_fixes"), action = SetTrue)]
+    pub show_fixes: Option<bool>,
+    #[clap(long, overrides_with("show_fixes"), hide = true, action = SetTrue)]
+    pub no_show_fixes: Option<bool>,
+    /// Apply fixes to resolve lint violations, but don't report on, or exit non-zero for, leftover violations. Implies `--fix`.
+    /// Use `--no-fix-only` to disable or `--unsafe-fixes` to include unsafe fixes.
+    #[arg(long, overrides_with("no_fix_only"), action = SetTrue)]
+    pub fix_only: Option<bool>,
+    #[clap(long, overrides_with("fix_only"), hide = true, action = SetTrue)]
+    pub no_fix_only: Option<bool>,
+
     /// Output serialization format for violations.
     /// The default serialization format is "full".
     #[arg(long, value_enum, env = "FORTITUDE_OUTPUT_FORMAT")]
@@ -104,9 +129,9 @@ pub struct CheckArgs {
 
     /// Enable preview mode; checks will include unstable rules and fixes.
     /// Use `--no-preview` to disable.
-    #[arg(long, overrides_with("no_preview"), action = clap::ArgAction::SetTrue)]
+    #[arg(long, overrides_with("no_preview"), action = SetTrue)]
     pub preview: Option<bool>,
-    #[clap(long, overrides_with("preview"), hide = true, action = clap::ArgAction::SetTrue)]
+    #[clap(long, overrides_with("preview"), hide = true, action = SetTrue)]
     pub no_preview: Option<bool>,
 
     /// Progress bar settings.

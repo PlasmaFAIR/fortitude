@@ -155,3 +155,11 @@ impl Display for OutputFormat {
         }
     }
 }
+
+#[derive(Debug, Copy, Clone, Hash, is_macro::Is)]
+pub enum FixMode {
+    Generate,
+    Apply,
+    #[allow(dead_code)]
+    Diff,
+}

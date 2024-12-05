@@ -1,22 +1,33 @@
 use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
+use crate::diagnostics::{Diagnostics, FixMap};
+use crate::fix::{fix_file, FixResult};
+use crate::fs;
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
+use crate::registry::AsRule;
 use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{OutputFormat, PreviewMode, ProgressBar, Settings, DEFAULT_SELECTORS};
+use crate::settings::{
+    FixMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+};
 
 use anyhow::{Context, Result};
+use colored::Colorize;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
-use ruff_source_file::{SourceFile, SourceFileBuilder};
+use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
+use std::fs::File;
 use std::io;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use strum::IntoEnumIterator;
@@ -131,6 +142,10 @@ pub struct CheckSettings {
     pub extend_select: Vec<RuleSelector>,
     pub line_length: usize,
     pub file_extensions: Vec<String>,
+    pub fix: bool,
+    pub fix_only: bool,
+    pub show_fixes: bool,
+    pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
@@ -159,6 +174,12 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             file_extensions: value
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
+            fix: resolve_bool_arg(value.fix, value.no_fix).unwrap_or_default(),
+            fix_only: resolve_bool_arg(value.fix_only, value.no_fix_only).unwrap_or_default(),
+            show_fixes: resolve_bool_arg(value.show_fixes, value.no_show_fixes).unwrap_or_default(),
+            unsafe_fixes: resolve_bool_arg(value.unsafe_fixes, value.no_unsafe_fixes)
+                .map(UnsafeFixes::from)
+                .unwrap_or_default(),
             output_format: value.output_format.unwrap_or_default(),
             progress_bar: value.progress_bar.unwrap_or_default(),
             preview: resolve_bool_arg(value.preview, value.no_preview)
@@ -245,6 +266,7 @@ fn get_files<S: AsRef<str>>(files_in: &Vec<PathBuf>, extensions: &[S]) -> Vec<Pa
 }
 
 /// Parse a file, check it for issues, and return the report.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn check_file(
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
@@ -252,7 +274,77 @@ pub(crate) fn check_file(
     path: &Path,
     file: &SourceFile,
     settings: &Settings,
-) -> anyhow::Result<Vec<Diagnostic>> {
+    fix_mode: FixMode,
+    unsafe_fixes: UnsafeFixes,
+) -> anyhow::Result<Diagnostics> {
+    let (messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+        if let Ok(FixerResult {
+            result,
+            transformed,
+            fixed,
+        }) = check_and_fix_file(
+            path_rules,
+            text_rules,
+            ast_entrypoints,
+            path,
+            file,
+            settings,
+            unsafe_fixes,
+        ) {
+            if !fixed.is_empty() {
+                match fix_mode {
+                    FixMode::Apply => {
+                        let mut out_file = File::create(path)?;
+                        out_file.write_all(transformed.source_text().as_bytes())?;
+                    }
+                    // TODO: diff
+                    FixMode::Diff => {}
+                    FixMode::Generate => {}
+                }
+            }
+
+            (result, fixed)
+        } else {
+            // Failed to fix, so just lint the original source
+            let result = check_only_file(
+                path_rules,
+                text_rules,
+                ast_entrypoints,
+                path,
+                file,
+                settings,
+            )?;
+            let fixed = FxHashMap::default();
+            (result, fixed)
+        }
+    } else {
+        let result = check_only_file(
+            path_rules,
+            text_rules,
+            ast_entrypoints,
+            path,
+            file,
+            settings,
+        )?;
+        let fixed = FxHashMap::default();
+        (result, fixed)
+    };
+
+    Ok(Diagnostics {
+        messages,
+        fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
+    })
+}
+
+/// Parse a file, check it for issues, and return the report.
+pub(crate) fn check_only_file(
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
+    path: &Path,
+    file: &SourceFile,
+    settings: &Settings,
+) -> anyhow::Result<Vec<DiagnosticMessage>> {
     let mut violations = Vec::new();
 
     for rule in path_rules {
@@ -286,7 +378,169 @@ pub(crate) fn check_file(
         }
     }
 
-    Ok(violations)
+    Ok(violations
+        .into_iter()
+        .map(|v| DiagnosticMessage::from_ruff(file, v))
+        .collect_vec())
+}
+
+const MAX_ITERATIONS: usize = 100;
+
+pub type FixTable = FxHashMap<Rule, usize>;
+
+pub struct FixerResult<'a> {
+    /// The result returned by the linter, after applying any fixes.
+    pub result: Vec<DiagnosticMessage>,
+    /// The resulting source code, after applying any fixes.
+    pub transformed: Cow<'a, SourceFile>,
+    /// The number of fixes applied for each [`Rule`].
+    pub fixed: FixTable,
+}
+
+pub(crate) fn check_and_fix_file<'a>(
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
+    path: &Path,
+    file: &'a SourceFile,
+    settings: &Settings,
+    unsafe_fixes: UnsafeFixes,
+) -> anyhow::Result<FixerResult<'a>> {
+    let mut transformed = Cow::Borrowed(file);
+
+    // Track the number of fixed errors across iterations.
+    let mut fixed = FxHashMap::default();
+
+    // As an escape hatch, bail after 100 iterations.
+    let mut iterations = 0;
+
+    // Track whether the _initial_ source code is valid syntax.
+    // TODO(peter): implement this
+    #[allow(unused_variables, unused_mut)]
+    let mut is_valid_syntax = false;
+
+    let mut parser = Parser::new();
+    parser
+        .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        .context("Error loading Fortran grammar")?;
+
+    // Continuously fix until the source code stabilizes.
+    loop {
+        let mut violations = Vec::new();
+
+        // Map row and column locations to byte slices (lazily).
+        let locator = Locator::new(transformed.source_text());
+
+        // No fixes on file path
+        for rule in path_rules {
+            if let Some(violation) = rule.check(settings, path) {
+                violations.push(violation);
+            }
+        }
+
+        // Perform plain text analysis
+        for rule in text_rules {
+            violations.extend(rule.check(settings, &transformed));
+        }
+
+        // TODO: check for syntax errors on first pass, so we can know
+        // if we've introduced them
+        let tree = parser
+            .parse(transformed.source_text(), None)
+            .context("Failed to parse")?;
+
+        // Perform AST analysis
+        for node in tree.root_node().named_descendants() {
+            if let Some(rules) = ast_entrypoints.get(node.kind()) {
+                for rule in rules {
+                    if let Some(violation) = rule.check(settings, &node, &transformed) {
+                        for v in violation {
+                            violations.push(v);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply fix
+        if let Some(FixResult {
+            code: fixed_contents,
+            fixes: applied,
+            ..
+        }) = fix_file(
+            &violations,
+            &locator,
+            unsafe_fixes,
+            path.to_string_lossy().as_ref(),
+        ) {
+            if iterations < MAX_ITERATIONS {
+                // Count the number of fixed errors
+                for (rule, count) in applied {
+                    *fixed.entry(rule).or_default() += count;
+                }
+
+                transformed = Cow::Owned(fixed_contents);
+
+                iterations += 1;
+
+                // Re-run the linter pass
+                continue;
+            }
+
+            report_failed_to_converge_error(path, transformed.source_text(), &violations);
+        };
+
+        return Ok(FixerResult {
+            result: violations
+                .into_iter()
+                .map(|v| DiagnosticMessage::from_ruff(file, v))
+                .collect_vec(),
+            transformed,
+            fixed,
+        });
+    }
+}
+
+fn collect_rule_codes(rules: impl IntoIterator<Item = Rule>) -> String {
+    rules
+        .into_iter()
+        .map(|rule| rule.noqa_code().to_string())
+        .sorted_unstable()
+        .dedup()
+        .join(", ")
+}
+
+#[allow(clippy::print_stderr)]
+fn report_failed_to_converge_error(path: &Path, transformed: &str, diagnostics: &[Diagnostic]) {
+    let codes = collect_rule_codes(diagnostics.iter().map(|diagnostic| diagnostic.kind.rule()));
+    if cfg!(debug_assertions) {
+        eprintln!(
+            "{}{} Failed to converge after {} iterations in `{}` with rule codes {}:---\n{}\n---",
+            "debug error".red().bold(),
+            ":".bold(),
+            MAX_ITERATIONS,
+            fs::relativize_path(path),
+            codes,
+            transformed,
+        );
+    } else {
+        eprintln!(
+            r#"
+{}{} Failed to converge after {} iterations.
+
+This indicates a bug in fortitude. If you could open an issue at:
+
+    https://github.com/PlasmaFAIR/fortitude/issues/new?title=%5BInfinite%20loop%5D
+
+...quoting the contents of `{}`, the rule codes {}, along with the `fpm.toml` settings and executed command, we'd be very appreciative!
+"#,
+            "error".red().bold(),
+            ":".bold(),
+            MAX_ITERATIONS,
+            fs::relativize_path(path),
+            codes
+        );
+    }
 }
 
 /// Wrapper around `std::fs::read_to_string` with some extra error
@@ -397,6 +651,30 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         progress_bar = ProgressBar::Ascii;
     }
 
+    let fix = resolve_bool_arg(args.fix, args.no_fix).unwrap_or(file_settings.fix);
+    let fix_only =
+        resolve_bool_arg(args.fix_only, args.no_fix_only).unwrap_or(file_settings.fix_only);
+    let unsafe_fixes = resolve_bool_arg(args.unsafe_fixes, args.no_unsafe_fixes)
+        .map(UnsafeFixes::from)
+        .unwrap_or(file_settings.unsafe_fixes);
+
+    let show_fixes =
+        resolve_bool_arg(args.show_fixes, args.no_show_fixes).unwrap_or(file_settings.show_fixes);
+
+    // Fix rules are as follows:
+    // - By default, generate all fixes, but don't apply them to the filesystem.
+    // - If `--fix` or `--fix-only` is set, apply applicable fixes to the filesystem (or
+    //   print them to stdout, if we're reading from stdin).
+    // - If `--diff` or `--fix-only` are set, don't print any violations (only applicable fixes)
+    // - By default, applicable fixes only include [`Applicablility::Automatic`], but if
+    //   `--unsafe-fixes` is set, then [`Applicablility::Suggested`] fixes are included.
+
+    let fix_mode = if fix || fix_only {
+        FixMode::Apply
+    } else {
+        FixMode::Generate
+    };
+
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
@@ -432,21 +710,21 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         ProgressBar::Off => ProgressStyle::with_template("").unwrap(),
     };
 
-    let mut diagnostics: Vec<_> = files
+    let diagnostics_per_file = files
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
-        .flat_map(|path| {
+        .map(|path| {
             let filename = path.to_string_lossy();
 
             let source = match read_to_string(path) {
                 Ok(source) => source,
                 Err(error) => {
                     let message = format!("Error opening file: {error}");
-                    return vec![DiagnosticMessage::from_error(
+                    return Diagnostics::new(vec![DiagnosticMessage::from_error(
                         filename,
                         Diagnostic::new(IoError { message }, TextRange::default()),
-                    )];
+                    )]);
                 }
             };
 
@@ -459,31 +737,45 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                 path,
                 &file,
                 &settings,
+                fix_mode,
+                unsafe_fixes,
             ) {
-                Ok(violations) => violations
-                    .into_iter()
-                    .map(|v| DiagnosticMessage::from_ruff(&file, v))
-                    .collect_vec(),
+                Ok(violations) => violations,
                 Err(msg) => {
                     let message = format!("Failed to process: {msg}");
-                    vec![DiagnosticMessage::from_error(
+                    Diagnostics::new(vec![DiagnosticMessage::from_error(
                         filename,
                         Diagnostic::new(IoError { message }, TextRange::default()),
-                    )]
+                    )])
                 }
             }
+        });
+
+    let mut all_diagnostics = diagnostics_per_file
+        .fold(Diagnostics::default, |all_diagnostics, file_diagnostics| {
+            all_diagnostics + file_diagnostics
         })
-        .collect();
+        .reduce(Diagnostics::default, |a, b| a + b);
 
-    diagnostics.par_sort_unstable();
+    all_diagnostics.messages.par_sort_unstable();
 
-    let total_errors = diagnostics.len();
+    let total_errors = all_diagnostics.messages.len();
 
     let mut writer = Box::new(io::stdout());
 
-    let flags = PrinterFlags::SHOW_VIOLATIONS | PrinterFlags::SHOW_FIX_SUMMARY;
+    let mut printer_flags = PrinterFlags::empty();
+    if !fix_only {
+        printer_flags |= PrinterFlags::SHOW_VIOLATIONS;
+    }
+    if show_fixes {
+        printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
+    }
 
-    Printer::new(output_format, flags).write_once(files.len(), &diagnostics, &mut writer)?;
+    Printer::new(output_format, printer_flags, fix_mode, unsafe_fixes).write_once(
+        files.len(),
+        &all_diagnostics,
+        &mut writer,
+    )?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)
