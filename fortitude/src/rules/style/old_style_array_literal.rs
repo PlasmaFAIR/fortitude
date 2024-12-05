@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Fix, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -16,12 +16,17 @@ use tree_sitter::Node;
 #[violation]
 pub struct OldStyleArrayLiteral {}
 
-impl Violation for OldStyleArrayLiteral {
+impl AlwaysFixableViolation for OldStyleArrayLiteral {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("Array literal uses old-style syntax: prefer `[...]`")
     }
+
+    fn fix_title(&self) -> String {
+        "Change `(/.../)` to `[...]`".to_string()
+    }
 }
+
 impl AstRule for OldStyleArrayLiteral {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let open_bracket = node.child(0)?;
