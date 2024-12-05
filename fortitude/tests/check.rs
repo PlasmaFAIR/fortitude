@@ -30,7 +30,6 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
     exit_code: 1
     ----- stdout -----
     test/file/doesnt/exist.f90:1:1: E000 Error opening file: No such file or directory (os error 2)
-
     fortitude: 0 files scanned, 1 could not be read.
     Number of errors: 1
 
@@ -128,7 +127,6 @@ end program
       | ^^^^^^^^^^^ S061
       |
 
-
     fortitude: 1 files scanned.
     Number of errors: 4
 
@@ -179,7 +177,6 @@ end program
     4 | end program
       | ^^^^^^^^^^^ S061
       |
-
 
     fortitude: 1 files scanned.
     Number of errors: 2
@@ -240,7 +237,6 @@ select = ["T001", "style"]
     4 | end program
       | ^^^^^^^^^^^ S061
       |
-
 
     fortitude: 1 files scanned.
     Number of errors: 2
@@ -304,7 +300,6 @@ select = ["T001"]
       | ^^^^^^^^^^^ S061
       |
 
-
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -365,7 +360,6 @@ select = ["T001", "style"]
       | ^^^^^^^^^^^ S061
       |
 
-
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -417,9 +411,8 @@ end program foo
     6 | contains
       |
 
-
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of errors: 3 (2 fixed, 1 remaining)
 
     For more information about specific rules, run:
 

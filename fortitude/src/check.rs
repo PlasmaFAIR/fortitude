@@ -145,6 +145,7 @@ pub struct CheckSettings {
     pub fix: bool,
     pub fix_only: bool,
     pub diff: bool,
+    pub show_fixes: bool,
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
     pub progress_bar: ProgressBar,
@@ -177,6 +178,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             fix: resolve_bool_arg(value.fix, value.no_fix).unwrap_or_default(),
             fix_only: resolve_bool_arg(value.fix_only, value.no_fix_only).unwrap_or_default(),
             diff: value.diff.unwrap_or_default(),
+            show_fixes: resolve_bool_arg(value.show_fixes, value.no_show_fixes).unwrap_or_default(),
             unsafe_fixes: resolve_bool_arg(value.unsafe_fixes, value.no_unsafe_fixes)
                 .map(UnsafeFixes::from)
                 .unwrap_or_default(),
@@ -492,7 +494,7 @@ pub(crate) fn check_and_fix_file<'a>(
         return Ok(FixerResult {
             result: violations
                 .into_iter()
-                .map(|v| DiagnosticMessage::from_ruff(&file, v))
+                .map(|v| DiagnosticMessage::from_ruff(file, v))
                 .collect_vec(),
             transformed,
             fixed,
@@ -658,6 +660,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         .map(UnsafeFixes::from)
         .unwrap_or(file_settings.unsafe_fixes);
 
+    let show_fixes =
+        resolve_bool_arg(args.show_fixes, args.no_show_fixes).unwrap_or(file_settings.show_fixes);
+
     // Fix rules are as follows:
     // - By default, generate all fixes, but don't apply them to the filesystem.
     // - If `--fix` or `--fix-only` is set, apply applicable fixes to the filesystem (or
@@ -751,11 +756,10 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         });
 
     let mut all_diagnostics = diagnostics_per_file
-        .fold(
-            || Diagnostics::default(),
-            |all_diagnostics, file_diagnostics| (all_diagnostics + file_diagnostics),
-        )
-        .reduce(|| Diagnostics::default(), |a, b| a + b);
+        .fold(Diagnostics::default, |all_diagnostics, file_diagnostics| {
+            (all_diagnostics + file_diagnostics)
+        })
+        .reduce(Diagnostics::default, |a, b| a + b);
 
     all_diagnostics.messages.par_sort_unstable();
 
@@ -763,11 +767,17 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let mut writer = Box::new(io::stdout());
 
-    let flags = PrinterFlags::SHOW_VIOLATIONS | PrinterFlags::SHOW_FIX_SUMMARY;
+    let mut printer_flags = PrinterFlags::empty();
+    if !fix_only {
+        printer_flags |= PrinterFlags::SHOW_VIOLATIONS;
+    }
+    if show_fixes {
+        printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
+    }
 
-    Printer::new(output_format, flags, fix_mode, unsafe_fixes).write_once(
+    Printer::new(output_format, printer_flags, fix_mode, unsafe_fixes).write_once(
         files.len(),
-        &all_diagnostics.messages,
+        &all_diagnostics,
         &mut writer,
     )?;
 
