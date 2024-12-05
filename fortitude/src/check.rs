@@ -758,7 +758,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let mut all_diagnostics = diagnostics_per_file
         .fold(Diagnostics::default, |all_diagnostics, file_diagnostics| {
-            (all_diagnostics + file_diagnostics)
+            all_diagnostics + file_diagnostics
         })
         .reduce(Diagnostics::default, |a, b| a + b);
 
