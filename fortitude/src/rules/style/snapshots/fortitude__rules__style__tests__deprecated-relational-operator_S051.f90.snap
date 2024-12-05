@@ -11,6 +11,7 @@ snapshot_kind: text
 3 |   if (1 .le. 0) error stop
 4 |   if (a.eq.b.and.a.ne.b) error stop
   |
+  = help: Use '>'
 
 ℹ Safe fix
 1 1 | program test
@@ -29,6 +30,7 @@ snapshot_kind: text
 4 |   if (a.eq.b.and.a.ne.b) error stop
 5 |   if (1 == 2) error stop  ! OK
   |
+  = help: Use '<='
 
 ℹ Safe fix
 1 1 | program test
@@ -48,6 +50,7 @@ snapshot_kind: text
 5 |   if (1 == 2) error stop  ! OK
 6 |   if (2 /= 2) error stop  ! OK
   |
+  = help: Use '=='
 
 ℹ Safe fix
 1 1 | program test
@@ -68,6 +71,7 @@ snapshot_kind: text
 5 |   if (1 == 2) error stop  ! OK
 6 |   if (2 /= 2) error stop  ! OK
   |
+  = help: Use '/='
 
 ℹ Safe fix
 1 1 | program test
