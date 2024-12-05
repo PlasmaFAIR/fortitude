@@ -268,6 +268,7 @@ fn get_files<S: AsRef<str>>(files_in: &Vec<PathBuf>, extensions: &[S]) -> Vec<Pa
 }
 
 /// Parse a file, check it for issues, and return the report.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn check_file(
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,

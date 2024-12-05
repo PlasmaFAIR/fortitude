@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Taken from ruff
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
