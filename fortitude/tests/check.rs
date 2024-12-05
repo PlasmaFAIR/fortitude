@@ -136,7 +136,7 @@ end program
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option.
+    [*] 2 fixable with the `--fix` option.
 
     ----- stderr -----
     ");
@@ -189,6 +189,7 @@ end program
 
         fortitude explain X001,Y002,...
 
+    [*] 1 fixable with the `--fix` option.
 
     ----- stderr -----
     ");
@@ -250,6 +251,7 @@ select = ["T001", "style"]
 
         fortitude explain X001,Y002,...
 
+    [*] 1 fixable with the `--fix` option.
 
     ----- stderr -----
     ");
@@ -313,6 +315,7 @@ select = ["T001"]
 
         fortitude explain X001,Y002,...
 
+    [*] 1 fixable with the `--fix` option.
 
     ----- stderr -----
     ");
@@ -374,6 +377,7 @@ select = ["T001", "style"]
 
         fortitude explain X001,Y002,...
 
+    [*] 1 fixable with the `--fix` option.
 
     ----- stderr -----
     ");
