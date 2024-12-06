@@ -19,7 +19,7 @@ mod tests {
     use crate::settings::Settings;
     use crate::test::test_path;
 
-    #[test_case(Rule::ExternalFunction, Path::new("M001.f90"))]
+    #[test_case(Rule::ProcedureNotInModule, Path::new("M001.f90"))]
     #[test_case(Rule::UseAll, Path::new("M011.f90"))]
     #[test_case(Rule::MissingAccessibilityStatement, Path::new("M021.f90"))]
     #[test_case(Rule::DefaultPublicAccessibility, Path::new("M022.f90"))]

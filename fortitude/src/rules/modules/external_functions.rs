@@ -14,25 +14,25 @@ use tree_sitter::Node;
 /// Fortran compilers are unable to perform type checks and conversions on functions
 /// defined outside of these scopes, and this is a common source of bugs.
 #[violation]
-pub struct ExternalFunction {
+pub struct ProcedureNotInModule {
     procedure: String,
 }
 
-impl Violation for ExternalFunction {
+impl Violation for ProcedureNotInModule {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let ExternalFunction { procedure } = self;
+        let ProcedureNotInModule { procedure } = self;
         format!("{procedure} not contained within (sub)module or program")
     }
 }
 
-impl AstRule for ExternalFunction {
+impl AstRule for ProcedureNotInModule {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.parent()?.kind() == "translation_unit" {
             let procedure_stmt = node.child(0)?;
             let procedure = node.kind().to_string();
             return some_vec![Diagnostic::from_node(
-                ExternalFunction { procedure },
+                ProcedureNotInModule { procedure },
                 &procedure_stmt
             )];
         }
