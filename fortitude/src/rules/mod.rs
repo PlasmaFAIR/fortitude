@@ -82,6 +82,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "061") => (RuleGroup::Stable, Ast, style::end_statements::UnnamedEndStatement),
         (Style, "071") => (RuleGroup::Preview, Ast, style::double_colon_in_decl::MissingDoubleColon),
         (Style, "101") => (RuleGroup::Stable, Text, style::whitespace::TrailingWhitespace),
+        (Style, "102") => (RuleGroup::Preview, Ast, style::whitespace::IncorrectSpaceBeforeComment),
 
         (Typing, "001") => (RuleGroup::Stable, Ast, typing::implicit_typing::ImplicitTyping),
         (Typing, "002") => (RuleGroup::Stable, Ast, typing::implicit_typing::InterfaceImplicitTyping),

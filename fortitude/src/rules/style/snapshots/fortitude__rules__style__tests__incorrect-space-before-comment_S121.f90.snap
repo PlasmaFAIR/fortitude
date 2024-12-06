@@ -1,0 +1,45 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S121.f90:3:13: S121 [*] need at least 2 spaces before inline comment
+  |
+1 | ! This is fine
+2 |  ! This isn't but we'll let it pass
+3 | module mymod! This should be given two extra spaces
+  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S121
+4 |   implicit none ! This should be given one extra space
+5 |   private  ! This is fine
+  |
+  = help: add extra whitespace
+
+ℹ Safe fix
+1 1 | ! This is fine
+2 2 |  ! This isn't but we'll let it pass
+3   |-module mymod! This should be given two extra spaces
+  3 |+module mymod  ! This should be given two extra spaces
+4 4 |   implicit none ! This should be given one extra space
+5 5 |   private  ! This is fine
+6 6 |   ! This is fine
+
+./resources/test/fixtures/style/S121.f90:4:17: S121 [*] need at least 2 spaces before inline comment
+  |
+2 |  ! This isn't but we'll let it pass
+3 | module mymod! This should be given two extra spaces
+4 |   implicit none ! This should be given one extra space
+  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S121
+5 |   private  ! This is fine
+6 |   ! This is fine
+  |
+  = help: add extra whitespace
+
+ℹ Safe fix
+1 1 | ! This is fine
+2 2 |  ! This isn't but we'll let it pass
+3 3 | module mymod! This should be given two extra spaces
+4   |-  implicit none ! This should be given one extra space
+  4 |+  implicit none  ! This should be given one extra space
+5 5 |   private  ! This is fine
+6 6 |   ! This is fine
+7 7 | ! As is this
