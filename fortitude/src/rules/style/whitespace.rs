@@ -95,11 +95,7 @@ impl AstRule for IncorrectSpaceBeforeComment {
             return None;
         }
         if whitespace < 2 {
-            let replacement = format!(
-                "{}{}",
-                &"  "[..2 - whitespace],
-                node.to_text(source.text())?
-            );
+            let replacement = format!("{}{}", &"  "[whitespace..], node.to_text(source.text())?);
             let edit = node.edit_replacement(replacement);
             return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
         }
