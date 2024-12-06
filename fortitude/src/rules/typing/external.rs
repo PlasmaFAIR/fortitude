@@ -15,11 +15,11 @@ use crate::{ast::FortitudeNode, settings::Settings, AstRule, FromAstNode};
 /// If the procedure is in your project, put it in a module (see
 /// `external-function`), or write an explicit interface.
 #[violation]
-pub struct ExternalStatement {
+pub struct ExternalProcedure {
     name: String,
 }
 
-impl Violation for ExternalStatement {
+impl Violation for ExternalProcedure {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { name } = self;
@@ -31,7 +31,7 @@ impl Violation for ExternalStatement {
     }
 }
 
-impl AstRule for ExternalStatement {
+impl AstRule for ExternalProcedure {
     fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node
             .child_with_name("type_qualifier")?

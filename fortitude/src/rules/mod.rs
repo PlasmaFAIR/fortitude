@@ -96,7 +96,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Typing, "042") => (RuleGroup::Stable, Ast, typing::assumed_size::AssumedSizeCharacterIntent),
         (Typing, "043") => (RuleGroup::Stable, Ast, typing::assumed_size::DeprecatedAssumedSizeCharacter),
         (Typing, "051") => (RuleGroup::Stable, Ast, typing::init_decls::InitialisationInDeclaration),
-        (Typing, "061") => (RuleGroup::Preview, Ast, typing::external::ExternalStatement),
+        (Typing, "061") => (RuleGroup::Preview, Ast, typing::external::ExternalProcedure),
 
         (Obsolescent, "001") => (RuleGroup::Preview, Ast, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Preview, Ast, obsolescent::common_blocks::CommonBlock),
@@ -106,7 +106,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),
         (Precision, "021") => (RuleGroup::Stable, Ast, precision::implicit_kinds::ImplicitRealKind),
 
-        (Modules, "001") => (RuleGroup::Stable, Ast, modules::external_functions::ExternalFunction),
+        (Modules, "001") => (RuleGroup::Stable, Ast, modules::external_functions::ProcedureNotInModule),
         (Modules, "011") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
         (Modules, "021") => (RuleGroup::Preview, Ast, modules::accessibility_statements::MissingAccessibilityStatement),
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
