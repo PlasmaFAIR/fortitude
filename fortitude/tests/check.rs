@@ -538,44 +538,103 @@ fn check_multibyte_utf8() -> anyhow::Result<()> {
         &test_file,
         // NOTE: There should be trailing whitespace in the snippet, do not remove!
         r#"
+program test
+  use some_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_long_module_name, only : integer_working_precision
+  implicit none
+  integer(integer_working_precision), parameter, dimension(1) :: a = [1]
+  write (*, '("╔════════════════════════════════════════════╗")')
+  write (*, '("║  UTF-8 LOGO BOX                            ║")')
+  write (*, '("╚════════════════════════════════════════════╝")')
   !-- transform into g/cm³   
   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
   !-- transform³ into³ g/cm³   
   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-  !dens=0.001*mass/(1.0d-30*ax(1)*ax(2)*ax(3)*bohr**3)
+end program test
 "#,
     )?;
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=trailing-whitespace")
+                         .arg("--select=trailing-whitespace,line-too-long")
+                         .arg("--line-length=60")
                          .arg(&test_file),
-                         @r"
+                         @r#"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S101 [*] trailing whitespace
+    [TEMP_FILE] S001 line length of 222, exceeds maximum 60
       |
-    2 |   !-- transform into g/cm³   
-      |                           ^^^ S101
-    3 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    4 |   !-- transform³ into³ g/cm³   
+    2 | ...
+    3 | ...ly_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_long_module_name, only : integer_working_precision
+      |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
+    4 | ...
+    5 | ...n(1) :: a = [1]
       |
-      = help: Remove trailing whitespace
+
+    [TEMP_FILE] S001 line length of 72, exceeds maximum 60
+      |
+    3 |   use some_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_rea...
+    4 |   implicit none
+    5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
+      |                                                             ^^^^^^^^^^^^ S001
+    6 |   write (*, '("╔════════════════════════════════════════════╗"...
+    7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
+      |
+
+    [TEMP_FILE] S001 line length of 65, exceeds maximum 60
+      |
+    4 |   implicit none
+    5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
+    6 |   write (*, '("╔════════════════════════════════════════════╗"...
+      |                                                             ^^^^^ S001
+    7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
+    8 |   write (*, '("╚════════════════════════════════════════════╝"...
+      |
+
+    [TEMP_FILE] S001 line length of 65, exceeds maximum 60
+      |
+    5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
+    6 |   write (*, '("╔════════════════════════════════════════════╗"...
+    7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
+      |                                                             ^^^^^ S001
+    8 |   write (*, '("╚════════════════════════════════════════════╝"...
+    9 |   !-- transform into g/cm³   
+      |
+
+    [TEMP_FILE] S001 line length of 65, exceeds maximum 60
+       |
+     6 |   write (*, '("╔════════════════════════════════════════════╗"...
+     7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
+     8 |   write (*, '("╚════════════════════════════════════════════╝"...
+       |                                                             ^^^^^ S001
+     9 |   !-- transform into g/cm³   
+    10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
+       |
 
     [TEMP_FILE] S101 [*] trailing whitespace
-      |
-    2 |   !-- transform into g/cm³   
-    3 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    4 |   !-- transform³ into³ g/cm³   
-      |                             ^^^ S101
-    5 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    6 |   !dens=0.001*mass/(1.0d-30*ax(1)*ax(2)*ax(3)*bohr**3)
-      |
-      = help: Remove trailing whitespace
+       |
+     7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
+     8 |   write (*, '("╚════════════════════════════════════════════╝"...
+     9 |   !-- transform into g/cm³   
+       |                           ^^^ S101
+    10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
+    11 |   !-- transform³ into³ g/cm³   
+       |
+       = help: Remove trailing whitespace
+
+    [TEMP_FILE] S101 [*] trailing whitespace
+       |
+     9 |   !-- transform into g/cm³   
+    10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
+    11 |   !-- transform³ into³ g/cm³   
+       |                             ^^^ S101
+    12 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
+    13 | end program test
+       |
+       = help: Remove trailing whitespace
 
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of errors: 7
 
     For more information about specific rules, run:
 
@@ -584,7 +643,7 @@ fn check_multibyte_utf8() -> anyhow::Result<()> {
     [*] 2 fixable with the `--fix` option.
 
     ----- stderr -----
-    ");
+    "#);
 
     Ok(())
 }
