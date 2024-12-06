@@ -5,7 +5,7 @@ use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 
 use crate::settings::Settings;
-use crate::{FromStartEndLineCol, TextRule};
+use crate::TextRule;
 
 /// ## What does it do?
 /// Checks for tailing whitespace
@@ -40,21 +40,9 @@ impl TextRule for TrailingWhitespace {
                 .sum();
             if whitespace_bytes > 0.into() {
                 let line_end_byte = source.line_end_exclusive(OneIndexed::from_zero_indexed(idx));
-                let edit = Edit::range_deletion(TextRange::new(
-                    line_end_byte - whitespace_bytes,
-                    line_end_byte,
-                ));
-                violations.push(
-                    Diagnostic::from_start_end_line_col(
-                        Self {},
-                        source_file,
-                        idx,
-                        line.trim_end().len(),
-                        idx,
-                        line.len(),
-                    )
-                    .with_fix(Fix::safe_edit(edit)),
-                );
+                let range = TextRange::new(line_end_byte - whitespace_bytes, line_end_byte);
+                let edit = Edit::range_deletion(range);
+                violations.push(Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit)));
             }
         }
         violations
