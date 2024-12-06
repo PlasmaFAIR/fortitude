@@ -529,3 +529,49 @@ end program foo
 
     Ok(())
 }
+
+#[test]
+fn check_multibyte_utf8() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        // NOTE: There should be trailing whitespace in the snippet, do not remove!
+        r#"
+  !-- transform into g/cm³   
+  dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
+  !dens=0.001*mass/(1.0d-30*ax(1)*ax(2)*ax(3)*bohr**3)
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=trailing-whitespace")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] S101 [*] trailing whitespace
+      |
+    2 |   !-- transform into g/cm³   
+      |                           ^^^ S101
+    3 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
+    4 |   !dens=0.001*mass/(1.0d-30*ax(1)*ax(2)*ax(3)*bohr**3)
+      |
+      = help: Remove trailing whitespace
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option.
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
