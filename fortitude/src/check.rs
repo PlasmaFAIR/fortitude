@@ -493,7 +493,7 @@ pub(crate) fn check_and_fix_file<'a>(
         return Ok(FixerResult {
             result: violations
                 .into_iter()
-                .map(|v| DiagnosticMessage::from_ruff(file, v))
+                .map(|v| DiagnosticMessage::from_ruff(&transformed, v))
                 .collect_vec(),
             transformed,
             fixed,

@@ -416,7 +416,7 @@ end program foo
       |
     2 | program foo
     3 |   implicit none
-    4 |   real i
+    4 |   real :: i
       |   ^^^^ P021
     5 |   i = 4.0
     6 | contains
