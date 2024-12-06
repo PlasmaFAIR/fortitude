@@ -2,9 +2,10 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
+use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 fn implicit_statement_is_none(node: &Node) -> bool {
@@ -142,6 +143,70 @@ impl AstRule for SuperfluousImplicitNone {
             }
         }
         None
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["implicit_statement"]
+    }
+}
+
+/// ## What it does
+/// Checks if `implicit none` is missing `external`
+///
+/// ## Why is this bad?
+/// `implicit none` disables implicit types of variables but still allows
+/// implicit interfaces for procedures. Fortran 2018 added the ability to also
+/// forbid implicit interfaces through `implicit none (external)`, enabling the
+/// compiler to check the number and type of arguments and return values.
+///
+/// `implicit none` is equivalent to `implicit none (type)`, so the full
+/// statement should be `implicit none (type, external)`.
+#[violation]
+pub struct ImplicitExternalProcedures {}
+
+impl Violation for ImplicitExternalProcedures {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        format!("'implicit none' missing 'external'")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        Some("Add `(external)` to 'implicit none'".to_string())
+    }
+}
+
+impl AstRule for ImplicitExternalProcedures {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        if !implicit_statement_is_none(node) {
+            return None;
+        }
+
+        let text = node.to_text(src.source_text())?.to_lowercase();
+
+        if !text.contains("external") {
+            let edit = if let Some(type_node) = node
+                .children(&mut node.walk())
+                .find(|child| child.to_text(src.source_text()).unwrap().to_lowercase() == "type")
+            {
+                // Seems unlikely someone would have `implicit none (type)`
+                // without `external` -- is that a sign they _explicitly_ don't
+                // want it? That's probably still unwise though
+                Edit::insertion(
+                    ", external".to_string(),
+                    TextSize::try_from(type_node.end_byte()).unwrap(),
+                )
+            } else {
+                Edit::insertion(
+                    " (type, external)".to_string(),
+                    TextSize::try_from(node.end_byte()).unwrap(),
+                )
+            };
+            let fix = Fix::unsafe_edit(edit);
+
+            some_vec!(Diagnostic::from_node(Self {}, node).with_fix(fix))
+        } else {
+            None
+        }
     }
 
     fn entrypoints() -> Vec<&'static str> {
