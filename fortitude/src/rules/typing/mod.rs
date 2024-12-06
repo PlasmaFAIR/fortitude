@@ -21,6 +21,7 @@ mod tests {
     #[test_case(Rule::ImplicitTyping, Path::new("T001.f90"))]
     #[test_case(Rule::InterfaceImplicitTyping, Path::new("T002.f90"))]
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("T003.f90"))]
+    #[test_case(Rule::ImplicitExternalProcedures, Path::new("T004.f90"))]
     #[test_case(Rule::LiteralKind, Path::new("T011.f90"))]
     #[test_case(Rule::LiteralKindSuffix, Path::new("T012.f90"))]
     #[test_case(Rule::StarKind, Path::new("T021.f90"))]

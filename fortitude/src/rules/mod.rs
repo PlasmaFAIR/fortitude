@@ -86,6 +86,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Typing, "001") => (RuleGroup::Stable, Ast, typing::implicit_typing::ImplicitTyping),
         (Typing, "002") => (RuleGroup::Stable, Ast, typing::implicit_typing::InterfaceImplicitTyping),
         (Typing, "003") => (RuleGroup::Stable, Ast, typing::implicit_typing::SuperfluousImplicitNone),
+        (Typing, "004") => (RuleGroup::Preview, Ast, typing::implicit_typing::ImplicitExternalProcedures),
         (Typing, "011") => (RuleGroup::Stable, Ast, typing::literal_kinds::LiteralKind),
         (Typing, "012") => (RuleGroup::Stable, Ast, typing::literal_kinds::LiteralKindSuffix),
         (Typing, "021") => (RuleGroup::Stable, Ast, typing::star_kinds::StarKind),
