@@ -1,4 +1,5 @@
 pub mod assumed_size;
+pub mod external;
 pub mod implicit_typing;
 pub mod init_decls;
 pub mod intent;
@@ -30,6 +31,7 @@ mod tests {
     #[test_case(Rule::AssumedSizeCharacterIntent, Path::new("T042.f90"))]
     #[test_case(Rule::DeprecatedAssumedSizeCharacter, Path::new("T043.f90"))]
     #[test_case(Rule::InitialisationInDeclaration, Path::new("T051.f90"))]
+    #[test_case(Rule::ExternalStatement, Path::new("T061.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
