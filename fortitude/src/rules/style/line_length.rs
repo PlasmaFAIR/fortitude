@@ -1,10 +1,12 @@
 /// Defines rules that govern line length.
 use crate::settings::Settings;
-use crate::{FromStartEndLineCol, TextRule};
+use crate::TextRule;
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
+use ruff_source_file::OneIndexed;
 use ruff_source_file::SourceFile;
+use ruff_text_size::{TextLen, TextRange, TextSize};
 
 /// ## What does it do?
 /// Checks line length isn't too long
@@ -42,11 +44,13 @@ impl Violation for LineTooLong {
 }
 
 impl TextRule for LineTooLong {
-    fn check(settings: &Settings, source: &SourceFile) -> Vec<Diagnostic> {
+    fn check(settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
+        let source = source_file.to_source_code();
         let max_length = settings.line_length;
         let mut violations = Vec::new();
-        for (idx, line) in source.source_text().split('\n').enumerate() {
-            let actual_length = line.len();
+        for (idx, line) in source.text().lines().enumerate() {
+            // Note: Can't use string.len(), as that gives byte length, not char length
+            let actual_length = line.chars().count();
             if actual_length > max_length {
                 // Are we ending on a string or comment? If so, we'll allow it through, as it may
                 // contain something like a long URL that cannot be reasonably split across multiple
@@ -54,17 +58,23 @@ impl TextRule for LineTooLong {
                 if regex_is_match!(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#, line) {
                     continue;
                 }
-                violations.push(Diagnostic::from_start_end_line_col(
+                // Get the byte range from the first character that oversteps the limit
+                // to the end of the line
+                let extra_bytes: TextSize = line
+                    .chars()
+                    .rev()
+                    .take(actual_length - max_length)
+                    .map(TextLen::text_len)
+                    .sum();
+                let line_end = source.line_end_exclusive(OneIndexed::from_zero_indexed(idx));
+                let range = TextRange::new(line_end - extra_bytes, line_end);
+                violations.push(Diagnostic::new(
                     Self {
                         max_length,
                         actual_length,
                     },
-                    source,
-                    idx,
-                    max_length,
-                    idx,
-                    actual_length,
-                ))
+                    range,
+                ));
             }
         }
         violations
