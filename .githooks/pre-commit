@@ -8,7 +8,7 @@ echo "Running Fortitude pre-commit hook..."
 caveat="If you really know what you're doing, commit again with --no-verify"
 
 echo "Testing Rust..."
-cargo test
+cargo test --all-targets --all-features
 if [ $? != "0" ]; then
   echo "Rust tests are failing, fix all reported by 'cargo test' and try again"
   echo $caveat

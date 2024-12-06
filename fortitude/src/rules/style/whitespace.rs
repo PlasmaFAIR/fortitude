@@ -1,10 +1,11 @@
 /// Defines rules that enforce widely accepted whitespace rules.
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_source_file::SourceFile;
+use ruff_source_file::{OneIndexed, SourceFile};
+use ruff_text_size::{TextLen, TextRange, TextSize};
 
 use crate::settings::Settings;
-use crate::{FromStartEndLineCol, TextRule};
+use crate::TextRule;
 
 /// ## What does it do?
 /// Checks for tailing whitespace
@@ -16,25 +17,32 @@ use crate::{FromStartEndLineCol, TextRule};
 #[violation]
 pub struct TrailingWhitespace {}
 
-impl Violation for TrailingWhitespace {
+impl AlwaysFixableViolation for TrailingWhitespace {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("trailing whitespace")
     }
+
+    fn fix_title(&self) -> String {
+        format!("Remove trailing whitespace")
+    }
 }
 impl TextRule for TrailingWhitespace {
-    fn check(_settings: &Settings, source: &SourceFile) -> Vec<Diagnostic> {
+    fn check(_settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
+        let source = source_file.to_source_code();
         let mut violations = Vec::new();
-        for (idx, line) in source.source_text().split('\n').enumerate() {
-            if line.ends_with([' ', '\t']) {
-                violations.push(Diagnostic::from_start_end_line_col(
-                    Self {},
-                    source,
-                    idx,
-                    line.trim_end().len(),
-                    idx,
-                    line.len(),
-                ));
+        for (idx, line) in source.text().lines().enumerate() {
+            let whitespace_bytes: TextSize = line
+                .chars()
+                .rev()
+                .take_while(|c| c.is_whitespace())
+                .map(TextLen::text_len)
+                .sum();
+            if whitespace_bytes > 0.into() {
+                let line_end_byte = source.line_end_exclusive(OneIndexed::from_zero_indexed(idx));
+                let range = TextRange::new(line_end_byte - whitespace_bytes, line_end_byte);
+                let edit = Edit::range_deletion(range);
+                violations.push(Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit)));
             }
         }
         violations
