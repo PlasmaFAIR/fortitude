@@ -19,7 +19,7 @@ pub use crate::registry::clap_completion::RuleParser;
 pub use crate::rule_selector::clap_completion::RuleSelectorParser;
 
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
-use ruff_source_file::{OneIndexed, SourceFile};
+use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
 use shadow_rs::shadow;
@@ -44,36 +44,6 @@ impl FromAstNode for Diagnostic {
                 TextSize::try_from(node.end_byte()).unwrap(),
             ),
         )
-    }
-}
-
-pub trait FromStartEndLineCol {
-    /// Create new `Violation` from zero-index start/end line/column numbers
-    fn from_start_end_line_col<T: Into<DiagnosticKind>>(
-        kind: T,
-        source: &SourceFile,
-        start_line: usize,
-        start_col: usize,
-        end_line: usize,
-        end_col: usize,
-    ) -> Self;
-}
-
-impl FromStartEndLineCol for Diagnostic {
-    fn from_start_end_line_col<T: Into<DiagnosticKind>>(
-        kind: T,
-        source: &SourceFile,
-        start_line: usize,
-        start_col: usize,
-        end_line: usize,
-        end_col: usize,
-    ) -> Self {
-        let source_code = source.to_source_code();
-        let start_line_offset = source_code.line_start(OneIndexed::from_zero_indexed(start_line));
-        let start_offset = start_line_offset + TextSize::try_from(start_col).unwrap();
-        let end_line_offset = source_code.line_start(OneIndexed::from_zero_indexed(end_line));
-        let end_offset = end_line_offset + TextSize::try_from(end_col).unwrap();
-        Diagnostic::new(kind, TextRange::new(start_offset, end_offset))
     }
 }
 
