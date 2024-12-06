@@ -192,12 +192,14 @@ impl Display for MessageCodeFrame<'_> {
         let source = source_code.slice(TextRange::new(start_offset, end_offset));
         let message_range = self.message.range() - start_offset;
 
-        let start_char = source[TextRange::up_to(message_range.start())]
+        let start_byte = source[TextRange::up_to(message_range.start())]
             .chars()
-            .count();
-        let end_char = source[TextRange::up_to(message_range.end())]
+            .map(|c| c.len_utf8())
+            .sum();
+        let end_byte = source[TextRange::up_to(message_range.end())]
             .chars()
-            .count();
+            .map(|c| c.len_utf8())
+            .sum();
 
         let mut code = self.message.code.bold().bright_red();
 
@@ -211,7 +213,7 @@ impl Display for MessageCodeFrame<'_> {
         let snippet = Level::None.title("").snippet(
             Snippet::source(&source_text)
                 .line_start(start_index.get())
-                .annotation(Level::Error.span(start_char..end_char).label(&code)),
+                .annotation(Level::Error.span(start_byte..end_byte).label(&code)),
         );
 
         let snippet_with_footer = if let Some(s) = self.message.suggestion() {
