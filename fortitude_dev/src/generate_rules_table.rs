@@ -140,39 +140,7 @@ pub(crate) fn generate() -> String {
         table_out.push('\n');
         table_out.push('\n');
 
-        // if let Some(url) = linter.url() {
-        //     let host = url
-        //         .trim_start_matches("https://")
-        //         .split('/')
-        //         .next()
-        //         .unwrap();
-        //     table_out.push_str(&format!(
-        //         "For more, see [{}]({}) on {}.",
-        //         linter.name(),
-        //         url,
-        //         match host {
-        //             "pypi.org" => "PyPI",
-        //             "github.com" => "GitHub",
-        //             host => panic!(
-        //                 "unexpected host in URL of {}, expected pypi.org or github.com but found \
-        //                  {host}",
-        //                 linter.name()
-        //             ),
-        //         }
-        //     ));
-        //     table_out.push('\n');
-        //     table_out.push('\n');
-        // }
-
-        // if Options::metadata().has(&format!("lint.{}", linter.name())) {
-        //     table_out.push_str(&format!(
-        //         "For related settings, see [{}](settings.md#lint{}).",
-        //         linter.name(),
-        //         linter.name(),
-        //     ));
-        //     table_out.push('\n');
-        //     table_out.push('\n');
-        // }
+        // TODO: cross-link to options
 
         generate_table(&mut table_out, linter.all_rules(), &linter);
     }

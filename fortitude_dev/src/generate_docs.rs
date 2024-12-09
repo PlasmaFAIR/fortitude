@@ -35,30 +35,6 @@ pub(crate) fn main(args: &Args) -> Result<()> {
             output.push_str(&format!("# {} ({})", rule.as_ref(), rule.noqa_code()));
             output.push('\n');
 
-            // let (linter, _) = Category::parse_code(&rule.noqa_code().to_string()).unwrap();
-            // if linter.url().is_some() {
-            //     let common_prefix: String = match linter.common_prefix() {
-            //         "" => linter
-            //             .iter()
-            //             .map(|c| c.prefix)
-            //             .join("-"),
-            //         prefix => prefix.to_string(),
-            //     };
-            //     let anchor = format!(
-            //         "{}-{}",
-            //         linter.name().to_lowercase(),
-            //         common_prefix.to_lowercase()
-            //     );
-
-            //     output.push_str(&format!(
-            //         "Derived from the **[{}](../rules.md#{})** linter.",
-            //         linter.name(),
-            //         anchor
-            //     ));
-            //     output.push('\n');
-            //     output.push('\n');
-            // }
-
             if rule.is_deprecated() {
                 output.push_str(
                     r"**Warning: This rule is deprecated and will be removed in a future release.**",
@@ -141,45 +117,11 @@ fn process_documentation(documentation: &str, out: &mut String, _rule_name: &str
         if line.starts_with("## ") {
             in_options = line == "## Options\n";
         } else if in_options {
-            // if let Some(rest) = line.strip_prefix("- `") {
-            //     let option = rest.trim_end().trim_end_matches('`');
-
-            //     match Options::metadata().find(option) {
-            //         Some(OptionEntry::Field(field)) => {
-            //             if field.deprecated.is_some() {
-            //                 eprintln!("Rule {rule_name} references deprecated option {option}.");
-            //             }
-            //         }
-            //         Some(_) => {}
-            //         None => {
-            //             panic!("Unknown option {option} referenced by rule {rule_name}");
-            //         }
-            //     }
-
-            //     let anchor = option.replace('.', "_");
-            //     out.push_str(&format!("- [`{option}`][{option}]\n"));
-            //     after.push_str(&format!("[{option}]: ../settings.md#{anchor}\n"));
-            //     referenced_options.insert(option);
-
-            //     continue;
-            // }
+            // TODO: deal with options
         }
 
         out.push_str(line);
     }
-
-    // let re = Regex::new(r"\[`([^`]*?)`]\[(.*?)]").unwrap();
-    // for (_, [option, _]) in re.captures_iter(&documentation).map(|c| c.extract()) {
-    //     if let Some(OptionEntry::Field(field)) = Options::metadata().find(option) {
-    //         if referenced_options.insert(option) {
-    //             let anchor = option.replace('.', "_");
-    //             after.push_str(&format!("[{option}]: ../settings.md#{anchor}\n"));
-    //         }
-    //         if field.deprecated.is_some() {
-    //             eprintln!("Rule {rule_name} references deprecated option {option}.");
-    //         }
-    //     }
-    // }
 
     if !after.is_empty() {
         out.push('\n');
@@ -187,44 +129,3 @@ fn process_documentation(documentation: &str, out: &mut String, _rule_name: &str
         out.push_str(&after);
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::process_documentation;
-
-//     #[test]
-//     fn test_process_documentation() {
-//         let mut output = String::new();
-//         process_documentation(
-//             "
-// See also [`lint.mccabe.max-complexity`] and [`lint.task-tags`].
-// Something [`else`][other]. Some [link](https://example.com).
-
-// ## Options
-
-// - `lint.task-tags`
-// - `lint.mccabe.max-complexity`
-
-// [other]: http://example.com.",
-//             &mut output,
-//             "example",
-//         );
-//         assert_eq!(
-//             output,
-//             "
-// See also [`lint.mccabe.max-complexity`][lint.mccabe.max-complexity] and [`lint.task-tags`][lint.task-tags].
-// Something [`else`][other]. Some [link](https://example.com).
-
-// ## Options
-
-// - [`lint.task-tags`][lint.task-tags]
-// - [`lint.mccabe.max-complexity`][lint.mccabe.max-complexity]
-
-// [other]: http://example.com.
-
-// [lint.task-tags]: ../settings.md#lint_task-tags
-// [lint.mccabe.max-complexity]: ../settings.md#lint_mccabe_max-complexity
-// "
-//         );
-//     }
-// }
