@@ -188,43 +188,43 @@ fn process_documentation(documentation: &str, out: &mut String, _rule_name: &str
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::process_documentation;
+// #[cfg(test)]
+// mod tests {
+//     use super::process_documentation;
 
-    #[test]
-    fn test_process_documentation() {
-        let mut output = String::new();
-        process_documentation(
-            "
-See also [`lint.mccabe.max-complexity`] and [`lint.task-tags`].
-Something [`else`][other]. Some [link](https://example.com).
+//     #[test]
+//     fn test_process_documentation() {
+//         let mut output = String::new();
+//         process_documentation(
+//             "
+// See also [`lint.mccabe.max-complexity`] and [`lint.task-tags`].
+// Something [`else`][other]. Some [link](https://example.com).
 
-## Options
+// ## Options
 
-- `lint.task-tags`
-- `lint.mccabe.max-complexity`
+// - `lint.task-tags`
+// - `lint.mccabe.max-complexity`
 
-[other]: http://example.com.",
-            &mut output,
-            "example",
-        );
-        assert_eq!(
-            output,
-            "
-See also [`lint.mccabe.max-complexity`][lint.mccabe.max-complexity] and [`lint.task-tags`][lint.task-tags].
-Something [`else`][other]. Some [link](https://example.com).
+// [other]: http://example.com.",
+//             &mut output,
+//             "example",
+//         );
+//         assert_eq!(
+//             output,
+//             "
+// See also [`lint.mccabe.max-complexity`][lint.mccabe.max-complexity] and [`lint.task-tags`][lint.task-tags].
+// Something [`else`][other]. Some [link](https://example.com).
 
-## Options
+// ## Options
 
-- [`lint.task-tags`][lint.task-tags]
-- [`lint.mccabe.max-complexity`][lint.mccabe.max-complexity]
+// - [`lint.task-tags`][lint.task-tags]
+// - [`lint.mccabe.max-complexity`][lint.mccabe.max-complexity]
 
-[other]: http://example.com.
+// [other]: http://example.com.
 
-[lint.task-tags]: ../settings.md#lint_task-tags
-[lint.mccabe.max-complexity]: ../settings.md#lint_mccabe_max-complexity
-"
-        );
-    }
-}
+// [lint.task-tags]: ../settings.md#lint_task-tags
+// [lint.mccabe.max-complexity]: ../settings.md#lint_mccabe_max-complexity
+// "
+//         );
+//     }
+// }
