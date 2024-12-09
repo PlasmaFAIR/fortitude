@@ -2,6 +2,7 @@
 ![Tests](https://github.com/PlasmaFAIR/fortitude/actions/workflows/test.yml/badge.svg)
 ![Clippy](https://github.com/PlasmaFAIR/fortitude/actions/workflows/clippy.yml/badge.svg)
 [![Docs](https://readthedocs.org/projects/fortitude/badge/?version=latest)](https://fortitude.readthedocs.io/en/latest/?badge=latest)
+[![License](https://img.shields.io/pypi/l/fortitude-lint.svg)](https://github.com/PlasmaFAIR/fortitude/blob/main/LICENSE)
 
 # Fortitude
 
