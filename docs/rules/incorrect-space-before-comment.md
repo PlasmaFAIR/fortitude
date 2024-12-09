@@ -1,8 +1,6 @@
 # incorrect-space-before-comment (S102)
 Fix is always available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What does it do?
 Checks for inline comments that aren't preceeded by at least two spaces.
 

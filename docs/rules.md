@@ -18,9 +18,9 @@
 | S041 | [old-style-array-literal](rules/old-style-array-literal.md) | Array literal uses old-style syntax: prefer `[...]` | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
 | S051 | [deprecated-relational-operator](rules/deprecated-relational-operator.md) | deprecated relational operator '{symbol}', prefer '{new_symbol}' instead | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
 | S061 | [unnamed-end-statement](rules/unnamed-end-statement.md) | end statement should be named. | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
-| S071 | [missing-double-colon](rules/missing-double-colon.md) | variable declaration missing '::' | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> |
+| S071 | [missing-double-colon](rules/missing-double-colon.md) | variable declaration missing '::' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
 | S101 | [trailing-whitespace](rules/trailing-whitespace.md) | trailing whitespace | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
-| S102 | [incorrect-space-before-comment](rules/incorrect-space-before-comment.md) | need at least 2 spaces before inline comment | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> |
+| S102 | [incorrect-space-before-comment](rules/incorrect-space-before-comment.md) | need at least 2 spaces before inline comment | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
 
 ### Typing (T)
 
@@ -38,7 +38,7 @@
 | T042 | [assumed-size-character-intent](rules/assumed-size-character-intent.md) | character '{name}' has assumed size but does not have `intent(in)` | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | T043 | [deprecated-assumed-size-character](rules/deprecated-assumed-size-character.md) | character '{name}' uses deprecated syntax for assumed size | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | T051 | [initialisation-in-declaration](rules/initialisation-in-declaration.md) | '{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
-| T061 | [external-procedure](rules/external-procedure.md) | '{name}' declared as `external` | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| T061 | [external-procedure](rules/external-procedure.md) | '{name}' declared as `external` | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 
 ### Modules (M)
 
@@ -67,7 +67,7 @@
 
 | Code | Name | Message | |
 | ---- | ---- | ------- | ------: |
-| OB001 | [statement-function](rules/statement-function.md) | statement functions are obsolescent, prefer internal functions | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
-| OB011 | [common-block](rules/common-block.md) | common blocks are obsolescent, prefer modules or derived types | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
-| OB021 | [entry-statement](rules/entry-statement.md) | entry statements are obsolescent, use module procedures with generic interface | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| OB001 | [statement-function](rules/statement-function.md) | statement functions are obsolescent, prefer internal functions | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| OB011 | [common-block](rules/common-block.md) | common blocks are obsolescent, prefer modules or derived types | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| OB021 | [entry-statement](rules/entry-statement.md) | entry statements are obsolescent, use module procedures with generic interface | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 

@@ -1,6 +1,4 @@
 # external-procedure (T061)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What does it do?
 Checks for procedures declared with just `external`
 

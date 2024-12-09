@@ -1,8 +1,6 @@
 # missing-double-colon (S071)
 Fix is always available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What does it do?
 Checks for missing double-colon separator in variable declarations.
 
