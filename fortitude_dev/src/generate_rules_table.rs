@@ -78,9 +78,10 @@ fn generate_table(table_out: &mut String, rules: impl IntoIterator<Item = Rule>,
             se = "</span>";
         }
 
+        // TODO: Add back anchor when building proper docs
         #[allow(clippy::or_fun_call)]
         table_out.push_str(&format!(
-            "| {ss}{0}{1}{se} {{ #{0}{1} }} | {ss}{2}{se} | {ss}{3}{se} | {ss}{4}{se} |",
+            "| {ss}{0}{1}{se} | {ss}{2}{se} | {ss}{3}{se} | {ss}{4}{se} |",
             linter.common_prefix(),
             linter.code_for_rule(rule).unwrap(),
             rule.explanation()
