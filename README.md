@@ -1,4 +1,4 @@
-[![PyPI](https://img.shields.io/pypi/v/:fortitude-lint)](https://pypi.org/project/fortitude-lint)
+[![PyPI](https://img.shields.io/pypi/v/fortitude-lint.svg)](https://pypi.org/project/fortitude-lint)
 ![Tests](https://github.com/PlasmaFAIR/fortitude/actions/workflows/test.yml/badge.svg)
 ![Clippy](https://github.com/PlasmaFAIR/fortitude/actions/workflows/clippy.yml/badge.svg)
 [![Docs](https://readthedocs.org/projects/fortitude/badge/?version=latest)](https://fortitude.readthedocs.io/en/latest/?badge=latest)
