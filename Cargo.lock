@@ -448,6 +448,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "fortitude_dev"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "fortitude",
+ "fortitude_macros",
+ "itertools 0.12.1",
+ "regex",
+ "ruff_cache",
+ "ruff_diagnostics",
+ "ruff_macros",
+ "ruff_source_file",
+ "ruff_text_size",
+ "serde_json",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
 name = "fortitude_macros"
 version = "0.1.0"
 dependencies = [

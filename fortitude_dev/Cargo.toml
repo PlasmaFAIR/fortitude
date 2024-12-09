@@ -1,0 +1,26 @@
+[package]
+name = "fortitude_dev"
+version = "0.0.0"
+publish = false
+authors = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+fortitude = { workspace = true }
+fortitude_macros = { workspace = true }
+
+anyhow = { workspace = true }
+clap = { workspace = true }
+colored = { workspace = true }
+itertools = { workspace = true }
+regex = { version = "1.10.2" }
+ruff_cache = { workspace = true }
+ruff_diagnostics = { workspace = true }
+ruff_macros = { workspace = true }
+ruff_source_file = { workspace = true }
+ruff_text_size = { workspace = true }
+serde_json = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }

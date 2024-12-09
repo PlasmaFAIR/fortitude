@@ -16,12 +16,13 @@ exclude = [".*", "test.f90"]
 build = "build.rs"
 
 [dependencies]
+fortitude_macros = { workspace = true }
+
 annotate-snippets = { git = "https://github.com/PlasmaFAIR/annotate-snippets-rs.git", branch = "level-none" }
-anyhow = "1.0.79"
+anyhow = { workspace = true }
 bitflags = "2.6.0"
-clap = { version = "4.4.16", features = ["derive", "string", "env"] }
+clap = { workspace = true }
 colored = { workspace = true }
-fortitude_macros = { version = "0.1.0", path = "../fortitude_macros" }
 is-macro = "0.3.7"
 indicatif = { version = "0.17.9", features = ["rayon", "improved_unicode"] }
 itertools = { workspace = true }
@@ -34,11 +35,11 @@ path-absolutize = { version = "3.1.1", features = [
 pathdiff = { version = "0.2.1" }
 quick-junit = { version = "0.5.0" }
 rayon = "1.10.0"
-ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
-ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0", features = ["serde"] }
-ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
-ruff_source_file = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0", features = ["serde"] }
-ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1", version = "0.0.0" }
+ruff_cache = { workspace = true }
+ruff_diagnostics = { workspace = true, features = ["serde"] }
+ruff_macros = { workspace = true }
+ruff_source_file = { workspace = true, features = ["serde"] }
+ruff_text_size = { workspace = true }
 rustc-hash = "2.0.0"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { workspace = true }
