@@ -90,9 +90,7 @@ pub(crate) fn main(args: &Args) -> Result<()> {
         }
     }
 
-    let filename = PathBuf::from(ROOT_DIR)
-        .join("docs")
-        .join("rules.md");
+    let filename = PathBuf::from(ROOT_DIR).join("docs").join("rules.md");
 
     let rules_table = generate_rules_table::generate();
     fs::write(filename, rules_table).expect("Write rules table");

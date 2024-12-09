@@ -457,6 +457,7 @@ dependencies = [
  "fortitude",
  "fortitude_macros",
  "itertools 0.12.1",
+ "pretty_assertions",
  "regex",
  "ruff_cache",
  "ruff_diagnostics",
