@@ -100,12 +100,18 @@ mkdocs serve
 
 To make a new release, the following steps must be completed in order:
 
+- Move rules out of preview mode/into deprecated mode (if applicable).
 - Make sure the generated docs are up-to-date: `cargo dev generate-all`
 - Make a new commit that updates the project version in `pyproject.toml`,
   `Cargo.toml`, and `CITATION.cff`.
-  - Remember to run `cargo build` to update the `Cargo.lock` file too!
+
+> [!IMPORTANT]
+> Remember to run `cargo build` to update the `Cargo.lock` file too!
+
 - Open a new PR to merge this change.
 - After merging, make a new release on GitHub.
   - This will automatically upload the new version to PyPI.
-- On your machine, pull the main branch, and run `cargo publish`.
-  - This will upload the Rust crate to `crates.io`.
+
+Pushing to `crates.io` is currently not possible as some of our dependencies point
+to GitHub repositories. We'll be able to restart using `crates.io` if Ruff starts
+publishing there.
