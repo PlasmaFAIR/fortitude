@@ -15,6 +15,7 @@ use strum::IntoEnumIterator;
 use ruff_diagnostics::FixAvailability;
 
 const FIX_SYMBOL: &str = "🛠️";
+const NO_FIX_SYMBOL: &str = "➖";
 const PREVIEW_SYMBOL: &str = "🧪";
 const REMOVED_SYMBOL: &str = "❌";
 const WARNING_SYMBOL: &str = "⚠️";
@@ -49,7 +50,7 @@ fn generate_table(table_out: &mut String, rules: impl IntoIterator<Item = Rule>,
                 format!("<span title='Automatic fix available'>{FIX_SYMBOL}</span>")
             }
             FixAvailability::None => {
-                format!("<span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>{FIX_SYMBOL}</span>")
+                format!("<span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>{NO_FIX_SYMBOL}</span>")
             }
         };
 
