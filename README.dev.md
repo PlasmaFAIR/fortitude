@@ -87,10 +87,20 @@ Once you've completed the code for the rule itself, you can define tests with th
 1. Run `cargo test` again to ensure that your test passes.
 
 
+## Building Docs
+
+The documentation can be built locally using:
+
+```bash
+pip install mkdocs-material
+mkdocs serve
+```
+
 ## Making New Releases
 
 To make a new release, the following steps must be completed in order:
 
+- Make sure the generated docs are up-to-date: `cargo dev generate-all`
 - Make a new commit that updates the project version in `pyproject.toml`,
   `Cargo.toml`, and `CITATION.cff`.
   - Remember to run `cargo build` to update the `Cargo.lock` file too!
