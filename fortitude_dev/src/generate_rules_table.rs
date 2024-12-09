@@ -6,8 +6,8 @@
 //!
 //! Used for <https://docs.astral.sh/ruff/rules/>.
 
-use fortitude::rules::RuleGroup;
 use fortitude::registry::{Category, Rule, RuleNamespace};
+use fortitude::rules::RuleGroup;
 
 use std::borrow::Cow;
 use strum::IntoEnumIterator;
@@ -22,7 +22,11 @@ const WARNING_SYMBOL: &str = "⚠️";
 const STABLE_SYMBOL: &str = "✔️";
 const SPACER: &str = "&nbsp;&nbsp;&nbsp;&nbsp;";
 
-fn generate_table(table_out: &mut String, rules: impl IntoIterator<Item = Rule>, linter: &Category) {
+fn generate_table(
+    table_out: &mut String,
+    rules: impl IntoIterator<Item = Rule>,
+    linter: &Category,
+) {
     table_out.push_str("| Code | Name | Message | |");
     table_out.push('\n');
     table_out.push_str("| ---- | ---- | ------- | ------: |");
