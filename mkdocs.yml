@@ -1,0 +1,60 @@
+site_name: Fortitude
+site_url: !ENV READTHEDOCS_CANONICAL_URL
+site_description: An extremely fast Fortran linter, built on ruff and tree-sitter
+repo_url: https://github.com/PlasmaFAIR/fortitude
+repo_name: fortitude
+theme:
+  name: material
+  features:
+    - content.code.annotate
+    - content.code.copy
+    - content.tabs.link
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.path
+    - navigation.top
+    - navigation.tracking
+    - toc.follow
+    - toc.integrate
+  # https://squidfunk.github.io/mkdocs-material/customization/
+  custom_dir: docs/overrides
+  icon:
+    logo: material/language-fortran
+
+# Include extra CSS to make some style adjustments
+extra_css:
+  - stylesheets/readthedocs.css
+
+# Include extra JS to setup Read the Docs addons integrations
+extra_javascript:
+    - javascript/readthedocs.js
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - toc:
+      anchorlink: true
+      anchorlink_class: "toclink"
+  - pymdownx.snippets:
+  - pymdownx.magiclink:
+  - attr_list:
+  - md_in_html:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite:
+  - pymdownx.superfences:
+  - markdown.extensions.attr_list:
+  - pymdownx.keys:
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+# Too many rules, don't include them in the left-hand nav bar
+not_in_nav: |
+  /rules/*

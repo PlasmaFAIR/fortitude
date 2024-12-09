@@ -5,13 +5,13 @@ mod diagnostics;
 pub mod explain;
 mod fix;
 mod fs;
-mod message;
+pub mod message;
 mod printer;
-mod registry;
+pub mod registry;
 mod rule_redirects;
 mod rule_selector;
-mod rules;
-mod settings;
+pub mod rules;
+pub mod settings;
 #[cfg(test)]
 mod test;
 mod text_helpers;
