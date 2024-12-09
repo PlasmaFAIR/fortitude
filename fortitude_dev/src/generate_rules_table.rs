@@ -105,6 +105,10 @@ pub(crate) fn generate() -> String {
     // Generate the table string.
     let mut table_out = String::new();
 
+    table_out.push_str("# Rules");
+    table_out.push('\n');
+    table_out.push('\n');
+
     table_out.push_str("### Legend");
     table_out.push('\n');
 

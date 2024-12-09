@@ -1,3 +1,5 @@
+# Rules
+
 ### Legend
 &nbsp;&nbsp;&nbsp;&nbsp;✔️&nbsp;&nbsp;&nbsp;&nbsp; The rule is stable.<br />&nbsp;&nbsp;&nbsp;&nbsp;🧪&nbsp;&nbsp;&nbsp;&nbsp; The rule is unstable and is in ["preview"](faq.md#what-is-preview).<br />&nbsp;&nbsp;&nbsp;&nbsp;⚠️&nbsp;&nbsp;&nbsp;&nbsp; The rule has been deprecated and will be removed in a future release.<br />&nbsp;&nbsp;&nbsp;&nbsp;❌&nbsp;&nbsp;&nbsp;&nbsp; The rule has been removed only the documentation is available.<br />&nbsp;&nbsp;&nbsp;&nbsp;🛠️&nbsp;&nbsp;&nbsp;&nbsp; The rule is automatically fixable by the `--fix` command-line option.<br />
 ### Error (E)
@@ -68,5 +70,4 @@
 | OB001 | [statement-function](rules/statement-function.md) | statement functions are obsolescent, prefer internal functions | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>➖</span> |
 | OB011 | [common-block](rules/common-block.md) | common blocks are obsolescent, prefer modules or derived types | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>➖</span> |
 | OB021 | [entry-statement](rules/entry-statement.md) | entry statements are obsolescent, use module procedures with generic interface | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>➖</span> |
-
 

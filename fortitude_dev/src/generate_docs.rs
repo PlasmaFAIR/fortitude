@@ -18,7 +18,7 @@ use ruff_diagnostics::FixAvailability;
 
 use fortitude::registry::Rule;
 
-use crate::ROOT_DIR;
+use crate::{generate_rules_table, ROOT_DIR};
 
 #[derive(clap::Args)]
 pub(crate) struct Args {
@@ -85,11 +85,18 @@ pub(crate) fn main(args: &Args) -> Result<()> {
                 println!("{output}");
             } else {
                 fs::create_dir_all("docs/rules").expect("make docs/rules dir");
-                println!("write {filename:?}");
                 fs::write(filename, output).expect("write output");
             }
         }
     }
+
+    let filename = PathBuf::from(ROOT_DIR)
+        .join("docs")
+        .join("rules.md");
+
+    let rules_table = generate_rules_table::generate();
+    fs::write(filename, rules_table).expect("Write rules table");
+
     Ok(())
 }
 
