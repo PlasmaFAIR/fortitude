@@ -169,6 +169,10 @@ rules on top of those in the configuration file.
 fortitude check --extend-select=M
 ```
 
+## Documentation
+
+See [table of rules](docs/all_rules.md) for a list of all rules.
+
 ## Contributing
 
 Please feel free to add or suggest new rules or comment on the layout of the project
