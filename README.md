@@ -103,6 +103,9 @@ fortitude check --help
 
 ### Fixes
 
+> [!NOTE]
+> Added in v0.6.0
+
 Fortitude can automatically fix some lint warnings, such as
 unnecessary `implicit none` statements, missing double-colons in
 variable declarations, and more. Just pass the `--fix` flag to
@@ -117,6 +120,9 @@ Number of errors: 2 (2 fixed, 0 remaining)
 Run `fortitude explain` to see which rules have fixes available.
 
 ### Preview
+
+> [!NOTE]
+> Added in v0.6.0
 
 Some fortitude rules are only available through an opt-in preview
 mode to give the community some time to evaluate them and provide
