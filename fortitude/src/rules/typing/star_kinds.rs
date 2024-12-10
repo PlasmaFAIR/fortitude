@@ -1,7 +1,7 @@
 use crate::ast::{dtype_is_plain_number, strip_line_breaks, FortitudeNode};
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
+use ruff_diagnostics::{Diagnostic, Fix, FixAvailability, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -16,9 +16,14 @@ use tree_sitter::Node;
 /// module 'iso_fortran_env'. You may also wish to determine kinds using the
 /// built-in functions 'selected_real_kind' and 'selected_int_kind'.
 ///
-/// Also prefers the use of `character(len=*)` to
-/// `character*(*)`, as although the latter is permitted by the standard, the former is
-/// more explicit.
+/// Fixes to this rule are considered unsafe, as while `dtype*N` is generally
+/// understood to mean a `dtype` that occupied `N` bytes, this does not necessarily
+/// correspond to `dtype(N)`, which is a `dtype` of 'kind' `N`. For example, the NAG
+/// compiler may be conigured to use a sequential kind system in which `real*8`
+/// corresponds to `real(2)`
+///
+/// In a future version, we hope to upgrade this to a safe fix by use of parameters
+/// in `iso_fortran_env`, as `real*8` should always correspond to `real(real64)`.
 #[violation]
 pub struct StarKind {
     dtype: String,
@@ -26,16 +31,18 @@ pub struct StarKind {
     kind: String,
 }
 
-impl AlwaysFixableViolation for StarKind {
+impl Violation for StarKind {
+    const FIX_AVAILABILITY: FixAvailability = FixAvailability::Sometimes;
+
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { dtype, size, .. } = self;
         format!("'{dtype}{size}' uses non-standard syntax")
     }
 
-    fn fix_title(&self) -> String {
+    fn fix_title(&self) -> Option<String> {
         let Self { dtype, kind, .. } = self;
-        format!("Replace with '{dtype}({kind})'")
+        Some(format!("Replace with '{dtype}({kind})'"))
     }
 }
 
@@ -59,7 +66,7 @@ impl AstRule for StarKind {
         let literal = kind_node.child_with_name("number_literal")?;
         let kind = literal.to_text(src)?.to_string();
         let replacement = format!("{dtype}({kind})");
-        let fix = Fix::safe_edit(node.edit_replacement(replacement));
+        let fix = Fix::unsafe_edit(node.edit_replacement(replacement));
         some_vec![Diagnostic::from_node(Self { dtype, size, kind }, &kind_node).with_fix(fix)]
     }
 
