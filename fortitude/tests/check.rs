@@ -103,7 +103,7 @@ end program
     4 | end program
       |
 
-    [TEMP_FILE] T021 [*] 'logical*4' uses non-standard syntax
+    [TEMP_FILE] T021 'logical*4' uses non-standard syntax
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
@@ -136,7 +136,7 @@ end program
 
         fortitude explain X001,Y002,...
 
-    [*] 2 fixable with the `--fix` option.
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
