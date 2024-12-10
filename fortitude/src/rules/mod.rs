@@ -80,9 +80,9 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "041") => (RuleGroup::Stable, Ast, style::old_style_array_literal::OldStyleArrayLiteral),
         (Style, "051") => (RuleGroup::Stable, Ast, style::relational_operators::DeprecatedRelationalOperator),
         (Style, "061") => (RuleGroup::Stable, Ast, style::end_statements::UnnamedEndStatement),
-        (Style, "071") => (RuleGroup::Preview, Ast, style::double_colon_in_decl::MissingDoubleColon),
+        (Style, "071") => (RuleGroup::Stable, Ast, style::double_colon_in_decl::MissingDoubleColon),
         (Style, "101") => (RuleGroup::Stable, Text, style::whitespace::TrailingWhitespace),
-        (Style, "102") => (RuleGroup::Preview, Ast, style::whitespace::IncorrectSpaceBeforeComment),
+        (Style, "102") => (RuleGroup::Stable, Ast, style::whitespace::IncorrectSpaceBeforeComment),
 
         (Typing, "001") => (RuleGroup::Stable, Ast, typing::implicit_typing::ImplicitTyping),
         (Typing, "002") => (RuleGroup::Stable, Ast, typing::implicit_typing::InterfaceImplicitTyping),
@@ -96,11 +96,11 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Typing, "042") => (RuleGroup::Stable, Ast, typing::assumed_size::AssumedSizeCharacterIntent),
         (Typing, "043") => (RuleGroup::Stable, Ast, typing::assumed_size::DeprecatedAssumedSizeCharacter),
         (Typing, "051") => (RuleGroup::Stable, Ast, typing::init_decls::InitialisationInDeclaration),
-        (Typing, "061") => (RuleGroup::Preview, Ast, typing::external::ExternalProcedure),
+        (Typing, "061") => (RuleGroup::Stable, Ast, typing::external::ExternalProcedure),
 
-        (Obsolescent, "001") => (RuleGroup::Preview, Ast, obsolescent::statement_functions::StatementFunction),
-        (Obsolescent, "011") => (RuleGroup::Preview, Ast, obsolescent::common_blocks::CommonBlock),
-        (Obsolescent, "021") => (RuleGroup::Preview, Ast, obsolescent::entry_statement::EntryStatement),
+        (Obsolescent, "001") => (RuleGroup::Stable, Ast, obsolescent::statement_functions::StatementFunction),
+        (Obsolescent, "011") => (RuleGroup::Stable, Ast, obsolescent::common_blocks::CommonBlock),
+        (Obsolescent, "021") => (RuleGroup::Stable, Ast, obsolescent::entry_statement::EntryStatement),
 
         (Precision, "001") => (RuleGroup::Stable, Ast, precision::kind_suffixes::NoRealSuffix),
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),
