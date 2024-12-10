@@ -185,7 +185,7 @@ fortitude check --extend-select=M
 
 ## Documentation
 
-See [table of rules](https://fortitude.readthedocs.io/en/rules/) for a list of all rules.
+See [table of rules](https://fortitude.readthedocs.io/en/stable/rules/) for a list of all rules.
 
 ## Contributing
 
