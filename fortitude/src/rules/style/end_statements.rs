@@ -96,7 +96,7 @@ impl AstRule for UnnamedEndStatement {
             .to_string();
         let statement = statement.to_string();
         let replacement = format!("end {statement} {name}");
-        let fix = Fix::safe_edit(node.edit_replacement(replacement));
+        let fix = Fix::safe_edit(node.edit_replacement(src, replacement));
         some_vec![Diagnostic::from_node(Self { statement, name }, node).with_fix(fix)]
     }
 
