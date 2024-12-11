@@ -108,7 +108,7 @@ pub trait FortitudeNode<'tree> {
     fn edit_delete(&self, source_file: &SourceFile) -> Edit;
 
     /// Creates an edit that inserts `content`, replacing the whole node
-    fn edit_replacement(&self, content: String) -> Edit;
+    fn edit_replacement(&self, original: &SourceFile, content: String) -> Edit;
 }
 
 impl FortitudeNode<'_> for Node<'_> {
@@ -182,12 +182,16 @@ impl FortitudeNode<'_> for Node<'_> {
         }
     }
 
-    fn edit_replacement(&self, content: String) -> Edit {
-        Edit::replacement(
-            content,
-            TextSize::try_from(self.start_byte()).unwrap(),
-            TextSize::try_from(self.end_byte()).unwrap(),
-        )
+    fn edit_replacement(&self, original: &SourceFile, content: String) -> Edit {
+        // The node might include the newline as part of the
+        // end-of-statement child, so don't include trailing
+        // whitespace in the replacement
+        let text = self.to_text(original.source_text()).unwrap();
+        let len = text.trim().len();
+        let start = TextSize::try_from(self.start_byte()).unwrap();
+        let end = start + TextSize::try_from(len).unwrap();
+
+        Edit::replacement(content, start, end)
     }
 }
 

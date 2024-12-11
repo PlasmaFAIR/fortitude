@@ -2,60 +2,78 @@ module mymod1
   implicit none
   type mytype
     integer :: x
-  end type                      ! catch this
+    ! catch this
+  end type
 contains
   subroutine mysub1()
     write (*,*) 'hello world'
-  end subroutine                ! catch this
+    ! catch this
+  end subroutine
   subroutine mysub2()
     write (*,*) 'hello world'
-  end subroutine mysub2         ! ignore this
-end                             ! catch this
+    ! ignore this
+  end subroutine mysub2
+  ! catch this
+end
 module mymod2
   implicit none
   type mytype
     integer :: x
-  end type mytype               ! ignore this
+    ! ignore this
+  end type mytype
 contains
   integer function myfunc1()
     myfunc1 = 1
-  end function                  ! catch this
+    ! catch this
+  end function
   integer function myfunc2()
     myfunc2 = 1
-  end function myfunc2          ! ignore this
-end module                      ! catch this
+    ! ignore this
+  end function myfunc2
+  ! catch this
+end module
 module mymod3
   interface
     module function foo() result(x)
       integer :: x
-    end function foo            ! ignore this
+      ! ignore this
+    end function foo
     module function bar() result(x)
       integer :: x
-    end function bar            ! ignore this
+      ! ignore this
+    end function bar
     module function baz() result(x)
       integer :: x
-    end function baz            ! ignore this
+      ! ignore this
+    end function baz
   end interface
 end module mymod3
 submodule (mymod3) mysub1
 contains
   module procedure foo
     x = 1
-  end procedure                 ! catch this
-end                             ! catch this
+    ! catch this
+  end procedure
+  ! catch this
+end
 submodule (mymod3) mysub2
 contains
   module procedure bar
     x = 1
-  end procedure bar             ! ignore this
-end submodule                   ! catch this
+    ! ignore this
+  end procedure bar
+  ! catch this
+end submodule
 submodule (mymod3) mysub3
 contains
   module procedure baz
     x = 1
-  end procedure baz             ! ignore this
-end submodule mysub3            ! ignore this
+    ! ignore this
+  end procedure baz
+  ! ignore this
+end submodule mysub3
 program myprog
   implicit none
   write (*,*) 'hello world'
-end                             ! catch this
+  ! catch this
+end

@@ -52,7 +52,7 @@ impl AstRule for DeprecatedRelationalOperator {
             .to_string();
         let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
 
-        let fix = Fix::safe_edit(relation.edit_replacement(new_symbol.clone()));
+        let fix = Fix::safe_edit(relation.edit_replacement(src, new_symbol.clone()));
 
         some_vec![Diagnostic::from_node(Self { symbol, new_symbol }, &relation).with_fix(fix)]
     }

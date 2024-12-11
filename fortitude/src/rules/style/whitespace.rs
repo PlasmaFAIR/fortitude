@@ -76,12 +76,8 @@ impl AlwaysFixableViolation for IncorrectSpaceBeforeComment {
     }
 }
 impl AstRule for IncorrectSpaceBeforeComment {
-    fn check(
-        _settings: &Settings,
-        node: &Node,
-        source_file: &SourceFile,
-    ) -> Option<Vec<Diagnostic>> {
-        let source = source_file.to_source_code();
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let source = src.to_source_code();
         let comment_start = TextSize::try_from(node.start_byte()).unwrap();
         // Get the line up to the start of the comment
         let line_index = source.line_index(comment_start);
@@ -96,7 +92,7 @@ impl AstRule for IncorrectSpaceBeforeComment {
         }
         if whitespace < 2 {
             let replacement = format!("{}{}", &"  "[whitespace..], node.to_text(source.text())?);
-            let edit = node.edit_replacement(replacement);
+            let edit = node.edit_replacement(src, replacement);
             return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
         }
         None

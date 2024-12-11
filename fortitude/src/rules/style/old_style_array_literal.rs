@@ -34,8 +34,8 @@ impl AstRule for OldStyleArrayLiteral {
         if open_bracket.to_text(src.source_text())?.starts_with("(/") {
             let close_bracket = node.children(&mut node.walk()).last()?;
 
-            let edit_open = open_bracket.edit_replacement("[".to_string());
-            let edit_close = close_bracket.edit_replacement("]".to_string());
+            let edit_open = open_bracket.edit_replacement(src, "[".to_string());
+            let edit_close = close_bracket.edit_replacement(src, "]".to_string());
             let fix = Fix::safe_edits(edit_open, [edit_close]);
 
             return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(fix));

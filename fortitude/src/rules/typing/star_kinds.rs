@@ -48,14 +48,14 @@ impl Violation for StarKind {
 
 impl AstRule for StarKind {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        let src = src.source_text();
-        let dtype = node.child(0)?.to_text(src)?.to_lowercase();
+        let text = src.source_text();
+        let dtype = node.child(0)?.to_text(text)?.to_lowercase();
         // TODO: Handle characters
         if !dtype_is_plain_number(dtype.as_str()) {
             return None;
         }
         let kind_node = node.child_by_field_name("kind")?;
-        let size = kind_node.to_text(src)?;
+        let size = kind_node.to_text(text)?;
         if !size.starts_with('*') {
             return None;
         }
@@ -64,9 +64,9 @@ impl AstRule for StarKind {
         let size = strip_line_breaks(size).replace([' ', '\t'], "");
 
         let literal = kind_node.child_with_name("number_literal")?;
-        let kind = literal.to_text(src)?.to_string();
+        let kind = literal.to_text(text)?.to_string();
         let replacement = format!("{dtype}({kind})");
-        let fix = Fix::unsafe_edit(node.edit_replacement(replacement));
+        let fix = Fix::unsafe_edit(node.edit_replacement(src, replacement));
         some_vec![Diagnostic::from_node(Self { dtype, size, kind }, &kind_node).with_fix(fix)]
     }
 

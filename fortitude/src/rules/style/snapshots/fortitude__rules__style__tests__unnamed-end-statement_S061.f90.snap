@@ -3,186 +3,194 @@ source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S061.f90:5:3: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:6:3: S061 [*] end statement should be named.
   |
-3 |   type mytype
 4 |     integer :: x
-5 |   end type                      ! catch this
-  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
-6 | contains
-7 |   subroutine mysub1()
+5 |     ! catch this
+6 |   end type
+  |   ^^^^^^^^ S061
+7 | contains
+8 |   subroutine mysub1()
+9 |     write (*,*) 'hello world'
   |
   = help: Write as 'end type mytype'.
 
 ℹ Safe fix
-2 2 |   implicit none
 3 3 |   type mytype
 4 4 |     integer :: x
-5   |-  end type                      ! catch this
-  5 |+  end type mytype! catch this
-6 6 | contains
-7 7 |   subroutine mysub1()
-8 8 |     write (*,*) 'hello world'
+5 5 |     ! catch this
+6   |-  end type
+  6 |+  end type mytype
+7 7 | contains
+8 8 |   subroutine mysub1()
+9 9 |     write (*,*) 'hello world'
 
-./resources/test/fixtures/style/S061.f90:9:3: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:11:3: S061 [*] end statement should be named.
    |
- 7 |   subroutine mysub1()
- 8 |     write (*,*) 'hello world'
- 9 |   end subroutine                ! catch this
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
-10 |   subroutine mysub2()
-11 |     write (*,*) 'hello world'
+ 9 |     write (*,*) 'hello world'
+10 |     ! catch this
+11 |   end subroutine
+   |   ^^^^^^^^^^^^^^ S061
+12 |   subroutine mysub2()
+13 |     write (*,*) 'hello world'
+14 |     ! ignore this
    |
    = help: Write as 'end subroutine mysub1'.
 
 ℹ Safe fix
-6  6  | contains
-7  7  |   subroutine mysub1()
-8  8  |     write (*,*) 'hello world'
-9     |-  end subroutine                ! catch this
-   9  |+  end subroutine mysub1! catch this
-10 10 |   subroutine mysub2()
-11 11 |     write (*,*) 'hello world'
-12 12 |   end subroutine mysub2         ! ignore this
+8  8  |   subroutine mysub1()
+9  9  |     write (*,*) 'hello world'
+10 10 |     ! catch this
+11    |-  end subroutine
+   11 |+  end subroutine mysub1
+12 12 |   subroutine mysub2()
+13 13 |     write (*,*) 'hello world'
+14 14 |     ! ignore this
 
-./resources/test/fixtures/style/S061.f90:13:1: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:17:1: S061 [*] end statement should be named.
    |
-11 |     write (*,*) 'hello world'
-12 |   end subroutine mysub2         ! ignore this
-13 | end                             ! catch this
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
-14 | module mymod2
-15 |   implicit none
+15 |   end subroutine mysub2
+16 |   ! catch this
+17 | end
+   | ^^^ S061
+18 | module mymod2
+19 |   implicit none
+20 |   type mytype
    |
    = help: Write as 'end module mymod1'.
 
 ℹ Safe fix
-10 10 |   subroutine mysub2()
-11 11 |     write (*,*) 'hello world'
-12 12 |   end subroutine mysub2         ! ignore this
-13    |-end                             ! catch this
-   13 |+end module mymod1! catch this
-14 14 | module mymod2
-15 15 |   implicit none
-16 16 |   type mytype
+14 14 |     ! ignore this
+15 15 |   end subroutine mysub2
+16 16 |   ! catch this
+17    |-end
+   17 |+end module mymod1
+18 18 | module mymod2
+19 19 |   implicit none
+20 20 |   type mytype
 
-./resources/test/fixtures/style/S061.f90:22:3: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:28:3: S061 [*] end statement should be named.
    |
-20 |   integer function myfunc1()
-21 |     myfunc1 = 1
-22 |   end function                  ! catch this
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
-23 |   integer function myfunc2()
-24 |     myfunc2 = 1
+26 |     myfunc1 = 1
+27 |     ! catch this
+28 |   end function
+   |   ^^^^^^^^^^^^ S061
+29 |   integer function myfunc2()
+30 |     myfunc2 = 1
+31 |     ! ignore this
    |
    = help: Write as 'end function myfunc1'.
 
 ℹ Safe fix
-19 19 | contains
-20 20 |   integer function myfunc1()
-21 21 |     myfunc1 = 1
-22    |-  end function                  ! catch this
-   22 |+  end function myfunc1! catch this
-23 23 |   integer function myfunc2()
-24 24 |     myfunc2 = 1
-25 25 |   end function myfunc2          ! ignore this
+25 25 |   integer function myfunc1()
+26 26 |     myfunc1 = 1
+27 27 |     ! catch this
+28    |-  end function
+   28 |+  end function myfunc1
+29 29 |   integer function myfunc2()
+30 30 |     myfunc2 = 1
+31 31 |     ! ignore this
 
-./resources/test/fixtures/style/S061.f90:26:1: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:34:1: S061 [*] end statement should be named.
    |
-24 |     myfunc2 = 1
-25 |   end function myfunc2          ! ignore this
-26 | end module                      ! catch this
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
-27 | module mymod3
-28 |   interface
+32 |   end function myfunc2
+33 |   ! catch this
+34 | end module
+   | ^^^^^^^^^^ S061
+35 | module mymod3
+36 |   interface
+37 |     module function foo() result(x)
    |
    = help: Write as 'end module mymod2'.
 
 ℹ Safe fix
-23 23 |   integer function myfunc2()
-24 24 |     myfunc2 = 1
-25 25 |   end function myfunc2          ! ignore this
-26    |-end module                      ! catch this
-   26 |+end module mymod2! catch this
-27 27 | module mymod3
-28 28 |   interface
-29 29 |     module function foo() result(x)
+31 31 |     ! ignore this
+32 32 |   end function myfunc2
+33 33 |   ! catch this
+34    |-end module
+   34 |+end module mymod2
+35 35 | module mymod3
+36 36 |   interface
+37 37 |     module function foo() result(x)
 
-./resources/test/fixtures/style/S061.f90:44:3: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:56:3: S061 [*] end statement should be named.
    |
-42 |   module procedure foo
-43 |     x = 1
-44 |   end procedure                 ! catch this
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
-45 | end                             ! catch this
-46 | submodule (mymod3) mysub2
+54 |     x = 1
+55 |     ! catch this
+56 |   end procedure
+   |   ^^^^^^^^^^^^^ S061
+57 |   ! catch this
+58 | end
+59 | submodule (mymod3) mysub2
    |
    = help: Write as 'end procedure foo'.
 
 ℹ Safe fix
-41 41 | contains
-42 42 |   module procedure foo
-43 43 |     x = 1
-44    |-  end procedure                 ! catch this
-   44 |+  end procedure foo! catch this
-45 45 | end                             ! catch this
-46 46 | submodule (mymod3) mysub2
-47 47 | contains
+53 53 |   module procedure foo
+54 54 |     x = 1
+55 55 |     ! catch this
+56    |-  end procedure
+   56 |+  end procedure foo
+57 57 |   ! catch this
+58 58 | end
+59 59 | submodule (mymod3) mysub2
 
-./resources/test/fixtures/style/S061.f90:45:1: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:58:1: S061 [*] end statement should be named.
    |
-43 |     x = 1
-44 |   end procedure                 ! catch this
-45 | end                             ! catch this
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
-46 | submodule (mymod3) mysub2
-47 | contains
+56 |   end procedure
+57 |   ! catch this
+58 | end
+   | ^^^ S061
+59 | submodule (mymod3) mysub2
+60 | contains
+61 |   module procedure bar
    |
    = help: Write as 'end submodule mysub1'.
 
 ℹ Safe fix
-42 42 |   module procedure foo
-43 43 |     x = 1
-44 44 |   end procedure                 ! catch this
-45    |-end                             ! catch this
-   45 |+end submodule mysub1! catch this
-46 46 | submodule (mymod3) mysub2
-47 47 | contains
-48 48 |   module procedure bar
+55 55 |     ! catch this
+56 56 |   end procedure
+57 57 |   ! catch this
+58    |-end
+   58 |+end submodule mysub1
+59 59 | submodule (mymod3) mysub2
+60 60 | contains
+61 61 |   module procedure bar
 
-./resources/test/fixtures/style/S061.f90:51:1: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:66:1: S061 [*] end statement should be named.
    |
-49 |     x = 1
-50 |   end procedure bar             ! ignore this
-51 | end submodule                   ! catch this
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
-52 | submodule (mymod3) mysub3
-53 | contains
+64 |   end procedure bar
+65 |   ! catch this
+66 | end submodule
+   | ^^^^^^^^^^^^^ S061
+67 | submodule (mymod3) mysub3
+68 | contains
+69 |   module procedure baz
    |
    = help: Write as 'end submodule mysub2'.
 
 ℹ Safe fix
-48 48 |   module procedure bar
-49 49 |     x = 1
-50 50 |   end procedure bar             ! ignore this
-51    |-end submodule                   ! catch this
-   51 |+end submodule mysub2! catch this
-52 52 | submodule (mymod3) mysub3
-53 53 | contains
-54 54 |   module procedure baz
+63 63 |     ! ignore this
+64 64 |   end procedure bar
+65 65 |   ! catch this
+66    |-end submodule
+   66 |+end submodule mysub2
+67 67 | submodule (mymod3) mysub3
+68 68 | contains
+69 69 |   module procedure baz
 
-./resources/test/fixtures/style/S061.f90:61:1: S061 [*] end statement should be named.
+./resources/test/fixtures/style/S061.f90:79:1: S061 [*] end statement should be named.
    |
-59 |   implicit none
-60 |   write (*,*) 'hello world'
-61 | end                             ! catch this
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S061
+77 |   write (*,*) 'hello world'
+78 |   ! catch this
+79 | end
+   | ^^^ S061
    |
    = help: Write as 'end program myprog'.
 
 ℹ Safe fix
-58 58 | program myprog
-59 59 |   implicit none
-60 60 |   write (*,*) 'hello world'
-61    |-end                             ! catch this
-   61 |+end program myprog! catch this
+76 76 |   implicit none
+77 77 |   write (*,*) 'hello world'
+78 78 |   ! catch this
+79    |-end
+   79 |+end program myprog
