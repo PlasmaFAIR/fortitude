@@ -6,11 +6,14 @@ use crate::fs;
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
-use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
+use crate::rule_selector::{
+    collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
+};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    FixMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    FixMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes,
+    DEFAULT_SELECTORS,
 };
 
 use anyhow::{Context, Result};
@@ -22,7 +25,7 @@ use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
@@ -37,17 +40,17 @@ use walkdir::WalkDir;
 
 // These are just helper structs to let us quickly work out if there's
 // a fortitude section in an fpm.toml file
-#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
 struct Fpm {
     extra: Option<Extra>,
 }
 
-#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
 struct Extra {
     fortitude: Option<CheckSection>,
 }
 
-#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
 struct CheckSection {
     check: Option<CheckArgs>,
 }
@@ -140,6 +143,8 @@ pub struct CheckSettings {
     pub ignore: Vec<RuleSelector>,
     pub select: Option<Vec<RuleSelector>>,
     pub extend_select: Vec<RuleSelector>,
+    pub per_file_ignores: Option<Vec<PatternPrefixPair>>,
+    pub extend_per_file_ignores: Vec<PatternPrefixPair>,
     pub line_length: usize,
     pub file_extensions: Vec<String>,
     pub fix: bool,
@@ -170,6 +175,8 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             ignore: value.ignore.unwrap_or_default(),
             select: value.select,
             extend_select: value.extend_select.unwrap_or_default(),
+            per_file_ignores: value.per_file_ignores,
+            extend_per_file_ignores: value.extend_per_file_ignores.unwrap_or_default(),
             line_length: value.line_length.unwrap_or(Settings::default().line_length),
             file_extensions: value
                 .file_extensions
@@ -276,8 +283,9 @@ pub(crate) fn check_file(
     settings: &Settings,
     fix_mode: FixMode,
     unsafe_fixes: UnsafeFixes,
+    per_file_ignores: &CompiledPerFileIgnoreList,
 ) -> anyhow::Result<Diagnostics> {
-    let (messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+    let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
             result,
             transformed,
@@ -329,6 +337,18 @@ pub(crate) fn check_file(
         let fixed = FxHashMap::default();
         (result, fixed)
     };
+
+    // Ignore based on per-file-ignores.
+    // If the DiagnosticMessage is discarded, its fix will also be ignored.
+    let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {
+        fs::ignores_from_path(path, per_file_ignores)
+    } else {
+        vec![]
+    };
+    if !per_file_ignores.is_empty() {
+        // (liam): unwrap used as I don't think a DiagnosticMessage's rule can ever be None
+        messages.retain(|message| !per_file_ignores.contains(&message.rule().unwrap()));
+    }
 
     Ok(Diagnostics {
         messages,
@@ -640,6 +660,19 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
     };
 
+    let mut per_file_ignores = args
+        .per_file_ignores
+        .or(file_settings.per_file_ignores)
+        .unwrap_or_default();
+    per_file_ignores.extend(
+        args.extend_per_file_ignores
+            .unwrap_or_default()
+            .into_iter()
+            .chain(file_settings.extend_per_file_ignores),
+    );
+    let per_file_ignores =
+        CompiledPerFileIgnoreList::resolve(collect_per_file_ignores(per_file_ignores))?;
+
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
         .map(PreviewMode::from)
@@ -739,6 +772,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                 &settings,
                 fix_mode,
                 unsafe_fixes,
+                &per_file_ignores,
             ) {
                 Ok(violations) => violations,
                 Err(msg) => {
