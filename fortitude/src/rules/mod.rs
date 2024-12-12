@@ -1,9 +1,10 @@
 #![allow(clippy::useless_format)]
 /// A collection of all rules, and utilities to select a subset at runtime.
-pub(crate) mod error;
-pub(crate) mod filesystem;
 #[macro_use]
 mod macros;
+pub(crate) mod error;
+pub(crate) mod filesystem;
+pub(crate) mod io;
 pub(crate) mod modules;
 pub(crate) mod obsolescent;
 pub(crate) mod precision;
@@ -110,6 +111,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modules, "011") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
         (Modules, "021") => (RuleGroup::Preview, Ast, modules::accessibility_statements::MissingAccessibilityStatement),
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
+
+        (Io, "001") => (RuleGroup::Preview, Ast, io::missing_specifier::MissingActionSpecifier),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason

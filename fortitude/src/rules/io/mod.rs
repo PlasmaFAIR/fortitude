@@ -1,6 +1,4 @@
-pub mod accessibility_statements;
-pub mod external_functions;
-pub mod use_statements;
+pub mod missing_specifier;
 
 #[cfg(test)]
 mod tests {
@@ -15,14 +13,11 @@ mod tests {
     use crate::settings::Settings;
     use crate::test::test_path;
 
-    #[test_case(Rule::ProcedureNotInModule, Path::new("M001.f90"))]
-    #[test_case(Rule::UseAll, Path::new("M011.f90"))]
-    #[test_case(Rule::MissingAccessibilityStatement, Path::new("M021.f90"))]
-    #[test_case(Rule::DefaultPublicAccessibility, Path::new("M022.f90"))]
+    #[test_case(Rule::MissingActionSpecifier, Path::new("IO001.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
-            Path::new("modules").join(path).as_path(),
+            Path::new("io").join(path).as_path(),
             &[rule_code],
             &Settings::default(),
         )?;
