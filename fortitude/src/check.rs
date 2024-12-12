@@ -13,7 +13,7 @@ use crate::settings::{
     FixMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
@@ -415,8 +415,6 @@ pub(crate) fn check_and_fix_file<'a>(
     let mut iterations = 0;
 
     // Track whether the _initial_ source code is valid syntax.
-    // TODO(peter): implement this
-    #[allow(unused_variables, unused_mut)]
     let mut is_valid_syntax = false;
 
     let mut parser = Parser::new();
@@ -460,6 +458,13 @@ pub(crate) fn check_and_fix_file<'a>(
                     }
                 }
             }
+        }
+
+        if iterations == 0 {
+            is_valid_syntax = !tree.root_node().has_error();
+        } else if is_valid_syntax && tree.root_node().has_error() {
+            report_fix_syntax_error(path, transformed.source_text(), fixed.keys().copied());
+            return Err(anyhow!("Fix introduced a syntax error"));
         }
 
         // Apply fix
@@ -539,6 +544,36 @@ This indicates a bug in fortitude. If you could open an issue at:
             MAX_ITERATIONS,
             fs::relativize_path(path),
             codes
+        );
+    }
+}
+
+#[allow(clippy::print_stderr)]
+fn report_fix_syntax_error(path: &Path, transformed: &str, rules: impl IntoIterator<Item = Rule>) {
+    // TODO: include syntax error
+    let codes = collect_rule_codes(rules);
+    if cfg!(debug_assertions) {
+        eprintln!(
+            "{}{} Fix introduced a syntax error in `{}` with rule codes {codes}: \n---\n{transformed}\n---",
+            "error".red().bold(),
+            ":".bold(),
+            fs::relativize_path(path),
+        );
+    } else {
+        eprintln!(
+            r#"
+{}{} Fix introduced a syntax error. Reverting all changes.
+
+This indicates a bug in Fortitude. If you could open an issue at:
+
+    https://github.com/PlasmaFAIR/fortitude/issues/new?title=%5BFix%20error%5D
+
+...quoting the contents of `{}`, the rule codes {}, along with the `fortitude.toml`/`fpm.toml` settings and executed command, we'd be very appreciative!
+"#,
+            "error".red().bold(),
+            ":".bold(),
+            fs::relativize_path(path),
+            codes,
         );
     }
 }
