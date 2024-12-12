@@ -62,6 +62,9 @@ pub enum Category {
     /// Best practices for setting floating point precision.
     #[prefix = "P"]
     Precision,
+    /// Best practices when reading and writing to file or other IO streams.
+    #[prefix = "IO"]
+    Io,
     /// Check path names, directory structures, etc.
     #[prefix = "F"]
     Filesystem,

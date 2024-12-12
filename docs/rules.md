@@ -57,6 +57,12 @@
 | P011 | [double-precision](rules/double-precision.md) | prefer '{preferred}' to '{original}' (see 'iso_fortran_env') | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | P021 | [implicit-real-kind](rules/implicit-real-kind.md) | {dtype} has implicit kind | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 
+### Io (IO)
+
+| Code | Name | Message | |
+| ---- | ---- | ------- | ------: |
+| IO001 | [missing-action-specifier](rules/missing-action-specifier.md) | file opened without action specifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+
 ### Filesystem (F)
 
 | Code | Name | Message | |
