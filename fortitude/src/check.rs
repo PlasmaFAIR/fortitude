@@ -660,18 +660,19 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
     };
 
-    let mut per_file_ignores = args
-        .per_file_ignores
-        .or(file_settings.per_file_ignores)
-        .unwrap_or_default();
-    per_file_ignores.extend(
-        args.extend_per_file_ignores
+    let per_file_ignores = CompiledPerFileIgnoreList::resolve(collect_per_file_ignores(
+        args.per_file_ignores
+            .or(file_settings.per_file_ignores)
             .unwrap_or_default()
             .into_iter()
-            .chain(file_settings.extend_per_file_ignores),
-    );
-    let per_file_ignores =
-        CompiledPerFileIgnoreList::resolve(collect_per_file_ignores(per_file_ignores))?;
+            .chain(
+                args.extend_per_file_ignores
+                    .unwrap_or_default()
+                    .into_iter()
+                    .chain(file_settings.extend_per_file_ignores),
+            )
+            .collect::<Vec<_>>(),
+    ))?;
 
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
