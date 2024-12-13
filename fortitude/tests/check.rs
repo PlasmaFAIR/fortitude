@@ -686,21 +686,17 @@ per-file-ignores = [
     // - Overwrite per-file-ignores in the config file
     // - Files of foo, bar, and baz
     // - No files with index 2
-    let ignores = format!(
-        "--per-file-ignores={}/**/double_nested/*.f90:implicit-typing",
-        path.display()
-    );
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
                          .arg("check")
                          .arg("--select=typing")
-                         .arg(ignores)
-                         .arg(path),
+                         .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
+                         .arg(path)
+                         .current_dir(path),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T001 module missing 'implicit none'
+    bar0.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module bar0
       | ^^^^^^^^^^^ T001
@@ -708,7 +704,7 @@ per-file-ignores = [
     4 | contains
       |
 
-    [TEMP_FILE] T001 module missing 'implicit none'
+    baz0.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module baz0
       | ^^^^^^^^^^^ T001
@@ -716,7 +712,7 @@ per-file-ignores = [
     4 | contains
       |
 
-    [TEMP_FILE] T001 module missing 'implicit none'
+    foo0.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module foo0
       | ^^^^^^^^^^^ T001
@@ -724,7 +720,7 @@ per-file-ignores = [
     4 | contains
       |
 
-    [TEMP_FILE] T001 module missing 'implicit none'
+    nested/bar1.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module bar1
       | ^^^^^^^^^^^ T001
@@ -732,7 +728,7 @@ per-file-ignores = [
     4 | contains
       |
 
-    [TEMP_FILE] T001 module missing 'implicit none'
+    nested/baz1.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module baz1
       | ^^^^^^^^^^^ T001
@@ -740,7 +736,7 @@ per-file-ignores = [
     4 | contains
       |
 
-    [TEMP_FILE] T001 module missing 'implicit none'
+    nested/foo1.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module foo1
       | ^^^^^^^^^^^ T001
@@ -795,27 +791,22 @@ per-file-ignores = [
 ]
 "#;
     fs::write(&config_file, config)?;
-    let ignores = format!(
-        "--extend-per-file-ignores={}/**/double_nested/*.f90:implicit-typing",
-        path.display()
-    );
-
     apply_common_filters!();
     // Expect:
     // - Don't overwrite config file
     // - File types of foo and baz but no bar
     // - No files with index 2
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
                          .arg("check")
                          .arg("--select=typing")
-                         .arg(ignores)
-                         .arg(path),
+                         .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
+                         .arg(path)
+                         .current_dir(path),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T001 module missing 'implicit none'
+    baz0.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module baz0
       | ^^^^^^^^^^^ T001
@@ -823,7 +814,7 @@ per-file-ignores = [
     4 | contains
       |
 
-    [TEMP_FILE] T001 module missing 'implicit none'
+    foo0.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module foo0
       | ^^^^^^^^^^^ T001
@@ -831,7 +822,7 @@ per-file-ignores = [
     4 | contains
       |
 
-    [TEMP_FILE] T001 module missing 'implicit none'
+    nested/baz1.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module baz1
       | ^^^^^^^^^^^ T001
@@ -839,7 +830,7 @@ per-file-ignores = [
     4 | contains
       |
 
-    [TEMP_FILE] T001 module missing 'implicit none'
+    nested/foo1.f90:2:1: T001 module missing 'implicit none'
       |
     2 | module foo1
       | ^^^^^^^^^^^ T001
