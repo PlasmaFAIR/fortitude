@@ -350,8 +350,13 @@ pub(crate) fn check_file(
         vec![]
     };
     if !per_file_ignores.is_empty() {
-        // (liam): unwrap used as I don't think a DiagnosticMessage's rule can ever be None
-        messages.retain(|message| !per_file_ignores.contains(&message.rule().unwrap()));
+        messages.retain(|message| {
+            if let Some(rule) = message.rule() {
+                !per_file_ignores.contains(&rule)
+            } else {
+                true
+            }
+        });
     }
 
     Ok(Diagnostics {
