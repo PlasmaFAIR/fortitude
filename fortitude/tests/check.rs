@@ -647,3 +647,215 @@ end program test
 
     Ok(())
 }
+
+#[test]
+fn check_per_file_ignores() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let path = tempdir.path();
+    let nested = path.join("nested");
+    let double_nested = nested.join("double_nested");
+    std::fs::create_dir(nested.as_path())?;
+    std::fs::create_dir(double_nested.as_path())?;
+    for file in ["foo", "bar", "baz"] {
+        for (idx, dir) in [path, &nested, &double_nested].iter().enumerate() {
+            let snippet = format!(
+                r#"
+module {file}{idx}
+! missing implicit none
+contains
+  integer function f()
+    f = 1
+  end function f
+end module {file}{idx}
+"#
+            );
+            fs::write(dir.join(format!("{file}{idx}.f90")), snippet)?;
+        }
+    }
+
+    let config_file = path.join(".fortitude.toml");
+    let config = r#"
+[check]
+per-file-ignores = [
+    "bar*.f90:implicit-typing",
+]
+"#;
+    fs::write(&config_file, config)?;
+    let double_nested_ignore = format!(
+        "--per-file-ignores={}/*:implicit-typing",
+        double_nested.canonicalize()?.display()
+    );
+    apply_common_filters!();
+    // Expect:
+    // - Overwrite per-file-ignores in the config file
+    // - Files of foo, bar, and baz
+    // - No files with index 2
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg(double_nested_ignore)
+                         .arg(path),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module bar0
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module baz0
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module foo0
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module bar1
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module baz1
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module foo1
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    fortitude: 9 files scanned.
+    Number of errors: 6
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
+fn check_extend_per_file_ignores() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let path = tempdir.path();
+    let nested = path.join("nested");
+    let double_nested = nested.join("double_nested");
+    std::fs::create_dir(nested.as_path())?;
+    std::fs::create_dir(double_nested.as_path())?;
+    for file in ["foo", "bar", "baz"] {
+        for (idx, dir) in [path, &nested, &double_nested].iter().enumerate() {
+            let snippet = format!(
+                r#"
+module {file}{idx}
+! missing implicit none
+contains
+  integer function f()
+    f = 1
+  end function f
+end module {file}{idx}
+"#
+            );
+            fs::write(dir.join(format!("{file}{idx}.f90")), snippet)?;
+        }
+    }
+
+    let config_file = path.join(".fortitude.toml");
+    let config = r#"
+[check]
+per-file-ignores = [
+    "bar*.f90:implicit-typing",
+]
+"#;
+    fs::write(&config_file, config)?;
+    let double_nested_ignore = format!(
+        "--extend-per-file-ignores={}/*:implicit-typing",
+        double_nested.canonicalize()?.display()
+    );
+    apply_common_filters!();
+    // Expect:
+    // - Don't overwrite config file
+    // - File types of foo and baz but no bar
+    // - No files with index 2
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg(double_nested_ignore)
+                         .arg(path),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module baz0
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module foo0
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module baz1
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    [TEMP_FILE] T001 module missing 'implicit none'
+      |
+    2 | module foo1
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    fortitude: 9 files scanned.
+    Number of errors: 4
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
