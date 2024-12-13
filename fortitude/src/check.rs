@@ -253,23 +253,27 @@ fn filter_fortran_extensions<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bo
 }
 
 /// Expand the input list of files to include all Fortran files.
-fn get_files<S: AsRef<str>>(files_in: &Vec<PathBuf>, extensions: &[S]) -> Vec<PathBuf> {
-    let mut paths = Vec::new();
-    for path in files_in {
-        if path.is_dir() {
-            paths.extend(
+fn get_files<P: AsRef<Path>, S: AsRef<str>>(
+    paths: &[P],
+    extensions: &[S],
+) -> anyhow::Result<Vec<PathBuf>> {
+    paths
+        .iter()
+        .flat_map(|path| {
+            if path.as_ref().is_dir() {
                 WalkDir::new(path)
                     .min_depth(1)
                     .into_iter()
-                    .filter_map(|x| x.ok())
-                    .map(|x| x.path().to_path_buf())
-                    .filter(|x| filter_fortran_extensions(x.as_path(), extensions)),
-            );
-        } else {
-            paths.push(path.to_path_buf());
-        }
-    }
-    paths
+                    .filter_map(|x| x.ok()) // skip dirs if user doesn't have permission
+                    .filter(|x| filter_fortran_extensions(x.path(), extensions))
+                    .map(|x| std::path::absolute(x.path()))
+                    .collect::<Vec<_>>()
+            } else {
+                std::iter::once(std::path::absolute(path)).collect::<Vec<_>>()
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(anyhow::Error::new)
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -718,7 +722,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let files = get_files(files, file_extensions);
+    let files = get_files(files, file_extensions)?;
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
