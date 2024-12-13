@@ -2,17 +2,22 @@
 // Adapted from ruff
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
+use std::collections::HashMap;
+use std::ops::Deref;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use globset::{Glob, GlobMatcher};
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use crate::fs;
 use crate::registry::{Category, Rule, RuleNamespace};
 use crate::rule_redirects::get_redirect;
 use crate::rules::{RuleCodePrefix, RuleGroup, RuleIter};
-use crate::settings::PreviewMode;
+use crate::settings::{PatternPrefixPair, PreviewMode};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RuleSelector {
@@ -397,5 +402,102 @@ pub mod clap_completion {
                 ),
             ))
         }
+    }
+}
+
+pub struct PerFileIgnore {
+    basename: String,
+    absolute: PathBuf,
+    negated: bool,
+    rules: Vec<Rule>,
+}
+
+impl PerFileIgnore {
+    pub fn new(
+        mut pattern: String,
+        prefixes: &[RuleSelector],
+        project_root: Option<&Path>,
+    ) -> Self {
+        // Rules in preview are included here even if preview mode is disabled; it's
+        // safe to ignore disabled rules
+        let rules: Vec<_> = prefixes.iter().flat_map(RuleSelector::all_rules).collect();
+        let negated = pattern.starts_with('!');
+        if negated {
+            pattern.drain(..1);
+        }
+        let path = Path::new(&pattern);
+        let absolute = match project_root {
+            Some(project_root) => fs::normalize_path_to(path, project_root),
+            None => fs::normalize_path(path),
+        };
+
+        Self {
+            basename: pattern,
+            absolute,
+            negated,
+            rules,
+        }
+    }
+}
+
+/// Convert a list of `PatternPrefixPair` structs to `PerFileIgnore`.
+pub fn collect_per_file_ignores(pairs: Vec<PatternPrefixPair>) -> Vec<PerFileIgnore> {
+    let mut per_file_ignores: HashMap<String, Vec<RuleSelector>> = HashMap::new();
+    for pair in pairs {
+        per_file_ignores
+            .entry(pair.pattern)
+            .or_default()
+            .push(pair.prefix);
+    }
+    per_file_ignores
+        .into_iter()
+        .map(|(pattern, prefixes)| PerFileIgnore::new(pattern, &prefixes, None))
+        .collect()
+}
+
+#[derive(Debug, Clone)]
+pub struct CompiledPerFileIgnore {
+    pub absolute_matcher: GlobMatcher,
+    pub basename_matcher: GlobMatcher,
+    pub negated: bool,
+    pub rules: Vec<Rule>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct CompiledPerFileIgnoreList {
+    // Ordered as (absolute path matcher, basename matcher, rules)
+    ignores: Vec<CompiledPerFileIgnore>,
+}
+
+impl CompiledPerFileIgnoreList {
+    /// Given a list of patterns, create a `GlobSet`.
+    pub fn resolve(per_file_ignores: Vec<PerFileIgnore>) -> anyhow::Result<Self> {
+        let ignores: anyhow::Result<Vec<_>> = per_file_ignores
+            .into_iter()
+            .map(|per_file_ignore| {
+                // Construct absolute path matcher.
+                let absolute_matcher =
+                    Glob::new(&per_file_ignore.absolute.to_string_lossy())?.compile_matcher();
+
+                // Construct basename matcher.
+                let basename_matcher = Glob::new(&per_file_ignore.basename)?.compile_matcher();
+
+                Ok(CompiledPerFileIgnore {
+                    absolute_matcher,
+                    basename_matcher,
+                    negated: per_file_ignore.negated,
+                    rules: per_file_ignore.rules,
+                })
+            })
+            .collect();
+        Ok(Self { ignores: ignores? })
+    }
+}
+
+impl Deref for CompiledPerFileIgnoreList {
+    type Target = Vec<CompiledPerFileIgnore>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ignores
     }
 }

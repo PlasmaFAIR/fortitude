@@ -1,10 +1,10 @@
 use clap::{ArgAction::SetTrue, Parser, Subcommand};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::path::PathBuf;
 
 use crate::{
-    build, rule_selector::RuleSelector, settings::OutputFormat, settings::ProgressBar,
-    RuleSelectorParser,
+    build, rule_selector::RuleSelector, settings::OutputFormat, settings::PatternPrefixPair,
+    settings::ProgressBar, RuleSelectorParser,
 };
 
 /// Default extensions to check
@@ -52,7 +52,7 @@ pub struct ExplainArgs {
 }
 
 /// Perform static analysis on files and report issues.
-#[derive(Debug, clap::Parser, Deserialize, Serialize, Clone, PartialEq, Eq)]
+#[derive(Debug, clap::Parser, Deserialize, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct CheckArgs {
     /// List of files or directories to check. Directories are searched recursively for
@@ -90,6 +90,13 @@ pub struct CheckArgs {
         hide_possible_values = true
     )]
     pub extend_select: Option<Vec<RuleSelector>>,
+    /// List of mappings from file pattern to code to exclude.
+    #[arg(long, value_delimiter = ',', help_heading = "Rule selection")]
+    pub per_file_ignores: Option<Vec<PatternPrefixPair>>,
+    /// Like `--per-file-ignores`, but adds additional ignores on top of those already specified.
+    #[arg(long, value_delimiter = ',', help_heading = "Rule selection")]
+    pub extend_per_file_ignores: Option<Vec<PatternPrefixPair>>,
+
     /// Set the maximum allowable line length.
     #[arg(long, default_value = "100")]
     pub line_length: Option<usize>,

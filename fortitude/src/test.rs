@@ -8,6 +8,7 @@ use crate::{
         ast_entrypoint_map, check_file, read_to_string, rules_to_path_rules, rules_to_text_rules,
     },
     message::{Emitter, TextEmitter},
+    rule_selector::CompiledPerFileIgnoreList,
     rules::Rule,
     settings::{FixMode, Settings, UnsafeFixes},
 };
@@ -38,6 +39,7 @@ pub(crate) fn test_contents(
     let path_rules = rules_to_path_rules(rules);
     let text_rules = rules_to_text_rules(rules);
     let ast_entrypoints = ast_entrypoint_map(rules);
+    let per_file_ignores = CompiledPerFileIgnoreList::resolve(vec![]).unwrap();
 
     match check_file(
         &path_rules,
@@ -48,6 +50,7 @@ pub(crate) fn test_contents(
         settings,
         FixMode::Generate,
         UnsafeFixes::Hint,
+        &per_file_ignores,
     ) {
         Ok(violations) => {
             if violations.messages.is_empty() {

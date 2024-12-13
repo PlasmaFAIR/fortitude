@@ -6,11 +6,14 @@ use crate::fs;
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
-use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
+use crate::rule_selector::{
+    collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
+};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    FixMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    FixMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes,
+    DEFAULT_SELECTORS,
 };
 
 use anyhow::{anyhow, Context, Result};
@@ -22,7 +25,7 @@ use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
@@ -37,17 +40,17 @@ use walkdir::WalkDir;
 
 // These are just helper structs to let us quickly work out if there's
 // a fortitude section in an fpm.toml file
-#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
 struct Fpm {
     extra: Option<Extra>,
 }
 
-#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
 struct Extra {
     fortitude: Option<CheckSection>,
 }
 
-#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
 struct CheckSection {
     check: Option<CheckArgs>,
 }
@@ -140,6 +143,8 @@ pub struct CheckSettings {
     pub ignore: Vec<RuleSelector>,
     pub select: Option<Vec<RuleSelector>>,
     pub extend_select: Vec<RuleSelector>,
+    pub per_file_ignores: Option<Vec<PatternPrefixPair>>,
+    pub extend_per_file_ignores: Vec<PatternPrefixPair>,
     pub line_length: usize,
     pub file_extensions: Vec<String>,
     pub fix: bool,
@@ -170,6 +175,8 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             ignore: value.ignore.unwrap_or_default(),
             select: value.select,
             extend_select: value.extend_select.unwrap_or_default(),
+            per_file_ignores: value.per_file_ignores,
+            extend_per_file_ignores: value.extend_per_file_ignores.unwrap_or_default(),
             line_length: value.line_length.unwrap_or(Settings::default().line_length),
             file_extensions: value
                 .file_extensions
@@ -246,23 +253,27 @@ fn filter_fortran_extensions<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bo
 }
 
 /// Expand the input list of files to include all Fortran files.
-fn get_files<S: AsRef<str>>(files_in: &Vec<PathBuf>, extensions: &[S]) -> Vec<PathBuf> {
-    let mut paths = Vec::new();
-    for path in files_in {
-        if path.is_dir() {
-            paths.extend(
+fn get_files<P: AsRef<Path>, S: AsRef<str>>(
+    paths: &[P],
+    extensions: &[S],
+) -> anyhow::Result<Vec<PathBuf>> {
+    paths
+        .iter()
+        .flat_map(|path| {
+            if path.as_ref().is_dir() {
                 WalkDir::new(path)
                     .min_depth(1)
                     .into_iter()
-                    .filter_map(|x| x.ok())
-                    .map(|x| x.path().to_path_buf())
-                    .filter(|x| filter_fortran_extensions(x.as_path(), extensions)),
-            );
-        } else {
-            paths.push(path.to_path_buf());
-        }
-    }
-    paths
+                    .filter_map(|x| x.ok()) // skip dirs if user doesn't have permission
+                    .filter(|x| filter_fortran_extensions(x.path(), extensions))
+                    .map(|x| std::path::absolute(x.path()))
+                    .collect::<Vec<_>>()
+            } else {
+                vec![std::path::absolute(path)]
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(anyhow::Error::new)
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -276,8 +287,9 @@ pub(crate) fn check_file(
     settings: &Settings,
     fix_mode: FixMode,
     unsafe_fixes: UnsafeFixes,
+    per_file_ignores: &CompiledPerFileIgnoreList,
 ) -> anyhow::Result<Diagnostics> {
-    let (messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+    let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
             result,
             transformed,
@@ -329,6 +341,23 @@ pub(crate) fn check_file(
         let fixed = FxHashMap::default();
         (result, fixed)
     };
+
+    // Ignore based on per-file-ignores.
+    // If the DiagnosticMessage is discarded, its fix will also be ignored.
+    let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {
+        fs::ignores_from_path(path, per_file_ignores)
+    } else {
+        vec![]
+    };
+    if !per_file_ignores.is_empty() {
+        messages.retain(|message| {
+            if let Some(rule) = message.rule() {
+                !per_file_ignores.contains(&rule)
+            } else {
+                true
+            }
+        });
+    }
 
     Ok(Diagnostics {
         messages,
@@ -675,6 +704,20 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
     };
 
+    let per_file_ignores = CompiledPerFileIgnoreList::resolve(collect_per_file_ignores(
+        args.per_file_ignores
+            .or(file_settings.per_file_ignores)
+            .unwrap_or_default()
+            .into_iter()
+            .chain(
+                args.extend_per_file_ignores
+                    .unwrap_or_default()
+                    .into_iter()
+                    .chain(file_settings.extend_per_file_ignores),
+            )
+            .collect::<Vec<_>>(),
+    ))?;
+
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
         .map(PreviewMode::from)
@@ -719,7 +762,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let files = get_files(files, file_extensions);
+    let files = get_files(files, file_extensions)?;
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
@@ -774,6 +817,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                 &settings,
                 fix_mode,
                 unsafe_fixes,
+                &per_file_ignores,
             ) {
                 Ok(violations) => violations,
                 Err(msg) => {

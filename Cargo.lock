@@ -409,6 +409,8 @@ dependencies = [
  "clap",
  "colored",
  "fortitude_macros",
+ "glob",
+ "globset",
  "indicatif",
  "insta",
  "insta-cmd",
