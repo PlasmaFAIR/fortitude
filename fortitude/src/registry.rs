@@ -71,6 +71,9 @@ pub enum Category {
     /// Obsolescent features
     #[prefix = "OB"]
     Obsolescent,
+    /// Readability.
+    #[prefix = "R"]
+    Readability,
 }
 
 pub trait RuleNamespace: Sized {

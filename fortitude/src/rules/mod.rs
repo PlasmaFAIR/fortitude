@@ -8,6 +8,7 @@ pub(crate) mod io;
 pub(crate) mod modules;
 pub(crate) mod obsolescent;
 pub(crate) mod precision;
+pub(crate) mod readability;
 pub(crate) mod style;
 pub(crate) mod testing;
 pub(crate) mod typing;
@@ -113,6 +114,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
 
         (Io, "001") => (RuleGroup::Preview, Ast, io::missing_specifier::MissingActionSpecifier),
+
+        (Readability, "001") => (RuleGroup::Preview, Ast, readability::magic_numbers::MagicNumberInArraySize),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason
