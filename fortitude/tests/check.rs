@@ -681,20 +681,20 @@ per-file-ignores = [
 ]
 "#;
     fs::write(&config_file, config)?;
-    let double_nested_ignore = format!(
-        "--per-file-ignores={}/*:implicit-typing",
-        double_nested.canonicalize()?.display()
-    );
     apply_common_filters!();
     // Expect:
     // - Overwrite per-file-ignores in the config file
     // - Files of foo, bar, and baz
     // - No files with index 2
+    let ignores = format!(
+        "--per-file-ignores={}/**/double_nested/*.f90:implicit-typing",
+        path.display()
+    );
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
                          .arg("check")
                          .arg("--select=typing")
-                         .arg(double_nested_ignore)
+                         .arg(ignores)
                          .arg(path),
                          @r"
     success: false
@@ -795,10 +795,11 @@ per-file-ignores = [
 ]
 "#;
     fs::write(&config_file, config)?;
-    let double_nested_ignore = format!(
-        "--extend-per-file-ignores={}/*:implicit-typing",
-        double_nested.canonicalize()?.display()
+    let ignores = format!(
+        "--extend-per-file-ignores={}/**/double_nested/*.f90:implicit-typing",
+        path.display()
     );
+
     apply_common_filters!();
     // Expect:
     // - Don't overwrite config file
@@ -808,7 +809,7 @@ per-file-ignores = [
                          .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
                          .arg("check")
                          .arg("--select=typing")
-                         .arg(double_nested_ignore)
+                         .arg(ignores)
                          .arg(path),
                          @r"
     success: false

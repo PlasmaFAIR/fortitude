@@ -269,7 +269,7 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
                     .map(|x| std::path::absolute(x.path()))
                     .collect::<Vec<_>>()
             } else {
-                std::iter::once(std::path::absolute(path)).collect::<Vec<_>>()
+                vec![std::path::absolute(path)]
             }
         })
         .collect::<Result<Vec<_>, _>>()
