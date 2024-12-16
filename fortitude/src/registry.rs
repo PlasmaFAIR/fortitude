@@ -74,6 +74,9 @@ pub enum Category {
     /// Readability.
     #[prefix = "R"]
     Readability,
+    /// Issues that are susceptible to bugs.
+    #[prefix = "B"]
+    Bugprone,
 }
 
 pub trait RuleNamespace: Sized {

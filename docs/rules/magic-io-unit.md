@@ -8,7 +8,9 @@ Checks for literal integers as units in IO statements.
 Hardcoding unit numbers makes programs more brittle as it becomes harder to
 verify units have been opened before reading/writing. Instead, units should
 be passed in to procedures as arguments, or the `newunit=` argument used for
-`open` statements.
+`open` statements. Having a named variable also makes it much clearer what a
+given IO statement is for, and allows tools like LSP and IDEs to find all
+references.
 
 Bad:
 ```f90

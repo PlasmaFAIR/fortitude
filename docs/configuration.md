@@ -97,6 +97,10 @@ Rule selection:
           Comma-separated list of rule codes to enable (or ALL, to enable all rules)
       --extend-select <RULE_CODE>
           Like --select, but adds additional rule codes on top of those already specified
+      --per-file-ignores <PER_FILE_IGNORES>
+          List of mappings from file pattern to code to exclude
+      --extend-per-file-ignores <EXTEND_PER_FILE_IGNORES>
+          Like `--per-file-ignores`, but adds additional ignores on top of those already specified
 ```
 
 <!-- End auto-generated check help. -->
