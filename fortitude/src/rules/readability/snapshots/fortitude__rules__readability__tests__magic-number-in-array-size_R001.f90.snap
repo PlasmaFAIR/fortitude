@@ -1,0 +1,154 @@
+---
+source: fortitude/src/rules/readability/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/readability/R001.f90:4:16: R001 Magic number in array size, consider replacing 221 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                ^^^ R001
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/readability/R001.f90:4:27: R001 Magic number in array size, consider replacing 221 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                           ^^^ R001
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/readability/R001.f90:4:37: R001 Magic number in array size, consider replacing 100 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                                     ^^^ R001
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/readability/R001.f90:4:53: R001 Magic number in array size, consider replacing 33 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                                                     ^^ R001
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/readability/R001.f90:4:56: R001 Magic number in array size, consider replacing 44 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                                                        ^^ R001
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/readability/R001.f90:4:60: R001 Magic number in array size, consider replacing 5 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                                                            ^ R001
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/readability/R001.f90:5:22: R001 Magic number in array size, consider replacing 57 with named `parameter`
+  |
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+5 |   integer, dimension(57) :: E
+  |                      ^^ R001
+6 |   integer, dimension(57, 64) :: F
+7 |   integer, dimension(NUM_POINTS) :: G
+  |
+
+./resources/test/fixtures/readability/R001.f90:6:22: R001 Magic number in array size, consider replacing 57 with named `parameter`
+  |
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |                      ^^ R001
+7 |   integer, dimension(NUM_POINTS) :: G
+8 |   integer :: H(NUM_POINTS)
+  |
+
+./resources/test/fixtures/readability/R001.f90:6:26: R001 Magic number in array size, consider replacing 64 with named `parameter`
+  |
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |                          ^^ R001
+7 |   integer, dimension(NUM_POINTS) :: G
+8 |   integer :: H(NUM_POINTS)
+  |
+
+./resources/test/fixtures/readability/R001.f90:13:24: R001 Magic number in array size, consider replacing 8 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                        ^ R001
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/readability/R001.f90:13:26: R001 Magic number in array size, consider replacing 9 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                          ^ R001
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/readability/R001.f90:13:29: R001 Magic number in array size, consider replacing 10 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                             ^^ R001
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/readability/R001.f90:13:33: R001 Magic number in array size, consider replacing 11 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                                 ^^ R001
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/readability/R001.f90:13:36: R001 Magic number in array size, consider replacing 12 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                                    ^^ R001
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/readability/R001.f90:14:31: R001 Magic number in array size, consider replacing 57 with named `parameter`
+   |
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+14 |     integer, intent(out) :: M(57)
+   |                               ^^ R001
+15 |   end subroutine foo
+16 | end module test
+   |
