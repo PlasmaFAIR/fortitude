@@ -2,6 +2,7 @@
 /// A collection of all rules, and utilities to select a subset at runtime.
 #[macro_use]
 mod macros;
+pub(crate) mod bugprone;
 pub(crate) mod error;
 pub(crate) mod filesystem;
 pub(crate) mod io;
@@ -118,6 +119,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Io, "012") => (RuleGroup::Preview, Ast, io::magic_io_unit::NonPortableIoUnit),
 
         (Readability, "001") => (RuleGroup::Preview, Ast, readability::magic_numbers::MagicNumberInArraySize),
+
+        (Bugprone, "001") => (RuleGroup::Preview, Ast, bugprone::select_default::MissingDefaultCase),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason
