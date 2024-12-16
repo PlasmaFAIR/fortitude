@@ -113,6 +113,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
 
         (Io, "001") => (RuleGroup::Preview, Ast, io::missing_specifier::MissingActionSpecifier),
+        (Io, "011") => (RuleGroup::Preview, Ast, io::magic_io_unit::MagicIoUnit),
+        (Io, "012") => (RuleGroup::Preview, Ast, io::magic_io_unit::NonPortableIoUnit),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason

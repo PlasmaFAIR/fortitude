@@ -62,6 +62,8 @@
 | Code | Name | Message | |
 | ---- | ---- | ------- | ------: |
 | IO001 | [missing-action-specifier](rules/missing-action-specifier.md) | file opened without action specifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| IO011 | [magic-io-unit](rules/magic-io-unit.md) | Magic unit '{value}' in IO statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| IO012 | [non-portable-io-unit](rules/non-portable-io-unit.md) | Non-portable unit '{value}' in '{kind}' statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 
 ### Filesystem (F)
 
