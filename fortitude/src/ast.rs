@@ -208,3 +208,17 @@ pub fn dtype_is_plain_number(dtype: &str) -> bool {
         "integer" | "real" | "logical" | "complex"
     )
 }
+
+/// Returns `true` if `node` is a keyword argument with name `keyword`.
+pub fn is_keyword_argument<S: AsRef<str>>(node: &Node, keyword: S, src: &str) -> bool {
+    if node.kind() != "keyword_argument" {
+        return false;
+    }
+
+    if let Some(kwarg) = node.child_by_field_name("name") {
+        if let Some(name) = &kwarg.to_text(src) {
+            return name.to_lowercase() == keyword.as_ref();
+        }
+    }
+    false
+}
