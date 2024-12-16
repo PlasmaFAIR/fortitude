@@ -209,7 +209,7 @@ pub fn dtype_is_plain_number(dtype: &str) -> bool {
     )
 }
 
-/// If `node` is a keyword argument with name `keyword`, return the corresponding value
+/// Returns `true` if `node` is a keyword argument with name `keyword`.
 pub fn is_keyword_argument<S: AsRef<str>>(node: &Node, keyword: S, src: &str) -> bool {
     if node.kind() != "keyword_argument" {
         return false;
