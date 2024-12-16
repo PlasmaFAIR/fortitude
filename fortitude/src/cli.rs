@@ -3,8 +3,8 @@ use serde::Deserialize;
 use std::path::PathBuf;
 
 use crate::{
-    build, rule_selector::RuleSelector, settings::OutputFormat, settings::PatternPrefixPair,
-    settings::ProgressBar, RuleSelectorParser,
+    build, rule_selector::RuleSelector, settings::FilePattern, settings::OutputFormat,
+    settings::PatternPrefixPair, settings::ProgressBar, RuleSelectorParser,
 };
 
 /// Default extensions to check
@@ -31,6 +31,7 @@ pub struct GlobalConfigArgs {
     pub config_file: Option<PathBuf>,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand, Clone, PartialEq)]
 pub enum SubCommands {
     Check(CheckArgs),
@@ -167,6 +168,24 @@ pub struct CheckArgs {
         help_heading = "File selection"
     )]
     pub file_extensions: Option<Vec<String>>,
+
+    /// List of paths, used to omit files and/or directories from analysis.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "FILE_PATTERN",
+        help_heading = "File selection"
+    )]
+    pub exclude: Option<Vec<FilePattern>>,
+
+    /// Like --exclude, but adds additional files and directories on top of those already excluded.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "FILE_PATTERN",
+        help_heading = "File selection"
+    )]
+    pub extend_exclude: Option<Vec<FilePattern>>,
 
     // Options for individual rules
     /// Set the maximum allowable line length.

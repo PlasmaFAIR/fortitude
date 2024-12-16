@@ -12,8 +12,8 @@ use crate::rule_selector::{
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    FixMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes,
-    DEFAULT_SELECTORS,
+    FilePattern, FilePatternSet, FixMode, OutputFormat, PatternPrefixPair, PreviewMode,
+    ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 
 use anyhow::{anyhow, Context, Result};
@@ -154,6 +154,8 @@ pub struct CheckSettings {
     pub output_format: OutputFormat,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
+    pub exclude: Option<Vec<FilePattern>>,
+    pub extend_exclude: Vec<FilePattern>,
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -192,6 +194,8 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             preview: resolve_bool_arg(value.preview, value.no_preview)
                 .map(PreviewMode::from)
                 .unwrap_or_default(),
+            exclude: value.exclude,
+            extend_exclude: value.extend_exclude.unwrap_or_default(),
         },
         None => CheckSettings::default(),
     };
@@ -241,9 +245,8 @@ fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<Vec<Rul
     Ok(rules)
 }
 
-/// Helper function used with `filter` to select only paths that end in a Fortran extension.
-/// Includes non-standard extensions, as these should be reported.
-fn filter_fortran_extensions<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
+/// Helper function used with `get_files` to select only paths that end in a Fortran extension.
+fn is_valid_extension<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
     if let Some(ext) = path.extension() {
         // Can't use '&[&str].contains()', as extensions are of type OsStr
         extensions.iter().any(|x| x.as_ref() == ext)
@@ -256,6 +259,7 @@ fn filter_fortran_extensions<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bo
 fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     paths: &[P],
     extensions: &[S],
+    excludes: &FilePatternSet,
 ) -> anyhow::Result<Vec<PathBuf>> {
     paths
         .iter()
@@ -265,10 +269,13 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
                     .min_depth(1)
                     .into_iter()
                     .filter_map(|x| x.ok()) // skip dirs if user doesn't have permission
-                    .filter(|x| filter_fortran_extensions(x.path(), extensions))
+                    .filter(|x| {
+                        is_valid_extension(x.path(), extensions) && !excludes.matches(x.path())
+                    })
                     .map(|x| std::path::absolute(x.path()))
                     .collect::<Vec<_>>()
             } else {
+                // Directly specified paths override any filters
                 vec![std::path::absolute(path)]
             }
         })
@@ -718,6 +725,14 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             .collect::<Vec<_>>(),
     ))?;
 
+    let file_excludes = FilePatternSet::try_from_iter(
+        args.exclude
+            .unwrap_or(file_settings.exclude.unwrap_or_default())
+            .into_iter()
+            .chain(args.extend_exclude.unwrap_or_default().into_iter())
+            .chain(file_settings.extend_exclude.into_iter()),
+    )?;
+
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
         .map(PreviewMode::from)
@@ -762,7 +777,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let files = get_files(files, file_extensions)?;
+    let files = get_files(files, file_extensions, &file_excludes)?;
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {

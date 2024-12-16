@@ -1,11 +1,15 @@
+/// A collection of user-modifiable settings. Should be expanded as new features are added.
 use std::fmt::{Display, Formatter};
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-/// A collection of user-modifiable settings. Should be expanded as new features are added.
-use crate::rule_selector::RuleSelector;
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use ruff_diagnostics::Applicability;
 use ruff_macros::CacheKey;
 use serde::{de, Deserialize, Deserializer, Serialize};
+
+use crate::fs;
+use crate::rule_selector::RuleSelector;
 
 pub struct Settings {
     pub line_length: usize,
@@ -132,6 +136,88 @@ impl FromStr for PatternPrefixPair {
         let pattern = pattern_str.into();
         let prefix = RuleSelector::from_str(code_string)?;
         Ok(Self { pattern, prefix })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
+pub enum FilePattern {
+    Builtin(&'static str),
+    User(String, PathBuf),
+}
+
+impl FilePattern {
+    const EXPECTED_PATTERN: &'static str = "<FilePattern>";
+
+    pub fn add_to(self, builder: &mut GlobSetBuilder) -> anyhow::Result<()> {
+        match self {
+            FilePattern::Builtin(pattern) => {
+                builder.add(Glob::from_str(pattern)?);
+            }
+            FilePattern::User(pattern, absolute) => {
+                // Add the absolute path.
+                builder.add(Glob::new(&absolute.to_string_lossy())?);
+
+                // Add basename path.
+                if !pattern.contains(std::path::MAIN_SEPARATOR) {
+                    builder.add(Glob::new(&pattern)?);
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl FromStr for FilePattern {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let pattern = s.to_string();
+        let absolute = fs::normalize_path(&pattern);
+        Ok(Self::User(pattern, absolute))
+    }
+}
+
+impl<'de> Deserialize<'de> for FilePattern {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let str_result = String::deserialize(deserializer)?;
+        Self::from_str(str_result.as_str()).map_err(|_| {
+            de::Error::invalid_value(
+                de::Unexpected::Str(str_result.as_str()),
+                &Self::EXPECTED_PATTERN,
+            )
+        })
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct FilePatternSet {
+    pub set: GlobSet,
+}
+
+impl FilePatternSet {
+    pub fn try_from_iter<I>(patterns: I) -> Result<Self, anyhow::Error>
+    where
+        I: IntoIterator<Item = FilePattern>,
+    {
+        let mut builder = GlobSetBuilder::new();
+        for pattern in patterns {
+            pattern.add_to(&mut builder)?;
+        }
+        let set = builder.build()?;
+        Ok(FilePatternSet { set })
+    }
+
+    pub fn matches<P: AsRef<Path>>(&self, path: P) -> bool {
+        match std::path::absolute(path.as_ref()) {
+            Ok(path) => match path.clone().file_name() {
+                Some(basename) => self.set.is_match(path) || self.set.is_match(basename),
+                None => false,
+            },
+            _ => false,
+        }
     }
 }
 
