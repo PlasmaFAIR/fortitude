@@ -60,49 +60,6 @@ pub struct CheckArgs {
     /// are included in the search.
     #[arg(default_value = ".")]
     pub files: Option<Vec<PathBuf>>,
-    /// Comma-separated list of rules to ignore.
-    #[arg(
-        long,
-        value_delimiter = ',',
-        value_name = "RULE_CODE",
-        value_parser = RuleSelectorParser,
-        help_heading = "Rule selection",
-        hide_possible_values = true
-    )]
-    pub ignore: Option<Vec<RuleSelector>>,
-    /// Comma-separated list of rule codes to enable (or ALL, to enable all rules).
-    #[arg(
-        long,
-        value_delimiter = ',',
-        value_name = "RULE_CODE",
-        value_parser = RuleSelectorParser,
-        help_heading = "Rule selection",
-        hide_possible_values = true
-    )]
-    pub select: Option<Vec<RuleSelector>>,
-    /// Like --select, but adds additional rule codes on top of those already specified.
-    #[arg(
-        long,
-        value_delimiter = ',',
-        value_name = "RULE_CODE",
-        value_parser = RuleSelectorParser,
-        help_heading = "Rule selection",
-        hide_possible_values = true
-    )]
-    pub extend_select: Option<Vec<RuleSelector>>,
-    /// List of mappings from file pattern to code to exclude.
-    #[arg(long, value_delimiter = ',', help_heading = "Rule selection")]
-    pub per_file_ignores: Option<Vec<PatternPrefixPair>>,
-    /// Like `--per-file-ignores`, but adds additional ignores on top of those already specified.
-    #[arg(long, value_delimiter = ',', help_heading = "Rule selection")]
-    pub extend_per_file_ignores: Option<Vec<PatternPrefixPair>>,
-
-    /// Set the maximum allowable line length.
-    #[arg(long, default_value = "100")]
-    pub line_length: Option<usize>,
-    /// File extensions to check
-    #[arg(long, value_delimiter = ',', default_values = FORTRAN_EXTS)]
-    pub file_extensions: Option<Vec<String>>,
 
     /// Apply fixes to resolve lint violations.
     /// Use `--no-fix` to disable or `--unsafe-fixes` to include unsafe fixes.
@@ -110,18 +67,21 @@ pub struct CheckArgs {
     pub fix: Option<bool>,
     #[clap(long, overrides_with("fix"), hide = true, action = SetTrue)]
     pub no_fix: Option<bool>,
+
     /// Include fixes that may not retain the original intent of the code.
     /// Use `--no-unsafe-fixes` to disable.
     #[arg(long, overrides_with("no_unsafe_fixes"), action = SetTrue)]
     pub unsafe_fixes: Option<bool>,
     #[arg(long, overrides_with("unsafe_fixes"), hide = true, action = SetTrue)]
     pub no_unsafe_fixes: Option<bool>,
+
     /// Show an enumeration of all fixed lint violations.
     /// Use `--no-show-fixes` to disable.
     #[arg(long, overrides_with("no_show_fixes"), action = SetTrue)]
     pub show_fixes: Option<bool>,
     #[clap(long, overrides_with("show_fixes"), hide = true, action = SetTrue)]
     pub no_show_fixes: Option<bool>,
+
     /// Apply fixes to resolve lint violations, but don't report on, or exit non-zero for, leftover violations. Implies `--fix`.
     /// Use `--no-fix-only` to disable or `--unsafe-fixes` to include unsafe fixes.
     #[arg(long, overrides_with("no_fix_only"), action = SetTrue)]
@@ -145,4 +105,71 @@ pub struct CheckArgs {
     /// Options are "off" (default), "ascii", and "fancy"
     #[arg(long, value_enum)]
     pub progress_bar: Option<ProgressBar>,
+
+    // Rule selection
+    /// Comma-separated list of rules to ignore.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub ignore: Option<Vec<RuleSelector>>,
+
+    /// Comma-separated list of rule codes to enable (or ALL, to enable all rules).
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub select: Option<Vec<RuleSelector>>,
+
+    /// Like --select, but adds additional rule codes on top of those already specified.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub extend_select: Option<Vec<RuleSelector>>,
+
+    /// List of mappings from file pattern to code to exclude.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "FILE_PATTERN:RULE_CODE",
+        help_heading = "Rule selection"
+    )]
+    pub per_file_ignores: Option<Vec<PatternPrefixPair>>,
+
+    /// Like `--per-file-ignores`, but adds additional ignores on top of those already specified.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "FILE_PATTERN:RULE_CODE",
+        help_heading = "Rule selection"
+    )]
+    pub extend_per_file_ignores: Option<Vec<PatternPrefixPair>>,
+
+    // File selection
+    /// File extensions to check
+    #[arg(
+        long,
+        value_delimiter = ',',
+        default_values = FORTRAN_EXTS,
+        help_heading = "File selection"
+    )]
+    pub file_extensions: Option<Vec<String>>,
+
+    // Options for individual rules
+    /// Set the maximum allowable line length.
+    #[arg(long, help_heading = "Per-Rule Options", default_value = "100")]
+    pub line_length: Option<usize>,
 }

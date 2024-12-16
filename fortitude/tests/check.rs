@@ -69,7 +69,7 @@ unknown-key = 1
       |
     2 | unknown-key = 1
       | ^^^^^^^^^^^
-    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `line-length`, `file-extensions`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `preview`, `no-preview`, `progress-bar`
+    unknown field `unknown-key`, expected one of `files`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `preview`, `no-preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `file-extensions`, `line-length`
     ");
     Ok(())
 }
