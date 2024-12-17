@@ -1093,3 +1093,110 @@ fn check_force_exclude_builtin() -> anyhow::Result<()> {
     ");
     Ok(())
 }
+
+#[test]
+fn check_per_line_ignores() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+! allow(T001, unnamed-end-statement, literal-kind)
+program test
+  ! allow(star-kind)
+  logical*4, parameter :: true = .true.
+  ! allow(trailing-whitespace)
+  logical*4, parameter :: false = .false.  
+end program test
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg(test_file)
+                         .args(["--select=T001,S061,T011,T021,S101"]),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] T021 'logical*4' uses non-standard syntax
+      |
+    5 |   logical*4, parameter :: true = .true.
+    6 |   ! allow(trailing-whitespace)
+    7 |   logical*4, parameter :: false = .false.  
+      |          ^^ T021
+    8 | end program test
+      |
+      = help: Replace with 'logical(4)'
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
+fn apply_fixes_with_allow_comment() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+! allow(superfluous-implicit-none)
+program foo
+  implicit none
+  real i
+  i = 4.0
+contains
+  subroutine bar
+    implicit none
+  end subroutine bar
+end program foo
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=superfluous-implicit-none")
+                         .arg("--fix")
+                         .arg(&test_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 1 files scanned.
+    All checks passed!
+
+
+    ----- stderr -----
+    ");
+
+    let expected = r#"
+! allow(superfluous-implicit-none)
+program foo
+  implicit none
+  real i
+  i = 4.0
+contains
+  subroutine bar
+    implicit none
+  end subroutine bar
+end program foo
+"#
+    .to_string();
+
+    let transformed = fs::read_to_string(&test_file)?;
+    assert_eq!(transformed, expected);
+
+    Ok(())
+}
