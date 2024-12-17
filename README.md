@@ -152,6 +152,36 @@ preview = true
 
 Run `fortitude explain` to see which rules are in preview mode.
 
+### Excluding Files
+
+> [!NOTE]
+> To be featured in v0.7.0
+
+Fortitude will automatically ignore files in some directories (`build/`, `.git/`,
+`.venv/`, etc.), and this behaviour can be extended using the `--exclude` option. For
+example, to ignore all files in the directory `benchmarks/`:
+
+```console
+$ fortitude check --exclude=benchmarks
+```
+
+Note that this will override any exclusions specified in your `fpm.toml` or
+`fortitude.toml` file. To extend those exclusions, use instead:
+
+```console
+$ fortitude check --extend-exclude=benchmarks
+```
+
+It is also possible to switch off individual rules or rule categories for specific
+files using `--per-file-ignores`:
+
+```console
+$ fortitude check --per-file-ignores=**/*.f95:non-standard-file-extension
+```
+
+Similarly, if these are set in the configuration file, `--extend-per-file-ignores` can
+be used to add additional rule ignores instead of overwriting them.
+
 ## Configuration
 
 Fortitude will look for either a `fortitude.toml` or `fpm.toml` file in the
