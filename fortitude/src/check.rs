@@ -55,6 +55,25 @@ struct CheckSection {
     check: Option<CheckArgs>,
 }
 
+// Default paths to exclude when searching paths
+pub(crate) static EXCLUDE_DEFAULT: &[FilePattern] = &[
+    FilePattern::Builtin(".git"),
+    FilePattern::Builtin(".git-rewrite"),
+    FilePattern::Builtin(".hg"),
+    FilePattern::Builtin(".svn"),
+    FilePattern::Builtin("venv"),
+    FilePattern::Builtin(".venv"),
+    FilePattern::Builtin("pyenv"),
+    FilePattern::Builtin(".pyenv"),
+    FilePattern::Builtin(".eggs"),
+    FilePattern::Builtin("site-packages"),
+    FilePattern::Builtin(".vscode"),
+    FilePattern::Builtin("build"),
+    FilePattern::Builtin("_build"),
+    FilePattern::Builtin("dist"),
+    FilePattern::Builtin("_dist"),
+];
+
 // Adapted from ruff
 fn parse_fpm_toml<P: AsRef<Path>>(path: P) -> Result<Fpm> {
     let contents = std::fs::read_to_string(path.as_ref())
@@ -269,18 +288,17 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     paths
         .iter()
         .flat_map(|path| {
-            if path.as_ref().is_dir() {
+            if matches!(exclude_mode, ExcludeMode::Force) && excludes.matches(path) {
+                vec![]
+            } else if path.as_ref().is_dir() {
                 WalkDir::new(path)
                     .min_depth(1)
                     .into_iter()
-                    .filter_map(|x| x.ok()) // skip dirs if user doesn't have permission
-                    .filter(|x| {
-                        is_valid_extension(x.path(), extensions) && !excludes.matches(x.path())
-                    })
-                    .map(|x| fs::normalize_path(x.path()))
+                    .filter_entry(|e| !excludes.matches(e.path()))
+                    .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
+                    .filter(|p| is_valid_extension(p.path(), extensions))
+                    .map(|p| fs::normalize_path(p.path()))
                     .collect::<Vec<_>>()
-            } else if matches!(exclude_mode, ExcludeMode::Force) && excludes.matches(path) {
-                vec![]
             } else {
                 vec![fs::normalize_path(path)]
             }
@@ -732,7 +750,11 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let file_excludes = FilePatternSet::try_from_iter(
         args.exclude
-            .unwrap_or(file_settings.exclude.unwrap_or_default())
+            .unwrap_or(
+                file_settings
+                    .exclude
+                    .unwrap_or(EXCLUDE_DEFAULT.iter().cloned().collect_vec()),
+            )
             .into_iter()
             .chain(args.extend_exclude.unwrap_or_default().into_iter())
             .chain(file_settings.extend_exclude.into_iter()),
