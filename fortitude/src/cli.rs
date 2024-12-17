@@ -189,7 +189,7 @@ pub struct CheckArgs {
 
     /// Enforce exclusions, even for paths passed to Fortitude directly on the command-line.
     /// Use `--no-force_exclude` to disable.
-    #[arg(long, overrides_with("no_force_exclude"), action = SetTrue)]
+    #[arg(long, overrides_with("no_force_exclude"), help_heading="File selection", action = SetTrue)]
     pub force_exclude: Option<bool>,
     #[clap(long, overrides_with("force_exclude"), hide = true, action = SetTrue)]
     pub no_force_exclude: Option<bool>,
