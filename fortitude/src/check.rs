@@ -56,7 +56,7 @@ struct CheckSection {
 }
 
 // Default paths to exclude when searching paths
-pub(crate) static EXCLUDE_DEFAULT: &[FilePattern] = &[
+pub(crate) static EXCLUDE_BUILTINS: &[FilePattern] = &[
     FilePattern::Builtin(".git"),
     FilePattern::Builtin(".git-rewrite"),
     FilePattern::Builtin(".hg"),
@@ -749,13 +749,14 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     ))?;
 
     let file_excludes = FilePatternSet::try_from_iter(
-        args.exclude
-            .unwrap_or(
-                file_settings
-                    .exclude
-                    .unwrap_or(EXCLUDE_DEFAULT.iter().cloned().collect_vec()),
+        EXCLUDE_BUILTINS
+            .iter()
+            .cloned()
+            .chain(
+                args.exclude
+                    .unwrap_or(file_settings.exclude.unwrap_or_default())
+                    .into_iter(),
             )
-            .into_iter()
             .chain(args.extend_exclude.unwrap_or_default().into_iter())
             .chain(file_settings.extend_exclude.into_iter()),
     )?;
