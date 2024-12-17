@@ -187,7 +187,7 @@ pub struct CheckArgs {
     )]
     pub extend_exclude: Option<Vec<FilePattern>>,
 
-    /// Enforce exclusions, even for paths passed to Ruff directly on the command-line.
+    /// Enforce exclusions, even for paths passed to Fortitude directly on the command-line.
     /// Use `--no-force_exclude` to disable.
     #[arg(long, overrides_with("no_force_exclude"), action = SetTrue)]
     pub force_exclude: Option<bool>,
