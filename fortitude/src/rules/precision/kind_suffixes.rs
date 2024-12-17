@@ -76,7 +76,7 @@ impl AstRule for NoRealSuffix {
         // Exponentiation with d or D are ignored, and should be handled with a different
         // rule.
         let txt = node.to_text(src.source_text())?;
-        if !regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]\d+)$", txt) {
+        if !regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]-?\d+)$", txt) {
             return None;
         }
 
