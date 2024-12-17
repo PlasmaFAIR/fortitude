@@ -187,6 +187,13 @@ pub struct CheckArgs {
     )]
     pub extend_exclude: Option<Vec<FilePattern>>,
 
+    /// Enforce exclusions, even for paths passed to Ruff directly on the command-line.
+    /// Use `--no-force_exclude` to disable.
+    #[arg(long, overrides_with("no_force_exclude"), action = SetTrue)]
+    pub force_exclude: Option<bool>,
+    #[clap(long, overrides_with("force_exclude"), hide = true, action = SetTrue)]
+    pub no_force_exclude: Option<bool>,
+
     // Options for individual rules
     /// Set the maximum allowable line length.
     #[arg(long, help_heading = "Per-Rule Options", default_value = "100")]

@@ -221,6 +221,24 @@ impl FilePatternSet {
     }
 }
 
+/// Toggle for excluding files even when passed directly on the command line
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, CacheKey, is_macro::Is)]
+pub enum ExcludeMode {
+    #[default]
+    NoForce,
+    Force,
+}
+
+impl From<bool> for ExcludeMode {
+    fn from(b: bool) -> Self {
+        if b {
+            Self::Force
+        } else {
+            Self::NoForce
+        }
+    }
+}
+
 /// Toggle for progress bar
 #[derive(
     Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Default, clap::ValueEnum,

@@ -12,8 +12,8 @@ use crate::rule_selector::{
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    FilePattern, FilePatternSet, FixMode, OutputFormat, PatternPrefixPair, PreviewMode,
-    ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    ExcludeMode, FilePattern, FilePatternSet, FixMode, OutputFormat, PatternPrefixPair,
+    PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 
 use anyhow::{anyhow, Context, Result};
@@ -156,6 +156,7 @@ pub struct CheckSettings {
     pub preview: PreviewMode,
     pub exclude: Option<Vec<FilePattern>>,
     pub extend_exclude: Vec<FilePattern>,
+    pub exclude_mode: ExcludeMode,
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -196,6 +197,9 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
                 .unwrap_or_default(),
             exclude: value.exclude,
             extend_exclude: value.extend_exclude.unwrap_or_default(),
+            exclude_mode: resolve_bool_arg(value.force_exclude, value.no_force_exclude)
+                .map(ExcludeMode::from)
+                .unwrap_or_default(),
         },
         None => CheckSettings::default(),
     };
@@ -260,7 +264,8 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     paths: &[P],
     extensions: &[S],
     excludes: &FilePatternSet,
-) -> anyhow::Result<Vec<PathBuf>> {
+    exclude_mode: ExcludeMode,
+) -> Vec<PathBuf> {
     paths
         .iter()
         .flat_map(|path| {
@@ -272,15 +277,15 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
                     .filter(|x| {
                         is_valid_extension(x.path(), extensions) && !excludes.matches(x.path())
                     })
-                    .map(|x| std::path::absolute(x.path()))
+                    .map(|x| fs::normalize_path(x.path()))
                     .collect::<Vec<_>>()
+            } else if matches!(exclude_mode, ExcludeMode::Force) && excludes.matches(path) {
+                vec![]
             } else {
-                // Directly specified paths override any filters
-                vec![std::path::absolute(path)]
+                vec![fs::normalize_path(path)]
             }
         })
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(anyhow::Error::new)
+        .collect()
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -732,6 +737,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             .chain(args.extend_exclude.unwrap_or_default().into_iter())
             .chain(file_settings.extend_exclude.into_iter()),
     )?;
+    let exclude_mode = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
+        .map(ExcludeMode::from)
+        .unwrap_or(file_settings.exclude_mode);
 
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
@@ -777,7 +785,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let files = get_files(files, file_extensions, &file_excludes)?;
+    let files = get_files(files, file_extensions, &file_excludes, exclude_mode);
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
