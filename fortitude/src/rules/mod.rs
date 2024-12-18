@@ -12,6 +12,7 @@ pub(crate) mod precision;
 pub(crate) mod readability;
 pub(crate) mod style;
 pub(crate) mod testing;
+pub mod text;
 pub(crate) mod typing;
 use crate::registry::{AsRule, Category};
 
