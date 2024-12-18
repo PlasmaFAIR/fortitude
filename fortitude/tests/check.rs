@@ -112,13 +112,14 @@ end program
       |
       = help: Replace with 'logical(4)'
 
-    [TEMP_FILE] T011 logical kind set with number literal '4', use 'iso_fortran_env' parameter
+    [TEMP_FILE] T011 logical kind set with number literal '4'
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
       |           ^ T011
     4 | end program
       |
+      = help: Use the parameter 'int32' from 'iso_fortran_env'
 
     [TEMP_FILE] S061 [*] end statement should be named.
       |
