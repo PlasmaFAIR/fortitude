@@ -12,11 +12,11 @@ program test
   real(sp), parameter :: f = -2E10 ! Okay: No loss of precision, E exponent
   real(sp), parameter :: g = 1.23456 ! Bad: Loss of precision
   real(sp), parameter :: h = 1.23456e1 ! Bad: Loss of precision, e exponent
-  real(sp), parameter :: i = 1.23456E1 ! Bad: Loss of precision, E exponent
+  real(sp), parameter :: i = 1.23456E-1 ! Bad: Loss of precision, E exponent
   real(dp), parameter :: j = -1.23456_dp ! Okay: Kind suffix
   real(sp), parameter :: k = 1.23456_sp ! Okay: Loss of precision, but we're explicit
   real(dp), parameter :: l = 1.23456d1 ! Okay: Ignore d exponent
-  real(dp), parameter :: m = 1.23456D3 ! Okay: Ignore D exponent
+  real(dp), parameter :: m = 1.23456D-3 ! Okay: Ignore D exponent
   real(dp), parameter :: n = 2e39 ! Bad: Magnitude doesn't fit in single precision
   real(dp), parameter :: o = -(+(-(((3.141592654))))) ! Bad: Loss of precision, horrible declaration
   
@@ -25,7 +25,7 @@ program test
   complex(dp), parameter :: cc = (.25, -0.5) ! Okay: No loss of precision
   complex(dp), parameter :: cd = (0.000244140625, 0.0) ! Okay: No loss of precision (=2^-12)
   complex(sp), parameter :: ce = (1.0e10, 2.0e5) ! Okay: No loss of precision, e exponent
-  complex(sp), parameter :: cf = (2E10, -4.0e-5) ! Okay: No loss of precision, E exponent
+  complex(sp), parameter :: cf = (2E10, -4.0E-5) ! Bad: Loss of precision, negative E exponent
   complex(sp), parameter :: cg = (1.23456, -0.0) ! Bad: Loss of precision
   complex(sp), parameter :: ch = (0.0, 1.23456e1) ! Bad: Loss of precision, e exponent
   complex(sp), parameter :: ci = (1.23456E1, 0.0) ! Bad: Loss of precision, E exponent
