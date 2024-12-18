@@ -15,9 +15,7 @@ fn blank_comment(s: &str) -> String {
 /// Convert contents of strings to whitespace and comments to '!' so text rules won't match.
 pub fn blank_comments_and_strings<S: AsRef<str>>(line: S) -> String {
     // Need to replace with the equivalent number of _bytes_.
-    // (?ms) at the beginning sets the flags:
-    // - 'm': multiline
-    // - 's': dot matches newline
+    // (?m) at the beginning sets the multiline flag:
     regex_replace_all!(
         r#"(?m)("[^"]*"|'[^']*'|!.*$)"#,
         line.as_ref(),
