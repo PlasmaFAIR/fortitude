@@ -12,8 +12,8 @@ use crate::rule_selector::{
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    FixMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes,
-    DEFAULT_SELECTORS,
+    ExcludeMode, FilePattern, FilePatternSet, FixMode, OutputFormat, PatternPrefixPair,
+    PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 
 use anyhow::{anyhow, Context, Result};
@@ -54,6 +54,25 @@ struct Extra {
 struct CheckSection {
     check: Option<CheckArgs>,
 }
+
+// Default paths to exclude when searching paths
+pub(crate) static EXCLUDE_BUILTINS: &[FilePattern] = &[
+    FilePattern::Builtin(".git"),
+    FilePattern::Builtin(".git-rewrite"),
+    FilePattern::Builtin(".hg"),
+    FilePattern::Builtin(".svn"),
+    FilePattern::Builtin("venv"),
+    FilePattern::Builtin(".venv"),
+    FilePattern::Builtin("pyenv"),
+    FilePattern::Builtin(".pyenv"),
+    FilePattern::Builtin(".eggs"),
+    FilePattern::Builtin("site-packages"),
+    FilePattern::Builtin(".vscode"),
+    FilePattern::Builtin("build"),
+    FilePattern::Builtin("_build"),
+    FilePattern::Builtin("dist"),
+    FilePattern::Builtin("_dist"),
+];
 
 // Adapted from ruff
 fn parse_fpm_toml<P: AsRef<Path>>(path: P) -> Result<Fpm> {
@@ -154,6 +173,9 @@ pub struct CheckSettings {
     pub output_format: OutputFormat,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
+    pub exclude: Option<Vec<FilePattern>>,
+    pub extend_exclude: Vec<FilePattern>,
+    pub exclude_mode: ExcludeMode,
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -191,6 +213,11 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             progress_bar: value.progress_bar.unwrap_or_default(),
             preview: resolve_bool_arg(value.preview, value.no_preview)
                 .map(PreviewMode::from)
+                .unwrap_or_default(),
+            exclude: value.exclude,
+            extend_exclude: value.extend_exclude.unwrap_or_default(),
+            exclude_mode: resolve_bool_arg(value.force_exclude, value.no_force_exclude)
+                .map(ExcludeMode::from)
                 .unwrap_or_default(),
         },
         None => CheckSettings::default(),
@@ -241,9 +268,8 @@ fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<Vec<Rul
     Ok(rules)
 }
 
-/// Helper function used with `filter` to select only paths that end in a Fortran extension.
-/// Includes non-standard extensions, as these should be reported.
-fn filter_fortran_extensions<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
+/// Helper function used with `get_files` to select only paths that end in a Fortran extension.
+fn is_valid_extension<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
     if let Some(ext) = path.extension() {
         // Can't use '&[&str].contains()', as extensions are of type OsStr
         extensions.iter().any(|x| x.as_ref() == ext)
@@ -256,24 +282,28 @@ fn filter_fortran_extensions<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bo
 fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     paths: &[P],
     extensions: &[S],
-) -> anyhow::Result<Vec<PathBuf>> {
+    excludes: &FilePatternSet,
+    exclude_mode: ExcludeMode,
+) -> Vec<PathBuf> {
     paths
         .iter()
         .flat_map(|path| {
-            if path.as_ref().is_dir() {
+            if matches!(exclude_mode, ExcludeMode::Force) && excludes.matches(path) {
+                vec![]
+            } else if path.as_ref().is_dir() {
                 WalkDir::new(path)
                     .min_depth(1)
                     .into_iter()
-                    .filter_map(|x| x.ok()) // skip dirs if user doesn't have permission
-                    .filter(|x| filter_fortran_extensions(x.path(), extensions))
-                    .map(|x| std::path::absolute(x.path()))
+                    .filter_entry(|e| !excludes.matches(e.path()))
+                    .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
+                    .filter(|p| is_valid_extension(p.path(), extensions))
+                    .map(|p| fs::normalize_path(p.path()))
                     .collect::<Vec<_>>()
             } else {
-                vec![std::path::absolute(path)]
+                vec![fs::normalize_path(path)]
             }
         })
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(anyhow::Error::new)
+        .collect()
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -718,6 +748,22 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             .collect::<Vec<_>>(),
     ))?;
 
+    let file_excludes = FilePatternSet::try_from_iter(
+        EXCLUDE_BUILTINS
+            .iter()
+            .cloned()
+            .chain(
+                args.exclude
+                    .unwrap_or(file_settings.exclude.unwrap_or_default())
+                    .into_iter(),
+            )
+            .chain(args.extend_exclude.unwrap_or_default().into_iter())
+            .chain(file_settings.extend_exclude.into_iter()),
+    )?;
+    let exclude_mode = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
+        .map(ExcludeMode::from)
+        .unwrap_or(file_settings.exclude_mode);
+
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
         .map(PreviewMode::from)
@@ -762,7 +808,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let files = get_files(files, file_extensions)?;
+    let files = get_files(files, file_extensions, &file_excludes, exclude_mode);
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
