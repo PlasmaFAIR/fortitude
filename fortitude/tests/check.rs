@@ -684,7 +684,7 @@ per-file-ignores = [
     fs::write(&config_file, config)?;
     apply_common_filters!();
     // Expect:
-    // - Overwrite per-file-ignores in the config file
+    // - Override per-file-ignores in the config file
     // - Files of foo, bar, and baz
     // - No files with index 2
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
@@ -894,7 +894,7 @@ fn check_exclude() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     apply_common_filters!();
     // Expect:
-    // - Overwrite 'foo.f90' in config file, see 'base.f90' and 'foo.f90' but not 'bar.f90'
+    // - Override 'foo.f90' in config file, see 'base.f90' and 'foo.f90' but not 'bar.f90'
     // - Don't see anything in venv
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
