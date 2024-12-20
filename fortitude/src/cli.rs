@@ -7,11 +7,6 @@ use crate::{
     settings::PatternPrefixPair, settings::ProgressBar, RuleSelectorParser,
 };
 
-/// Default extensions to check
-pub const FORTRAN_EXTS: &[&str] = &[
-    "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
-];
-
 #[derive(Debug, Parser)]
 #[command(version = build::CLAP_LONG_VERSION, about)]
 pub struct Cli {
@@ -164,7 +159,7 @@ pub struct CheckArgs {
     #[arg(
         long,
         value_delimiter = ',',
-        default_values = FORTRAN_EXTS,
+        value_name = "EXTENSION",
         help_heading = "File selection"
     )]
     pub file_extensions: Option<Vec<String>>,
@@ -189,13 +184,13 @@ pub struct CheckArgs {
 
     /// Enforce exclusions, even for paths passed to Fortitude directly on the command-line.
     /// Use `--no-force_exclude` to disable.
-    #[arg(long, overrides_with("no_force_exclude"), help_heading="File selection", action = SetTrue)]
+    #[arg(long, overrides_with("no_force_exclude"), help_heading = "File selection", action = SetTrue)]
     pub force_exclude: Option<bool>,
     #[clap(long, overrides_with("force_exclude"), hide = true, action = SetTrue)]
     pub no_force_exclude: Option<bool>,
 
     // Options for individual rules
     /// Set the maximum allowable line length.
-    #[arg(long, help_heading = "Per-Rule Options", default_value = "100")]
+    #[arg(long, help_heading = "Per-Rule Options")]
     pub line_length: Option<usize>,
 }
