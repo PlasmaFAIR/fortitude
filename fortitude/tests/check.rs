@@ -1,5 +1,6 @@
 use assert_cmd::prelude::*;
 use insta_cmd::assert_cmd_snapshot;
+use std::path::{Path, PathBuf};
 use std::{fs, process::Command};
 use tempfile::TempDir;
 
@@ -69,7 +70,7 @@ unknown-key = 1
       |
     2 | unknown-key = 1
       | ^^^^^^^^^^^
-    unknown field `unknown-key`, expected one of `files`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `line-length`, `file-extensions`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `preview`, `no-preview`, `progress-bar`
+    unknown field `unknown-key`, expected one of `files`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `preview`, `no-preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `no-force-exclude`, `line-length`
     ");
     Ok(())
 }
@@ -683,7 +684,7 @@ per-file-ignores = [
     fs::write(&config_file, config)?;
     apply_common_filters!();
     // Expect:
-    // - Overwrite per-file-ignores in the config file
+    // - Override per-file-ignores in the config file
     // - Files of foo, bar, and baz
     // - No files with index 2
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
@@ -849,5 +850,246 @@ per-file-ignores = [
     ----- stderr -----
     ");
 
+    Ok(())
+}
+
+fn exclude_test_path<P: AsRef<Path>>(tempdir: P) -> PathBuf {
+    let base_path = tempdir.as_ref().join("base");
+    let foo_path = base_path.join("foo");
+    let bar_path = foo_path.join("bar");
+    // Simulate a Python env, which is in the default exclude list
+    let venv_path = base_path.join(".venv/lib/site-packages/numpy");
+    std::fs::create_dir_all(bar_path.as_path()).unwrap();
+    std::fs::create_dir_all(venv_path.as_path()).unwrap();
+    for dir in [&base_path, &foo_path, &bar_path, &venv_path] {
+        let name = dir.file_name().unwrap().to_string_lossy();
+        println!("{name}");
+        let snippet = format!(
+            r#"
+module {name}
+! missing implicit none
+contains
+  integer function f()
+    f = 1
+  end function f
+end module {name}
+"#
+        );
+        fs::write(dir.join(format!("{name}.f90")), snippet).unwrap();
+    }
+
+    let config_file = base_path.join(".fortitude.toml");
+    let config = r#"
+[check]
+exclude = [
+    "foo.f90",
+]
+"#;
+    fs::write(&config_file, config).unwrap();
+    base_path
+}
+
+#[test]
+fn check_exclude() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    apply_common_filters!();
+    // Expect:
+    // - Override 'foo.f90' in config file, see 'base.f90' and 'foo.f90' but not 'bar.f90'
+    // - Don't see anything in venv
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg("--exclude=bar")
+                         .current_dir(exclude_test_path(tempdir.path())),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    base.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module base
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    foo/foo.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module foo
+      | ^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    fortitude: 2 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_extend_exclude() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    apply_common_filters!();
+    // Expect:
+    // - Don't overwrite 'foo.f90' in config file, see only base.f90
+    // - Don't see anything in venv
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg("--extend-exclude=bar")
+                         .current_dir(exclude_test_path(tempdir.path())),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    base.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module base
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
+fn check_no_force_exclude() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    apply_common_filters!();
+    // Expect:
+    // - See error in foo.f90 despite it being in the exclude list
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg("foo/foo.f90")
+                         .current_dir(exclude_test_path(tempdir.path())),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    foo/foo.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module foo
+      | ^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_force_exclude() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    apply_common_filters!();
+    // Expect:
+    // - Don't see error in foo.f90 despite it being asked for
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg("--force-exclude")
+                         .arg("foo/foo.f90")
+                         .current_dir(exclude_test_path(tempdir.path())),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 0 files scanned.
+    All checks passed!
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_exclude_builtin() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    apply_common_filters!();
+    // Expect:
+    // - See error in venv despite it being excluded by default
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg(".venv/lib/site-packages/")
+                         .current_dir(exclude_test_path(tempdir.path())),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    .venv/lib/site-packages/numpy/numpy.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module numpy
+      | ^^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_force_exclude_builtin() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    apply_common_filters!();
+    // Expect:
+    // - Don't see error in venv even though it was asked for
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg("--force-exclude")
+                         .arg(".venv/lib/site-packages/")
+                         .current_dir(exclude_test_path(tempdir.path())),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 0 files scanned.
+    All checks passed!
+
+
+    ----- stderr -----
+    ");
     Ok(())
 }

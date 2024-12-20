@@ -57,7 +57,6 @@ unicode-width = "0.2.0"
 url = { version = "2.5.0" }
 walkdir = "2.4.0"
 globset = "0.4.15"
-glob = "0.3.1"
 
 [build-dependencies]
 shadow-rs = { version = "0.36.0", default-features = false }
