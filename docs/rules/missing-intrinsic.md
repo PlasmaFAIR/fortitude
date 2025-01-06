@@ -1,6 +1,4 @@
-# use-intrinsic (M012)
-Fix is always available.
-
+# missing-intrinsic (M012)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does

@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, Violation};
+use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
@@ -72,7 +72,7 @@ impl AstRule for UseAll {
 /// This ensures the compiler will use the built-in module instead of a different
 /// module with the same name.
 #[violation]
-pub struct UseIntrinsic {}
+pub struct MissingIntrinsic {}
 
 const INTRINSIC_MODULES: &[&str] = &[
     "iso_fortran_env",
@@ -82,18 +82,18 @@ const INTRINSIC_MODULES: &[&str] = &[
     "ieee_features",
 ];
 
-impl AlwaysFixableViolation for UseIntrinsic {
+impl Violation for MissingIntrinsic {
     #[derive_message_formats]
     fn message(&self) -> String {
         format!("'use' for intrinsic module missing 'intrinsic' modifier")
     }
 
-    fn fix_title(&self) -> String {
-        "Add 'intrinsic'".to_string()
+    fn fix_title(&self) -> Option<String> {
+        Some("Add 'intrinsic'".to_string())
     }
 }
 
-impl AstRule for UseIntrinsic {
+impl AstRule for MissingIntrinsic {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let module_name = node
             .child_with_name("module_name")?
@@ -106,13 +106,19 @@ impl AstRule for UseIntrinsic {
                 .filter_map(|child| child.to_text(_src.source_text()))
                 .all(|child| child != "intrinsic" && child != "non_intrinsic")
         {
+            let intrinsic = if node.child(1)?.kind() == "::" {
+                ", intrinsic"
+            } else {
+                ", intrinsic ::"
+            };
+
             let use_field = node
                 .children(&mut node.walk())
                 .find(|&child| child.to_text(_src.source_text()) == Some("use"))?;
             let start_pos = TextSize::try_from(use_field.end_byte()).unwrap();
-            let fix = Fix::safe_edit(Edit::insertion(", intrinsic".to_string(), start_pos));
+            let fix = Fix::safe_edit(Edit::insertion(intrinsic.to_string(), start_pos));
 
-            return some_vec![Diagnostic::from_node(UseIntrinsic {}, node).with_fix(fix)];
+            return some_vec![Diagnostic::from_node(MissingIntrinsic {}, node).with_fix(fix)];
         }
         None
     }

@@ -111,7 +111,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Modules, "001") => (RuleGroup::Stable, Ast, modules::external_functions::ProcedureNotInModule),
         (Modules, "011") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
-        (Modules, "012") => (RuleGroup::Preview, Ast, modules::use_statements::UseIntrinsic),
+        (Modules, "012") => (RuleGroup::Preview, Ast, modules::use_statements::MissingIntrinsic),
         (Modules, "021") => (RuleGroup::Preview, Ast, modules::accessibility_statements::MissingAccessibilityStatement),
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
 

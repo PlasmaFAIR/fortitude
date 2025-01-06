@@ -1,4 +1,6 @@
 module my_module
+    use iso_fortran_env
+    use my_other_module
     use :: iso_fortran_env, only: real32
     use, intrinsic :: iso_c_binding
     use, non_intrinsic :: iso_c_binding
