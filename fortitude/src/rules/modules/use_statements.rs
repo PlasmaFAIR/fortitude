@@ -116,7 +116,7 @@ impl AstRule for MissingIntrinsic {
                 .children(&mut node.walk())
                 .find(|&child| child.to_text(_src.source_text()) == Some("use"))?;
             let start_pos = TextSize::try_from(use_field.end_byte()).unwrap();
-            let fix = Fix::safe_edit(Edit::insertion(intrinsic.to_string(), start_pos));
+            let fix = Fix::unsafe_edit(Edit::insertion(intrinsic.to_string(), start_pos));
 
             return some_vec![Diagnostic::from_node(MissingIntrinsic {}, node).with_fix(fix)];
         }
