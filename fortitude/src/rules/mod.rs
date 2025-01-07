@@ -13,6 +13,7 @@ pub(crate) mod readability;
 pub(crate) mod style;
 pub(crate) mod testing;
 pub(crate) mod typing;
+pub mod utilities;
 use crate::registry::{AsRule, Category};
 
 use std::fmt::Formatter;

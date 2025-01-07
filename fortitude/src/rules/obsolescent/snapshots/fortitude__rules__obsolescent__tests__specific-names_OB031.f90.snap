@@ -1,7 +1,6 @@
 ---
 source: fortitude/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/OB031.f90:6:9: OB031 [*] deprecated specific name 'DSIN', prefer 'SIN' instead
   |
@@ -42,7 +41,7 @@ snapshot_kind: text
 15 15 | 
 16 16 | subroutine test2()
 
-./resources/test/fixtures/obsolescent/OB031.f90:20:9: OB031 [*] deprecated specific name 'DSIN', prefer 'SIN' instead
+./resources/test/fixtures/obsolescent/OB031.f90:20:9: OB031 [*] deprecated specific name 'dsin', prefer 'sin' instead
    |
 18 |     real(kind=dp) :: x, y
 19 |
@@ -50,17 +49,17 @@ snapshot_kind: text
    |         ^^^^ OB031
 21 | end subroutine test2
    |
-   = help: Use 'SIN'
+   = help: Use 'sin'
 
 ℹ Safe fix
 17 17 |     use, intrinsic :: iso_fortran_env, dp => real64
 18 18 |     real(kind=dp) :: x, y
 19 19 | 
 20    |-    y = dsin(x) + dcos(x)
-   20 |+    y = SIN(x) + dcos(x)
+   20 |+    y = sin(x) + dcos(x)
 21 21 | end subroutine test2
 
-./resources/test/fixtures/obsolescent/OB031.f90:20:19: OB031 [*] deprecated specific name 'DCOS', prefer 'COS' instead
+./resources/test/fixtures/obsolescent/OB031.f90:20:19: OB031 [*] deprecated specific name 'dcos', prefer 'cos' instead
    |
 18 |     real(kind=dp) :: x, y
 19 |
@@ -68,12 +67,12 @@ snapshot_kind: text
    |                   ^^^^ OB031
 21 | end subroutine test2
    |
-   = help: Use 'COS'
+   = help: Use 'cos'
 
 ℹ Safe fix
 17 17 |     use, intrinsic :: iso_fortran_env, dp => real64
 18 18 |     real(kind=dp) :: x, y
 19 19 | 
 20    |-    y = dsin(x) + dcos(x)
-   20 |+    y = dsin(x) + COS(x)
+   20 |+    y = dsin(x) + cos(x)
 21 21 | end subroutine test2

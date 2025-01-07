@@ -1,4 +1,5 @@
 use crate::ast::FortitudeNode;
+use crate::rules::utilities;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
@@ -84,14 +85,20 @@ impl AlwaysFixableViolation for SpecificNames {
 impl AstRule for SpecificNames {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let name_node = node.child_with_name("identifier")?;
-        let func = name_node
-            .to_text(src.source_text())?
-            .to_uppercase()
-            .to_string();
-        let new_func = map_specific_intrinsic_functions(func.as_str())?.to_string();
-        let fix = Fix::safe_edit(name_node.edit_replacement(src, new_func.clone()));
+        let func = name_node.to_text(src.source_text())?;
 
-        some_vec![Diagnostic::from_node(Self { func, new_func }, &name_node).with_fix(fix)]
+        let new_func = map_specific_intrinsic_functions(func.to_uppercase().as_str())?;
+        let matched_case = utilities::match_original_case(func, new_func)?;
+
+        let fix = Fix::safe_edit(name_node.edit_replacement(src, matched_case.clone()));
+        some_vec![Diagnostic::from_node(
+            Self {
+                func: func.to_string(),
+                new_func: matched_case
+            },
+            &name_node
+        )
+        .with_fix(fix)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
