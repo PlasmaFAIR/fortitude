@@ -1146,6 +1146,58 @@ end program test
 }
 
 #[test]
+fn check_invalid_per_line_ignores() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+! allow(badbad, notgood)
+program test
+end program test
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg(test_file)
+                         .arg("--select=E"),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] E011 Unknown rule selector: `badbad`
+      |
+    2 | ! allow(badbad, notgood)
+      | ^^^^^^^^^^^^^^^^^^^^^^^^ E011
+    3 | program test
+    4 | end program test
+      |
+
+    [TEMP_FILE] E011 Unknown rule selector: `notgood`
+      |
+    2 | ! allow(badbad, notgood)
+      | ^^^^^^^^^^^^^^^^^^^^^^^^ E011
+    3 | program test
+    4 | end program test
+      |
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
 fn apply_fixes_with_allow_comment() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let test_file = tempdir.path().join("test.f90");

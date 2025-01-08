@@ -2,20 +2,22 @@ use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
-use crate::fs;
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
 use crate::rule_selector::{
-    collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
+    collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector,
+    Specificity,
 };
 use crate::rule_table::RuleTable;
+use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
     ExcludeMode, FilePattern, FilePatternSet, FixMode, OutputFormat, PatternPrefixPair,
     PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
+use crate::{fs, FromAstNode};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
@@ -440,10 +442,17 @@ struct AllowComment {
 }
 
 /// If this node is an `allow` comment, get all the rules allowed on the next line
-fn gather_allow_comments(node: &Node, allow_comments: &mut Vec<AllowComment>, file: &SourceFile) {
+fn gather_allow_comments(
+    node: &Node,
+    file: &SourceFile,
+) -> Result<Vec<AllowComment>, Vec<Diagnostic>> {
     if node.kind() != "comment" {
-        return;
+        return Ok(vec![]);
     }
+
+    let mut allow_comments = Vec::new();
+    let mut errors = Vec::new();
+
     if let Some((_, allow_comment)) = regex_captures!(
         r#"! allow\((.*)\)\s*"#,
         node.to_text(file.source_text()).unwrap()
@@ -454,7 +463,7 @@ fn gather_allow_comments(node: &Node, allow_comments: &mut Vec<AllowComment>, fi
         };
         let allow_rules = allow_comment
             .split(',')
-            .map(|rule| RuleSelector::from_str(rule.trim()).expect("valid rule"))
+            .map(|rule| RuleSelector::from_str(rule.trim()))
             .collect_vec();
 
         if let Some(next_node) = node.next_named_sibling() {
@@ -473,11 +482,32 @@ fn gather_allow_comments(node: &Node, allow_comments: &mut Vec<AllowComment>, fi
 
             let range = TextRange::new(start_line, end_line);
             for rule_selector in allow_rules {
-                for rule in rule_selector.rules(&preview) {
-                    allow_comments.push(AllowComment { rule, range });
+                match rule_selector {
+                    Ok(rule_selector) => {
+                        for rule in rule_selector.rules(&preview) {
+                            allow_comments.push(AllowComment { rule, range });
+                        }
+                    }
+                    Err(error) => errors.push(error),
                 }
             }
         };
+    }
+    if !errors.is_empty() {
+        let violations = errors
+            .into_iter()
+            .map(|error| {
+                Diagnostic::from_node(
+                    InvalidRuleCodeOrName {
+                        message: error.to_string(),
+                    },
+                    node,
+                )
+            })
+            .collect_vec();
+        Err(violations)
+    } else {
+        Ok(allow_comments)
     }
 }
 
@@ -529,7 +559,10 @@ pub(crate) fn check_only_file(
                 }
             }
         }
-        gather_allow_comments(&node, &mut allow_comments, file);
+        match gather_allow_comments(&node, file) {
+            Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
+            Err(mut errors) => violations.append(&mut errors),
+        };
     }
 
     Ok(violations
@@ -614,7 +647,10 @@ pub(crate) fn check_and_fix_file<'a>(
                     }
                 }
             }
-            gather_allow_comments(&node, &mut allow_comments, file);
+            match gather_allow_comments(&node, file) {
+                Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
+                Err(mut violation) => violations.append(&mut violation),
+            };
         }
 
         if iterations == 0 {
