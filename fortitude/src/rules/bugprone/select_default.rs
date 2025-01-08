@@ -14,7 +14,7 @@ use tree_sitter::Node;
 /// program will continue execution, which may lead to surprising results.
 /// Unfortunately, because Fortran doesn't have proper enums, it's not possible
 /// for the compiler to issue warnings for non-exhaustive cases. Having a default
-/// case allows for the program to graceefully handle errors.
+/// case allows for the program to gracefully handle errors.
 #[violation]
 pub struct MissingDefaultCase {}
 
