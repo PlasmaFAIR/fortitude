@@ -69,12 +69,12 @@ fn map_specific_intrinsic_functions(name: &str) -> Option<&'static str> {
 ///   Incorporating Fortran 2018_, Oxford University Press, Appendix B
 ///   'Obsolescent and Deleted Features'
 #[violation]
-pub struct SpecificNames {
+pub struct SpecificName {
     func: String,
     new_func: String,
 }
 
-impl Violation for SpecificNames {
+impl Violation for SpecificName {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { func, .. } = self;
@@ -87,7 +87,7 @@ impl Violation for SpecificNames {
     }
 }
 
-impl AstRule for SpecificNames {
+impl AstRule for SpecificName {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.to_text(src.source_text())?;

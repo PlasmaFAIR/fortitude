@@ -1,4 +1,4 @@
-# specific-names (OB031)
+# specific-name (OB031)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What does it do?
