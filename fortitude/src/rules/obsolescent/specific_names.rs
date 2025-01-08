@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::rules::utilities;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
+use ruff_diagnostics::{Diagnostic, Fix, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -63,26 +63,31 @@ fn map_specific_intrinsic_functions(name: &str) -> Option<&'static str> {
 /// Specific names of intrinsic functions can be obscure and hinder readability of
 /// the code. Fortran 90 made these specific names redundant and recommends the use
 /// of the generic names for calling intrinsic functions.
+///
+/// ## References
+/// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
+///   Incorporating Fortran 2018_, Oxford University Press, Appendix B
+///   'Obsolescent and Deleted Features'
 #[violation]
-pub struct SpecificNames {
+pub struct SpecificName {
     func: String,
     new_func: String,
 }
 
-impl AlwaysFixableViolation for SpecificNames {
+impl Violation for SpecificName {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { func, new_func } = self;
-        format!("deprecated specific name '{func}', prefer '{new_func}' instead")
+        let Self { func, .. } = self;
+        format!("deprecated type-specific function '{func}'")
     }
 
-    fn fix_title(&self) -> String {
+    fn fix_title(&self) -> Option<String> {
         let Self { new_func, .. } = self;
-        format!("Use '{new_func}'")
+        Some(format!("Use '{new_func}'"))
     }
 }
 
-impl AstRule for SpecificNames {
+impl AstRule for SpecificName {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.to_text(src.source_text())?;
@@ -90,7 +95,7 @@ impl AstRule for SpecificNames {
         let new_func = map_specific_intrinsic_functions(func.to_uppercase().as_str())?;
         let matched_case = utilities::match_original_case(func, new_func)?;
 
-        let fix = Fix::safe_edit(name_node.edit_replacement(src, matched_case.clone()));
+        let fix = Fix::unsafe_edit(name_node.edit_replacement(src, matched_case.clone()));
         some_vec![Diagnostic::from_node(
             Self {
                 func: func.to_string(),
