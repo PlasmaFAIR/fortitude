@@ -863,7 +863,6 @@ fn exclude_test_path<P: AsRef<Path>>(tempdir: P) -> PathBuf {
     std::fs::create_dir_all(venv_path.as_path()).unwrap();
     for dir in [&base_path, &foo_path, &bar_path, &venv_path] {
         let name = dir.file_name().unwrap().to_string_lossy();
-        println!("{name}");
         let snippet = format!(
             r#"
 module {name}
@@ -1087,6 +1086,69 @@ fn check_force_exclude_builtin() -> anyhow::Result<()> {
     ----- stdout -----
     fortitude: 0 files scanned.
     All checks passed!
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_toml_settings() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let config_file = tempdir.path().join("fortitude.toml");
+    let fortran_file = tempdir.path().join("myfile.ff");
+    fs::write(
+        &config_file,
+        r#"
+[check]
+file-extensions = ["ff"]
+line-length = 10
+"#,
+    )?;
+    fs::write(
+        &fortran_file,
+        r#"
+program myprogram
+end program myprogram
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .current_dir(tempdir.path()),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    myfile.ff:1:1: F001 file extension should be '.f90' or '.F90'
+    myfile.ff:2:1: T001 program missing 'implicit none'
+      |
+    2 | program myprogram
+      | ^^^^^^^^^^^^^^^^^ T001
+    3 | end program myprogram
+      |
+
+    myfile.ff:2:11: S001 line length of 17, exceeds maximum 10
+      |
+    2 | program myprogram
+      |           ^^^^^^^ S001
+    3 | end program myprogram
+      |
+
+    myfile.ff:3:11: S001 line length of 21, exceeds maximum 10
+      |
+    2 | program myprogram
+    3 | end program myprogram
+      |           ^^^^^^^^^^^ S001
+      |
+
+    fortitude: 1 files scanned.
+    Number of errors: 4
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
 
 
     ----- stderr -----
