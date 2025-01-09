@@ -49,6 +49,7 @@
 | M012 | [missing-intrinsic](rules/missing-intrinsic.md) | 'use' for intrinsic module missing 'intrinsic' modifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | M021 | [missing-accessibility-statement](rules/missing-accessibility-statement.md) | module '{}' missing default accessibility statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | M022 | [default-public-accessibility](rules/default-public-accessibility.md) | module '{}' has default `public` accessibility | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| M031 | [include-statement](rules/include-statement.md) | Include statement is deprecated, use modules instead | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 
 ### Precision (P)
 
