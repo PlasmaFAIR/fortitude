@@ -74,7 +74,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
     #[rustfmt::skip]
     Some(match (category, code) {
-        (Error, "000") => (RuleGroup::Stable, Path, error::ioerror::IoError),
+        (Error, "000") => (RuleGroup::Stable, None, error::ioerror::IoError),
         (Error, "001") => (RuleGroup::Stable, Ast, error::syntax_error::SyntaxError),
 
         (Filesystem, "001") => (RuleGroup::Stable, Path, filesystem::extensions::NonStandardFileExtension),
@@ -128,28 +128,28 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9900") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRule),
+        (Error, "9900") => (RuleGroup::Stable, None, testing::test_rules::StableTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9901") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleSafeFix),
+        (Error, "9901") => (RuleGroup::Stable, None, testing::test_rules::StableTestRuleSafeFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9902") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleUnsafeFix),
+        (Error, "9902") => (RuleGroup::Stable, None, testing::test_rules::StableTestRuleUnsafeFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9903") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleDisplayOnlyFix),
+        (Error, "9903") => (RuleGroup::Stable, None, testing::test_rules::StableTestRuleDisplayOnlyFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9904") => (RuleGroup::Preview, Test, testing::test_rules::PreviewTestRule),
+        (Error, "9904") => (RuleGroup::Preview, None, testing::test_rules::PreviewTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9905") => (RuleGroup::Deprecated, Test, testing::test_rules::DeprecatedTestRule),
+        (Error, "9905") => (RuleGroup::Deprecated, None, testing::test_rules::DeprecatedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9906") => (RuleGroup::Deprecated, Test, testing::test_rules::AnotherDeprecatedTestRule),
+        (Error, "9906") => (RuleGroup::Deprecated, None, testing::test_rules::AnotherDeprecatedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9907") => (RuleGroup::Removed, Test, testing::test_rules::RemovedTestRule),
+        (Error, "9907") => (RuleGroup::Removed, None, testing::test_rules::RemovedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9908") => (RuleGroup::Removed, Test, testing::test_rules::AnotherRemovedTestRule),
+        (Error, "9908") => (RuleGroup::Removed, None, testing::test_rules::AnotherRemovedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9909") => (RuleGroup::Removed, Test, testing::test_rules::RedirectedFromTestRule),
+        (Error, "9909") => (RuleGroup::Removed, None, testing::test_rules::RedirectedFromTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9910") => (RuleGroup::Stable, Test, testing::test_rules::RedirectedToTestRule),
+        (Error, "9910") => (RuleGroup::Stable, None, testing::test_rules::RedirectedToTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9911") => (RuleGroup::Removed, Test, testing::test_rules::RedirectedFromPrefixTestRule),
+        (Error, "9911") => (RuleGroup::Removed, None, testing::test_rules::RedirectedFromPrefixTestRule),
     })
 }
