@@ -81,11 +81,12 @@ impl Violation for ComputedGoTo {
 
 impl AstRule for ComputedGoTo {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if node
-            .children(&mut node.walk())
-            .filter(|node| node.kind() != "goto")
-            .count()
-            > 1
+        if node.child(0)?.kind() == "goto"
+            && node
+                .children(&mut node.walk())
+                .filter(|node| node.kind() != "goto")
+                .count()
+                > 1
         {
             return some_vec![Diagnostic::from_node(ComputedGoTo {}, node)];
         }
