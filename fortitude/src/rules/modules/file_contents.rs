@@ -43,3 +43,42 @@ impl AstRule for MultipleModules {
         vec!["translation_unit"]
     }
 }
+
+/// ## What it does
+/// Checks for programs and modules in one file
+///
+/// ## Why is this bad?
+/// Separating top-level constructs into their own files improves
+/// maintainability by making each easier to locate for developers,
+/// and also making dependency generation in build systems easier.
+#[violation]
+pub struct ProgramWithModule {}
+
+impl Violation for ProgramWithModule {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        format!("Program and module in one file, split into their own files")
+    }
+}
+
+impl AstRule for ProgramWithModule {
+    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let violations: Vec<Diagnostic> = node
+            .children(&mut node.walk())
+            .filter(|node| node.kind() == "module" || node.kind() == "program")
+            .map(|m| -> Diagnostic {
+                let m_first = m.child(0).unwrap_or(m);
+                Diagnostic::from_node(ProgramWithModule {}, &m_first)
+            })
+            .collect();
+
+        if violations.len() > 1 {
+            return Some(violations);
+        }
+        None
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["translation_unit"]
+    }
+}

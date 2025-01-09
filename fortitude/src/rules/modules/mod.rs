@@ -24,6 +24,7 @@ mod tests {
     #[test_case(Rule::DefaultPublicAccessibility, Path::new("M022.f90"))]
     #[test_case(Rule::IncludeStatement, Path::new("M031.f90"))]
     #[test_case(Rule::MultipleModules, Path::new("M041.f90"))]
+    #[test_case(Rule::ProgramWithModule, Path::new("M042.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

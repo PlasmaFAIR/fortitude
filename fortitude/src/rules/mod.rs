@@ -119,6 +119,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
         (Modules, "031") => (RuleGroup::Preview, Ast, modules::include_statement::IncludeStatement),
         (Modules, "041") => (RuleGroup::Preview, Ast, modules::file_contents::MultipleModules),
+        (Modules, "042") => (RuleGroup::Preview, Ast, modules::file_contents::ProgramWithModule),
 
         (Io, "001") => (RuleGroup::Preview, Ast, io::missing_specifier::MissingActionSpecifier),
         (Io, "011") => (RuleGroup::Preview, Ast, io::magic_io_unit::MagicIoUnit),
