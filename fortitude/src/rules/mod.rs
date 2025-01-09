@@ -13,6 +13,7 @@ pub(crate) mod readability;
 pub(crate) mod style;
 pub(crate) mod testing;
 pub(crate) mod typing;
+pub mod utilities;
 use crate::registry::{AsRule, Category};
 
 use std::fmt::Formatter;
@@ -104,6 +105,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "001") => (RuleGroup::Stable, Ast, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Stable, Ast, obsolescent::common_blocks::CommonBlock),
         (Obsolescent, "021") => (RuleGroup::Stable, Ast, obsolescent::entry_statement::EntryStatement),
+        (Obsolescent, "031") => (RuleGroup::Preview, Ast, obsolescent::specific_names::SpecificNames),
 
         (Precision, "001") => (RuleGroup::Stable, Ast, precision::kind_suffixes::NoRealSuffix),
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),
@@ -111,6 +113,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Modules, "001") => (RuleGroup::Stable, Ast, modules::external_functions::ProcedureNotInModule),
         (Modules, "011") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
+        (Modules, "012") => (RuleGroup::Preview, Ast, modules::use_statements::MissingIntrinsic),
         (Modules, "021") => (RuleGroup::Preview, Ast, modules::accessibility_statements::MissingAccessibilityStatement),
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
 

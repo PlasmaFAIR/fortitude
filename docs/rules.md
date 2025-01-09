@@ -46,6 +46,7 @@
 | ---- | ---- | ------- | ------: |
 | M001 | [procedure-not-in-module](rules/procedure-not-in-module.md) | {procedure} not contained within (sub)module or program | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | M011 | [use-all](rules/use-all.md) | 'use' statement missing 'only' clause | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| M012 | [missing-intrinsic](rules/missing-intrinsic.md) | 'use' for intrinsic module missing 'intrinsic' modifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | M021 | [missing-accessibility-statement](rules/missing-accessibility-statement.md) | module '{}' missing default accessibility statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | M022 | [default-public-accessibility](rules/default-public-accessibility.md) | module '{}' has default `public` accessibility | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 

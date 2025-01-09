@@ -20,10 +20,11 @@ use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
+use lazy_regex::regex_captures;
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
-use ruff_text_size::TextRange;
+use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::borrow::Cow;
@@ -33,9 +34,10 @@ use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::str::FromStr;
 use strum::IntoEnumIterator;
 use toml::Table;
-use tree_sitter::Parser;
+use tree_sitter::{Node, Parser};
 use walkdir::WalkDir;
 
 /// Default extensions to check
@@ -425,6 +427,61 @@ pub(crate) fn check_file(
     })
 }
 
+/// A single allowed rule and the range it applies to
+struct AllowComment {
+    pub rule: Rule,
+    pub range: TextRange,
+}
+
+/// If this node is an `allow` comment, get all the rules allowed on the next line
+fn gather_allow_comments(node: &Node, allow_comments: &mut Vec<AllowComment>, file: &SourceFile) {
+    if node.kind() != "comment" {
+        return;
+    }
+    if let Some((_, allow_comment)) = regex_captures!(
+        r#"! allow\((.*)\)\s*"#,
+        node.to_text(file.source_text()).unwrap()
+    ) {
+        let preview = PreviewOptions {
+            mode: PreviewMode::Enabled,
+            require_explicit: false,
+        };
+        let allow_rules = allow_comment
+            .split(',')
+            .map(|rule| RuleSelector::from_str(rule.trim()).expect("valid rule"))
+            .collect_vec();
+
+        if let Some(next_node) = node.next_named_sibling() {
+            let start_byte = TextSize::try_from(next_node.start_byte()).unwrap();
+            let end_byte = TextSize::try_from(next_node.end_byte()).unwrap();
+
+            // This covers the next statement _upto_ the end of the
+            // line that it _ends_ on -- i.e. including trailing
+            // whitespace and other statements. This might have weird
+            // edge cases.
+            let src = file.to_source_code();
+            let start_index = src.line_index(start_byte);
+            let end_index = src.line_index(end_byte);
+            let start_line = src.line_start(start_index);
+            let end_line = src.line_end(end_index);
+
+            let range = TextRange::new(start_line, end_line);
+            for rule_selector in allow_rules {
+                for rule in rule_selector.rules(&preview) {
+                    allow_comments.push(AllowComment { rule, range });
+                }
+            }
+        };
+    }
+}
+
+/// Filter out allowed rules
+fn filter_allowed_rules(diagnostic: &Diagnostic, allow_comments: &[AllowComment]) -> bool {
+    allow_comments.iter().all(|allow| {
+        !(allow.rule == diagnostic.kind.rule() && allow.range.contains_range(diagnostic.range))
+    })
+}
+
 /// Parse a file, check it for issues, and return the report.
 pub(crate) fn check_only_file(
     path_rules: &Vec<PathRuleEnum>,
@@ -435,6 +492,7 @@ pub(crate) fn check_only_file(
     settings: &Settings,
 ) -> anyhow::Result<Vec<DiagnosticMessage>> {
     let mut violations = Vec::new();
+    let mut allow_comments = Vec::new();
 
     for rule in path_rules {
         if let Some(violation) = rule.check(settings, path) {
@@ -465,10 +523,12 @@ pub(crate) fn check_only_file(
                 }
             }
         }
+        gather_allow_comments(&node, &mut allow_comments, file);
     }
 
     Ok(violations
         .into_iter()
+        .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
         .map(|v| DiagnosticMessage::from_ruff(file, v))
         .collect_vec())
 }
@@ -514,6 +574,7 @@ pub(crate) fn check_and_fix_file<'a>(
     // Continuously fix until the source code stabilizes.
     loop {
         let mut violations = Vec::new();
+        let mut allow_comments = Vec::new();
 
         // Map row and column locations to byte slices (lazily).
         let locator = Locator::new(transformed.source_text());
@@ -547,6 +608,7 @@ pub(crate) fn check_and_fix_file<'a>(
                     }
                 }
             }
+            gather_allow_comments(&node, &mut allow_comments, file);
         }
 
         if iterations == 0 {
@@ -555,6 +617,11 @@ pub(crate) fn check_and_fix_file<'a>(
             report_fix_syntax_error(path, transformed.source_text(), fixed.keys().copied());
             return Err(anyhow!("Fix introduced a syntax error"));
         }
+
+        let violations = violations
+            .into_iter()
+            .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
+            .collect_vec();
 
         // Apply fix
         if let Some(FixResult {

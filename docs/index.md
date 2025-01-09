@@ -90,6 +90,30 @@ files using `--per-file-ignores`:
 fortitude check --per-file-ignores=**/*.f95:non-standard-file-extension
 ```
 
+as well as for individual statements through "allow" comments of the
+form:
+
+```f90
+! allow(rule-or-category)
+```
+
+Multiple rules or categories can be given as a comma-separated
+list. Allow comments apply to the next statement and its contents. So
+in the example below, we allow all of the `style` rules and
+`superfluous-implicit-none` throughout the whole module, and `use-all`
+on the `iso_fortran_env` `use` statement specifically, while
+`some_other_module` will still generate a warning.
+
+```f90
+! allow(style, superfluous-implicit-none)
+module example
+    ! allow(use-all)
+    use, intrinsic :: iso_fortran_env
+    use some_other_module
+    implicit none (type, external)
+...
+```
+
 ### Filtering Files
 
 Fortitude will automatically ignore files in some directories (`build/`, `.git/`,
