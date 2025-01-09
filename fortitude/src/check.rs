@@ -9,6 +9,7 @@ use crate::registry::AsRule;
 use crate::rule_selector::{
     collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
 };
+use crate::rule_table::RuleTable;
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
@@ -228,7 +229,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
 }
 
 /// Get the list of active rules for this session.
-fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<Vec<Rule>> {
+fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<RuleTable> {
     let preview = PreviewOptions {
         mode: *preview,
         require_explicit: false,
@@ -265,7 +266,12 @@ fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<Vec<Rul
         }
     }
 
-    let rules = select_set.into_iter().collect_vec();
+    let mut rules = RuleTable::empty();
+
+    for rule in select_set {
+        let should_fix = true;
+        rules.enable(rule, should_fix);
+    }
 
     Ok(rules)
 }
@@ -725,20 +731,20 @@ pub(crate) fn read_to_string(path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
 }
 
-pub(crate) fn rules_to_path_rules(rules: &[Rule]) -> Vec<PathRuleEnum> {
+pub(crate) fn rules_to_path_rules(rules: &RuleTable) -> Vec<PathRuleEnum> {
     rules
-        .iter()
-        .filter_map(|rule| match TryFrom::try_from(*rule) {
+        .iter_enabled()
+        .filter_map(|rule| match TryFrom::try_from(rule) {
             Ok(path) => Some(path),
             _ => None,
         })
         .collect_vec()
 }
 
-pub(crate) fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
+pub(crate) fn rules_to_text_rules(rules: &RuleTable) -> Vec<TextRuleEnum> {
     rules
-        .iter()
-        .filter_map(|rule| match TryFrom::try_from(*rule) {
+        .iter_enabled()
+        .filter_map(|rule| match TryFrom::try_from(rule) {
             Ok(text) => Some(text),
             _ => None,
         })
@@ -746,10 +752,10 @@ pub(crate) fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
 }
 
 /// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
-pub(crate) fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
+pub(crate) fn ast_entrypoint_map<'a>(rules: &RuleTable) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
     let ast_rules: Vec<AstRuleEnum> = rules
-        .iter()
-        .filter_map(|rule| match TryFrom::try_from(*rule) {
+        .iter_enabled()
+        .filter_map(|rule| match TryFrom::try_from(rule) {
             Ok(ast) => Some(ast),
             _ => None,
         })
@@ -980,9 +986,13 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 mod tests {
     use std::str::FromStr;
 
-    use crate::rule_selector::RuleSelector;
+    use crate::{registry::RuleSet, rule_selector::RuleSelector};
 
     use super::*;
+
+    fn resolve_rules(args: RuleSelection, preview: &PreviewMode) -> Result<RuleSet> {
+        Ok(ruleset(args, preview)?.iter_enabled().collect())
+    }
 
     #[test]
     fn empty_select() -> anyhow::Result<()> {
@@ -993,13 +1003,15 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::default();
-        let rules = ruleset(args, &preview_mode)?;
+        let rules = resolve_rules(args, &preview_mode)?;
         let preview = PreviewOptions::default();
 
         let all_rules: Vec<Rule> = DEFAULT_SELECTORS
             .iter()
             .flat_map(|selector| selector.rules(&preview))
             .collect();
+
+        let all_rules = RuleSet::from_rules(&all_rules);
 
         assert_eq!(rules, all_rules);
 
@@ -1015,7 +1027,7 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::Enabled;
-        let rules = ruleset(args, &preview_mode)?;
+        let rules = resolve_rules(args, &preview_mode)?;
         let preview = PreviewOptions {
             mode: preview_mode,
             require_explicit: false,
@@ -1025,6 +1037,8 @@ mod tests {
             .iter()
             .flat_map(|selector| selector.rules(&preview))
             .collect();
+
+        let all_rules = RuleSet::from_rules(&all_rules);
 
         assert_eq!(rules, all_rules);
 
@@ -1040,8 +1054,8 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::default();
-        let rules = ruleset(args, &preview_mode)?;
-        let one_rules: Vec<Rule> = vec![Rule::IoError];
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rules(&[Rule::IoError]);
 
         assert_eq!(rules, one_rules);
 
@@ -1057,8 +1071,8 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::default();
-        let rules = ruleset(args, &preview_mode)?;
-        let one_rules: Vec<Rule> = vec![];
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::empty();
 
         assert_eq!(rules, one_rules);
 
@@ -1074,8 +1088,8 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::Enabled;
-        let rules = ruleset(args, &preview_mode)?;
-        let one_rules: Vec<Rule> = vec![Rule::PreviewTestRule];
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rule(Rule::PreviewTestRule);
 
         assert_eq!(rules, one_rules);
 
@@ -1091,8 +1105,8 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::default();
-        let rules = ruleset(args, &preview_mode)?;
-        let one_rules: Vec<Rule> = vec![Rule::IoError, Rule::SyntaxError];
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rules(&[Rule::IoError, Rule::SyntaxError]);
 
         assert_eq!(rules, one_rules);
 
