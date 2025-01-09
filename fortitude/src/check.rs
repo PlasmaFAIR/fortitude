@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
+use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
 use crate::fs;
@@ -39,6 +39,11 @@ use strum::IntoEnumIterator;
 use toml::Table;
 use tree_sitter::{Node, Parser};
 use walkdir::WalkDir;
+
+/// Default extensions to check
+const FORTRAN_EXTS: &[&str] = &[
+    "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
+];
 
 // These are just helper structs to let us quickly work out if there's
 // a fortitude section in an fpm.toml file
@@ -158,7 +163,7 @@ fn resolve_bool_arg(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
 
 // This is our "known good" intermediate settings struct after we've
 // read the config file, but before we've overridden it from the CLI
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct CheckSettings {
     pub files: Vec<PathBuf>,
     pub ignore: Vec<RuleSelector>,
@@ -178,6 +183,31 @@ pub struct CheckSettings {
     pub exclude: Option<Vec<FilePattern>>,
     pub extend_exclude: Vec<FilePattern>,
     pub exclude_mode: ExcludeMode,
+}
+
+impl Default for CheckSettings {
+    fn default() -> Self {
+        Self {
+            files: Default::default(),
+            ignore: Default::default(),
+            select: Default::default(),
+            extend_select: Default::default(),
+            per_file_ignores: Default::default(),
+            extend_per_file_ignores: Default::default(),
+            line_length: Settings::default().line_length,
+            file_extensions: Default::default(),
+            fix: Default::default(),
+            fix_only: Default::default(),
+            show_fixes: Default::default(),
+            unsafe_fixes: Default::default(),
+            output_format: Default::default(),
+            progress_bar: Default::default(),
+            preview: Default::default(),
+            exclude: Default::default(),
+            extend_exclude: Default::default(),
+            exclude_mode: Default::default(),
+        }
+    }
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
