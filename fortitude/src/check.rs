@@ -229,7 +229,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
 }
 
 /// Get the list of active rules for this session.
-fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<RuleTable> {
+fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<RuleTable> {
     let preview = PreviewOptions {
         mode: *preview,
         require_explicit: false,
@@ -875,7 +875,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
-    let rules = ruleset(rule_selection, &preview_mode)?;
+    let rules = to_rule_table(rule_selection, &preview_mode)?;
 
     let path_rules = rules_to_path_rules(&rules);
     let text_rules = rules_to_text_rules(&rules);
@@ -1001,7 +1001,7 @@ mod tests {
     use super::*;
 
     fn resolve_rules(args: RuleSelection, preview: &PreviewMode) -> Result<RuleSet> {
-        Ok(ruleset(args, preview)?.iter_enabled().collect())
+        Ok(to_rule_table(args, preview)?.iter_enabled().collect())
     }
 
     #[test]
