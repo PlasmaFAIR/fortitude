@@ -1,5 +1,6 @@
 pub mod accessibility_statements;
 pub mod external_functions;
+pub mod file_contents;
 pub mod include_statement;
 pub mod use_statements;
 
@@ -22,6 +23,7 @@ mod tests {
     #[test_case(Rule::MissingAccessibilityStatement, Path::new("M021.f90"))]
     #[test_case(Rule::DefaultPublicAccessibility, Path::new("M022.f90"))]
     #[test_case(Rule::IncludeStatement, Path::new("M031.f90"))]
+    #[test_case(Rule::MultipleModules, Path::new("M041.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
