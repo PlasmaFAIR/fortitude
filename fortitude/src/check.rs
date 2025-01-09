@@ -925,6 +925,12 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                         )]));
                     } else {
                         // TODO: log::warn
+                        eprintln!(
+                            "{}{}{} {error}",
+                            "Error opening file ".bold(),
+                            fs::relativize_path(path).bold(),
+                            ":".bold()
+                        );
                         return None;
                     }
                 }
@@ -953,6 +959,12 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                         )]))
                     } else {
                         // TODO: log::warn
+                        eprintln!(
+                            "{}{}{} {msg}",
+                            "Failed to process ".bold(),
+                            fs::relativize_path(path).bold(),
+                            ":".bold()
+                        );
                         None
                     }
                 }
