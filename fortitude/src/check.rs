@@ -911,17 +911,22 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
-        .map(|path| {
+        .filter_map(|path| {
             let filename = path.to_string_lossy();
 
             let source = match read_to_string(path) {
                 Ok(source) => source,
                 Err(error) => {
-                    let message = format!("Error opening file: {error}");
-                    return Diagnostics::new(vec![DiagnosticMessage::from_error(
-                        filename,
-                        Diagnostic::new(IoError { message }, TextRange::default()),
-                    )]);
+                    if rules.enabled(Rule::IoError) {
+                        let message = format!("Error opening file: {error}");
+                        return Some(Diagnostics::new(vec![DiagnosticMessage::from_error(
+                            filename,
+                            Diagnostic::new(IoError { message }, TextRange::default()),
+                        )]));
+                    } else {
+                        // TODO: log::warn
+                        return None;
+                    }
                 }
             };
 
@@ -938,13 +943,18 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                 unsafe_fixes,
                 &per_file_ignores,
             ) {
-                Ok(violations) => violations,
+                Ok(violations) => Some(violations),
                 Err(msg) => {
-                    let message = format!("Failed to process: {msg}");
-                    Diagnostics::new(vec![DiagnosticMessage::from_error(
-                        filename,
-                        Diagnostic::new(IoError { message }, TextRange::default()),
-                    )])
+                    if rules.enabled(Rule::IoError) {
+                        let message = format!("Failed to process: {msg}");
+                        Some(Diagnostics::new(vec![DiagnosticMessage::from_error(
+                            filename,
+                            Diagnostic::new(IoError { message }, TextRange::default()),
+                        )]))
+                    } else {
+                        // TODO: log::warn
+                        None
+                    }
                 }
             }
         });
