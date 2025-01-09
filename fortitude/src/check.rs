@@ -349,6 +349,7 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
 /// Parse a file, check it for issues, and return the report.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn check_file(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -365,6 +366,7 @@ pub(crate) fn check_file(
             transformed,
             fixed,
         }) = check_and_fix_file(
+            rules,
             path_rules,
             text_rules,
             ast_entrypoints,
@@ -389,6 +391,7 @@ pub(crate) fn check_file(
         } else {
             // Failed to fix, so just lint the original source
             let result = check_only_file(
+                rules,
                 path_rules,
                 text_rules,
                 ast_entrypoints,
@@ -401,6 +404,7 @@ pub(crate) fn check_file(
         }
     } else {
         let result = check_only_file(
+            rules,
             path_rules,
             text_rules,
             ast_entrypoints,
@@ -445,6 +449,7 @@ struct AllowComment {
 fn gather_allow_comments(
     node: &Node,
     file: &SourceFile,
+    rules: &RuleTable,
 ) -> Result<Vec<AllowComment>, Vec<Diagnostic>> {
     if node.kind() != "comment" {
         return Ok(vec![]);
@@ -493,7 +498,8 @@ fn gather_allow_comments(
             }
         };
     }
-    if !errors.is_empty() {
+
+    if !errors.is_empty() && rules.enabled(Rule::InvalidRuleCodeOrName) {
         let violations = errors
             .into_iter()
             .map(|error| {
@@ -520,6 +526,7 @@ fn filter_allowed_rules(diagnostic: &Diagnostic, allow_comments: &[AllowComment]
 
 /// Parse a file, check it for issues, and return the report.
 pub(crate) fn check_only_file(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -559,7 +566,7 @@ pub(crate) fn check_only_file(
                 }
             }
         }
-        match gather_allow_comments(&node, file) {
+        match gather_allow_comments(&node, file, rules) {
             Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
             Err(mut errors) => violations.append(&mut errors),
         };
@@ -586,6 +593,7 @@ pub struct FixerResult<'a> {
 }
 
 pub(crate) fn check_and_fix_file<'a>(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -647,7 +655,7 @@ pub(crate) fn check_and_fix_file<'a>(
                     }
                 }
             }
-            match gather_allow_comments(&node, file) {
+            match gather_allow_comments(&node, file, rules) {
                 Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
                 Err(mut violation) => violations.append(&mut violation),
             };
@@ -1005,6 +1013,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
             match check_file(
+                &rules,
                 &path_rules,
                 &text_rules,
                 &ast_entrypoints,
