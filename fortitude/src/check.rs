@@ -2,12 +2,12 @@ use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
+use crate::fs;
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
 use crate::rule_selector::{
-    collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector,
-    Specificity,
+    collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
 };
 use crate::rule_table::RuleTable;
 use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
@@ -17,13 +17,12 @@ use crate::settings::{
     ExcludeMode, FilePattern, FilePatternSet, FixMode, OutputFormat, PatternPrefixPair,
     PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
-use crate::{fs, FromAstNode};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
-use lazy_regex::regex_captures;
+use lazy_regex::{regex, regex_captures};
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
@@ -466,10 +465,28 @@ fn gather_allow_comments(
             mode: PreviewMode::Enabled,
             require_explicit: false,
         };
-        let allow_rules = allow_comment
-            .split(',')
-            .map(|rule| RuleSelector::from_str(rule.trim()))
-            .collect_vec();
+
+        // Partition the found selectors into valid and invalid
+        let rule_regex = regex!(r#"\w[-\w\d]*"#);
+        let mut allow_rules = Vec::new();
+        // 8 from length of "! allow("
+        let comment_start_offset =
+            TextSize::try_from(node.start_byte()).unwrap() + TextSize::new(8);
+        for rule in rule_regex.find_iter(allow_comment) {
+            match RuleSelector::from_str(rule.as_str()) {
+                Ok(rule) => allow_rules.push(rule),
+                Err(error) => {
+                    let start = comment_start_offset + TextSize::try_from(rule.start()).unwrap();
+                    let end = comment_start_offset + TextSize::try_from(rule.end()).unwrap();
+                    errors.push(Diagnostic::new(
+                        InvalidRuleCodeOrName {
+                            message: error.to_string(),
+                        },
+                        TextRange::new(start, end),
+                    ))
+                }
+            }
+        }
 
         if let Some(next_node) = node.next_named_sibling() {
             let start_byte = TextSize::try_from(next_node.start_byte()).unwrap();
@@ -487,31 +504,15 @@ fn gather_allow_comments(
 
             let range = TextRange::new(start_line, end_line);
             for rule_selector in allow_rules {
-                match rule_selector {
-                    Ok(rule_selector) => {
-                        for rule in rule_selector.rules(&preview) {
-                            allow_comments.push(AllowComment { rule, range });
-                        }
-                    }
-                    Err(error) => errors.push(error),
+                for rule in rule_selector.rules(&preview) {
+                    allow_comments.push(AllowComment { rule, range });
                 }
             }
         };
     }
 
     if !errors.is_empty() && rules.enabled(Rule::InvalidRuleCodeOrName) {
-        let violations = errors
-            .into_iter()
-            .map(|error| {
-                Diagnostic::from_node(
-                    InvalidRuleCodeOrName {
-                        message: error.to_string(),
-                    },
-                    node,
-                )
-            })
-            .collect_vec();
-        Err(violations)
+        Err(errors)
     } else {
         Ok(allow_comments)
     }

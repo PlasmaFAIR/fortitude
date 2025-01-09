@@ -1170,7 +1170,7 @@ end program test
     [TEMP_FILE] E011 Unknown rule selector: `badbad`
       |
     2 | ! allow(badbad, notgood)
-      | ^^^^^^^^^^^^^^^^^^^^^^^^ E011
+      |         ^^^^^^ E011
     3 | program test
     4 | end program test
       |
@@ -1178,7 +1178,7 @@ end program test
     [TEMP_FILE] E011 Unknown rule selector: `notgood`
       |
     2 | ! allow(badbad, notgood)
-      | ^^^^^^^^^^^^^^^^^^^^^^^^ E011
+      |                 ^^^^^^^ E011
     3 | program test
     4 | end program test
       |
