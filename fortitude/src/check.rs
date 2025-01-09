@@ -593,6 +593,7 @@ pub struct FixerResult<'a> {
     pub fixed: FixTable,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn check_and_fix_file<'a>(
     rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
