@@ -10,6 +10,7 @@ mod printer;
 pub mod registry;
 mod rule_redirects;
 mod rule_selector;
+pub mod rule_table;
 pub mod rules;
 pub mod settings;
 #[cfg(test)]

@@ -9,6 +9,7 @@ use crate::{
     },
     message::{Emitter, TextEmitter},
     rule_selector::CompiledPerFileIgnoreList,
+    rule_table::RuleTable,
     rules::Rule,
     settings::{FixMode, Settings, UnsafeFixes},
 };
@@ -36,9 +37,10 @@ pub(crate) fn test_contents(
     rules: &[Rule],
     settings: &Settings,
 ) -> String {
-    let path_rules = rules_to_path_rules(rules);
-    let text_rules = rules_to_text_rules(rules);
-    let ast_entrypoints = ast_entrypoint_map(rules);
+    let rule_table = RuleTable::from_iter(rules.iter().cloned());
+    let path_rules = rules_to_path_rules(&rule_table);
+    let text_rules = rules_to_text_rules(&rule_table);
+    let ast_entrypoints = ast_entrypoint_map(&rule_table);
     let per_file_ignores = CompiledPerFileIgnoreList::resolve(vec![]).unwrap();
 
     match check_file(

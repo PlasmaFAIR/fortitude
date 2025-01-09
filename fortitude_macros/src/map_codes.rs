@@ -702,14 +702,14 @@ impl Parse for RuleMeta {
         let kind_is_valid = kind.is_ident("Path")
             || kind.is_ident("Text")
             || kind.is_ident("Ast")
-            || kind.is_ident("Test");
+            || kind.is_ident("None");
         if !kind_is_valid {
             // We better have an ident here, because I don't know what else to do
             let kind = kind.get_ident().unwrap();
             return Err(syn::Error::new(
                 pat_tuple.span(),
                 format!(
-                    "Invalid checker kind '{kind}', expected one of 'Path', 'Text', 'Ast', 'Test'"
+                    "Invalid checker kind '{kind}', expected one of 'Path', 'Text', 'Ast', 'None'"
                 ),
             ));
         }

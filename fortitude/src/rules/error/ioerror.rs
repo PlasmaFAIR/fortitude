@@ -2,11 +2,7 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use crate::settings::Settings;
-use crate::PathRule;
-use std::path::Path;
-
-use ruff_diagnostics::{Diagnostic, Violation};
+use ruff_diagnostics::Violation;
 use ruff_macros::{derive_message_formats, violation};
 
 /// ## What it does
@@ -42,12 +38,5 @@ impl Violation for IoError {
     fn message(&self) -> String {
         let IoError { message } = self;
         format!("{message}")
-    }
-}
-
-// Need to implement some kind of rule, although we only raise this manually
-impl PathRule for IoError {
-    fn check(_settings: &Settings, _path: &Path) -> Option<Diagnostic> {
-        None
     }
 }
