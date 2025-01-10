@@ -23,6 +23,7 @@ use colored::Colorize;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
+use log::warn;
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
@@ -1000,8 +1001,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                             Diagnostic::new(IoError { message }, TextRange::default()),
                         )]));
                     } else {
-                        // TODO: log::warn
-                        eprintln!(
+                        warn!(
                             "{}{}{} {error}",
                             "Error opening file ".bold(),
                             fs::relativize_path(path).bold(),
@@ -1035,8 +1035,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                             Diagnostic::new(IoError { message }, TextRange::default()),
                         )]))
                     } else {
-                        // TODO: log::warn
-                        eprintln!(
+                        warn!(
                             "{}{}{} {msg}",
                             "Failed to process ".bold(),
                             fs::relativize_path(path).bold(),
