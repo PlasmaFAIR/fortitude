@@ -1067,11 +1067,14 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
     }
 
-    Printer::new(output_format, printer_flags, fix_mode, unsafe_fixes).write_once(
-        files.len(),
-        &all_diagnostics,
-        &mut writer,
-    )?;
+    Printer::new(
+        output_format,
+        global_options.log_level(),
+        printer_flags,
+        fix_mode,
+        unsafe_fixes,
+    )
+    .write_once(files.len(), &all_diagnostics, &mut writer)?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)
