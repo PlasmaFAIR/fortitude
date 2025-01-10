@@ -5,6 +5,7 @@ mod diagnostics;
 pub mod explain;
 mod fix;
 mod fs;
+pub mod logging;
 pub mod message;
 mod printer;
 pub mod registry;
