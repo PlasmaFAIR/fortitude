@@ -10,6 +10,7 @@ use crate::rule_selector::{
     collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
 };
 use crate::rule_table::RuleTable;
+use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
@@ -21,7 +22,7 @@ use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
-use lazy_regex::regex_captures;
+use lazy_regex::{regex, regex_captures};
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
@@ -347,6 +348,7 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
 /// Parse a file, check it for issues, and return the report.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn check_file(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -363,6 +365,7 @@ pub(crate) fn check_file(
             transformed,
             fixed,
         }) = check_and_fix_file(
+            rules,
             path_rules,
             text_rules,
             ast_entrypoints,
@@ -387,6 +390,7 @@ pub(crate) fn check_file(
         } else {
             // Failed to fix, so just lint the original source
             let result = check_only_file(
+                rules,
                 path_rules,
                 text_rules,
                 ast_entrypoints,
@@ -399,6 +403,7 @@ pub(crate) fn check_file(
         }
     } else {
         let result = check_only_file(
+            rules,
             path_rules,
             text_rules,
             ast_entrypoints,
@@ -440,10 +445,18 @@ struct AllowComment {
 }
 
 /// If this node is an `allow` comment, get all the rules allowed on the next line
-fn gather_allow_comments(node: &Node, allow_comments: &mut Vec<AllowComment>, file: &SourceFile) {
+fn gather_allow_comments(
+    node: &Node,
+    file: &SourceFile,
+    rules: &RuleTable,
+) -> Result<Vec<AllowComment>, Vec<Diagnostic>> {
     if node.kind() != "comment" {
-        return;
+        return Ok(vec![]);
     }
+
+    let mut allow_comments = Vec::new();
+    let mut errors = Vec::new();
+
     if let Some((_, allow_comment)) = regex_captures!(
         r#"! allow\((.*)\)\s*"#,
         node.to_text(file.source_text()).unwrap()
@@ -452,10 +465,28 @@ fn gather_allow_comments(node: &Node, allow_comments: &mut Vec<AllowComment>, fi
             mode: PreviewMode::Enabled,
             require_explicit: false,
         };
-        let allow_rules = allow_comment
-            .split(',')
-            .map(|rule| RuleSelector::from_str(rule.trim()).expect("valid rule"))
-            .collect_vec();
+
+        // Partition the found selectors into valid and invalid
+        let rule_regex = regex!(r#"\w[-\w\d]*"#);
+        let mut allow_rules = Vec::new();
+        // 8 from length of "! allow("
+        let comment_start_offset =
+            TextSize::try_from(node.start_byte()).unwrap() + TextSize::new(8);
+        for rule in rule_regex.find_iter(allow_comment) {
+            match RuleSelector::from_str(rule.as_str()) {
+                Ok(rule) => allow_rules.push(rule),
+                Err(error) => {
+                    let start = comment_start_offset + TextSize::try_from(rule.start()).unwrap();
+                    let end = comment_start_offset + TextSize::try_from(rule.end()).unwrap();
+                    errors.push(Diagnostic::new(
+                        InvalidRuleCodeOrName {
+                            message: error.to_string(),
+                        },
+                        TextRange::new(start, end),
+                    ))
+                }
+            }
+        }
 
         if let Some(next_node) = node.next_named_sibling() {
             let start_byte = TextSize::try_from(next_node.start_byte()).unwrap();
@@ -479,6 +510,12 @@ fn gather_allow_comments(node: &Node, allow_comments: &mut Vec<AllowComment>, fi
             }
         };
     }
+
+    if !errors.is_empty() && rules.enabled(Rule::InvalidRuleCodeOrName) {
+        Err(errors)
+    } else {
+        Ok(allow_comments)
+    }
 }
 
 /// Filter out allowed rules
@@ -490,6 +527,7 @@ fn filter_allowed_rules(diagnostic: &Diagnostic, allow_comments: &[AllowComment]
 
 /// Parse a file, check it for issues, and return the report.
 pub(crate) fn check_only_file(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -529,7 +567,10 @@ pub(crate) fn check_only_file(
                 }
             }
         }
-        gather_allow_comments(&node, &mut allow_comments, file);
+        match gather_allow_comments(&node, file, rules) {
+            Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
+            Err(mut errors) => violations.append(&mut errors),
+        };
     }
 
     Ok(violations
@@ -552,7 +593,9 @@ pub struct FixerResult<'a> {
     pub fixed: FixTable,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn check_and_fix_file<'a>(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -614,7 +657,10 @@ pub(crate) fn check_and_fix_file<'a>(
                     }
                 }
             }
-            gather_allow_comments(&node, &mut allow_comments, file);
+            match gather_allow_comments(&node, file, rules) {
+                Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
+                Err(mut violation) => violations.append(&mut violation),
+            };
         }
 
         if iterations == 0 {
@@ -969,6 +1015,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
             match check_file(
+                &rules,
                 &path_rules,
                 &text_rules,
                 &ast_entrypoints,

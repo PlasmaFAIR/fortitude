@@ -76,6 +76,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
     Some(match (category, code) {
         (Error, "000") => (RuleGroup::Stable, None, error::ioerror::IoError),
         (Error, "001") => (RuleGroup::Stable, Ast, error::syntax_error::SyntaxError),
+        (Error, "011") => (RuleGroup::Stable, None, error::allow_comments::InvalidRuleCodeOrName),
 
         (Filesystem, "001") => (RuleGroup::Stable, Path, filesystem::extensions::NonStandardFileExtension),
 

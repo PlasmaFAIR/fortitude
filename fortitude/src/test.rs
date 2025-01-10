@@ -44,6 +44,7 @@ pub(crate) fn test_contents(
     let per_file_ignores = CompiledPerFileIgnoreList::resolve(vec![]).unwrap();
 
     match check_file(
+        &rule_table,
         &path_rules,
         &text_rules,
         &ast_entrypoints,
