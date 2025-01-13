@@ -145,8 +145,6 @@ pub fn set_up_logging(level: LogLevel) -> Result<()> {
         })
         .level(level.level_filter())
         .level_for("globset", log::LevelFilter::Warn)
-        .level_for("red_knot_python_semantic", log::LevelFilter::Warn)
-        .level_for("salsa", log::LevelFilter::Warn)
         .chain(std::io::stderr())
         .apply()?;
     Ok(())
