@@ -14,12 +14,13 @@ use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    ExcludeMode, FilePattern, FilePatternSet, FixMode, OutputFormat, PatternPrefixPair,
-    PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    ExcludeMode, FilePattern, FilePatternSet, FixMode, GitignoreMode, OutputFormat,
+    PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
+use ignore::WalkBuilder;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
@@ -40,7 +41,6 @@ use std::str::FromStr;
 use strum::IntoEnumIterator;
 use toml::Table;
 use tree_sitter::{Node, Parser};
-use walkdir::WalkDir;
 
 /// Default extensions to check
 const FORTRAN_EXTS: &[&str] = &[
@@ -185,6 +185,7 @@ pub struct CheckSettings {
     pub exclude: Option<Vec<FilePattern>>,
     pub extend_exclude: Vec<FilePattern>,
     pub exclude_mode: ExcludeMode,
+    pub gitignore_mode: GitignoreMode,
 }
 
 impl Default for CheckSettings {
@@ -197,7 +198,7 @@ impl Default for CheckSettings {
             per_file_ignores: Default::default(),
             extend_per_file_ignores: Default::default(),
             line_length: Settings::default().line_length,
-            file_extensions: Default::default(),
+            file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
             fix: Default::default(),
             fix_only: Default::default(),
             show_fixes: Default::default(),
@@ -208,6 +209,7 @@ impl Default for CheckSettings {
             exclude: Default::default(),
             extend_exclude: Default::default(),
             exclude_mode: Default::default(),
+            gitignore_mode: Default::default(),
         }
     }
 }
@@ -252,6 +254,9 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             extend_exclude: value.extend_exclude.unwrap_or_default(),
             exclude_mode: resolve_bool_arg(value.force_exclude, value.no_force_exclude)
                 .map(ExcludeMode::from)
+                .unwrap_or_default(),
+            gitignore_mode: resolve_bool_arg(value.respect_gitignore, value.no_respect_gitignore)
+                .map(GitignoreMode::from)
                 .unwrap_or_default(),
         },
         None => CheckSettings::default(),
@@ -323,6 +328,7 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     extensions: &[S],
     excludes: &FilePatternSet,
     exclude_mode: ExcludeMode,
+    gitignore_mode: GitignoreMode,
 ) -> Vec<PathBuf> {
     paths
         .iter()
@@ -330,10 +336,13 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
             if matches!(exclude_mode, ExcludeMode::Force) && excludes.matches(path) {
                 vec![]
             } else if path.as_ref().is_dir() {
-                WalkDir::new(path)
-                    .min_depth(1)
-                    .into_iter()
-                    .filter_entry(|e| !excludes.matches(e.path()))
+                let excludes = excludes.clone(); // Needed to get around lifetime issues
+                let mut builder = WalkBuilder::new(path);
+                builder.standard_filters(gitignore_mode.into());
+                builder.hidden(false);
+                builder.filter_entry(move |e| !excludes.matches(e.path()));
+                builder
+                    .build()
                     .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
                     .filter(|p| is_valid_extension(p.path(), extensions))
                     .map(|p| fs::normalize_path(p.path()))
@@ -912,6 +921,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let exclude_mode = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
         .map(ExcludeMode::from)
         .unwrap_or(file_settings.exclude_mode);
+    let gitignore_mode = resolve_bool_arg(args.respect_gitignore, args.no_respect_gitignore)
+        .map(GitignoreMode::from)
+        .unwrap_or(file_settings.gitignore_mode);
 
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
@@ -957,7 +969,13 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let files = get_files(files, file_extensions, &file_excludes, exclude_mode);
+    let files = get_files(
+        files,
+        file_extensions,
+        &file_excludes,
+        exclude_mode,
+        gitignore_mode,
+    );
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {

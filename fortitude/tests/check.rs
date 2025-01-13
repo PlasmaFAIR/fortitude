@@ -70,7 +70,7 @@ unknown-key = 1
       |
     2 | unknown-key = 1
       | ^^^^^^^^^^^
-    unknown field `unknown-key`, expected one of `files`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `preview`, `no-preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `no-force-exclude`, `line-length`
+    unknown field `unknown-key`, expected one of `files`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `preview`, `no-preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `no-force-exclude`, `respect-gitignore`, `no-respect-gitignore`, `line-length`
     ");
     Ok(())
 }
@@ -1305,6 +1305,177 @@ end program myprogram
 
     fortitude: 1 files scanned.
     Number of errors: 4
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+fn gitignore_test_path<P: AsRef<Path>>(tempdir: P) -> PathBuf {
+    let base_path = tempdir.as_ref().join("base");
+    let include_dir = base_path.join("include");
+    let exclude_dir_1 = base_path.join("exclude");
+    let exclude_dir_2 = include_dir.join("exclude");
+    std::fs::create_dir_all(exclude_dir_1.as_path()).unwrap();
+    std::fs::create_dir_all(exclude_dir_2.as_path()).unwrap();
+    for dir in [&base_path, &include_dir, &exclude_dir_1, &exclude_dir_2] {
+        let name = dir.file_name().unwrap().to_string_lossy();
+        let snippet = format!(
+            r#"
+module {name}
+! missing implicit none
+contains
+  integer function f()
+    f = 1
+  end function f
+end module {name}
+"#
+        );
+        fs::write(dir.join("include.f90"), &snippet).unwrap();
+        fs::write(dir.join("exclude.f90"), &snippet).unwrap();
+    }
+
+    // Simulate a git repo. Don't need anything inside the .git folder
+    let git_path = base_path.join(".git");
+    std::fs::create_dir_all(git_path.as_path()).unwrap();
+    let gitignore_file = base_path.join(".gitignore");
+    let config = r#"
+exclude
+exclude.f90
+"#;
+    fs::write(&gitignore_file, config).unwrap();
+    base_path
+}
+
+#[test]
+fn check_gitignore() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    apply_common_filters!();
+    // Expect:
+    // - See file include.f90 in the base path and include/include.f90
+    // - Don't see file exclude.f90 in the base path or files in exclude directories
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=typing")
+                         .current_dir(gitignore_test_path(tempdir.path())),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    include.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module base
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    include/include.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module include
+      | ^^^^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    fortitude: 2 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_no_respect_gitignore() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    apply_common_filters!();
+    // Expect to see all 8 files, even though exclude.f90 and exclude/ are in the .gitignore
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=typing")
+                         .arg("--no-respect-gitignore")
+                         .current_dir(gitignore_test_path(tempdir.path())),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    exclude.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module base
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    exclude/exclude.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module exclude
+      | ^^^^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    exclude/include.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module exclude
+      | ^^^^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    include.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module base
+      | ^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    include/exclude.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module include
+      | ^^^^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    include/exclude/exclude.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module exclude
+      | ^^^^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    include/exclude/include.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module exclude
+      | ^^^^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    include/include.f90:2:1: T001 module missing 'implicit none'
+      |
+    2 | module include
+      | ^^^^^^^^^^^^^^ T001
+    3 | ! missing implicit none
+    4 | contains
+      |
+
+    fortitude: 8 files scanned.
+    Number of errors: 8
 
     For more information about specific rules, run:
 
