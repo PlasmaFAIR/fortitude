@@ -1,7 +1,9 @@
+use std::io::Write;
 use std::process::ExitCode;
 
 use anyhow::Result;
 use clap::Parser;
+use colored::Colorize;
 use fortitude::check::check;
 use fortitude::cli::{Cli, SubCommands};
 use fortitude::explain::explain;
@@ -18,6 +20,30 @@ fn main() -> Result<ExitCode> {
     };
     match status {
         Ok(code) => Ok(code),
-        Err(_) => status,
+        Err(err) => {
+            {
+                // Exit "gracefully" on broken pipe errors.
+                //
+                // See: https://github.com/BurntSushi/ripgrep/blob/bf63fe8f258afc09bae6caa48f0ae35eaf115005/crates/core/main.rs#L47C1-L61C14
+                for cause in err.chain() {
+                    if let Some(ioerr) = cause.downcast_ref::<std::io::Error>() {
+                        if ioerr.kind() == std::io::ErrorKind::BrokenPipe {
+                            return Ok(ExitCode::from(0));
+                        }
+                    }
+                }
+
+                // Use `writeln` instead of `eprintln` to avoid panicking when the stderr pipe is broken.
+                let mut stderr = std::io::stderr().lock();
+
+                // This communicates that this isn't a linter error but ruff itself hard-errored for
+                // some reason (e.g. failed to resolve the configuration)
+                writeln!(stderr, "{}", "fortitude failed".red().bold()).ok();
+
+                // TODO: handle reporting multiple/chain of errors. Currently
+                // only most recent error is reported
+            }
+            Err(err)
+        }
     }
 }
