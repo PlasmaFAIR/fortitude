@@ -24,6 +24,7 @@ use ignore::{types::TypesBuilder, WalkBuilder};
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
+use log::{debug, warn};
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
@@ -38,6 +39,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::str::FromStr;
+use std::time::Instant;
 use strum::IntoEnumIterator;
 use toml::Table;
 use tree_sitter::{Node, Parser};
@@ -985,6 +987,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
+    let start = Instant::now();
     let files = get_files(
         files,
         file_extensions,
@@ -992,6 +995,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         exclude_mode,
         gitignore_mode,
     )?;
+    debug!("Identified files to lint in: {:?}", start.elapsed());
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
@@ -1017,6 +1021,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         ProgressBar::Off => ProgressStyle::with_template("").unwrap(),
     };
 
+    let start = Instant::now();
     let diagnostics_per_file = files
         .par_iter()
         .progress_with_style(progress_bar_style)
@@ -1034,8 +1039,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                             Diagnostic::new(IoError { message }, TextRange::default()),
                         )]));
                     } else {
-                        // TODO: log::warn
-                        eprintln!(
+                        warn!(
                             "{}{}{} {error}",
                             "Error opening file ".bold(),
                             fs::relativize_path(path).bold(),
@@ -1069,8 +1073,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                             Diagnostic::new(IoError { message }, TextRange::default()),
                         )]))
                     } else {
-                        // TODO: log::warn
-                        eprintln!(
+                        warn!(
                             "{}{}{} {msg}",
                             "Failed to process ".bold(),
                             fs::relativize_path(path).bold(),
@@ -1082,13 +1085,22 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             }
         });
 
-    let mut all_diagnostics = diagnostics_per_file
-        .fold(Diagnostics::default, |all_diagnostics, file_diagnostics| {
-            all_diagnostics + file_diagnostics
-        })
-        .reduce(Diagnostics::default, |a, b| a + b);
+    let (mut all_diagnostics, checked_files) = diagnostics_per_file
+        .fold(
+            || (Diagnostics::default(), 0u64),
+            |(all_diagnostics, checked_files), file_diagnostics| {
+                (all_diagnostics + file_diagnostics, checked_files + 1)
+            },
+        )
+        .reduce(
+            || (Diagnostics::default(), 0u64),
+            |a, b| (a.0 + b.0, a.1 + b.1),
+        );
 
     all_diagnostics.messages.par_sort_unstable();
+
+    let duration = start.elapsed();
+    debug!("Checked {:?} files in: {:?}", checked_files, duration);
 
     let total_errors = all_diagnostics.messages.len();
 
@@ -1102,11 +1114,14 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
     }
 
-    Printer::new(output_format, printer_flags, fix_mode, unsafe_fixes).write_once(
-        files.len(),
-        &all_diagnostics,
-        &mut writer,
-    )?;
+    Printer::new(
+        output_format,
+        global_options.log_level(),
+        printer_flags,
+        fix_mode,
+        unsafe_fixes,
+    )
+    .write_once(files.len(), &all_diagnostics, &mut writer)?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)

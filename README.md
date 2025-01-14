@@ -38,6 +38,7 @@ It can also be installed as a pure Rust project:
 
 ```bash
 git clone https://github.com/PlasmaFAIR/fortitude
+cd fortitude
 cargo install --path fortitude
 ```
 
