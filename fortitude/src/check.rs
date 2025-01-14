@@ -326,32 +326,46 @@ fn is_valid_extension<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
 fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     paths: &[P],
     extensions: &[S],
-    excludes: &FilePatternSet,
+    excludes: FilePatternSet,
     exclude_mode: ExcludeMode,
     gitignore_mode: GitignoreMode,
 ) -> Vec<PathBuf> {
-    paths
-        .iter()
-        .flat_map(|path| {
-            if matches!(exclude_mode, ExcludeMode::Force) && excludes.matches(path) {
-                vec![]
-            } else if path.as_ref().is_dir() {
-                let excludes = excludes.clone(); // Needed to get around lifetime issues
-                let mut builder = WalkBuilder::new(path);
-                builder.standard_filters(gitignore_mode.into());
-                builder.hidden(false);
-                builder.filter_entry(move |e| !excludes.matches(e.path()));
-                builder
-                    .build()
-                    .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
-                    .filter(|p| is_valid_extension(p.path(), extensions))
-                    .map(|p| fs::normalize_path(p.path()))
-                    .collect::<Vec<_>>()
-            } else {
-                vec![fs::normalize_path(path)]
-            }
-        })
-        .collect()
+    // If exclude_mode is set to Force, remove paths that match the exclude patterns
+    let paths: Vec<_> = if matches!(exclude_mode, ExcludeMode::Force) {
+        paths.iter().filter(|p| !excludes.matches(p)).collect()
+    } else {
+        paths.iter().collect()
+    };
+
+    // The remaining non-directory paths are always included; split into directories and files.
+    // Note that this includes paths that do not exist, as these should be reported to the user.
+    let (dirs, files): (Vec<_>, Vec<_>) = paths
+        .into_iter()
+        .map(|p| fs::normalize_path(p.as_ref()))
+        .partition(|p| p.is_dir());
+
+    // Collect all files from directories
+    let dir_contents = if let Some((first_dir, rest)) = dirs.split_first() {
+        let mut builder = WalkBuilder::new(first_dir);
+        for path in rest {
+            builder.add(path);
+        }
+        builder.standard_filters(gitignore_mode.into());
+        builder.hidden(false);
+        builder.filter_entry(move |e| !excludes.matches(e.path()));
+        builder
+            .build()
+            .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
+            .filter(|p| is_valid_extension(p.path(), extensions))
+            .map(|p| fs::normalize_path(p.path()))
+            .collect()
+    } else {
+        // No paths remain after removing excludes
+        vec![]
+    };
+
+    // Return all files found
+    files.into_iter().chain(dir_contents).collect()
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -972,7 +986,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let files = get_files(
         files,
         file_extensions,
-        &file_excludes,
+        file_excludes,
         exclude_mode,
         gitignore_mode,
     );
