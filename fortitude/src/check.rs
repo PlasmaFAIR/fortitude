@@ -20,7 +20,7 @@ use crate::settings::{
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
-use ignore::WalkBuilder;
+use ignore::{types::TypesBuilder, WalkBuilder};
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
@@ -312,16 +312,6 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
     Ok(rules)
 }
 
-/// Helper function used with `get_files` to select only paths that end in a Fortran extension.
-fn is_valid_extension<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
-    if let Some(ext) = path.extension() {
-        // Can't use '&[&str].contains()', as extensions are of type OsStr
-        extensions.iter().any(|x| x.as_ref() == ext)
-    } else {
-        false
-    }
-}
-
 /// Expand the input list of files to include all Fortran files.
 fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     paths: &[P],
@@ -329,7 +319,7 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     excludes: FilePatternSet,
     exclude_mode: ExcludeMode,
     gitignore_mode: GitignoreMode,
-) -> Vec<PathBuf> {
+) -> Result<Vec<PathBuf>> {
     // If exclude_mode is set to Force, remove paths that match the exclude patterns
     let paths: Vec<_> = if matches!(exclude_mode, ExcludeMode::Force) {
         paths.iter().filter(|p| !excludes.matches(p)).collect()
@@ -346,6 +336,7 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
 
     // Collect all files from directories
     let dir_contents = if let Some((first_dir, rest)) = dirs.split_first() {
+        // Create a directory walker that follows exclude patterns
         let mut builder = WalkBuilder::new(first_dir);
         for path in rest {
             builder.add(path);
@@ -353,19 +344,30 @@ fn get_files<P: AsRef<Path>, S: AsRef<str>>(
         builder.standard_filters(gitignore_mode.into());
         builder.hidden(false);
         builder.filter_entry(move |e| !excludes.matches(e.path()));
+
+        // Add file type filter for provided file extensions
+        // Directories will be skipped
+        let mut file_types = TypesBuilder::new();
+        for ext in extensions {
+            file_types.add(ext.as_ref(), format!("*.{}", ext.as_ref()).as_str())?;
+        }
+        file_types.select("all");
+        builder.types(file_types.build()?);
+
+        // Collect all valid files from directories
         builder
             .build()
             .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
-            .filter(|p| is_valid_extension(p.path(), extensions))
-            .map(|p| fs::normalize_path(p.path()))
+            .map(|p| p.into_path())
+            .filter(|p| !p.is_dir())
             .collect()
     } else {
-        // No paths remain after removing excludes
+        // No dirs remain after removing excludes and splitting into dirs and files
         vec![]
     };
 
     // Return all files found
-    files.into_iter().chain(dir_contents).collect()
+    Ok(files.into_iter().chain(dir_contents).collect())
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -989,7 +991,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         file_excludes,
         exclude_mode,
         gitignore_mode,
-    );
+    )?;
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
