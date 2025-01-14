@@ -243,6 +243,33 @@ impl From<bool> for ExcludeMode {
     }
 }
 
+/// Toggle for respecting .gitignore files
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, CacheKey, is_macro::Is)]
+pub enum GitignoreMode {
+    #[default]
+    RespectGitignore,
+    NoRespectGitignore,
+}
+
+impl From<bool> for GitignoreMode {
+    fn from(value: bool) -> Self {
+        if value {
+            GitignoreMode::RespectGitignore
+        } else {
+            GitignoreMode::NoRespectGitignore
+        }
+    }
+}
+
+impl From<GitignoreMode> for bool {
+    fn from(value: GitignoreMode) -> Self {
+        match value {
+            GitignoreMode::RespectGitignore => true,
+            GitignoreMode::NoRespectGitignore => false,
+        }
+    }
+}
+
 /// Toggle for progress bar
 #[derive(
     Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Default, clap::ValueEnum,

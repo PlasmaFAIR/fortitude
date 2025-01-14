@@ -14,12 +14,13 @@ use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    ExcludeMode, FilePattern, FilePatternSet, FixMode, OutputFormat, PatternPrefixPair,
-    PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    ExcludeMode, FilePattern, FilePatternSet, FixMode, GitignoreMode, OutputFormat,
+    PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
+use ignore::{types::TypesBuilder, WalkBuilder};
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
@@ -42,7 +43,6 @@ use std::time::Instant;
 use strum::IntoEnumIterator;
 use toml::Table;
 use tree_sitter::{Node, Parser};
-use walkdir::WalkDir;
 
 /// Default extensions to check
 const FORTRAN_EXTS: &[&str] = &[
@@ -187,6 +187,7 @@ pub struct CheckSettings {
     pub exclude: Option<Vec<FilePattern>>,
     pub extend_exclude: Vec<FilePattern>,
     pub exclude_mode: ExcludeMode,
+    pub gitignore_mode: GitignoreMode,
 }
 
 impl Default for CheckSettings {
@@ -199,7 +200,7 @@ impl Default for CheckSettings {
             per_file_ignores: Default::default(),
             extend_per_file_ignores: Default::default(),
             line_length: Settings::default().line_length,
-            file_extensions: Default::default(),
+            file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
             fix: Default::default(),
             fix_only: Default::default(),
             show_fixes: Default::default(),
@@ -210,6 +211,7 @@ impl Default for CheckSettings {
             exclude: Default::default(),
             extend_exclude: Default::default(),
             exclude_mode: Default::default(),
+            gitignore_mode: Default::default(),
         }
     }
 }
@@ -254,6 +256,9 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             extend_exclude: value.extend_exclude.unwrap_or_default(),
             exclude_mode: resolve_bool_arg(value.force_exclude, value.no_force_exclude)
                 .map(ExcludeMode::from)
+                .unwrap_or_default(),
+            gitignore_mode: resolve_bool_arg(value.respect_gitignore, value.no_respect_gitignore)
+                .map(GitignoreMode::from)
                 .unwrap_or_default(),
         },
         None => CheckSettings::default(),
@@ -309,42 +314,62 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
     Ok(rules)
 }
 
-/// Helper function used with `get_files` to select only paths that end in a Fortran extension.
-fn is_valid_extension<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
-    if let Some(ext) = path.extension() {
-        // Can't use '&[&str].contains()', as extensions are of type OsStr
-        extensions.iter().any(|x| x.as_ref() == ext)
-    } else {
-        false
-    }
-}
-
 /// Expand the input list of files to include all Fortran files.
 fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     paths: &[P],
     extensions: &[S],
-    excludes: &FilePatternSet,
+    excludes: FilePatternSet,
     exclude_mode: ExcludeMode,
-) -> Vec<PathBuf> {
-    paths
-        .iter()
-        .flat_map(|path| {
-            if matches!(exclude_mode, ExcludeMode::Force) && excludes.matches(path) {
-                vec![]
-            } else if path.as_ref().is_dir() {
-                WalkDir::new(path)
-                    .min_depth(1)
-                    .into_iter()
-                    .filter_entry(|e| !excludes.matches(e.path()))
-                    .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
-                    .filter(|p| is_valid_extension(p.path(), extensions))
-                    .map(|p| fs::normalize_path(p.path()))
-                    .collect::<Vec<_>>()
-            } else {
-                vec![fs::normalize_path(path)]
-            }
-        })
-        .collect()
+    gitignore_mode: GitignoreMode,
+) -> Result<Vec<PathBuf>> {
+    // If exclude_mode is set to Force, remove paths that match the exclude patterns
+    let paths: Vec<_> = if matches!(exclude_mode, ExcludeMode::Force) {
+        paths.iter().filter(|p| !excludes.matches(p)).collect()
+    } else {
+        paths.iter().collect()
+    };
+
+    // The remaining non-directory paths are always included; split into directories and files.
+    // Note that this includes paths that do not exist, as these should be reported to the user.
+    let (dirs, files): (Vec<_>, Vec<_>) = paths
+        .into_iter()
+        .map(|p| fs::normalize_path(p.as_ref()))
+        .partition(|p| p.is_dir());
+
+    // Collect all files from directories
+    let dir_contents = if let Some((first_dir, rest)) = dirs.split_first() {
+        // Create a directory walker that follows exclude patterns
+        let mut builder = WalkBuilder::new(first_dir);
+        for path in rest {
+            builder.add(path);
+        }
+        builder.standard_filters(gitignore_mode.into());
+        builder.hidden(false);
+        builder.filter_entry(move |e| !excludes.matches(e.path()));
+
+        // Add file type filter for provided file extensions
+        // Directories will be skipped
+        let mut file_types = TypesBuilder::new();
+        for ext in extensions {
+            file_types.add(ext.as_ref(), format!("*.{}", ext.as_ref()).as_str())?;
+        }
+        file_types.select("all");
+        builder.types(file_types.build()?);
+
+        // Collect all valid files from directories
+        builder
+            .build()
+            .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
+            .map(|p| p.into_path())
+            .filter(|p| !p.is_dir())
+            .collect()
+    } else {
+        // No dirs remain after removing excludes and splitting into dirs and files
+        vec![]
+    };
+
+    // Return all files found
+    Ok(files.into_iter().chain(dir_contents).collect())
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -914,6 +939,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let exclude_mode = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
         .map(ExcludeMode::from)
         .unwrap_or(file_settings.exclude_mode);
+    let gitignore_mode = resolve_bool_arg(args.respect_gitignore, args.no_respect_gitignore)
+        .map(GitignoreMode::from)
+        .unwrap_or(file_settings.gitignore_mode);
 
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
@@ -960,9 +988,14 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
     let start = Instant::now();
-    let files = get_files(files, file_extensions, &file_excludes, exclude_mode);
+    let files = get_files(
+        files,
+        file_extensions,
+        file_excludes,
+        exclude_mode,
+        gitignore_mode,
+    )?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
-
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {

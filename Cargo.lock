@@ -445,6 +445,7 @@ dependencies = [
  "fern",
  "fortitude_macros",
  "globset",
+ "ignore",
  "indicatif",
  "insta",
  "insta-cmd",
@@ -481,7 +482,6 @@ dependencies = [
  "tree-sitter-fortran",
  "unicode-width 0.2.0",
  "url",
- "walkdir",
 ]
 
 [[package]]
@@ -717,6 +717,22 @@ checksum = "daca1df1c957320b2cf139ac61e7bd64fed304c5040df000a745aa1de3b4ef71"
 dependencies = [
  "icu_normalizer",
  "icu_properties",
+]
+
+[[package]]
+name = "ignore"
+version = "0.4.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d89fd380afde86567dfba715db065673989d6253f42b88179abd3eae47bda4b"
+dependencies = [
+ "crossbeam-deque",
+ "globset",
+ "log",
+ "memchr",
+ "regex-automata",
+ "same-file",
+ "walkdir",
+ "winapi-util",
 ]
 
 [[package]]

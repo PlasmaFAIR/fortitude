@@ -247,6 +247,13 @@ pub struct CheckArgs {
     #[clap(long, overrides_with("force_exclude"), hide = true, action = SetTrue)]
     pub no_force_exclude: Option<bool>,
 
+    /// Respect `.gitignore`` files when determining which files to check.
+    /// Use `--no-respect-gitignore` to disable.
+    #[arg(long, overrides_with("no_respect_gitignore"), help_heading = "File selection", action = SetTrue)]
+    pub respect_gitignore: Option<bool>,
+    #[clap(long, overrides_with("respect_gitignore"), hide = true, action = SetTrue)]
+    pub no_respect_gitignore: Option<bool>,
+
     // Options for individual rules
     /// Set the maximum allowable line length.
     #[arg(long, help_heading = "Per-Rule Options")]
