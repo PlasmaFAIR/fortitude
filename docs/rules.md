@@ -39,6 +39,7 @@
 | T043 | [deprecated-assumed-size-character](rules/deprecated-assumed-size-character.md) | character '{name}' uses deprecated syntax for assumed size | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | T051 | [initialisation-in-declaration](rules/initialisation-in-declaration.md) | '{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 | T061 | [external-procedure](rules/external-procedure.md) | '{name}' declared as `external` | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| T071 | [missing-default-pointer-initalisation](rules/missing-default-pointer-initalisation.md) | '{var}' does not have a default initialiser | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 
 ### Modules (M)
 

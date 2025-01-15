@@ -102,6 +102,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Typing, "043") => (RuleGroup::Stable, Ast, typing::assumed_size::DeprecatedAssumedSizeCharacter),
         (Typing, "051") => (RuleGroup::Stable, Ast, typing::init_decls::InitialisationInDeclaration),
         (Typing, "061") => (RuleGroup::Stable, Ast, typing::external::ExternalProcedure),
+        (Typing, "071") => (RuleGroup::Preview, Ast, typing::derived_default_init::MissingDefaultPointerInitalisation),
 
         (Obsolescent, "001") => (RuleGroup::Stable, Ast, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Stable, Ast, obsolescent::common_blocks::CommonBlock),
