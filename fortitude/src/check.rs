@@ -606,19 +606,8 @@ pub(crate) fn check_and_fix_file<'a>(
             .parse(transformed.source_text(), None)
             .context("Failed to parse")?;
 
-        // Perform AST analysis, starting with root-level rules
-        let root_node = tree.root_node();
-        if let Some(rules) = ast_entrypoints.get(root_node.kind()) {
-            for rule in rules {
-                if let Some(violation) = rule.check(settings, &root_node, &transformed) {
-                    for v in violation {
-                        violations.push(v);
-                    }
-                }
-            }
-        }
-
-        for node in tree.root_node().named_descendants() {
+        let root = tree.root_node();
+        for node in once(root).chain(root.named_descendants()) {
             if let Some(rules) = ast_entrypoints.get(node.kind()) {
                 for rule in rules {
                     if let Some(violation) = rule.check(settings, &node, &transformed) {

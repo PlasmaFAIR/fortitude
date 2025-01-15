@@ -61,6 +61,14 @@ impl Violation for ProgramWithModule {
 
 impl AstRule for ProgramWithModule {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        // There must be a program statement to trigger this rule
+        if !node
+            .children(&mut node.walk())
+            .any(|node| node.kind() == "program")
+        {
+            return None;
+        }
+
         // Mark the violation on the second, and subsequent, occurences
         let violations: Vec<Diagnostic> = node
             .children(&mut node.walk())
