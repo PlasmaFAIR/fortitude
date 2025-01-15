@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use ignore::{types::TypesBuilder, WalkBuilder};
+use log::debug;
 use path_absolutize::Absolutize;
 use serde::{de, Deserialize, Deserializer};
 
@@ -192,9 +193,21 @@ pub fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     exclude_mode: ExcludeMode,
     gitignore_mode: GitignoreMode,
 ) -> anyhow::Result<Vec<PathBuf>> {
+    debug!("Gathering files");
     // If exclude_mode is set to Force, remove paths that match the exclude patterns
     let paths: Vec<_> = if matches!(exclude_mode, ExcludeMode::Force) {
-        paths.iter().filter(|p| !excludes.matches(p)).collect()
+        let (excluded, paths): (Vec<_>, Vec<_>) = paths.iter().partition(|p| {
+            p.as_ref()
+                .ancestors()
+                .any(|ancestor| excludes.matches(ancestor))
+        });
+        if !excluded.is_empty() {
+            debug!(
+                "Force excluded paths: {:?}",
+                excluded.iter().map(|p| p.as_ref()).collect::<Vec<_>>()
+            );
+        }
+        paths
     } else {
         paths.iter().collect()
     };
