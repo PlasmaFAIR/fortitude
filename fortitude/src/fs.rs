@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use ignore::{types::TypesBuilder, WalkBuilder};
+use itertools::Itertools;
 use log::debug;
 use path_absolutize::Absolutize;
 use serde::{de, Deserialize, Deserializer};
@@ -194,30 +195,26 @@ pub fn get_files<P: AsRef<Path>, S: AsRef<str>>(
     gitignore_mode: GitignoreMode,
 ) -> anyhow::Result<Vec<PathBuf>> {
     debug!("Gathering files");
-    // If exclude_mode is set to Force, remove paths that match the exclude patterns
+    // Normalise all paths and remove duplicates.
+    // If exclude_mode is set to Force, remove paths that match the exclude patterns.
     let paths: Vec<_> = if matches!(exclude_mode, ExcludeMode::Force) {
-        let (excluded, paths): (Vec<_>, Vec<_>) = paths.iter().partition(|p| {
-            p.as_ref()
-                .ancestors()
-                .any(|ancestor| excludes.matches(ancestor))
-        });
+        let (excluded, paths): (Vec<_>, Vec<_>) = paths
+            .iter()
+            .map(normalize_path)
+            .unique()
+            .partition(|p| p.ancestors().any(|ancestor| excludes.matches(ancestor)));
         if !excluded.is_empty() {
-            debug!(
-                "Force excluded paths: {:?}",
-                excluded.iter().map(|p| p.as_ref()).collect::<Vec<_>>()
-            );
+            debug!("Force excluded paths: {:?}", excluded);
         }
         paths
     } else {
-        paths.iter().collect()
+        paths.iter().map(normalize_path).unique().collect()
     };
+    debug!("Paths provided: {:?}", paths);
 
     // The remaining non-directory paths are always included; split into directories and files.
     // Note that this includes paths that do not exist, as these should be reported to the user.
-    let (dirs, files): (Vec<_>, Vec<_>) = paths
-        .into_iter()
-        .map(|p| normalize_path(p.as_ref()))
-        .partition(|p| p.is_dir());
+    let (dirs, files): (Vec<_>, Vec<_>) = paths.into_iter().partition(|p| p.is_dir());
 
     // Collect all files from directories
     let dir_contents = if let Some((first_dir, rest)) = dirs.split_first() {
