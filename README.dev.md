@@ -73,7 +73,8 @@ Once you've completed the code for the rule itself, you can define tests with th
     ```
 
     **Note:** Only a subset of rules are enabled by default. When testing a new rule, ensure that
-    you activate it by adding `--select ${rule_code}` to the command.
+    you activate it by adding `--select ${rule_code}` to the command, and if the rule is in the `Preview`
+    category, add `--preview` as well.
 
 1. Add the test to the relevant `fortitude/src/rules/[category]/mod.rs` file. If you're contributing
     a rule to a pre-existing set, you should be able to find a similar example to pattern-match
