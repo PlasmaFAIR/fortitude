@@ -33,6 +33,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io;
 use std::io::Write;
+use std::iter::once;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::str::FromStr;
@@ -520,18 +521,8 @@ pub(crate) fn check_only_file(
         .parse(file.source_text(), None)
         .context("Failed to parse")?;
 
-    let root_node = tree.root_node();
-    if let Some(rules) = ast_entrypoints.get(root_node.kind()) {
-        for rule in rules {
-            if let Some(violation) = rule.check(settings, &root_node, file) {
-                for v in violation {
-                    violations.push(v);
-                }
-            }
-        }
-    }
-
-    for node in tree.root_node().named_descendants() {
+    let root = tree.root_node();
+    for node in once(root).chain(root.named_descendants()) {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for rule in rules {
                 if let Some(violation) = rule.check(settings, &node, file) {

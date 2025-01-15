@@ -27,16 +27,14 @@ impl AstRule for MultipleModules {
         let violations: Vec<Diagnostic> = node
             .children(&mut node.walk())
             .filter(|node| node.kind() == "module")
+            .skip(1)
             .map(|m| -> Diagnostic {
                 let m_first = m.child(0).unwrap_or(m);
                 Diagnostic::from_node(MultipleModules {}, &m_first)
             })
             .collect();
 
-        if violations.len() > 1 {
-            return Some(violations);
-        }
-        None
+        Some(violations)
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -63,19 +61,18 @@ impl Violation for ProgramWithModule {
 
 impl AstRule for ProgramWithModule {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        // Mark the violation on the second, and subsequent, occurences
         let violations: Vec<Diagnostic> = node
             .children(&mut node.walk())
             .filter(|node| node.kind() == "module" || node.kind() == "program")
+            .skip(1)
             .map(|m| -> Diagnostic {
                 let m_first = m.child(0).unwrap_or(m);
                 Diagnostic::from_node(ProgramWithModule {}, &m_first)
             })
             .collect();
 
-        if violations.len() > 1 {
-            return Some(violations);
-        }
-        None
+        Some(violations)
     }
 
     fn entrypoints() -> Vec<&'static str> {

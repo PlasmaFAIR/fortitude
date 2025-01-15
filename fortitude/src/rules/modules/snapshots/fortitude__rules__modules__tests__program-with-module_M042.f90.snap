@@ -2,14 +2,6 @@
 source: fortitude/src/rules/modules/mod.rs
 expression: diagnostics
 ---
-./resources/test/fixtures/modules/M042.f90:1:1: M042 Program and module in one file, split into their own files
-  |
-1 | module mod1
-  | ^^^^^^^^^^^ M042
-2 |
-3 | contains
-  |
-
 ./resources/test/fixtures/modules/M042.f90:8:1: M042 Program and module in one file, split into their own files
   |
 6 | end module mod1
