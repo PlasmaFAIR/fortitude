@@ -109,6 +109,17 @@ pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
+/// Find the path to the project root, which contains the `fpm.toml` or `fortitude.toml` file.
+/// If no such file exists, return the current working directory.
+fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
+    find_settings_toml(&path)?.map_or(Ok(fs::normalize_path(&path)), |settings| {
+        fs::normalize_path(settings)
+            .parent()
+            .context("Settings file has no parent")
+            .map(PathBuf::from)
+    })
+}
+
 /// Read either the "extra.fortitude" table from "fpm.toml", or the
 /// whole "fortitude.toml" file
 fn from_toml_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> {
@@ -197,7 +208,7 @@ impl Default for CheckSettings {
 fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
     let filename = match config_file {
         Some(filename) => filename.clone(),
-        None => match find_settings_toml(".")? {
+        None => match find_settings_toml(path_absolutize::path_dedot::CWD.as_path())? {
             Some(filename) => filename,
             None => {
                 return Ok(CheckSettings::default());
@@ -906,8 +917,10 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
     let start = Instant::now();
+
     let files = get_files(
         files,
+        project_root(path_absolutize::path_dedot::CWD.as_path())?,
         file_extensions,
         file_excludes,
         exclude_mode,

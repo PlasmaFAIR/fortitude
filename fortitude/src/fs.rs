@@ -92,6 +92,24 @@ impl FilePatternSet {
             _ => false,
         }
     }
+
+    pub fn ancestor_matches<P: AsRef<Path>, R: AsRef<Path>>(
+        &self,
+        path: P,
+        project_root: R,
+    ) -> bool {
+        let project_root = project_root.as_ref();
+        match std::path::absolute(path.as_ref()) {
+            Ok(path) => path
+                .ancestors()
+                .take_while(|ancestor| *ancestor != project_root)
+                .any(|ancestor| match ancestor.file_name() {
+                    Some(basename) => self.set.is_match(ancestor) || self.set.is_match(basename),
+                    None => false,
+                }),
+            _ => false,
+        }
+    }
 }
 
 /// Create a set with codes matching the pattern/code pairs.
@@ -187,14 +205,17 @@ pub(crate) static EXCLUDE_BUILTINS: &[FilePattern] = &[
 ];
 
 /// Expand the input list of files to include all Fortran files.
-pub fn get_files<P: AsRef<Path>, S: AsRef<str>>(
+pub fn get_files<P: AsRef<Path>, R: AsRef<Path>, S: AsRef<str>>(
     paths: &[P],
+    project_root: R,
     extensions: &[S],
     excludes: FilePatternSet,
     exclude_mode: ExcludeMode,
     gitignore_mode: GitignoreMode,
 ) -> anyhow::Result<Vec<PathBuf>> {
     debug!("Gathering files");
+    let project_root = project_root.as_ref().to_path_buf();
+    debug!("Project root: {:?}", project_root);
     // Normalise all paths and remove duplicates.
     // If exclude_mode is set to Force, remove paths that match the exclude patterns.
     let paths: Vec<_> = if matches!(exclude_mode, ExcludeMode::Force) {
@@ -202,7 +223,7 @@ pub fn get_files<P: AsRef<Path>, S: AsRef<str>>(
             .iter()
             .map(normalize_path)
             .unique()
-            .partition(|p| p.ancestors().any(|ancestor| excludes.matches(ancestor)));
+            .partition(|p| excludes.ancestor_matches(p, &project_root));
         if !excluded.is_empty() {
             debug!("Force excluded paths: {:?}", excluded);
         }
