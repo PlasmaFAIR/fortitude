@@ -66,6 +66,7 @@ unknown-key = 1
     ----- stdout -----
 
     ----- stderr -----
+    fortitude failed
     Error: TOML parse error at line 2, column 1
       |
     2 | unknown-key = 1
