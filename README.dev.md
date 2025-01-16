@@ -87,6 +87,21 @@ tree-sitter parse /path/to/fortran/file.f90
    consider edge cases and any scenarios where false positives could occur.
 7. Update the generated documentation using `cargo dev generate-all`.
 
+For some rules, it may be possible to automatically apply a fix for the user,
+though it isn't essential to include a fix when adding a new rule. These are
+typically applied using
+[`Fix`](https://github.com/astral-sh/ruff/blob/main/crates/ruff_diagnostics/src/fix.rs)
+and
+[`Edit`](https://github.com/astral-sh/ruff/blob/main/crates/ruff_diagnostics/src/edit.rs)
+from Ruff. A fix may be one of:
+
+- 'Safe': Applying the fix is guaranteed to not change the behaviour of the
+  user's program. This will normally only apply to stylistic changes.
+- 'Unsafe': Applying the fix may change the behaviour of the user's program in
+  some edge cases.
+- 'Display only': Fortitude can guess at a solution, but makes no guarantees
+  to its correctness or safety.
+
 If you help writing rules, we recommend checking the implementation of existing
 rules to see if anything similar already exists. You can also raise a draft pull
 request to ask for assistance from other developers.
