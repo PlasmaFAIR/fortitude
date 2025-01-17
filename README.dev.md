@@ -124,7 +124,7 @@ The boundaries between categories are not always clear, so the exact name and
 category of a rule is often determined following a discussion after a pull
 request has been raised.
 
-#### Rule Testing: Fixtures and Snapshots
+### Rule Testing: Fixtures and Snapshots
 
 To test rules, Fortitude uses snapshots of Fortitude's output for a given file (fixture). Generally, there
 will be one file per rule (e.g., `E402.f90`), and each file will contain all necessary examples of
