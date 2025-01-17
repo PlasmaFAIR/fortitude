@@ -1015,11 +1015,13 @@ fn check_force_exclude() -> anyhow::Result<()> {
     apply_common_filters!();
     // Expect:
     // - Don't see error in foo.f90 despite it being asked for
+    // - Also shouldn't see numpy.f90
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg("--select=typing")
                          .arg("--force-exclude")
                          .arg("foo/foo.f90")
+                         .arg(".venv/lib/site-packages/numpy/numpy.f90")
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: true

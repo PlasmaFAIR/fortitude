@@ -4,9 +4,10 @@ use std::path::PathBuf;
 
 use crate::{
     build,
+    fs::FilePattern,
     logging::LogLevel,
     rule_selector::RuleSelector,
-    settings::{FilePattern, OutputFormat, PatternPrefixPair, ProgressBar},
+    settings::{OutputFormat, PatternPrefixPair, ProgressBar},
     RuleSelectorParser,
 };
 

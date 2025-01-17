@@ -3,6 +3,7 @@ use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
 use crate::fs;
+use crate::fs::{get_files, FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
@@ -14,13 +15,12 @@ use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    ExcludeMode, FilePattern, FilePatternSet, FixMode, GitignoreMode, OutputFormat,
-    PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    ExcludeMode, FixMode, GitignoreMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar,
+    Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
-use ignore::{types::TypesBuilder, WalkBuilder};
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
@@ -44,11 +44,6 @@ use strum::IntoEnumIterator;
 use toml::Table;
 use tree_sitter::{Node, Parser};
 
-/// Default extensions to check
-const FORTRAN_EXTS: &[&str] = &[
-    "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
-];
-
 // These are just helper structs to let us quickly work out if there's
 // a fortitude section in an fpm.toml file
 #[derive(Debug, PartialEq, Eq, Default, Deserialize)]
@@ -65,25 +60,6 @@ struct Extra {
 struct CheckSection {
     check: Option<CheckArgs>,
 }
-
-// Default paths to exclude when searching paths
-pub(crate) static EXCLUDE_BUILTINS: &[FilePattern] = &[
-    FilePattern::Builtin(".git"),
-    FilePattern::Builtin(".git-rewrite"),
-    FilePattern::Builtin(".hg"),
-    FilePattern::Builtin(".svn"),
-    FilePattern::Builtin("venv"),
-    FilePattern::Builtin(".venv"),
-    FilePattern::Builtin("pyenv"),
-    FilePattern::Builtin(".pyenv"),
-    FilePattern::Builtin(".eggs"),
-    FilePattern::Builtin("site-packages"),
-    FilePattern::Builtin(".vscode"),
-    FilePattern::Builtin("build"),
-    FilePattern::Builtin("_build"),
-    FilePattern::Builtin("dist"),
-    FilePattern::Builtin("_dist"),
-];
 
 // Adapted from ruff
 fn parse_fpm_toml<P: AsRef<Path>>(path: P) -> Result<Fpm> {
@@ -131,6 +107,17 @@ pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
         }
     }
     Ok(None)
+}
+
+/// Find the path to the project root, which contains the `fpm.toml` or `fortitude.toml` file.
+/// If no such file exists, return the current working directory.
+fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
+    find_settings_toml(&path)?.map_or(Ok(fs::normalize_path(&path)), |settings| {
+        fs::normalize_path(settings)
+            .parent()
+            .context("Settings file has no parent")
+            .map(PathBuf::from)
+    })
 }
 
 /// Read either the "extra.fortitude" table from "fpm.toml", or the
@@ -221,7 +208,7 @@ impl Default for CheckSettings {
 fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
     let filename = match config_file {
         Some(filename) => filename.clone(),
-        None => match find_settings_toml(".")? {
+        None => match find_settings_toml(path_absolutize::path_dedot::CWD.as_path())? {
             Some(filename) => filename,
             None => {
                 return Ok(CheckSettings::default());
@@ -312,64 +299,6 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
     }
 
     Ok(rules)
-}
-
-/// Expand the input list of files to include all Fortran files.
-fn get_files<P: AsRef<Path>, S: AsRef<str>>(
-    paths: &[P],
-    extensions: &[S],
-    excludes: FilePatternSet,
-    exclude_mode: ExcludeMode,
-    gitignore_mode: GitignoreMode,
-) -> Result<Vec<PathBuf>> {
-    // If exclude_mode is set to Force, remove paths that match the exclude patterns
-    let paths: Vec<_> = if matches!(exclude_mode, ExcludeMode::Force) {
-        paths.iter().filter(|p| !excludes.matches(p)).collect()
-    } else {
-        paths.iter().collect()
-    };
-
-    // The remaining non-directory paths are always included; split into directories and files.
-    // Note that this includes paths that do not exist, as these should be reported to the user.
-    let (dirs, files): (Vec<_>, Vec<_>) = paths
-        .into_iter()
-        .map(|p| fs::normalize_path(p.as_ref()))
-        .partition(|p| p.is_dir());
-
-    // Collect all files from directories
-    let dir_contents = if let Some((first_dir, rest)) = dirs.split_first() {
-        // Create a directory walker that follows exclude patterns
-        let mut builder = WalkBuilder::new(first_dir);
-        for path in rest {
-            builder.add(path);
-        }
-        builder.standard_filters(gitignore_mode.into());
-        builder.hidden(false);
-        builder.filter_entry(move |e| !excludes.matches(e.path()));
-
-        // Add file type filter for provided file extensions
-        // Directories will be skipped
-        let mut file_types = TypesBuilder::new();
-        for ext in extensions {
-            file_types.add(ext.as_ref(), format!("*.{}", ext.as_ref()).as_str())?;
-        }
-        file_types.select("all");
-        builder.types(file_types.build()?);
-
-        // Collect all valid files from directories
-        builder
-            .build()
-            .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
-            .map(|p| p.into_path())
-            .filter(|p| !p.is_dir())
-            .collect()
-    } else {
-        // No dirs remain after removing excludes and splitting into dirs and files
-        vec![]
-    };
-
-    // Return all files found
-    Ok(files.into_iter().chain(dir_contents).collect())
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -988,8 +917,10 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
     let start = Instant::now();
+
     let files = get_files(
         files,
+        project_root(path_absolutize::path_dedot::CWD.as_path())?,
         file_extensions,
         file_excludes,
         exclude_mode,
