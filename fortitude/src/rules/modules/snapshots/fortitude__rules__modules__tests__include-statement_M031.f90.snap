@@ -1,0 +1,22 @@
+---
+source: fortitude/src/rules/modules/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/modules/M031.f90:3:1: M031 Include statement is deprecated, use modules instead
+  |
+1 | module test
+2 |
+3 | include "common_variables"
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^ M031
+4 |
+5 | contains
+  |
+
+./resources/test/fixtures/modules/M031.f90:8:5: M031 Include statement is deprecated, use modules instead
+   |
+ 7 | integer function func1()
+ 8 |     include "variable_declaration"
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ M031
+ 9 |
+10 |     func1 = i + 3
+   |
