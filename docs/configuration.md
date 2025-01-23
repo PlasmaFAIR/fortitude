@@ -52,6 +52,11 @@ Options:
       --config-file <CONFIG_FILE>  Path to a TOML configuration file
   -h, --help                       Print help
   -V, --version                    Print version
+
+Log levels:
+  -v, --verbose  Enable verbose logging
+  -q, --quiet    Print diagnostics, but nothing else
+  -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
 ```
 
 <!-- End auto-generated command help. -->
@@ -99,18 +104,24 @@ Rule selection:
           Like `--per-file-ignores`, but adds additional ignores on top of those already specified
 
 File selection:
-      --file-extensions <FILE_EXTENSIONS>
-          File extensions to check [default: f90 F90 f95 F95 f03 F03 f08 F08 f18 F18 f23 F23]
+      --file-extensions <EXTENSION>
+          File extensions to check
       --exclude <FILE_PATTERN>
           List of paths, used to omit files and/or directories from analysis
       --extend-exclude <FILE_PATTERN>
           Like --exclude, but adds additional files and directories on top of those already excluded
       --force-exclude
           Enforce exclusions, even for paths passed to Fortitude directly on the command-line. Use `--no-force_exclude` to disable
+      --respect-gitignore
+          Respect `.gitignore`` files when determining which files to check. Use `--no-respect-gitignore` to disable
 
 Per-Rule Options:
-      --line-length <LINE_LENGTH>
-          Set the maximum allowable line length [default: 100]
+      --line-length <LINE_LENGTH>  Set the maximum allowable line length
+
+Log levels:
+  -v, --verbose  Enable verbose logging
+  -q, --quiet    Print diagnostics, but nothing else
+  -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
 ```
 
 <!-- End auto-generated check help. -->
