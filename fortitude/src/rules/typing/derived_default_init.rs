@@ -61,7 +61,7 @@ impl Violation for MissingDefaultPointerInitalisation {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { var } = self;
-        format!("'{var}' does not have a default initialiser")
+        format!("pointer component '{var}' does not have a default initialiser")
     }
 
     fn fix_title(&self) -> Option<String> {
@@ -100,7 +100,7 @@ impl AstRule for MissingDefaultPointerInitalisation {
             .map(|node| {
                 let var_name = node.to_text(src.source_text()).unwrap_or("").to_string();
 
-                let init_var = format!("{var_name} => null()");
+                let init_var = format!(" => null()");
                 let start_pos = TextSize::try_from(node.end_byte()).unwrap();
                 let fix = Fix::unsafe_edit(Edit::insertion(init_var, start_pos));
 
