@@ -1,0 +1,10 @@
+---
+source: fortitude/src/rules/modules/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/modules/M041.f90:9:1: M041 Multiple modules in one file, split into one module per file
+   |
+ 9 | module mod2
+   | ^^^^^^^^^^^ M041
+10 |     use :: mod1, only: test1
+   |

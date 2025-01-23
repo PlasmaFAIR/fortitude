@@ -1,0 +1,12 @@
+---
+source: fortitude/src/rules/modules/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/modules/M042.f90:8:1: M042 Program and module in one file, split into their own files
+  |
+6 | end module mod1
+7 |
+8 | program main
+  | ^^^^^^^^^^^^ M042
+9 |     use :: mod1, only: test1
+  |

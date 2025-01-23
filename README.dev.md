@@ -45,13 +45,86 @@ git config --local core.hooksPath .githooks
 
 ## Adding Rules
 
-Similarly to how [Ruff](https://docs.astral.sh/ruff/) names rules, the rules in
-Fortitude should be categorised appropriately and their name should describe the pattern
-the rule is intended to fix. Words such as 'forbid' should be omitted. For example, the
-name for the rule that warns of overly long lines is `LineTooLong`, and not something
-like `AvoidLineTooLong` or `KeepLinesShort`.
+We're always open to new rule suggestions, and would be very grateful for any
+assistance in implementing them. Before raising an issue to suggest a new rule,
+please check to see if it has already been
+[suggested](https://github.com/PlasmaFAIR/fortitude/issues?q=is%3Aissue+is%3Aopen+label%3Arule).
 
-#### Rule testing: fixtures and snapshots
+There are several steps required to add a new rule to Fortitude:
+
+1. Decide on a name and category following our [naming
+   rules](#naming-and-categorising-rules).
+2. Create a new file
+   `fortitude/src/rules/category/rule_name.rs`, where `category` is your chosen rule
+   category and `rule_name` is its name.  If there is already a file for a
+   similar rule, you may also choose to add your rule there.
+3. In that file, define a `Violation` struct. This defines the diagnostic
+   messages raised when your rule is violated.
+4. Implement one of `TextRule`, `AstRule` or `PathRule` for your `Violation`. These
+   are, respectively, rules that check a file line-by-line, rules that analyse the
+   AST, and rules that analyse the path to a Fortran file directly.
+   - Most rules are `AstRules`, which use [`tree_sitter`](https://docs.rs/tree-sitter/latest/tree_sitter/)
+     to analyse the code. If you want to see how `tree_sitter` parses a given file,
+     we recommended installing `tree_sitter`, cloning
+     [`tree_sitter_fortran`](https://github.com/stadelmanma/tree-sitter-fortran),
+     and then running the following from the `tree_sitter_fortran` root directory:
+```bash
+tree-sitter build
+tree-sitter parse /path/to/fortran/file.f90
+```
+5. Map the `Violation` struct to a rule code in `fortitude/src/rules/mod.rs`.
+   - `code_to_rule` is never called directly, but the match statement within is
+     analysed by the macro `fortitude_macros::map_codes` to define a `Rule` enum
+     and many associated utilities.
+   - The first two digits for a rule code normally define a subcategory, while the
+     last digit denotes the specific rule within that subcategory. The last digit
+     should not be zero. For example, `T04x` defines rules related to the use of
+     assumed-size arrays and character strings.  This isn't stringently
+     enforced, but you may be asked to renumber the rule if other developers
+     think it would better fit somewhere else.
+   - New rules should be in `RuleGroup::Preview`.
+6. Add a [test](#rule-testing-fixtures-and-snapshots) for your rule. Try to
+   consider edge cases and any scenarios where false positives could occur.
+7. Update the generated documentation using `cargo dev generate-all`.
+
+For some rules, it may be possible to automatically apply a fix for the user,
+though it isn't essential to include a fix when adding a new rule. These are
+typically applied using
+[`Fix`](https://github.com/astral-sh/ruff/blob/main/crates/ruff_diagnostics/src/fix.rs)
+and
+[`Edit`](https://github.com/astral-sh/ruff/blob/main/crates/ruff_diagnostics/src/edit.rs)
+from Ruff. A fix may be one of:
+
+- 'Safe': Applying the fix is guaranteed to not change the behaviour of the
+  user's program. This will normally only apply to stylistic changes.
+- 'Unsafe': Applying the fix may change the behaviour of the user's program in
+  some edge cases.
+- 'Display only': Fortitude can guess at a solution, but makes no guarantees
+  to its correctness or safety.
+
+If you help writing rules, we recommend checking the implementation of existing
+rules to see if anything similar already exists. You can also raise a draft pull
+request to ask for assistance from other developers.
+
+### Naming and Categorising Rules
+
+Similarly to
+[Ruff](https://docs.astral.sh/ruff/contributing/#rule-naming-convention), the name
+of a rule should describe the pattern the rule is intended to fix. Words such as
+'forbid' should be omitted. For example, the name for the rule that warns of
+overly long lines is `LineTooLong`, and not something like `AvoidLineTooLong` or
+`KeepLinesShort`.
+
+Rules should also be categorised appropriately. For example, if a rule is
+intended to discourage the use of outdated features, it may go under
+`Obsolescent`, or perhaps a more specific category such as `Modules` or
+`Typing`. If the rule only affects code readability, it should go under `Style`.
+
+The boundaries between categories are not always clear, so the exact name and
+category of a rule is often determined following a discussion after a pull
+request has been raised.
+
+### Rule Testing: Fixtures and Snapshots
 
 To test rules, Fortitude uses snapshots of Fortitude's output for a given file (fixture). Generally, there
 will be one file per rule (e.g., `E402.f90`), and each file will contain all necessary examples of
@@ -73,7 +146,8 @@ Once you've completed the code for the rule itself, you can define tests with th
     ```
 
     **Note:** Only a subset of rules are enabled by default. When testing a new rule, ensure that
-    you activate it by adding `--select ${rule_code}` to the command.
+    you activate it by adding `--select ${rule_code}` to the command, and if the rule is in the `Preview`
+    category, add `--preview` as well.
 
 1. Add the test to the relevant `fortitude/src/rules/[category]/mod.rs` file. If you're contributing
     a rule to a pre-existing set, you should be able to find a similar example to pattern-match

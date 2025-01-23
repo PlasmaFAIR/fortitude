@@ -1,5 +1,7 @@
 pub mod common_blocks;
+pub mod computed_goto;
 pub mod entry_statement;
+pub mod specific_names;
 pub mod statement_functions;
 
 #[cfg(test)]
@@ -18,6 +20,8 @@ mod tests {
     #[test_case(Rule::StatementFunction, Path::new("OB001.f90"))]
     #[test_case(Rule::CommonBlock, Path::new("OB011.f90"))]
     #[test_case(Rule::EntryStatement, Path::new("OB021.f90"))]
+    #[test_case(Rule::SpecificName, Path::new("OB031.f90"))]
+    #[test_case(Rule::ComputedGoTo, Path::new("OB041.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

@@ -10,7 +10,7 @@ snapshot_kind: text
 13 |   real(sp), parameter :: g = 1.23456 ! Bad: Loss of precision
    |                              ^^^^^^^ P001
 14 |   real(sp), parameter :: h = 1.23456e1 ! Bad: Loss of precision, e exponent
-15 |   real(sp), parameter :: i = 1.23456E1 ! Bad: Loss of precision, E exponent
+15 |   real(sp), parameter :: i = 1.23456E-1 ! Bad: Loss of precision, E exponent
    |
 
 ./resources/test/fixtures/precision/P001.f90:14:30: P001 real literal 1.23456e1 missing kind suffix
@@ -19,16 +19,16 @@ snapshot_kind: text
 13 |   real(sp), parameter :: g = 1.23456 ! Bad: Loss of precision
 14 |   real(sp), parameter :: h = 1.23456e1 ! Bad: Loss of precision, e exponent
    |                              ^^^^^^^^^ P001
-15 |   real(sp), parameter :: i = 1.23456E1 ! Bad: Loss of precision, E exponent
+15 |   real(sp), parameter :: i = 1.23456E-1 ! Bad: Loss of precision, E exponent
 16 |   real(dp), parameter :: j = -1.23456_dp ! Okay: Kind suffix
    |
 
-./resources/test/fixtures/precision/P001.f90:15:30: P001 real literal 1.23456E1 missing kind suffix
+./resources/test/fixtures/precision/P001.f90:15:30: P001 real literal 1.23456E-1 missing kind suffix
    |
 13 |   real(sp), parameter :: g = 1.23456 ! Bad: Loss of precision
 14 |   real(sp), parameter :: h = 1.23456e1 ! Bad: Loss of precision, e exponent
-15 |   real(sp), parameter :: i = 1.23456E1 ! Bad: Loss of precision, E exponent
-   |                              ^^^^^^^^^ P001
+15 |   real(sp), parameter :: i = 1.23456E-1 ! Bad: Loss of precision, E exponent
+   |                              ^^^^^^^^^^ P001
 16 |   real(dp), parameter :: j = -1.23456_dp ! Okay: Kind suffix
 17 |   real(sp), parameter :: k = 1.23456_sp ! Okay: Loss of precision, but we're explicit
    |
@@ -36,7 +36,7 @@ snapshot_kind: text
 ./resources/test/fixtures/precision/P001.f90:20:30: P001 real literal 2e39 missing kind suffix
    |
 18 |   real(dp), parameter :: l = 1.23456d1 ! Okay: Ignore d exponent
-19 |   real(dp), parameter :: m = 1.23456D3 ! Okay: Ignore D exponent
+19 |   real(dp), parameter :: m = 1.23456D-3 ! Okay: Ignore D exponent
 20 |   real(dp), parameter :: n = 2e39 ! Bad: Magnitude doesn't fit in single precision
    |                              ^^^^ P001
 21 |   real(dp), parameter :: o = -(+(-(((3.141592654))))) ! Bad: Loss of precision, horrible declaration
@@ -44,7 +44,7 @@ snapshot_kind: text
 
 ./resources/test/fixtures/precision/P001.f90:21:38: P001 real literal 3.141592654 missing kind suffix
    |
-19 |   real(dp), parameter :: m = 1.23456D3 ! Okay: Ignore D exponent
+19 |   real(dp), parameter :: m = 1.23456D-3 ! Okay: Ignore D exponent
 20 |   real(dp), parameter :: n = 2e39 ! Bad: Magnitude doesn't fit in single precision
 21 |   real(dp), parameter :: o = -(+(-(((3.141592654))))) ! Bad: Loss of precision, horrible declaration
    |                                      ^^^^^^^^^^^ P001
@@ -52,10 +52,20 @@ snapshot_kind: text
 23 |   complex(dp), parameter :: ca = (0.0, 0.0) ! Okay: No loss of precision
    |
 
+./resources/test/fixtures/precision/P001.f90:28:42: P001 real literal 4.0E-5 missing kind suffix
+   |
+26 |   complex(dp), parameter :: cd = (0.000244140625, 0.0) ! Okay: No loss of precision (=2^-12)
+27 |   complex(sp), parameter :: ce = (1.0e10, 2.0e5) ! Okay: No loss of precision, e exponent
+28 |   complex(sp), parameter :: cf = (2E10, -4.0E-5) ! Bad: Loss of precision, negative E exponent
+   |                                          ^^^^^^ P001
+29 |   complex(sp), parameter :: cg = (1.23456, -0.0) ! Bad: Loss of precision
+30 |   complex(sp), parameter :: ch = (0.0, 1.23456e1) ! Bad: Loss of precision, e exponent
+   |
+
 ./resources/test/fixtures/precision/P001.f90:29:35: P001 real literal 1.23456 missing kind suffix
    |
 27 |   complex(sp), parameter :: ce = (1.0e10, 2.0e5) ! Okay: No loss of precision, e exponent
-28 |   complex(sp), parameter :: cf = (2E10, -4.0e-5) ! Okay: No loss of precision, E exponent
+28 |   complex(sp), parameter :: cf = (2E10, -4.0E-5) ! Bad: Loss of precision, negative E exponent
 29 |   complex(sp), parameter :: cg = (1.23456, -0.0) ! Bad: Loss of precision
    |                                   ^^^^^^^ P001
 30 |   complex(sp), parameter :: ch = (0.0, 1.23456e1) ! Bad: Loss of precision, e exponent
@@ -64,7 +74,7 @@ snapshot_kind: text
 
 ./resources/test/fixtures/precision/P001.f90:30:40: P001 real literal 1.23456e1 missing kind suffix
    |
-28 |   complex(sp), parameter :: cf = (2E10, -4.0e-5) ! Okay: No loss of precision, E exponent
+28 |   complex(sp), parameter :: cf = (2E10, -4.0E-5) ! Bad: Loss of precision, negative E exponent
 29 |   complex(sp), parameter :: cg = (1.23456, -0.0) ! Bad: Loss of precision
 30 |   complex(sp), parameter :: ch = (0.0, 1.23456e1) ! Bad: Loss of precision, e exponent
    |                                        ^^^^^^^^^ P001

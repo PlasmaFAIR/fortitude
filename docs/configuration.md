@@ -69,10 +69,6 @@ Arguments:
   [FILES]...  List of files or directories to check. Directories are searched recursively for Fortran files. The `--file-extensions` option can be used to control which files are included in the search [default: .]
 
 Options:
-      --line-length <LINE_LENGTH>
-          Set the maximum allowable line length [default: 100]
-      --file-extensions <FILE_EXTENSIONS>
-          File extensions to check [default: f90 F90 f95 F95 f03 F03 f08 F08 f18 F18 f23 F23]
       --fix
           Apply fixes to resolve lint violations. Use `--no-fix` to disable or `--unsafe-fixes` to include unsafe fixes
       --unsafe-fixes
@@ -97,10 +93,24 @@ Rule selection:
           Comma-separated list of rule codes to enable (or ALL, to enable all rules)
       --extend-select <RULE_CODE>
           Like --select, but adds additional rule codes on top of those already specified
-      --per-file-ignores <PER_FILE_IGNORES>
+      --per-file-ignores <FILE_PATTERN:RULE_CODE>
           List of mappings from file pattern to code to exclude
-      --extend-per-file-ignores <EXTEND_PER_FILE_IGNORES>
+      --extend-per-file-ignores <FILE_PATTERN:RULE_CODE>
           Like `--per-file-ignores`, but adds additional ignores on top of those already specified
+
+File selection:
+      --file-extensions <FILE_EXTENSIONS>
+          File extensions to check [default: f90 F90 f95 F95 f03 F03 f08 F08 f18 F18 f23 F23]
+      --exclude <FILE_PATTERN>
+          List of paths, used to omit files and/or directories from analysis
+      --extend-exclude <FILE_PATTERN>
+          Like --exclude, but adds additional files and directories on top of those already excluded
+      --force-exclude
+          Enforce exclusions, even for paths passed to Fortitude directly on the command-line. Use `--no-force_exclude` to disable
+
+Per-Rule Options:
+      --line-length <LINE_LENGTH>
+          Set the maximum allowable line length [default: 100]
 ```
 
 <!-- End auto-generated check help. -->

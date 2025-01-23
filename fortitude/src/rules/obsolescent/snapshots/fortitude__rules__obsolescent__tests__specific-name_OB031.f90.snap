@@ -1,0 +1,79 @@
+---
+source: fortitude/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB031.f90:6:9: OB031 [*] deprecated type-specific function 'DSIN'
+  |
+5 |     y = ASIN(x)
+6 |     y = DSIN(x)
+  |         ^^^^ OB031
+7 | end subroutine test
+  |
+  = help: Use 'SIN'
+
+ℹ Unsafe fix
+3 3 |     real(kind=dp) :: x, y
+4 4 | 
+5 5 |     y = ASIN(x)
+6   |-    y = DSIN(x)
+  6 |+    y = SIN(x)
+7 7 | end subroutine test
+8 8 | 
+9 9 | subroutine test1()
+
+./resources/test/fixtures/obsolescent/OB031.f90:13:19: OB031 [*] deprecated type-specific function 'DSIN'
+   |
+11 |     real(kind=dp) :: x, y
+12 |
+13 |     y = ASIN(x) + DSIN(x)
+   |                   ^^^^ OB031
+14 | end subroutine test1
+   |
+   = help: Use 'SIN'
+
+ℹ Unsafe fix
+10 10 |     use, intrinsic :: iso_fortran_env, dp => real64
+11 11 |     real(kind=dp) :: x, y
+12 12 | 
+13    |-    y = ASIN(x) + DSIN(x)
+   13 |+    y = ASIN(x) + SIN(x)
+14 14 | end subroutine test1
+15 15 | 
+16 16 | subroutine test2()
+
+./resources/test/fixtures/obsolescent/OB031.f90:20:9: OB031 [*] deprecated type-specific function 'dsin'
+   |
+18 |     real(kind=dp) :: x, y
+19 |
+20 |     y = dsin(x) + dcos(x)
+   |         ^^^^ OB031
+21 | end subroutine test2
+   |
+   = help: Use 'sin'
+
+ℹ Unsafe fix
+17 17 |     use, intrinsic :: iso_fortran_env, dp => real64
+18 18 |     real(kind=dp) :: x, y
+19 19 | 
+20    |-    y = dsin(x) + dcos(x)
+   20 |+    y = sin(x) + dcos(x)
+21 21 | end subroutine test2
+
+./resources/test/fixtures/obsolescent/OB031.f90:20:19: OB031 [*] deprecated type-specific function 'dcos'
+   |
+18 |     real(kind=dp) :: x, y
+19 |
+20 |     y = dsin(x) + dcos(x)
+   |                   ^^^^ OB031
+21 | end subroutine test2
+   |
+   = help: Use 'cos'
+
+ℹ Unsafe fix
+17 17 |     use, intrinsic :: iso_fortran_env, dp => real64
+18 18 |     real(kind=dp) :: x, y
+19 19 | 
+20    |-    y = dsin(x) + dcos(x)
+   20 |+    y = dsin(x) + cos(x)
+21 21 | end subroutine test2

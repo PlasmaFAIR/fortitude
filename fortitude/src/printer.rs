@@ -8,6 +8,7 @@ use itertools::{iterate, Itertools};
 
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fs::relativize_path;
+use crate::logging::LogLevel;
 use crate::message::{
     AzureEmitter, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
     JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
@@ -28,6 +29,7 @@ bitflags! {
 
 pub(crate) struct Printer {
     format: OutputFormat,
+    log_level: LogLevel,
     flags: Flags,
     fix_mode: FixMode,
     unsafe_fixes: UnsafeFixes,
@@ -36,12 +38,14 @@ pub(crate) struct Printer {
 impl Printer {
     pub(crate) fn new(
         format: OutputFormat,
+        log_level: LogLevel,
         flags: Flags,
         fix_mode: FixMode,
         unsafe_fixes: UnsafeFixes,
     ) -> Self {
         Self {
             format,
+            log_level,
             flags,
             fix_mode,
             unsafe_fixes,
@@ -54,6 +58,10 @@ impl Printer {
         diagnostics: &Diagnostics,
         num_files: usize,
     ) -> Result<()> {
+        if self.log_level < LogLevel::Default {
+            return Ok(());
+        }
+
         // IO Errors indicate that we failed to read a file
         let num_failed = diagnostics
             .messages
@@ -158,6 +166,10 @@ impl Printer {
         diagnostics: &Diagnostics,
         writer: &mut dyn Write,
     ) -> Result<()> {
+        if matches!(self.log_level, LogLevel::Silent) {
+            return Ok(());
+        }
+
         let fixables = FixableStatistics::try_from(diagnostics, self.unsafe_fixes);
 
         match self.format {

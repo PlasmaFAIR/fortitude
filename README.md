@@ -38,6 +38,7 @@ It can also be installed as a pure Rust project:
 
 ```bash
 git clone https://github.com/PlasmaFAIR/fortitude
+cd fortitude
 cargo install --path fortitude
 ```
 
@@ -51,11 +52,11 @@ fortitude check
 ```
 
 You can also call `check` on individual files, globs, and
-directories. You can configure what extensions `fortitude` searches
+directories. You can configure what extensions Fortitude searches
 for in directories with `--file-extensions`:
 
 ```bash
-fortitude check src --file-extensions=f90,fpp
+fortitude check --file-extensions=f90,fpp
 ```
 
 You can select or ignore individual rules or whole groups with
@@ -77,7 +78,7 @@ fortitude check --select=typing --ignore=superfluous-implicit-none
 Use `--output-format=concise` to get shorter output:
 
 ```bash
-$ fortitude check --concise
+$ fortitude check --output-format=concise
 test.f90:2:1: M001 function not contained within (sub)module or program
 test.f90:5:1: S061 end statement should read 'end function double'
 test.f90:7:1: M001 subroutine not contained within (sub)module or program
@@ -90,11 +91,11 @@ The `explain` command can be used to get extra information about any rules:
 # Print extra information for all rules
 fortitude explain
 # Only get information for selected rules
-fortitude explain T001,T011
+fortitude explain T001 T011
 # Print information on all style rules
 fortitude explain S
 # Rules and categories can also be referred to by name
-fortitude explain style,superfluous-implicit-none
+fortitude explain style superfluous-implicit-none
 ```
 
 To see further commands and optional arguments, try using `--help`:
@@ -151,6 +152,8 @@ preview = true
 ```
 
 Run `fortitude explain` to see which rules are in preview mode.
+
+
 
 ## Configuration
 

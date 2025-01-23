@@ -1,10 +1,31 @@
 use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
+use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
+
+fn iso_fortran_env_param<S: AsRef<str>>(dtype: S, literal: u8) -> Option<String> {
+    match dtype.as_ref() {
+        "integer" | "logical" => {
+            if matches!(literal, 1u8 | 2u8 | 4u8 | 8u8) {
+                Some(format!("int{}", literal * 8))
+            } else {
+                None
+            }
+        }
+        "real" | "complex" => {
+            if matches!(literal, 4u8 | 8u8 | 16u8) {
+                Some(format!("real{}", literal * 8))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
 
 // TODO rules for intrinsic kinds in real(x, [KIND]) and similar type casting functions
 
@@ -65,14 +86,20 @@ use tree_sitter::Node;
 #[violation]
 pub struct LiteralKind {
     dtype: String,
-    literal: String,
+    literal: u8,
 }
 
 impl Violation for LiteralKind {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { dtype, literal } = self;
-        format!("{dtype} kind set with number literal '{literal}', use 'iso_fortran_env' parameter",)
+        format!("{dtype} kind set with number literal '{literal}'")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let Self { dtype, literal } = self;
+        iso_fortran_env_param(dtype, *literal)
+            .map(|param| format!("Use the parameter '{param}' from 'iso_fortran_env'"))
     }
 }
 
@@ -87,9 +114,7 @@ impl AstRule for LiteralKind {
 
         let kind_node = node.child_by_field_name("kind")?;
         let literal_node = integer_literal_kind(&kind_node, src)?;
-        let literal = literal_node.to_text(src)?.to_string();
-        // TODO: Can we recommend the "correct" size? Although
-        // non-standard, `real*8` _usually_ means `real(real64)`
+        let literal: u8 = literal_node.to_text(src)?.parse().ok()?;
         some_vec![Diagnostic::from_node(
             Self { dtype, literal },
             &literal_node
@@ -157,14 +182,25 @@ fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
 #[violation]
 pub struct LiteralKindSuffix {
     literal: String,
-    suffix: String,
+    suffix: u8,
 }
 
 impl Violation for LiteralKindSuffix {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { literal, suffix } = self;
-        format!("'{literal}' has literal suffix '{suffix}', use 'iso_fortran_env' parameter")
+        format!("'{literal}' has literal kind suffix '{suffix}'")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let Self { literal, suffix } = self;
+        let dtype = if regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]-?\d+)", literal) {
+            "real"
+        } else {
+            "integer"
+        };
+        iso_fortran_env_param(dtype, *suffix)
+            .map(|param| format!("Use the parameter '{param}' from 'iso_fortran_env'"))
     }
 }
 
@@ -176,7 +212,7 @@ impl AstRule for LiteralKindSuffix {
             return None;
         }
         let literal = node.to_text(src)?.to_string();
-        let suffix = kind.to_text(src)?.to_string();
+        let suffix: u8 = kind.to_text(src)?.parse().ok()?;
         some_vec![Diagnostic::from_node(Self { literal, suffix }, &kind)]
     }
 

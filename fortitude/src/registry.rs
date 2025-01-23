@@ -2,6 +2,9 @@ use fortitude_macros::RuleNamespace;
 use std::str::FromStr; // Needed by strum_macros
 
 pub use crate::rules::Rule;
+pub use rule_set::{RuleSet, RuleSetIterator};
+
+mod rule_set;
 
 // Rule categories and identity codes
 // ----------------------------------

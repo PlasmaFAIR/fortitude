@@ -1,29 +1,34 @@
 use crate::ast::FortitudeNode;
-use crate::cli::{CheckArgs, GlobalConfigArgs, FORTRAN_EXTS};
+use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
 use crate::fs;
+use crate::fs::{get_files, FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
 use crate::rule_selector::{
     collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
 };
+use crate::rule_table::RuleTable;
+use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
-    FixMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes,
-    DEFAULT_SELECTORS,
+    ExcludeMode, FixMode, GitignoreMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar,
+    Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
+use lazy_regex::{regex, regex_captures};
+use log::{debug, warn};
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
-use ruff_text_size::TextRange;
+use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::borrow::Cow;
@@ -31,12 +36,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io;
 use std::io::Write;
+use std::iter::once;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::str::FromStr;
+use std::time::Instant;
 use strum::IntoEnumIterator;
 use toml::Table;
-use tree_sitter::Parser;
-use walkdir::WalkDir;
+use tree_sitter::{Node, Parser};
 
 // These are just helper structs to let us quickly work out if there's
 // a fortitude section in an fpm.toml file
@@ -103,6 +110,17 @@ pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
+/// Find the path to the project root, which contains the `fpm.toml` or `fortitude.toml` file.
+/// If no such file exists, return the current working directory.
+fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
+    find_settings_toml(&path)?.map_or(Ok(fs::normalize_path(&path)), |settings| {
+        fs::normalize_path(settings)
+            .parent()
+            .context("Settings file has no parent")
+            .map(PathBuf::from)
+    })
+}
+
 /// Read either the "extra.fortitude" table from "fpm.toml", or the
 /// whole "fortitude.toml" file
 fn from_toml_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> {
@@ -137,7 +155,7 @@ fn resolve_bool_arg(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
 
 // This is our "known good" intermediate settings struct after we've
 // read the config file, but before we've overridden it from the CLI
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct CheckSettings {
     pub files: Vec<PathBuf>,
     pub ignore: Vec<RuleSelector>,
@@ -154,6 +172,36 @@ pub struct CheckSettings {
     pub output_format: OutputFormat,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
+    pub exclude: Option<Vec<FilePattern>>,
+    pub extend_exclude: Vec<FilePattern>,
+    pub exclude_mode: ExcludeMode,
+    pub gitignore_mode: GitignoreMode,
+}
+
+impl Default for CheckSettings {
+    fn default() -> Self {
+        Self {
+            files: Default::default(),
+            ignore: Default::default(),
+            select: Default::default(),
+            extend_select: Default::default(),
+            per_file_ignores: Default::default(),
+            extend_per_file_ignores: Default::default(),
+            line_length: Settings::default().line_length,
+            file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
+            fix: Default::default(),
+            fix_only: Default::default(),
+            show_fixes: Default::default(),
+            unsafe_fixes: Default::default(),
+            output_format: Default::default(),
+            progress_bar: Default::default(),
+            preview: Default::default(),
+            exclude: Default::default(),
+            extend_exclude: Default::default(),
+            exclude_mode: Default::default(),
+            gitignore_mode: Default::default(),
+        }
+    }
 }
 
 /// Read either fpm.toml or fortitude.toml into our "known good" file
@@ -161,7 +209,7 @@ pub struct CheckSettings {
 fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
     let filename = match config_file {
         Some(filename) => filename.clone(),
-        None => match find_settings_toml(".")? {
+        None => match find_settings_toml(path_absolutize::path_dedot::CWD.as_path())? {
             Some(filename) => filename,
             None => {
                 return Ok(CheckSettings::default());
@@ -192,6 +240,14 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             preview: resolve_bool_arg(value.preview, value.no_preview)
                 .map(PreviewMode::from)
                 .unwrap_or_default(),
+            exclude: value.exclude,
+            extend_exclude: value.extend_exclude.unwrap_or_default(),
+            exclude_mode: resolve_bool_arg(value.force_exclude, value.no_force_exclude)
+                .map(ExcludeMode::from)
+                .unwrap_or_default(),
+            gitignore_mode: resolve_bool_arg(value.respect_gitignore, value.no_respect_gitignore)
+                .map(GitignoreMode::from)
+                .unwrap_or_default(),
         },
         None => CheckSettings::default(),
     };
@@ -199,7 +255,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
 }
 
 /// Get the list of active rules for this session.
-fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<Vec<Rule>> {
+fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<RuleTable> {
     let preview = PreviewOptions {
         mode: *preview,
         require_explicit: false,
@@ -236,49 +292,20 @@ fn ruleset(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<Vec<Rul
         }
     }
 
-    let rules = select_set.into_iter().collect_vec();
+    let mut rules = RuleTable::empty();
+
+    for rule in select_set {
+        let should_fix = true;
+        rules.enable(rule, should_fix);
+    }
 
     Ok(rules)
-}
-
-/// Helper function used with `filter` to select only paths that end in a Fortran extension.
-/// Includes non-standard extensions, as these should be reported.
-fn filter_fortran_extensions<S: AsRef<str>>(path: &Path, extensions: &[S]) -> bool {
-    if let Some(ext) = path.extension() {
-        // Can't use '&[&str].contains()', as extensions are of type OsStr
-        extensions.iter().any(|x| x.as_ref() == ext)
-    } else {
-        false
-    }
-}
-
-/// Expand the input list of files to include all Fortran files.
-fn get_files<P: AsRef<Path>, S: AsRef<str>>(
-    paths: &[P],
-    extensions: &[S],
-) -> anyhow::Result<Vec<PathBuf>> {
-    paths
-        .iter()
-        .flat_map(|path| {
-            if path.as_ref().is_dir() {
-                WalkDir::new(path)
-                    .min_depth(1)
-                    .into_iter()
-                    .filter_map(|x| x.ok()) // skip dirs if user doesn't have permission
-                    .filter(|x| filter_fortran_extensions(x.path(), extensions))
-                    .map(|x| std::path::absolute(x.path()))
-                    .collect::<Vec<_>>()
-            } else {
-                vec![std::path::absolute(path)]
-            }
-        })
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(anyhow::Error::new)
 }
 
 /// Parse a file, check it for issues, and return the report.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn check_file(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -295,6 +322,7 @@ pub(crate) fn check_file(
             transformed,
             fixed,
         }) = check_and_fix_file(
+            rules,
             path_rules,
             text_rules,
             ast_entrypoints,
@@ -319,6 +347,7 @@ pub(crate) fn check_file(
         } else {
             // Failed to fix, so just lint the original source
             let result = check_only_file(
+                rules,
                 path_rules,
                 text_rules,
                 ast_entrypoints,
@@ -331,6 +360,7 @@ pub(crate) fn check_file(
         }
     } else {
         let result = check_only_file(
+            rules,
             path_rules,
             text_rules,
             ast_entrypoints,
@@ -365,8 +395,96 @@ pub(crate) fn check_file(
     })
 }
 
+/// A single allowed rule and the range it applies to
+struct AllowComment {
+    pub rule: Rule,
+    pub range: TextRange,
+}
+
+/// If this node is an `allow` comment, get all the rules allowed on the next line
+fn gather_allow_comments(
+    node: &Node,
+    file: &SourceFile,
+    rules: &RuleTable,
+) -> Result<Vec<AllowComment>, Vec<Diagnostic>> {
+    if node.kind() != "comment" {
+        return Ok(vec![]);
+    }
+
+    let mut allow_comments = Vec::new();
+    let mut errors = Vec::new();
+
+    if let Some((_, allow_comment)) = regex_captures!(
+        r#"! allow\((.*)\)\s*"#,
+        node.to_text(file.source_text()).unwrap()
+    ) {
+        let preview = PreviewOptions {
+            mode: PreviewMode::Enabled,
+            require_explicit: false,
+        };
+
+        // Partition the found selectors into valid and invalid
+        let rule_regex = regex!(r#"\w[-\w\d]*"#);
+        let mut allow_rules = Vec::new();
+        // 8 from length of "! allow("
+        let comment_start_offset =
+            TextSize::try_from(node.start_byte()).unwrap() + TextSize::new(8);
+        for rule in rule_regex.find_iter(allow_comment) {
+            match RuleSelector::from_str(rule.as_str()) {
+                Ok(rule) => allow_rules.push(rule),
+                Err(error) => {
+                    let start = comment_start_offset + TextSize::try_from(rule.start()).unwrap();
+                    let end = comment_start_offset + TextSize::try_from(rule.end()).unwrap();
+                    errors.push(Diagnostic::new(
+                        InvalidRuleCodeOrName {
+                            message: error.to_string(),
+                        },
+                        TextRange::new(start, end),
+                    ))
+                }
+            }
+        }
+
+        if let Some(next_node) = node.next_named_sibling() {
+            let start_byte = TextSize::try_from(next_node.start_byte()).unwrap();
+            let end_byte = TextSize::try_from(next_node.end_byte()).unwrap();
+
+            // This covers the next statement _upto_ the end of the
+            // line that it _ends_ on -- i.e. including trailing
+            // whitespace and other statements. This might have weird
+            // edge cases.
+            let src = file.to_source_code();
+            let start_index = src.line_index(start_byte);
+            let end_index = src.line_index(end_byte);
+            let start_line = src.line_start(start_index);
+            let end_line = src.line_end(end_index);
+
+            let range = TextRange::new(start_line, end_line);
+            for rule_selector in allow_rules {
+                for rule in rule_selector.rules(&preview) {
+                    allow_comments.push(AllowComment { rule, range });
+                }
+            }
+        };
+    }
+
+    if !errors.is_empty() && rules.enabled(Rule::InvalidRuleCodeOrName) {
+        Err(errors)
+    } else {
+        Ok(allow_comments)
+    }
+}
+
+/// Filter out allowed rules
+fn filter_allowed_rules(diagnostic: &Diagnostic, allow_comments: &[AllowComment]) -> bool {
+    allow_comments.iter().all(|allow| {
+        !(allow.rule == diagnostic.kind.rule() && allow.range.contains_range(diagnostic.range))
+    })
+}
+
 /// Parse a file, check it for issues, and return the report.
 pub(crate) fn check_only_file(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -375,6 +493,7 @@ pub(crate) fn check_only_file(
     settings: &Settings,
 ) -> anyhow::Result<Vec<DiagnosticMessage>> {
     let mut violations = Vec::new();
+    let mut allow_comments = Vec::new();
 
     for rule in path_rules {
         if let Some(violation) = rule.check(settings, path) {
@@ -395,7 +514,9 @@ pub(crate) fn check_only_file(
     let tree = parser
         .parse(file.source_text(), None)
         .context("Failed to parse")?;
-    for node in tree.root_node().named_descendants() {
+
+    let root = tree.root_node();
+    for node in once(root).chain(root.named_descendants()) {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for rule in rules {
                 if let Some(violation) = rule.check(settings, &node, file) {
@@ -405,10 +526,15 @@ pub(crate) fn check_only_file(
                 }
             }
         }
+        match gather_allow_comments(&node, file, rules) {
+            Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
+            Err(mut errors) => violations.append(&mut errors),
+        };
     }
 
     Ok(violations
         .into_iter()
+        .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
         .map(|v| DiagnosticMessage::from_ruff(file, v))
         .collect_vec())
 }
@@ -426,7 +552,9 @@ pub struct FixerResult<'a> {
     pub fixed: FixTable,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn check_and_fix_file<'a>(
+    rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
     text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
@@ -454,6 +582,7 @@ pub(crate) fn check_and_fix_file<'a>(
     // Continuously fix until the source code stabilizes.
     loop {
         let mut violations = Vec::new();
+        let mut allow_comments = Vec::new();
 
         // Map row and column locations to byte slices (lazily).
         let locator = Locator::new(transformed.source_text());
@@ -476,8 +605,8 @@ pub(crate) fn check_and_fix_file<'a>(
             .parse(transformed.source_text(), None)
             .context("Failed to parse")?;
 
-        // Perform AST analysis
-        for node in tree.root_node().named_descendants() {
+        let root = tree.root_node();
+        for node in once(root).chain(root.named_descendants()) {
             if let Some(rules) = ast_entrypoints.get(node.kind()) {
                 for rule in rules {
                     if let Some(violation) = rule.check(settings, &node, &transformed) {
@@ -487,6 +616,10 @@ pub(crate) fn check_and_fix_file<'a>(
                     }
                 }
             }
+            match gather_allow_comments(&node, file, rules) {
+                Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
+                Err(mut violation) => violations.append(&mut violation),
+            };
         }
 
         if iterations == 0 {
@@ -495,6 +628,11 @@ pub(crate) fn check_and_fix_file<'a>(
             report_fix_syntax_error(path, transformed.source_text(), fixed.keys().copied());
             return Err(anyhow!("Fix introduced a syntax error"));
         }
+
+        let violations = violations
+            .into_iter()
+            .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
+            .collect_vec();
 
         // Apply fix
         if let Some(FixResult {
@@ -628,20 +766,20 @@ pub(crate) fn read_to_string(path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
 }
 
-pub(crate) fn rules_to_path_rules(rules: &[Rule]) -> Vec<PathRuleEnum> {
+pub(crate) fn rules_to_path_rules(rules: &RuleTable) -> Vec<PathRuleEnum> {
     rules
-        .iter()
-        .filter_map(|rule| match TryFrom::try_from(*rule) {
+        .iter_enabled()
+        .filter_map(|rule| match TryFrom::try_from(rule) {
             Ok(path) => Some(path),
             _ => None,
         })
         .collect_vec()
 }
 
-pub(crate) fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
+pub(crate) fn rules_to_text_rules(rules: &RuleTable) -> Vec<TextRuleEnum> {
     rules
-        .iter()
-        .filter_map(|rule| match TryFrom::try_from(*rule) {
+        .iter_enabled()
+        .filter_map(|rule| match TryFrom::try_from(rule) {
             Ok(text) => Some(text),
             _ => None,
         })
@@ -649,10 +787,10 @@ pub(crate) fn rules_to_text_rules(rules: &[Rule]) -> Vec<TextRuleEnum> {
 }
 
 /// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
-pub(crate) fn ast_entrypoint_map<'a>(rules: &[Rule]) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
+pub(crate) fn ast_entrypoint_map<'a>(rules: &RuleTable) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
     let ast_rules: Vec<AstRuleEnum> = rules
-        .iter()
-        .filter_map(|rule| match TryFrom::try_from(*rule) {
+        .iter_enabled()
+        .filter_map(|rule| match TryFrom::try_from(rule) {
             Ok(ast) => Some(ast),
             _ => None,
         })
@@ -718,6 +856,25 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             .collect::<Vec<_>>(),
     ))?;
 
+    let file_excludes = FilePatternSet::try_from_iter(
+        EXCLUDE_BUILTINS
+            .iter()
+            .cloned()
+            .chain(
+                args.exclude
+                    .unwrap_or(file_settings.exclude.unwrap_or_default())
+                    .into_iter(),
+            )
+            .chain(args.extend_exclude.unwrap_or_default().into_iter())
+            .chain(file_settings.extend_exclude.into_iter()),
+    )?;
+    let exclude_mode = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
+        .map(ExcludeMode::from)
+        .unwrap_or(file_settings.exclude_mode);
+    let gitignore_mode = resolve_bool_arg(args.respect_gitignore, args.no_respect_gitignore)
+        .map(GitignoreMode::from)
+        .unwrap_or(file_settings.gitignore_mode);
+
     let output_format = args.output_format.unwrap_or(file_settings.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
         .map(PreviewMode::from)
@@ -756,13 +913,23 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
-    let rules = ruleset(rule_selection, &preview_mode)?;
+    let rules = to_rule_table(rule_selection, &preview_mode)?;
 
     let path_rules = rules_to_path_rules(&rules);
     let text_rules = rules_to_text_rules(&rules);
     let ast_entrypoints = ast_entrypoint_map(&rules);
 
-    let files = get_files(files, file_extensions)?;
+    let start = Instant::now();
+
+    let files = get_files(
+        files,
+        project_root(path_absolutize::path_dedot::CWD.as_path())?,
+        file_extensions,
+        file_excludes,
+        exclude_mode,
+        gitignore_mode,
+    )?;
+    debug!("Identified files to lint in: {:?}", start.elapsed());
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
@@ -788,27 +955,39 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         ProgressBar::Off => ProgressStyle::with_template("").unwrap(),
     };
 
+    let start = Instant::now();
     let diagnostics_per_file = files
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
-        .map(|path| {
+        .filter_map(|path| {
             let filename = path.to_string_lossy();
 
             let source = match read_to_string(path) {
                 Ok(source) => source,
                 Err(error) => {
-                    let message = format!("Error opening file: {error}");
-                    return Diagnostics::new(vec![DiagnosticMessage::from_error(
-                        filename,
-                        Diagnostic::new(IoError { message }, TextRange::default()),
-                    )]);
+                    if rules.enabled(Rule::IoError) {
+                        let message = format!("Error opening file: {error}");
+                        return Some(Diagnostics::new(vec![DiagnosticMessage::from_error(
+                            filename,
+                            Diagnostic::new(IoError { message }, TextRange::default()),
+                        )]));
+                    } else {
+                        warn!(
+                            "{}{}{} {error}",
+                            "Error opening file ".bold(),
+                            fs::relativize_path(path).bold(),
+                            ":".bold()
+                        );
+                        return None;
+                    }
                 }
             };
 
             let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
             match check_file(
+                &rules,
                 &path_rules,
                 &text_rules,
                 &ast_entrypoints,
@@ -819,24 +998,43 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
                 unsafe_fixes,
                 &per_file_ignores,
             ) {
-                Ok(violations) => violations,
+                Ok(violations) => Some(violations),
                 Err(msg) => {
-                    let message = format!("Failed to process: {msg}");
-                    Diagnostics::new(vec![DiagnosticMessage::from_error(
-                        filename,
-                        Diagnostic::new(IoError { message }, TextRange::default()),
-                    )])
+                    if rules.enabled(Rule::IoError) {
+                        let message = format!("Failed to process: {msg}");
+                        Some(Diagnostics::new(vec![DiagnosticMessage::from_error(
+                            filename,
+                            Diagnostic::new(IoError { message }, TextRange::default()),
+                        )]))
+                    } else {
+                        warn!(
+                            "{}{}{} {msg}",
+                            "Failed to process ".bold(),
+                            fs::relativize_path(path).bold(),
+                            ":".bold()
+                        );
+                        None
+                    }
                 }
             }
         });
 
-    let mut all_diagnostics = diagnostics_per_file
-        .fold(Diagnostics::default, |all_diagnostics, file_diagnostics| {
-            all_diagnostics + file_diagnostics
-        })
-        .reduce(Diagnostics::default, |a, b| a + b);
+    let (mut all_diagnostics, checked_files) = diagnostics_per_file
+        .fold(
+            || (Diagnostics::default(), 0u64),
+            |(all_diagnostics, checked_files), file_diagnostics| {
+                (all_diagnostics + file_diagnostics, checked_files + 1)
+            },
+        )
+        .reduce(
+            || (Diagnostics::default(), 0u64),
+            |a, b| (a.0 + b.0, a.1 + b.1),
+        );
 
     all_diagnostics.messages.par_sort_unstable();
+
+    let duration = start.elapsed();
+    debug!("Checked {:?} files in: {:?}", checked_files, duration);
 
     let total_errors = all_diagnostics.messages.len();
 
@@ -850,11 +1048,14 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
     }
 
-    Printer::new(output_format, printer_flags, fix_mode, unsafe_fixes).write_once(
-        files.len(),
-        &all_diagnostics,
-        &mut writer,
-    )?;
+    Printer::new(
+        output_format,
+        global_options.log_level(),
+        printer_flags,
+        fix_mode,
+        unsafe_fixes,
+    )
+    .write_once(files.len(), &all_diagnostics, &mut writer)?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)
@@ -867,9 +1068,13 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 mod tests {
     use std::str::FromStr;
 
-    use crate::rule_selector::RuleSelector;
+    use crate::{registry::RuleSet, rule_selector::RuleSelector};
 
     use super::*;
+
+    fn resolve_rules(args: RuleSelection, preview: &PreviewMode) -> Result<RuleSet> {
+        Ok(to_rule_table(args, preview)?.iter_enabled().collect())
+    }
 
     #[test]
     fn empty_select() -> anyhow::Result<()> {
@@ -880,13 +1085,15 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::default();
-        let rules = ruleset(args, &preview_mode)?;
+        let rules = resolve_rules(args, &preview_mode)?;
         let preview = PreviewOptions::default();
 
         let all_rules: Vec<Rule> = DEFAULT_SELECTORS
             .iter()
             .flat_map(|selector| selector.rules(&preview))
             .collect();
+
+        let all_rules = RuleSet::from_rules(&all_rules);
 
         assert_eq!(rules, all_rules);
 
@@ -902,7 +1109,7 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::Enabled;
-        let rules = ruleset(args, &preview_mode)?;
+        let rules = resolve_rules(args, &preview_mode)?;
         let preview = PreviewOptions {
             mode: preview_mode,
             require_explicit: false,
@@ -912,6 +1119,8 @@ mod tests {
             .iter()
             .flat_map(|selector| selector.rules(&preview))
             .collect();
+
+        let all_rules = RuleSet::from_rules(&all_rules);
 
         assert_eq!(rules, all_rules);
 
@@ -927,8 +1136,8 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::default();
-        let rules = ruleset(args, &preview_mode)?;
-        let one_rules: Vec<Rule> = vec![Rule::IoError];
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rules(&[Rule::IoError]);
 
         assert_eq!(rules, one_rules);
 
@@ -944,8 +1153,8 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::default();
-        let rules = ruleset(args, &preview_mode)?;
-        let one_rules: Vec<Rule> = vec![];
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::empty();
 
         assert_eq!(rules, one_rules);
 
@@ -961,8 +1170,8 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::Enabled;
-        let rules = ruleset(args, &preview_mode)?;
-        let one_rules: Vec<Rule> = vec![Rule::PreviewTestRule];
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rule(Rule::PreviewTestRule);
 
         assert_eq!(rules, one_rules);
 
@@ -978,8 +1187,8 @@ mod tests {
         };
 
         let preview_mode = PreviewMode::default();
-        let rules = ruleset(args, &preview_mode)?;
-        let one_rules: Vec<Rule> = vec![Rule::IoError, Rule::SyntaxError];
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rules(&[Rule::IoError, Rule::SyntaxError]);
 
         assert_eq!(rules, one_rules);
 

@@ -14,6 +14,7 @@ pub(crate) mod style;
 pub(crate) mod testing;
 pub mod text;
 pub(crate) mod typing;
+pub mod utilities;
 use crate::registry::{AsRule, Category};
 
 use std::fmt::Formatter;
@@ -74,8 +75,9 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
     #[rustfmt::skip]
     Some(match (category, code) {
-        (Error, "000") => (RuleGroup::Stable, Path, error::ioerror::IoError),
+        (Error, "000") => (RuleGroup::Stable, None, error::ioerror::IoError),
         (Error, "001") => (RuleGroup::Stable, Ast, error::syntax_error::SyntaxError),
+        (Error, "011") => (RuleGroup::Stable, None, error::allow_comments::InvalidRuleCodeOrName),
 
         (Filesystem, "001") => (RuleGroup::Stable, Path, filesystem::extensions::NonStandardFileExtension),
 
@@ -103,10 +105,13 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Typing, "043") => (RuleGroup::Stable, Ast, typing::assumed_size::DeprecatedAssumedSizeCharacter),
         (Typing, "051") => (RuleGroup::Stable, Ast, typing::init_decls::InitialisationInDeclaration),
         (Typing, "061") => (RuleGroup::Stable, Ast, typing::external::ExternalProcedure),
+        (Typing, "071") => (RuleGroup::Preview, Ast, typing::derived_default_init::MissingDefaultPointerInitalisation),
 
         (Obsolescent, "001") => (RuleGroup::Stable, Ast, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Stable, Ast, obsolescent::common_blocks::CommonBlock),
         (Obsolescent, "021") => (RuleGroup::Stable, Ast, obsolescent::entry_statement::EntryStatement),
+        (Obsolescent, "031") => (RuleGroup::Preview, Ast, obsolescent::specific_names::SpecificName),
+        (Obsolescent, "041") => (RuleGroup::Preview, Ast, obsolescent::computed_goto::ComputedGoTo),
 
         (Precision, "001") => (RuleGroup::Stable, Ast, precision::kind_suffixes::NoRealSuffix),
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),
@@ -114,8 +119,12 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Modules, "001") => (RuleGroup::Stable, Ast, modules::external_functions::ProcedureNotInModule),
         (Modules, "011") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
+        (Modules, "012") => (RuleGroup::Preview, Ast, modules::use_statements::MissingIntrinsic),
         (Modules, "021") => (RuleGroup::Preview, Ast, modules::accessibility_statements::MissingAccessibilityStatement),
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
+        (Modules, "031") => (RuleGroup::Preview, Ast, modules::include_statement::IncludeStatement),
+        (Modules, "041") => (RuleGroup::Preview, Ast, modules::file_contents::MultipleModules),
+        (Modules, "042") => (RuleGroup::Preview, Ast, modules::file_contents::ProgramWithModule),
 
         (Io, "001") => (RuleGroup::Preview, Ast, io::missing_specifier::MissingActionSpecifier),
         (Io, "011") => (RuleGroup::Preview, Ast, io::magic_io_unit::MagicIoUnit),
@@ -128,28 +137,28 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9900") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRule),
+        (Error, "9900") => (RuleGroup::Stable, None, testing::test_rules::StableTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9901") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleSafeFix),
+        (Error, "9901") => (RuleGroup::Stable, None, testing::test_rules::StableTestRuleSafeFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9902") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleUnsafeFix),
+        (Error, "9902") => (RuleGroup::Stable, None, testing::test_rules::StableTestRuleUnsafeFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9903") => (RuleGroup::Stable, Test, testing::test_rules::StableTestRuleDisplayOnlyFix),
+        (Error, "9903") => (RuleGroup::Stable, None, testing::test_rules::StableTestRuleDisplayOnlyFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9904") => (RuleGroup::Preview, Test, testing::test_rules::PreviewTestRule),
+        (Error, "9904") => (RuleGroup::Preview, None, testing::test_rules::PreviewTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9905") => (RuleGroup::Deprecated, Test, testing::test_rules::DeprecatedTestRule),
+        (Error, "9905") => (RuleGroup::Deprecated, None, testing::test_rules::DeprecatedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9906") => (RuleGroup::Deprecated, Test, testing::test_rules::AnotherDeprecatedTestRule),
+        (Error, "9906") => (RuleGroup::Deprecated, None, testing::test_rules::AnotherDeprecatedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9907") => (RuleGroup::Removed, Test, testing::test_rules::RemovedTestRule),
+        (Error, "9907") => (RuleGroup::Removed, None, testing::test_rules::RemovedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9908") => (RuleGroup::Removed, Test, testing::test_rules::AnotherRemovedTestRule),
+        (Error, "9908") => (RuleGroup::Removed, None, testing::test_rules::AnotherRemovedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9909") => (RuleGroup::Removed, Test, testing::test_rules::RedirectedFromTestRule),
+        (Error, "9909") => (RuleGroup::Removed, None, testing::test_rules::RedirectedFromTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9910") => (RuleGroup::Stable, Test, testing::test_rules::RedirectedToTestRule),
+        (Error, "9910") => (RuleGroup::Stable, None, testing::test_rules::RedirectedToTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9911") => (RuleGroup::Removed, Test, testing::test_rules::RedirectedFromPrefixTestRule),
+        (Error, "9911") => (RuleGroup::Removed, None, testing::test_rules::RedirectedFromPrefixTestRule),
     })
 }
