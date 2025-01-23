@@ -1,4 +1,5 @@
 pub mod assumed_size;
+pub mod derived_default_init;
 pub mod external;
 pub mod implicit_typing;
 pub mod init_decls;
@@ -32,6 +33,7 @@ mod tests {
     #[test_case(Rule::DeprecatedAssumedSizeCharacter, Path::new("T043.f90"))]
     #[test_case(Rule::InitialisationInDeclaration, Path::new("T051.f90"))]
     #[test_case(Rule::ExternalProcedure, Path::new("T061.f90"))]
+    #[test_case(Rule::MissingDefaultPointerInitalisation, Path::new("T071.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
