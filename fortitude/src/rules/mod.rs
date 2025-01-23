@@ -12,7 +12,6 @@ pub(crate) mod precision;
 pub(crate) mod readability;
 pub(crate) mod style;
 pub(crate) mod testing;
-pub mod text;
 pub(crate) mod typing;
 pub mod utilities;
 use crate::registry::{AsRule, Category};
@@ -87,8 +86,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "051") => (RuleGroup::Stable, Ast, style::relational_operators::DeprecatedRelationalOperator),
         (Style, "061") => (RuleGroup::Stable, Ast, style::end_statements::UnnamedEndStatement),
         (Style, "071") => (RuleGroup::Stable, Ast, style::double_colon_in_decl::MissingDoubleColon),
-        (Style, "081") => (RuleGroup::Preview, Text, style::semicolons::SuperfluousSemicolon),
-        (Style, "082") => (RuleGroup::Preview, Text, style::semicolons::MultipleStatementsPerLine),
+        (Style, "081") => (RuleGroup::Preview, Ast, style::semicolons::SuperfluousSemicolon),
+        (Style, "082") => (RuleGroup::Preview, Ast, style::semicolons::MultipleStatementsPerLine),
         (Style, "101") => (RuleGroup::Stable, Text, style::whitespace::TrailingWhitespace),
         (Style, "102") => (RuleGroup::Stable, Ast, style::whitespace::IncorrectSpaceBeforeComment),
 

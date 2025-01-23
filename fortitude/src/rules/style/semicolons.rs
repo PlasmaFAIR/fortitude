@@ -1,26 +1,43 @@
-use lazy_regex::bytes_regex_is_match;
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_source_file::{OneIndexed, SourceFile};
-use ruff_text_size::{TextRange, TextSize};
+use ruff_source_file::SourceFile;
+use tree_sitter::Node;
 
-use crate::rules::text::blank_comments_and_strings;
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::TextRule;
+use crate::{AstRule, FromAstNode};
 
-fn semicolon_is_superfluous<S: AsRef<str>>(line: S, position: usize) -> bool {
-    let line = line.as_ref();
-    // A semicolons is superfluous if:
-    // - It is at the beginning of a line, possibly containing a line continuation or
-    //   other semicolons.
-    // - It is at the end of the last statement on a line, even if followed by a line
-    //   continuation character.
-    // - It is followed by other semicolons (with any amount of whitespace in between)
-    line.as_bytes()[..position]
-        .iter()
-        .all(|b| b.is_ascii_whitespace() || *b == b'&' || *b == b';')
-        || bytes_regex_is_match!(r"^;[\s!&]*$", &line.as_bytes()[position..])
-        || bytes_regex_is_match!(r"^;\s*;", &line.as_bytes()[position..])
+fn semicolon_is_superfluous(node: &Node) -> bool {
+    let line_number = node.start_position().row;
+    // Test it is at beginning of a line. If the previous sibling is on an earlier line,
+    // or if there is no previous sibling, then it is at the beginning of a line.
+    // Also check that the previous sibling isn't a semicolon!
+    if let Some(prev_node) = node.prev_sibling() {
+        let prev_line_number = prev_node.start_position().row;
+        if prev_line_number < line_number {
+            return true;
+        }
+        if prev_line_number == line_number && prev_node.kind() == ";" {
+            return true;
+        }
+    } else {
+        return true;
+    }
+    // Test it is at the end of a line. If the next sibling is on a later line, or if
+    // there is no next sibling, then it is at the end of a line. Also check that the
+    // next sibling isn't a comment or another semicolon!
+    if let Some(next_node) = node.next_sibling() {
+        let next_line_number = next_node.start_position().row;
+        if next_line_number > line_number {
+            return true;
+        }
+        if next_line_number == line_number && next_node.kind() == "comment" {
+            return true;
+        }
+    } else {
+        return true;
+    }
+    false
 }
 
 /// ## What does it do?
@@ -49,45 +66,17 @@ impl AlwaysFixableViolation for SuperfluousSemicolon {
     }
 }
 
-impl TextRule for SuperfluousSemicolon {
-    fn check(_settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
-        let source = source_file.to_source_code();
-        let text = blank_comments_and_strings(source.text());
-        text.lines()
-            .enumerate()
-            .flat_map(|(line_idx, line)| {
-                let line_start_byte = source.line_start(OneIndexed::from_zero_indexed(line_idx));
-                line.bytes()
-                    .enumerate()
-                    .filter_map(move |(col_idx, b)| {
-                        if b == b';' && semicolon_is_superfluous(line, col_idx) {
-                            Some(col_idx)
-                        } else {
-                            None
-                        }
-                    })
-                    .map(move |col_idx| {
-                        let leading_whitespace = line.as_bytes()[..col_idx]
-                            .iter()
-                            .rev()
-                            .take_while(|&&b| b == b' ' || b == b'\t')
-                            .count();
-                        let trailing_whitespace = line.as_bytes()[col_idx + 1..]
-                            .iter()
-                            .take_while(|&&b| b == b' ' || b == b'\t')
-                            .count();
-                        let edit_start =
-                            line_start_byte + TextSize::from((col_idx - leading_whitespace) as u32);
-                        let edit_end = line_start_byte
-                            + TextSize::from((col_idx + 1 + trailing_whitespace) as u32);
-                        let edit = Edit::deletion(edit_start, edit_end);
-                        let report_start = line_start_byte + TextSize::from(col_idx as u32);
-                        let report_end = line_start_byte + TextSize::from((col_idx + 1) as u32);
-                        let range = TextRange::new(report_start, report_end);
-                        Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit))
-                    })
-            })
-            .collect()
+impl AstRule for SuperfluousSemicolon {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        if semicolon_is_superfluous(node) {
+            let edit = node.edit_delete(src);
+            return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
+        }
+        None
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec![";"]
     }
 }
 
@@ -110,47 +99,16 @@ impl AlwaysFixableViolation for MultipleStatementsPerLine {
     }
 }
 
-impl TextRule for MultipleStatementsPerLine {
-    fn check(_settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
-        let source = source_file.to_source_code();
-        let text = blank_comments_and_strings(source.text());
-        text.lines()
-            .enumerate()
-            .flat_map(|(line_idx, line)| {
-                let line_start_byte = source.line_start(OneIndexed::from_zero_indexed(line_idx));
-                line.bytes()
-                    .enumerate()
-                    .filter_map(move |(col_idx, b)| {
-                        if b == b';' && !semicolon_is_superfluous(line, col_idx) {
-                            Some(col_idx)
-                        } else {
-                            None
-                        }
-                    })
-                    .map(move |col_idx| {
-                        let leading_whitespace = line.as_bytes()[..col_idx]
-                            .iter()
-                            .rev()
-                            .take_while(|&&b| b == b' ' || b == b'\t')
-                            .count();
-                        let trailing_whitespace = line.as_bytes()[col_idx + 1..]
-                            .iter()
-                            .take_while(|&&b| b == b' ' || b == b'\t')
-                            .count();
-                        let indentation: String =
-                            line.chars().take_while(|c| c.is_whitespace()).collect();
-                        let replacement = format!("\n{indentation}");
-                        let edit_start =
-                            line_start_byte + TextSize::from((col_idx - leading_whitespace) as u32);
-                        let edit_end = line_start_byte
-                            + TextSize::from((col_idx + 1 + trailing_whitespace) as u32);
-                        let edit = Edit::replacement(replacement, edit_start, edit_end);
-                        let report_start = line_start_byte + TextSize::from(col_idx as u32);
-                        let report_end = line_start_byte + TextSize::from((col_idx + 1) as u32);
-                        let range = TextRange::new(report_start, report_end);
-                        Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit))
-                    })
-            })
-            .collect()
+impl AstRule for MultipleStatementsPerLine {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        if semicolon_is_superfluous(node) {
+            return None;
+        }
+        let edit = node.edit_replacement(src, "\n".to_string());
+        some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec![";"]
     }
 }
