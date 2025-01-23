@@ -26,6 +26,9 @@ impl Violation for PauseStatement {
     fn message(&self) -> String {
         format!("`pause` statements are a deleted feature")
     }
+    fn fix_title(&self) -> Option<String> {
+        Some("Use 'read(*, *)' instead".into())
+    }
 }
 
 impl AstRule for PauseStatement {
