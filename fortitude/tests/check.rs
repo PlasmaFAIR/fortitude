@@ -92,6 +92,7 @@ end program
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
+                         .arg("--select=S061,T001,T011,T021")
                          .arg(test_file),
                          @r"
     success: false
@@ -408,6 +409,7 @@ end program foo
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
+                         .arg("--select=S071,P021,T003,T004")
                          .arg("--preview")
                          .arg("--fix")
                          .arg(&test_file),
@@ -486,6 +488,7 @@ end program foo
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
+                         .arg("--select=S071,P021,T003,T004")
                          .arg("--preview")
                          .arg("--fix")
                          .arg("--unsafe-fixes")
@@ -1165,7 +1168,7 @@ end program test
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg(test_file)
-                         .arg("--select=E"),
+                         .arg("--select=E011"),
                          @r"
     success: false
     exit_code: 1
@@ -1279,6 +1282,7 @@ end program myprogram
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
+                         .arg("--select=S001,F001,T001")
                          .current_dir(tempdir.path()),
                          @r"
     success: false
@@ -1486,6 +1490,80 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
 
 
     ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn preview_enabled_prefix() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+end program
+"#,
+    )?;
+    apply_common_filters!();
+
+    // All the E99XX test rules should be triggered
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .args(["--select=E99", "--output-format=concise", "--preview"])
+                         .arg(test_file), @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] E9900 Hey this is a stable test rule.
+    [TEMP_FILE] E9901 [*] Hey this is a stable test rule with a safe fix.
+    [TEMP_FILE] E9902 Hey this is a stable test rule with an unsafe fix.
+    [TEMP_FILE] E9903 Hey this is a stable test rule with a display only fix.
+    [TEMP_FILE] E9911 Hey this is a preview test rule.
+    [TEMP_FILE] E9950 Hey this is a test rule that was redirected from another.
+    fortitude: 1 files scanned.
+    Number of errors: 6
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn preview_disabled_direct() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+end program
+"#,
+    )?;
+    apply_common_filters!();
+
+    // All the E99XX test rules should be triggered
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .args(["--select=E9911", "--output-format=concise"])
+                         .arg(test_file), @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 1 files scanned.
+    All checks passed!
+
+
+    ----- stderr -----
+    warning: Selection `E9911` has no effect because preview is not enabled.
     ");
     Ok(())
 }

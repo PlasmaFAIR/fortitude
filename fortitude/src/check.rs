@@ -11,6 +11,8 @@ use crate::rule_selector::{
 };
 use crate::rule_table::RuleTable;
 use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
+#[cfg(any(feature = "test-rules", test))]
+use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
@@ -703,6 +705,38 @@ pub(crate) fn check_path(
         };
     }
 
+    // Raise violations for internal test rules
+    #[cfg(any(feature = "test-rules", test))]
+    {
+        for test_rule in TEST_RULES {
+            if !rules.enabled(*test_rule) {
+                continue;
+            }
+            let diagnostic = match test_rule {
+                Rule::StableTestRule => test_rules::StableTestRule::check(),
+                Rule::StableTestRuleSafeFix => test_rules::StableTestRuleSafeFix::check(),
+                Rule::StableTestRuleUnsafeFix => test_rules::StableTestRuleUnsafeFix::check(),
+                Rule::StableTestRuleDisplayOnlyFix => {
+                    test_rules::StableTestRuleDisplayOnlyFix::check()
+                }
+                Rule::PreviewTestRule => test_rules::PreviewTestRule::check(),
+                Rule::DeprecatedTestRule => test_rules::DeprecatedTestRule::check(),
+                Rule::AnotherDeprecatedTestRule => test_rules::AnotherDeprecatedTestRule::check(),
+                Rule::RemovedTestRule => test_rules::RemovedTestRule::check(),
+                Rule::AnotherRemovedTestRule => test_rules::AnotherRemovedTestRule::check(),
+                Rule::RedirectedToTestRule => test_rules::RedirectedToTestRule::check(),
+                Rule::RedirectedFromTestRule => test_rules::RedirectedFromTestRule::check(),
+                Rule::RedirectedFromPrefixTestRule => {
+                    test_rules::RedirectedFromPrefixTestRule::check()
+                }
+                _ => unreachable!("All test rules must have an implementation"),
+            };
+            if let Some(diagnostic) = diagnostic {
+                violations.push(diagnostic);
+            }
+        }
+    }
+
     violations
         .into_iter()
         .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
@@ -1350,7 +1384,7 @@ mod tests {
     fn select_one_preview_rule_without_preview() -> anyhow::Result<()> {
         let args = RuleSelection {
             ignore: vec![],
-            select: Some(vec![RuleSelector::from_str("E9904")?]),
+            select: Some(vec![RuleSelector::from_str("E9911")?]),
             extend_select: vec![],
             fixable: None,
             extend_fixable: vec![],
@@ -1370,7 +1404,7 @@ mod tests {
     fn select_one_preview_rule_with_preview() -> anyhow::Result<()> {
         let args = RuleSelection {
             ignore: vec![],
-            select: Some(vec![RuleSelector::from_str("E9904")?]),
+            select: Some(vec![RuleSelector::from_str("E9911")?]),
             extend_select: vec![],
             fixable: None,
             extend_fixable: vec![],
