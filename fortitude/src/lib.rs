@@ -14,6 +14,7 @@ mod rule_selector;
 pub mod rule_table;
 pub mod rules;
 pub mod settings;
+pub mod stdin;
 #[cfg(test)]
 mod test;
 mod text_helpers;

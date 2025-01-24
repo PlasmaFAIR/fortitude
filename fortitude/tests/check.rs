@@ -71,7 +71,7 @@ unknown-key = 1
       |
     2 | unknown-key = 1
       | ^^^^^^^^^^^
-    unknown field `unknown-key`, expected one of `files`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `preview`, `no-preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `no-force-exclude`, `respect-gitignore`, `no-respect-gitignore`, `line-length`
+    unknown field `unknown-key`, expected one of `files`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `output-file`, `preview`, `no-preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `no-force-exclude`, `respect-gitignore`, `no-respect-gitignore`, `line-length`, `stdin-filename`
     ");
     Ok(())
 }
@@ -1496,32 +1496,20 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
 
 #[test]
 fn preview_enabled_prefix() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
-program test
-  logical*4, parameter :: true = .true.
-end program
-"#,
-    )?;
-    apply_common_filters!();
-
     // All the E99XX test rules should be triggered
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .args(["--select=E99", "--output-format=concise", "--preview"])
-                         .arg(test_file), @r"
+                         .arg("-"), @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] E9900 Hey this is a stable test rule.
-    [TEMP_FILE] E9901 [*] Hey this is a stable test rule with a safe fix.
-    [TEMP_FILE] E9902 Hey this is a stable test rule with an unsafe fix.
-    [TEMP_FILE] E9903 Hey this is a stable test rule with a display only fix.
-    [TEMP_FILE] E9911 Hey this is a preview test rule.
-    [TEMP_FILE] E9950 Hey this is a test rule that was redirected from another.
+    -:1:1: E9900 Hey this is a stable test rule.
+    -:1:1: E9901 [*] Hey this is a stable test rule with a safe fix.
+    -:1:1: E9902 Hey this is a stable test rule with an unsafe fix.
+    -:1:1: E9903 Hey this is a stable test rule with a display only fix.
+    -:1:1: E9911 Hey this is a preview test rule.
+    -:1:1: E9950 Hey this is a test rule that was redirected from another.
     fortitude: 1 files scanned.
     Number of errors: 6
 
@@ -1538,23 +1526,11 @@ end program
 
 #[test]
 fn preview_disabled_direct() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
-program test
-  logical*4, parameter :: true = .true.
-end program
-"#,
-    )?;
-    apply_common_filters!();
-
     // All the E99XX test rules should be triggered
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .args(["--select=E9911", "--output-format=concise"])
-                         .arg(test_file), @r"
+                         .arg("-"), @r"
     success: true
     exit_code: 0
     ----- stdout -----
