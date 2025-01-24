@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: MIT
 
 /// Fake rules for testing fortitude's behaviour
-use ruff_diagnostics::{FixAvailability, Violation};
+use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{derive_message_formats, violation};
+use ruff_text_size::{TextRange, TextSize};
 
 use crate::rules::Rule;
 
-#[allow(dead_code)]
 pub(crate) const TEST_RULES: &[Rule] = &[
     Rule::StableTestRule,
     Rule::StableTestRuleSafeFix,
@@ -24,8 +24,9 @@ pub(crate) const TEST_RULES: &[Rule] = &[
     Rule::RedirectedFromPrefixTestRule,
 ];
 
-#[allow(dead_code)]
-pub(crate) trait TestRule {}
+pub(crate) trait TestRule {
+    fn check() -> Option<Diagnostic>;
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -34,12 +35,12 @@ pub(crate) trait TestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -54,7 +55,11 @@ impl Violation for StableTestRule {
     }
 }
 
-impl TestRule for StableTestRule {}
+impl TestRule for StableTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -63,12 +68,12 @@ impl TestRule for StableTestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -83,7 +88,16 @@ impl Violation for StableTestRuleSafeFix {
     }
 }
 
-impl TestRule for StableTestRuleSafeFix {}
+impl TestRule for StableTestRuleSafeFix {
+    fn check() -> Option<Diagnostic> {
+        let comment = "! fix from stable-test-rule-safe-fix\n".to_string();
+
+        Some(
+            Diagnostic::new(Self {}, TextRange::default())
+                .with_fix(Fix::safe_edit(Edit::insertion(comment, TextSize::new(0)))),
+        )
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -92,12 +106,12 @@ impl TestRule for StableTestRuleSafeFix {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -112,7 +126,15 @@ impl Violation for StableTestRuleUnsafeFix {
     }
 }
 
-impl TestRule for StableTestRuleUnsafeFix {}
+impl TestRule for StableTestRuleUnsafeFix {
+    fn check() -> Option<Diagnostic> {
+        let comment = "! fix from stable-test-rule-unsafe-fix\n".to_string();
+        Some(
+            Diagnostic::new(Self {}, TextRange::default())
+                .with_fix(Fix::unsafe_edit(Edit::insertion(comment, TextSize::new(0)))),
+        )
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -121,12 +143,12 @@ impl TestRule for StableTestRuleUnsafeFix {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -141,7 +163,16 @@ impl Violation for StableTestRuleDisplayOnlyFix {
     }
 }
 
-impl TestRule for StableTestRuleDisplayOnlyFix {}
+impl TestRule for StableTestRuleDisplayOnlyFix {
+    fn check() -> Option<Diagnostic> {
+        let comment = "! fix from stable-test-rule-display-only-fix\n".to_string();
+        Some(
+            Diagnostic::new(Self {}, TextRange::default()).with_fix(Fix::display_only_edit(
+                Edit::insertion(comment, TextSize::new(0)),
+            )),
+        )
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -150,12 +181,12 @@ impl TestRule for StableTestRuleDisplayOnlyFix {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -170,7 +201,11 @@ impl Violation for PreviewTestRule {
     }
 }
 
-impl TestRule for PreviewTestRule {}
+impl TestRule for PreviewTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -179,12 +214,12 @@ impl TestRule for PreviewTestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -199,7 +234,11 @@ impl Violation for DeprecatedTestRule {
     }
 }
 
-impl TestRule for DeprecatedTestRule {}
+impl TestRule for DeprecatedTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -208,12 +247,12 @@ impl TestRule for DeprecatedTestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -228,7 +267,11 @@ impl Violation for AnotherDeprecatedTestRule {
     }
 }
 
-impl TestRule for AnotherDeprecatedTestRule {}
+impl TestRule for AnotherDeprecatedTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -237,12 +280,12 @@ impl TestRule for AnotherDeprecatedTestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -257,7 +300,11 @@ impl Violation for RemovedTestRule {
     }
 }
 
-impl TestRule for RemovedTestRule {}
+impl TestRule for RemovedTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -266,12 +313,12 @@ impl TestRule for RemovedTestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -286,7 +333,11 @@ impl Violation for AnotherRemovedTestRule {
     }
 }
 
-impl TestRule for AnotherRemovedTestRule {}
+impl TestRule for AnotherRemovedTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -295,12 +346,12 @@ impl TestRule for AnotherRemovedTestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -315,7 +366,11 @@ impl Violation for RedirectedFromTestRule {
     }
 }
 
-impl TestRule for RedirectedFromTestRule {}
+impl TestRule for RedirectedFromTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -324,12 +379,12 @@ impl TestRule for RedirectedFromTestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -344,7 +399,11 @@ impl Violation for RedirectedToTestRule {
     }
 }
 
-impl TestRule for RedirectedToTestRule {}
+impl TestRule for RedirectedToTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
 
 /// ## What it does
 /// Fake rule for testing.
@@ -353,12 +412,12 @@ impl TestRule for RedirectedToTestRule {}
 /// Tests must pass!
 ///
 /// ## Example
-/// ```python
+/// ```f90
 /// foo
 /// ```
 ///
 /// Use instead:
-/// ```python
+/// ```f90
 /// bar
 /// ```
 #[violation]
@@ -373,4 +432,8 @@ impl Violation for RedirectedFromPrefixTestRule {
     }
 }
 
-impl TestRule for RedirectedFromPrefixTestRule {}
+impl TestRule for RedirectedFromPrefixTestRule {
+    fn check() -> Option<Diagnostic> {
+        Some(Diagnostic::new(Self {}, TextRange::default()))
+    }
+}
