@@ -43,7 +43,7 @@ use std::str::FromStr;
 use std::time::Instant;
 use strum::IntoEnumIterator;
 use toml::Table;
-use tree_sitter::{Node, Parser};
+use tree_sitter::{Node, Parser, Tree};
 
 // These are just helper structs to let us quickly work out if there's
 // a fortitude section in an fpm.toml file
@@ -633,6 +633,44 @@ pub(crate) fn check_only_file(
     file: &SourceFile,
     settings: &Settings,
 ) -> anyhow::Result<Vec<DiagnosticMessage>> {
+    let mut parser = Parser::new();
+    parser
+        .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        .context("Error loading Fortran grammar")?;
+    let tree = parser
+        .parse(file.source_text(), None)
+        .context("Failed to parse")?;
+
+    let violations = check_path(
+        rules,
+        path_rules,
+        text_rules,
+        ast_entrypoints,
+        path,
+        file,
+        settings,
+        &tree,
+    );
+
+    Ok(violations
+        .into_iter()
+        .map(|v| DiagnosticMessage::from_ruff(file, v))
+        .collect_vec())
+}
+
+/// Check an already parsed file. This actually does all the checking,
+/// `check_only_file`/`check_and_fix_file` wrap this
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn check_path(
+    rules: &RuleTable,
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
+    path: &Path,
+    file: &SourceFile,
+    settings: &Settings,
+    tree: &Tree,
+) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
 
@@ -648,14 +686,6 @@ pub(crate) fn check_only_file(
     }
 
     // Perform AST analysis
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_fortran::LANGUAGE.into())
-        .context("Error loading Fortran grammar")?;
-    let tree = parser
-        .parse(file.source_text(), None)
-        .context("Failed to parse")?;
-
     let root = tree.root_node();
     for node in once(root).chain(root.named_descendants()) {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
@@ -673,11 +703,10 @@ pub(crate) fn check_only_file(
         };
     }
 
-    Ok(violations
+    violations
         .into_iter()
         .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
-        .map(|v| DiagnosticMessage::from_ruff(file, v))
-        .collect_vec())
+        .collect_vec()
 }
 
 const MAX_ITERATIONS: usize = 100;
@@ -722,46 +751,23 @@ pub(crate) fn check_and_fix_file<'a>(
 
     // Continuously fix until the source code stabilizes.
     loop {
-        let mut violations = Vec::new();
-        let mut allow_comments = Vec::new();
-
-        // Map row and column locations to byte slices (lazily).
-        let locator = Locator::new(transformed.source_text());
-
-        // No fixes on file path
-        for rule in path_rules {
-            if let Some(violation) = rule.check(settings, path) {
-                violations.push(violation);
-            }
-        }
-
-        // Perform plain text analysis
-        for rule in text_rules {
-            violations.extend(rule.check(settings, &transformed));
-        }
-
-        // TODO: check for syntax errors on first pass, so we can know
-        // if we've introduced them
         let tree = parser
             .parse(transformed.source_text(), None)
             .context("Failed to parse")?;
 
-        let root = tree.root_node();
-        for node in once(root).chain(root.named_descendants()) {
-            if let Some(rules) = ast_entrypoints.get(node.kind()) {
-                for rule in rules {
-                    if let Some(violation) = rule.check(settings, &node, &transformed) {
-                        for v in violation {
-                            violations.push(v);
-                        }
-                    }
-                }
-            }
-            match gather_allow_comments(&node, file, rules) {
-                Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
-                Err(mut violation) => violations.append(&mut violation),
-            };
-        }
+        // Map row and column locations to byte slices (lazily).
+        let locator = Locator::new(transformed.source_text());
+
+        let violations = check_path(
+            rules,
+            path_rules,
+            text_rules,
+            ast_entrypoints,
+            path,
+            &transformed,
+            settings,
+            &tree,
+        );
 
         if iterations == 0 {
             is_valid_syntax = !tree.root_node().has_error();
@@ -769,11 +775,6 @@ pub(crate) fn check_and_fix_file<'a>(
             report_fix_syntax_error(path, transformed.source_text(), fixed.keys().copied());
             return Err(anyhow!("Fix introduced a syntax error"));
         }
-
-        let violations = violations
-            .into_iter()
-            .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
-            .collect_vec();
 
         // Apply fix
         if let Some(FixResult {
