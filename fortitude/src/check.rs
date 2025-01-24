@@ -2,11 +2,10 @@ use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
-use crate::fs;
 use crate::fs::{get_files, FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
-use crate::registry::AsRule;
+use crate::registry::{AsRule, RuleNamespace};
 use crate::rule_selector::{
     collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
 };
@@ -18,6 +17,7 @@ use crate::settings::{
     ExcludeMode, FixMode, GitignoreMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar,
     Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
+use crate::{fs, warn_user_once_by_id, warn_user_once_by_message};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
@@ -29,7 +29,7 @@ use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
 use ruff_text_size::{TextRange, TextSize};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
@@ -261,6 +261,13 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
         require_explicit: false,
     };
 
+    // Store selectors for displaying warnings
+    let mut redirects = FxHashMap::default();
+    let mut deprecated_selectors = FxHashSet::default();
+    let mut removed_selectors = FxHashSet::default();
+    let mut removed_ignored_rules = FxHashSet::default();
+    let mut ignored_preview_selectors = FxHashSet::default();
+
     // The select_set keeps track of which rules have been selected.
     let mut select_set: BTreeSet<Rule> = if args.select.is_none() {
         DEFAULT_SELECTORS
@@ -290,6 +297,140 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
                 select_set.remove(&rule);
             }
         }
+
+        // Check for selections that require a warning
+        for (kind, selector) in args.selectors_by_kind() {
+            // Some of these checks are only for `Kind::Enable` which means only `--select` will warn
+            // and use with, e.g., `--ignore` or `--fixable` is okay
+
+            // Unstable rules
+            if preview.mode.is_disabled() && kind.is_enable() {
+                // Check if the selector is empty because preview mode is disabled
+                if selector.rules(&preview).next().is_none()
+                    && selector
+                        .rules(&PreviewOptions {
+                            mode: PreviewMode::Enabled,
+                            require_explicit: preview.require_explicit,
+                        })
+                        .next()
+                        .is_some()
+                {
+                    ignored_preview_selectors.insert(selector);
+                }
+            }
+
+            // Deprecated rules
+            if kind.is_enable()
+                && selector.is_exact()
+                && selector.all_rules().all(|rule| rule.is_deprecated())
+            {
+                deprecated_selectors.insert(selector.clone());
+            }
+
+            // Removed rules
+            if selector.is_exact() && selector.all_rules().all(|rule| rule.is_removed()) {
+                if kind.is_disable() {
+                    removed_ignored_rules.insert(selector);
+                } else {
+                    removed_selectors.insert(selector);
+                }
+            }
+
+            // Redirected rules
+            if let RuleSelector::Prefix {
+                prefix,
+                redirected_from: Some(redirect_from),
+            }
+            | RuleSelector::Rule {
+                prefix,
+                redirected_from: Some(redirect_from),
+            } = selector
+            {
+                redirects.insert(redirect_from, prefix);
+            }
+        }
+    }
+
+    let removed_selectors = removed_selectors.iter().sorted().collect::<Vec<_>>();
+    match removed_selectors.as_slice() {
+        [] => (),
+        [selection] => {
+            let (prefix, code) = selection.prefix_and_code();
+            return Err(anyhow!(
+                "Rule `{prefix}{code}` was removed and cannot be selected."
+            ));
+        }
+        [..] => {
+            let mut message =
+                "The following rules have been removed and cannot be selected:".to_string();
+            for selection in removed_selectors {
+                let (prefix, code) = selection.prefix_and_code();
+                message.push_str("\n    - ");
+                message.push_str(prefix);
+                message.push_str(code);
+            }
+            message.push('\n');
+            return Err(anyhow!(message));
+        }
+    }
+
+    if !removed_ignored_rules.is_empty() {
+        let mut rules = String::new();
+        for selection in removed_ignored_rules.iter().sorted() {
+            let (prefix, code) = selection.prefix_and_code();
+            rules.push_str("\n    - ");
+            rules.push_str(prefix);
+            rules.push_str(code);
+        }
+        rules.push('\n');
+        warn_user_once_by_message!(
+            "The following rules have been removed and ignoring them has no effect:{rules}"
+        );
+    }
+
+    for (from, target) in redirects.iter().sorted_by_key(|item| item.0) {
+        warn_user_once_by_id!(
+            from,
+            "`{from}` has been remapped to `{}{}`.",
+            target.category().common_prefix(),
+            target.short_code()
+        );
+    }
+
+    if preview.mode.is_disabled() {
+        for selection in deprecated_selectors.iter().sorted() {
+            let (prefix, code) = selection.prefix_and_code();
+            warn_user_once_by_message!(
+                "Rule `{prefix}{code}` is deprecated and will be removed in a future release."
+            );
+        }
+    } else {
+        let deprecated_selectors = deprecated_selectors.iter().sorted().collect::<Vec<_>>();
+        match deprecated_selectors.as_slice() {
+            [] => (),
+            [selection] => {
+                let (prefix, code) = selection.prefix_and_code();
+                return Err(anyhow!("Selection of deprecated rule `{prefix}{code}` is not allowed when preview is enabled."));
+            }
+            [..] => {
+                let mut message = "Selection of deprecated rules is not allowed when preview is enabled. Remove selection of:".to_string();
+                for selection in deprecated_selectors {
+                    let (prefix, code) = selection.prefix_and_code();
+                    message.push_str("\n\t- ");
+                    message.push_str(prefix);
+                    message.push_str(code);
+                }
+                message.push('\n');
+                return Err(anyhow!(message));
+            }
+        }
+    }
+
+    for selection in ignored_preview_selectors.iter().sorted() {
+        let (prefix, code) = selection.prefix_and_code();
+        warn_user_once_by_message!(
+            "Selection `{prefix}{code}` has no effect because preview is not enabled.",
+        );
     }
 
     let mut rules = RuleTable::empty();
@@ -818,6 +959,54 @@ pub struct RuleSelection {
     pub select: Option<Vec<RuleSelector>>,
     pub ignore: Vec<RuleSelector>,
     pub extend_select: Vec<RuleSelector>,
+    pub fixable: Option<Vec<RuleSelector>>,
+    pub unfixable: Vec<RuleSelector>,
+    pub extend_fixable: Vec<RuleSelector>,
+}
+
+#[derive(Debug, Eq, PartialEq, is_macro::Is)]
+pub enum RuleSelectorKind {
+    /// Enables the selected rules
+    Enable,
+    /// Disables the selected rules
+    Disable,
+    /// Modifies the behavior of selected rules
+    Modify,
+}
+
+impl RuleSelection {
+    pub fn selectors_by_kind(&self) -> impl Iterator<Item = (RuleSelectorKind, &RuleSelector)> {
+        self.select
+            .iter()
+            .flatten()
+            .map(|selector| (RuleSelectorKind::Enable, selector))
+            .chain(
+                self.fixable
+                    .iter()
+                    .flatten()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+            .chain(
+                self.ignore
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Disable, selector)),
+            )
+            .chain(
+                self.extend_select
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Enable, selector)),
+            )
+            .chain(
+                self.unfixable
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+            .chain(
+                self.extend_fixable
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+    }
 }
 
 /// Check all files, report issues found, and return error code.
@@ -840,6 +1029,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         // TODO: CLI ignore should _extend_ file ignore
         ignore: args.ignore.unwrap_or(file_settings.ignore),
         extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
+        fixable: None,
+        unfixable: vec![],
+        extend_fixable: vec![],
     };
 
     let per_file_ignores = CompiledPerFileIgnoreList::resolve(collect_per_file_ignores(
@@ -1082,6 +1274,9 @@ mod tests {
             ignore: vec![],
             select: None,
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::default();
@@ -1106,6 +1301,9 @@ mod tests {
             ignore: vec![],
             select: None,
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::Enabled;
@@ -1133,6 +1331,9 @@ mod tests {
             ignore: vec![],
             select: Some(vec![RuleSelector::from_str("E000")?]),
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::default();
@@ -1150,6 +1351,9 @@ mod tests {
             ignore: vec![],
             select: Some(vec![RuleSelector::from_str("E9904")?]),
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::default();
@@ -1167,6 +1371,9 @@ mod tests {
             ignore: vec![],
             select: Some(vec![RuleSelector::from_str("E9904")?]),
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::Enabled;
@@ -1184,6 +1391,9 @@ mod tests {
             ignore: vec![],
             select: Some(vec![RuleSelector::from_str("E000")?]),
             extend_select: vec![RuleSelector::from_str("E001")?],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::default();
