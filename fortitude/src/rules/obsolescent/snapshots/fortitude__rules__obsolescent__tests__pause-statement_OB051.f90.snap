@@ -12,6 +12,7 @@ snapshot_kind: text
 5 |   print*,"bye"
 6 | end program
   |
+  = help: Use 'read(*, *)' instead
 
 ℹ Unsafe fix
 1 1 | program test
