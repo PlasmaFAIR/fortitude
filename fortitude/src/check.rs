@@ -19,7 +19,8 @@ use crate::settings::{
     ExcludeMode, FixMode, GitignoreMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar,
     Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
-use crate::{fs, warn_user_once_by_id, warn_user_once_by_message};
+use crate::stdin::read_from_stdin;
+use crate::{fs, warn_user_once, warn_user_once_by_id, warn_user_once_by_message};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
@@ -36,8 +37,8 @@ use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
-use std::io;
 use std::io::Write;
+use std::io::{self, BufWriter};
 use std::iter::once;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -178,6 +179,7 @@ pub struct CheckSettings {
     pub extend_exclude: Vec<FilePattern>,
     pub exclude_mode: ExcludeMode,
     pub gitignore_mode: GitignoreMode,
+    pub stdin_filename: Option<PathBuf>,
 }
 
 impl Default for CheckSettings {
@@ -202,6 +204,7 @@ impl Default for CheckSettings {
             extend_exclude: Default::default(),
             exclude_mode: Default::default(),
             gitignore_mode: Default::default(),
+            stdin_filename: Default::default(),
         }
     }
 }
@@ -221,7 +224,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
 
     let settings = match from_toml_subsection(filename)?.check {
         Some(value) => CheckSettings {
-            files: value.files.unwrap_or(vec![PathBuf::from(".")]),
+            files: value.files.unwrap_or_default(),
             ignore: value.ignore.unwrap_or_default(),
             select: value.select,
             extend_select: value.extend_select.unwrap_or_default(),
@@ -250,6 +253,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             gitignore_mode: resolve_bool_arg(value.respect_gitignore, value.no_respect_gitignore)
                 .map(GitignoreMode::from)
                 .unwrap_or_default(),
+            stdin_filename: value.stdin_filename,
         },
         None => CheckSettings::default(),
     };
@@ -443,6 +447,40 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
     }
 
     Ok(rules)
+}
+
+/// Returns true if the command should read from standard input.
+fn is_stdin(files: &[PathBuf], stdin_filename: Option<&Path>) -> bool {
+    // If the user provided a `--stdin-filename`, always read from standard input.
+    if stdin_filename.is_some() {
+        if let Some(file) = files.iter().find(|file| file.as_path() != Path::new("-")) {
+            warn_user_once!(
+                "Ignoring file {} in favor of standard input.",
+                file.display()
+            );
+        }
+        return true;
+    }
+
+    let [file] = files else {
+        return false;
+    };
+    // If the user provided exactly `-`, read from standard input.
+    file == Path::new("-")
+}
+
+/// Returns the default set of files if none are provided, otherwise
+/// returns a list with just the current working directory.
+fn resolve_default_files(files: Vec<PathBuf>, is_stdin: bool) -> Vec<PathBuf> {
+    if files.is_empty() {
+        if is_stdin {
+            vec![Path::new("-").to_path_buf()]
+        } else {
+            vec![Path::new(".").to_path_buf()]
+        }
+    } else {
+        files
+    }
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -1050,7 +1088,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let file_settings = parse_config_file(&global_options.config_file)?;
     // Now, we can override settings from the config file with options
     // from the CLI
-    let files = &args.files.unwrap_or(file_settings.files);
+    let files = args.files.unwrap_or(file_settings.files);
     let file_extensions = &args
         .file_extensions
         .unwrap_or(file_settings.file_extensions);
@@ -1123,6 +1161,24 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let show_fixes =
         resolve_bool_arg(args.show_fixes, args.no_show_fixes).unwrap_or(file_settings.show_fixes);
 
+    let stdin_filename = args.stdin_filename.or(file_settings.stdin_filename);
+
+    let writer: Box<dyn Write> = match args.output_file {
+        Some(path) => {
+            colored::control::set_override(false);
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let file = File::create(path)?;
+            Box::new(BufWriter::new(file))
+        }
+        _ => Box::new(BufWriter::new(io::stdout())),
+    };
+    let stderr_writer = Box::new(BufWriter::new(io::stderr()));
+
+    let is_stdin = is_stdin(&files, stdin_filename.as_deref());
+    let files = resolve_default_files(files, is_stdin);
+
     // Fix rules are as follows:
     // - By default, generate all fixes, but don't apply them to the filesystem.
     // - If `--fix` or `--fix-only` is set, apply applicable fixes to the filesystem (or
@@ -1149,7 +1205,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let start = Instant::now();
 
     let files = get_files(
-        files,
+        &files,
         project_root(path_absolutize::path_dedot::CWD.as_path())?,
         file_extensions,
         file_excludes,
@@ -1157,6 +1213,82 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         gitignore_mode,
     )?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
+
+    let all_diagnostics = if is_stdin {
+        check_stdin(
+            stdin_filename.map(fs::normalize_path).as_deref(),
+            &rules,
+            &path_rules,
+            &text_rules,
+            &ast_entrypoints,
+            &settings,
+            fix_mode,
+            unsafe_fixes,
+            &per_file_ignores,
+        )?
+    } else {
+        check_files(
+            &files,
+            &rules,
+            &path_rules,
+            &text_rules,
+            &ast_entrypoints,
+            &settings,
+            fix_mode,
+            unsafe_fixes,
+            &per_file_ignores,
+            progress_bar,
+        )?
+    };
+
+    let total_errors = all_diagnostics.messages.len();
+
+    // Always try to print violations (though the printer itself may suppress output)
+    // If we're writing fixes via stdin, the transformed source code goes to the writer
+    // so send the summary to stderr instead
+    let mut summary_writer = if is_stdin && matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+        stderr_writer
+    } else {
+        writer
+    };
+
+    let mut printer_flags = PrinterFlags::empty();
+    if !fix_only {
+        printer_flags |= PrinterFlags::SHOW_VIOLATIONS;
+    }
+    if show_fixes {
+        printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
+    }
+
+    Printer::new(
+        output_format,
+        global_options.log_level(),
+        printer_flags,
+        fix_mode,
+        unsafe_fixes,
+    )
+    .write_once(files.len(), &all_diagnostics, &mut summary_writer)?;
+
+    if total_errors == 0 {
+        Ok(ExitCode::SUCCESS)
+    } else {
+        Ok(ExitCode::FAILURE)
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn check_files(
+    files: &[PathBuf],
+    rules: &RuleTable,
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
+    settings: &Settings,
+    fix_mode: FixMode,
+    unsafe_fixes: UnsafeFixes,
+    per_file_ignores: &CompiledPerFileIgnoreList,
+    progress_bar: ProgressBar,
+) -> Result<Diagnostics> {
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
@@ -1214,16 +1346,16 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
             match check_file(
-                &rules,
-                &path_rules,
-                &text_rules,
-                &ast_entrypoints,
+                rules,
+                path_rules,
+                text_rules,
+                ast_entrypoints,
                 path,
                 &file,
-                &settings,
+                settings,
                 fix_mode,
                 unsafe_fixes,
-                &per_file_ignores,
+                per_file_ignores,
             ) {
                 Ok(violations) => Some(violations),
                 Err(msg) => {
@@ -1263,32 +1395,104 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let duration = start.elapsed();
     debug!("Checked {:?} files in: {:?}", checked_files, duration);
 
-    let total_errors = all_diagnostics.messages.len();
+    Ok(all_diagnostics)
+}
 
-    let mut writer = Box::new(io::stdout());
+#[allow(clippy::too_many_arguments)]
+fn check_stdin(
+    filename: Option<&Path>,
+    rules: &RuleTable,
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
+    settings: &Settings,
+    fix_mode: FixMode,
+    unsafe_fixes: UnsafeFixes,
+    per_file_ignores: &CompiledPerFileIgnoreList,
+) -> Result<Diagnostics> {
+    let stdin = read_from_stdin()?;
 
-    let mut printer_flags = PrinterFlags::empty();
-    if !fix_only {
-        printer_flags |= PrinterFlags::SHOW_VIOLATIONS;
-    }
-    if show_fixes {
-        printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
-    }
+    let path = filename.unwrap_or_else(|| Path::new("-"));
+    let file = SourceFileBuilder::new(path.to_str().unwrap_or("-"), stdin.as_str()).finish();
 
-    Printer::new(
-        output_format,
-        global_options.log_level(),
-        printer_flags,
-        fix_mode,
-        unsafe_fixes,
-    )
-    .write_once(files.len(), &all_diagnostics, &mut writer)?;
+    let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+        if let Ok(FixerResult {
+            result,
+            transformed,
+            fixed,
+        }) = check_and_fix_file(
+            rules,
+            path_rules,
+            text_rules,
+            ast_entrypoints,
+            path,
+            &file,
+            settings,
+            unsafe_fixes,
+        ) {
+            if !fixed.is_empty() {
+                match fix_mode {
+                    FixMode::Apply => {
+                        // Write the contents to stdout, regardless of whether any errors were fixed.
+                        let out_file = &mut io::stdout().lock();
+                        out_file.write_all(transformed.source_text().as_bytes())?;
+                    }
+                    // TODO: diff
+                    FixMode::Diff => {}
+                    FixMode::Generate => {}
+                }
+            }
 
-    if total_errors == 0 {
-        Ok(ExitCode::SUCCESS)
+            (result, fixed)
+        } else {
+            // Failed to fix, so just lint the original source
+            let result = check_only_file(
+                rules,
+                path_rules,
+                text_rules,
+                ast_entrypoints,
+                path,
+                &file,
+                settings,
+            )?;
+            let fixed = FxHashMap::default();
+            (result, fixed)
+        }
     } else {
-        Ok(ExitCode::FAILURE)
+        let result = check_only_file(
+            rules,
+            path_rules,
+            text_rules,
+            ast_entrypoints,
+            path,
+            &file,
+            settings,
+        )?;
+        let fixed = FxHashMap::default();
+        (result, fixed)
+    };
+
+    // Ignore based on per-file-ignores.
+    // If the DiagnosticMessage is discarded, its fix will also be ignored.
+    let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {
+        fs::ignores_from_path(path, per_file_ignores)
+    } else {
+        vec![]
+    };
+    if !per_file_ignores.is_empty() {
+        messages.retain(|message| {
+            if let Some(rule) = message.rule() {
+                !per_file_ignores.contains(&rule)
+            } else {
+                true
+            }
+        });
     }
+
+    Ok(Diagnostics {
+        messages,
+        fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
+    })
 }
 
 #[cfg(test)]
