@@ -109,6 +109,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "021") => (RuleGroup::Stable, Ast, obsolescent::entry_statement::EntryStatement),
         (Obsolescent, "031") => (RuleGroup::Preview, Ast, obsolescent::specific_names::SpecificName),
         (Obsolescent, "041") => (RuleGroup::Preview, Ast, obsolescent::computed_goto::ComputedGoTo),
+        (Obsolescent, "051") => (RuleGroup::Stable, Ast, obsolescent::pause_statement::PauseStatement),
 
         (Precision, "001") => (RuleGroup::Stable, Ast, precision::kind_suffixes::NoRealSuffix),
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),
