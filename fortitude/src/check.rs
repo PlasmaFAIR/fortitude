@@ -224,7 +224,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
 
     let settings = match from_toml_subsection(filename)?.check {
         Some(value) => CheckSettings {
-            files: value.files.unwrap_or(vec![PathBuf::from(".")]),
+            files: value.files.unwrap_or_default(),
             ignore: value.ignore.unwrap_or_default(),
             select: value.select,
             extend_select: value.extend_select.unwrap_or_default(),
@@ -469,7 +469,8 @@ fn is_stdin(files: &[PathBuf], stdin_filename: Option<&Path>) -> bool {
     file == Path::new("-")
 }
 
-/// Returns the default set of files if none are provided, otherwise returns `None`.
+/// Returns the default set of files if none are provided, otherwise
+/// returns a list with just the current working directory.
 fn resolve_default_files(files: Vec<PathBuf>, is_stdin: bool) -> Vec<PathBuf> {
     if files.is_empty() {
         if is_stdin {
