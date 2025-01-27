@@ -1,0 +1,63 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S082.f90:11:8: S082 [*] multiple statements per line
+   |
+ 9 |   integer :: i;
+10 |   integer :: j;
+11 |   i = 1;; j = 2;
+   |        ^ S082
+12 |   i = i + j; write (*, *) i;;
+13 | end program p;
+   |
+   = help: Separate over two lines
+
+ℹ Safe fix
+8  8  |   implicit none;
+9  9  |   integer :: i;
+10 10 |   integer :: j;
+11    |-  i = 1;; j = 2;
+   11 |+  i = 1
+   12 |+  ; j = 2;
+12 13 |   i = i + j; write (*, *) i;;
+13 14 | end program p;
+
+./resources/test/fixtures/style/S082.f90:12:12: S082 [*] multiple statements per line
+   |
+10 |   integer :: j;
+11 |   i = 1;; j = 2;
+12 |   i = i + j; write (*, *) i;;
+   |            ^ S082
+13 | end program p;
+   |
+   = help: Separate over two lines
+
+ℹ Safe fix
+9  9  |   integer :: i;
+10 10 |   integer :: j;
+11 11 |   i = 1;; j = 2;
+12    |-  i = i + j; write (*, *) i;;
+   12 |+  i = i + j
+   13 |+  write (*, *) i;;
+13 14 | end program p;
+
+./resources/test/fixtures/style/S082.f90:12:28: S082 [*] multiple statements per line
+   |
+10 |   integer :: j;
+11 |   i = 1;; j = 2;
+12 |   i = i + j; write (*, *) i;;
+   |                            ^ S082
+13 | end program p;
+   |
+   = help: Separate over two lines
+
+ℹ Safe fix
+9  9  |   integer :: i;
+10 10 |   integer :: j;
+11 11 |   i = 1;; j = 2;
+12    |-  i = i + j; write (*, *) i;;
+   12 |+  i = i + j; write (*, *) i
+   13 |+  ;
+13 14 | end program p;

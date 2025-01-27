@@ -4,6 +4,7 @@ pub mod exit_labels;
 pub mod line_length;
 pub mod old_style_array_literal;
 pub mod relational_operators;
+pub mod semicolons;
 pub mod whitespace;
 
 #[cfg(test)]
@@ -25,6 +26,8 @@ mod tests {
     #[test_case(Rule::DeprecatedRelationalOperator, Path::new("S051.f90"))]
     #[test_case(Rule::UnnamedEndStatement, Path::new("S061.f90"))]
     #[test_case(Rule::MissingDoubleColon, Path::new("S071.f90"))]
+    #[test_case(Rule::SuperfluousSemicolon, Path::new("S081.f90"))]
+    #[test_case(Rule::MultipleStatementsPerLine, Path::new("S082.f90"))]
     #[test_case(Rule::TrailingWhitespace, Path::new("S101.f90"))]
     #[test_case(Rule::IncorrectSpaceBeforeComment, Path::new("S102.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {

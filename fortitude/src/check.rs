@@ -727,7 +727,7 @@ pub(crate) fn check_path(
 
     // Perform AST analysis
     let root = tree.root_node();
-    for node in once(root).chain(root.named_descendants()) {
+    for node in once(root).chain(root.descendants()) {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for rule in rules {
                 if let Some(violation) = rule.check(settings, &node, file) {

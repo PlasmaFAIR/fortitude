@@ -104,6 +104,9 @@ pub trait FortitudeNode<'tree> {
     /// or None otherwise.
     fn parse_intrinsic_type(&self) -> Option<String>;
 
+    /// Get the current indentation level of the node.
+    fn indentation(&self, source_file: &SourceFile) -> String;
+
     /// Return the edit required to remove this node.
     fn edit_delete(&self, source_file: &SourceFile) -> Edit;
 
@@ -159,6 +162,18 @@ impl FortitudeNode<'_> for Node<'_> {
             return Some(grandchild.kind().to_string());
         }
         None
+    }
+
+    fn indentation(&self, source_file: &SourceFile) -> String {
+        let src = source_file.to_source_code();
+        let start_byte = TextSize::try_from(self.start_byte()).unwrap();
+        let start_index = src.line_index(start_byte);
+        let start_line = src.line_start(start_index);
+        let start_offset = start_byte - start_line;
+        let line = src
+            .slice(TextRange::new(start_line, start_line + start_offset))
+            .to_string();
+        line.chars().take_while(|&c| c.is_whitespace()).collect()
     }
 
     fn edit_delete(&self, source_file: &SourceFile) -> Edit {
