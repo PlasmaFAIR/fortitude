@@ -1082,6 +1082,7 @@ impl RuleSelection {
     }
 }
 
+/// Helper object to store the results of all checks
 pub(crate) struct CheckResults {
     /// All diagnostics found in all files
     pub(crate) diagnostics: Diagnostics,
@@ -1136,6 +1137,7 @@ impl CheckResults {
     }
 }
 
+/// Enum used to report the result of a single file check
 enum CheckStatus {
     /// The file was checked and no issues were found
     Ok,
@@ -1341,7 +1343,6 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     }
 }
 
-/// Enum used to report the result of a single file check
 #[allow(clippy::too_many_arguments)]
 fn check_files(
     files: &[PathBuf],
