@@ -111,6 +111,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "021") => (RuleGroup::Stable, Ast, obsolescent::entry_statement::EntryStatement),
         (Obsolescent, "031") => (RuleGroup::Preview, Ast, obsolescent::specific_names::SpecificName),
         (Obsolescent, "041") => (RuleGroup::Preview, Ast, obsolescent::computed_goto::ComputedGoTo),
+        (Obsolescent, "051") => (RuleGroup::Stable, Ast, obsolescent::pause_statement::PauseStatement),
 
         (Precision, "001") => (RuleGroup::Stable, Ast, precision::kind_suffixes::NoRealSuffix),
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),
@@ -144,20 +145,20 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         #[cfg(any(feature = "test-rules", test))]
         (Error, "9903") => (RuleGroup::Stable, None, testing::test_rules::StableTestRuleDisplayOnlyFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9904") => (RuleGroup::Preview, None, testing::test_rules::PreviewTestRule),
+        (Error, "9911") => (RuleGroup::Preview, None, testing::test_rules::PreviewTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9905") => (RuleGroup::Deprecated, None, testing::test_rules::DeprecatedTestRule),
+        (Error, "9920") => (RuleGroup::Deprecated, None, testing::test_rules::DeprecatedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9906") => (RuleGroup::Deprecated, None, testing::test_rules::AnotherDeprecatedTestRule),
+        (Error, "9921") => (RuleGroup::Deprecated, None, testing::test_rules::AnotherDeprecatedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9907") => (RuleGroup::Removed, None, testing::test_rules::RemovedTestRule),
+        (Error, "9930") => (RuleGroup::Removed, None, testing::test_rules::RemovedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9908") => (RuleGroup::Removed, None, testing::test_rules::AnotherRemovedTestRule),
+        (Error, "9931") => (RuleGroup::Removed, None, testing::test_rules::AnotherRemovedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9909") => (RuleGroup::Removed, None, testing::test_rules::RedirectedFromTestRule),
+        (Error, "9940") => (RuleGroup::Removed, None, testing::test_rules::RedirectedFromTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9910") => (RuleGroup::Stable, None, testing::test_rules::RedirectedToTestRule),
+        (Error, "9950") => (RuleGroup::Stable, None, testing::test_rules::RedirectedToTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9911") => (RuleGroup::Removed, None, testing::test_rules::RedirectedFromPrefixTestRule),
+        (Error, "9960") => (RuleGroup::Removed, None, testing::test_rules::RedirectedFromPrefixTestRule),
     })
 }

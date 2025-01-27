@@ -149,6 +149,10 @@ pub struct CheckArgs {
     #[arg(long, value_enum, env = "FORTITUDE_OUTPUT_FORMAT")]
     pub output_format: Option<OutputFormat>,
 
+    /// Specify file to write the linter output to (default: stdout).
+    #[arg(short, long, env = "FORTITUDE_OUTPUT_FILE")]
+    pub output_file: Option<PathBuf>,
+
     /// Enable preview mode; checks will include unstable rules and fixes.
     /// Use `--no-preview` to disable.
     #[arg(long, overrides_with("no_preview"), action = SetTrue)]
@@ -259,4 +263,9 @@ pub struct CheckArgs {
     /// Set the maximum allowable line length.
     #[arg(long, help_heading = "Per-Rule Options")]
     pub line_length: Option<usize>,
+
+    // Miscellaneous
+    /// The name of the file when passing it through stdin.
+    #[arg(long)]
+    pub stdin_filename: Option<PathBuf>,
 }

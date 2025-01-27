@@ -2,22 +2,25 @@ use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
-use crate::fs;
 use crate::fs::{get_files, FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
-use crate::registry::AsRule;
+use crate::registry::{AsRule, RuleNamespace};
 use crate::rule_selector::{
     collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector, Specificity,
 };
 use crate::rule_table::RuleTable;
 use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
+#[cfg(any(feature = "test-rules", test))]
+use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{
     ExcludeMode, FixMode, GitignoreMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar,
     Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
+use crate::stdin::read_from_stdin;
+use crate::{fs, warn_user_once, warn_user_once_by_id, warn_user_once_by_message};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
@@ -29,13 +32,13 @@ use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
 use ruff_text_size::{TextRange, TextSize};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
-use std::io;
 use std::io::Write;
+use std::io::{self, BufWriter};
 use std::iter::once;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -43,7 +46,7 @@ use std::str::FromStr;
 use std::time::Instant;
 use strum::IntoEnumIterator;
 use toml::Table;
-use tree_sitter::{Node, Parser};
+use tree_sitter::{Node, Parser, Tree};
 
 // These are just helper structs to let us quickly work out if there's
 // a fortitude section in an fpm.toml file
@@ -176,6 +179,7 @@ pub struct CheckSettings {
     pub extend_exclude: Vec<FilePattern>,
     pub exclude_mode: ExcludeMode,
     pub gitignore_mode: GitignoreMode,
+    pub stdin_filename: Option<PathBuf>,
 }
 
 impl Default for CheckSettings {
@@ -200,6 +204,7 @@ impl Default for CheckSettings {
             extend_exclude: Default::default(),
             exclude_mode: Default::default(),
             gitignore_mode: Default::default(),
+            stdin_filename: Default::default(),
         }
     }
 }
@@ -219,7 +224,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
 
     let settings = match from_toml_subsection(filename)?.check {
         Some(value) => CheckSettings {
-            files: value.files.unwrap_or(vec![PathBuf::from(".")]),
+            files: value.files.unwrap_or_default(),
             ignore: value.ignore.unwrap_or_default(),
             select: value.select,
             extend_select: value.extend_select.unwrap_or_default(),
@@ -248,6 +253,7 @@ fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
             gitignore_mode: resolve_bool_arg(value.respect_gitignore, value.no_respect_gitignore)
                 .map(GitignoreMode::from)
                 .unwrap_or_default(),
+            stdin_filename: value.stdin_filename,
         },
         None => CheckSettings::default(),
     };
@@ -260,6 +266,13 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
         mode: *preview,
         require_explicit: false,
     };
+
+    // Store selectors for displaying warnings
+    let mut redirects = FxHashMap::default();
+    let mut deprecated_selectors = FxHashSet::default();
+    let mut removed_selectors = FxHashSet::default();
+    let mut removed_ignored_rules = FxHashSet::default();
+    let mut ignored_preview_selectors = FxHashSet::default();
 
     // The select_set keeps track of which rules have been selected.
     let mut select_set: BTreeSet<Rule> = if args.select.is_none() {
@@ -290,6 +303,140 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
                 select_set.remove(&rule);
             }
         }
+
+        // Check for selections that require a warning
+        for (kind, selector) in args.selectors_by_kind() {
+            // Some of these checks are only for `Kind::Enable` which means only `--select` will warn
+            // and use with, e.g., `--ignore` or `--fixable` is okay
+
+            // Unstable rules
+            if preview.mode.is_disabled() && kind.is_enable() {
+                // Check if the selector is empty because preview mode is disabled
+                if selector.rules(&preview).next().is_none()
+                    && selector
+                        .rules(&PreviewOptions {
+                            mode: PreviewMode::Enabled,
+                            require_explicit: preview.require_explicit,
+                        })
+                        .next()
+                        .is_some()
+                {
+                    ignored_preview_selectors.insert(selector);
+                }
+            }
+
+            // Deprecated rules
+            if kind.is_enable()
+                && selector.is_exact()
+                && selector.all_rules().all(|rule| rule.is_deprecated())
+            {
+                deprecated_selectors.insert(selector.clone());
+            }
+
+            // Removed rules
+            if selector.is_exact() && selector.all_rules().all(|rule| rule.is_removed()) {
+                if kind.is_disable() {
+                    removed_ignored_rules.insert(selector);
+                } else {
+                    removed_selectors.insert(selector);
+                }
+            }
+
+            // Redirected rules
+            if let RuleSelector::Prefix {
+                prefix,
+                redirected_from: Some(redirect_from),
+            }
+            | RuleSelector::Rule {
+                prefix,
+                redirected_from: Some(redirect_from),
+            } = selector
+            {
+                redirects.insert(redirect_from, prefix);
+            }
+        }
+    }
+
+    let removed_selectors = removed_selectors.iter().sorted().collect::<Vec<_>>();
+    match removed_selectors.as_slice() {
+        [] => (),
+        [selection] => {
+            let (prefix, code) = selection.prefix_and_code();
+            return Err(anyhow!(
+                "Rule `{prefix}{code}` was removed and cannot be selected."
+            ));
+        }
+        [..] => {
+            let mut message =
+                "The following rules have been removed and cannot be selected:".to_string();
+            for selection in removed_selectors {
+                let (prefix, code) = selection.prefix_and_code();
+                message.push_str("\n    - ");
+                message.push_str(prefix);
+                message.push_str(code);
+            }
+            message.push('\n');
+            return Err(anyhow!(message));
+        }
+    }
+
+    if !removed_ignored_rules.is_empty() {
+        let mut rules = String::new();
+        for selection in removed_ignored_rules.iter().sorted() {
+            let (prefix, code) = selection.prefix_and_code();
+            rules.push_str("\n    - ");
+            rules.push_str(prefix);
+            rules.push_str(code);
+        }
+        rules.push('\n');
+        warn_user_once_by_message!(
+            "The following rules have been removed and ignoring them has no effect:{rules}"
+        );
+    }
+
+    for (from, target) in redirects.iter().sorted_by_key(|item| item.0) {
+        warn_user_once_by_id!(
+            from,
+            "`{from}` has been remapped to `{}{}`.",
+            target.category().common_prefix(),
+            target.short_code()
+        );
+    }
+
+    if preview.mode.is_disabled() {
+        for selection in deprecated_selectors.iter().sorted() {
+            let (prefix, code) = selection.prefix_and_code();
+            warn_user_once_by_message!(
+                "Rule `{prefix}{code}` is deprecated and will be removed in a future release."
+            );
+        }
+    } else {
+        let deprecated_selectors = deprecated_selectors.iter().sorted().collect::<Vec<_>>();
+        match deprecated_selectors.as_slice() {
+            [] => (),
+            [selection] => {
+                let (prefix, code) = selection.prefix_and_code();
+                return Err(anyhow!("Selection of deprecated rule `{prefix}{code}` is not allowed when preview is enabled."));
+            }
+            [..] => {
+                let mut message = "Selection of deprecated rules is not allowed when preview is enabled. Remove selection of:".to_string();
+                for selection in deprecated_selectors {
+                    let (prefix, code) = selection.prefix_and_code();
+                    message.push_str("\n\t- ");
+                    message.push_str(prefix);
+                    message.push_str(code);
+                }
+                message.push('\n');
+                return Err(anyhow!(message));
+            }
+        }
+    }
+
+    for selection in ignored_preview_selectors.iter().sorted() {
+        let (prefix, code) = selection.prefix_and_code();
+        warn_user_once_by_message!(
+            "Selection `{prefix}{code}` has no effect because preview is not enabled.",
+        );
     }
 
     let mut rules = RuleTable::empty();
@@ -300,6 +447,40 @@ fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<R
     }
 
     Ok(rules)
+}
+
+/// Returns true if the command should read from standard input.
+fn is_stdin(files: &[PathBuf], stdin_filename: Option<&Path>) -> bool {
+    // If the user provided a `--stdin-filename`, always read from standard input.
+    if stdin_filename.is_some() {
+        if let Some(file) = files.iter().find(|file| file.as_path() != Path::new("-")) {
+            warn_user_once!(
+                "Ignoring file {} in favor of standard input.",
+                file.display()
+            );
+        }
+        return true;
+    }
+
+    let [file] = files else {
+        return false;
+    };
+    // If the user provided exactly `-`, read from standard input.
+    file == Path::new("-")
+}
+
+/// Returns the default set of files if none are provided, otherwise
+/// returns a list with just the current working directory.
+fn resolve_default_files(files: Vec<PathBuf>, is_stdin: bool) -> Vec<PathBuf> {
+    if files.is_empty() {
+        if is_stdin {
+            vec![Path::new("-").to_path_buf()]
+        } else {
+            vec![Path::new(".").to_path_buf()]
+        }
+    } else {
+        files
+    }
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -492,6 +673,44 @@ pub(crate) fn check_only_file(
     file: &SourceFile,
     settings: &Settings,
 ) -> anyhow::Result<Vec<DiagnosticMessage>> {
+    let mut parser = Parser::new();
+    parser
+        .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        .context("Error loading Fortran grammar")?;
+    let tree = parser
+        .parse(file.source_text(), None)
+        .context("Failed to parse")?;
+
+    let violations = check_path(
+        rules,
+        path_rules,
+        text_rules,
+        ast_entrypoints,
+        path,
+        file,
+        settings,
+        &tree,
+    );
+
+    Ok(violations
+        .into_iter()
+        .map(|v| DiagnosticMessage::from_ruff(file, v))
+        .collect_vec())
+}
+
+/// Check an already parsed file. This actually does all the checking,
+/// `check_only_file`/`check_and_fix_file` wrap this
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn check_path(
+    rules: &RuleTable,
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
+    path: &Path,
+    file: &SourceFile,
+    settings: &Settings,
+    tree: &Tree,
+) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
 
@@ -507,14 +726,6 @@ pub(crate) fn check_only_file(
     }
 
     // Perform AST analysis
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_fortran::LANGUAGE.into())
-        .context("Error loading Fortran grammar")?;
-    let tree = parser
-        .parse(file.source_text(), None)
-        .context("Failed to parse")?;
-
     let root = tree.root_node();
     for node in once(root).chain(root.descendants()) {
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
@@ -532,11 +743,42 @@ pub(crate) fn check_only_file(
         };
     }
 
-    Ok(violations
+    // Raise violations for internal test rules
+    #[cfg(any(feature = "test-rules", test))]
+    {
+        for test_rule in TEST_RULES {
+            if !rules.enabled(*test_rule) {
+                continue;
+            }
+            let diagnostic = match test_rule {
+                Rule::StableTestRule => test_rules::StableTestRule::check(),
+                Rule::StableTestRuleSafeFix => test_rules::StableTestRuleSafeFix::check(),
+                Rule::StableTestRuleUnsafeFix => test_rules::StableTestRuleUnsafeFix::check(),
+                Rule::StableTestRuleDisplayOnlyFix => {
+                    test_rules::StableTestRuleDisplayOnlyFix::check()
+                }
+                Rule::PreviewTestRule => test_rules::PreviewTestRule::check(),
+                Rule::DeprecatedTestRule => test_rules::DeprecatedTestRule::check(),
+                Rule::AnotherDeprecatedTestRule => test_rules::AnotherDeprecatedTestRule::check(),
+                Rule::RemovedTestRule => test_rules::RemovedTestRule::check(),
+                Rule::AnotherRemovedTestRule => test_rules::AnotherRemovedTestRule::check(),
+                Rule::RedirectedToTestRule => test_rules::RedirectedToTestRule::check(),
+                Rule::RedirectedFromTestRule => test_rules::RedirectedFromTestRule::check(),
+                Rule::RedirectedFromPrefixTestRule => {
+                    test_rules::RedirectedFromPrefixTestRule::check()
+                }
+                _ => unreachable!("All test rules must have an implementation"),
+            };
+            if let Some(diagnostic) = diagnostic {
+                violations.push(diagnostic);
+            }
+        }
+    }
+
+    violations
         .into_iter()
         .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
-        .map(|v| DiagnosticMessage::from_ruff(file, v))
-        .collect_vec())
+        .collect_vec()
 }
 
 const MAX_ITERATIONS: usize = 100;
@@ -581,46 +823,23 @@ pub(crate) fn check_and_fix_file<'a>(
 
     // Continuously fix until the source code stabilizes.
     loop {
-        let mut violations = Vec::new();
-        let mut allow_comments = Vec::new();
-
-        // Map row and column locations to byte slices (lazily).
-        let locator = Locator::new(transformed.source_text());
-
-        // No fixes on file path
-        for rule in path_rules {
-            if let Some(violation) = rule.check(settings, path) {
-                violations.push(violation);
-            }
-        }
-
-        // Perform plain text analysis
-        for rule in text_rules {
-            violations.extend(rule.check(settings, &transformed));
-        }
-
-        // TODO: check for syntax errors on first pass, so we can know
-        // if we've introduced them
         let tree = parser
             .parse(transformed.source_text(), None)
             .context("Failed to parse")?;
 
-        let root = tree.root_node();
-        for node in once(root).chain(root.descendants()) {
-            if let Some(rules) = ast_entrypoints.get(node.kind()) {
-                for rule in rules {
-                    if let Some(violation) = rule.check(settings, &node, &transformed) {
-                        for v in violation {
-                            violations.push(v);
-                        }
-                    }
-                }
-            }
-            match gather_allow_comments(&node, file, rules) {
-                Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
-                Err(mut violation) => violations.append(&mut violation),
-            };
-        }
+        // Map row and column locations to byte slices (lazily).
+        let locator = Locator::new(transformed.source_text());
+
+        let violations = check_path(
+            rules,
+            path_rules,
+            text_rules,
+            ast_entrypoints,
+            path,
+            &transformed,
+            settings,
+            &tree,
+        );
 
         if iterations == 0 {
             is_valid_syntax = !tree.root_node().has_error();
@@ -628,11 +847,6 @@ pub(crate) fn check_and_fix_file<'a>(
             report_fix_syntax_error(path, transformed.source_text(), fixed.keys().copied());
             return Err(anyhow!("Fix introduced a syntax error"));
         }
-
-        let violations = violations
-            .into_iter()
-            .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
-            .collect_vec();
 
         // Apply fix
         if let Some(FixResult {
@@ -818,6 +1032,54 @@ pub struct RuleSelection {
     pub select: Option<Vec<RuleSelector>>,
     pub ignore: Vec<RuleSelector>,
     pub extend_select: Vec<RuleSelector>,
+    pub fixable: Option<Vec<RuleSelector>>,
+    pub unfixable: Vec<RuleSelector>,
+    pub extend_fixable: Vec<RuleSelector>,
+}
+
+#[derive(Debug, Eq, PartialEq, is_macro::Is)]
+pub enum RuleSelectorKind {
+    /// Enables the selected rules
+    Enable,
+    /// Disables the selected rules
+    Disable,
+    /// Modifies the behavior of selected rules
+    Modify,
+}
+
+impl RuleSelection {
+    pub fn selectors_by_kind(&self) -> impl Iterator<Item = (RuleSelectorKind, &RuleSelector)> {
+        self.select
+            .iter()
+            .flatten()
+            .map(|selector| (RuleSelectorKind::Enable, selector))
+            .chain(
+                self.fixable
+                    .iter()
+                    .flatten()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+            .chain(
+                self.ignore
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Disable, selector)),
+            )
+            .chain(
+                self.extend_select
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Enable, selector)),
+            )
+            .chain(
+                self.unfixable
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+            .chain(
+                self.extend_fixable
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+    }
 }
 
 /// Check all files, report issues found, and return error code.
@@ -826,7 +1088,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let file_settings = parse_config_file(&global_options.config_file)?;
     // Now, we can override settings from the config file with options
     // from the CLI
-    let files = &args.files.unwrap_or(file_settings.files);
+    let files = args.files.unwrap_or(file_settings.files);
     let file_extensions = &args
         .file_extensions
         .unwrap_or(file_settings.file_extensions);
@@ -840,6 +1102,9 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         // TODO: CLI ignore should _extend_ file ignore
         ignore: args.ignore.unwrap_or(file_settings.ignore),
         extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
+        fixable: None,
+        unfixable: vec![],
+        extend_fixable: vec![],
     };
 
     let per_file_ignores = CompiledPerFileIgnoreList::resolve(collect_per_file_ignores(
@@ -896,6 +1161,24 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let show_fixes =
         resolve_bool_arg(args.show_fixes, args.no_show_fixes).unwrap_or(file_settings.show_fixes);
 
+    let stdin_filename = args.stdin_filename.or(file_settings.stdin_filename);
+
+    let writer: Box<dyn Write> = match args.output_file {
+        Some(path) => {
+            colored::control::set_override(false);
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let file = File::create(path)?;
+            Box::new(BufWriter::new(file))
+        }
+        _ => Box::new(BufWriter::new(io::stdout())),
+    };
+    let stderr_writer = Box::new(BufWriter::new(io::stderr()));
+
+    let is_stdin = is_stdin(&files, stdin_filename.as_deref());
+    let files = resolve_default_files(files, is_stdin);
+
     // Fix rules are as follows:
     // - By default, generate all fixes, but don't apply them to the filesystem.
     // - If `--fix` or `--fix-only` is set, apply applicable fixes to the filesystem (or
@@ -922,7 +1205,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let start = Instant::now();
 
     let files = get_files(
-        files,
+        &files,
         project_root(path_absolutize::path_dedot::CWD.as_path())?,
         file_extensions,
         file_excludes,
@@ -930,6 +1213,82 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         gitignore_mode,
     )?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
+
+    let all_diagnostics = if is_stdin {
+        check_stdin(
+            stdin_filename.map(fs::normalize_path).as_deref(),
+            &rules,
+            &path_rules,
+            &text_rules,
+            &ast_entrypoints,
+            &settings,
+            fix_mode,
+            unsafe_fixes,
+            &per_file_ignores,
+        )?
+    } else {
+        check_files(
+            &files,
+            &rules,
+            &path_rules,
+            &text_rules,
+            &ast_entrypoints,
+            &settings,
+            fix_mode,
+            unsafe_fixes,
+            &per_file_ignores,
+            progress_bar,
+        )?
+    };
+
+    let total_errors = all_diagnostics.messages.len();
+
+    // Always try to print violations (though the printer itself may suppress output)
+    // If we're writing fixes via stdin, the transformed source code goes to the writer
+    // so send the summary to stderr instead
+    let mut summary_writer = if is_stdin && matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+        stderr_writer
+    } else {
+        writer
+    };
+
+    let mut printer_flags = PrinterFlags::empty();
+    if !fix_only {
+        printer_flags |= PrinterFlags::SHOW_VIOLATIONS;
+    }
+    if show_fixes {
+        printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
+    }
+
+    Printer::new(
+        output_format,
+        global_options.log_level(),
+        printer_flags,
+        fix_mode,
+        unsafe_fixes,
+    )
+    .write_once(files.len(), &all_diagnostics, &mut summary_writer)?;
+
+    if total_errors == 0 {
+        Ok(ExitCode::SUCCESS)
+    } else {
+        Ok(ExitCode::FAILURE)
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn check_files(
+    files: &[PathBuf],
+    rules: &RuleTable,
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
+    settings: &Settings,
+    fix_mode: FixMode,
+    unsafe_fixes: UnsafeFixes,
+    per_file_ignores: &CompiledPerFileIgnoreList,
+    progress_bar: ProgressBar,
+) -> Result<Diagnostics> {
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
@@ -987,16 +1346,16 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
             match check_file(
-                &rules,
-                &path_rules,
-                &text_rules,
-                &ast_entrypoints,
+                rules,
+                path_rules,
+                text_rules,
+                ast_entrypoints,
                 path,
                 &file,
-                &settings,
+                settings,
                 fix_mode,
                 unsafe_fixes,
-                &per_file_ignores,
+                per_file_ignores,
             ) {
                 Ok(violations) => Some(violations),
                 Err(msg) => {
@@ -1036,32 +1395,104 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let duration = start.elapsed();
     debug!("Checked {:?} files in: {:?}", checked_files, duration);
 
-    let total_errors = all_diagnostics.messages.len();
+    Ok(all_diagnostics)
+}
 
-    let mut writer = Box::new(io::stdout());
+#[allow(clippy::too_many_arguments)]
+fn check_stdin(
+    filename: Option<&Path>,
+    rules: &RuleTable,
+    path_rules: &Vec<PathRuleEnum>,
+    text_rules: &Vec<TextRuleEnum>,
+    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
+    settings: &Settings,
+    fix_mode: FixMode,
+    unsafe_fixes: UnsafeFixes,
+    per_file_ignores: &CompiledPerFileIgnoreList,
+) -> Result<Diagnostics> {
+    let stdin = read_from_stdin()?;
 
-    let mut printer_flags = PrinterFlags::empty();
-    if !fix_only {
-        printer_flags |= PrinterFlags::SHOW_VIOLATIONS;
-    }
-    if show_fixes {
-        printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
-    }
+    let path = filename.unwrap_or_else(|| Path::new("-"));
+    let file = SourceFileBuilder::new(path.to_str().unwrap_or("-"), stdin.as_str()).finish();
 
-    Printer::new(
-        output_format,
-        global_options.log_level(),
-        printer_flags,
-        fix_mode,
-        unsafe_fixes,
-    )
-    .write_once(files.len(), &all_diagnostics, &mut writer)?;
+    let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+        if let Ok(FixerResult {
+            result,
+            transformed,
+            fixed,
+        }) = check_and_fix_file(
+            rules,
+            path_rules,
+            text_rules,
+            ast_entrypoints,
+            path,
+            &file,
+            settings,
+            unsafe_fixes,
+        ) {
+            if !fixed.is_empty() {
+                match fix_mode {
+                    FixMode::Apply => {
+                        // Write the contents to stdout, regardless of whether any errors were fixed.
+                        let out_file = &mut io::stdout().lock();
+                        out_file.write_all(transformed.source_text().as_bytes())?;
+                    }
+                    // TODO: diff
+                    FixMode::Diff => {}
+                    FixMode::Generate => {}
+                }
+            }
 
-    if total_errors == 0 {
-        Ok(ExitCode::SUCCESS)
+            (result, fixed)
+        } else {
+            // Failed to fix, so just lint the original source
+            let result = check_only_file(
+                rules,
+                path_rules,
+                text_rules,
+                ast_entrypoints,
+                path,
+                &file,
+                settings,
+            )?;
+            let fixed = FxHashMap::default();
+            (result, fixed)
+        }
     } else {
-        Ok(ExitCode::FAILURE)
+        let result = check_only_file(
+            rules,
+            path_rules,
+            text_rules,
+            ast_entrypoints,
+            path,
+            &file,
+            settings,
+        )?;
+        let fixed = FxHashMap::default();
+        (result, fixed)
+    };
+
+    // Ignore based on per-file-ignores.
+    // If the DiagnosticMessage is discarded, its fix will also be ignored.
+    let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {
+        fs::ignores_from_path(path, per_file_ignores)
+    } else {
+        vec![]
+    };
+    if !per_file_ignores.is_empty() {
+        messages.retain(|message| {
+            if let Some(rule) = message.rule() {
+                !per_file_ignores.contains(&rule)
+            } else {
+                true
+            }
+        });
     }
+
+    Ok(Diagnostics {
+        messages,
+        fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
+    })
 }
 
 #[cfg(test)]
@@ -1082,6 +1513,9 @@ mod tests {
             ignore: vec![],
             select: None,
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::default();
@@ -1106,6 +1540,9 @@ mod tests {
             ignore: vec![],
             select: None,
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::Enabled;
@@ -1133,6 +1570,9 @@ mod tests {
             ignore: vec![],
             select: Some(vec![RuleSelector::from_str("E000")?]),
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::default();
@@ -1148,8 +1588,11 @@ mod tests {
     fn select_one_preview_rule_without_preview() -> anyhow::Result<()> {
         let args = RuleSelection {
             ignore: vec![],
-            select: Some(vec![RuleSelector::from_str("E9904")?]),
+            select: Some(vec![RuleSelector::from_str("E9911")?]),
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::default();
@@ -1165,8 +1608,11 @@ mod tests {
     fn select_one_preview_rule_with_preview() -> anyhow::Result<()> {
         let args = RuleSelection {
             ignore: vec![],
-            select: Some(vec![RuleSelector::from_str("E9904")?]),
+            select: Some(vec![RuleSelector::from_str("E9911")?]),
             extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::Enabled;
@@ -1184,6 +1630,9 @@ mod tests {
             ignore: vec![],
             select: Some(vec![RuleSelector::from_str("E000")?]),
             extend_select: vec![RuleSelector::from_str("E001")?],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
         };
 
         let preview_mode = PreviewMode::default();

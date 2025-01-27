@@ -443,6 +443,7 @@ dependencies = [
  "clap",
  "colored",
  "fern",
+ "fortitude",
  "fortitude_macros",
  "globset",
  "ignore",
