@@ -1082,6 +1082,73 @@ impl RuleSelection {
     }
 }
 
+/// Helper object to store the results of all checks
+pub(crate) struct CheckResults {
+    /// All diagnostics found in all files
+    pub(crate) diagnostics: Diagnostics,
+    /// The number of files checked
+    pub(crate) files_checked: usize,
+    /// The number of files skipped
+    pub(crate) files_skipped: usize,
+}
+
+impl CheckResults {
+    fn new() -> Self {
+        Self {
+            diagnostics: Diagnostics::default(),
+            files_checked: 0,
+            files_skipped: 0,
+        }
+    }
+
+    fn from_stdin(diagnostics: Diagnostics) -> Self {
+        Self {
+            diagnostics,
+            files_checked: 1,
+            files_skipped: 0,
+        }
+    }
+
+    fn add(mut self, status: CheckStatus) -> Self {
+        match status {
+            CheckStatus::Ok => self.files_checked += 1,
+            CheckStatus::Violations(diagnostics) => {
+                self.diagnostics += diagnostics;
+                self.files_checked += 1;
+            }
+            CheckStatus::Skipped(diagnostics) => {
+                self.diagnostics += diagnostics;
+                self.files_skipped += 1;
+            }
+            CheckStatus::SkippedNoDiagnostic => self.files_skipped += 1,
+        }
+        self
+    }
+
+    fn merge(mut self, other: CheckResults) -> Self {
+        self.diagnostics += other.diagnostics;
+        self.files_checked += other.files_checked;
+        self.files_skipped += other.files_skipped;
+        self
+    }
+
+    fn sort(&mut self) {
+        self.diagnostics.messages.par_sort_unstable();
+    }
+}
+
+/// Enum used to report the result of a single file check
+enum CheckStatus {
+    /// The file was checked and no issues were found
+    Ok,
+    /// The file was checked and issues were found
+    Violations(Diagnostics),
+    /// The file was skipped due to an error
+    Skipped(Diagnostics),
+    /// The file was skipped but no violations were raised
+    SkippedNoDiagnostic,
+}
+
 /// Check all files, report issues found, and return error code.
 pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
     // First we need to find and read any config file
@@ -1214,7 +1281,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     )?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
 
-    let all_diagnostics = if is_stdin {
+    let results = if is_stdin {
         check_stdin(
             stdin_filename.map(fs::normalize_path).as_deref(),
             &rules,
@@ -1241,7 +1308,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         )?
     };
 
-    let total_errors = all_diagnostics.messages.len();
+    let total_errors = results.diagnostics.messages.len();
 
     // Always try to print violations (though the printer itself may suppress output)
     // If we're writing fixes via stdin, the transformed source code goes to the writer
@@ -1267,7 +1334,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         fix_mode,
         unsafe_fixes,
     )
-    .write_once(files.len(), &all_diagnostics, &mut summary_writer)?;
+    .write_once(&results, &mut summary_writer)?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)
@@ -1288,7 +1355,7 @@ fn check_files(
     unsafe_fixes: UnsafeFixes,
     per_file_ignores: &CompiledPerFileIgnoreList,
     progress_bar: ProgressBar,
-) -> Result<Diagnostics> {
+) -> Result<CheckResults> {
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
@@ -1315,11 +1382,11 @@ fn check_files(
     };
 
     let start = Instant::now();
-    let diagnostics_per_file = files
+    let mut results = files
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
-        .filter_map(|path| {
+        .map(|path| {
             let filename = path.to_string_lossy();
 
             let source = match read_to_string(path) {
@@ -1327,10 +1394,11 @@ fn check_files(
                 Err(error) => {
                     if rules.enabled(Rule::IoError) {
                         let message = format!("Error opening file: {error}");
-                        return Some(Diagnostics::new(vec![DiagnosticMessage::from_error(
+                        let diagnostics = vec![DiagnosticMessage::from_error(
                             filename,
                             Diagnostic::new(IoError { message }, TextRange::default()),
-                        )]));
+                        )];
+                        return CheckStatus::Skipped(Diagnostics::new(diagnostics));
                     } else {
                         warn!(
                             "{}{}{} {error}",
@@ -1338,7 +1406,7 @@ fn check_files(
                             fs::relativize_path(path).bold(),
                             ":".bold()
                         );
-                        return None;
+                        return CheckStatus::SkippedNoDiagnostic;
                     }
                 }
             };
@@ -1357,14 +1425,21 @@ fn check_files(
                 unsafe_fixes,
                 per_file_ignores,
             ) {
-                Ok(violations) => Some(violations),
+                Ok(violations) => {
+                    if violations.is_empty() {
+                        CheckStatus::Ok
+                    } else {
+                        CheckStatus::Violations(violations)
+                    }
+                }
                 Err(msg) => {
                     if rules.enabled(Rule::IoError) {
                         let message = format!("Failed to process: {msg}");
-                        Some(Diagnostics::new(vec![DiagnosticMessage::from_error(
+                        let diagnostics = vec![DiagnosticMessage::from_error(
                             filename,
                             Diagnostic::new(IoError { message }, TextRange::default()),
-                        )]))
+                        )];
+                        CheckStatus::Skipped(Diagnostics::new(diagnostics))
                     } else {
                         warn!(
                             "{}{}{} {msg}",
@@ -1372,30 +1447,23 @@ fn check_files(
                             fs::relativize_path(path).bold(),
                             ":".bold()
                         );
-                        None
+                        CheckStatus::SkippedNoDiagnostic
                     }
                 }
             }
-        });
+        })
+        .fold(CheckResults::new, |results, status| results.add(status))
+        .reduce(CheckResults::new, |a, b| a.merge(b));
 
-    let (mut all_diagnostics, checked_files) = diagnostics_per_file
-        .fold(
-            || (Diagnostics::default(), 0u64),
-            |(all_diagnostics, checked_files), file_diagnostics| {
-                (all_diagnostics + file_diagnostics, checked_files + 1)
-            },
-        )
-        .reduce(
-            || (Diagnostics::default(), 0u64),
-            |a, b| (a.0 + b.0, a.1 + b.1),
-        );
-
-    all_diagnostics.messages.par_sort_unstable();
+    results.sort();
 
     let duration = start.elapsed();
-    debug!("Checked {:?} files in: {:?}", checked_files, duration);
+    debug!(
+        "Checked {:?} files and skipped {:?} in: {:?}",
+        results.files_checked, results.files_skipped, duration
+    );
 
-    Ok(all_diagnostics)
+    Ok(results)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1409,7 +1477,7 @@ fn check_stdin(
     fix_mode: FixMode,
     unsafe_fixes: UnsafeFixes,
     per_file_ignores: &CompiledPerFileIgnoreList,
-) -> Result<Diagnostics> {
+) -> Result<CheckResults> {
     let stdin = read_from_stdin()?;
 
     let path = filename.unwrap_or_else(|| Path::new("-"));
@@ -1489,10 +1557,11 @@ fn check_stdin(
         });
     }
 
-    Ok(Diagnostics {
+    let diagnostics = Diagnostics {
         messages,
         fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
-    })
+    };
+    Ok(CheckResults::from_stdin(diagnostics))
 }
 
 #[cfg(test)]
