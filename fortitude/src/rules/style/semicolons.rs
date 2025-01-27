@@ -1,6 +1,7 @@
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_source_file::SourceFile;
+use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
@@ -9,10 +10,16 @@ use crate::{AstRule, FromAstNode};
 
 fn semicolon_is_superfluous(node: &Node) -> bool {
     let line_number = node.start_position().row;
+    let prev_node = node.prev_sibling();
+    let next_node = node.next_sibling();
+    // Test it has at least one sibling.
+    if prev_node.is_none() && next_node.is_none() {
+        return true;
+    }
     // Test it is at beginning of a line. If the previous sibling is on an earlier line,
     // or if there is no previous sibling, then it is at the beginning of a line.
     // Also check that the previous sibling isn't a semicolon!
-    if let Some(prev_node) = node.prev_sibling() {
+    if let Some(prev_node) = prev_node {
         let prev_line_number = prev_node.start_position().row;
         if prev_line_number < line_number {
             return true;
@@ -26,7 +33,7 @@ fn semicolon_is_superfluous(node: &Node) -> bool {
     // Test it is at the end of a line. If the next sibling is on a later line, or if
     // there is no next sibling, then it is at the end of a line. Also check that the
     // next sibling isn't a comment or another semicolon!
-    if let Some(next_node) = node.next_sibling() {
+    if let Some(next_node) = next_node {
         let next_line_number = next_node.start_position().row;
         if next_line_number > line_number {
             return true;
@@ -104,7 +111,19 @@ impl AstRule for MultipleStatementsPerLine {
         if semicolon_is_superfluous(node) {
             return None;
         }
-        let edit = node.edit_replacement(src, "\n".to_string());
+        let indentation = node.indentation(src);
+        let start = node.start_byte();
+        let mut end = node.end_byte();
+        let text = src.source_text().as_bytes();
+        while text[end] == b' ' || text[end] == b'\t' {
+            end += 1;
+        }
+        let edit = Edit::replacement(
+            format!("\n{indentation}"),
+            TextSize::try_from(start).unwrap(),
+            TextSize::try_from(end).unwrap(),
+        );
+
         some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)))
     }
 
