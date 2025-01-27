@@ -6,6 +6,7 @@ use bitflags::bitflags;
 use colored::Colorize;
 use itertools::{iterate, Itertools};
 
+use crate::check::CheckResults;
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fs::relativize_path;
 use crate::logging::LogLevel;
@@ -52,39 +53,37 @@ impl Printer {
         }
     }
 
-    fn write_summary_text(
-        &self,
-        writer: &mut dyn Write,
-        diagnostics: &Diagnostics,
-        num_checked: usize,
-        num_skipped: usize,
-    ) -> Result<()> {
+    fn write_summary_text(&self, writer: &mut dyn Write, results: &CheckResults) -> Result<()> {
         if self.log_level < LogLevel::Default {
             return Ok(());
         }
 
-        let skipped = if num_skipped == 0 {
+        let skipped = if results.files_skipped == 0 {
             "".to_string()
         } else {
-            format!(", {} could not be read", num_skipped.to_string().bold())
+            format!(
+                ", {} could not be read",
+                results.files_skipped.to_string().bold()
+            )
         };
 
         let report = format!(
             "fortitude: {} files scanned{}.",
-            num_checked.to_string().bold(),
+            results.files_checked.to_string().bold(),
             skipped
         );
 
         writeln!(writer, "{report}")?;
 
-        let fixables = FixableStatistics::try_from(diagnostics, self.unsafe_fixes);
-        let fixed = diagnostics
+        let fixables = FixableStatistics::try_from(&results.diagnostics, self.unsafe_fixes);
+        let fixed = results
+            .diagnostics
             .fixed
             .values()
             .flat_map(std::collections::HashMap::values)
             .sum::<usize>();
 
-        let remaining = diagnostics.messages.len();
+        let remaining = results.diagnostics.messages.len();
         let total = fixed + remaining;
 
         let total_txt = total.to_string().bold();
@@ -152,18 +151,12 @@ impl Printer {
         Ok(())
     }
 
-    pub(crate) fn write_once(
-        &self,
-        num_checked: usize,
-        num_skipped: usize,
-        diagnostics: &Diagnostics,
-        writer: &mut dyn Write,
-    ) -> Result<()> {
+    pub(crate) fn write_once(&self, results: &CheckResults, writer: &mut dyn Write) -> Result<()> {
         if matches!(self.log_level, LogLevel::Silent) {
             return Ok(());
         }
 
-        let fixables = FixableStatistics::try_from(diagnostics, self.unsafe_fixes);
+        let fixables = FixableStatistics::try_from(&results.diagnostics, self.unsafe_fixes);
 
         match self.format {
             OutputFormat::Concise | OutputFormat::Full => {
@@ -172,55 +165,59 @@ impl Printer {
                     .with_show_fix_diff(self.flags.intersects(Flags::SHOW_FIX_DIFF))
                     .with_show_source(self.format == OutputFormat::Full)
                     .with_unsafe_fixes(crate::settings::UnsafeFixes::Hint)
-                    .emit(writer, &diagnostics.messages)?;
+                    .emit(writer, &results.diagnostics.messages)?;
 
-                if self.flags.intersects(Flags::SHOW_FIX_SUMMARY) && !diagnostics.fixed.is_empty() {
+                if self.flags.intersects(Flags::SHOW_FIX_SUMMARY)
+                    && !results.diagnostics.fixed.is_empty()
+                {
                     writeln!(writer)?;
-                    print_fix_summary(writer, &diagnostics.fixed)?;
+                    print_fix_summary(writer, &results.diagnostics.fixed)?;
                     writeln!(writer)?;
                 }
 
-                self.write_summary_text(writer, diagnostics, num_checked, num_skipped)?;
+                self.write_summary_text(writer, results)?;
             }
             OutputFormat::Github => {
-                GithubEmitter.emit(writer, &diagnostics.messages)?;
+                GithubEmitter.emit(writer, &results.diagnostics.messages)?;
             }
             OutputFormat::Gitlab => {
-                GitlabEmitter::default().emit(writer, &diagnostics.messages)?;
+                GitlabEmitter::default().emit(writer, &results.diagnostics.messages)?;
             }
             OutputFormat::Grouped => {
                 GroupedEmitter::default()
                     .with_show_fix_status(show_fix_status(self.fix_mode, fixables.as_ref()))
                     .with_unsafe_fixes(self.unsafe_fixes)
-                    .emit(writer, &diagnostics.messages)?;
+                    .emit(writer, &results.diagnostics.messages)?;
 
-                if self.flags.intersects(Flags::SHOW_FIX_SUMMARY) && !diagnostics.fixed.is_empty() {
+                if self.flags.intersects(Flags::SHOW_FIX_SUMMARY)
+                    && !results.diagnostics.fixed.is_empty()
+                {
                     writeln!(writer)?;
-                    print_fix_summary(writer, &diagnostics.fixed)?;
+                    print_fix_summary(writer, &results.diagnostics.fixed)?;
                     writeln!(writer)?;
                 }
-                self.write_summary_text(writer, diagnostics, num_checked, num_skipped)?;
+                self.write_summary_text(writer, results)?;
             }
             OutputFormat::Json => {
-                JsonEmitter.emit(writer, &diagnostics.messages)?;
+                JsonEmitter.emit(writer, &results.diagnostics.messages)?;
             }
             OutputFormat::Sarif => {
-                SarifEmitter.emit(writer, &diagnostics.messages)?;
+                SarifEmitter.emit(writer, &results.diagnostics.messages)?;
             }
             OutputFormat::Azure => {
-                AzureEmitter.emit(writer, &diagnostics.messages)?;
+                AzureEmitter.emit(writer, &results.diagnostics.messages)?;
             }
             OutputFormat::JsonLines => {
-                JsonLinesEmitter.emit(writer, &diagnostics.messages)?;
+                JsonLinesEmitter.emit(writer, &results.diagnostics.messages)?;
             }
             OutputFormat::Rdjson => {
-                RdjsonEmitter.emit(writer, &diagnostics.messages)?;
+                RdjsonEmitter.emit(writer, &results.diagnostics.messages)?;
             }
             OutputFormat::Junit => {
-                JunitEmitter.emit(writer, &diagnostics.messages)?;
+                JunitEmitter.emit(writer, &results.diagnostics.messages)?;
             }
             OutputFormat::Pylint => {
-                PylintEmitter.emit(writer, &diagnostics.messages)?;
+                PylintEmitter.emit(writer, &results.diagnostics.messages)?;
             }
         }
 
