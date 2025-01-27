@@ -1279,7 +1279,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     )?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
 
-    let check_results = if is_stdin {
+    let results = if is_stdin {
         check_stdin(
             stdin_filename.map(fs::normalize_path).as_deref(),
             &rules,
@@ -1306,7 +1306,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         )?
     };
 
-    let total_errors = check_results.diagnostics.messages.len();
+    let total_errors = results.diagnostics.messages.len();
 
     // Always try to print violations (though the printer itself may suppress output)
     // If we're writing fixes via stdin, the transformed source code goes to the writer
@@ -1332,7 +1332,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         fix_mode,
         unsafe_fixes,
     )
-    .write_once(&check_results, &mut summary_writer)?;
+    .write_once(&results, &mut summary_writer)?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)
@@ -1381,7 +1381,7 @@ fn check_files(
     };
 
     let start = Instant::now();
-    let mut check_results = files
+    let mut results = files
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
@@ -1451,20 +1451,18 @@ fn check_files(
                 }
             }
         })
-        .fold(CheckResults::new, |check_results, status| {
-            check_results.add(status)
-        })
+        .fold(CheckResults::new, |results, status| results.add(status))
         .reduce(CheckResults::new, |a, b| a.merge(b));
 
-    check_results.sort();
+    results.sort();
 
     let duration = start.elapsed();
     debug!(
         "Checked {:?} files and skipped {:?} in: {:?}",
-        check_results.files_checked, check_results.files_skipped, duration
+        results.files_checked, results.files_skipped, duration
     );
 
-    Ok(check_results)
+    Ok(results)
 }
 
 #[allow(clippy::too_many_arguments)]
