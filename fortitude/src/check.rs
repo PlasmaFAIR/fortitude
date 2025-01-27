@@ -1214,18 +1214,22 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     )?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
 
-    let all_diagnostics = if is_stdin {
-        check_stdin(
-            stdin_filename.map(fs::normalize_path).as_deref(),
-            &rules,
-            &path_rules,
-            &text_rules,
-            &ast_entrypoints,
-            &settings,
-            fix_mode,
-            unsafe_fixes,
-            &per_file_ignores,
-        )?
+    let (all_diagnostics, num_checked, num_skipped) = if is_stdin {
+        (
+            check_stdin(
+                stdin_filename.map(fs::normalize_path).as_deref(),
+                &rules,
+                &path_rules,
+                &text_rules,
+                &ast_entrypoints,
+                &settings,
+                fix_mode,
+                unsafe_fixes,
+                &per_file_ignores,
+            )?,
+            1,
+            0,
+        )
     } else {
         check_files(
             &files,
@@ -1267,13 +1271,30 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         fix_mode,
         unsafe_fixes,
     )
-    .write_once(files.len(), &all_diagnostics, &mut summary_writer)?;
+    .write_once(
+        num_checked,
+        num_skipped,
+        &all_diagnostics,
+        &mut summary_writer,
+    )?;
 
     if total_errors == 0 {
         Ok(ExitCode::SUCCESS)
     } else {
         Ok(ExitCode::FAILURE)
     }
+}
+
+/// Enum used to report the result of a single file check
+enum CheckResult {
+    /// The file was checked and no issues were found
+    Ok,
+    /// The file was checked and issues were found
+    Violations(Diagnostics),
+    /// The file was skipped due to an error
+    Skipped(Diagnostics),
+    /// The file was skipped but no violations were raised
+    SkippedNoDiagnostic,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1288,7 +1309,7 @@ fn check_files(
     unsafe_fixes: UnsafeFixes,
     per_file_ignores: &CompiledPerFileIgnoreList,
     progress_bar: ProgressBar,
-) -> Result<Diagnostics> {
+) -> Result<(Diagnostics, usize, usize)> {
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match progress_bar {
         ProgressBar::Fancy => {
@@ -1315,11 +1336,11 @@ fn check_files(
     };
 
     let start = Instant::now();
-    let diagnostics_per_file = files
+    let check_results = files
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
-        .filter_map(|path| {
+        .map(|path| {
             let filename = path.to_string_lossy();
 
             let source = match read_to_string(path) {
@@ -1327,10 +1348,11 @@ fn check_files(
                 Err(error) => {
                     if rules.enabled(Rule::IoError) {
                         let message = format!("Error opening file: {error}");
-                        return Some(Diagnostics::new(vec![DiagnosticMessage::from_error(
+                        let diagnostics = vec![DiagnosticMessage::from_error(
                             filename,
                             Diagnostic::new(IoError { message }, TextRange::default()),
-                        )]));
+                        )];
+                        return CheckResult::Skipped(Diagnostics::new(diagnostics));
                     } else {
                         warn!(
                             "{}{}{} {error}",
@@ -1338,7 +1360,7 @@ fn check_files(
                             fs::relativize_path(path).bold(),
                             ":".bold()
                         );
-                        return None;
+                        return CheckResult::SkippedNoDiagnostic;
                     }
                 }
             };
@@ -1357,14 +1379,21 @@ fn check_files(
                 unsafe_fixes,
                 per_file_ignores,
             ) {
-                Ok(violations) => Some(violations),
+                Ok(violations) => {
+                    if violations.is_empty() {
+                        CheckResult::Ok
+                    } else {
+                        CheckResult::Violations(violations)
+                    }
+                }
                 Err(msg) => {
                     if rules.enabled(Rule::IoError) {
                         let message = format!("Failed to process: {msg}");
-                        Some(Diagnostics::new(vec![DiagnosticMessage::from_error(
+                        let diagnostics = vec![DiagnosticMessage::from_error(
                             filename,
                             Diagnostic::new(IoError { message }, TextRange::default()),
-                        )]))
+                        )];
+                        CheckResult::Skipped(Diagnostics::new(diagnostics))
                     } else {
                         warn!(
                             "{}{}{} {msg}",
@@ -1372,30 +1401,46 @@ fn check_files(
                             fs::relativize_path(path).bold(),
                             ":".bold()
                         );
-                        None
+                        CheckResult::SkippedNoDiagnostic
                     }
                 }
             }
         });
 
-    let (mut all_diagnostics, checked_files) = diagnostics_per_file
+    let (mut all_diagnostics, checked_files, skipped_files) = check_results
         .fold(
-            || (Diagnostics::default(), 0u64),
-            |(all_diagnostics, checked_files), file_diagnostics| {
-                (all_diagnostics + file_diagnostics, checked_files + 1)
+            || (Diagnostics::default(), 0usize, 0usize),
+            |(all_diagnostics, checked_files, skipped_files), check_result| match check_result {
+                CheckResult::Ok => (all_diagnostics, checked_files + 1, skipped_files),
+                CheckResult::Violations(diagnostics) => (
+                    all_diagnostics + diagnostics,
+                    checked_files + 1,
+                    skipped_files,
+                ),
+                CheckResult::Skipped(diagnostics) => (
+                    all_diagnostics + diagnostics,
+                    checked_files,
+                    skipped_files + 1,
+                ),
+                CheckResult::SkippedNoDiagnostic => {
+                    (all_diagnostics, checked_files, skipped_files + 1)
+                }
             },
         )
         .reduce(
-            || (Diagnostics::default(), 0u64),
-            |a, b| (a.0 + b.0, a.1 + b.1),
+            || (Diagnostics::default(), 0usize, 0usize),
+            |a, b| (a.0 + b.0, a.1 + b.1, a.2 + b.2),
         );
 
     all_diagnostics.messages.par_sort_unstable();
 
     let duration = start.elapsed();
-    debug!("Checked {:?} files in: {:?}", checked_files, duration);
+    debug!(
+        "Checked {:?} files and skipped {:?} in: {:?}",
+        checked_files, skipped_files, duration
+    );
 
-    Ok(all_diagnostics)
+    Ok((all_diagnostics, checked_files, skipped_files))
 }
 
 #[allow(clippy::too_many_arguments)]

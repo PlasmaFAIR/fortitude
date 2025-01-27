@@ -21,6 +21,10 @@ impl Diagnostics {
             fixed: FixMap::default(),
         }
     }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.messages.is_empty()
+    }
 }
 
 impl Add for Diagnostics {

@@ -56,19 +56,26 @@ impl Printer {
         &self,
         writer: &mut dyn Write,
         diagnostics: &Diagnostics,
-        num_files: usize,
+        num_checked: usize,
+        num_skipped: usize,
     ) -> Result<()> {
         if self.log_level < LogLevel::Default {
             return Ok(());
         }
 
-        // IO Errors indicate that we failed to read a file
-        let num_failed = diagnostics
-            .messages
-            .iter()
-            .filter(|x| x.name() == "IoError")
-            .count();
-        let total_files = num_files - num_failed;
+        let skipped = if num_skipped == 0 {
+            "".to_string()
+        } else {
+            format!(", {} could not be read", num_skipped.to_string().bold())
+        };
+
+        let report = format!(
+            "fortitude: {} files scanned{}.",
+            num_checked.to_string().bold(),
+            skipped
+        );
+
+        writeln!(writer, "{report}")?;
 
         let fixables = FixableStatistics::try_from(diagnostics, self.unsafe_fixes);
         let fixed = diagnostics
@@ -77,27 +84,12 @@ impl Printer {
             .flat_map(std::collections::HashMap::values)
             .sum::<usize>();
 
-        let file_no = if num_failed == 0 {
-            format!(
-                "fortitude: {} files scanned.",
-                total_files.to_string().bold()
-            )
-        } else {
-            format!(
-                "fortitude: {} files scanned, {} could not be read.",
-                total_files.to_string().bold(),
-                num_failed.to_string().bold(),
-            )
-        };
-
         let remaining = diagnostics.messages.len();
         let total = fixed + remaining;
 
         let total_txt = total.to_string().bold();
         let fixed_txt = fixed.to_string().bold();
         let remaining_txt = remaining.to_string().bold();
-
-        writeln!(writer, "{file_no}")?;
 
         let explain = format!(
             "fortitude explain {},{},...",
@@ -162,7 +154,8 @@ impl Printer {
 
     pub(crate) fn write_once(
         &self,
-        num_files: usize,
+        num_checked: usize,
+        num_skipped: usize,
         diagnostics: &Diagnostics,
         writer: &mut dyn Write,
     ) -> Result<()> {
@@ -187,7 +180,7 @@ impl Printer {
                     writeln!(writer)?;
                 }
 
-                self.write_summary_text(writer, diagnostics, num_files)?;
+                self.write_summary_text(writer, diagnostics, num_checked, num_skipped)?;
             }
             OutputFormat::Github => {
                 GithubEmitter.emit(writer, &diagnostics.messages)?;
@@ -206,7 +199,7 @@ impl Printer {
                     print_fix_summary(writer, &diagnostics.fixed)?;
                     writeln!(writer)?;
                 }
-                self.write_summary_text(writer, diagnostics, num_files)?;
+                self.write_summary_text(writer, diagnostics, num_checked, num_skipped)?;
             }
             OutputFormat::Json => {
                 JsonEmitter.emit(writer, &diagnostics.messages)?;
