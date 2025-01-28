@@ -11,7 +11,7 @@ project_root="$(dirname "$script_root")"
 
 echo "Updating metadata with rooster..."
 cd "$project_root"
-uv tool run --from 'rooster-blue>=0.0.7' --python 3.12 --isolated -- \
+uvx --from 'rooster-blue>=0.0.7' --python 3.12 --isolated -- \
     rooster release "$@"
 
 echo "Updating lockfile..."
@@ -20,5 +20,5 @@ cargo update -p fortitude
 echo "Generating contributors list..."
 echo ""
 echo ""
-uv tool run --from 'rooster-blue>=0.0.7' --python 3.12 --isolated -- \
+uvx --from 'rooster-blue>=0.0.7' --python 3.12 --isolated -- \
     rooster contributors --quiet
