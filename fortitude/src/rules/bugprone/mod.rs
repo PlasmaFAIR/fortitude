@@ -1,4 +1,5 @@
 pub mod select_default;
+pub mod trailing_backslash;
 
 #[cfg(test)]
 mod tests {
@@ -14,6 +15,7 @@ mod tests {
     use crate::test::test_path;
 
     #[test_case(Rule::MissingDefaultCase, Path::new("B001.f90"))]
+    #[test_case(Rule::TrailingBackslash, Path::new("B011.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

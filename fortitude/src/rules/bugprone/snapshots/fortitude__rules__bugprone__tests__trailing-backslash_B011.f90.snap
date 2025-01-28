@@ -1,0 +1,13 @@
+---
+source: fortitude/src/rules/bugprone/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/bugprone/B011.f90:5:22: B011 Trailing backslash
+  |
+3 |     real :: A
+4 |
+5 |     ! Just a comment \
+  |                      ^ B011
+6 |     A = 2.0
+7 |     print *, A
+  |

@@ -99,4 +99,5 @@
 | Code | Name | Message | |
 | ---- | ---- | ------- | ------: |
 | B001 | [missing-default-case](rules/missing-default-case.md) | Missing default case may not handle all values | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
+| B011 | [trailing-backslash](rules/trailing-backslash.md) | Trailing backslash | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> |
 
