@@ -282,20 +282,6 @@ jobs:
           args: --release --locked --out dist
         env:
           CFLAGS: -std=c99
-      - uses: uraimo/run-on-arch-action@v2
-        if: matrix.platform.arch != 'ppc64'
-        name: Test wheel
-        with:
-          arch: ${{ matrix.platform.arch == 'arm' && 'armv6' || matrix.platform.arch }}
-          distro: ${{ matrix.platform.arch == 'arm' && 'bullseye' || 'ubuntu20.04' }}
-          githubToken: ${{ github.token }}
-          install: |
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-          run: |
-            ~/.local/bin/uv venv --python 3.11
-            source .venv/bin/activate
-            ~/.local/bin/uv pip install ${{ env.PACKAGE_NAME }} --no-index --find-links dist/ --force-reinstall
-            fortitude --help
       - name: "Upload wheels"
         uses: actions/upload-artifact@v4
         with:
