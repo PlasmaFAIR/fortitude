@@ -174,17 +174,60 @@ mkdocs serve
 
 To make a new release, the following steps must be completed in order:
 
-- Move rules out of preview mode/into deprecated mode (if applicable).
-- Make sure the generated docs are up-to-date: `cargo dev generate-all`
-- Make a new commit that updates the project version in `pyproject.toml`,
-  `Cargo.toml`, and `CITATION.cff`.
+1. Move rules out of preview mode/into deprecated mode (if applicable).
 
-> [!IMPORTANT]
-> Remember to run `cargo build` to update the `Cargo.lock` file too!
+1. Make sure the generated docs are up-to-date: `cargo dev generate-all`
 
-- Open a new PR to merge this change.
-- After merging, make a new release on GitHub.
-  - This will automatically upload the new version to PyPI.
+1. Install `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+1. Run `./scripts/release.sh`; this command will:
+
+    - Generate a temporary virtual environment with `rooster`
+    - Generate a changelog entry in `CHANGELOG.md`
+    - Update versions in `pyproject.toml` and `Cargo.toml`
+    - Update references to versions in the `README.md` and documentation
+    - Display contributors for the release
+
+1. `rooster` currently doesn't update `CITATION.cff`, so this needs to be done
+   manually for now
+
+1. The changelog should then be editorialised for consistency
+
+    - Often labels will be missing from pull requests they will need
+      to be manually organized into the proper section
+    - Changes should be edited to be user-facing descriptions, avoiding internal details
+
+1. Highlight any breaking changes in `BREAKING_CHANGES.md`
+
+1. Run `cargo check`. This should update the lock file with new versions.
+
+1. Create a pull request with the changelog and version updates
+
+1. Merge the PR
+
+1. Run the [release workflow](https://github.com/astral-sh/ruff/actions/workflows/release.yml) with:
+
+    - The new version number
+
+1. The release workflow will do the following:
+
+    1. Build all the assets. If this fails (even though we tested in step 4), we
+       haven't tagged or uploaded anything, you can restart after pushing a
+       fix. If you just need to rerun the build, make sure you're [re-running
+       all the failed
+       jobs](https://docs.github.com/en/actions/managing-workflow-runs/re-running-workflows-and-jobs#re-running-failed-jobs-in-a-workflow)
+       and not just a single failed job.
+    1. Upload to PyPI.
+    1. Create and push the Git tag (as extracted from `pyproject.toml`). We
+       create the Git tag only after building the wheels and uploading to PyPI,
+       since we can't delete or modify the tag
+       ([#4468](https://github.com/astral-sh/ruff/issues/4468)).
+    1. Attach artifacts to draft GitHub release
+
+1. Verify the GitHub release:
+
+    1. The Changelog should match the content of `CHANGELOG.md`
+    1. Append the contributors from the `scripts/release.sh` script
 
 Pushing to `crates.io` is currently not possible as some of our dependencies point
 to GitHub repositories. We'll be able to restart using `crates.io` if Ruff starts

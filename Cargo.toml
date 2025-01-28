@@ -32,3 +32,8 @@ strum_macros = { version = "0.26.0" }
 [profile.dev.package]
 insta.opt-level = 3
 similar.opt-level = 3
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
