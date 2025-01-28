@@ -280,6 +280,8 @@ jobs:
           manylinux: auto
           docker-options: ${{ matrix.platform.maturin_docker_options }}
           args: --release --locked --out dist
+        env:
+          CFLAGS: -std=c99
       - uses: uraimo/run-on-arch-action@v2
         if: matrix.platform.arch != 'ppc64'
         name: Test wheel
