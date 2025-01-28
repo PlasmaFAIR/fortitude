@@ -43,7 +43,7 @@ manifest-path = "fortitude/Cargo.toml"
 strip = true
 
 [tool.rooster]
-major_labels = []  # Ruff never uses the major version number
+major_labels = []  # Major version number never used
 minor_labels = ["breaking"]   # Bump the minor version on breaking changes
 
 changelog_ignore_labels = ["internal", "ci", "tests"]
