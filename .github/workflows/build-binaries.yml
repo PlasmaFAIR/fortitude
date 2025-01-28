@@ -26,7 +26,7 @@ concurrency:
 permissions: {}
 
 env:
-  PACKAGE_NAME: fortitude-lint
+  PACKAGE_NAME: fortitude_lint
   MODULE_NAME: fortitude
   PYTHON_VERSION: "3.11"
   CARGO_INCREMENTAL: 0
