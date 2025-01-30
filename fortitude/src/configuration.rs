@@ -1,0 +1,658 @@
+use crate::cli::CheckArgs;
+use crate::fs::{FilePattern, FORTRAN_EXTS};
+use crate::registry::RuleNamespace;
+use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
+use crate::rule_table::RuleTable;
+use crate::rules::Rule;
+use crate::settings::{
+    ExcludeMode, GitignoreMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar,
+    Settings, UnsafeFixes, DEFAULT_SELECTORS,
+};
+use crate::{fs, warn_user_once_by_id, warn_user_once_by_message};
+
+use anyhow::{anyhow, Context, Result};
+use itertools::Itertools;
+use log::warn;
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde::Deserialize;
+use std::collections::BTreeSet;
+use std::path::{Path, PathBuf};
+use strum::IntoEnumIterator;
+use toml::Table;
+
+// These are just helper structs to let us quickly work out if there's
+// a fortitude section in an fpm.toml file
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
+struct Fpm {
+    extra: Option<Extra>,
+}
+
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
+struct Extra {
+    fortitude: Option<CheckSection>,
+}
+
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
+struct CheckSection {
+    check: Option<CheckArgs>,
+}
+
+// Adapted from ruff
+fn parse_fpm_toml<P: AsRef<Path>>(path: P) -> Result<Fpm> {
+    let contents = std::fs::read_to_string(path.as_ref())
+        .with_context(|| format!("Failed to read {}", path.as_ref().display()))?;
+    toml::from_str(&contents)
+        .with_context(|| format!("Failed to parse {}", path.as_ref().display()))
+}
+
+pub fn fortitude_enabled<P: AsRef<Path>>(path: P) -> Result<bool> {
+    let fpm = parse_fpm_toml(path)?;
+    Ok(fpm.extra.and_then(|extra| extra.fortitude).is_some())
+}
+
+/// Return the path to the `fpm.toml` or `fortitude.toml` file in a given
+/// directory. Adapated from ruff
+pub fn settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
+    // Check for `.fortitude.toml`.
+    let fortitude_toml = path.as_ref().join(".fortitude.toml");
+    if fortitude_toml.is_file() {
+        return Ok(Some(fortitude_toml));
+    }
+
+    // Check for `fortitude.toml`.
+    let fortitude_toml = path.as_ref().join("fortitude.toml");
+    if fortitude_toml.is_file() {
+        return Ok(Some(fortitude_toml));
+    }
+
+    // Check for `fpm.toml`.
+    let fpm_toml = path.as_ref().join("fpm.toml");
+    if fpm_toml.is_file() && fortitude_enabled(&fpm_toml)? {
+        return Ok(Some(fpm_toml));
+    }
+
+    Ok(None)
+}
+
+/// Find the path to the `fpm.toml` or `fortitude.toml` file, if such a file
+/// exists. Adapated from ruff
+pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
+    for directory in path.as_ref().ancestors() {
+        if let Some(settings) = settings_toml(directory)? {
+            return Ok(Some(settings));
+        }
+    }
+    Ok(None)
+}
+
+/// Find the path to the project root, which contains the `fpm.toml` or `fortitude.toml` file.
+/// If no such file exists, return the current working directory.
+pub fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
+    find_settings_toml(&path)?.map_or(Ok(fs::normalize_path(&path)), |settings| {
+        fs::normalize_path(settings)
+            .parent()
+            .context("Settings file has no parent")
+            .map(PathBuf::from)
+    })
+}
+
+/// Read either the "extra.fortitude" table from "fpm.toml", or the
+/// whole "fortitude.toml" file
+fn from_toml_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> {
+    let config_str = if path.as_ref().ends_with("fpm.toml") {
+        let config = std::fs::read_to_string(path)?.parse::<Table>()?;
+
+        // Unwrap should be ok here because we've already checked this
+        // file has these tables
+        let extra = &config["extra"].as_table().unwrap();
+        let fortitude = &extra["fortitude"].as_table().unwrap();
+        fortitude.to_string()
+    } else {
+        std::fs::read_to_string(path)?
+    };
+
+    let config: CheckSection = toml::from_str(&config_str)?;
+
+    Ok(config)
+}
+
+/// Resolve `--foo` and `--no-foo` arguments
+pub fn resolve_bool_arg(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
+    let yes = yes.unwrap_or_default();
+    let no = no.unwrap_or_default();
+    match (yes, no) {
+        (true, false) => Some(true),
+        (false, true) => Some(false),
+        (false, false) => None,
+        (..) => unreachable!("Clap should make this impossible"),
+    }
+}
+
+// This is our "known good" intermediate settings struct after we've
+// read the config file, but before we've overridden it from the CLI
+#[derive(Debug)]
+pub struct CheckSettings {
+    pub files: Vec<PathBuf>,
+    pub ignore: Vec<RuleSelector>,
+    pub select: Option<Vec<RuleSelector>>,
+    pub extend_select: Vec<RuleSelector>,
+    pub per_file_ignores: Option<Vec<PatternPrefixPair>>,
+    pub extend_per_file_ignores: Vec<PatternPrefixPair>,
+    pub line_length: usize,
+    pub file_extensions: Vec<String>,
+    pub fix: bool,
+    pub fix_only: bool,
+    pub show_fixes: bool,
+    pub unsafe_fixes: UnsafeFixes,
+    pub output_format: OutputFormat,
+    pub progress_bar: ProgressBar,
+    pub preview: PreviewMode,
+    pub exclude: Option<Vec<FilePattern>>,
+    pub extend_exclude: Vec<FilePattern>,
+    pub exclude_mode: ExcludeMode,
+    pub gitignore_mode: GitignoreMode,
+    pub stdin_filename: Option<PathBuf>,
+}
+
+impl Default for CheckSettings {
+    fn default() -> Self {
+        Self {
+            files: Default::default(),
+            ignore: Default::default(),
+            select: Default::default(),
+            extend_select: Default::default(),
+            per_file_ignores: Default::default(),
+            extend_per_file_ignores: Default::default(),
+            line_length: Settings::default().line_length,
+            file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
+            fix: Default::default(),
+            fix_only: Default::default(),
+            show_fixes: Default::default(),
+            unsafe_fixes: Default::default(),
+            output_format: Default::default(),
+            progress_bar: Default::default(),
+            preview: Default::default(),
+            exclude: Default::default(),
+            extend_exclude: Default::default(),
+            exclude_mode: Default::default(),
+            gitignore_mode: Default::default(),
+            stdin_filename: Default::default(),
+        }
+    }
+}
+
+/// Read either fpm.toml or fortitude.toml into our "known good" file
+/// settings struct
+pub fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
+    let filename = match config_file {
+        Some(filename) => filename.clone(),
+        None => match find_settings_toml(path_absolutize::path_dedot::CWD.as_path())? {
+            Some(filename) => filename,
+            None => {
+                return Ok(CheckSettings::default());
+            }
+        },
+    };
+
+    let settings = match from_toml_subsection(filename)?.check {
+        Some(value) => CheckSettings {
+            files: value.files.unwrap_or_default(),
+            ignore: value.ignore.unwrap_or_default(),
+            select: value.select,
+            extend_select: value.extend_select.unwrap_or_default(),
+            per_file_ignores: value.per_file_ignores,
+            extend_per_file_ignores: value.extend_per_file_ignores.unwrap_or_default(),
+            line_length: value.line_length.unwrap_or(Settings::default().line_length),
+            file_extensions: value
+                .file_extensions
+                .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
+            fix: resolve_bool_arg(value.fix, value.no_fix).unwrap_or_default(),
+            fix_only: resolve_bool_arg(value.fix_only, value.no_fix_only).unwrap_or_default(),
+            show_fixes: resolve_bool_arg(value.show_fixes, value.no_show_fixes).unwrap_or_default(),
+            unsafe_fixes: resolve_bool_arg(value.unsafe_fixes, value.no_unsafe_fixes)
+                .map(UnsafeFixes::from)
+                .unwrap_or_default(),
+            output_format: value.output_format.unwrap_or_default(),
+            progress_bar: value.progress_bar.unwrap_or_default(),
+            preview: resolve_bool_arg(value.preview, value.no_preview)
+                .map(PreviewMode::from)
+                .unwrap_or_default(),
+            exclude: value.exclude,
+            extend_exclude: value.extend_exclude.unwrap_or_default(),
+            exclude_mode: resolve_bool_arg(value.force_exclude, value.no_force_exclude)
+                .map(ExcludeMode::from)
+                .unwrap_or_default(),
+            gitignore_mode: resolve_bool_arg(value.respect_gitignore, value.no_respect_gitignore)
+                .map(GitignoreMode::from)
+                .unwrap_or_default(),
+            stdin_filename: value.stdin_filename,
+        },
+        None => CheckSettings::default(),
+    };
+    Ok(settings)
+}
+
+/// Get the list of active rules for this session.
+pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Result<RuleTable> {
+    let preview = PreviewOptions {
+        mode: *preview,
+        require_explicit: false,
+    };
+
+    // Store selectors for displaying warnings
+    let mut redirects = FxHashMap::default();
+    let mut deprecated_selectors = FxHashSet::default();
+    let mut removed_selectors = FxHashSet::default();
+    let mut removed_ignored_rules = FxHashSet::default();
+    let mut ignored_preview_selectors = FxHashSet::default();
+
+    // The select_set keeps track of which rules have been selected.
+    let mut select_set: BTreeSet<Rule> = if args.select.is_none() {
+        DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect()
+    } else {
+        BTreeSet::default()
+    };
+
+    for spec in Specificity::iter() {
+        // Iterate over rule selectors in order of specificity.
+        for selector in args
+            .select
+            .iter()
+            .flatten()
+            .chain(args.extend_select.iter())
+            .filter(|s| s.specificity() == spec)
+        {
+            for rule in selector.rules(&preview) {
+                select_set.insert(rule);
+            }
+        }
+
+        for selector in args.ignore.iter().filter(|s| s.specificity() == spec) {
+            for rule in selector.rules(&preview) {
+                select_set.remove(&rule);
+            }
+        }
+
+        // Check for selections that require a warning
+        for (kind, selector) in args.selectors_by_kind() {
+            // Some of these checks are only for `Kind::Enable` which means only `--select` will warn
+            // and use with, e.g., `--ignore` or `--fixable` is okay
+
+            // Unstable rules
+            if preview.mode.is_disabled() && kind.is_enable() {
+                // Check if the selector is empty because preview mode is disabled
+                if selector.rules(&preview).next().is_none()
+                    && selector
+                        .rules(&PreviewOptions {
+                            mode: PreviewMode::Enabled,
+                            require_explicit: preview.require_explicit,
+                        })
+                        .next()
+                        .is_some()
+                {
+                    ignored_preview_selectors.insert(selector);
+                }
+            }
+
+            // Deprecated rules
+            if kind.is_enable()
+                && selector.is_exact()
+                && selector.all_rules().all(|rule| rule.is_deprecated())
+            {
+                deprecated_selectors.insert(selector.clone());
+            }
+
+            // Removed rules
+            if selector.is_exact() && selector.all_rules().all(|rule| rule.is_removed()) {
+                if kind.is_disable() {
+                    removed_ignored_rules.insert(selector);
+                } else {
+                    removed_selectors.insert(selector);
+                }
+            }
+
+            // Redirected rules
+            if let RuleSelector::Prefix {
+                prefix,
+                redirected_from: Some(redirect_from),
+            }
+            | RuleSelector::Rule {
+                prefix,
+                redirected_from: Some(redirect_from),
+            } = selector
+            {
+                redirects.insert(redirect_from, prefix);
+            }
+        }
+    }
+
+    let removed_selectors = removed_selectors.iter().sorted().collect::<Vec<_>>();
+    match removed_selectors.as_slice() {
+        [] => (),
+        [selection] => {
+            let (prefix, code) = selection.prefix_and_code();
+            return Err(anyhow!(
+                "Rule `{prefix}{code}` was removed and cannot be selected."
+            ));
+        }
+        [..] => {
+            let mut message =
+                "The following rules have been removed and cannot be selected:".to_string();
+            for selection in removed_selectors {
+                let (prefix, code) = selection.prefix_and_code();
+                message.push_str("\n    - ");
+                message.push_str(prefix);
+                message.push_str(code);
+            }
+            message.push('\n');
+            return Err(anyhow!(message));
+        }
+    }
+
+    if !removed_ignored_rules.is_empty() {
+        let mut rules = String::new();
+        for selection in removed_ignored_rules.iter().sorted() {
+            let (prefix, code) = selection.prefix_and_code();
+            rules.push_str("\n    - ");
+            rules.push_str(prefix);
+            rules.push_str(code);
+        }
+        rules.push('\n');
+        warn_user_once_by_message!(
+            "The following rules have been removed and ignoring them has no effect:{rules}"
+        );
+    }
+
+    for (from, target) in redirects.iter().sorted_by_key(|item| item.0) {
+        warn_user_once_by_id!(
+            from,
+            "`{from}` has been remapped to `{}{}`.",
+            target.category().common_prefix(),
+            target.short_code()
+        );
+    }
+
+    if preview.mode.is_disabled() {
+        for selection in deprecated_selectors.iter().sorted() {
+            let (prefix, code) = selection.prefix_and_code();
+            warn_user_once_by_message!(
+                "Rule `{prefix}{code}` is deprecated and will be removed in a future release."
+            );
+        }
+    } else {
+        let deprecated_selectors = deprecated_selectors.iter().sorted().collect::<Vec<_>>();
+        match deprecated_selectors.as_slice() {
+            [] => (),
+            [selection] => {
+                let (prefix, code) = selection.prefix_and_code();
+                return Err(anyhow!("Selection of deprecated rule `{prefix}{code}` is not allowed when preview is enabled."));
+            }
+            [..] => {
+                let mut message = "Selection of deprecated rules is not allowed when preview is enabled. Remove selection of:".to_string();
+                for selection in deprecated_selectors {
+                    let (prefix, code) = selection.prefix_and_code();
+                    message.push_str("\n\t- ");
+                    message.push_str(prefix);
+                    message.push_str(code);
+                }
+                message.push('\n');
+                return Err(anyhow!(message));
+            }
+        }
+    }
+
+    for selection in ignored_preview_selectors.iter().sorted() {
+        let (prefix, code) = selection.prefix_and_code();
+        warn_user_once_by_message!(
+            "Selection `{prefix}{code}` has no effect because preview is not enabled.",
+        );
+    }
+
+    let mut rules = RuleTable::empty();
+
+    for rule in select_set {
+        let should_fix = true;
+        rules.enable(rule, should_fix);
+    }
+
+    Ok(rules)
+}
+
+// Taken from Ruff
+#[derive(Clone, Debug, Default)]
+pub struct RuleSelection {
+    pub select: Option<Vec<RuleSelector>>,
+    pub ignore: Vec<RuleSelector>,
+    pub extend_select: Vec<RuleSelector>,
+    pub fixable: Option<Vec<RuleSelector>>,
+    pub unfixable: Vec<RuleSelector>,
+    pub extend_fixable: Vec<RuleSelector>,
+}
+
+#[derive(Debug, Eq, PartialEq, is_macro::Is)]
+pub enum RuleSelectorKind {
+    /// Enables the selected rules
+    Enable,
+    /// Disables the selected rules
+    Disable,
+    /// Modifies the behavior of selected rules
+    Modify,
+}
+
+impl RuleSelection {
+    pub fn selectors_by_kind(&self) -> impl Iterator<Item = (RuleSelectorKind, &RuleSelector)> {
+        self.select
+            .iter()
+            .flatten()
+            .map(|selector| (RuleSelectorKind::Enable, selector))
+            .chain(
+                self.fixable
+                    .iter()
+                    .flatten()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+            .chain(
+                self.ignore
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Disable, selector)),
+            )
+            .chain(
+                self.extend_select
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Enable, selector)),
+            )
+            .chain(
+                self.unfixable
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+            .chain(
+                self.extend_fixable
+                    .iter()
+                    .map(|selector| (RuleSelectorKind::Modify, selector)),
+            )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::{registry::RuleSet, rule_selector::RuleSelector, settings::DEFAULT_SELECTORS};
+
+    use super::*;
+
+    fn resolve_rules(args: RuleSelection, preview: &PreviewMode) -> Result<RuleSet> {
+        Ok(to_rule_table(args, preview)?.iter_enabled().collect())
+    }
+
+    #[test]
+    fn empty_select() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: None,
+            extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
+        };
+
+        let preview_mode = PreviewMode::default();
+        let rules = resolve_rules(args, &preview_mode)?;
+        let preview = PreviewOptions::default();
+
+        let all_rules: Vec<Rule> = DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect();
+
+        let all_rules = RuleSet::from_rules(&all_rules);
+
+        assert_eq!(rules, all_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn empty_select_with_preview() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: None,
+            extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
+        };
+
+        let preview_mode = PreviewMode::Enabled;
+        let rules = resolve_rules(args, &preview_mode)?;
+        let preview = PreviewOptions {
+            mode: preview_mode,
+            require_explicit: false,
+        };
+
+        let all_rules: Vec<Rule> = DEFAULT_SELECTORS
+            .iter()
+            .flat_map(|selector| selector.rules(&preview))
+            .collect();
+
+        let all_rules = RuleSet::from_rules(&all_rules);
+
+        assert_eq!(rules, all_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn select_one_rule() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: Some(vec![RuleSelector::from_str("E000")?]),
+            extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
+        };
+
+        let preview_mode = PreviewMode::default();
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rules(&[Rule::IoError]);
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn select_one_preview_rule_without_preview() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: Some(vec![RuleSelector::from_str("E9911")?]),
+            extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
+        };
+
+        let preview_mode = PreviewMode::default();
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::empty();
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn select_one_preview_rule_with_preview() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: Some(vec![RuleSelector::from_str("E9911")?]),
+            extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
+        };
+
+        let preview_mode = PreviewMode::Enabled;
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rule(Rule::PreviewTestRule);
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn extend_select() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: Some(vec![RuleSelector::from_str("E000")?]),
+            extend_select: vec![RuleSelector::from_str("E001")?],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![],
+        };
+
+        let preview_mode = PreviewMode::default();
+        let rules = resolve_rules(args, &preview_mode)?;
+        let one_rules = RuleSet::from_rules(&[Rule::IoError, Rule::SyntaxError]);
+
+        assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    use std::fs;
+
+    use anyhow::{Context, Result};
+    use tempfile::TempDir;
+    use textwrap::dedent;
+
+    #[test]
+    fn find_and_check_fpm_toml() -> Result<()> {
+        let tempdir = TempDir::new()?;
+        let fpm_toml = tempdir.path().join("fpm.toml");
+        fs::write(
+            fpm_toml,
+            dedent(
+                r#"
+                some-stuff = 1
+                other-things = "hello"
+
+                [extra.fortitude.check]
+                ignore = ["T001"]
+                "#,
+            ),
+        )?;
+
+        let fpm = find_settings_toml(tempdir.path())?.context("Failed to find fpm.toml")?;
+        let enabled = fortitude_enabled(fpm)?;
+        assert!(enabled);
+
+        Ok(())
+    }
+}

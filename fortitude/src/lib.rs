@@ -1,6 +1,7 @@
 mod ast;
 pub mod check;
 pub mod cli;
+mod configuration;
 mod diagnostics;
 pub mod explain;
 mod fix;
