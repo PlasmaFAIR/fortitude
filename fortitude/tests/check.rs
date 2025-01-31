@@ -696,7 +696,6 @@ per-file-ignores = [
                          .arg("check")
                          .arg("--select=typing")
                          .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
-                         .arg(path)
                          .current_dir(path),
                          @r"
     success: false
@@ -806,7 +805,6 @@ per-file-ignores = [
                          .arg("check")
                          .arg("--select=typing")
                          .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
-                         .arg(path)
                          .current_dir(path),
                          @r"
     success: false
