@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::configuration::{
-    parse_config_file, project_root, resolve_bool_arg, to_rule_table, RuleSelection,
+    self, parse_config_file, resolve_bool_arg, to_rule_table, CheckSettings, RuleSelection,
 };
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
@@ -694,7 +694,12 @@ enum CheckStatus {
 /// Check all files, report issues found, and return error code.
 pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
     // First we need to find and read any config file
-    let file_settings = parse_config_file(&global_options.config_file)?;
+    let project_root = configuration::project_root(path_absolutize::path_dedot::CWD.as_path())?;
+    let file_settings = CheckSettings::from_options(
+        parse_config_file(&global_options.config_file)?,
+        &project_root,
+    );
+
     // Now, we can override settings from the config file with options
     // from the CLI
     let files = args.files.unwrap_or(file_settings.files);
@@ -716,19 +721,23 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         extend_fixable: vec![],
     };
 
-    let per_file_ignores = CompiledPerFileIgnoreList::resolve(collect_per_file_ignores(
-        args.per_file_ignores
-            .or(file_settings.per_file_ignores)
+    let per_file_ignores = if let Some(per_file_ignores) = args.per_file_ignores {
+        Some(collect_per_file_ignores(per_file_ignores))
+    } else {
+        file_settings.per_file_ignores
+    };
+
+    let per_file_ignores = CompiledPerFileIgnoreList::resolve(
+        per_file_ignores
             .unwrap_or_default()
             .into_iter()
             .chain(
                 args.extend_per_file_ignores
-                    .unwrap_or_default()
-                    .into_iter()
-                    .chain(file_settings.extend_per_file_ignores),
+                    .map(collect_per_file_ignores)
+                    .unwrap_or_default(),
             )
             .collect::<Vec<_>>(),
-    ))?;
+    )?;
 
     let file_excludes = FilePatternSet::try_from_iter(
         EXCLUDE_BUILTINS
@@ -770,7 +779,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let show_fixes =
         resolve_bool_arg(args.show_fixes, args.no_show_fixes).unwrap_or(file_settings.show_fixes);
 
-    let stdin_filename = args.stdin_filename.or(file_settings.stdin_filename);
+    let stdin_filename = args.stdin_filename;
 
     let writer: Box<dyn Write> = match args.output_file {
         Some(path) => {
@@ -815,7 +824,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let files = get_files(
         &files,
-        project_root(path_absolutize::path_dedot::CWD.as_path())?,
+        project_root,
         file_extensions,
         file_excludes,
         exclude_mode,

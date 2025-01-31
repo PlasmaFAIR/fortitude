@@ -6,13 +6,13 @@ use ignore::{types::TypesBuilder, WalkBuilder};
 use itertools::Itertools;
 use log::debug;
 use path_absolutize::Absolutize;
-use serde::{de, Deserialize, Deserializer};
+use serde::{de, Deserialize, Deserializer, Serialize};
 
 use crate::registry::Rule;
 use crate::rule_selector::CompiledPerFileIgnoreList;
 use crate::settings::{ExcludeMode, GitignoreMode};
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize)]
 pub enum FilePattern {
     Builtin(&'static str),
     User(String, PathBuf),

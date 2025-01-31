@@ -1,12 +1,12 @@
-use crate::cli::CheckArgs;
 use crate::fs::{FilePattern, FORTRAN_EXTS};
+use crate::options::Options;
 use crate::registry::RuleNamespace;
-use crate::rule_selector::{PreviewOptions, RuleSelector, Specificity};
+use crate::rule_selector::{PerFileIgnore, PreviewOptions, RuleSelector, Specificity};
 use crate::rule_table::RuleTable;
 use crate::rules::Rule;
 use crate::settings::{
-    ExcludeMode, GitignoreMode, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar,
-    Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    ExcludeMode, GitignoreMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes,
+    DEFAULT_SELECTORS,
 };
 use crate::{fs, warn_user_once_by_id, warn_user_once_by_message};
 
@@ -18,7 +18,6 @@ use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use strum::IntoEnumIterator;
-use toml::Table;
 
 // These are just helper structs to let us quickly work out if there's
 // a fortitude section in an fpm.toml file
@@ -29,16 +28,18 @@ struct Fpm {
 
 #[derive(Debug, PartialEq, Eq, Default, Deserialize)]
 struct Extra {
-    fortitude: Option<CheckSection>,
-}
-
-#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
-struct CheckSection {
-    check: Option<CheckArgs>,
+    fortitude: Option<Options>,
 }
 
 // Adapted from ruff
 fn parse_fpm_toml<P: AsRef<Path>>(path: P) -> Result<Fpm> {
+    let contents = std::fs::read_to_string(path.as_ref())
+        .with_context(|| format!("Failed to read {}", path.as_ref().display()))?;
+    toml::from_str(&contents)
+        .with_context(|| format!("Failed to parse {}", path.as_ref().display()))
+}
+
+fn parse_fortitude_toml<P: AsRef<Path>>(path: P) -> Result<Options> {
     let contents = std::fs::read_to_string(path.as_ref())
         .with_context(|| format!("Failed to read {}", path.as_ref().display()))?;
     toml::from_str(&contents)
@@ -98,22 +99,15 @@ pub fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
 
 /// Read either the "extra.fortitude" table from "fpm.toml", or the
 /// whole "fortitude.toml" file
-fn from_toml_subsection<P: AsRef<Path>>(path: P) -> Result<CheckSection> {
-    let config_str = if path.as_ref().ends_with("fpm.toml") {
-        let config = std::fs::read_to_string(path)?.parse::<Table>()?;
-
+fn load_options<P: AsRef<Path>>(path: P) -> Result<Options> {
+    if path.as_ref().ends_with("fpm.toml") {
+        let config = parse_fpm_toml(&path)?;
         // Unwrap should be ok here because we've already checked this
         // file has these tables
-        let extra = &config["extra"].as_table().unwrap();
-        let fortitude = &extra["fortitude"].as_table().unwrap();
-        fortitude.to_string()
+        Ok(config.extra.unwrap().fortitude.unwrap())
     } else {
-        std::fs::read_to_string(path)?
-    };
-
-    let config: CheckSection = toml::from_str(&config_str)?;
-
-    Ok(config)
+        parse_fortitude_toml(&path)
+    }
 }
 
 /// Resolve `--foo` and `--no-foo` arguments
@@ -128,6 +122,22 @@ pub fn resolve_bool_arg(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
     }
 }
 
+/// Read either fpm.toml or fortitude.toml into our "known good" file
+/// settings struct
+pub fn parse_config_file(config_file: &Option<PathBuf>) -> Result<Options> {
+    let filename = match config_file {
+        Some(filename) => filename.clone(),
+        None => match find_settings_toml(path_absolutize::path_dedot::CWD.as_path())? {
+            Some(filename) => filename,
+            None => {
+                return Ok(Options::default());
+            }
+        },
+    };
+
+    load_options(filename)
+}
+
 // This is our "known good" intermediate settings struct after we've
 // read the config file, but before we've overridden it from the CLI
 #[derive(Debug)]
@@ -136,8 +146,7 @@ pub struct CheckSettings {
     pub ignore: Vec<RuleSelector>,
     pub select: Option<Vec<RuleSelector>>,
     pub extend_select: Vec<RuleSelector>,
-    pub per_file_ignores: Option<Vec<PatternPrefixPair>>,
-    pub extend_per_file_ignores: Vec<PatternPrefixPair>,
+    pub per_file_ignores: Option<Vec<PerFileIgnore>>,
     pub line_length: usize,
     pub file_extensions: Vec<String>,
     pub fix: bool,
@@ -151,7 +160,6 @@ pub struct CheckSettings {
     pub extend_exclude: Vec<FilePattern>,
     pub exclude_mode: ExcludeMode,
     pub gitignore_mode: GitignoreMode,
-    pub stdin_filename: Option<PathBuf>,
 }
 
 impl Default for CheckSettings {
@@ -162,7 +170,6 @@ impl Default for CheckSettings {
             select: Default::default(),
             extend_select: Default::default(),
             per_file_ignores: Default::default(),
-            extend_per_file_ignores: Default::default(),
             line_length: Settings::default().line_length,
             file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
             fix: Default::default(),
@@ -176,60 +183,73 @@ impl Default for CheckSettings {
             extend_exclude: Default::default(),
             exclude_mode: Default::default(),
             gitignore_mode: Default::default(),
-            stdin_filename: Default::default(),
         }
     }
 }
 
-/// Read either fpm.toml or fortitude.toml into our "known good" file
-/// settings struct
-pub fn parse_config_file(config_file: &Option<PathBuf>) -> Result<CheckSettings> {
-    let filename = match config_file {
-        Some(filename) => filename.clone(),
-        None => match find_settings_toml(path_absolutize::path_dedot::CWD.as_path())? {
-            Some(filename) => filename,
-            None => {
-                return Ok(CheckSettings::default());
-            }
-        },
-    };
+impl CheckSettings {
+    /// Convert from config file options struct into our "known good" struct
+    pub fn from_options(options: Options, project_root: &Path) -> Self {
+        let check = options.check.unwrap_or_default();
 
-    let settings = match from_toml_subsection(filename)?.check {
-        Some(value) => CheckSettings {
-            files: value.files.unwrap_or_default(),
-            ignore: value.ignore.unwrap_or_default(),
-            select: value.select,
-            extend_select: value.extend_select.unwrap_or_default(),
-            per_file_ignores: value.per_file_ignores,
-            extend_per_file_ignores: value.extend_per_file_ignores.unwrap_or_default(),
-            line_length: value.line_length.unwrap_or(Settings::default().line_length),
-            file_extensions: value
+        Self {
+            files: check.files.unwrap_or_default(),
+            ignore: check.ignore.unwrap_or_default(),
+            select: check.select,
+            extend_select: check.extend_select.unwrap_or_default(),
+            per_file_ignores: check.per_file_ignores.map(|per_file_ignores| {
+                per_file_ignores
+                    .into_iter()
+                    .map(|(pattern, prefixes)| {
+                        PerFileIgnore::new(pattern, &prefixes, Some(project_root))
+                    })
+                    .collect()
+            }),
+            line_length: check.line_length.unwrap_or(Settings::default().line_length),
+            file_extensions: check
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
-            fix: resolve_bool_arg(value.fix, value.no_fix).unwrap_or_default(),
-            fix_only: resolve_bool_arg(value.fix_only, value.no_fix_only).unwrap_or_default(),
-            show_fixes: resolve_bool_arg(value.show_fixes, value.no_show_fixes).unwrap_or_default(),
-            unsafe_fixes: resolve_bool_arg(value.unsafe_fixes, value.no_unsafe_fixes)
+            fix: check.fix.unwrap_or_default(),
+            fix_only: check.fix_only.unwrap_or_default(),
+            show_fixes: check.show_fixes.unwrap_or_default(),
+            unsafe_fixes: check
+                .unsafe_fixes
                 .map(UnsafeFixes::from)
                 .unwrap_or_default(),
-            output_format: value.output_format.unwrap_or_default(),
-            progress_bar: value.progress_bar.unwrap_or_default(),
-            preview: resolve_bool_arg(value.preview, value.no_preview)
-                .map(PreviewMode::from)
+            output_format: check.output_format.unwrap_or_default(),
+            progress_bar: check.progress_bar.unwrap_or_default(),
+            preview: check.preview.map(PreviewMode::from).unwrap_or_default(),
+            exclude: check.exclude.map(|paths| {
+                paths
+                    .into_iter()
+                    .map(|pattern| {
+                        let absolute = fs::normalize_path_to(&pattern, project_root);
+                        FilePattern::User(pattern, absolute)
+                    })
+                    .collect()
+            }),
+            extend_exclude: check
+                .extend_exclude
+                .map(|paths| {
+                    paths
+                        .into_iter()
+                        .map(|pattern| {
+                            let absolute = fs::normalize_path_to(&pattern, project_root);
+                            FilePattern::User(pattern, absolute)
+                        })
+                        .collect()
+                })
                 .unwrap_or_default(),
-            exclude: value.exclude,
-            extend_exclude: value.extend_exclude.unwrap_or_default(),
-            exclude_mode: resolve_bool_arg(value.force_exclude, value.no_force_exclude)
+            exclude_mode: check
+                .force_exclude
                 .map(ExcludeMode::from)
                 .unwrap_or_default(),
-            gitignore_mode: resolve_bool_arg(value.respect_gitignore, value.no_respect_gitignore)
+            gitignore_mode: check
+                .respect_gitignore
                 .map(GitignoreMode::from)
                 .unwrap_or_default(),
-            stdin_filename: value.stdin_filename,
-        },
-        None => CheckSettings::default(),
-    };
-    Ok(settings)
+        }
+    }
 }
 
 /// Get the list of active rules for this session.
