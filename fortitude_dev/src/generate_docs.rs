@@ -9,7 +9,8 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
+use pretty_assertions::StrComparison;
 use regex::{Captures, Regex};
 use strum::IntoEnumIterator;
 
@@ -21,13 +22,15 @@ use fortitude::{
     registry::Rule,
 };
 
-use crate::{generate_rules_table, ROOT_DIR};
+use crate::{
+    generate_all::{Mode, REGENERATE_ALL_COMMAND},
+    generate_rules_table, ROOT_DIR,
+};
 
 #[derive(clap::Args)]
 pub(crate) struct Args {
-    /// Write the generated docs to stdout (rather than to the filesystem).
-    #[arg(long)]
-    pub(crate) dry_run: bool,
+    #[arg(long, default_value_t, value_enum)]
+    pub(crate) mode: Mode,
 }
 
 pub(crate) fn main(args: &Args) -> Result<()> {
@@ -84,19 +87,55 @@ pub(crate) fn main(args: &Args) -> Result<()> {
                 .join(rule.as_ref())
                 .with_extension("md");
 
-            if args.dry_run {
-                println!("{output}");
-            } else {
-                fs::create_dir_all("docs/rules").expect("make docs/rules dir");
-                fs::write(filename, output).expect("write output");
+            match args.mode {
+                Mode::DryRun => println!("{output}"),
+                Mode::Check => {
+                    let rule_name = rule.as_ref();
+                    if !filename.exists() {
+                        bail!(
+                            "Missing docs for '{rule_name}', please run `{REGENERATE_ALL_COMMAND}`"
+                        );
+                    }
+                    let existing = fs::read_to_string(filename)?;
+                    if existing == output {
+                        println!("up-to-date: docs/rules/{rule_name}.md");
+                    } else {
+                        let comparison = StrComparison::new(&existing, &output);
+                        bail!("docs/rules/{rule_name}.md changed, please run `{REGENERATE_ALL_COMMAND}`:\n{comparison}");
+                    }
+                }
+                Mode::Write => {
+                    fs::create_dir_all("docs/rules").expect("make docs/rules dir");
+                    fs::write(filename, output).expect("write output");
+                }
             }
         }
     }
 
-    let filename = PathBuf::from(ROOT_DIR).join("docs").join("rules.md");
-
     let rules_table = generate_rules_table::generate();
-    fs::write(filename, rules_table).expect("Write rules table");
+
+    if args.mode.is_dry_run() {
+        print!("{rules_table}");
+        return Ok(());
+    }
+
+    let filename = "docs/rules.md";
+    let file = PathBuf::from(ROOT_DIR).join(filename);
+    let existing = fs::read_to_string(filename)?;
+
+    match args.mode {
+        Mode::Check => {
+            if existing == rules_table {
+                println!("up-to-date: {filename}");
+            } else {
+                let comparison = StrComparison::new(&existing, &rules_table);
+                bail!("{filename} changed, please run `{REGENERATE_ALL_COMMAND}`:\n{comparison}");
+            }
+        }
+        _ => {
+            fs::write(file, rules_table).expect("Write rules table");
+        }
+    }
 
     Ok(())
 }

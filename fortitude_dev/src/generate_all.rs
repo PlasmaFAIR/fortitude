@@ -33,9 +33,7 @@ impl Mode {
 
 pub(crate) fn main(args: &Args) -> Result<()> {
     generate_cli_help::main(&generate_cli_help::Args { mode: args.mode })?;
-    generate_docs::main(&generate_docs::Args {
-        dry_run: args.mode.is_dry_run(),
-    })?;
+    generate_docs::main(&generate_docs::Args { mode: args.mode })?;
     generate_options::main(&generate_options::Args { mode: args.mode })?;
     Ok(())
 }
