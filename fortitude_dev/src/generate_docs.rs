@@ -5,6 +5,7 @@
 //! Generate Markdown documentation for applicable rules.
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 
+use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 
@@ -13,10 +14,12 @@ use regex::{Captures, Regex};
 use strum::IntoEnumIterator;
 
 use ruff_diagnostics::FixAvailability;
-// use ruff_workspace::options::Options;
-// use ruff_workspace::options_base::{OptionEntry, OptionsMetadata};
 
-use fortitude::registry::Rule;
+use fortitude::{
+    options::Options,
+    options_base::{OptionEntry, OptionsMetadata},
+    registry::Rule,
+};
 
 use crate::{generate_rules_table, ROOT_DIR};
 
@@ -98,10 +101,10 @@ pub(crate) fn main(args: &Args) -> Result<()> {
     Ok(())
 }
 
-fn process_documentation(documentation: &str, out: &mut String, _rule_name: &str) {
+fn process_documentation(documentation: &str, out: &mut String, rule_name: &str) {
     let mut in_options = false;
-    let after = String::new();
-    // let mut referenced_options = HashSet::new();
+    let mut after = String::new();
+    let mut referenced_options = HashSet::new();
 
     // HACK: This is an ugly regex hack that's necessary because mkdocs uses
     // a non-CommonMark-compliant Markdown parser, which doesn't support code
@@ -122,10 +125,44 @@ fn process_documentation(documentation: &str, out: &mut String, _rule_name: &str
         if line.starts_with("## ") {
             in_options = line == "## Options\n";
         } else if in_options {
-            // TODO: deal with options
+            if let Some(rest) = line.strip_prefix("- `") {
+                let option = rest.trim_end().trim_end_matches('`');
+
+                match Options::metadata().find(option) {
+                    Some(OptionEntry::Field(field)) => {
+                        if field.deprecated.is_some() {
+                            eprintln!("Rule {rule_name} references deprecated option {option}.");
+                        }
+                    }
+                    Some(_) => {}
+                    None => {
+                        panic!("Unknown option {option} referenced by rule {rule_name}");
+                    }
+                }
+
+                let anchor = option.replace('.', "_");
+                out.push_str(&format!("- [`{option}`][{option}]\n"));
+                after.push_str(&format!("[{option}]: ../settings.md#{anchor}\n"));
+                referenced_options.insert(option);
+
+                continue;
+            }
         }
 
         out.push_str(line);
+    }
+
+    let re = Regex::new(r"\[`([^`]*?)`]\[(.*?)]").unwrap();
+    for (_, [option, _]) in re.captures_iter(&documentation).map(|c| c.extract()) {
+        if let Some(OptionEntry::Field(field)) = Options::metadata().find(option) {
+            if referenced_options.insert(option) {
+                let anchor = option.replace('.', "_");
+                after.push_str(&format!("[{option}]: ../settings.md#{anchor}\n"));
+            }
+            if field.deprecated.is_some() {
+                eprintln!("Rule {rule_name} references deprecated option {option}.");
+            }
+        }
     }
 
     if !after.is_empty() {

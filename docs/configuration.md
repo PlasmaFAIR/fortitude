@@ -24,13 +24,8 @@ in the current directory, or one of its parents. If using
     line-length = 132
     ```
 
-You can use `--extend-select` from the command line to select additional
-rules on top of those in the configuration file.
-
-```bash
-# Selects S, T, and M categories
-fortitude check --extend-select=M
-```
+For complete documentation of the available configuration options, see
+[_Settings_](settings.md).
 
 ## Full command-line interface
 

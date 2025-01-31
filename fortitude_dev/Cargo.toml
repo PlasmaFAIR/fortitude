@@ -25,3 +25,4 @@ ruff_text_size = { workspace = true }
 serde_json = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
+textwrap = { workspace = true }

@@ -152,7 +152,7 @@ pub struct CheckOptions {
 
     // TODO: fix default and example when default rules decided!
     /// A list of rule codes or prefixes to enable, in addition to those
-    /// specified by [`select`](#lint_select).
+    /// specified by [`select`](#check_select).
     #[option(
         default = "[]",
         value_type = "list[RuleSelector]",
