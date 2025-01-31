@@ -79,10 +79,14 @@ Options:
           Apply fixes to resolve lint violations, but don't report on, or exit non-zero for, leftover violations. Implies `--fix`. Use `--no-fix-only` to disable or `--unsafe-fixes` to include unsafe fixes
       --output-format <OUTPUT_FORMAT>
           Output serialization format for violations. The default serialization format is "full" [env: FORTITUDE_OUTPUT_FORMAT=] [possible values: concise, full, json, json-lines, junit, grouped, github, gitlab, pylint, rdjson, azure, sarif]
+  -o, --output-file <OUTPUT_FILE>
+          Specify file to write the linter output to (default: stdout) [env: FORTITUDE_OUTPUT_FILE=]
       --preview
           Enable preview mode; checks will include unstable rules and fixes. Use `--no-preview` to disable
       --progress-bar <PROGRESS_BAR>
           Progress bar settings. Options are "off" (default), "ascii", and "fancy" [possible values: off, fancy, ascii]
+      --stdin-filename <STDIN_FILENAME>
+          The name of the file when passing it through stdin
   -h, --help
           Print help
 
