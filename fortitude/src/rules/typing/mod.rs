@@ -16,6 +16,7 @@ mod tests {
     use insta::assert_snapshot;
     use test_case::test_case;
 
+    use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::settings::Settings;
     use crate::test::test_path;
@@ -41,6 +42,7 @@ mod tests {
             &[rule_code],
             &Settings::default(),
         )?;
+        apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
     }

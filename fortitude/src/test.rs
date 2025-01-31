@@ -14,6 +14,16 @@ use crate::{
     settings::{FixMode, Settings, UnsafeFixes},
 };
 
+#[macro_export]
+macro_rules! apply_common_filters {
+    {} => {
+        let mut settings = insta::Settings::clone_current();
+        // Convert windows paths to Unix Paths.
+        settings.add_filter(r"\\\\?([\w\d.])", "/$1");
+        let _bound = settings.bind_to_scope();
+    }
+}
+
 pub(crate) fn test_resource_path(path: impl AsRef<Path>) -> std::path::PathBuf {
     Path::new("./resources/test/").join(path)
 }
