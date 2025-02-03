@@ -29,11 +29,7 @@ pub struct CheckOptions {
     /// A list of file patterns to include when linting.
     ///
     /// Inclusion are based on globs, and should be single-path patterns, like
-    /// `*.pyw`, to include any file with the `.pyw` extension. `pyproject.toml` is
-    /// included here not for configuration but because we lint whether e.g. the
-    /// `[project]` matches the schema.
-    ///
-    /// Notebook files (`.ipynb` extension) are included by default on Fortitude 0.6.0+.
+    /// `*.f90`, to include any file with the `.f90` extension.
     ///
     /// For more information on the glob syntax, refer to the [`globset` documentation](https://docs.rs/globset/latest/globset/#syntax).
     #[option(
@@ -141,11 +137,11 @@ pub struct CheckOptions {
     /// `ignore`, respectively), more specific prefixes override less
     /// specific prefixes.
     #[option(
-        default = r#"["E4", "E7", "E9", "F"]"#,
+        default = r#"["E", "F", "S", "T", "OB", "P", "M", "IO", "R", "B"]"#,
         value_type = "list[RuleSelector]",
         example = r#"
-            # On top of the defaults (`E4`, E7`, `E9`, and `F`), enable flake8-bugbear (`B`) and flake8-quotes (`Q`).
-            select = ["E4", "E7", "E9", "F", "B", "Q"]
+            # Only check errors and obsolescent features
+            select = ["E", "OB"]
         "#
     )]
     pub select: Option<Vec<RuleSelector>>,
@@ -157,8 +153,8 @@ pub struct CheckOptions {
         default = "[]",
         value_type = "list[RuleSelector]",
         example = r#"
-            # On top of the default `select` (`E4`, E7`, `E9`, and `F`), enable flake8-bugbear (`B`) and flake8-quotes (`Q`).
-            extend-select = ["B", "Q"]
+            # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
+            extend-select = ["T031", "R"]
         "#
     )]
     pub extend_select: Option<Vec<RuleSelector>>,
@@ -176,9 +172,9 @@ pub struct CheckOptions {
     ///
     /// Exclusions are based on globs, and can be either:
     ///
-    /// - Single-path patterns, like `.mypy_cache` (to exclude any directory
-    ///   named `.mypy_cache` in the tree), `foo.f90` (to exclude any file named
-    ///   `foo.f90`), or `foo_*.f90` (to exclude any file matching `foo_*.f90` ).
+    /// - Single-path patterns, like `build` (to exclude any directory named
+    ///   `build` in the tree), `foo.f90` (to exclude any file named `foo.f90`),
+    ///   or `foo_*.f90` (to exclude any file matching `foo_*.f90`).
     /// - Relative patterns, like `directory/foo.f90` (to exclude that specific
     ///   file) or `directory/*.f90` (to exclude any Fortran files in
     ///   `directory`). Note that these paths are relative to the project root
@@ -202,9 +198,9 @@ pub struct CheckOptions {
     ///
     /// Exclusions are based on globs, and can be either:
     ///
-    /// - Single-path patterns, like `.mypy_cache` (to exclude any directory
-    ///   named `.mypy_cache` in the tree), `foo.f90` (to exclude any file named
-    ///   `foo.f90`), or `foo_*.f90` (to exclude any file matching `foo_*.f90` ).
+    /// - Single-path patterns, like `build` (to exclude any directory named
+    ///   `build` in the tree), `foo.f90` (to exclude any file named `foo.f90`),
+    ///   or `foo_*.f90` (to exclude any file matching `foo_*.f90`).
     /// - Relative patterns, like `directory/foo.f90` (to exclude that specific
     ///   file) or `directory/*.f90` (to exclude any Fortran files in
     ///   `directory`). Note that these paths are relative to the project root
@@ -252,8 +248,7 @@ pub struct CheckOptions {
     pub respect_gitignore: Option<bool>,
 
     // Global Formatting options
-    /// The line length to use when enforcing long-lines violations (like `E501`)
-    /// and at which `isort` and the formatter prefers to wrap lines.
+    /// The line length to use when enforcing long-lines violations (like `S001`).
     ///
     /// The length is determined by the number of characters per line, except for lines containing East Asian characters or emojis.
     /// For these lines, the [unicode width](https://unicode.org/reports/tr11/) of each character is added up to determine the length.
