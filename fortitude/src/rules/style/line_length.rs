@@ -4,8 +4,8 @@ use crate::TextRule;
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_source_file::OneIndexed;
 use ruff_source_file::SourceFile;
+use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};
 
 /// ## What does it do?
@@ -48,14 +48,14 @@ impl TextRule for LineTooLong {
         let source = source_file.to_source_code();
         let max_length = settings.line_length;
         let mut violations = Vec::new();
-        for (idx, line) in source.text().lines().enumerate() {
+        for line in source.text().universal_newlines() {
             // Note: Can't use string.len(), as that gives byte length, not char length
             let actual_length = line.chars().count();
             if actual_length > max_length {
                 // Are we ending on a string or comment? If so, we'll allow it through, as it may
                 // contain something like a long URL that cannot be reasonably split across multiple
                 // lines.
-                if regex_is_match!(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#, line) {
+                if regex_is_match!(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#, line.as_str()) {
                     continue;
                 }
                 // Get the byte range from the first character that oversteps the limit
@@ -66,8 +66,7 @@ impl TextRule for LineTooLong {
                     .take(actual_length - max_length)
                     .map(TextLen::text_len)
                     .sum();
-                let line_end = source.line_end_exclusive(OneIndexed::from_zero_indexed(idx));
-                let range = TextRange::new(line_end - extra_bytes, line_end);
+                let range = TextRange::new(line.end() - extra_bytes, line.end());
                 violations.push(Diagnostic::new(
                     Self {
                         max_length,
