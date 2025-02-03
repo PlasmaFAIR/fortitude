@@ -23,6 +23,7 @@ macro_rules! apply_common_filters {
 
 #[test]
 fn check_file_doesnt_exist() -> anyhow::Result<()> {
+    apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg("test/file/doesnt/exist.f90"),
