@@ -90,8 +90,13 @@ impl AstRule for IncorrectSpaceBeforeComment {
             return None;
         }
         if whitespace < 2 {
-            let replacement = format!("{}{}", &"  "[whitespace..], node.to_text(source.text())?);
-            let edit = node.edit_replacement(src, replacement);
+            // Comment node can contain whitespace characters at the end, and is inconsistent
+            // between Windows and Unix line endings. A CR may be inserted even if there isn't
+            // one in the source code!
+            let trim_comment = node.to_text(source.text())?.trim();
+            let comment_end = comment_start + TextSize::try_from(trim_comment.len()).unwrap();
+            let replacement = format!("{}{}", &"  "[whitespace..], trim_comment);
+            let edit = Edit::replacement(replacement, comment_start, comment_end);
             return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
         }
         None
