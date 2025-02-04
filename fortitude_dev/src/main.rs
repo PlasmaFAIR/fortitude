@@ -9,6 +9,7 @@ use std::process::ExitCode;
 mod generate_all;
 mod generate_cli_help;
 mod generate_docs;
+mod generate_options;
 mod generate_rules_table;
 
 const ROOT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../");
@@ -30,8 +31,8 @@ enum Command {
     // GenerateJSONSchema(generate_json_schema::Args),
     /// Generate a Markdown-compatible table of supported lint rules.
     GenerateRulesTable,
-    // /// Generate a Markdown-compatible listing of configuration options.
-    // GenerateOptions,
+    /// Generate a Markdown-compatible listing of configuration options.
+    GenerateOptions(generate_options::Args),
     /// Generate CLI help.
     GenerateCliHelp(generate_cli_help::Args),
     /// Generate Markdown docs.
@@ -45,7 +46,7 @@ fn main() -> Result<ExitCode> {
         Command::GenerateAll(args) => generate_all::main(&args)?,
         // Command::GenerateJSONSchema(args) => generate_json_schema::main(&args)?,
         Command::GenerateRulesTable => println!("{}", generate_rules_table::generate()),
-        // Command::GenerateOptions => println!("{}", generate_options::generate()),
+        Command::GenerateOptions(args) => generate_options::main(&args)?,
         Command::GenerateCliHelp(args) => generate_cli_help::main(&args)?,
         Command::GenerateDocs(args) => generate_docs::main(&args)?,
     }

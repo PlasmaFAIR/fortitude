@@ -20,6 +20,8 @@
 | S051 | [deprecated-relational-operator](rules/deprecated-relational-operator.md) | deprecated relational operator '{symbol}', prefer '{new_symbol}' instead | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
 | S061 | [unnamed-end-statement](rules/unnamed-end-statement.md) | end statement should be named. | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
 | S071 | [missing-double-colon](rules/missing-double-colon.md) | variable declaration missing '::' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
+| S081 | [superfluous-semicolon](rules/superfluous-semicolon.md) | unnecessary semicolon | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> |
+| S082 | [multiple-statements-per-line](rules/multiple-statements-per-line.md) | multiple statements per line | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> |
 | S101 | [trailing-whitespace](rules/trailing-whitespace.md) | trailing whitespace | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
 | S102 | [incorrect-space-before-comment](rules/incorrect-space-before-comment.md) | need at least 2 spaces before inline comment | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> |
 

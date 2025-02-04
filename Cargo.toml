@@ -28,6 +28,7 @@ ruff_text_size = { git = "https://github.com/astral-sh/ruff.git", tag = "0.7.1",
 serde_json = { version = "1.0.113" }
 strum = { version = "0.26.0", features = ["strum_macros"] }
 strum_macros = { version = "0.26.0" }
+textwrap = { version = "0.16.0" }
 
 [profile.dev.package]
 insta.opt-level = 3

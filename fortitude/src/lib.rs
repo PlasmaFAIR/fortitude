@@ -1,12 +1,15 @@
 mod ast;
 pub mod check;
 pub mod cli;
+mod configuration;
 mod diagnostics;
 pub mod explain;
 mod fix;
 mod fs;
 pub mod logging;
 pub mod message;
+pub mod options;
+pub mod options_base;
 mod printer;
 pub mod registry;
 mod rule_redirects;

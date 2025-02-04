@@ -5,26 +5,32 @@
 //! Generate Markdown documentation for applicable rules.
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 
+use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
+use pretty_assertions::StrComparison;
 use regex::{Captures, Regex};
 use strum::IntoEnumIterator;
 
 use ruff_diagnostics::FixAvailability;
-// use ruff_workspace::options::Options;
-// use ruff_workspace::options_base::{OptionEntry, OptionsMetadata};
 
-use fortitude::registry::Rule;
+use fortitude::{
+    options::Options,
+    options_base::{OptionEntry, OptionsMetadata},
+    registry::Rule,
+};
 
-use crate::{generate_rules_table, ROOT_DIR};
+use crate::{
+    generate_all::{Mode, REGENERATE_ALL_COMMAND},
+    generate_rules_table, ROOT_DIR,
+};
 
 #[derive(clap::Args)]
 pub(crate) struct Args {
-    /// Write the generated docs to stdout (rather than to the filesystem).
-    #[arg(long)]
-    pub(crate) dry_run: bool,
+    #[arg(long, default_value_t, value_enum)]
+    pub(crate) mode: Mode,
 }
 
 pub(crate) fn main(args: &Args) -> Result<()> {
@@ -81,27 +87,63 @@ pub(crate) fn main(args: &Args) -> Result<()> {
                 .join(rule.as_ref())
                 .with_extension("md");
 
-            if args.dry_run {
-                println!("{output}");
-            } else {
-                fs::create_dir_all("docs/rules").expect("make docs/rules dir");
-                fs::write(filename, output).expect("write output");
+            match args.mode {
+                Mode::DryRun => println!("{output}"),
+                Mode::Check => {
+                    let rule_name = rule.as_ref();
+                    if !filename.exists() {
+                        bail!(
+                            "Missing docs for '{rule_name}', please run `{REGENERATE_ALL_COMMAND}`"
+                        );
+                    }
+                    let existing = fs::read_to_string(filename)?;
+                    if existing == output {
+                        println!("up-to-date: docs/rules/{rule_name}.md");
+                    } else {
+                        let comparison = StrComparison::new(&existing, &output);
+                        bail!("docs/rules/{rule_name}.md changed, please run `{REGENERATE_ALL_COMMAND}`:\n{comparison}");
+                    }
+                }
+                Mode::Write => {
+                    fs::create_dir_all("docs/rules").expect("make docs/rules dir");
+                    fs::write(filename, output).expect("write output");
+                }
             }
         }
     }
 
-    let filename = PathBuf::from(ROOT_DIR).join("docs").join("rules.md");
-
     let rules_table = generate_rules_table::generate();
-    fs::write(filename, rules_table).expect("Write rules table");
+
+    if args.mode.is_dry_run() {
+        print!("{rules_table}");
+        return Ok(());
+    }
+
+    let filename = "docs/rules.md";
+    let file = PathBuf::from(ROOT_DIR).join(filename);
+    let existing = fs::read_to_string(filename)?;
+
+    match args.mode {
+        Mode::Check => {
+            if existing == rules_table {
+                println!("up-to-date: {filename}");
+            } else {
+                let comparison = StrComparison::new(&existing, &rules_table);
+                bail!("{filename} changed, please run `{REGENERATE_ALL_COMMAND}`:\n{comparison}");
+            }
+        }
+        _ => {
+            fs::write(file, rules_table).expect("Write rules table");
+        }
+    }
 
     Ok(())
 }
 
-fn process_documentation(documentation: &str, out: &mut String, _rule_name: &str) {
+fn process_documentation(documentation: &str, out: &mut String, rule_name: &str) {
     let mut in_options = false;
-    let after = String::new();
-    // let mut referenced_options = HashSet::new();
+    let mut after = String::new();
+    let mut referenced_options = HashSet::new();
 
     // HACK: This is an ugly regex hack that's necessary because mkdocs uses
     // a non-CommonMark-compliant Markdown parser, which doesn't support code
@@ -122,10 +164,44 @@ fn process_documentation(documentation: &str, out: &mut String, _rule_name: &str
         if line.starts_with("## ") {
             in_options = line == "## Options\n";
         } else if in_options {
-            // TODO: deal with options
+            if let Some(rest) = line.strip_prefix("- `") {
+                let option = rest.trim_end().trim_end_matches('`');
+
+                match Options::metadata().find(option) {
+                    Some(OptionEntry::Field(field)) => {
+                        if field.deprecated.is_some() {
+                            eprintln!("Rule {rule_name} references deprecated option {option}.");
+                        }
+                    }
+                    Some(_) => {}
+                    None => {
+                        panic!("Unknown option {option} referenced by rule {rule_name}");
+                    }
+                }
+
+                let anchor = option.replace('.', "_");
+                out.push_str(&format!("- [`{option}`][{option}]\n"));
+                after.push_str(&format!("[{option}]: ../settings.md#{anchor}\n"));
+                referenced_options.insert(option);
+
+                continue;
+            }
         }
 
         out.push_str(line);
+    }
+
+    let re = Regex::new(r"\[`([^`]*?)`]\[(.*?)]").unwrap();
+    for (_, [option, _]) in re.captures_iter(&documentation).map(|c| c.extract()) {
+        if let Some(OptionEntry::Field(field)) = Options::metadata().find(option) {
+            if referenced_options.insert(option) {
+                let anchor = option.replace('.', "_");
+                after.push_str(&format!("[{option}]: ../settings.md#{anchor}\n"));
+            }
+            if field.deprecated.is_some() {
+                eprintln!("Rule {rule_name} references deprecated option {option}.");
+            }
+        }
     }
 
     if !after.is_empty() {

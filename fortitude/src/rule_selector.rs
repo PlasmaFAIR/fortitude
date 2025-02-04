@@ -405,6 +405,7 @@ pub mod clap_completion {
     }
 }
 
+#[derive(Debug)]
 pub struct PerFileIgnore {
     basename: String,
     absolute: PathBuf,

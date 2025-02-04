@@ -70,11 +70,14 @@ unknown-key = 1
 
     ----- stderr -----
     fortitude failed
-    Error: TOML parse error at line 2, column 1
-      |
-    2 | unknown-key = 1
-      | ^^^^^^^^^^^
-    unknown field `unknown-key`, expected one of `files`, `fix`, `no-fix`, `unsafe-fixes`, `no-unsafe-fixes`, `show-fixes`, `no-show-fixes`, `fix-only`, `no-fix-only`, `output-format`, `output-file`, `preview`, `no-preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `per-file-ignores`, `extend-per-file-ignores`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `no-force-exclude`, `respect-gitignore`, `no-respect-gitignore`, `line-length`, `stdin-filename`
+    Error: Failed to parse [TEMP_FILE]
+
+    Caused by:
+        TOML parse error at line 3, column 1
+          |
+        3 | unknown-key = 1
+          | ^^^^^^^^^^^
+        unknown field `unknown-key`, expected one of `files`, `fix`, `unsafe-fixes`, `show-fixes`, `fix-only`, `output-format`, `preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `respect-gitignore`, `line-length`, `per-file-ignores`
     ");
     Ok(())
 }
@@ -684,10 +687,8 @@ end module {file}{idx}
 
     let config_file = path.join(".fortitude.toml");
     let config = r#"
-[check]
-per-file-ignores = [
-    "bar*.f90:implicit-typing",
-]
+[check.per-file-ignores]
+"bar*.f90" = ["implicit-typing"]
 "#;
     fs::write(&config_file, config)?;
     apply_common_filters!();
@@ -793,10 +794,8 @@ end module {file}{idx}
 
     let config_file = path.join(".fortitude.toml");
     let config = r#"
-[check]
-per-file-ignores = [
-    "bar*.f90:implicit-typing",
-]
+[check.per-file-ignores]
+"bar*.f90" = ["implicit-typing"]
 "#;
     fs::write(&config_file, config)?;
     apply_common_filters!();
