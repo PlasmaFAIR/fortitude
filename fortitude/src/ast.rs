@@ -212,7 +212,7 @@ impl FortitudeNode<'_> for Node<'_> {
 
 /// Strip line breaks from a string of Fortran code.
 pub fn strip_line_breaks(src: &str) -> String {
-    src.replace('&', "").replace('\n', " ")
+    src.replace('&', "").replace('\n', " ").replace('\r', "")
 }
 
 /// Returns true if the type passed to it is number-like, and of a kind that can be modified using

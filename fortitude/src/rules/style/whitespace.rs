@@ -1,12 +1,12 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_source_file::{OneIndexed, SourceFile};
+use ruff_source_file::{SourceFile, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
 
 use crate::settings::Settings;
-use crate::{ast::FortitudeNode, AstRule, FromAstNode, TextRule};
+use crate::{AstRule, FromAstNode, TextRule};
 
 /// ## What does it do?
 /// Checks for tailing whitespace
@@ -33,7 +33,7 @@ impl TextRule for TrailingWhitespace {
     fn check(_settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
         let source = source_file.to_source_code();
         let mut violations = Vec::new();
-        for (idx, line) in source.text().lines().enumerate() {
+        for line in source.text().universal_newlines() {
             let whitespace_bytes: TextSize = line
                 .chars()
                 .rev()
@@ -41,8 +41,7 @@ impl TextRule for TrailingWhitespace {
                 .map(TextLen::text_len)
                 .sum();
             if whitespace_bytes > 0.into() {
-                let line_end_byte = source.line_end_exclusive(OneIndexed::from_zero_indexed(idx));
-                let range = TextRange::new(line_end_byte - whitespace_bytes, line_end_byte);
+                let range = TextRange::new(line.end() - whitespace_bytes, line.end());
                 let edit = Edit::range_deletion(range);
                 violations.push(Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit)));
             }
@@ -91,8 +90,7 @@ impl AstRule for IncorrectSpaceBeforeComment {
             return None;
         }
         if whitespace < 2 {
-            let replacement = format!("{}{}", &"  "[whitespace..], node.to_text(source.text())?);
-            let edit = node.edit_replacement(src, replacement);
+            let edit = Edit::insertion("  "[whitespace..].to_string(), comment_start);
             return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
         }
         None

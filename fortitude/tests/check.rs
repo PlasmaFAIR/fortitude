@@ -17,12 +17,15 @@ macro_rules! apply_common_filters {
         settings.add_filter(r"\b[A-Z]:\\.*\\Local\\Temp\\\S+", "[TEMP_FILE]");
         // Convert windows paths to Unix Paths.
         settings.add_filter(r"\\\\?([\w\d.])", "/$1");
+        // Ignore specific os errors
+        settings.add_filter(r"E000 Error opening file: .*", "E000 Error opening file: [OS_ERROR]");
         let _bound = settings.bind_to_scope();
     }
 }
 
 #[test]
 fn check_file_doesnt_exist() -> anyhow::Result<()> {
+    apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg("test/file/doesnt/exist.f90"),
@@ -30,7 +33,7 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    test/file/doesnt/exist.f90:1:1: E000 Error opening file: No such file or directory (os error 2)
+    test/file/doesnt/exist.f90:1:1: E000 Error opening file: [OS_ERROR]
     fortitude: 0 files scanned, 1 could not be read.
     Number of errors: 1
 
@@ -696,7 +699,6 @@ per-file-ignores = [
                          .arg("check")
                          .arg("--select=typing")
                          .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
-                         .arg(path)
                          .current_dir(path),
                          @r"
     success: false
@@ -806,7 +808,6 @@ per-file-ignores = [
                          .arg("check")
                          .arg("--select=typing")
                          .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
-                         .arg(path)
                          .current_dir(path),
                          @r"
     success: false
