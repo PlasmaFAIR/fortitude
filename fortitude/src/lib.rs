@@ -17,6 +17,7 @@ mod rule_selector;
 pub mod rule_table;
 pub mod rules;
 pub mod settings;
+mod show_files;
 mod show_settings;
 pub mod stdin;
 #[cfg(test)]

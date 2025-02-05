@@ -15,6 +15,7 @@ use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{CheckSettings, FixMode, PreviewMode, ProgressBar, Settings};
+use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
 use crate::{fs, warn_user_once};
@@ -701,6 +702,11 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     if args.show_settings {
         show_settings(&settings, &mut writer)?;
+        return Ok(ExitCode::SUCCESS);
+    }
+
+    if args.show_files {
+        show_files(&settings.file_resolver, is_stdin, &mut writer)?;
         return Ok(ExitCode::SUCCESS);
     }
 

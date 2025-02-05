@@ -166,8 +166,19 @@ pub struct CheckArgs {
     pub progress_bar: Option<ProgressBar>,
 
     /// See the settings fortitude will use to check a given Fortran file.
-    #[arg(long)]
+    #[arg(long,
+        // Fake subcommands.
+        conflicts_with = "show_files",
+        // conflicts_with = "show_settings",
+    )]
     pub show_settings: bool,
+    /// See the files fortitude will be run against with the current settings.
+    #[arg(long,
+          // Fake subcommands.
+        // conflicts_with = "show_files",
+        conflicts_with = "show_settings",
+    )]
+    pub show_files: bool,
 
     // Rule selection
     /// Comma-separated list of rules to ignore.
