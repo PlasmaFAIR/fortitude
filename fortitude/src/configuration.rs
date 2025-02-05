@@ -141,7 +141,7 @@ pub fn parse_config_file(config_file: &Option<PathBuf>) -> Result<Options> {
 // This is our "known good" intermediate settings struct after we've
 // read the config file, but before we've overridden it from the CLI
 #[derive(Debug)]
-pub struct CheckSettings {
+pub struct Configuration {
     pub files: Vec<PathBuf>,
     pub ignore: Vec<RuleSelector>,
     pub select: Option<Vec<RuleSelector>>,
@@ -162,7 +162,7 @@ pub struct CheckSettings {
     pub gitignore_mode: GitignoreMode,
 }
 
-impl Default for CheckSettings {
+impl Default for Configuration {
     fn default() -> Self {
         Self {
             files: Default::default(),
@@ -170,7 +170,7 @@ impl Default for CheckSettings {
             select: Default::default(),
             extend_select: Default::default(),
             per_file_ignores: Default::default(),
-            line_length: Settings::default().line_length,
+            line_length: Settings::default().check.line_length,
             file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
             fix: Default::default(),
             fix_only: Default::default(),
@@ -187,7 +187,7 @@ impl Default for CheckSettings {
     }
 }
 
-impl CheckSettings {
+impl Configuration {
     /// Convert from config file options struct into our "known good" struct
     pub fn from_options(options: Options, project_root: &Path) -> Self {
         let check = options.check.unwrap_or_default();
@@ -205,7 +205,9 @@ impl CheckSettings {
                     })
                     .collect()
             }),
-            line_length: check.line_length.unwrap_or(Settings::default().line_length),
+            line_length: check
+                .line_length
+                .unwrap_or(Settings::default().check.line_length),
             file_extensions: check
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),

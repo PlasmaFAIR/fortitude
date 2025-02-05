@@ -18,7 +18,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::settings::Settings;
+    use crate::settings::{CheckSettings, Settings};
     use crate::test::test_path;
 
     #[test_case(Rule::LineTooLong, Path::new("S001.f90"))]
@@ -46,10 +46,15 @@ mod tests {
     #[test_case(Rule::LineTooLong, Path::new("S001_line_length_20.f90"))]
     fn line_too_long_line_length_20(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+
+        let default = Settings::default();
         #[allow(clippy::needless_update)]
         let settings = Settings {
-            line_length: 20,
-            ..Settings::default()
+            check: CheckSettings {
+                line_length: 20,
+                ..default.check
+            },
+            ..default
         };
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),

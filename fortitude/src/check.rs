@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::configuration::{
-    self, parse_config_file, resolve_bool_arg, to_rule_table, CheckSettings, RuleSelection,
+    self, parse_config_file, resolve_bool_arg, to_rule_table, Configuration, RuleSelection,
 };
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
@@ -695,27 +695,28 @@ enum CheckStatus {
 pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
     // First we need to find and read any config file
     let project_root = configuration::project_root(path_absolutize::path_dedot::CWD.as_path())?;
-    let file_settings = CheckSettings::from_options(
+    let file_configuration = Configuration::from_options(
         parse_config_file(&global_options.config_file)?,
         &project_root,
     );
 
     // Now, we can override settings from the config file with options
     // from the CLI
-    let files = args.files.unwrap_or(file_settings.files);
+    let files = args.files.unwrap_or(file_configuration.files);
     let file_extensions = &args
         .file_extensions
-        .unwrap_or(file_settings.file_extensions);
+        .unwrap_or(file_configuration.file_extensions);
 
-    let settings = Settings {
-        line_length: args.line_length.unwrap_or(file_settings.line_length),
-    };
+    let mut settings = Settings::default();
+    settings.check.line_length = args.line_length.unwrap_or(file_configuration.line_length);
 
     let rule_selection = RuleSelection {
-        select: args.select.or(file_settings.select),
+        select: args.select.or(file_configuration.select),
         // TODO: CLI ignore should _extend_ file ignore
-        ignore: args.ignore.unwrap_or(file_settings.ignore),
-        extend_select: args.extend_select.unwrap_or(file_settings.extend_select),
+        ignore: args.ignore.unwrap_or(file_configuration.ignore),
+        extend_select: args
+            .extend_select
+            .unwrap_or(file_configuration.extend_select),
         fixable: None,
         unfixable: vec![],
         extend_fixable: vec![],
@@ -724,7 +725,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let per_file_ignores = if let Some(per_file_ignores) = args.per_file_ignores {
         Some(collect_per_file_ignores(per_file_ignores))
     } else {
-        file_settings.per_file_ignores
+        file_configuration.per_file_ignores
     };
 
     let per_file_ignores = CompiledPerFileIgnoreList::resolve(
@@ -745,39 +746,41 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             .cloned()
             .chain(
                 args.exclude
-                    .unwrap_or(file_settings.exclude.unwrap_or_default())
+                    .unwrap_or(file_configuration.exclude.unwrap_or_default())
                     .into_iter(),
             )
             .chain(args.extend_exclude.unwrap_or_default().into_iter())
-            .chain(file_settings.extend_exclude.into_iter()),
+            .chain(file_configuration.extend_exclude.into_iter()),
     )?;
     let exclude_mode = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
         .map(ExcludeMode::from)
-        .unwrap_or(file_settings.exclude_mode);
+        .unwrap_or(file_configuration.exclude_mode);
     let gitignore_mode = resolve_bool_arg(args.respect_gitignore, args.no_respect_gitignore)
         .map(GitignoreMode::from)
-        .unwrap_or(file_settings.gitignore_mode);
+        .unwrap_or(file_configuration.gitignore_mode);
 
-    let output_format = args.output_format.unwrap_or(file_settings.output_format);
+    let output_format = args
+        .output_format
+        .unwrap_or(file_configuration.output_format);
     let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
         .map(PreviewMode::from)
-        .unwrap_or(file_settings.preview);
+        .unwrap_or(file_configuration.preview);
 
-    let mut progress_bar = args.progress_bar.unwrap_or(file_settings.progress_bar);
+    let mut progress_bar = args.progress_bar.unwrap_or(file_configuration.progress_bar);
     // Override progress bar settings if not using colour terminal
     if progress_bar == ProgressBar::Fancy && !colored::control::SHOULD_COLORIZE.should_colorize() {
         progress_bar = ProgressBar::Ascii;
     }
 
-    let fix = resolve_bool_arg(args.fix, args.no_fix).unwrap_or(file_settings.fix);
+    let fix = resolve_bool_arg(args.fix, args.no_fix).unwrap_or(file_configuration.fix);
     let fix_only =
-        resolve_bool_arg(args.fix_only, args.no_fix_only).unwrap_or(file_settings.fix_only);
+        resolve_bool_arg(args.fix_only, args.no_fix_only).unwrap_or(file_configuration.fix_only);
     let unsafe_fixes = resolve_bool_arg(args.unsafe_fixes, args.no_unsafe_fixes)
         .map(UnsafeFixes::from)
-        .unwrap_or(file_settings.unsafe_fixes);
+        .unwrap_or(file_configuration.unsafe_fixes);
 
-    let show_fixes =
-        resolve_bool_arg(args.show_fixes, args.no_show_fixes).unwrap_or(file_settings.show_fixes);
+    let show_fixes = resolve_bool_arg(args.show_fixes, args.no_show_fixes)
+        .unwrap_or(file_configuration.show_fixes);
 
     let stdin_filename = args.stdin_filename;
 
