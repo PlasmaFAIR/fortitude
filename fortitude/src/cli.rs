@@ -165,6 +165,10 @@ pub struct CheckArgs {
     #[arg(long, value_enum)]
     pub progress_bar: Option<ProgressBar>,
 
+    /// See the settings fortitude will use to check a given Fortran file.
+    #[arg(long)]
+    pub show_settings: bool,
+
     // Rule selection
     /// Comma-separated list of rules to ignore.
     #[arg(

@@ -15,6 +15,7 @@ use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use crate::settings::{CheckSettings, FixMode, PreviewMode, ProgressBar, Settings};
+use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
 use crate::{fs, warn_user_once};
 
@@ -683,7 +684,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let stdin_filename = args.stdin_filename;
 
-    let writer: Box<dyn Write> = match args.output_file {
+    let mut writer: Box<dyn Write> = match args.output_file {
         Some(path) => {
             colored::control::set_override(false);
             if let Some(parent) = path.parent() {
@@ -697,6 +698,11 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let stderr_writer = Box::new(BufWriter::new(io::stderr()));
 
     let is_stdin = is_stdin(&args.files.unwrap_or_default(), stdin_filename.as_deref());
+
+    if args.show_settings {
+        show_settings(&settings, &mut writer)?;
+        return Ok(ExitCode::SUCCESS);
+    }
 
     let CheckSettings {
         fix,
