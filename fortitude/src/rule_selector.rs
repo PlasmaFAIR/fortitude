@@ -3,6 +3,7 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -13,11 +14,11 @@ use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::fs;
-use crate::registry::{Category, Rule, RuleNamespace};
+use crate::registry::{Category, Rule, RuleNamespace, RuleSet};
 use crate::rule_redirects::get_redirect;
 use crate::rules::{RuleCodePrefix, RuleGroup, RuleIter};
 use crate::settings::{PatternPrefixPair, PreviewMode};
+use crate::{display_settings, fs};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RuleSelector {
@@ -410,7 +411,7 @@ pub struct PerFileIgnore {
     basename: String,
     absolute: PathBuf,
     negated: bool,
-    rules: Vec<Rule>,
+    rules: RuleSet,
 }
 
 impl PerFileIgnore {
@@ -421,7 +422,7 @@ impl PerFileIgnore {
     ) -> Self {
         // Rules in preview are included here even if preview mode is disabled; it's
         // safe to ignore disabled rules
-        let rules: Vec<_> = prefixes.iter().flat_map(RuleSelector::all_rules).collect();
+        let rules: RuleSet = prefixes.iter().flat_map(RuleSelector::all_rules).collect();
         let negated = pattern.starts_with('!');
         if negated {
             pattern.drain(..1);
@@ -461,7 +462,22 @@ pub struct CompiledPerFileIgnore {
     pub absolute_matcher: GlobMatcher,
     pub basename_matcher: GlobMatcher,
     pub negated: bool,
-    pub rules: Vec<Rule>,
+    pub rules: RuleSet,
+}
+
+impl Display for CompiledPerFileIgnore {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        display_settings! {
+            formatter = f,
+            fields = [
+                self.absolute_matcher | globmatcher,
+                self.basename_matcher | globmatcher,
+                self.negated,
+                self.rules,
+            ]
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -492,6 +508,21 @@ impl CompiledPerFileIgnoreList {
             })
             .collect();
         Ok(Self { ignores: ignores? })
+    }
+}
+
+impl Display for CompiledPerFileIgnoreList {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if self.ignores.is_empty() {
+            write!(f, "{{}}")?;
+        } else {
+            writeln!(f, "{{")?;
+            for ignore in &self.ignores {
+                writeln!(f, "\t{ignore}")?;
+            }
+            write!(f, "}}")?;
+        }
+        Ok(())
     }
 }
 

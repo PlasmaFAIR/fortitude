@@ -1,3 +1,6 @@
+use std::fmt::{Display, Formatter};
+use std::hash::Hasher;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -6,13 +9,15 @@ use ignore::{types::TypesBuilder, WalkBuilder};
 use itertools::Itertools;
 use log::debug;
 use path_absolutize::Absolutize;
+use ruff_cache::{CacheKey, CacheKeyHasher};
+use ruff_macros::CacheKey;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
 use crate::registry::Rule;
 use crate::rule_selector::CompiledPerFileIgnoreList;
 use crate::settings::{ExcludeMode, GitignoreMode};
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize, CacheKey)]
 pub enum FilePattern {
     Builtin(&'static str),
     User(String, PathBuf),
@@ -65,9 +70,57 @@ impl<'de> Deserialize<'de> for FilePattern {
     }
 }
 
+impl Display for FilePattern {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{:?}",
+            match self {
+                Self::Builtin(pattern) => pattern,
+                Self::User(pattern, _) => pattern.as_str(),
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct FilePatternSet {
-    pub set: GlobSet,
+    set: GlobSet,
+    cache_key: u64,
+    // This field is only for displaying the internals
+    // of `set`.
+    #[allow(clippy::used_underscore_binding)]
+    _set_internals: Vec<FilePattern>,
+}
+
+impl Display for FilePatternSet {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if self._set_internals.is_empty() {
+            write!(f, "[]")?;
+        } else {
+            writeln!(f, "[")?;
+            for pattern in &self._set_internals {
+                writeln!(f, "\t{pattern},")?;
+            }
+            write!(f, "]")?;
+        }
+        Ok(())
+    }
+}
+
+impl Deref for FilePatternSet {
+    type Target = GlobSet;
+
+    fn deref(&self) -> &Self::Target {
+        &self.set
+    }
+}
+
+impl CacheKey for FilePatternSet {
+    fn cache_key(&self, state: &mut CacheKeyHasher) {
+        state.write_usize(self.set.len());
+        state.write_u64(self.cache_key);
+    }
 }
 
 impl FilePatternSet {
@@ -76,11 +129,21 @@ impl FilePatternSet {
         I: IntoIterator<Item = FilePattern>,
     {
         let mut builder = GlobSetBuilder::new();
+        let mut hasher = CacheKeyHasher::new();
+
+        let mut _set_internals = vec![];
+
         for pattern in patterns {
+            _set_internals.push(pattern.clone());
+            pattern.cache_key(&mut hasher);
             pattern.add_to(&mut builder)?;
         }
         let set = builder.build()?;
-        Ok(FilePatternSet { set })
+        Ok(FilePatternSet {
+            set,
+            cache_key: hasher.finish(),
+            _set_internals,
+        })
     }
 
     pub fn matches<P: AsRef<Path>>(&self, path: P) -> bool {
@@ -131,7 +194,6 @@ pub(crate) fn ignores_from_path(path: &Path, ignore_list: &CompiledPerFileIgnore
             }
         })
         .flatten()
-        .copied()
         .collect()
 }
 
