@@ -1,26 +1,20 @@
 use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs};
-use crate::configuration::{
-    self, parse_config_file, resolve_bool_arg, to_rule_table, Configuration, RuleSelection,
-};
+use crate::configuration::{self, parse_config_file, Configuration};
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fix::{fix_file, FixResult};
-use crate::fs::{get_files, FilePatternSet, EXCLUDE_BUILTINS};
+use crate::fs::get_files;
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
-use crate::rule_selector::{
-    collect_per_file_ignores, CompiledPerFileIgnoreList, PreviewOptions, RuleSelector,
-};
+use crate::rule_selector::{PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
 use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
 #[cfg(any(feature = "test-rules", test))]
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{
-    ExcludeMode, FixMode, GitignoreMode, PreviewMode, ProgressBar, Settings, UnsafeFixes,
-};
+use crate::settings::{CheckSettings, FixMode, PreviewMode, ProgressBar, Settings};
 use crate::stdin::read_from_stdin;
 use crate::{fs, warn_user_once};
 
@@ -92,8 +86,6 @@ pub(crate) fn check_file(
     file: &SourceFile,
     settings: &Settings,
     fix_mode: FixMode,
-    unsafe_fixes: UnsafeFixes,
-    per_file_ignores: &CompiledPerFileIgnoreList,
 ) -> anyhow::Result<Diagnostics> {
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
@@ -108,7 +100,6 @@ pub(crate) fn check_file(
             path,
             file,
             settings,
-            unsafe_fixes,
         ) {
             if !fixed.is_empty() {
                 match fix_mode {
@@ -153,6 +144,7 @@ pub(crate) fn check_file(
 
     // Ignore based on per-file-ignores.
     // If the DiagnosticMessage is discarded, its fix will also be ignored.
+    let per_file_ignores = &settings.check.per_file_ignores;
     let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {
         fs::ignores_from_path(path, per_file_ignores)
     } else {
@@ -401,7 +393,6 @@ pub(crate) fn check_and_fix_file<'a>(
     path: &Path,
     file: &'a SourceFile,
     settings: &Settings,
-    unsafe_fixes: UnsafeFixes,
 ) -> anyhow::Result<FixerResult<'a>> {
     let mut transformed = Cow::Borrowed(file);
 
@@ -454,7 +445,7 @@ pub(crate) fn check_and_fix_file<'a>(
         }) = fix_file(
             &violations,
             &locator,
-            unsafe_fixes,
+            settings.check.unsafe_fixes,
             path.to_string_lossy().as_ref(),
         ) {
             if iterations < MAX_ITERATIONS {
@@ -700,87 +691,15 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         &project_root,
     );
 
+    let files = args
+        .files
+        .as_ref()
+        .unwrap_or(file_configuration.files.as_ref())
+        .clone();
+
     // Now, we can override settings from the config file with options
     // from the CLI
-    let files = args.files.unwrap_or(file_configuration.files);
-    let file_extensions = &args
-        .file_extensions
-        .unwrap_or(file_configuration.file_extensions);
-
-    let mut settings = Settings::default();
-    settings.check.line_length = args.line_length.unwrap_or(file_configuration.line_length);
-
-    let rule_selection = RuleSelection {
-        select: args.select.or(file_configuration.select),
-        // TODO: CLI ignore should _extend_ file ignore
-        ignore: args.ignore.unwrap_or(file_configuration.ignore),
-        extend_select: args
-            .extend_select
-            .unwrap_or(file_configuration.extend_select),
-        fixable: None,
-        unfixable: vec![],
-        extend_fixable: vec![],
-    };
-
-    let per_file_ignores = if let Some(per_file_ignores) = args.per_file_ignores {
-        Some(collect_per_file_ignores(per_file_ignores))
-    } else {
-        file_configuration.per_file_ignores
-    };
-
-    let per_file_ignores = CompiledPerFileIgnoreList::resolve(
-        per_file_ignores
-            .unwrap_or_default()
-            .into_iter()
-            .chain(
-                args.extend_per_file_ignores
-                    .map(collect_per_file_ignores)
-                    .unwrap_or_default(),
-            )
-            .collect::<Vec<_>>(),
-    )?;
-
-    let file_excludes = FilePatternSet::try_from_iter(
-        EXCLUDE_BUILTINS
-            .iter()
-            .cloned()
-            .chain(
-                args.exclude
-                    .unwrap_or(file_configuration.exclude.unwrap_or_default())
-                    .into_iter(),
-            )
-            .chain(args.extend_exclude.unwrap_or_default().into_iter())
-            .chain(file_configuration.extend_exclude.into_iter()),
-    )?;
-    let exclude_mode = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
-        .map(ExcludeMode::from)
-        .unwrap_or(file_configuration.exclude_mode);
-    let gitignore_mode = resolve_bool_arg(args.respect_gitignore, args.no_respect_gitignore)
-        .map(GitignoreMode::from)
-        .unwrap_or(file_configuration.gitignore_mode);
-
-    let output_format = args
-        .output_format
-        .unwrap_or(file_configuration.output_format);
-    let preview_mode = resolve_bool_arg(args.preview, args.no_preview)
-        .map(PreviewMode::from)
-        .unwrap_or(file_configuration.preview);
-
-    let mut progress_bar = args.progress_bar.unwrap_or(file_configuration.progress_bar);
-    // Override progress bar settings if not using colour terminal
-    if progress_bar == ProgressBar::Fancy && !colored::control::SHOULD_COLORIZE.should_colorize() {
-        progress_bar = ProgressBar::Ascii;
-    }
-
-    let fix = resolve_bool_arg(args.fix, args.no_fix).unwrap_or(file_configuration.fix);
-    let fix_only =
-        resolve_bool_arg(args.fix_only, args.no_fix_only).unwrap_or(file_configuration.fix_only);
-    let unsafe_fixes = resolve_bool_arg(args.unsafe_fixes, args.no_unsafe_fixes)
-        .map(UnsafeFixes::from)
-        .unwrap_or(file_configuration.unsafe_fixes);
-
-    let show_fixes = resolve_bool_arg(args.show_fixes, args.no_show_fixes)
-        .unwrap_or(file_configuration.show_fixes);
+    let settings = file_configuration.into_settings(&project_root, &args)?;
 
     let stdin_filename = args.stdin_filename;
 
@@ -800,6 +719,16 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     let is_stdin = is_stdin(&files, stdin_filename.as_deref());
     let files = resolve_default_files(files, is_stdin);
 
+    let CheckSettings {
+        fix,
+        fix_only,
+        ref rules,
+        unsafe_fixes,
+        show_fixes,
+        output_format,
+        ..
+    } = settings.check;
+
     // Fix rules are as follows:
     // - By default, generate all fixes, but don't apply them to the filesystem.
     // - If `--fix` or `--fix-only` is set, apply applicable fixes to the filesystem (or
@@ -817,48 +746,34 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
-    let rules = to_rule_table(rule_selection, &preview_mode)?;
-
-    let path_rules = rules_to_path_rules(&rules);
-    let text_rules = rules_to_text_rules(&rules);
-    let ast_entrypoints = ast_entrypoint_map(&rules);
+    let path_rules = rules_to_path_rules(rules);
+    let text_rules = rules_to_text_rules(rules);
+    let ast_entrypoints = ast_entrypoint_map(rules);
 
     let start = Instant::now();
 
-    let files = get_files(
-        &files,
-        project_root,
-        file_extensions,
-        file_excludes,
-        exclude_mode,
-        gitignore_mode,
-    )?;
+    let files = get_files(&files, &settings.file_resolver)?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
 
     let results = if is_stdin {
         check_stdin(
             stdin_filename.map(fs::normalize_path).as_deref(),
-            &rules,
+            rules,
             &path_rules,
             &text_rules,
             &ast_entrypoints,
             &settings,
             fix_mode,
-            unsafe_fixes,
-            &per_file_ignores,
         )?
     } else {
         check_files(
             &files,
-            &rules,
+            rules,
             &path_rules,
             &text_rules,
             &ast_entrypoints,
             &settings,
             fix_mode,
-            unsafe_fixes,
-            &per_file_ignores,
-            progress_bar,
         )?
     };
 
@@ -906,12 +821,9 @@ fn check_files(
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
-    unsafe_fixes: UnsafeFixes,
-    per_file_ignores: &CompiledPerFileIgnoreList,
-    progress_bar: ProgressBar,
 ) -> Result<CheckResults> {
     let file_digits = files.len().to_string().len();
-    let progress_bar_style = match progress_bar {
+    let progress_bar_style = match settings.check.progress_bar {
         ProgressBar::Fancy => {
             // Make progress bar with 60 char width, bright cyan colour (51)
             // Colours use some 8-bit representation
@@ -976,8 +888,6 @@ fn check_files(
                 &file,
                 settings,
                 fix_mode,
-                unsafe_fixes,
-                per_file_ignores,
             ) {
                 Ok(violations) => {
                     if violations.is_empty() {
@@ -1029,8 +939,6 @@ fn check_stdin(
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
-    unsafe_fixes: UnsafeFixes,
-    per_file_ignores: &CompiledPerFileIgnoreList,
 ) -> Result<CheckResults> {
     let stdin = read_from_stdin()?;
 
@@ -1050,7 +958,6 @@ fn check_stdin(
             path,
             &file,
             settings,
-            unsafe_fixes,
         ) {
             if !fixed.is_empty() {
                 match fix_mode {
@@ -1094,6 +1001,7 @@ fn check_stdin(
         (result, fixed)
     };
 
+    let per_file_ignores = &settings.check.per_file_ignores;
     // Ignore based on per-file-ignores.
     // If the DiagnosticMessage is discarded, its fix will also be ignored.
     let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {

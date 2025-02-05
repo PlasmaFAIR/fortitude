@@ -110,11 +110,9 @@ impl fmt::Display for CheckSettings {
 }
 #[derive(Debug, CacheKey)]
 pub struct FileResolverSettings {
-    pub exclude: FilePatternSet,
-    pub extend_exclude: FilePatternSet,
+    pub excludes: FilePatternSet,
     pub force_exclude: bool,
     pub file_extensions: Vec<String>,
-    pub extend_include: FilePatternSet,
     pub respect_gitignore: bool,
     pub project_root: PathBuf,
 }
@@ -126,11 +124,9 @@ impl fmt::Display for FileResolverSettings {
             formatter = f,
             namespace = "file_resolver",
             fields = [
-                self.exclude,
-                self.extend_exclude,
+                self.excludes,
                 self.force_exclude,
                 self.file_extensions | array,
-                self.extend_include,
                 self.respect_gitignore,
                 self.project_root | path,
             ]
@@ -143,9 +139,7 @@ impl FileResolverSettings {
     fn new(project_root: &Path) -> Self {
         Self {
             project_root: project_root.to_path_buf(),
-            exclude: FilePatternSet::try_from_iter(EXCLUDE_BUILTINS.iter().cloned()).unwrap(),
-            extend_exclude: FilePatternSet::default(),
-            extend_include: FilePatternSet::default(),
+            excludes: FilePatternSet::try_from_iter(EXCLUDE_BUILTINS.iter().cloned()).unwrap(),
             force_exclude: false,
             respect_gitignore: true,
             file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),

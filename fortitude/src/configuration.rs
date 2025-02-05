@@ -1,12 +1,16 @@
-use crate::fs::{FilePattern, FORTRAN_EXTS};
+use crate::cli::CheckArgs;
+use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::options::Options;
 use crate::registry::RuleNamespace;
-use crate::rule_selector::{PerFileIgnore, PreviewOptions, RuleSelector, Specificity};
+use crate::rule_selector::{
+    collect_per_file_ignores, CompiledPerFileIgnoreList, PerFileIgnore, PreviewOptions,
+    RuleSelector, Specificity,
+};
 use crate::rule_table::RuleTable;
 use crate::rules::Rule;
 use crate::settings::{
-    ExcludeMode, GitignoreMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes,
-    DEFAULT_SELECTORS,
+    CheckSettings, ExcludeMode, FileResolverSettings, GitignoreMode, OutputFormat, PreviewMode,
+    ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 use crate::{fs, warn_user_once_by_id, warn_user_once_by_message};
 
@@ -251,6 +255,104 @@ impl Configuration {
                 .map(GitignoreMode::from)
                 .unwrap_or_default(),
         }
+    }
+
+    pub fn into_settings(self, project_root: &Path, args: &CheckArgs) -> Result<Settings> {
+        let args = args.clone();
+        let file_extensions = args.file_extensions.unwrap_or(self.file_extensions);
+
+        let per_file_ignores = if let Some(per_file_ignores) = args.per_file_ignores {
+            Some(collect_per_file_ignores(per_file_ignores))
+        } else {
+            self.per_file_ignores
+        };
+
+        let per_file_ignores = CompiledPerFileIgnoreList::resolve(
+            per_file_ignores
+                .unwrap_or_default()
+                .into_iter()
+                .chain(
+                    args.extend_per_file_ignores
+                        .map(collect_per_file_ignores)
+                        .unwrap_or_default(),
+                )
+                .collect::<Vec<_>>(),
+        )?;
+
+        let exclude = FilePatternSet::try_from_iter(
+            EXCLUDE_BUILTINS
+                .iter()
+                .cloned()
+                .chain(
+                    args.exclude
+                        .unwrap_or(self.exclude.unwrap_or_default())
+                        .into_iter(),
+                )
+                .chain(args.extend_exclude.unwrap_or_default().into_iter())
+                .chain(self.extend_exclude.into_iter()),
+        )?;
+
+        let force_exclude = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
+            .map(ExcludeMode::from)
+            .unwrap_or(self.exclude_mode);
+
+        let respect_gitignore = resolve_bool_arg(args.respect_gitignore, args.no_respect_gitignore)
+            .map(GitignoreMode::from)
+            .unwrap_or(self.gitignore_mode);
+
+        let preview = resolve_bool_arg(args.preview, args.no_preview)
+            .map(PreviewMode::from)
+            .unwrap_or(self.preview);
+
+        let rule_selection = RuleSelection {
+            select: args.select.or(self.select),
+            // TODO: CLI ignore should _extend_ file ignore
+            ignore: args.ignore.unwrap_or(self.ignore),
+            extend_select: args.extend_select.unwrap_or(self.extend_select),
+            fixable: None,
+            unfixable: vec![],
+            extend_fixable: vec![],
+        };
+        let rules = to_rule_table(rule_selection, &preview)?;
+
+        let mut progress_bar = args.progress_bar.unwrap_or(self.progress_bar);
+        // Override progress bar settings if not using colour terminal
+        if progress_bar == ProgressBar::Fancy
+            && !colored::control::SHOULD_COLORIZE.should_colorize()
+        {
+            progress_bar = ProgressBar::Ascii;
+        }
+
+        let output_format = args.output_format.unwrap_or(self.output_format);
+
+        let show_fixes =
+            resolve_bool_arg(args.show_fixes, args.no_show_fixes).unwrap_or(self.show_fixes);
+
+        Ok(Settings {
+            check: CheckSettings {
+                project_root: project_root.to_path_buf(),
+                rules,
+                fix: resolve_bool_arg(args.fix, args.no_fix).unwrap_or(self.fix),
+                fix_only: resolve_bool_arg(args.fix_only, args.no_fix_only)
+                    .unwrap_or(self.fix_only),
+                line_length: args.line_length.unwrap_or(self.line_length),
+                unsafe_fixes: resolve_bool_arg(args.unsafe_fixes, args.no_unsafe_fixes)
+                    .map(UnsafeFixes::from)
+                    .unwrap_or(self.unsafe_fixes),
+                preview,
+                progress_bar,
+                output_format,
+                show_fixes,
+                per_file_ignores,
+            },
+            file_resolver: FileResolverSettings {
+                project_root: project_root.to_path_buf(),
+                excludes: exclude,
+                file_extensions: file_extensions.clone(),
+                respect_gitignore: respect_gitignore.is_respect_gitignore(),
+                force_exclude: force_exclude.is_force(),
+            },
+        })
     }
 }
 
