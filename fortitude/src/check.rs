@@ -61,20 +61,6 @@ fn is_stdin(files: &[PathBuf], stdin_filename: Option<&Path>) -> bool {
     file == Path::new("-")
 }
 
-/// Returns the default set of files if none are provided, otherwise
-/// returns a list with just the current working directory.
-fn resolve_default_files(files: Vec<PathBuf>, is_stdin: bool) -> Vec<PathBuf> {
-    if files.is_empty() {
-        if is_stdin {
-            vec![Path::new("-").to_path_buf()]
-        } else {
-            vec![Path::new(".").to_path_buf()]
-        }
-    } else {
-        files
-    }
-}
-
 /// Parse a file, check it for issues, and return the report.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn check_file(
@@ -691,12 +677,6 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         &project_root,
     );
 
-    let files = args
-        .files
-        .as_ref()
-        .unwrap_or(file_configuration.files.as_ref())
-        .clone();
-
     // Now, we can override settings from the config file with options
     // from the CLI
     let settings = file_configuration.into_settings(&project_root, &args)?;
@@ -716,8 +696,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     };
     let stderr_writer = Box::new(BufWriter::new(io::stderr()));
 
-    let is_stdin = is_stdin(&files, stdin_filename.as_deref());
-    let files = resolve_default_files(files, is_stdin);
+    let is_stdin = is_stdin(&args.files.unwrap_or_default(), stdin_filename.as_deref());
 
     let CheckSettings {
         fix,
@@ -752,7 +731,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     let start = Instant::now();
 
-    let files = get_files(&files, &settings.file_resolver)?;
+    let files = get_files(&settings.file_resolver, is_stdin)?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
 
     let results = if is_stdin {

@@ -266,13 +266,26 @@ pub(crate) static EXCLUDE_BUILTINS: &[FilePattern] = &[
     FilePattern::Builtin("_dist"),
 ];
 
+/// Returns the default set of files if none are provided, otherwise
+/// returns a list with just the current working directory.
+fn resolve_default_files(files: &[PathBuf], is_stdin: bool) -> Vec<PathBuf> {
+    if files.is_empty() {
+        if is_stdin {
+            vec![Path::new("-").to_path_buf()]
+        } else {
+            vec![Path::new(".").to_path_buf()]
+        }
+    } else {
+        files.to_vec()
+    }
+}
+
 /// Expand the input list of files to include all Fortran files.
-pub fn get_files<P: AsRef<Path>>(
-    paths: &[P],
-    resolver: &FileResolverSettings,
-) -> anyhow::Result<Vec<PathBuf>> {
+pub fn get_files(resolver: &FileResolverSettings, is_stdin: bool) -> anyhow::Result<Vec<PathBuf>> {
     debug!("Gathering files");
     debug!("Project root: {:?}", resolver.project_root);
+    let paths = resolve_default_files(&resolver.files, is_stdin);
+
     // Normalise all paths and remove duplicates.
     // If exclude_mode is set to Force, remove paths that match the exclude patterns.
     let paths: Vec<_> = if resolver.force_exclude {

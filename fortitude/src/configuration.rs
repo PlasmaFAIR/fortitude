@@ -259,6 +259,8 @@ impl Configuration {
 
     pub fn into_settings(self, project_root: &Path, args: &CheckArgs) -> Result<Settings> {
         let args = args.clone();
+
+        let files = args.files.unwrap_or(self.files);
         let file_extensions = args.file_extensions.unwrap_or(self.file_extensions);
 
         let per_file_ignores = if let Some(per_file_ignores) = args.per_file_ignores {
@@ -348,7 +350,8 @@ impl Configuration {
             file_resolver: FileResolverSettings {
                 project_root: project_root.to_path_buf(),
                 excludes: exclude,
-                file_extensions: file_extensions.clone(),
+                files,
+                file_extensions,
                 respect_gitignore: respect_gitignore.is_respect_gitignore(),
                 force_exclude: force_exclude.is_force(),
             },
