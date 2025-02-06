@@ -1,3 +1,5 @@
+#define SOME_MACRO 1 \
+                   2
 program t
     implicit none
     real :: A
@@ -6,4 +8,4 @@ program t
     A = 2.0
     print *, A
 
- end
+end program t

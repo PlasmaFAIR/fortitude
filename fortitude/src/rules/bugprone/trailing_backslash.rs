@@ -1,11 +1,13 @@
+use crate::ast::FortitudeNode;
 /// Defines rules that govern line length.
 use crate::settings::Settings;
-use crate::TextRule;
+use crate::AstRule;
+use lazy_regex::regex;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_source_file::OneIndexed;
 use ruff_source_file::SourceFile;
-use ruff_text_size::{TextLen, TextRange, TextSize};
+use ruff_text_size::{TextRange, TextSize};
+use tree_sitter::Node;
 
 /// ## What does it do?
 /// Checks if a backslash is the last character on a line
@@ -50,22 +52,24 @@ impl Violation for TrailingBackslash {
     }
 }
 
-impl TextRule for TrailingBackslash {
-    fn check(_settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
-        let source = source_file.to_source_code();
-        let mut violations = Vec::new();
+impl AstRule for TrailingBackslash {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        // Preprocessor might ignore trailing whitespace
+        let trailing_backslash_re = regex!(r#".*(\\)\s*$"#);
 
-        for (idx, line) in source.text().lines().enumerate() {
-            if line.trim_end().ends_with("\\") {
-                let len = line.trim_end().chars().count();
+        let comment = node.to_text(src.source_text())?;
+        let captures = trailing_backslash_re.captures(comment)?;
 
-                // Skip to position the warning underneath the \, which is 1 before the end of the line
-                let offset: TextSize = line.chars().skip(len - 1).map(TextLen::text_len).sum();
-                let line_end = source.line_end_exclusive(OneIndexed::from_zero_indexed(idx));
-                let range = TextRange::new(line_end - offset, line_end - offset);
-                violations.push(Diagnostic::new(Self {}, range));
-            }
-        }
-        violations
+        let trailing_backslash = captures.get(1)?;
+        let start: TextSize = trailing_backslash.start().try_into().unwrap();
+        let end: TextSize = trailing_backslash.end().try_into().unwrap();
+        // Regex start/end are relative to start of comment node
+        let comment_start: TextSize = node.start_byte().try_into().unwrap();
+        let range = TextRange::new(comment_start + start, comment_start + end);
+        some_vec!(Diagnostic::new(Self {}, range))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["comment"]
     }
 }
