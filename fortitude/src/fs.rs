@@ -1,3 +1,6 @@
+use std::fmt::{Display, Formatter};
+use std::hash::Hasher;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -6,13 +9,15 @@ use ignore::{types::TypesBuilder, WalkBuilder};
 use itertools::Itertools;
 use log::debug;
 use path_absolutize::Absolutize;
+use ruff_cache::{CacheKey, CacheKeyHasher};
+use ruff_macros::CacheKey;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
 use crate::registry::Rule;
 use crate::rule_selector::CompiledPerFileIgnoreList;
-use crate::settings::{ExcludeMode, GitignoreMode};
+use crate::settings::FileResolverSettings;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize, CacheKey)]
 pub enum FilePattern {
     Builtin(&'static str),
     User(String, PathBuf),
@@ -65,9 +70,57 @@ impl<'de> Deserialize<'de> for FilePattern {
     }
 }
 
+impl Display for FilePattern {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{:?}",
+            match self {
+                Self::Builtin(pattern) => pattern,
+                Self::User(pattern, _) => pattern.as_str(),
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct FilePatternSet {
-    pub set: GlobSet,
+    set: GlobSet,
+    cache_key: u64,
+    // This field is only for displaying the internals
+    // of `set`.
+    #[allow(clippy::used_underscore_binding)]
+    _set_internals: Vec<FilePattern>,
+}
+
+impl Display for FilePatternSet {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if self._set_internals.is_empty() {
+            write!(f, "[]")?;
+        } else {
+            writeln!(f, "[")?;
+            for pattern in &self._set_internals {
+                writeln!(f, "\t{pattern},")?;
+            }
+            write!(f, "]")?;
+        }
+        Ok(())
+    }
+}
+
+impl Deref for FilePatternSet {
+    type Target = GlobSet;
+
+    fn deref(&self) -> &Self::Target {
+        &self.set
+    }
+}
+
+impl CacheKey for FilePatternSet {
+    fn cache_key(&self, state: &mut CacheKeyHasher) {
+        state.write_usize(self.set.len());
+        state.write_u64(self.cache_key);
+    }
 }
 
 impl FilePatternSet {
@@ -76,11 +129,21 @@ impl FilePatternSet {
         I: IntoIterator<Item = FilePattern>,
     {
         let mut builder = GlobSetBuilder::new();
+        let mut hasher = CacheKeyHasher::new();
+
+        let mut _set_internals = vec![];
+
         for pattern in patterns {
+            _set_internals.push(pattern.clone());
+            pattern.cache_key(&mut hasher);
             pattern.add_to(&mut builder)?;
         }
         let set = builder.build()?;
-        Ok(FilePatternSet { set })
+        Ok(FilePatternSet {
+            set,
+            cache_key: hasher.finish(),
+            _set_internals,
+        })
     }
 
     pub fn matches<P: AsRef<Path>>(&self, path: P) -> bool {
@@ -131,7 +194,6 @@ pub(crate) fn ignores_from_path(path: &Path, ignore_list: &CompiledPerFileIgnore
             }
         })
         .flatten()
-        .copied()
         .collect()
 }
 
@@ -204,26 +266,35 @@ pub(crate) static EXCLUDE_BUILTINS: &[FilePattern] = &[
     FilePattern::Builtin("_dist"),
 ];
 
+/// Returns the default set of files if none are provided, otherwise
+/// returns a list with just the current working directory.
+fn resolve_default_files(files: &[PathBuf], is_stdin: bool) -> Vec<PathBuf> {
+    if files.is_empty() {
+        if is_stdin {
+            vec![Path::new("-").to_path_buf()]
+        } else {
+            vec![Path::new(".").to_path_buf()]
+        }
+    } else {
+        files.to_vec()
+    }
+}
+
 /// Expand the input list of files to include all Fortran files.
-pub fn get_files<P: AsRef<Path>, R: AsRef<Path>, S: AsRef<str>>(
-    paths: &[P],
-    project_root: R,
-    extensions: &[S],
-    excludes: FilePatternSet,
-    exclude_mode: ExcludeMode,
-    gitignore_mode: GitignoreMode,
-) -> anyhow::Result<Vec<PathBuf>> {
+pub fn get_files(resolver: &FileResolverSettings, is_stdin: bool) -> anyhow::Result<Vec<PathBuf>> {
     debug!("Gathering files");
-    let project_root = project_root.as_ref().to_path_buf();
-    debug!("Project root: {:?}", project_root);
+    debug!("Project root: {:?}", resolver.project_root);
+    let paths = resolve_default_files(&resolver.files, is_stdin);
+
     // Normalise all paths and remove duplicates.
     // If exclude_mode is set to Force, remove paths that match the exclude patterns.
-    let paths: Vec<_> = if matches!(exclude_mode, ExcludeMode::Force) {
-        let (excluded, paths): (Vec<_>, Vec<_>) = paths
-            .iter()
-            .map(normalize_path)
-            .unique()
-            .partition(|p| excludes.ancestor_matches(p, &project_root));
+    let paths: Vec<_> = if resolver.force_exclude {
+        let (excluded, paths): (Vec<_>, Vec<_>) =
+            paths.iter().map(normalize_path).unique().partition(|p| {
+                resolver
+                    .excludes
+                    .ancestor_matches(p, &resolver.project_root)
+            });
         if !excluded.is_empty() {
             debug!("Force excluded paths: {:?}", excluded);
         }
@@ -237,6 +308,8 @@ pub fn get_files<P: AsRef<Path>, R: AsRef<Path>, S: AsRef<str>>(
     // Note that this includes paths that do not exist, as these should be reported to the user.
     let (dirs, files): (Vec<_>, Vec<_>) = paths.into_iter().partition(|p| p.is_dir());
 
+    let excludes = resolver.excludes.clone();
+
     // Collect all files from directories
     let dir_contents = if let Some((first_dir, rest)) = dirs.split_first() {
         // Create a directory walker that follows exclude patterns
@@ -244,15 +317,15 @@ pub fn get_files<P: AsRef<Path>, R: AsRef<Path>, S: AsRef<str>>(
         for path in rest {
             builder.add(path);
         }
-        builder.standard_filters(gitignore_mode.into());
+        builder.standard_filters(resolver.respect_gitignore);
         builder.hidden(false);
         builder.filter_entry(move |e| !excludes.matches(e.path()));
 
         // Add file type filter for provided file extensions
         // Directories will be skipped
         let mut file_types = TypesBuilder::new();
-        for ext in extensions {
-            file_types.add(ext.as_ref(), format!("*.{}", ext.as_ref()).as_str())?;
+        for ext in &resolver.file_extensions {
+            file_types.add(ext.as_ref(), format!("*.{}", ext).as_str())?;
         }
         file_types.select("all");
         builder.types(file_types.build()?);

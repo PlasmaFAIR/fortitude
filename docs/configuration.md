@@ -85,6 +85,10 @@ Options:
           Enable preview mode; checks will include unstable rules and fixes. Use `--no-preview` to disable
       --progress-bar <PROGRESS_BAR>
           Progress bar settings. Options are "off" (default), "ascii", and "fancy" [possible values: off, fancy, ascii]
+      --show-settings
+          See the settings fortitude will use to check a given Fortran file
+      --show-files
+          See the files fortitude will be run against with the current settings
       --stdin-filename <STDIN_FILENAME>
           The name of the file when passing it through stdin
   -h, --help

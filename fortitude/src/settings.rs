@@ -3,22 +3,150 @@
 // SPDX-License-Identifier: MIT
 
 /// A collection of user-modifiable settings. Should be expanded as new features are added.
-use std::fmt::{Display, Formatter};
+use std::fmt;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use path_absolutize::path_dedot;
 use ruff_diagnostics::Applicability;
 use ruff_macros::CacheKey;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
-use crate::rule_selector::RuleSelector;
+use crate::display_settings;
+use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
+use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
+use crate::rule_table::RuleTable;
 
+#[derive(Debug)]
 pub struct Settings {
-    pub line_length: usize,
+    pub check: CheckSettings,
+    pub file_resolver: FileResolverSettings,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { line_length: 100 }
+        let project_root = path_dedot::CWD.as_path();
+        Self {
+            check: CheckSettings::new(project_root),
+            file_resolver: FileResolverSettings::new(project_root),
+        }
+    }
+}
+
+impl fmt::Display for Settings {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "\n# General Settings")?;
+        display_settings! {
+            formatter = f,
+            fields = [
+                self.check         | nested,
+                self.file_resolver | nested,
+            ]
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct CheckSettings {
+    pub project_root: PathBuf,
+
+    pub rules: RuleTable,
+    pub per_file_ignores: CompiledPerFileIgnoreList,
+
+    pub line_length: usize,
+
+    pub fix: bool,
+    pub fix_only: bool,
+    pub show_fixes: bool,
+    pub unsafe_fixes: UnsafeFixes,
+    pub output_format: OutputFormat,
+    pub progress_bar: ProgressBar,
+    pub preview: PreviewMode,
+}
+
+impl CheckSettings {
+    fn new(project_root: &Path) -> Self {
+        Self {
+            project_root: project_root.to_path_buf(),
+            rules: DEFAULT_SELECTORS
+                .iter()
+                .flat_map(|selector| selector.rules(&PreviewOptions::default()))
+                .collect(),
+            per_file_ignores: CompiledPerFileIgnoreList::default(),
+            line_length: 100,
+            fix: false,
+            fix_only: false,
+            show_fixes: false,
+            unsafe_fixes: UnsafeFixes::default(),
+            output_format: OutputFormat::default(),
+            progress_bar: ProgressBar::default(),
+            preview: PreviewMode::default(),
+        }
+    }
+}
+
+impl fmt::Display for CheckSettings {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "\n# Check Settings")?;
+        display_settings! {
+            formatter = f,
+            namespace = "check",
+            fields = [
+                self.project_root | path,
+                self.rules | nested,
+                self.per_file_ignores,
+                self.line_length,
+                self.fix,
+                self.fix_only,
+                self.show_fixes,
+                self.output_format,
+                self.progress_bar,
+                self.preview,
+            ]
+        }
+        Ok(())
+    }
+}
+#[derive(Debug, CacheKey)]
+pub struct FileResolverSettings {
+    pub excludes: FilePatternSet,
+    pub force_exclude: bool,
+    pub files: Vec<PathBuf>,
+    pub file_extensions: Vec<String>,
+    pub respect_gitignore: bool,
+    pub project_root: PathBuf,
+}
+
+impl fmt::Display for FileResolverSettings {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "\n# File Resolver Settings")?;
+        display_settings! {
+            formatter = f,
+            namespace = "file_resolver",
+            fields = [
+                self.excludes,
+                self.force_exclude,
+                self.files | paths,
+                self.file_extensions | array,
+                self.respect_gitignore,
+                self.project_root | path,
+            ]
+        }
+        Ok(())
+    }
+}
+
+impl FileResolverSettings {
+    fn new(project_root: &Path) -> Self {
+        Self {
+            project_root: project_root.to_path_buf(),
+            excludes: FilePatternSet::try_from_iter(EXCLUDE_BUILTINS.iter().cloned()).unwrap(),
+            force_exclude: false,
+            respect_gitignore: true,
+            files: Vec::default(),
+            file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
+        }
     }
 }
 
@@ -40,8 +168,8 @@ impl From<bool> for PreviewMode {
     }
 }
 
-impl Display for PreviewMode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for PreviewMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Disabled => write!(f, "disabled"),
             Self::Enabled => write!(f, "enabled"),
@@ -64,8 +192,8 @@ pub enum UnsafeFixes {
     Enabled,
 }
 
-impl Display for UnsafeFixes {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for UnsafeFixes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -197,8 +325,8 @@ pub enum ProgressBar {
     Ascii,
 }
 
-impl Display for ProgressBar {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ProgressBar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -231,8 +359,8 @@ pub enum OutputFormat {
     Sarif,
 }
 
-impl Display for OutputFormat {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for OutputFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Concise => write!(f, "concise"),
             Self::Full => write!(f, "full"),
