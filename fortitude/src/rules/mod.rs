@@ -133,6 +133,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Readability, "001") => (RuleGroup::Preview, Ast, readability::magic_numbers::MagicNumberInArraySize),
 
         (Bugprone, "001") => (RuleGroup::Preview, Ast, bugprone::select_default::MissingDefaultCase),
+        (Bugprone, "011") => (RuleGroup::Preview, Ast, bugprone::trailing_backslash::TrailingBackslash),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason
