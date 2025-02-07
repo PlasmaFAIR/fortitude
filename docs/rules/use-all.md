@@ -1,4 +1,4 @@
-# use-all (M011)
+# use-all (B051)
 ## What it does
 Checks whether `use` statements are used correctly.
 

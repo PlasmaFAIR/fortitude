@@ -1,4 +1,4 @@
-# interface-implicit-typing (T002)
+# interface-implicit-typing (B022)
 ## What it does
 Checks for missing `implicit none` in interfaces
 

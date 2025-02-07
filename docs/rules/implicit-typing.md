@@ -1,4 +1,4 @@
-# implicit-typing (T001)
+# implicit-typing (B021)
 ## What does it do?
 Checks for missing `implicit none`
 

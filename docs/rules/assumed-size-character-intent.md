@@ -1,4 +1,4 @@
-# assumed-size-character-intent (T042)
+# assumed-size-character-intent (B061)
 ## What does it do?
 Checks `character` dummy arguments have `intent(in)` only
 

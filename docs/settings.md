@@ -105,15 +105,15 @@ specified by [`select`](#check_select).
 
     ```toml
     [fpm.extra.check]
-    # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
-    extend-select = ["T031", "R"]
+    # On top of the default rules (`E`, `B`, `OB`), enable missing-intent (`T031`) and readability rules (`R`).
+    extend-select = ["missing-intent", "R"]
     ```
 === "fortitude.toml"
 
     ```toml
     [check]
-    # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
-    extend-select = ["T031", "R"]
+    # On top of the default rules (`E`, `B`, `OB`), enable missing-intent (`T031`) and readability rules (`R`).
+    extend-select = ["missing-intent", "R"]
     ```
 
 ---
@@ -491,7 +491,7 @@ When breaking ties between enabled and disabled rules (via `select` and
 `ignore`, respectively), more specific prefixes override less
 specific prefixes.
 
-**Default value**: `["E", "F", "S", "T", "OB", "P", "M", "IO", "R", "B"]`
+**Default value**: `["E", "B", "OB"]`
 
 **Type**: `list[RuleSelector]`
 
@@ -501,15 +501,15 @@ specific prefixes.
 
     ```toml
     [fpm.extra.check]
-    # Only check errors and obsolescent features
-    select = ["E", "OB"]
+    # On top of the default `select` rules (`E`, `B`, `OB`), enable missing-intent (`T031`) and readability rules (`R`).
+    select = ["E", "B", "OB", "missing-intent", "R"]
     ```
 === "fortitude.toml"
 
     ```toml
     [check]
-    # Only check errors and obsolescent features
-    select = ["E", "OB"]
+    # On top of the default `select` rules (`E`, `B`, `OB`), enable missing-intent (`T031`) and readability rules (`R`).
+    select = ["E", "B", "OB", "missing-intent", "R"]
     ```
 
 ---

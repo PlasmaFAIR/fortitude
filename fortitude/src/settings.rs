@@ -14,6 +14,7 @@ use serde::{de, Deserialize, Deserializer, Serialize};
 
 use crate::display_settings;
 use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
+use crate::registry::Category;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
 
@@ -178,7 +179,11 @@ impl fmt::Display for PreviewMode {
 }
 
 /// Default rule selection
-pub const DEFAULT_SELECTORS: &[RuleSelector] = &[RuleSelector::All];
+pub const DEFAULT_SELECTORS: &[RuleSelector] = &[
+    RuleSelector::Category(Category::Error),
+    RuleSelector::Category(Category::Bugprone),
+    RuleSelector::Category(Category::Obsolescent),
+];
 
 /// Toggle for unsafe fixes.
 /// `Hint` will not apply unsafe fixes but a message will be shown when they are available.

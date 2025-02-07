@@ -1,4 +1,4 @@
-# procedure-not-in-module (M001)
+# procedure-not-in-module (B041)
 ## What it does
 Checks for any functions and subroutines not defined within modules (or one
 of a few acceptable alternatives).

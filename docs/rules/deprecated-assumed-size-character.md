@@ -1,4 +1,4 @@
-# deprecated-assumed-size-character (T043)
+# deprecated-assumed-size-character (B062)
 ## What does it do?
 Checks for deprecated declarations of `character`
 
