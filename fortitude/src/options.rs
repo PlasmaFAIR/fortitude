@@ -137,11 +137,11 @@ pub struct CheckOptions {
     /// `ignore`, respectively), more specific prefixes override less
     /// specific prefixes.
     #[option(
-        default = r#"["E", "F", "S", "T", "OB", "P", "M", "IO", "R", "B"]"#,
+        default = r#"["E", "B", "OB"]"#,
         value_type = "list[RuleSelector]",
         example = r#"
-            # Only check errors and obsolescent features
-            select = ["E", "OB"]
+            # On top of the default `select` rules (`E`, `B`, `OB`), enable missing-intent (`T031`) and readability rules (`R`).
+            select = ["E", "B", "OB", "missing-intent", "R"]
         "#
     )]
     pub select: Option<Vec<RuleSelector>>,
@@ -153,8 +153,8 @@ pub struct CheckOptions {
         default = "[]",
         value_type = "list[RuleSelector]",
         example = r#"
-            # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
-            extend-select = ["T031", "R"]
+            # On top of the default rules (`E`, `B`, `OB`), enable missing-intent (`T031`) and readability rules (`R`).
+            extend-select = ["missing-intent", "R"]
         "#
     )]
     pub extend_select: Option<Vec<RuleSelector>>,

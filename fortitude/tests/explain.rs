@@ -10,8 +10,8 @@ fn explain_all() -> anyhow::Result<()> {
         .arg("explain")
         .assert()
         .success()
-        .stdout(predicate::str::contains("T001"))
-        .stdout(predicate::str::contains("S061"));
+        .stdout(predicate::str::contains("B001"))
+        .stdout(predicate::str::contains("OB011"));
 
     Ok(())
 }
