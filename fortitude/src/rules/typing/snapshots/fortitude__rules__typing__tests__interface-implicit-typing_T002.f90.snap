@@ -3,22 +3,22 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/typing/T002.f90:4:5: T002 interface 'function' missing 'implicit none'
+./resources/test/fixtures/typing/T002.f90:4:5: B022 interface 'function' missing 'implicit none'
   |
 2 |   implicit none
 3 |   interface
 4 |     integer function myfunc(x)
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ T002
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ B022
 5 |       integer, intent(in) :: x
 6 |     end function myfunc
   |
 
-./resources/test/fixtures/typing/T002.f90:13:5: T002 interface 'subroutine' missing 'implicit none'
+./resources/test/fixtures/typing/T002.f90:13:5: B022 interface 'subroutine' missing 'implicit none'
    |
 11 |   implicit none
 12 |   interface
 13 |     subroutine myfunc2(x)
-   |     ^^^^^^^^^^^^^^^^^^^^^ T002
+   |     ^^^^^^^^^^^^^^^^^^^^^ B022
 14 |       integer, intent(inout) :: x
 15 |     end subroutine myfunc2
    |

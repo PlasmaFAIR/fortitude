@@ -3,20 +3,20 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/typing/T001.f90:1:1: T001 module missing 'implicit none'
+./resources/test/fixtures/typing/T001.f90:1:1: B021 module missing 'implicit none'
   |
 1 | module my_module
-  | ^^^^^^^^^^^^^^^^ T001
+  | ^^^^^^^^^^^^^^^^ B021
 2 |   parameter(N = 1)
 3 | end module my_module
   |
 
-./resources/test/fixtures/typing/T001.f90:5:1: T001 program missing 'implicit none'
+./resources/test/fixtures/typing/T001.f90:5:1: B021 program missing 'implicit none'
   |
 3 | end module my_module
 4 |
 5 | program my_program
-  | ^^^^^^^^^^^^^^^^^^ T001
+  | ^^^^^^^^^^^^^^^^^^ B021
 6 |   write(*,*) 42
 7 | end program my_program
   |

@@ -91,8 +91,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "101") => (RuleGroup::Stable, Text, style::whitespace::TrailingWhitespace),
         (Style, "102") => (RuleGroup::Stable, Ast, style::whitespace::IncorrectSpaceBeforeComment),
 
-        (Typing, "001") => (RuleGroup::Stable, Ast, typing::implicit_typing::ImplicitTyping),
-        (Typing, "002") => (RuleGroup::Stable, Ast, typing::implicit_typing::InterfaceImplicitTyping),
         (Typing, "003") => (RuleGroup::Stable, Ast, typing::implicit_typing::SuperfluousImplicitNone),
         (Typing, "004") => (RuleGroup::Preview, Ast, typing::implicit_typing::ImplicitExternalProcedures),
         (Typing, "011") => (RuleGroup::Stable, Ast, typing::literal_kinds::LiteralKind),
@@ -100,12 +98,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Typing, "021") => (RuleGroup::Stable, Ast, typing::star_kinds::StarKind),
         (Typing, "031") => (RuleGroup::Stable, Ast, typing::intent::MissingIntent),
         (Typing, "041") => (RuleGroup::Stable, Ast, typing::assumed_size::AssumedSize),
-        (Typing, "042") => (RuleGroup::Stable, Ast, typing::assumed_size::AssumedSizeCharacterIntent),
-        (Typing, "043") => (RuleGroup::Stable, Ast, typing::assumed_size::DeprecatedAssumedSizeCharacter),
-        (Typing, "051") => (RuleGroup::Stable, Ast, typing::init_decls::InitialisationInDeclaration),
-        (Typing, "061") => (RuleGroup::Stable, Ast, typing::external::ExternalProcedure),
-        (Typing, "071") => (RuleGroup::Preview, Ast, typing::derived_default_init::MissingDefaultPointerInitalisation),
-
+        
         (Obsolescent, "001") => (RuleGroup::Stable, Ast, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Stable, Ast, obsolescent::common_blocks::CommonBlock),
         (Obsolescent, "021") => (RuleGroup::Stable, Ast, obsolescent::entry_statement::EntryStatement),
@@ -117,8 +110,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Precision, "011") => (RuleGroup::Stable, Ast, precision::double_precision::DoublePrecision),
         (Precision, "021") => (RuleGroup::Stable, Ast, precision::implicit_kinds::ImplicitRealKind),
 
-        (Modules, "001") => (RuleGroup::Stable, Ast, modules::external_functions::ProcedureNotInModule),
-        (Modules, "011") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
         (Modules, "012") => (RuleGroup::Preview, Ast, modules::use_statements::MissingIntrinsic),
         (Modules, "021") => (RuleGroup::Preview, Ast, modules::accessibility_statements::MissingAccessibilityStatement),
         (Modules, "022") => (RuleGroup::Preview, Ast, modules::accessibility_statements::DefaultPublicAccessibility),
@@ -134,6 +125,15 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Bugprone, "001") => (RuleGroup::Preview, Ast, bugprone::select_default::MissingDefaultCase),
         (Bugprone, "011") => (RuleGroup::Preview, Ast, bugprone::trailing_backslash::TrailingBackslash),
+        (Bugprone, "021") => (RuleGroup::Stable, Ast, typing::implicit_typing::ImplicitTyping),
+        (Bugprone, "022") => (RuleGroup::Stable, Ast, typing::implicit_typing::InterfaceImplicitTyping),
+        (Bugprone, "031") => (RuleGroup::Stable, Ast, typing::init_decls::InitialisationInDeclaration),
+        (Bugprone, "041") => (RuleGroup::Stable, Ast, modules::external_functions::ProcedureNotInModule),
+        (Bugprone, "051") => (RuleGroup::Stable, Ast, modules::use_statements::UseAll),
+        (Bugprone, "061") => (RuleGroup::Stable, Ast, typing::assumed_size::AssumedSizeCharacterIntent),
+        (Bugprone, "062") => (RuleGroup::Stable, Ast, typing::assumed_size::DeprecatedAssumedSizeCharacter),
+        (Bugprone, "071") => (RuleGroup::Stable, Ast, typing::external::ExternalProcedure),
+        (Bugprone, "081") => (RuleGroup::Preview, Ast, typing::derived_default_init::MissingDefaultPointerInitalisation),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason

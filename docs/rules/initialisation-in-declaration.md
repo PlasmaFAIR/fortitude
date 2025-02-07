@@ -1,4 +1,4 @@
-# initialisation-in-declaration (T051)
+# initialisation-in-declaration (B031)
 ## What it does
 Checks for local variables with implicit `save`
 

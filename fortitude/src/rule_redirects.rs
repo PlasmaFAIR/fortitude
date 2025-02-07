@@ -1,5 +1,4 @@
 /// Mappings from old rule codes to new ones.
-/// Currently just future-proofing!
 // Adapted from ruff
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
@@ -18,5 +17,17 @@ pub(crate) fn get_redirect(code: &str) -> Option<(&'static str, &'static str)> {
     REDIRECTS.get_key_value(code).map(|(k, v)| (*k, *v))
 }
 
-static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> =
-    LazyLock::new(|| HashMap::from_iter([]));
+static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
+    HashMap::from_iter([
+        // Move all default rules into bugprone category
+        ("T001", "B021"),
+        ("T002", "B022"),
+        ("T051", "B031"),
+        ("T042", "B061"),
+        ("T043", "B062"),
+        ("T061", "B071"),
+        ("T071", "B081"),
+        ("M001", "B041"),
+        ("M011", "B051"),
+    ])
+});

@@ -1,4 +1,4 @@
-# external-procedure (T061)
+# external-procedure (B071)
 ## What does it do?
 Checks for procedures declared with just `external`
 

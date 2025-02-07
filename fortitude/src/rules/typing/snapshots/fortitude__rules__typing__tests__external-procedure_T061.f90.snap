@@ -3,12 +3,12 @@ source: fortitude/src/rules/typing/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/typing/T061.f90:12:3: T061 'g' declared as `external`
+./resources/test/fixtures/typing/T061.f90:12:3: B071 'g' declared as `external`
    |
 10 |   end interface
 11 |
 12 |   external :: g
-   |   ^^^^^^^^^^^^^ T061
+   |   ^^^^^^^^^^^^^ B071
 13 |
 14 | end program test
    |
