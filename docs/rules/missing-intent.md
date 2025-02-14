@@ -1,4 +1,6 @@
 # missing-intent (T031)
+This rule is turned on by default.
+
 ## What it does
 Checks for missing `intent` on dummy arguments
 

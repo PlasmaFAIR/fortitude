@@ -1,4 +1,6 @@
 # assumed-size-character-intent (T042)
+This rule is turned on by default.
+
 ## What does it do?
 Checks `character` dummy arguments have `intent(in)` only
 

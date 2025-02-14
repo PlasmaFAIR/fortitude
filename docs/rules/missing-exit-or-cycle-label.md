@@ -1,6 +1,8 @@
 # missing-exit-or-cycle-label (S021)
 Fix is sometimes available.
 
+This rule is turned on by default.
+
 ## What does it do?
 When using `exit` or `cycle` in a named `do` loop, the `exit`/`cycle` statement
 should use the loop name

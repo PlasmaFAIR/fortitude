@@ -1,4 +1,6 @@
 # invalid-rule-code-or-name (E011)
+This rule is turned on by default.
+
 ## What it does
 Checks for invalid rules in allow comments.
 

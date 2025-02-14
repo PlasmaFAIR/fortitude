@@ -1,4 +1,6 @@
 # pause-statement (OB051)
+This rule is turned on by default.
+
 ## What it does
 Checks for `pause` statements.
 

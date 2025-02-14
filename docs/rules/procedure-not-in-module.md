@@ -1,4 +1,6 @@
 # procedure-not-in-module (M001)
+This rule is turned on by default.
+
 ## What it does
 Checks for any functions and subroutines not defined within modules (or one
 of a few acceptable alternatives).

@@ -1,4 +1,6 @@
 # io-error (E000)
+This rule is turned on by default.
+
 ## What it does
 This is not a regular diagnostic; instead, it's raised when a file cannot be read
 from disk.

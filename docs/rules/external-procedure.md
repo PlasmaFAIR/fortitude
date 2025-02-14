@@ -1,4 +1,6 @@
 # external-procedure (T061)
+This rule is turned on by default.
+
 ## What does it do?
 Checks for procedures declared with just `external`
 

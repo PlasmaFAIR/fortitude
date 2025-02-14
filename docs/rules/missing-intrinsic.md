@@ -1,6 +1,8 @@
 # missing-intrinsic (M012)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
+This rule is turned on by default.
+
 ## What it does
 Checks whether `use` statements for intrinic modules specify `intrinsic` or
 `non_intrinsic`.
