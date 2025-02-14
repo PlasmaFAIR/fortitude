@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Fix, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -18,13 +18,13 @@ use tree_sitter::Node;
 /// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
 ///   Incorporating Fortran 2018, Oxford University Press, Appendix B
 ///   'Obsolescent and Deleted Features'
-#[violation]
-pub struct PauseStatement {}
+#[derive(ViolationMetadata)]
+pub(crate) struct PauseStatement {}
 
 impl Violation for PauseStatement {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("`pause` statements are a deleted feature")
+        "`pause` statements are a deleted feature".to_string()
     }
     fn fix_title(&self) -> Option<String> {
         Some("Use 'read(*, *)' instead".into())

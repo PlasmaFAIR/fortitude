@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -36,8 +36,8 @@ use tree_sitter::Node;
 /// ```
 ///
 /// Similar rules apply for many other Fortran statements
-#[violation]
-pub struct UnnamedEndStatement {
+#[derive(ViolationMetadata)]
+pub(crate) struct UnnamedEndStatement {
     statement: String,
     name: String,
 }
@@ -45,7 +45,7 @@ pub struct UnnamedEndStatement {
 impl AlwaysFixableViolation for UnnamedEndStatement {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("end statement should be named.")
+        "end statement should be named.".to_string()
     }
 
     fn fix_title(&self) -> String {

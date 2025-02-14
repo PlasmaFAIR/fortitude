@@ -3,7 +3,7 @@ use crate::settings::Settings;
 use crate::TextRule;
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};
@@ -26,8 +26,8 @@ use ruff_text_size::{TextLen, TextRange, TextSize};
 /// Note that the Fortran standard states a maximum line length of 132 characters,
 /// and while some modern compilers will support longer lines, for portability it
 /// is recommended to stay beneath this limit.
-#[violation]
-pub struct LineTooLong {
+#[derive(ViolationMetadata)]
+pub(crate) struct LineTooLong {
     max_length: usize,
     actual_length: usize,
 }

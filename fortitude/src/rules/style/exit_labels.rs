@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
@@ -21,8 +21,8 @@ use tree_sitter::Node;
 /// Using named loops is particularly useful for nested or complicated loops, as it
 /// helps the reader keep track of the flow of logic. It's also the only way to `exit`
 /// or `cycle` outer loops from within inner ones.
-#[violation]
-pub struct MissingExitOrCycleLabel {
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingExitOrCycleLabel {
     name: String,
     label: String,
 }

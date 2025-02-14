@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use ruff_diagnostics::Violation;
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 
 /// ## What it does
 /// This is not a regular diagnostic; instead, it's raised when a file cannot be read
@@ -27,8 +27,8 @@ use ruff_macros::{derive_message_formats, violation};
 /// ## References
 /// - [UNIX Permissions introduction](https://mason.gmu.edu/~montecin/UNIXpermiss.htm)
 /// - [Command Line Basics: Symbolic Links](https://www.digitalocean.com/community/tutorials/workflow-symbolic-links)
-#[violation]
-pub struct IoError {
+#[derive(ViolationMetadata)]
+pub(crate) struct IoError {
     pub message: String,
 }
 

@@ -4,7 +4,7 @@
 
 /// Fake rules for testing fortitude's behaviour
 use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_text_size::{TextRange, TextSize};
 
 use crate::rules::Rule;
@@ -43,15 +43,15 @@ pub(crate) trait TestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct StableTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct StableTestRule;
 
 impl Violation for StableTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a stable test rule.")
+        "Hey this is a stable test rule.".to_string()
     }
 }
 
@@ -76,15 +76,15 @@ impl TestRule for StableTestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct StableTestRuleSafeFix;
+#[derive(ViolationMetadata)]
+pub(crate) struct StableTestRuleSafeFix;
 
 impl Violation for StableTestRuleSafeFix {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::Always;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a stable test rule with a safe fix.")
+        "Hey this is a stable test rule with a safe fix.".to_string()
     }
 }
 
@@ -114,15 +114,15 @@ impl TestRule for StableTestRuleSafeFix {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct StableTestRuleUnsafeFix;
+#[derive(ViolationMetadata)]
+pub(crate) struct StableTestRuleUnsafeFix;
 
 impl Violation for StableTestRuleUnsafeFix {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::Always;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a stable test rule with an unsafe fix.")
+        "Hey this is a stable test rule with an unsafe fix.".to_string()
     }
 }
 
@@ -151,15 +151,15 @@ impl TestRule for StableTestRuleUnsafeFix {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct StableTestRuleDisplayOnlyFix;
+#[derive(ViolationMetadata)]
+pub(crate) struct StableTestRuleDisplayOnlyFix;
 
 impl Violation for StableTestRuleDisplayOnlyFix {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::Always;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a stable test rule with a display only fix.")
+        "Hey this is a stable test rule with a display only fix.".to_string()
     }
 }
 
@@ -189,15 +189,15 @@ impl TestRule for StableTestRuleDisplayOnlyFix {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct PreviewTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct PreviewTestRule;
 
 impl Violation for PreviewTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a preview test rule.")
+        "Hey this is a preview test rule.".to_string()
     }
 }
 
@@ -222,15 +222,15 @@ impl TestRule for PreviewTestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct DeprecatedTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct DeprecatedTestRule;
 
 impl Violation for DeprecatedTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a deprecated test rule.")
+        "Hey this is a deprecated test rule.".to_string()
     }
 }
 
@@ -255,15 +255,15 @@ impl TestRule for DeprecatedTestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct AnotherDeprecatedTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct AnotherDeprecatedTestRule;
 
 impl Violation for AnotherDeprecatedTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is another deprecated test rule.")
+        "Hey this is another deprecated test rule.".to_string()
     }
 }
 
@@ -288,15 +288,15 @@ impl TestRule for AnotherDeprecatedTestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct RemovedTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct RemovedTestRule;
 
 impl Violation for RemovedTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a removed test rule.")
+        "Hey this is a removed test rule.".to_string()
     }
 }
 
@@ -321,15 +321,15 @@ impl TestRule for RemovedTestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct AnotherRemovedTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct AnotherRemovedTestRule;
 
 impl Violation for AnotherRemovedTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a another removed test rule.")
+        "Hey this is a another removed test rule.".to_string()
     }
 }
 
@@ -354,15 +354,15 @@ impl TestRule for AnotherRemovedTestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct RedirectedFromTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct RedirectedFromTestRule;
 
 impl Violation for RedirectedFromTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a test rule that was redirected to another.")
+        "Hey this is a test rule that was redirected to another.".to_string()
     }
 }
 
@@ -387,15 +387,15 @@ impl TestRule for RedirectedFromTestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct RedirectedToTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct RedirectedToTestRule;
 
 impl Violation for RedirectedToTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a test rule that was redirected from another.")
+        "Hey this is a test rule that was redirected from another.".to_string()
     }
 }
 
@@ -420,15 +420,15 @@ impl TestRule for RedirectedToTestRule {
 /// ```f90
 /// bar
 /// ```
-#[violation]
-pub struct RedirectedFromPrefixTestRule;
+#[derive(ViolationMetadata)]
+pub(crate) struct RedirectedFromPrefixTestRule;
 
 impl Violation for RedirectedFromPrefixTestRule {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Hey this is a test rule that was redirected to another by prefix.")
+        "Hey this is a test rule that was redirected to another by prefix.".to_string()
     }
 }
 

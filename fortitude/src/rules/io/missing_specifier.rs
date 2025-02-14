@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -14,13 +14,13 @@ use tree_sitter::Node;
 /// programmer's intent. Explicitly specifying `read`, `write` or `readwrite`
 /// makes it clear how the file is intended to be used, and prevents the
 /// accidental overwriting of input data.
-#[violation]
-pub struct MissingActionSpecifier {}
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingActionSpecifier {}
 
 impl Violation for MissingActionSpecifier {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("file opened without action specifier")
+        "file opened without action specifier".to_string()
     }
 
     fn fix_title(&self) -> Option<String> {

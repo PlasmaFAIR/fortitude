@@ -1,5 +1,5 @@
 use ruff_diagnostics::Violation;
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 
 /// ## What it does
 /// Checks for invalid rules in allow comments.
@@ -14,8 +14,8 @@ use ruff_macros::{derive_message_formats, violation};
 /// program test
 /// end program test
 /// ```
-#[violation]
-pub struct InvalidRuleCodeOrName {
+#[derive(ViolationMetadata)]
+pub(crate) struct InvalidRuleCodeOrName {
     pub message: String,
 }
 

@@ -1,5 +1,5 @@
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
@@ -59,17 +59,17 @@ fn semicolon_is_superfluous(node: &Node) -> bool {
 ///
 /// A semicolon at the beginning of a statement similarly has no effect, nor do
 /// multiple semicolons in sequence.
-#[violation]
-pub struct SuperfluousSemicolon {}
+#[derive(ViolationMetadata)]
+pub(crate) struct SuperfluousSemicolon {}
 
 impl AlwaysFixableViolation for SuperfluousSemicolon {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("unnecessary semicolon")
+        "unnecessary semicolon".to_string()
     }
 
     fn fix_title(&self) -> String {
-        format!("Remove this character")
+        "Remove this character".to_string()
     }
 }
 
@@ -92,17 +92,17 @@ impl AstRule for SuperfluousSemicolon {
 ///
 /// ## Why is this bad?
 /// This can have a detrimental effect on code readability.
-#[violation]
-pub struct MultipleStatementsPerLine {}
+#[derive(ViolationMetadata)]
+pub(crate) struct MultipleStatementsPerLine {}
 
 impl AlwaysFixableViolation for MultipleStatementsPerLine {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("multiple statements per line")
+        "multiple statements per line".to_string()
     }
 
     fn fix_title(&self) -> String {
-        format!("Separate over two lines")
+        "Separate over two lines".to_string()
     }
 }
 

@@ -4,7 +4,7 @@ use crate::settings::Settings;
 use crate::AstRule;
 use lazy_regex::regex;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use tree_sitter::Node;
@@ -42,13 +42,13 @@ use tree_sitter::Node;
 /// ```
 /// which causes the assignment to not be compiled.
 ///
-#[violation]
-pub struct TrailingBackslash {}
+#[derive(ViolationMetadata)]
+pub(crate) struct TrailingBackslash {}
 
 impl Violation for TrailingBackslash {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Trailing backslash")
+        "Trailing backslash".to_string()
     }
 }
 

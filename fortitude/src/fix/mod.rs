@@ -8,9 +8,10 @@ use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use ruff_diagnostics::{Diagnostic, Edit, Fix, IsolationLevel, SourceMap};
-use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
+use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::{Ranged, TextLen, TextRange, TextSize};
 
+use crate::locator::Locator;
 use crate::registry::{AsRule, Rule};
 use crate::settings::UnsafeFixes;
 
@@ -146,10 +147,10 @@ fn cmp_fix(_rule1: Rule, _rule2: Rule, fix1: &Fix, fix2: &Fix) -> std::cmp::Orde
 #[cfg(test)]
 mod tests {
     use ruff_diagnostics::{Diagnostic, Edit, Fix, SourceMarker};
-    use ruff_source_file::Locator;
     use ruff_text_size::{Ranged, TextSize};
 
     use crate::fix::{apply_fixes, FixResult};
+    use crate::locator::Locator;
     use crate::rules::modules::use_statements::UseAll;
 
     #[allow(deprecated)]

@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -24,8 +24,8 @@ use tree_sitter::Node;
 /// Finally, `intent(inout)` arguments can be both read and modified by the
 /// routine. If an `intent` is not specified, it will default to
 /// `intent(inout)`.
-#[violation]
-pub struct MissingIntent {
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingIntent {
     entity: String,
     name: String,
 }

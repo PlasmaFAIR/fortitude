@@ -3,7 +3,7 @@ use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -41,8 +41,8 @@ use tree_sitter::Node;
 /// Note that this doesn't apply to `character` types, where `character(len=*)` is
 /// actually the most appropriate specification for `intent(in)` arguments! This is
 /// because `character(len=:)` must be either a `pointer` or `allocatable`.
-#[violation]
-pub struct AssumedSize {
+#[derive(ViolationMetadata)]
+pub(crate) struct AssumedSize {
     name: String,
 }
 
@@ -148,8 +148,8 @@ impl AstRule for AssumedSize {
 ///   end subroutine set_text
 /// end program
 /// ```
-#[violation]
-pub struct AssumedSizeCharacterIntent {
+#[derive(ViolationMetadata)]
+pub(crate) struct AssumedSizeCharacterIntent {
     name: String,
 }
 
@@ -231,8 +231,8 @@ impl AstRule for AssumedSizeCharacterIntent {
 /// ## Why is this bad?
 /// The syntax `character*(*)` is a deprecated form of `character(len=*)`. Prefer the
 /// second form.
-#[violation]
-pub struct DeprecatedAssumedSizeCharacter {
+#[derive(ViolationMetadata)]
+pub(crate) struct DeprecatedAssumedSizeCharacter {
     name: String,
 }
 

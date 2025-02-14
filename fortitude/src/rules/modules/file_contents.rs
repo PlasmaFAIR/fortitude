@@ -1,7 +1,7 @@
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -12,13 +12,13 @@ use tree_sitter::Node;
 /// Placing each module into its own file improves maintainability
 /// by making each module easier to locate for developers, and also
 /// making dependency generation in build systems easier.
-#[violation]
-pub struct MultipleModules {}
+#[derive(ViolationMetadata)]
+pub(crate) struct MultipleModules {}
 
 impl Violation for MultipleModules {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Multiple modules in one file, split into one module per file")
+        "Multiple modules in one file, split into one module per file".to_string()
     }
 }
 
@@ -49,13 +49,13 @@ impl AstRule for MultipleModules {
 /// Separating top-level constructs into their own files improves
 /// maintainability by making each easier to locate for developers,
 /// and also making dependency generation in build systems easier.
-#[violation]
-pub struct ProgramWithModule {}
+#[derive(ViolationMetadata)]
+pub(crate) struct ProgramWithModule {}
 
 impl Violation for ProgramWithModule {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Program and module in one file, split into their own files")
+        "Program and module in one file, split into their own files".to_string()
     }
 }
 

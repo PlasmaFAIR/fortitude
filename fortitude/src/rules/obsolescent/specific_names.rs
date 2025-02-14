@@ -3,7 +3,7 @@ use crate::rules::utilities;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Fix, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -68,8 +68,8 @@ fn map_specific_intrinsic_functions(name: &str) -> Option<&'static str> {
 /// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
 ///   Incorporating Fortran 2018_, Oxford University Press, Appendix B
 ///   'Obsolescent and Deleted Features'
-#[violation]
-pub struct SpecificName {
+#[derive(ViolationMetadata)]
+pub(crate) struct SpecificName {
     func: String,
     new_func: String,
 }

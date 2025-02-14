@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -25,8 +25,8 @@ fn map_relational_symbols(name: &str) -> Option<&'static str> {
 /// Fortran 90 introduced the traditional symbols for relational operators: `>`,
 /// `>=`, `<`, and so on. Prefer these over the deprecated forms `.gt.`, `.le.`, and
 /// so on.
-#[violation]
-pub struct DeprecatedRelationalOperator {
+#[derive(ViolationMetadata)]
+pub(crate) struct DeprecatedRelationalOperator {
     symbol: String,
     new_symbol: String,
 }

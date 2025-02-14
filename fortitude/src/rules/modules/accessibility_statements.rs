@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -21,8 +21,8 @@ use tree_sitter::Node;
 /// all of the same downsides as the default behaviour, but an explicit
 /// `public` statement makes it clear that the programmer is choosing
 /// this behaviour intentionally.  
-#[violation]
-pub struct MissingAccessibilityStatement {
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingAccessibilityStatement {
     name: String,
 }
 
@@ -76,8 +76,8 @@ impl AstRule for MissingAccessibilityStatement {
 /// accidentally expose more than necessary. Public accessibility also makes
 /// it harder to detect unused entities, which can often be indicative of
 /// errors within the code.
-#[violation]
-pub struct DefaultPublicAccessibility {
+#[derive(ViolationMetadata)]
+pub(crate) struct DefaultPublicAccessibility {
     name: String,
 }
 

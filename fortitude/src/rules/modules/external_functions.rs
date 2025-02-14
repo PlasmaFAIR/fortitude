@@ -1,7 +1,7 @@
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -13,8 +13,8 @@ use tree_sitter::Node;
 /// Functions and subroutines should be contained within (sub)modules or programs.
 /// Fortran compilers are unable to perform type checks and conversions on functions
 /// defined outside of these scopes, and this is a common source of bugs.
-#[violation]
-pub struct ProcedureNotInModule {
+#[derive(ViolationMetadata)]
+pub(crate) struct ProcedureNotInModule {
     procedure: String,
 }
 

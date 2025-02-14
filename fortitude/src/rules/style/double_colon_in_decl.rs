@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
@@ -13,13 +13,13 @@ use tree_sitter::Node;
 /// ## Why is this bad?
 /// The double-colon separator is required when declaring variables with
 /// attributes, so for consistency, all variable declarations should use it.
-#[violation]
-pub struct MissingDoubleColon {}
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingDoubleColon {}
 
 impl AlwaysFixableViolation for MissingDoubleColon {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("variable declaration missing '::'")
+        "variable declaration missing '::'".to_string()
     }
 
     fn fix_title(&self) -> String {

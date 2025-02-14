@@ -2,7 +2,7 @@ use crate::settings::Settings;
 use crate::{some_vec, AstRule, FromAstNode};
 
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -16,13 +16,13 @@ use tree_sitter::Node;
 ///
 /// If this rule is reporting valid Fortran, please let us know, as it's likely a
 /// bug in our code or in our parser!
-#[violation]
-pub struct SyntaxError {}
+#[derive(ViolationMetadata)]
+pub(crate) struct SyntaxError {}
 
 impl Violation for SyntaxError {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Syntax error")
+        "Syntax error".to_string()
     }
 }
 
