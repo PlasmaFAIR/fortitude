@@ -12,10 +12,12 @@ use ruff_diagnostics::Applicability;
 use ruff_macros::CacheKey;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
-use crate::display_settings;
 use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
+use crate::registry::Category;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
+use crate::rules::RuleCodePrefix;
+use crate::{display_settings, rules};
 
 #[derive(Debug)]
 pub struct Settings {
@@ -178,7 +180,93 @@ impl fmt::Display for PreviewMode {
 }
 
 /// Default rule selection
-pub const DEFAULT_SELECTORS: &[RuleSelector] = &[RuleSelector::All];
+pub const DEFAULT_SELECTORS: &[RuleSelector] = &[
+    RuleSelector::Category(Category::Error),
+    RuleSelector::Category(Category::Bugprone),
+    RuleSelector::Category(Category::Obsolescent),
+    RuleSelector::Category(Category::Filesystem),
+    // LineTooLong
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_001),
+        redirected_from: None,
+    },
+    // MissingExitOrCycleLabel
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_021),
+        redirected_from: None,
+    },
+    // OldStyleArrayLiteral
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_041),
+        redirected_from: None,
+    },
+    // DeprecatedRelationalOperator
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_051),
+        redirected_from: None,
+    },
+    // UnnamedEndStatement
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_061),
+        redirected_from: None,
+    },
+    // MissingDoubleColon
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_071),
+        redirected_from: None,
+    },
+    // SuperfluousSemicolon
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_081),
+        redirected_from: None,
+    },
+    // MultipleStatementsPerLine
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_082),
+        redirected_from: None,
+    },
+    // TrailingWhitespace
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Style(rules::Style::_101),
+        redirected_from: None,
+    },
+    // ImplicitTyping, InterfaceImplicitTyping,
+    // SuperfluousImplicitNone, ImplicitExternalProcedure
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Typing(rules::Typing::_00),
+        redirected_from: None,
+    },
+    // InitialisationInDeclaration
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Typing(rules::Typing::_05),
+        redirected_from: None,
+    },
+    // AssumedSize, AssumedSizeCharacterIntent, DeprecatedAssumedSizeCharacter
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Typing(rules::Typing::_04),
+        redirected_from: None,
+    },
+    // ExternalProcedure
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Typing(rules::Typing::_061),
+        redirected_from: None,
+    },
+    // MissingDefaultPointerInitalisation
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Typing(rules::Typing::_071),
+        redirected_from: None,
+    },
+    // ProcedureNotInModule
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Modules(rules::Modules::_001),
+        redirected_from: None,
+    },
+    // UseAll
+    RuleSelector::Prefix {
+        prefix: RuleCodePrefix::Modules(rules::Modules::_011),
+        redirected_from: None,
+    },
+];
 
 /// Toggle for unsafe fixes.
 /// `Hint` will not apply unsafe fixes but a message will be shown when they are available.
