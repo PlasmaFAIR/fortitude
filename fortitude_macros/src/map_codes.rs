@@ -33,7 +33,7 @@ struct RuleMeta {
     path: Path,
     /// The rule attributes, e.g. for feature gates
     attrs: Vec<Attribute>,
-    /// Whether this is a `Default` rule, or `Pedantic`
+    /// Whether this is a `Default` rule, or `Optional`
     defaultness: Path,
 }
 
@@ -733,13 +733,13 @@ impl Parse for RuleMeta {
         let _: Token!(,) = pat_tuple.parse()?;
         let defaultness: Path = pat_tuple.parse()?;
         let defaultness_is_valid =
-            defaultness.is_ident("Default") || defaultness.is_ident("Pedantic");
+            defaultness.is_ident("Default") || defaultness.is_ident("Optional");
         if !defaultness_is_valid {
             let defaultness = defaultness.get_ident().unwrap();
             return Err(syn::Error::new(
                 pat_tuple.span(),
                 format!(
-                    "Invalid defaultness '{defaultness}', expected one of 'Default' or 'Pedantic'"
+                    "Invalid defaultness '{defaultness}', expected one of 'Default' or 'Optional'"
                 ),
             ));
         }
