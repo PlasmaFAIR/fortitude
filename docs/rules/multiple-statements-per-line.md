@@ -3,8 +3,6 @@ Fix is always available.
 
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
-This rule is turned on by default.
-
 ## What does it do?
 Catches multiple statements on the same line separated by a semicolon.
 
