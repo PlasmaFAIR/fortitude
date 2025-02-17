@@ -3,7 +3,7 @@ use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -56,8 +56,8 @@ use tree_sitter::Node;
 ///
 /// ## References
 /// - [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/en/learn/best_practices/floating_point/)
-#[violation]
-pub struct NoRealSuffix {
+#[derive(ViolationMetadata)]
+pub(crate) struct NoRealSuffix {
     literal: String,
 }
 

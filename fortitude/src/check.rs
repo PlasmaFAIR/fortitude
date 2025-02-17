@@ -18,7 +18,7 @@ use crate::settings::{CheckSettings, FixMode, PreviewMode, ProgressBar, Settings
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
-use crate::{fs, warn_user_once};
+use crate::{fs, locator::Locator, warn_user_once};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
@@ -28,7 +28,7 @@ use lazy_regex::{regex, regex_captures};
 use log::{debug, warn};
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
-use ruff_source_file::{Locator, SourceFile, SourceFileBuilder};
+use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 use std::borrow::Cow;

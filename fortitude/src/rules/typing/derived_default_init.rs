@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
@@ -52,8 +52,8 @@ use tree_sitter::Node;
 ///   Incorporating Fortran 2018_, Oxford University Press, Section 8.5.3/8.5.4.
 /// - Clerman, N. Spector, W., 2012, _Modern Fortran: Style and Usage_, Cambridge
 ///   University Press, Rule 136, p. 189.
-#[violation]
-pub struct MissingDefaultPointerInitalisation {
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingDefaultPointerInitalisation {
     var: String,
 }
 

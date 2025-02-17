@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
@@ -28,13 +28,13 @@ use tree_sitter::Node;
 /// This makes it easier for programmers to understand where the symbols in your
 /// code have come from, and avoids introducing many unneeded components to your
 /// local scope.
-#[violation]
-pub struct UseAll {}
+#[derive(ViolationMetadata)]
+pub(crate) struct UseAll {}
 
 impl Violation for UseAll {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("'use' statement missing 'only' clause")
+        "'use' statement missing 'only' clause".to_string()
     }
 }
 
@@ -71,8 +71,8 @@ impl AstRule for UseAll {
 ///
 /// This ensures the compiler will use the built-in module instead of a different
 /// module with the same name.
-#[violation]
-pub struct MissingIntrinsic {}
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingIntrinsic {}
 
 const INTRINSIC_MODULES: &[&str] = &[
     "iso_fortran_env",
@@ -85,7 +85,7 @@ const INTRINSIC_MODULES: &[&str] = &[
 impl Violation for MissingIntrinsic {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("'use' for intrinsic module missing 'intrinsic' modifier")
+        "'use' for intrinsic module missing 'intrinsic' modifier".to_string()
     }
 
     fn fix_title(&self) -> Option<String> {

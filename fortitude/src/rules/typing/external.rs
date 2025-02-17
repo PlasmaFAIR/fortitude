@@ -1,5 +1,5 @@
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -14,8 +14,8 @@ use crate::{ast::FortitudeNode, settings::Settings, AstRule, FromAstNode};
 ///
 /// If the procedure is in your project, put it in a module (see
 /// `external-function`), or write an explicit interface.
-#[violation]
-pub struct ExternalProcedure {
+#[derive(ViolationMetadata)]
+pub(crate) struct ExternalProcedure {
     name: String,
 }
 

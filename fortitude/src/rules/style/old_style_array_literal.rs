@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -13,13 +13,13 @@ use tree_sitter::Node;
 /// Fortran 2003 introduced a shorter syntax for array literals: `[...]`. While the
 /// older style, `(/.../)`, is still valid, the F2003 style is shorter and easier to
 /// match.
-#[violation]
-pub struct OldStyleArrayLiteral {}
+#[derive(ViolationMetadata)]
+pub(crate) struct OldStyleArrayLiteral {}
 
 impl AlwaysFixableViolation for OldStyleArrayLiteral {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Array literal uses old-style syntax: prefer `[...]`")
+        "Array literal uses old-style syntax: prefer `[...]`".to_string()
     }
 
     fn fix_title(&self) -> String {

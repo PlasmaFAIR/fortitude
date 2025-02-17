@@ -3,7 +3,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
@@ -28,8 +28,8 @@ fn child_is_implicit_none(node: &Node) -> bool {
 /// ## Why is this bad?
 /// 'implicit none' should be used in all modules and programs, as implicit typing
 /// reduces the readability of code and increases the chances of typing errors.
-#[violation]
-pub struct ImplicitTyping {
+#[derive(ViolationMetadata)]
+pub(crate) struct ImplicitTyping {
     entity: String,
 }
 
@@ -61,8 +61,8 @@ impl AstRule for ImplicitTyping {
 /// ## Why is this bad?
 /// Interface functions and subroutines require 'implicit none', even if they are
 /// inside a module that uses 'implicit none'.
-#[violation]
-pub struct InterfaceImplicitTyping {
+#[derive(ViolationMetadata)]
+pub(crate) struct InterfaceImplicitTyping {
     name: String,
 }
 
@@ -96,8 +96,8 @@ impl AstRule for InterfaceImplicitTyping {
 /// ## Why is this bad?
 /// If a module has 'implicit none' set, it is not necessary to set it in contained
 /// functions and subroutines (except when using interfaces).
-#[violation]
-pub struct SuperfluousImplicitNone {
+#[derive(ViolationMetadata)]
+pub(crate) struct SuperfluousImplicitNone {
     entity: String,
 }
 
@@ -161,13 +161,13 @@ impl AstRule for SuperfluousImplicitNone {
 ///
 /// `implicit none` is equivalent to `implicit none (type)`, so the full
 /// statement should be `implicit none (type, external)`.
-#[violation]
-pub struct ImplicitExternalProcedures {}
+#[derive(ViolationMetadata)]
+pub(crate) struct ImplicitExternalProcedures {}
 
 impl Violation for ImplicitExternalProcedures {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("'implicit none' missing 'external'")
+        "'implicit none' missing 'external'".to_string()
     }
 
     fn fix_title(&self) -> Option<String> {

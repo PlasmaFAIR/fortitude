@@ -1,6 +1,6 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::{SourceFile, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
@@ -15,17 +15,17 @@ use crate::{AstRule, FromAstNode, TextRule};
 /// Trailing whitespace is difficult to spot, and as some editors will remove it
 /// automatically while others leave it, it can cause unwanted 'diff noise' in
 /// shared projects.
-#[violation]
-pub struct TrailingWhitespace {}
+#[derive(ViolationMetadata)]
+pub(crate) struct TrailingWhitespace {}
 
 impl AlwaysFixableViolation for TrailingWhitespace {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("trailing whitespace")
+        "trailing whitespace".to_string()
     }
 
     fn fix_title(&self) -> String {
-        format!("Remove trailing whitespace")
+        "Remove trailing whitespace".to_string()
     }
 }
 
@@ -61,17 +61,17 @@ impl TextRule for TrailingWhitespace {
 /// ## References
 /// - [PEP8 Python Style Guide](https://peps.python.org/pep-0008/)
 /// - [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html#Horizontal_Whitespace)
-#[violation]
-pub struct IncorrectSpaceBeforeComment {}
+#[derive(ViolationMetadata)]
+pub(crate) struct IncorrectSpaceBeforeComment {}
 
 impl AlwaysFixableViolation for IncorrectSpaceBeforeComment {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("need at least 2 spaces before inline comment")
+        "need at least 2 spaces before inline comment".to_string()
     }
 
     fn fix_title(&self) -> String {
-        format!("add extra whitespace")
+        "add extra whitespace".to_string()
     }
 }
 impl AstRule for IncorrectSpaceBeforeComment {

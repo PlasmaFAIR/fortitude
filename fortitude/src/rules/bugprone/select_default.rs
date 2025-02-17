@@ -1,7 +1,7 @@
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -15,13 +15,13 @@ use tree_sitter::Node;
 /// Unfortunately, because Fortran doesn't have proper enums, it's not possible
 /// for the compiler to issue warnings for non-exhaustive cases. Having a default
 /// case allows for the program to gracefully handle errors.
-#[violation]
-pub struct MissingDefaultCase {}
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingDefaultCase {}
 
 impl Violation for MissingDefaultCase {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Missing default case may not handle all values")
+        "Missing default case may not handle all values".to_string()
     }
 
     fn fix_title(&self) -> Option<String> {

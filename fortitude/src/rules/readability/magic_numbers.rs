@@ -3,7 +3,7 @@ use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -30,8 +30,8 @@ use tree_sitter::Node;
 /// integer, parameter :: NUM_SPLINE_POINTS = 10
 /// integer, dimension(NUM_SPLINE_POINTS) :: x, y
 /// ```
-#[violation]
-pub struct MagicNumberInArraySize {
+#[derive(ViolationMetadata)]
+pub(crate) struct MagicNumberInArraySize {
     value: i32,
 }
 

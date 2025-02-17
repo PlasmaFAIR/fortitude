@@ -824,9 +824,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
@@ -1203,12 +1203,12 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 [[package]]
 name = "ruff_cache"
 version = "0.0.0"
-source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.9.6#524cf6e5155066132da772b9f84e2e6695f241b8"
 dependencies = [
  "filetime",
  "glob",
  "globset",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "regex",
  "seahash",
 ]
@@ -1216,7 +1216,7 @@ dependencies = [
 [[package]]
 name = "ruff_diagnostics"
 version = "0.0.0"
-source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.9.6#524cf6e5155066132da772b9f84e2e6695f241b8"
 dependencies = [
  "anyhow",
  "is-macro",
@@ -1228,9 +1228,9 @@ dependencies = [
 [[package]]
 name = "ruff_macros"
 version = "0.0.0"
-source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.9.6#524cf6e5155066132da772b9f84e2e6695f241b8"
 dependencies = [
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "ruff_python_trivia",
@@ -1240,9 +1240,9 @@ dependencies = [
 [[package]]
 name = "ruff_python_trivia"
 version = "0.0.0"
-source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.9.6#524cf6e5155066132da772b9f84e2e6695f241b8"
 dependencies = [
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ruff_source_file",
  "ruff_text_size",
  "unicode-ident",
@@ -1251,7 +1251,7 @@ dependencies = [
 [[package]]
 name = "ruff_source_file"
 version = "0.0.0"
-source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.9.6#524cf6e5155066132da772b9f84e2e6695f241b8"
 dependencies = [
  "memchr",
  "ruff_text_size",
@@ -1261,7 +1261,7 @@ dependencies = [
 [[package]]
 name = "ruff_text_size"
 version = "0.0.0"
-source = "git+https://github.com/astral-sh/ruff.git?tag=0.7.1#337af836d3b2d88413c1391495a94755af46f574"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.9.6#524cf6e5155066132da772b9f84e2e6695f241b8"
 dependencies = [
  "serde",
 ]

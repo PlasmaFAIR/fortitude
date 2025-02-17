@@ -2,7 +2,7 @@ use crate::ast::{is_keyword_argument, FortitudeNode};
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -30,8 +30,8 @@ use tree_sitter::Node;
 /// read(example_unit, fmt=*) int
 /// close(example_unit)
 /// ```
-#[violation]
-pub struct MagicIoUnit {
+#[derive(ViolationMetadata)]
+pub(crate) struct MagicIoUnit {
     value: i32,
 }
 
@@ -76,8 +76,8 @@ impl AstRule for MagicIoUnit {
 /// The Fortran standard does not specify numeric values for `stdin` or
 /// `stdout`. Instead, use the named constants `input_unit` and `output_unit`
 /// from the `iso_fortran_env` module.
-#[violation]
-pub struct NonPortableIoUnit {
+#[derive(ViolationMetadata)]
+pub(crate) struct NonPortableIoUnit {
     value: i32,
     kind: String,
     replacement: Option<String>,

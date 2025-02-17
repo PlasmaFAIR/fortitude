@@ -3,7 +3,7 @@ use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -83,8 +83,8 @@ fn iso_fortran_env_param<S: AsRef<str>>(dtype: S, literal: u8) -> Option<String>
 ///                                          i4 => int32, &
 ///                                          i8 => int64
 /// ```
-#[violation]
-pub struct LiteralKind {
+#[derive(ViolationMetadata)]
+pub(crate) struct LiteralKind {
     dtype: String,
     literal: u8,
 }
@@ -179,8 +179,8 @@ fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
 /// real(sp), parameter :: sqrt2 = 1.41421_sp
 /// real(dp), parameter :: pi = 3.14159265358979_dp
 /// ```
-#[violation]
-pub struct LiteralKindSuffix {
+#[derive(ViolationMetadata)]
+pub(crate) struct LiteralKindSuffix {
     literal: String,
     suffix: u8,
 }

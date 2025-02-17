@@ -1,5 +1,5 @@
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_text_size::TextRange;
 
 use crate::settings::Settings;
@@ -13,13 +13,13 @@ use std::path::Path;
 /// The standard file extensions for modern (free-form) Fortran are '.f90' or  '.F90'.
 /// Forms that reference later Fortran standards such as '.f08' or '.F95' may be rejected
 /// by some compilers and build tools.
-#[violation]
-pub struct NonStandardFileExtension {}
+#[derive(ViolationMetadata)]
+pub(crate) struct NonStandardFileExtension {}
 
 impl Violation for NonStandardFileExtension {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("file extension should be '.f90' or '.F90'")
+        "file extension should be '.f90' or '.F90'".to_string()
     }
 }
 

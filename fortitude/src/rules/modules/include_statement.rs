@@ -1,7 +1,7 @@
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, violation};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -21,13 +21,13 @@ use tree_sitter::Node;
 ///   'Deprecated Features'
 /// - _Difference between INCLUDE and modules in Fortran_, 2013,
 ///   https://stackoverflow.com/a/15668209
-#[violation]
-pub struct IncludeStatement {}
+#[derive(ViolationMetadata)]
+pub(crate) struct IncludeStatement {}
 
 impl Violation for IncludeStatement {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("Include statement is deprecated, use modules instead")
+        "Include statement is deprecated, use modules instead".to_string()
     }
 }
 

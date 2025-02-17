@@ -6,6 +6,7 @@ mod diagnostics;
 pub mod explain;
 mod fix;
 mod fs;
+mod locator;
 pub mod logging;
 pub mod message;
 pub mod options;
