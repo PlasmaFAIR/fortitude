@@ -2,7 +2,7 @@
 /// A collection of all rules, and utilities to select a subset at runtime.
 #[macro_use]
 mod macros;
-pub(crate) mod bugprone;
+pub(crate) mod correctness;
 pub(crate) mod error;
 pub(crate) mod filesystem;
 pub(crate) mod io;
@@ -78,6 +78,9 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Error, "001") => (RuleGroup::Stable, Ast, Default, error::syntax_error::SyntaxError),
         (Error, "011") => (RuleGroup::Stable, None, Default, error::allow_comments::InvalidRuleCodeOrName),
 
+        (Correctness, "001") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultCase),
+        (Correctness, "011") => (RuleGroup::Preview, Ast, Default, correctness::trailing_backslash::TrailingBackslash),
+
         (Filesystem, "001") => (RuleGroup::Stable, Path, Default,filesystem::extensions::NonStandardFileExtension),
 
         (Style, "001") => (RuleGroup::Stable, Text, Default, style::line_length::LineTooLong),
@@ -131,9 +134,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Io, "012") => (RuleGroup::Preview, Ast, Optional, io::magic_io_unit::NonPortableIoUnit),
 
         (Readability, "001") => (RuleGroup::Preview, Ast, Optional, readability::magic_numbers::MagicNumberInArraySize),
-
-        (Bugprone, "001") => (RuleGroup::Preview, Ast, Default, bugprone::select_default::MissingDefaultCase),
-        (Bugprone, "011") => (RuleGroup::Preview, Ast, Default, bugprone::trailing_backslash::TrailingBackslash),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason

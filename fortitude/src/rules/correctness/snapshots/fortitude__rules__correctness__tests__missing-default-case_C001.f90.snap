@@ -1,9 +1,9 @@
 ---
-source: fortitude/src/rules/bugprone/mod.rs
+source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/bugprone/B001.f90:4:3: B001 Missing default case may not handle all values
+./resources/test/fixtures/correctness/C001.f90:4:3: C001 Missing default case may not handle all values
    |
  2 |     implicit none (type, external)
  3 |     integer :: foo = 4
@@ -13,7 +13,7 @@ snapshot_kind: text
  7 | |   case(2)
  8 | |     print*, "two"
  9 | |   end select
-   | |____________^ B001
+   | |____________^ C001
 10 |     
 11 |     select case(foo)
    |

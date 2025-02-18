@@ -19,4 +19,4 @@ pub(crate) fn get_redirect(code: &str) -> Option<(&'static str, &'static str)> {
 }
 
 static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> =
-    LazyLock::new(|| HashMap::from_iter([]));
+    LazyLock::new(|| HashMap::from_iter([("B001", "C001"), ("B011", "C011")]));

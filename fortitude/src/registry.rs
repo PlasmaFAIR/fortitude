@@ -53,6 +53,9 @@ pub enum Category {
     /// Failure to parse a file.
     #[prefix = "E"]
     Error,
+    /// Detect code that is bug-prone or likely to be incorrect.
+    #[prefix = "C"]
+    Correctness,
     /// Violation of style conventions.
     #[prefix = "S"]
     Style,
@@ -77,9 +80,6 @@ pub enum Category {
     /// Readability.
     #[prefix = "R"]
     Readability,
-    /// Issues that are susceptible to bugs.
-    #[prefix = "B"]
-    Bugprone,
 }
 
 pub trait RuleNamespace: Sized {
