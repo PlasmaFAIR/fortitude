@@ -1,4 +1,6 @@
 # literal-kind (T011)
+This rule is turned on by default.
+
 ## What it does
 Checks for use of raw number literals as kinds
 

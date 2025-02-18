@@ -1,4 +1,6 @@
 # assumed-size (T041)
+This rule is turned on by default.
+
 ## What does it do?
 Checks for assumed size variables
 

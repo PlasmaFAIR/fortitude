@@ -1,4 +1,6 @@
 # initialisation-in-declaration (T051)
+This rule is turned on by default.
+
 ## What it does
 Checks for local variables with implicit `save`
 

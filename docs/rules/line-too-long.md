@@ -1,4 +1,6 @@
 # line-too-long (S001)
+This rule is turned on by default.
+
 ## What does it do?
 Checks line length isn't too long
 

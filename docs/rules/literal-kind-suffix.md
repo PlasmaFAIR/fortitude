@@ -1,4 +1,6 @@
 # literal-kind-suffix (T012)
+This rule is turned on by default.
+
 ## What it does
 Checks for using an integer literal as a kind suffix
 

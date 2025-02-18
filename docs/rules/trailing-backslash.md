@@ -1,6 +1,8 @@
 # trailing-backslash (B011)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
+This rule is turned on by default.
+
 ## What does it do?
 Checks if a backslash is the last character on a line
 

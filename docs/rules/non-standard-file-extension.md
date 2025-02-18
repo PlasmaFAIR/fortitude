@@ -1,4 +1,6 @@
 # non-standard-file-extension (F001)
+This rule is turned on by default.
+
 ## What it does
 Checks for use of standard file extensions.
 

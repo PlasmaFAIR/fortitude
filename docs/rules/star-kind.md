@@ -1,6 +1,8 @@
 # star-kind (T021)
 Fix is sometimes available.
 
+This rule is turned on by default.
+
 ## What it does
 Checks for non-standard kind specifiers such as `int*4` or `real*8`
 

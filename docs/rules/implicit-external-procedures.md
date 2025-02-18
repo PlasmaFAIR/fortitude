@@ -1,6 +1,8 @@
 # implicit-external-procedures (T004)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
+This rule is turned on by default.
+
 ## What it does
 Checks if `implicit none` is missing `external`
 

@@ -75,6 +75,12 @@ pub(crate) fn main(args: &Args) -> Result<()> {
                 output.push('\n');
             }
 
+            if rule.is_default() {
+                output.push_str("This rule is turned on by default.");
+                output.push('\n');
+                output.push('\n');
+            }
+
             process_documentation(
                 explanation.trim(),
                 &mut output,

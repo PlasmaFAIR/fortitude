@@ -1,4 +1,6 @@
 # statement-function (OB001)
+This rule is turned on by default.
+
 ## What it does
 Checks for statement functions.
 

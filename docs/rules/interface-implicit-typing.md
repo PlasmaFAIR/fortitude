@@ -1,4 +1,6 @@
 # interface-implicit-typing (T002)
+This rule is turned on by default.
+
 ## What it does
 Checks for missing `implicit none` in interfaces
 
