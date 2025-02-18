@@ -281,6 +281,17 @@ pub struct CheckArgs {
 
     // Miscellaneous
     /// The name of the file when passing it through stdin.
-    #[arg(long)]
+    #[arg(long, help_heading = "Miscellaneous")]
     pub stdin_filename: Option<PathBuf>,
+    /// Exit with status code "0", even upon detecting lint violations.
+    #[arg(
+        short,
+        long,
+        help_heading = "Miscellaneous",
+        conflicts_with = "exit_non_zero_on_fix"
+    )]
+    pub exit_zero: bool,
+    /// Exit with a non-zero status code if any files were modified via fix, even if no lint violations remain.
+    #[arg(long, help_heading = "Miscellaneous", conflicts_with = "exit_zero")]
+    pub exit_non_zero_on_fix: bool,
 }

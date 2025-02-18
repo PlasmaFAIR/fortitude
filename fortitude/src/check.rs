@@ -768,8 +768,6 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         )?
     };
 
-    let total_errors = results.diagnostics.messages.len();
-
     // Always try to print violations (though the printer itself may suppress output)
     // If we're writing fixes via stdin, the transformed source code goes to the writer
     // so send the summary to stderr instead
@@ -796,11 +794,28 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     )
     .write_once(&results, &mut summary_writer)?;
 
-    if total_errors == 0 {
-        Ok(ExitCode::SUCCESS)
-    } else {
-        Ok(ExitCode::FAILURE)
+    let diagnostics = results.diagnostics;
+    if !args.exit_zero {
+        if fix_only {
+            // If we're only fixing, we want to exit zero (since we've fixed all fixable
+            // violations), unless we're explicitly asked to exit non-zero on fix.
+            if args.exit_non_zero_on_fix && !diagnostics.fixed.is_empty() {
+                return Ok(ExitCode::FAILURE);
+            }
+        } else {
+            // If we're running the linter (not just fixing), we want to exit non-zero if
+            // there are any violations, unless we're explicitly asked to exit zero on
+            // fix.
+            if args.exit_non_zero_on_fix {
+                if !diagnostics.fixed.is_empty() || !diagnostics.messages.is_empty() {
+                    return Ok(ExitCode::FAILURE);
+                }
+            } else if !diagnostics.messages.is_empty() {
+                return Ok(ExitCode::FAILURE);
+            }
+        }
     }
+    Ok(ExitCode::SUCCESS)
 }
 
 #[allow(clippy::too_many_arguments)]

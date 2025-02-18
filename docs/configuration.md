@@ -89,8 +89,6 @@ Options:
           See the settings fortitude will use to check a given Fortran file
       --show-files
           See the files fortitude will be run against with the current settings
-      --stdin-filename <STDIN_FILENAME>
-          The name of the file when passing it through stdin
   -h, --help
           Print help
 
@@ -120,6 +118,14 @@ File selection:
 
 Per-Rule Options:
       --line-length <LINE_LENGTH>  Set the maximum allowable line length
+
+Miscellaneous:
+      --stdin-filename <STDIN_FILENAME>
+          The name of the file when passing it through stdin
+  -e, --exit-zero
+          Exit with status code "0", even upon detecting lint violations
+      --exit-non-zero-on-fix
+          Exit with a non-zero status code if any files were modified via fix, even if no lint violations remain
 
 Log levels:
   -v, --verbose  Enable verbose logging
