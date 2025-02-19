@@ -4,10 +4,10 @@
 mod macros;
 pub(crate) mod correctness;
 pub(crate) mod error;
-pub(crate) mod io;
 pub(crate) mod modernization;
 pub(crate) mod modules;
 pub(crate) mod obsolescent;
+pub(crate) mod portability;
 pub(crate) mod style;
 pub(crate) mod testing;
 pub(crate) mod typing;
@@ -85,6 +85,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "043") => (RuleGroup::Preview, Ast, Optional, correctness::missing_io_specifier::MissingActionSpecifier),
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
+        
+        (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::magic_io_unit::NonPortableIoUnit),
 
         (Style, "001") => (RuleGroup::Stable, Text, Default, style::line_length::LineTooLong),
         (Style, "021") => (RuleGroup::Stable, Ast, Default, style::exit_labels::MissingExitOrCycleLabel),
@@ -131,7 +133,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modules, "041") => (RuleGroup::Preview, Ast, Optional, modules::file_contents::MultipleModules),
         (Modules, "042") => (RuleGroup::Preview, Ast, Optional, modules::file_contents::ProgramWithModule),
 
-        (Io, "012") => (RuleGroup::Preview, Ast, Optional, io::magic_io_unit::NonPortableIoUnit),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason

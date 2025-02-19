@@ -1,34 +1,34 @@
 ---
-source: fortitude/src/rules/io/mod.rs
+source: fortitude/src/rules/portability/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/io/IO012.f90:5:10: IO012 Non-portable unit '6' in 'write' statement
+./resources/test/fixtures/portability/PORT001.f90:5:10: PORT001 Non-portable unit '6' in 'write' statement
   |
 3 |   integer :: i, named_unit
 4 |
 5 |   write (6,*) "enter an integer"
-  |          ^ IO012
+  |          ^ PORT001
 6 |   read (unit=5,fmt=*) i
 7 |   write(fmt=*, unit=6) "thanks"
   |
   = help: Use `output_unit` from `iso_fortran_env`
 
-./resources/test/fixtures/io/IO012.f90:6:14: IO012 Non-portable unit '5' in 'read' statement
+./resources/test/fixtures/portability/PORT001.f90:6:14: PORT001 Non-portable unit '5' in 'read' statement
   |
 5 |   write (6,*) "enter an integer"
 6 |   read (unit=5,fmt=*) i
-  |              ^ IO012
+  |              ^ PORT001
 7 |   write(fmt=*, unit=6) "thanks"
   |
   = help: Use `input_unit` from `iso_fortran_env`
 
-./resources/test/fixtures/io/IO012.f90:7:21: IO012 Non-portable unit '6' in 'write' statement
+./resources/test/fixtures/portability/PORT001.f90:7:21: PORT001 Non-portable unit '6' in 'write' statement
   |
 5 |   write (6,*) "enter an integer"
 6 |   read (unit=5,fmt=*) i
 7 |   write(fmt=*, unit=6) "thanks"
-  |                     ^ IO012
+  |                     ^ PORT001
 8 |
 9 |   open(newunit=named_unit, file="test.txt", action="write")
   |

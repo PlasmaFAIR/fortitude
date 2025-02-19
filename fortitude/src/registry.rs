@@ -72,9 +72,9 @@ pub enum Category {
     /// Failure to use modules or use them appropriately.
     #[prefix = "M"]
     Modules,
-    /// Best practices when reading and writing to file or other IO streams.
-    #[prefix = "IO"]
-    Io,
+    /// Avoid platform/compiler-specific features.
+    #[prefix = "PORT"]
+    Portability,
 }
 
 pub trait RuleNamespace: Sized {

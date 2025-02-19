@@ -14,11 +14,11 @@ mod tests {
     use crate::settings::Settings;
     use crate::test::test_path;
 
-    #[test_case(Rule::NonPortableIoUnit, Path::new("IO012.f90"))]
+    #[test_case(Rule::NonPortableIoUnit, Path::new("PORT001.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
-            Path::new("io").join(path).as_path(),
+            Path::new("portability").join(path).as_path(),
             &[rule_code],
             &Settings::default(),
         )?;
