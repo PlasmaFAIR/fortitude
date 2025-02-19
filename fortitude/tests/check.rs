@@ -48,6 +48,72 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
 }
 
 #[test]
+fn deprecated_category() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+    implicit none
+    integer :: i
+    i = 1  ! Comment ending with backslash\
+    select case (i)  ! Select without default
+        case(1)
+            print *, "one"
+    end select
+end program test
+        "#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=bugprone")
+                         .arg("--preview")
+                         .arg(&test_file),
+                         @r#"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C011 Trailing backslash
+      |
+    3 |     implicit none
+    4 |     integer :: i
+    5 |     i = 1  ! Comment ending with backslash\
+      |                                           ^ C011
+    6 |     select case (i)  ! Select without default
+    7 |         case(1)
+      |
+
+    [TEMP_FILE] C001 Missing default case may not handle all values
+       |
+     4 |       integer :: i
+     5 |       i = 1  ! Comment ending with backslash\
+     6 | /     select case (i)  ! Select without default
+     7 | |         case(1)
+     8 | |             print *, "one"
+     9 | |     end select
+       | |______________^ C001
+    10 |   end program test
+       |
+       = help: Add 'case default'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    warning: `bugprone` has been remapped to `C001`, `C011`.
+    "#
+    );
+    Ok(())
+}
+
+#[test]
 fn unknown_name_in_config() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let config_file = tempdir.path().join("fpm.toml");
