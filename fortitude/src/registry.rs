@@ -75,9 +75,6 @@ pub enum Category {
     /// Best practices when reading and writing to file or other IO streams.
     #[prefix = "IO"]
     Io,
-    /// Readability.
-    #[prefix = "R"]
-    Readability,
 }
 
 pub trait RuleNamespace: Sized {

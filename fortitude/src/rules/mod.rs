@@ -8,7 +8,6 @@ pub(crate) mod io;
 pub(crate) mod modernization;
 pub(crate) mod modules;
 pub(crate) mod obsolescent;
-pub(crate) mod readability;
 pub(crate) mod style;
 pub(crate) mod testing;
 pub(crate) mod typing;
@@ -81,6 +80,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "011") => (RuleGroup::Preview, Ast, Default, correctness::trailing_backslash::TrailingBackslash),
         (Correctness, "021") => (RuleGroup::Stable, Ast, Optional, correctness::kind_suffixes::NoRealSuffix),
         (Correctness, "022") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_kinds::ImplicitRealKind),
+        (Correctness, "031") => (RuleGroup::Preview, Ast, Optional, correctness::magic_numbers::MagicNumberInArraySize),
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
 
@@ -131,8 +131,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Io, "001") => (RuleGroup::Preview, Ast, Optional, io::missing_specifier::MissingActionSpecifier),
         (Io, "011") => (RuleGroup::Preview, Ast, Optional, io::magic_io_unit::MagicIoUnit),
         (Io, "012") => (RuleGroup::Preview, Ast, Optional, io::magic_io_unit::NonPortableIoUnit),
-
-        (Readability, "001") => (RuleGroup::Preview, Ast, Optional, readability::magic_numbers::MagicNumberInArraySize),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason

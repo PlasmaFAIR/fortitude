@@ -18,6 +18,7 @@
 | C011 | [trailing-backslash](rules/trailing-backslash.md) | Trailing backslash | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C021 | [no-real-suffix](rules/no-real-suffix.md) | real literal {literal} missing kind suffix | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | C022 | [implicit-real-kind](rules/implicit-real-kind.md) | {dtype} has implicit kind | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| C031 | [magic-number-in-array-size](rules/magic-number-in-array-size.md) | Magic number in array size, consider replacing {value} with named `parameter` | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Obsolescent (OB)
 
@@ -91,10 +92,4 @@
 | IO001 | [missing-action-specifier](rules/missing-action-specifier.md) | file opened without action specifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | IO011 | [magic-io-unit](rules/magic-io-unit.md) | Magic unit '{value}' in IO statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | IO012 | [non-portable-io-unit](rules/non-portable-io-unit.md) | Non-portable unit '{value}' in '{kind}' statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
-
-### Readability (R)
-
-| Code | Name | Message | |
-| ---- | ---- | ------- | ------: |
-| R001 | [magic-number-in-array-size](rules/magic-number-in-array-size.md) | Magic number in array size, consider replacing {value} with named `parameter` | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
