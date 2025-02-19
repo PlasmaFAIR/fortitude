@@ -6,6 +6,7 @@ pub(crate) mod correctness;
 pub(crate) mod error;
 pub(crate) mod filesystem;
 pub(crate) mod io;
+pub(crate) mod modernization;
 pub(crate) mod modules;
 pub(crate) mod obsolescent;
 pub(crate) mod precision;
@@ -80,6 +81,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Correctness, "001") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultCase),
         (Correctness, "011") => (RuleGroup::Preview, Ast, Default, correctness::trailing_backslash::TrailingBackslash),
+        
+        (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
 
         (Filesystem, "001") => (RuleGroup::Stable, Path, Default,filesystem::extensions::NonStandardFileExtension),
 
@@ -117,7 +120,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
 
         (Precision, "001") => (RuleGroup::Stable, Ast, Optional, precision::kind_suffixes::NoRealSuffix),
-        (Precision, "011") => (RuleGroup::Stable, Ast, Optional, precision::double_precision::DoublePrecision),
         (Precision, "021") => (RuleGroup::Stable, Ast, Optional, precision::implicit_kinds::ImplicitRealKind),
 
         (Modules, "001") => (RuleGroup::Stable, Ast, Default, modules::external_functions::ProcedureNotInModule),

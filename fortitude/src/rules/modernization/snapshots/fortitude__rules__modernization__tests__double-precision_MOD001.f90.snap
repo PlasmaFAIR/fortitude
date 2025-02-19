@@ -1,0 +1,59 @@
+---
+source: fortitude/src/rules/modernization/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/modernization/MOD001.f90:1:1: MOD001 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
+  |
+1 | double precision function double(x)
+  | ^^^^^^^^^^^^^^^^ MOD001
+2 |   double precision, intent(in) :: x
+3 |   double = 2 * x
+  |
+
+./resources/test/fixtures/modernization/MOD001.f90:2:3: MOD001 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
+  |
+1 | double precision function double(x)
+2 |   double precision, intent(in) :: x
+  |   ^^^^^^^^^^^^^^^^ MOD001
+3 |   double = 2 * x
+4 | end function double
+  |
+
+./resources/test/fixtures/modernization/MOD001.f90:7:3: MOD001 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
+  |
+6 | subroutine triple(x)
+7 |   double precision, intent(inout) :: x
+  |   ^^^^^^^^^^^^^^^^ MOD001
+8 |   x = 3 * x
+9 | end subroutine triple
+  |
+
+./resources/test/fixtures/modernization/MOD001.f90:12:3: MOD001 prefer 'real(real64)' to 'double precision' (see 'iso_fortran_env')
+   |
+11 | function complex_mul(x, y)
+12 |   double precision, intent(in) :: x
+   |   ^^^^^^^^^^^^^^^^ MOD001
+13 |   double complex, intent(in) :: y
+14 |   double complex :: complex_mul
+   |
+
+./resources/test/fixtures/modernization/MOD001.f90:13:3: MOD001 prefer 'complex(real64)' to 'double complex' (see 'iso_fortran_env')
+   |
+11 | function complex_mul(x, y)
+12 |   double precision, intent(in) :: x
+13 |   double complex, intent(in) :: y
+   |   ^^^^^^^^^^^^^^ MOD001
+14 |   double complex :: complex_mul
+15 |   complex_mul = x * y
+   |
+
+./resources/test/fixtures/modernization/MOD001.f90:14:3: MOD001 prefer 'complex(real64)' to 'double complex' (see 'iso_fortran_env')
+   |
+12 |   double precision, intent(in) :: x
+13 |   double complex, intent(in) :: y
+14 |   double complex :: complex_mul
+   |   ^^^^^^^^^^^^^^ MOD001
+15 |   complex_mul = x * y
+16 | end function complex_mul
+   |

@@ -56,6 +56,13 @@ pub enum Category {
     /// Detect code that is bug-prone or likely to be incorrect.
     #[prefix = "C"]
     Correctness,
+    /// Obsolescent language features, as determined by the Fortran standard.
+    #[prefix = "OB"]
+    Obsolescent,
+    /// Update to modern Fortran features. Used for less severe issues than `Obsolescent`,
+    /// and goes beyond recommendations in the Fortran standard.
+    #[prefix = "MOD"]
+    Modernization,
     /// Violation of style conventions.
     #[prefix = "S"]
     Style,
@@ -74,9 +81,6 @@ pub enum Category {
     /// Check path names, directory structures, etc.
     #[prefix = "F"]
     Filesystem,
-    /// Obsolescent features
-    #[prefix = "OB"]
-    Obsolescent,
     /// Readability.
     #[prefix = "R"]
     Readability,
