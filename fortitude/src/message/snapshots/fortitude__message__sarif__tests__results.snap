@@ -28,7 +28,7 @@ snapshot_kind: text
           "message": {
             "text": "'implicit none' set on the enclosing module"
           },
-          "ruleId": "T003"
+          "ruleId": "S201"
         },
         {
           "level": "error",
@@ -105,10 +105,10 @@ snapshot_kind: text
               "help": {
                 "text": "'implicit none' set on the enclosing {entity}"
               },
-              "id": "T003",
+              "id": "S201",
               "properties": {
-                "id": "T003",
-                "kind": "Typing",
+                "id": "S201",
+                "kind": "Style",
                 "name": "superfluous-implicit-none",
                 "problem.severity": "error"
               },

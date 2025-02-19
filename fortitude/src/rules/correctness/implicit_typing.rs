@@ -8,14 +8,14 @@ use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
-fn implicit_statement_is_none(node: &Node) -> bool {
+pub fn implicit_statement_is_none(node: &Node) -> bool {
     if let Some(child) = node.child(1) {
         return child.kind() == "none";
     }
     false
 }
 
-fn child_is_implicit_none(node: &Node) -> bool {
+pub fn child_is_implicit_none(node: &Node) -> bool {
     if let Some(child) = node.child_with_name("implicit_statement") {
         return implicit_statement_is_none(&child);
     }

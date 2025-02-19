@@ -3,12 +3,12 @@ source: fortitude/src/message/text.rs
 expression: content
 snapshot_kind: text
 ---
-test.f90:6:5: T003 [*] 'implicit none' set on the enclosing module
+test.f90:6:5: S201 [*] 'implicit none' set on the enclosing module
   |
 4 | contains
 5 |   subroutine foo
 6 |     implicit none
-  |     ^^^^^^^^^^^^^ T003
+  |     ^^^^^^^^^^^^^ S201
 7 |   end subroutine
 8 | end module
   |

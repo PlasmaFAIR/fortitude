@@ -30,6 +30,10 @@ static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(
         ("IO001", "C041"),
         ("IO011", "C032"),
         ("IO012", "PORT001"),
+        ("T001", "C051"),
+        ("T002", "C052"),
+        ("T003", "S201"),
+        ("T004", "C053"),
     ])
 });
 

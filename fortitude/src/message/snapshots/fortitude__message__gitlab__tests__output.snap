@@ -5,7 +5,7 @@ snapshot_kind: text
 ---
 [
   {
-    "description": "(T003) 'implicit none' set on the enclosing module",
+    "description": "(S201) 'implicit none' set on the enclosing module",
     "fingerprint": "<redacted>",
     "location": {
       "lines": {

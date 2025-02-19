@@ -1,7 +1,6 @@
 pub mod assumed_size;
 pub mod derived_default_init;
 pub mod external;
-pub mod implicit_typing;
 pub mod init_decls;
 pub mod intent;
 pub mod literal_kinds;
@@ -21,10 +20,6 @@ mod tests {
     use crate::settings::Settings;
     use crate::test::test_path;
 
-    #[test_case(Rule::ImplicitTyping, Path::new("T001.f90"))]
-    #[test_case(Rule::InterfaceImplicitTyping, Path::new("T002.f90"))]
-    #[test_case(Rule::SuperfluousImplicitNone, Path::new("T003.f90"))]
-    #[test_case(Rule::ImplicitExternalProcedures, Path::new("T004.f90"))]
     #[test_case(Rule::LiteralKind, Path::new("T011.f90"))]
     #[test_case(Rule::LiteralKindSuffix, Path::new("T012.f90"))]
     #[test_case(Rule::StarKind, Path::new("T021.f90"))]

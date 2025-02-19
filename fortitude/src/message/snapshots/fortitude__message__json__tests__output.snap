@@ -5,7 +5,7 @@ snapshot_kind: text
 ---
 [
   {
-    "code": "T003",
+    "code": "S201",
     "end_location": {
       "column": 18,
       "row": 6

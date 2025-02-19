@@ -83,6 +83,9 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "031") => (RuleGroup::Preview, Ast, Optional, correctness::magic_numbers::MagicNumberInArraySize),
         (Correctness, "032") => (RuleGroup::Preview, Ast, Optional, correctness::magic_numbers::MagicIoUnit),
         (Correctness, "043") => (RuleGroup::Preview, Ast, Optional, correctness::missing_io_specifier::MissingActionSpecifier),
+        (Correctness, "051") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitTyping),
+        (Correctness, "052") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::InterfaceImplicitTyping),
+        (Correctness, "053") => (RuleGroup::Preview, Ast, Default, correctness::implicit_typing::ImplicitExternalProcedures),
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
         
@@ -100,11 +103,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         // There are likely to be many whitespace rules at some point, reserve S1xx for them
         (Style, "101") => (RuleGroup::Stable, Text, Default, style::whitespace::TrailingWhitespace),
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
+        (Style, "201") => (RuleGroup::Stable, Ast, Default, style::implicit_none::SuperfluousImplicitNone),
 
-        (Typing, "001") => (RuleGroup::Stable, Ast, Default, typing::implicit_typing::ImplicitTyping),
-        (Typing, "002") => (RuleGroup::Stable, Ast, Default, typing::implicit_typing::InterfaceImplicitTyping),
-        (Typing, "003") => (RuleGroup::Stable, Ast, Default, typing::implicit_typing::SuperfluousImplicitNone),
-        (Typing, "004") => (RuleGroup::Preview, Ast, Default, typing::implicit_typing::ImplicitExternalProcedures),
         (Typing, "011") => (RuleGroup::Stable, Ast, Default, typing::literal_kinds::LiteralKind),
         (Typing, "012") => (RuleGroup::Stable, Ast, Default, typing::literal_kinds::LiteralKindSuffix),
         (Typing, "021") => (RuleGroup::Stable, Ast, Default, typing::star_kinds::StarKind),
