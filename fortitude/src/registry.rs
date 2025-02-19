@@ -72,9 +72,6 @@ pub enum Category {
     /// Failure to use modules or use them appropriately.
     #[prefix = "M"]
     Modules,
-    /// Best practices for setting floating point precision.
-    #[prefix = "P"]
-    Precision,
     /// Best practices when reading and writing to file or other IO streams.
     #[prefix = "IO"]
     Io,

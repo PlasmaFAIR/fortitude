@@ -88,13 +88,13 @@ fn explain_mixed_multiple() -> anyhow::Result<()> {
         .arg("explain")
         .arg("T")
         .arg("use-all")
-        .arg("P021")
+        .arg("C022")
         .assert()
         .success()
         .stdout(predicate::str::contains("T001"))
         .stdout(predicate::str::contains("T002"))
         .stdout(predicate::str::contains("M011"))
-        .stdout(predicate::str::contains("P021"))
+        .stdout(predicate::str::contains("C022"))
         .stdout(predicate::str::contains("S061").count(0));
 
     Ok(())

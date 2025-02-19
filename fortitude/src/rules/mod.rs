@@ -9,7 +9,6 @@ pub(crate) mod io;
 pub(crate) mod modernization;
 pub(crate) mod modules;
 pub(crate) mod obsolescent;
-pub(crate) mod precision;
 pub(crate) mod readability;
 pub(crate) mod style;
 pub(crate) mod testing;
@@ -81,6 +80,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Correctness, "001") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultCase),
         (Correctness, "011") => (RuleGroup::Preview, Ast, Default, correctness::trailing_backslash::TrailingBackslash),
+        (Correctness, "021") => (RuleGroup::Stable, Ast, Optional, correctness::kind_suffixes::NoRealSuffix),
+        (Correctness, "022") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_kinds::ImplicitRealKind),
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
 
@@ -119,8 +120,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "041") => (RuleGroup::Preview, Ast, Default, obsolescent::computed_goto::ComputedGoTo),
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
 
-        (Precision, "001") => (RuleGroup::Stable, Ast, Optional, precision::kind_suffixes::NoRealSuffix),
-        (Precision, "021") => (RuleGroup::Stable, Ast, Optional, precision::implicit_kinds::ImplicitRealKind),
 
         (Modules, "001") => (RuleGroup::Stable, Ast, Default, modules::external_functions::ProcedureNotInModule),
         (Modules, "011") => (RuleGroup::Stable, Ast, Default, modules::use_statements::UseAll),

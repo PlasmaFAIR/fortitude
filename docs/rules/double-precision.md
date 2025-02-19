@@ -1,4 +1,4 @@
-# double-precision (P011)
+# double-precision (MOD001)
 ## What it does
 Checks for use of `double precision` and `double complex` types.
 

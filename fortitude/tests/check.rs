@@ -481,7 +481,7 @@ end program foo
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S071,P021,T003,T004")
+                         .arg("--select=S071,C022,T003,T004")
                          .arg("--preview")
                          .arg("--fix")
                          .arg(&test_file),
@@ -499,12 +499,12 @@ end program foo
       |
       = help: Add `(external)` to 'implicit none'
 
-    [TEMP_FILE] P021 real has implicit kind
+    [TEMP_FILE] C022 real has implicit kind
       |
     2 | program foo
     3 |   implicit none
     4 |   real :: i
-      |   ^^^^ P021
+      |   ^^^^ C022
     5 |   i = 4.0
     6 | contains
       |
@@ -560,7 +560,7 @@ end program foo
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S071,P021,T003,T004")
+                         .arg("--select=S071,C022,T003,T004")
                          .arg("--preview")
                          .arg("--fix")
                          .arg("--unsafe-fixes")
@@ -569,12 +569,12 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] P021 real has implicit kind
+    [TEMP_FILE] C022 real has implicit kind
       |
     2 | program foo
     3 |   implicit none (type, external)
     4 |   real :: i
-      |   ^^^^ P021
+      |   ^^^^ C022
     5 |   i = 4.0
     6 | contains
       |
