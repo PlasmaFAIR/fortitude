@@ -20,3 +20,19 @@ pub(crate) fn get_redirect(code: &str) -> Option<(&'static str, &'static str)> {
 
 static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> =
     LazyLock::new(|| HashMap::from_iter([("B001", "C001"), ("B011", "C011")]));
+
+/// Return the deprecated category and all contained rules if provided with the
+/// name of a deprecated category. Otherwise, return None.
+pub(crate) fn get_deprecated_category(code: &str) -> Option<(&'static str, &[&'static str])> {
+    DEPRECATED_CATEGORIES
+        .get_key_value(code)
+        .map(|(k, v)| (*k, v.as_slice()))
+}
+
+static DEPRECATED_CATEGORIES: LazyLock<HashMap<&'static str, Vec<&'static str>>> =
+    LazyLock::new(|| {
+        HashMap::from_iter([
+            ("B", vec!["C001", "C011"]),
+            ("bugprone", vec!["C001", "C011"]),
+        ])
+    });

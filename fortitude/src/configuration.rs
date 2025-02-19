@@ -451,7 +451,14 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
                 redirected_from: Some(redirect_from),
             } = selector
             {
-                redirects.insert(redirect_from, prefix);
+                redirects.insert(redirect_from, vec![prefix.clone()]);
+            }
+            if let RuleSelector::DeprecatedCategory {
+                prefixes,
+                redirected_from,
+            } = selector
+            {
+                redirects.insert(redirected_from, prefixes.clone());
             }
         }
     }
@@ -496,9 +503,15 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
     for (from, target) in redirects.iter().sorted_by_key(|item| item.0) {
         warn_user_once_by_id!(
             from,
-            "`{from}` has been remapped to `{}{}`.",
-            target.category().common_prefix(),
-            target.short_code()
+            "`{from}` has been remapped to `{}`.",
+            target
+                .iter()
+                .map(|prefix| format!(
+                    "{}{}",
+                    prefix.category().common_prefix(),
+                    prefix.short_code()
+                ))
+                .join("`, `")
         );
     }
 

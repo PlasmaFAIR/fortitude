@@ -15,7 +15,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::registry::{Category, Rule, RuleNamespace, RuleSet};
-use crate::rule_redirects::get_redirect;
+use crate::rule_redirects::{get_deprecated_category, get_redirect};
 use crate::rules::{RuleCodePrefix, RuleGroup, RuleIter};
 use crate::settings::{PatternPrefixPair, PreviewMode};
 use crate::{display_settings, fs};
@@ -35,6 +35,11 @@ pub enum RuleSelector {
     Rule {
         prefix: RuleCodePrefix,
         redirected_from: Option<&'static str>,
+    },
+    /// Select rules from a removed category
+    DeprecatedCategory {
+        prefixes: Vec<RuleCodePrefix>,
+        redirected_from: &'static str,
     },
 }
 
@@ -75,6 +80,22 @@ impl FromStr for RuleSelector {
                 if let Ok(rule) = Rule::from_str(s) {
                     let c = rule.noqa_code().to_string();
                     return Self::from_str(c.as_str());
+                }
+
+                // If passed a deprecated category, get list of all rules in that category.
+                // There's a lot of duplicate code here, but it can be removed in release 0.8 or 0.9
+                if let Some((redirected_from, rules)) = get_deprecated_category(s) {
+                    let prefixes = rules
+                        .iter()
+                        .map(|code| {
+                            let (category, code) = Category::parse_code(code).unwrap();
+                            RuleCodePrefix::parse(&category, code).unwrap()
+                        })
+                        .collect();
+                    return Ok(Self::DeprecatedCategory {
+                        prefixes,
+                        redirected_from,
+                    });
                 }
 
                 let (category, code) =
@@ -136,6 +157,9 @@ impl RuleSelector {
                 (prefix.category().common_prefix(), prefix.short_code())
             }
             RuleSelector::Category(l) => (l.common_prefix(), ""),
+            RuleSelector::DeprecatedCategory {
+                redirected_from, ..
+            } => (redirected_from, ""),
         }
     }
 }
@@ -192,6 +216,13 @@ impl RuleSelector {
             RuleSelector::Prefix { prefix, .. } | RuleSelector::Rule { prefix, .. } => {
                 RuleSelectorIter::Vec(prefix.clone().rules())
             }
+            RuleSelector::DeprecatedCategory { prefixes, .. } => RuleSelectorIter::Vec(
+                prefixes
+                    .iter()
+                    .flat_map(|prefix| prefix.clone().rules())
+                    .collect::<Vec<_>>()
+                    .into_iter(),
+            ),
         }
     }
 
@@ -253,7 +284,9 @@ impl RuleSelector {
     pub fn specificity(&self) -> Specificity {
         match self {
             RuleSelector::All => Specificity::All,
-            RuleSelector::Category(..) => Specificity::Category,
+            RuleSelector::Category(..) | RuleSelector::DeprecatedCategory { .. } => {
+                Specificity::Category
+            }
             RuleSelector::Rule { .. } => Specificity::Rule,
             RuleSelector::Prefix { prefix, .. } => {
                 let prefix: &'static str = prefix.short_code();
