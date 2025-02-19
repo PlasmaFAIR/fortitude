@@ -20,6 +20,7 @@
 | C022 | [implicit-real-kind](rules/implicit-real-kind.md) | {dtype} has implicit kind | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | C031 | [magic-number-in-array-size](rules/magic-number-in-array-size.md) | Magic number in array size, consider replacing {value} with named `parameter` | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | C032 | [magic-io-unit](rules/magic-io-unit.md) | Magic unit '{value}' in IO statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| C043 | [missing-action-specifier](rules/missing-action-specifier.md) | file opened without action specifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Obsolescent (OB)
 
@@ -90,6 +91,5 @@
 
 | Code | Name | Message | |
 | ---- | ---- | ------- | ------: |
-| IO001 | [missing-action-specifier](rules/missing-action-specifier.md) | file opened without action specifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | IO012 | [non-portable-io-unit](rules/non-portable-io-unit.md) | Non-portable unit '{value}' in '{kind}' statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 

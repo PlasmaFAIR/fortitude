@@ -1,4 +1,4 @@
-# missing-action-specifier (IO001)
+# missing-action-specifier (C043)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does

@@ -1,6 +1,7 @@
 pub mod implicit_kinds;
 pub mod kind_suffixes;
 pub mod magic_numbers;
+pub mod missing_io_specifier;
 pub mod select_default;
 pub mod trailing_backslash;
 
@@ -24,6 +25,7 @@ mod tests {
     #[test_case(Rule::ImplicitRealKind, Path::new("C022.f90"))]
     #[test_case(Rule::MagicNumberInArraySize, Path::new("C031.f90"))]
     #[test_case(Rule::MagicIoUnit, Path::new("C032.f90"))]
+    #[test_case(Rule::MissingActionSpecifier, Path::new("C041.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

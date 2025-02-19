@@ -82,6 +82,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "022") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_kinds::ImplicitRealKind),
         (Correctness, "031") => (RuleGroup::Preview, Ast, Optional, correctness::magic_numbers::MagicNumberInArraySize),
         (Correctness, "032") => (RuleGroup::Preview, Ast, Optional, correctness::magic_numbers::MagicIoUnit),
+        (Correctness, "043") => (RuleGroup::Preview, Ast, Optional, correctness::missing_io_specifier::MissingActionSpecifier),
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
 
@@ -130,7 +131,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modules, "041") => (RuleGroup::Preview, Ast, Optional, modules::file_contents::MultipleModules),
         (Modules, "042") => (RuleGroup::Preview, Ast, Optional, modules::file_contents::ProgramWithModule),
 
-        (Io, "001") => (RuleGroup::Preview, Ast, Optional, io::missing_specifier::MissingActionSpecifier),
         (Io, "012") => (RuleGroup::Preview, Ast, Optional, io::magic_io_unit::NonPortableIoUnit),
 
         // Rules for testing fortitude
