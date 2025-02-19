@@ -25,6 +25,7 @@ static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(
         ("P001", "C021"),
         ("P011", "MOD001"),
         ("P021", "C022"),
+        ("F001", "S091"),
     ])
 });
 
@@ -50,5 +51,9 @@ static DEPRECATED_CATEGORIES: LazyLock<HashMap<&'static str, Vec<&'static str>>>
             ("P01", vec!["MOD001"]),
             ("P02", vec!["C022"]),
             ("precision", vec!["C021", "C022", "MOD001"]),
+            ("F", vec!["S091"]),
+            ("F0", vec!["S091"]),
+            ("F00", vec!["S091"]),
+            ("filesystem", vec!["S091"]),
         ])
     });

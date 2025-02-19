@@ -4,7 +4,6 @@
 mod macros;
 pub(crate) mod correctness;
 pub(crate) mod error;
-pub(crate) mod filesystem;
 pub(crate) mod io;
 pub(crate) mod modernization;
 pub(crate) mod modules;
@@ -85,8 +84,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
 
-        (Filesystem, "001") => (RuleGroup::Stable, Path, Default,filesystem::extensions::NonStandardFileExtension),
-
         (Style, "001") => (RuleGroup::Stable, Text, Default, style::line_length::LineTooLong),
         (Style, "021") => (RuleGroup::Stable, Ast, Default, style::exit_labels::MissingExitOrCycleLabel),
         (Style, "041") => (RuleGroup::Stable, Ast, Default, style::old_style_array_literal::OldStyleArrayLiteral),
@@ -95,6 +92,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "071") => (RuleGroup::Stable, Ast, Default, style::double_colon_in_decl::MissingDoubleColon),
         (Style, "081") => (RuleGroup::Preview, Ast, Default, style::semicolons::SuperfluousSemicolon),
         (Style, "082") => (RuleGroup::Preview, Ast, Optional, style::semicolons::MultipleStatementsPerLine),
+        (Style, "091") => (RuleGroup::Stable, Path, Default, style::file_extensions::NonStandardFileExtension),
         (Style, "101") => (RuleGroup::Stable, Text, Default, style::whitespace::TrailingWhitespace),
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
 

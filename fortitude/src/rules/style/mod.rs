@@ -1,6 +1,7 @@
 pub mod double_colon_in_decl;
 pub mod end_statements;
 pub mod exit_labels;
+pub mod file_extensions;
 pub mod line_length;
 pub mod old_style_array_literal;
 pub mod relational_operators;

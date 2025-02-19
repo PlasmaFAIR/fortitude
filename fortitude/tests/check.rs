@@ -1348,13 +1348,13 @@ end program myprogram
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S001,F001,T001")
+                         .arg("--select=S001,S091,T001")
                          .current_dir(tempdir.path()),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    myfile.ff:1:1: F001 file extension should be '.f90' or '.F90'
+    myfile.ff:1:1: S091 file extension should be '.f90' or '.F90'
     myfile.ff:2:1: T001 program missing 'implicit none'
       |
     2 | program myprogram
