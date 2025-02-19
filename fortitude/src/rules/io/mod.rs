@@ -16,7 +16,6 @@ mod tests {
     use crate::test::test_path;
 
     #[test_case(Rule::MissingActionSpecifier, Path::new("IO001.f90"))]
-    #[test_case(Rule::MagicIoUnit, Path::new("IO011.f90"))]
     #[test_case(Rule::NonPortableIoUnit, Path::new("IO012.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());

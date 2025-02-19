@@ -23,6 +23,7 @@ mod tests {
     #[test_case(Rule::NoRealSuffix, Path::new("C021.f90"))]
     #[test_case(Rule::ImplicitRealKind, Path::new("C022.f90"))]
     #[test_case(Rule::MagicNumberInArraySize, Path::new("C031.f90"))]
+    #[test_case(Rule::MagicIoUnit, Path::new("C032.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

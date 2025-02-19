@@ -1,4 +1,5 @@
 use crate::ast::FortitudeNode;
+use crate::rules::utilities::literal_as_io_unit;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use itertools::Itertools;
@@ -92,5 +93,68 @@ impl AstRule for MagicNumberInArraySize {
 
     fn entrypoints() -> Vec<&'static str> {
         vec!["sized_declarator", "type_qualifier"]
+    }
+}
+
+/// ## What it does
+/// Checks for literal integers as units in IO statements.
+///
+/// ## Why is this bad?
+/// Hardcoding unit numbers makes programs more brittle as it becomes harder to
+/// verify units have been opened before reading/writing. Instead, units should
+/// be passed in to procedures as arguments, or the `newunit=` argument used for
+/// `open` statements. Having a named variable also makes it much clearer what a
+/// given IO statement is for, and allows tools like LSP and IDEs to find all
+/// references.
+///
+/// Bad:
+/// ```f90
+/// open(10, file="example.txt", action="read")
+/// read(10, fmt=*) int
+/// close(10)
+/// ```
+///
+/// Good:
+/// ```f90
+/// open(newunit=example_unit, file="example.txt", action="read")
+/// read(example_unit, fmt=*) int
+/// close(example_unit)
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct MagicIoUnit {
+    value: i32,
+}
+
+impl Violation for MagicIoUnit {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { value, .. } = self;
+        format!("Magic unit '{value}' in IO statement")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        Some("Replace with named variable".to_string())
+    }
+}
+
+impl AstRule for MagicIoUnit {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let unit = literal_as_io_unit(node, src)?;
+
+        let value = unit
+            .to_text(src.source_text())?
+            .parse::<i32>()
+            .unwrap_or_default();
+
+        some_vec!(Diagnostic::from_node(Self { value }, &unit))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec![
+            "read_statement",
+            "write_statement",
+            "open_statement",
+            "close_statement",
+        ]
     }
 }
