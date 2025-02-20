@@ -72,7 +72,7 @@ snapshot_kind: text
           "message": {
             "text": "integer*4 is non-standard, use integer(4)"
           },
-          "ruleId": "T021"
+          "ruleId": "PORT021"
         }
       ],
       "tool": {
@@ -80,6 +80,24 @@ snapshot_kind: text
           "informationUri": "https://github.com/PlasmaFAIR/fortitude",
           "name": "fortitude",
           "rules": [
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for non-standard kind specifiers such as `int*4` or `real*8`\n\n## Why is this bad?\nTypes such as 'real*8' or 'integer*4' are not standard Fortran and should be\navoided. For these cases, consider instead using 'real(real64)' or\n'integer(int32)', where 'real64' and 'int32' may be found in the intrinsic\nmodule 'iso_fortran_env'. You may also wish to determine kinds using the\nbuilt-in functions 'selected_real_kind' and 'selected_int_kind'.\n\nFixes to this rule are considered unsafe, as while `dtype*N` is generally\nunderstood to mean a `dtype` that occupied `N` bytes, this does not necessarily\ncorrespond to `dtype(N)`, which is a `dtype` of 'kind' `N`. For example, the NAG\ncompiler may be conigured to use a sequential kind system in which `real*8`\ncorresponds to `real(2)`\n\nIn a future version, we hope to upgrade this to a safe fix by use of parameters\nin `iso_fortran_env`, as `real*8` should always correspond to `real(real64)`.\n"
+              },
+              "help": {
+                "text": "'{dtype}{size}' uses non-standard syntax"
+              },
+              "id": "PORT021",
+              "properties": {
+                "id": "PORT021",
+                "kind": "Portability",
+                "name": "star-kind",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "'{dtype}{size}' uses non-standard syntax"
+              }
+            },
             {
               "fullDescription": {
                 "text": "## What does it do?\nChecks that `end` statements include the type of construct they're ending\n\n## Why is this bad?\nEnd statements should specify what kind of construct they're ending, and the\nname of that construct. For example, prefer this:\n\n```f90\nmodule mymodule\n  ...\nend module mymodule\n```\n\nTo this:\n\n```f90\nmodule mymodule\n  ...\nend\n```\n\nOr this:\n\n```f90\nmodule mymodule\n  ...\nend module\n```\n\nSimilar rules apply for many other Fortran statements\n"
@@ -114,24 +132,6 @@ snapshot_kind: text
               },
               "shortDescription": {
                 "text": "'implicit none' set on the enclosing {entity}"
-              }
-            },
-            {
-              "fullDescription": {
-                "text": "## What it does\nChecks for non-standard kind specifiers such as `int*4` or `real*8`\n\n## Why is this bad?\nTypes such as 'real*8' or 'integer*4' are not standard Fortran and should be\navoided. For these cases, consider instead using 'real(real64)' or\n'integer(int32)', where 'real64' and 'int32' may be found in the intrinsic\nmodule 'iso_fortran_env'. You may also wish to determine kinds using the\nbuilt-in functions 'selected_real_kind' and 'selected_int_kind'.\n\nFixes to this rule are considered unsafe, as while `dtype*N` is generally\nunderstood to mean a `dtype` that occupied `N` bytes, this does not necessarily\ncorrespond to `dtype(N)`, which is a `dtype` of 'kind' `N`. For example, the NAG\ncompiler may be conigured to use a sequential kind system in which `real*8`\ncorresponds to `real(2)`\n\nIn a future version, we hope to upgrade this to a safe fix by use of parameters\nin `iso_fortran_env`, as `real*8` should always correspond to `real(real64)`.\n"
-              },
-              "help": {
-                "text": "'{dtype}{size}' uses non-standard syntax"
-              },
-              "id": "T021",
-              "properties": {
-                "id": "T021",
-                "kind": "Typing",
-                "name": "star-kind",
-                "problem.severity": "error"
-              },
-              "shortDescription": {
-                "text": "'{dtype}{size}' uses non-standard syntax"
               }
             }
           ],

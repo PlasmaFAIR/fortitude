@@ -3,8 +3,6 @@ pub mod derived_default_init;
 pub mod external;
 pub mod init_decls;
 pub mod intent;
-pub mod literal_kinds;
-pub mod star_kinds;
 
 #[cfg(test)]
 mod tests {
@@ -20,9 +18,6 @@ mod tests {
     use crate::settings::Settings;
     use crate::test::test_path;
 
-    #[test_case(Rule::LiteralKind, Path::new("T011.f90"))]
-    #[test_case(Rule::LiteralKindSuffix, Path::new("T012.f90"))]
-    #[test_case(Rule::StarKind, Path::new("T021.f90"))]
     #[test_case(Rule::MissingIntent, Path::new("T031.f90"))]
     #[test_case(Rule::AssumedSize, Path::new("T041.f90"))]
     #[test_case(Rule::AssumedSizeCharacterIntent, Path::new("T042.f90"))]

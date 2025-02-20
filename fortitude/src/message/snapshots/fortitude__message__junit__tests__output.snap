@@ -6,7 +6,7 @@ snapshot_kind: text
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites name="fortitude" tests="3" failures="3" errors="0">
     <testsuite name="star_kind.f90" tests="1" disabled="0" errors="0" failures="1" package="org.plasmafair.fortitude">
-        <testcase name="org.plasmafair.fortitude.T021" classname="star_kind" line="1" column="8">
+        <testcase name="org.plasmafair.fortitude.PORT021" classname="star_kind" line="1" column="8">
             <failure message="integer*4 is non-standard, use integer(4)">line 1, col 8, integer*4 is non-standard, use integer(4)</failure>
         </testcase>
     </testsuite>

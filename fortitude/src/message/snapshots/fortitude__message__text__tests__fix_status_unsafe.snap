@@ -23,8 +23,8 @@ test.f90:7:3: S061 end statement should read 'end subroutine foo'
 8 | end module
   |
 
-star_kind.f90:1:8: T021 integer*4 is non-standard, use integer(4)
+star_kind.f90:1:8: PORT021 integer*4 is non-standard, use integer(4)
   |
 1 | integer*4 foo; end
-  |        ^ T021
+  |        ^ PORT021
   |

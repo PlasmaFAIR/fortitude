@@ -166,7 +166,7 @@ end program
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S061,C051,T011,T021")
+                         .arg("--select=S061,C051,PORT011,PORT021")
                          .arg(test_file),
                          @r"
     success: false
@@ -180,20 +180,20 @@ end program
     4 | end program
       |
 
-    [TEMP_FILE] T021 'logical*4' uses non-standard syntax
+    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
-      |          ^^ T021
+      |          ^^ PORT021
     4 | end program
       |
       = help: Replace with 'logical(4)'
 
-    [TEMP_FILE] T011 logical kind set with number literal '4'
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
-      |           ^ T011
+      |           ^ PORT011
     4 | end program
       |
       = help: Use the parameter 'int32' from 'iso_fortran_env'
@@ -1189,17 +1189,17 @@ end program test
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg(test_file)
-                         .args(["--select=C051,S061,T011,T021,S101"]),
+                         .args(["--select=C051,S061,PORT011,PORT021,S101"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T021 'logical*4' uses non-standard syntax
+    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
     7 |   logical*4, parameter :: false = .false.  
-      |          ^^ T021
+      |          ^^ PORT021
     8 | end program test
       |
       = help: Replace with 'logical(4)'

@@ -29,7 +29,7 @@ snapshot_kind: text
     "severity": "major"
   },
   {
-    "description": "(T021) integer*4 is non-standard, use integer(4)",
+    "description": "(PORT021) integer*4 is non-standard, use integer(4)",
     "fingerprint": "<redacted>",
     "location": {
       "lines": {

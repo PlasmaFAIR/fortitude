@@ -90,6 +90,9 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
         
         (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::magic_io_unit::NonPortableIoUnit),
+        (Portability, "011") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKind),
+        (Portability, "012") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKindSuffix),
+        (Portability, "021") => (RuleGroup::Stable, Ast, Default, portability::star_kinds::StarKind),
 
         (Style, "001") => (RuleGroup::Stable, Text, Default, style::line_length::LineTooLong),
         (Style, "021") => (RuleGroup::Stable, Ast, Default, style::exit_labels::MissingExitOrCycleLabel),
@@ -105,9 +108,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
         (Style, "201") => (RuleGroup::Stable, Ast, Default, style::implicit_none::SuperfluousImplicitNone),
 
-        (Typing, "011") => (RuleGroup::Stable, Ast, Default, typing::literal_kinds::LiteralKind),
-        (Typing, "012") => (RuleGroup::Stable, Ast, Default, typing::literal_kinds::LiteralKindSuffix),
-        (Typing, "021") => (RuleGroup::Stable, Ast, Default, typing::star_kinds::StarKind),
         (Typing, "031") => (RuleGroup::Stable, Ast, Default, typing::intent::MissingIntent),
         (Typing, "041") => (RuleGroup::Stable, Ast, Default, typing::assumed_size::AssumedSize),
         (Typing, "042") => (RuleGroup::Stable, Ast, Default, typing::assumed_size::AssumedSizeCharacterIntent),

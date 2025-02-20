@@ -1,4 +1,4 @@
-# interface-implicit-typing (T002)
+# interface-implicit-typing (C052)
 This rule is turned on by default.
 
 ## What it does

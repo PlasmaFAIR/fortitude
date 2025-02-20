@@ -1,0 +1,67 @@
+---
+source: fortitude/src/rules/portability/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/portability/PORT011.f90:1:9: PORT011 integer kind set with number literal '8'
+  |
+1 | integer(8) function add_if(x, y, z)
+  |         ^ PORT011
+2 |   integer :: w
+3 |   integer(kind=2), intent(in) :: x
+  |
+  = help: Use the parameter 'int64' from 'iso_fortran_env'
+
+./resources/test/fixtures/portability/PORT011.f90:3:16: PORT011 integer kind set with number literal '2'
+  |
+1 | integer(8) function add_if(x, y, z)
+2 |   integer :: w
+3 |   integer(kind=2), intent(in) :: x
+  |                ^ PORT011
+4 |   integer(i32), intent(in) :: y
+5 |   logical(kind=4), intent(in) :: z
+  |
+  = help: Use the parameter 'int16' from 'iso_fortran_env'
+
+./resources/test/fixtures/portability/PORT011.f90:5:16: PORT011 logical kind set with number literal '4'
+  |
+3 |   integer(kind=2), intent(in) :: x
+4 |   integer(i32), intent(in) :: y
+5 |   logical(kind=4), intent(in) :: z
+  |                ^ PORT011
+6 |
+7 |   if (x) then
+  |
+  = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+./resources/test/fixtures/portability/PORT011.f90:15:8: PORT011 real kind set with number literal '8'
+   |
+14 | subroutine complex_mul(x, y)
+15 |   real(8), intent(in) :: x
+   |        ^ PORT011
+16 |   complex(4), intent(inout) :: y
+17 |   real :: z = 0.5
+   |
+   = help: Use the parameter 'real64' from 'iso_fortran_env'
+
+./resources/test/fixtures/portability/PORT011.f90:16:11: PORT011 complex kind set with number literal '4'
+   |
+14 | subroutine complex_mul(x, y)
+15 |   real(8), intent(in) :: x
+16 |   complex(4), intent(inout) :: y
+   |           ^ PORT011
+17 |   real :: z = 0.5
+18 |   y = y * x
+   |
+   = help: Use the parameter 'real32' from 'iso_fortran_env'
+
+./resources/test/fixtures/portability/PORT011.f90:23:16: PORT011 complex kind set with number literal '4'
+   |
+21 | complex(real64) function complex_add(x, y)
+22 |   real(real64), intent(in) :: x
+23 |   complex(kind=4), intent(in) :: y
+   |                ^ PORT011
+24 |   complex_add = y + x
+25 | end function complex_add
+   |
+   = help: Use the parameter 'real32' from 'iso_fortran_env'

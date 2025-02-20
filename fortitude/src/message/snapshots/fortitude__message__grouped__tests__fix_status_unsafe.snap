@@ -4,10 +4,10 @@ expression: content
 snapshot_kind: text
 ---
 star_kind.f90:
-  1:8 T021 integer*4 is non-standard, use integer(4)
+  1:8 PORT021 integer*4 is non-standard, use integer(4)
     |
   1 | integer*4 foo; end
-    |        ^ T021
+    |        ^ PORT021
     |
   
 test.f90:
