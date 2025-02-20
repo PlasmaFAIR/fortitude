@@ -1,4 +1,4 @@
-# procedure-not-in-module (M001)
+# procedure-not-in-module (C111)
 This rule is turned on by default.
 
 ## What it does

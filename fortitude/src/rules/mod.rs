@@ -91,6 +91,12 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "081") => (RuleGroup::Stable, Ast, Default, correctness::init_decls::InitialisationInDeclaration),
         (Correctness, "091") => (RuleGroup::Stable, Ast, Default, correctness::external::ExternalProcedure),
         (Correctness, "101") => (RuleGroup::Preview, Ast, Default, correctness::derived_default_init::MissingDefaultPointerInitalisation),
+        (Correctness, "111") => (RuleGroup::Stable, Ast, Default, correctness::external_functions::ProcedureNotInModule),
+        (Correctness, "121") => (RuleGroup::Stable, Ast, Default, correctness::use_statements::UseAll),
+        (Correctness, "122") => (RuleGroup::Preview, Ast, Default, correctness::use_statements::MissingIntrinsic),
+        (Correctness, "131") => (RuleGroup::Preview, Ast, Default, correctness::accessibility_statements::MissingAccessibilityStatement),
+        (Correctness, "132") => (RuleGroup::Preview, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
+        (Correctness, "141") => (RuleGroup::Preview, Ast, Optional, correctness::include_statement::IncludeStatement),
 
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
@@ -123,12 +129,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::assumed_size_character_syntax::DeprecatedAssumedSizeCharacter),
 
 
-        (Modules, "001") => (RuleGroup::Stable, Ast, Default, modules::external_functions::ProcedureNotInModule),
-        (Modules, "011") => (RuleGroup::Stable, Ast, Default, modules::use_statements::UseAll),
-        (Modules, "012") => (RuleGroup::Preview, Ast, Default, modules::use_statements::MissingIntrinsic),
-        (Modules, "021") => (RuleGroup::Preview, Ast, Default, modules::accessibility_statements::MissingAccessibilityStatement),
-        (Modules, "022") => (RuleGroup::Preview, Ast, Optional, modules::accessibility_statements::DefaultPublicAccessibility),
-        (Modules, "031") => (RuleGroup::Preview, Ast, Optional, modules::include_statement::IncludeStatement),
         (Modules, "041") => (RuleGroup::Preview, Ast, Optional, modules::file_contents::MultipleModules),
         (Modules, "042") => (RuleGroup::Preview, Ast, Optional, modules::file_contents::ProgramWithModule),
 

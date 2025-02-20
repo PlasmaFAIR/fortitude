@@ -1,4 +1,4 @@
-# default-public-accessibility (M022)
+# default-public-accessibility (C132)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does

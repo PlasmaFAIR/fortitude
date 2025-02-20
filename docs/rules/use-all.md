@@ -1,4 +1,4 @@
-# use-all (M011)
+# use-all (C121)
 This rule is turned on by default.
 
 ## What it does

@@ -1,0 +1,23 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C141.f90:3:1: C141 Include statement is deprecated, use modules instead
+  |
+1 | module test
+2 |
+3 | include "common_variables"
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^ C141
+4 |
+5 | contains
+  |
+
+./resources/test/fixtures/correctness/C141.f90:8:5: C141 Include statement is deprecated, use modules instead
+   |
+ 7 | integer function func1()
+ 8 |     include "variable_declaration"
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ C141
+ 9 |
+10 |     func1 = i + 3
+   |

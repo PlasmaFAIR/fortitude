@@ -151,7 +151,7 @@ mod tests {
 
     use crate::fix::{apply_fixes, FixResult};
     use crate::locator::Locator;
-    use crate::rules::modules::use_statements::UseAll;
+    use crate::rules::correctness::use_statements::UseAll;
 
     #[allow(deprecated)]
     fn create_diagnostics(edit: impl IntoIterator<Item = Edit>) -> Vec<Diagnostic> {

@@ -1,8 +1,11 @@
+pub mod accessibility_statements;
 pub mod assumed_size;
 pub mod derived_default_init;
 pub mod external;
+pub mod external_functions;
 pub mod implicit_kinds;
 pub mod implicit_typing;
+pub mod include_statement;
 pub mod init_decls;
 pub mod intent;
 pub mod kind_suffixes;
@@ -10,6 +13,7 @@ pub mod magic_numbers;
 pub mod missing_io_specifier;
 pub mod select_default;
 pub mod trailing_backslash;
+pub mod use_statements;
 
 #[cfg(test)]
 mod tests {
@@ -41,6 +45,12 @@ mod tests {
     #[test_case(Rule::InitialisationInDeclaration, Path::new("C081.f90"))]
     #[test_case(Rule::ExternalProcedure, Path::new("C091.f90"))]
     #[test_case(Rule::MissingDefaultPointerInitalisation, Path::new("C101.f90"))]
+    #[test_case(Rule::ProcedureNotInModule, Path::new("C111.f90"))]
+    #[test_case(Rule::UseAll, Path::new("C121.f90"))]
+    #[test_case(Rule::MissingIntrinsic, Path::new("C122.f90"))]
+    #[test_case(Rule::MissingAccessibilityStatement, Path::new("C131.f90"))]
+    #[test_case(Rule::DefaultPublicAccessibility, Path::new("C132.f90"))]
+    #[test_case(Rule::IncludeStatement, Path::new("C141.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
