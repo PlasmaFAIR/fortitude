@@ -5,7 +5,6 @@ mod macros;
 pub(crate) mod correctness;
 pub(crate) mod error;
 pub(crate) mod modernization;
-pub(crate) mod modules;
 pub(crate) mod obsolescent;
 pub(crate) mod portability;
 pub(crate) mod style;
@@ -97,7 +96,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "131") => (RuleGroup::Preview, Ast, Default, correctness::accessibility_statements::MissingAccessibilityStatement),
         (Correctness, "132") => (RuleGroup::Preview, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
         (Correctness, "141") => (RuleGroup::Preview, Ast, Optional, correctness::include_statement::IncludeStatement),
-
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
         
@@ -119,6 +117,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "101") => (RuleGroup::Stable, Text, Default, style::whitespace::TrailingWhitespace),
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
         (Style, "201") => (RuleGroup::Stable, Ast, Default, style::implicit_none::SuperfluousImplicitNone),
+        (Style, "211") => (RuleGroup::Preview, Ast, Optional, style::file_contents::MultipleModules),
+        (Style, "212") => (RuleGroup::Preview, Ast, Optional, style::file_contents::ProgramWithModule),
 
         (Obsolescent, "001") => (RuleGroup::Stable, Ast, Default, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Stable, Ast, Default, obsolescent::common_blocks::CommonBlock),
@@ -127,11 +127,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "041") => (RuleGroup::Preview, Ast, Default, obsolescent::computed_goto::ComputedGoTo),
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::assumed_size_character_syntax::DeprecatedAssumedSizeCharacter),
-
-
-        (Modules, "041") => (RuleGroup::Preview, Ast, Optional, modules::file_contents::MultipleModules),
-        (Modules, "042") => (RuleGroup::Preview, Ast, Optional, modules::file_contents::ProgramWithModule),
-
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason

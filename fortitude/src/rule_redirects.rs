@@ -50,6 +50,8 @@ static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(
         ("M021", "C131"),
         ("M022", "C132"),
         ("M031", "C141"),
+        ("M041", "S211"),
+        ("M042", "S212"),
     ])
 });
 
@@ -94,5 +96,6 @@ static DEPRECATED_CATEGORY_SHORT_NAMES: LazyLock<HashMap<&'static str, &'static 
             ("readability", "R"),
             ("io", "IO"),
             ("typing", "T"),
+            ("modules", "M"),
         ])
     });

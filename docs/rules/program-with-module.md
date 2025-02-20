@@ -1,4 +1,4 @@
-# program-with-module (M042)
+# program-with-module (S212)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does
