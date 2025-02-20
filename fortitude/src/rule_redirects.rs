@@ -37,40 +37,45 @@ static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(
     ])
 });
 
-/// Return the deprecated category and all contained rules if provided with the
-/// name of a deprecated category. Otherwise, return None.
-pub(crate) fn get_deprecated_category(code: &str) -> Option<(&'static str, &[&'static str])> {
-    DEPRECATED_CATEGORIES
-        .get_key_value(code)
-        .map(|(k, v)| (*k, v.as_slice()))
+/// If provided with a rule/category/prefix from a deprecated category,
+/// returns all associated rules and redirects. Otherwise returns None.
+pub(crate) fn get_deprecated_category(
+    code: &str,
+) -> Option<(Vec<&'static str>, Vec<&'static str>)> {
+    let short_code = match DEPRECATED_CATEGORY_SHORT_NAMES.get(&code) {
+        Some(short_code) => short_code,
+        None => code,
+    };
+    let category = short_code.trim_end_matches(|c: char| c.is_numeric());
+    if DEPRECATED_CATEGORY_SHORT_NAMES
+        .values()
+        .all(|&v| v != category)
+    {
+        return None;
+    }
+    let (rules, redirects): (Vec<_>, Vec<_>) = REDIRECTS
+        .iter()
+        .filter_map(|(&k, &v)| {
+            if k.starts_with(short_code) {
+                Some((k, v))
+            } else {
+                None
+            }
+        })
+        .unzip();
+    if rules.is_empty() {
+        return None;
+    }
+    Some((rules, redirects))
 }
 
-static DEPRECATED_CATEGORIES: LazyLock<HashMap<&'static str, Vec<&'static str>>> =
+static DEPRECATED_CATEGORY_SHORT_NAMES: LazyLock<HashMap<&'static str, &'static str>> =
     LazyLock::new(|| {
         HashMap::from_iter([
-            ("B", vec!["C001", "C011"]),
-            ("B0", vec!["C001", "C011"]),
-            ("B00", vec!["C001"]),
-            ("B01", vec!["C011"]),
-            ("bugprone", vec!["C001", "C011"]),
-            ("P", vec!["C021", "C022", "MOD001"]),
-            ("P0", vec!["C021", "C022", "MOD001"]),
-            ("P00", vec!["C021"]),
-            ("P01", vec!["MOD001"]),
-            ("P02", vec!["C022"]),
-            ("precision", vec!["C021", "C022", "MOD001"]),
-            ("F", vec!["S091"]),
-            ("F0", vec!["S091"]),
-            ("F00", vec!["S091"]),
-            ("filesystem", vec!["S091"]),
-            ("R", vec!["C031"]),
-            ("R0", vec!["C031"]),
-            ("R00", vec!["C031"]),
-            ("readability", vec!["C031"]),
-            ("IO", vec!["C041", "C032", "PORT001"]),
-            ("IO0", vec!["C041", "C032", "PORT001"]),
-            ("IO00", vec!["C041"]),
-            ("IO01", vec!["C032", "PORT001"]),
-            ("portability", vec!["C041", "C032", "PORT001"]),
+            ("bugprone", "B"),
+            ("precision", "P"),
+            ("filesystem", "F"),
+            ("readability", "R"),
+            ("io", "IO"),
         ])
     });

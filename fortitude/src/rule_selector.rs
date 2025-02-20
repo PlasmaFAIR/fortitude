@@ -38,8 +38,9 @@ pub enum RuleSelector {
     },
     /// Select rules from a removed category
     DeprecatedCategory {
-        prefixes: Vec<RuleCodePrefix>,
-        redirected_from: &'static str,
+        rules: Vec<&'static str>,
+        redirected_to: Vec<RuleCodePrefix>,
+        redirected_from: String,
     },
 }
 
@@ -84,8 +85,8 @@ impl FromStr for RuleSelector {
 
                 // If passed a deprecated category, get list of all rules in that category.
                 // There's a lot of duplicate code here, but it can be removed in release 0.8 or 0.9
-                if let Some((redirected_from, rules)) = get_deprecated_category(s) {
-                    let prefixes = rules
+                if let Some((rules, redirects)) = get_deprecated_category(s) {
+                    let redirected_to = redirects
                         .iter()
                         .map(|code| {
                             let (category, code) = Category::parse_code(code).unwrap();
@@ -93,8 +94,9 @@ impl FromStr for RuleSelector {
                         })
                         .collect();
                     return Ok(Self::DeprecatedCategory {
-                        prefixes,
-                        redirected_from,
+                        rules,
+                        redirected_to,
+                        redirected_from: s.to_string(),
                     });
                 }
 
@@ -150,16 +152,17 @@ pub enum ParseError {
 }
 
 impl RuleSelector {
-    pub fn prefix_and_code(&self) -> (&'static str, &'static str) {
+    pub fn prefix_and_code(&self) -> (String, String) {
         match self {
-            RuleSelector::All => ("", "ALL"),
-            RuleSelector::Prefix { prefix, .. } | RuleSelector::Rule { prefix, .. } => {
-                (prefix.category().common_prefix(), prefix.short_code())
-            }
-            RuleSelector::Category(l) => (l.common_prefix(), ""),
+            RuleSelector::All => ("".to_string(), "ALL".to_string()),
+            RuleSelector::Prefix { prefix, .. } | RuleSelector::Rule { prefix, .. } => (
+                prefix.category().common_prefix().to_string(),
+                prefix.short_code().to_string(),
+            ),
+            RuleSelector::Category(l) => (l.common_prefix().to_string(), "".to_string()),
             RuleSelector::DeprecatedCategory {
                 redirected_from, ..
-            } => (redirected_from, ""),
+            } => (redirected_from.to_string(), "".to_string()),
         }
     }
 }
@@ -216,8 +219,8 @@ impl RuleSelector {
             RuleSelector::Prefix { prefix, .. } | RuleSelector::Rule { prefix, .. } => {
                 RuleSelectorIter::Vec(prefix.clone().rules())
             }
-            RuleSelector::DeprecatedCategory { prefixes, .. } => RuleSelectorIter::Vec(
-                prefixes
+            RuleSelector::DeprecatedCategory { redirected_to, .. } => RuleSelectorIter::Vec(
+                redirected_to
                     .iter()
                     .flat_map(|prefix| prefix.clone().rules())
                     .collect::<Vec<_>>()

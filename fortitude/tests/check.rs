@@ -107,7 +107,9 @@ end program test
 
 
     ----- stderr -----
-    warning: `bugprone` has been remapped to `C001`, `C011`.
+    warning: The selector `bugprone` refers to a deprecated rule category.
+    warning: `B001` has been remapped to `C001`.
+    warning: `B011` has been remapped to `C011`.
     "#
     );
     Ok(())
