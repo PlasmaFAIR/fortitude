@@ -1,4 +1,4 @@
-# initialisation-in-declaration (T051)
+# initialisation-in-declaration (C081)
 This rule is turned on by default.
 
 ## What it does

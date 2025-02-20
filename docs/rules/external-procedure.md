@@ -1,4 +1,4 @@
-# external-procedure (T061)
+# external-procedure (C091)
 This rule is turned on by default.
 
 ## What does it do?

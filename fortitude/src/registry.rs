@@ -66,9 +66,6 @@ pub enum Category {
     /// Violation of style conventions.
     #[prefix = "S"]
     Style,
-    /// Misuse of types and kinds.
-    #[prefix = "T"]
-    Typing,
     /// Failure to use modules or use them appropriately.
     #[prefix = "M"]
     Modules,

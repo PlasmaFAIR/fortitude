@@ -46,6 +46,20 @@ mod tests {
         Ok(())
     }
 
+    #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201_ok.f90"))]
+    fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
+        let diagnostics = test_path(
+            Path::new("style").join(path).as_path(),
+            &[rule_code],
+            &Settings::default(),
+        )?;
+        assert!(
+            diagnostics.is_empty(),
+            "Test source has no warnings, but some were raised:\n{diagnostics}"
+        );
+        Ok(())
+    }
+
     #[test_case(Rule::LineTooLong, Path::new("S001_line_length_20.f90"))]
     fn line_too_long_line_length_20(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());

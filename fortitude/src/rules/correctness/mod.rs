@@ -1,6 +1,9 @@
 pub mod assumed_size;
+pub mod derived_default_init;
+pub mod external;
 pub mod implicit_kinds;
 pub mod implicit_typing;
+pub mod init_decls;
 pub mod intent;
 pub mod kind_suffixes;
 pub mod magic_numbers;
@@ -35,6 +38,9 @@ mod tests {
     #[test_case(Rule::MissingIntent, Path::new("C061.f90"))]
     #[test_case(Rule::AssumedSize, Path::new("C071.f90"))]
     #[test_case(Rule::AssumedSizeCharacterIntent, Path::new("C072.f90"))]
+    #[test_case(Rule::InitialisationInDeclaration, Path::new("C081.f90"))]
+    #[test_case(Rule::ExternalProcedure, Path::new("C091.f90"))]
+    #[test_case(Rule::MissingDefaultPointerInitalisation, Path::new("C101.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -44,6 +50,21 @@ mod tests {
         )?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Rule::ImplicitTyping, Path::new("C051_ok.f90"))]
+    #[test_case(Rule::InterfaceImplicitTyping, Path::new("C052_ok.f90"))]
+    fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
+        let diagnostics = test_path(
+            Path::new("correctness").join(path).as_path(),
+            &[rule_code],
+            &Settings::default(),
+        )?;
+        assert!(
+            diagnostics.is_empty(),
+            "Test source has no warnings, but some were raised:\n{diagnostics}"
+        );
         Ok(())
     }
 }

@@ -10,7 +10,6 @@ pub(crate) mod obsolescent;
 pub(crate) mod portability;
 pub(crate) mod style;
 pub(crate) mod testing;
-pub(crate) mod typing;
 pub mod utilities;
 use crate::registry::{AsRule, Category};
 
@@ -89,6 +88,10 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "061") => (RuleGroup::Stable, Ast, Default, correctness::intent::MissingIntent),
         (Correctness, "071") => (RuleGroup::Stable, Ast, Default, correctness::assumed_size::AssumedSize),
         (Correctness, "072") => (RuleGroup::Stable, Ast, Default, correctness::assumed_size::AssumedSizeCharacterIntent),
+        (Correctness, "081") => (RuleGroup::Stable, Ast, Default, correctness::init_decls::InitialisationInDeclaration),
+        (Correctness, "091") => (RuleGroup::Stable, Ast, Default, correctness::external::ExternalProcedure),
+        (Correctness, "101") => (RuleGroup::Preview, Ast, Default, correctness::derived_default_init::MissingDefaultPointerInitalisation),
+
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
         
@@ -110,10 +113,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "101") => (RuleGroup::Stable, Text, Default, style::whitespace::TrailingWhitespace),
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
         (Style, "201") => (RuleGroup::Stable, Ast, Default, style::implicit_none::SuperfluousImplicitNone),
-
-        (Typing, "051") => (RuleGroup::Stable, Ast, Default, typing::init_decls::InitialisationInDeclaration),
-        (Typing, "061") => (RuleGroup::Stable, Ast, Default, typing::external::ExternalProcedure),
-        (Typing, "071") => (RuleGroup::Preview, Ast, Default, typing::derived_default_init::MissingDefaultPointerInitalisation),
 
         (Obsolescent, "001") => (RuleGroup::Stable, Ast, Default, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Stable, Ast, Default, obsolescent::common_blocks::CommonBlock),

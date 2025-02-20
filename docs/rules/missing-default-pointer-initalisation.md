@@ -1,4 +1,4 @@
-# missing-default-pointer-initalisation (T071)
+# missing-default-pointer-initalisation (C101)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 This rule is turned on by default.
