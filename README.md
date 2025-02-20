@@ -64,25 +64,25 @@ You can select or ignore individual rules or whole groups with
 
 ```bash
 # Just check for missing `implicit none`
-fortitude check --select=T001
+fortitude check --select=C051
 # Also check for missing `implicit none` in interfaces
-fortitude check --select=T001,T002
+fortitude check --select=C051,C052
 # Ignore all styling rules
 fortitude check --ignore=S
-# Only check for typing rules, but ignore superfluous implicit none
-fortitude check --select=T --ignore=T003
+# Only check for style rules, but ignore superfluous implicit none
+fortitude check --select=S --ignore=S201
 # Rules and categories can also be referred to by name
-fortitude check --select=typing --ignore=superfluous-implicit-none
+fortitude check --select=style --ignore=superfluous-implicit-none
 ```
 
 Use `--output-format=concise` to get shorter output:
 
 ```bash
 $ fortitude check --output-format=concise
-test.f90:2:1: M001 function not contained within (sub)module or program
+test.f90:2:1: C111 function not contained within (sub)module or program
 test.f90:5:1: S061 end statement should read 'end function double'
-test.f90:7:1: M001 subroutine not contained within (sub)module or program
-test.f90:8:3: P021 real has implicit kind
+test.f90:7:1: C111 subroutine not contained within (sub)module or program
+test.f90:8:3: C022 real has implicit kind
 ```
 
 The `explain` command can be used to get extra information about any rules:
@@ -91,11 +91,11 @@ The `explain` command can be used to get extra information about any rules:
 # Print extra information for all rules
 fortitude explain
 # Only get information for selected rules
-fortitude explain T001 T011
+fortitude explain C001 C011
 # Print information on all style rules
 fortitude explain S
 # Rules and categories can also be referred to by name
-fortitude explain style superfluous-implicit-none
+fortitude explain obsolescent superfluous-implicit-none
 ```
 
 To see further commands and optional arguments, try using `--help`:
@@ -163,7 +163,7 @@ should be under the command name:
 
 ```toml
 [check]
-select = ["S", "T"]
+select = ["C", "E", "S"]
 ignore = ["S001", "S051"]
 line-length = 132
 ```
@@ -173,7 +173,7 @@ For `fpm.toml` files, this has to be additionally nested under the
 
 ```toml
 [extra.fortitude.check]
-select = ["S", "T"]
+select = ["C", "E", "S"]
 ignore = ["S001", "S051"]
 line-length = 132
 ```
@@ -182,8 +182,8 @@ You can use `--extend-select` from the command line to select additional
 rules on top of those in the configuration file.
 
 ```bash
-# Selects S, T, and M categories
-fortitude check --extend-select=M
+# Select correctness, error, style and obsolescent categories
+fortitude check --extend-select=OB
 ```
 
 ## Documentation
