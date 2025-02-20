@@ -1,5 +1,7 @@
+pub mod assumed_size;
 pub mod implicit_kinds;
 pub mod implicit_typing;
+pub mod intent;
 pub mod kind_suffixes;
 pub mod magic_numbers;
 pub mod missing_io_specifier;
@@ -30,6 +32,9 @@ mod tests {
     #[test_case(Rule::ImplicitTyping, Path::new("C051.f90"))]
     #[test_case(Rule::InterfaceImplicitTyping, Path::new("C052.f90"))]
     #[test_case(Rule::ImplicitExternalProcedures, Path::new("C053.f90"))]
+    #[test_case(Rule::MissingIntent, Path::new("C061.f90"))]
+    #[test_case(Rule::AssumedSize, Path::new("C071.f90"))]
+    #[test_case(Rule::AssumedSizeCharacterIntent, Path::new("C072.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

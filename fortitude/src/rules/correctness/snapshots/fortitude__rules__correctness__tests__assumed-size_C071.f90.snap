@@ -1,0 +1,54 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C071.f90:3:28: C071 'array' has assumed size
+  |
+1 | subroutine assumed_size_dimension(array, n, m, l, o, p, options, thing, q)
+2 |   integer, intent(in) :: n, m
+3 |   integer, dimension(n, m, *), intent(in) :: array
+  |                            ^ C071
+4 |   integer, intent(in) :: l(*), o, p(*)
+5 |   ! warning must be on the array part for characters
+  |
+
+./resources/test/fixtures/correctness/C071.f90:4:28: C071 'l' has assumed size
+  |
+2 |   integer, intent(in) :: n, m
+3 |   integer, dimension(n, m, *), intent(in) :: array
+4 |   integer, intent(in) :: l(*), o, p(*)
+  |                            ^ C071
+5 |   ! warning must be on the array part for characters
+6 |   character(len=*), dimension(*) :: options
+  |
+
+./resources/test/fixtures/correctness/C071.f90:4:37: C071 'p' has assumed size
+  |
+2 |   integer, intent(in) :: n, m
+3 |   integer, dimension(n, m, *), intent(in) :: array
+4 |   integer, intent(in) :: l(*), o, p(*)
+  |                                     ^ C071
+5 |   ! warning must be on the array part for characters
+6 |   character(len=*), dimension(*) :: options
+  |
+
+./resources/test/fixtures/correctness/C071.f90:6:31: C071 'options' has assumed size
+  |
+4 |   integer, intent(in) :: l(*), o, p(*)
+5 |   ! warning must be on the array part for characters
+6 |   character(len=*), dimension(*) :: options
+  |                               ^ C071
+7 |   character(*) :: thing(*)
+8 |   ! this is ok
+  |
+
+./resources/test/fixtures/correctness/C071.f90:7:25: C071 'thing' has assumed size
+  |
+5 |   ! warning must be on the array part for characters
+6 |   character(len=*), dimension(*) :: options
+7 |   character(*) :: thing(*)
+  |                         ^ C071
+8 |   ! this is ok
+9 |   character(*), intent(in) :: q
+  |

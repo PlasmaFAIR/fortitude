@@ -1,4 +1,4 @@
-# assumed-size (T041)
+# assumed-size (C071)
 This rule is turned on by default.
 
 ## What does it do?

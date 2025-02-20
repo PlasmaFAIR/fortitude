@@ -1,4 +1,4 @@
-# deprecated-assumed-size-character (T043)
+# deprecated-assumed-size-character (OB061)
 This rule is turned on by default.
 
 ## What does it do?

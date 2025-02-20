@@ -86,6 +86,9 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "051") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitTyping),
         (Correctness, "052") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::InterfaceImplicitTyping),
         (Correctness, "053") => (RuleGroup::Preview, Ast, Default, correctness::implicit_typing::ImplicitExternalProcedures),
+        (Correctness, "061") => (RuleGroup::Stable, Ast, Default, correctness::intent::MissingIntent),
+        (Correctness, "071") => (RuleGroup::Stable, Ast, Default, correctness::assumed_size::AssumedSize),
+        (Correctness, "072") => (RuleGroup::Stable, Ast, Default, correctness::assumed_size::AssumedSizeCharacterIntent),
         
         (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
         
@@ -108,10 +111,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
         (Style, "201") => (RuleGroup::Stable, Ast, Default, style::implicit_none::SuperfluousImplicitNone),
 
-        (Typing, "031") => (RuleGroup::Stable, Ast, Default, typing::intent::MissingIntent),
-        (Typing, "041") => (RuleGroup::Stable, Ast, Default, typing::assumed_size::AssumedSize),
-        (Typing, "042") => (RuleGroup::Stable, Ast, Default, typing::assumed_size::AssumedSizeCharacterIntent),
-        (Typing, "043") => (RuleGroup::Stable, Ast, Default, typing::assumed_size::DeprecatedAssumedSizeCharacter),
         (Typing, "051") => (RuleGroup::Stable, Ast, Default, typing::init_decls::InitialisationInDeclaration),
         (Typing, "061") => (RuleGroup::Stable, Ast, Default, typing::external::ExternalProcedure),
         (Typing, "071") => (RuleGroup::Preview, Ast, Default, typing::derived_default_init::MissingDefaultPointerInitalisation),
@@ -122,6 +121,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "031") => (RuleGroup::Preview, Ast, Default, obsolescent::specific_names::SpecificName),
         (Obsolescent, "041") => (RuleGroup::Preview, Ast, Default, obsolescent::computed_goto::ComputedGoTo),
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
+        (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::assumed_size_character_syntax::DeprecatedAssumedSizeCharacter),
 
 
         (Modules, "001") => (RuleGroup::Stable, Ast, Default, modules::external_functions::ProcedureNotInModule),

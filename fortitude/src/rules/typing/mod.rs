@@ -1,8 +1,6 @@
-pub mod assumed_size;
 pub mod derived_default_init;
 pub mod external;
 pub mod init_decls;
-pub mod intent;
 
 #[cfg(test)]
 mod tests {
@@ -18,10 +16,6 @@ mod tests {
     use crate::settings::Settings;
     use crate::test::test_path;
 
-    #[test_case(Rule::MissingIntent, Path::new("T031.f90"))]
-    #[test_case(Rule::AssumedSize, Path::new("T041.f90"))]
-    #[test_case(Rule::AssumedSizeCharacterIntent, Path::new("T042.f90"))]
-    #[test_case(Rule::DeprecatedAssumedSizeCharacter, Path::new("T043.f90"))]
     #[test_case(Rule::InitialisationInDeclaration, Path::new("T051.f90"))]
     #[test_case(Rule::ExternalProcedure, Path::new("T061.f90"))]
     #[test_case(Rule::MissingDefaultPointerInitalisation, Path::new("T071.f90"))]
