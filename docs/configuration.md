@@ -89,6 +89,8 @@ Options:
           See the settings fortitude will use to check a given Fortran file
       --show-files
           See the files fortitude will be run against with the current settings
+      --statistics
+          Show counts for every rule with at least one violation
   -h, --help
           Print help
 

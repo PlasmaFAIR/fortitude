@@ -785,14 +785,19 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         printer_flags |= PrinterFlags::SHOW_FIX_SUMMARY;
     }
 
-    Printer::new(
+    let printer = Printer::new(
         output_format,
         global_options.log_level(),
         printer_flags,
         fix_mode,
         unsafe_fixes,
-    )
-    .write_once(&results, &mut summary_writer)?;
+    );
+
+    if args.statistics {
+        printer.write_statistics(&results.diagnostics, &mut summary_writer)?;
+    } else {
+        printer.write_once(&results, &mut summary_writer)?;
+    }
 
     let diagnostics = results.diagnostics;
     if !args.exit_zero {

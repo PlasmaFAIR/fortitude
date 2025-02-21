@@ -288,10 +288,19 @@ pub struct CheckArgs {
         short,
         long,
         help_heading = "Miscellaneous",
-        conflicts_with = "exit_non_zero_on_fix"
+        conflicts_with = "exit_non_zero_on_fix",
+        conflicts_with = "statistics"
     )]
     pub exit_zero: bool,
     /// Exit with a non-zero status code if any files were modified via fix, even if no lint violations remain.
-    #[arg(long, help_heading = "Miscellaneous", conflicts_with = "exit_zero")]
+    #[arg(
+        long,
+        help_heading = "Miscellaneous",
+        conflicts_with = "exit_zero",
+        conflicts_with = "statistics"
+    )]
     pub exit_non_zero_on_fix: bool,
+    /// Show counts for every rule with at least one violation.
+    #[arg(long)]
+    pub statistics: bool,
 }

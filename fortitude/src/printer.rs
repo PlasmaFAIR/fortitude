@@ -1,19 +1,23 @@
 use std::cmp::Reverse;
+use std::fmt::Display;
 use std::io::Write;
 
 use anyhow::Result;
 use bitflags::bitflags;
 use colored::Colorize;
 use itertools::{iterate, Itertools};
+use serde::Serialize;
 
 use crate::check::CheckResults;
 use crate::diagnostics::{Diagnostics, FixMap};
 use crate::fs::relativize_path;
 use crate::logging::LogLevel;
 use crate::message::{
-    AzureEmitter, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
-    JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
+    AzureEmitter, DiagnosticMessage, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter,
+    JsonEmitter, JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter,
+    TextEmitter,
 };
+use crate::rules::Rule;
 use crate::settings::{FixMode, OutputFormat, UnsafeFixes};
 
 bitflags! {
@@ -25,6 +29,67 @@ bitflags! {
         const SHOW_FIX_SUMMARY = 0b0000_0100;
         /// Whether to show a diff of each fixed violation when emitting diagnostics.
         const SHOW_FIX_DIFF = 0b0000_1000;
+    }
+}
+
+#[derive(Serialize)]
+struct ExpandedStatistics {
+    code: Option<SerializeRuleAsCode>,
+    name: SerializeRuleAsTitle,
+    count: usize,
+    fixable: bool,
+}
+
+#[derive(Copy, Clone)]
+struct SerializeRuleAsCode(Rule);
+
+impl Serialize for SerializeRuleAsCode {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.0.noqa_code().to_string())
+    }
+}
+
+impl Display for SerializeRuleAsCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.noqa_code())
+    }
+}
+
+impl From<Rule> for SerializeRuleAsCode {
+    fn from(rule: Rule) -> Self {
+        Self(rule)
+    }
+}
+
+struct SerializeRuleAsTitle(Rule);
+
+impl Serialize for SerializeRuleAsTitle {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.0.as_ref())
+    }
+}
+
+impl Display for SerializeRuleAsTitle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.0.as_ref())
+    }
+}
+
+impl From<Option<Rule>> for SerializeRuleAsTitle {
+    fn from(rule: Option<Rule>) -> Self {
+        match rule {
+            Some(rule) => Self(rule),
+            // This is a bit weird, but it's because `DiagnosticMessage::rule`
+            // returns `Option<Rule>`, leftover from ruff which treats
+            // `SyntaxError` specially and we don't. Should just not return `Option` there
+            None => Self(Rule::SyntaxError),
+        }
     }
 }
 
@@ -222,6 +287,113 @@ impl Printer {
         }
 
         writer.flush()?;
+        Ok(())
+    }
+
+    pub(crate) fn write_statistics(
+        &self,
+        diagnostics: &Diagnostics,
+        writer: &mut dyn Write,
+    ) -> Result<()> {
+        let statistics: Vec<ExpandedStatistics> = diagnostics
+            .messages
+            .iter()
+            .sorted_by_key(|message| (message.rule(), message.fixable()))
+            .fold(
+                vec![],
+                |mut acc: Vec<(&DiagnosticMessage, usize)>, message| {
+                    if let Some((prev_message, count)) = acc.last_mut() {
+                        if prev_message.rule() == message.rule() {
+                            *count += 1;
+                            return acc;
+                        }
+                    }
+                    acc.push((message, 1));
+                    acc
+                },
+            )
+            .iter()
+            .map(|&(message, count)| ExpandedStatistics {
+                code: message.rule().map(std::convert::Into::into),
+                name: message.rule().into(),
+                count,
+                fixable: message.fixable(),
+            })
+            .sorted_by_key(|statistic| Reverse(statistic.count))
+            .collect();
+
+        if statistics.is_empty() {
+            return Ok(());
+        }
+
+        match self.format {
+            OutputFormat::Full | OutputFormat::Concise => {
+                // Compute the maximum number of digits in the count and code, for all messages,
+                // to enable pretty-printing.
+                let count_width = num_digits(
+                    statistics
+                        .iter()
+                        .map(|statistic| statistic.count)
+                        .max()
+                        .unwrap(),
+                );
+                let code_width = statistics
+                    .iter()
+                    .map(|statistic| {
+                        statistic
+                            .code
+                            .map_or_else(String::new, |rule| rule.to_string())
+                            .len()
+                    })
+                    .max()
+                    .unwrap();
+                let any_fixable = statistics.iter().any(|statistic| statistic.fixable);
+
+                let fixable = format!("[{}] ", "*".cyan());
+                let unfixable = "[ ] ";
+
+                // By default, we mimic Flake8's `--statistics` format.
+                for statistic in statistics {
+                    writeln!(
+                        writer,
+                        "{:>count_width$}\t{:<code_width$}\t{}{}",
+                        statistic.count.to_string().bold(),
+                        statistic
+                            .code
+                            .map_or_else(String::new, |rule| rule.to_string())
+                            .red()
+                            .bold(),
+                        if any_fixable {
+                            if statistic.fixable {
+                                &fixable
+                            } else {
+                                unfixable
+                            }
+                        } else {
+                            ""
+                        },
+                        statistic.name,
+                    )?;
+                }
+
+                if any_fixable {
+                    writeln!(writer, "[*] fixable with `fortitude check --fix`",)?;
+                }
+                return Ok(());
+            }
+            OutputFormat::Json => {
+                writeln!(writer, "{}", serde_json::to_string_pretty(&statistics)?)?;
+            }
+            _ => {
+                anyhow::bail!(
+                    "Unsupported serialization format for statistics: {:?}",
+                    self.format
+                )
+            }
+        }
+
+        writer.flush()?;
+
         Ok(())
     }
 }

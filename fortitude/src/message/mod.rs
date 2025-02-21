@@ -94,6 +94,7 @@ impl DiagnosticMessage {
         self.fix().is_some()
     }
 
+    // TODO (peter): Don't return `Option`?
     /// Returns the [`Rule`] corresponding to the diagnostic message.
     pub fn rule(&self) -> Option<Rule> {
         Some(self.kind.rule())
