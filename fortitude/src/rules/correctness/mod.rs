@@ -3,7 +3,6 @@ pub mod assumed_size;
 pub mod derived_default_init;
 pub mod exit_labels;
 pub mod external;
-pub mod external_functions;
 pub mod implicit_kinds;
 pub mod implicit_typing;
 pub mod init_decls;
@@ -44,8 +43,8 @@ mod tests {
     #[test_case(Rule::AssumedSizeCharacterIntent, Path::new("C072.f90"))]
     #[test_case(Rule::InitialisationInDeclaration, Path::new("C081.f90"))]
     #[test_case(Rule::ExternalProcedure, Path::new("C091.f90"))]
+    #[test_case(Rule::ProcedureNotInModule, Path::new("C092.f90"))]
     #[test_case(Rule::MissingDefaultPointerInitalisation, Path::new("C101.f90"))]
-    #[test_case(Rule::ProcedureNotInModule, Path::new("C111.f90"))]
     #[test_case(Rule::UseAll, Path::new("C121.f90"))]
     #[test_case(Rule::MissingIntrinsic, Path::new("C122.f90"))]
     #[test_case(Rule::MissingAccessibilityStatement, Path::new("C131.f90"))]
