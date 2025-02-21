@@ -1,4 +1,4 @@
-# implicit-external-procedures (C053)
+# implicit-external-procedures (C003)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 This rule is turned on by default.

@@ -3,20 +3,20 @@ source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C051.f90:1:1: C051 module missing 'implicit none'
+./resources/test/fixtures/correctness/C001.f90:1:1: C001 module missing 'implicit none'
   |
 1 | module my_module
-  | ^^^^^^^^^^^^^^^^ C051
+  | ^^^^^^^^^^^^^^^^ C001
 2 |   parameter(N = 1)
 3 | end module my_module
   |
 
-./resources/test/fixtures/correctness/C051.f90:5:1: C051 program missing 'implicit none'
+./resources/test/fixtures/correctness/C001.f90:5:1: C001 program missing 'implicit none'
   |
 3 | end module my_module
 4 |
 5 | program my_program
-  | ^^^^^^^^^^^^^^^^^^ C051
+  | ^^^^^^^^^^^^^^^^^^ C001
 6 |   write(*,*) 42
 7 | end program my_program
   |

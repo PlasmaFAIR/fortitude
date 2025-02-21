@@ -29,16 +29,16 @@ mod tests {
     use crate::settings::Settings;
     use crate::test::test_path;
 
-    #[test_case(Rule::MissingDefaultCase, Path::new("C001.f90"))]
-    #[test_case(Rule::TrailingBackslash, Path::new("C011.F90"))]
+    #[test_case(Rule::ImplicitTyping, Path::new("C001.f90"))]
+    #[test_case(Rule::InterfaceImplicitTyping, Path::new("C002.f90"))]
+    #[test_case(Rule::ImplicitExternalProcedures, Path::new("C003.f90"))]
+    #[test_case(Rule::MissingDefaultCase, Path::new("C011.f90"))]
     #[test_case(Rule::NoRealSuffix, Path::new("C021.f90"))]
     #[test_case(Rule::ImplicitRealKind, Path::new("C022.f90"))]
     #[test_case(Rule::MagicNumberInArraySize, Path::new("C031.f90"))]
     #[test_case(Rule::MagicIoUnit, Path::new("C032.f90"))]
     #[test_case(Rule::MissingActionSpecifier, Path::new("C041.f90"))]
-    #[test_case(Rule::ImplicitTyping, Path::new("C051.f90"))]
-    #[test_case(Rule::InterfaceImplicitTyping, Path::new("C052.f90"))]
-    #[test_case(Rule::ImplicitExternalProcedures, Path::new("C053.f90"))]
+    #[test_case(Rule::TrailingBackslash, Path::new("C051.F90"))]
     #[test_case(Rule::MissingIntent, Path::new("C061.f90"))]
     #[test_case(Rule::AssumedSize, Path::new("C071.f90"))]
     #[test_case(Rule::AssumedSizeCharacterIntent, Path::new("C072.f90"))]
@@ -63,8 +63,8 @@ mod tests {
         Ok(())
     }
 
-    #[test_case(Rule::ImplicitTyping, Path::new("C051_ok.f90"))]
-    #[test_case(Rule::InterfaceImplicitTyping, Path::new("C052_ok.f90"))]
+    #[test_case(Rule::ImplicitTyping, Path::new("C001_ok.f90"))]
+    #[test_case(Rule::InterfaceImplicitTyping, Path::new("C002_ok.f90"))]
     fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
         let diagnostics = test_path(
             Path::new("correctness").join(path).as_path(),

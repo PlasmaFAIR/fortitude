@@ -1,4 +1,4 @@
-# implicit-typing (C051)
+# implicit-typing (C001)
 This rule is turned on by default.
 
 ## What does it do?

@@ -1,8 +1,6 @@
 # superfluous-implicit-none (S201)
 Fix is always available.
 
-This rule is turned on by default.
-
 ## What it does
 Checks for unnecessary `implicit none` in module procedures
 

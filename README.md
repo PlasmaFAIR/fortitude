@@ -64,9 +64,9 @@ You can select or ignore individual rules or whole groups with
 
 ```bash
 # Just check for missing `implicit none`
-fortitude check --select=C051
+fortitude check --select=C001
 # Also check for missing `implicit none` in interfaces
-fortitude check --select=C051,C052
+fortitude check --select=C001,C002
 # Ignore all styling rules
 fortitude check --ignore=S
 # Only check for style rules, but ignore superfluous implicit none

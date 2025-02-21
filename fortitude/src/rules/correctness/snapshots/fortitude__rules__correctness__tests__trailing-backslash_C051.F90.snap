@@ -3,12 +3,12 @@ source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C011.F90:7:22: C011 Trailing backslash
+./resources/test/fixtures/correctness/C051.F90:7:22: C051 Trailing backslash
   |
 5 |     real :: A
 6 |
 7 |     ! Just a comment \
-  |                      ^ C011
+  |                      ^ C051
 8 |     A = 2.0
 9 |     print *, A
   |

@@ -3,11 +3,11 @@ source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C053.f90:2:3: C053 [*] 'implicit none' missing 'external'
+./resources/test/fixtures/correctness/C003.f90:2:3: C003 [*] 'implicit none' missing 'external'
   |
 1 | module a
 2 |   implicit none
-  |   ^^^^^^^^^^^^^ C053
+  |   ^^^^^^^^^^^^^ C003
 3 | end module a
   |
   = help: Add `(external)` to 'implicit none'
@@ -20,11 +20,11 @@ snapshot_kind: text
 4 4 | 
 5 5 | module b
 
-./resources/test/fixtures/correctness/C053.f90:6:3: C053 [*] 'implicit none' missing 'external'
+./resources/test/fixtures/correctness/C003.f90:6:3: C003 [*] 'implicit none' missing 'external'
   |
 5 | module b
 6 |   implicit none (type)
-  |   ^^^^^^^^^^^^^^^^^^^^ C053
+  |   ^^^^^^^^^^^^^^^^^^^^ C003
 7 | end module b
   |
   = help: Add `(external)` to 'implicit none'

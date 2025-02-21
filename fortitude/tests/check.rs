@@ -75,17 +75,17 @@ end program test
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C011 Trailing backslash
+    [TEMP_FILE] C051 Trailing backslash
       |
     3 |     implicit none
     4 |     integer :: i
     5 |     i = 1  ! Comment ending with backslash\
-      |                                           ^ C011
+      |                                           ^ C051
     6 |     select case (i)  ! Select without default
     7 |         case(1)
       |
 
-    [TEMP_FILE] C001 Missing default case may not handle all values
+    [TEMP_FILE] C011 Missing default case may not handle all values
        |
      4 |       integer :: i
      5 |       i = 1  ! Comment ending with backslash\
@@ -93,7 +93,7 @@ end program test
      7 | |         case(1)
      8 | |             print *, "one"
      9 | |     end select
-       | |______________^ C001
+       | |______________^ C011
     10 |   end program test
        |
        = help: Add 'case default'
@@ -108,8 +108,8 @@ end program test
 
     ----- stderr -----
     warning: The selector `bugprone` refers to a deprecated rule category.
-    warning: `B001` has been remapped to `C001`.
-    warning: `B011` has been remapped to `C011`.
+    warning: `B001` has been remapped to `C011`.
+    warning: `B011` has been remapped to `C051`.
     "#
     );
     Ok(())
@@ -166,16 +166,16 @@ end program
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S061,C051,PORT011,PORT021")
+                         .arg("--select=S061,C001,PORT011,PORT021")
                          .arg(test_file),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C051 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -238,15 +238,15 @@ end program
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg(test_file)
-                         .arg("--select=C051,style"),
+                         .arg("--select=C001,style"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C051 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -292,7 +292,7 @@ end program
         &config_file,
         r#"
 [check]
-select = ["C051", "style"]
+select = ["C001", "style"]
 "#,
     )?;
 
@@ -305,10 +305,10 @@ select = ["C051", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C051 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -354,7 +354,7 @@ end program
         &config_file,
         r#"
 [check]
-select = ["C051"]
+select = ["C001"]
 "#,
     )?;
 
@@ -369,10 +369,10 @@ select = ["C051"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C051 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -418,7 +418,7 @@ end program
         &config_file,
         r#"
 [extra.fortitude.check]
-select = ["C051", "style"]
+select = ["C001", "style"]
 "#,
     )?;
 
@@ -431,10 +431,10 @@ select = ["C051", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C051 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -483,7 +483,7 @@ end program foo
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S071,C022,S201,C053")
+                         .arg("--select=S071,C022,S201,C003")
                          .arg("--preview")
                          .arg("--fix")
                          .arg(&test_file),
@@ -491,11 +491,11 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C053 'implicit none' missing 'external'
+    [TEMP_FILE] C003 'implicit none' missing 'external'
       |
     2 | program foo
     3 |   implicit none
-      |   ^^^^^^^^^^^^^ C053
+      |   ^^^^^^^^^^^^^ C003
     4 |   real :: i
     5 |   i = 4.0
       |
@@ -562,7 +562,7 @@ end program foo
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S071,C022,S201,C053")
+                         .arg("--select=S071,C022,S201,C003")
                          .arg("--preview")
                          .arg("--fix")
                          .arg("--unsafe-fixes")
@@ -773,50 +773,50 @@ end module {file}{idx}
     success: false
     exit_code: 1
     ----- stdout -----
-    bar0.f90:2:1: C051 module missing 'implicit none'
+    bar0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module bar0
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    baz0.f90:2:1: C051 module missing 'implicit none'
+    baz0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module baz0
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    foo0.f90:2:1: C051 module missing 'implicit none'
+    foo0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo0
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/bar1.f90:2:1: C051 module missing 'implicit none'
+    nested/bar1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module bar1
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/baz1.f90:2:1: C051 module missing 'implicit none'
+    nested/baz1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module baz1
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/foo1.f90:2:1: C051 module missing 'implicit none'
+    nested/foo1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo1
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -880,34 +880,34 @@ end module {file}{idx}
     success: false
     exit_code: 1
     ----- stdout -----
-    baz0.f90:2:1: C051 module missing 'implicit none'
+    baz0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module baz0
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    foo0.f90:2:1: C051 module missing 'implicit none'
+    foo0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo0
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/baz1.f90:2:1: C051 module missing 'implicit none'
+    nested/baz1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module baz1
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/foo1.f90:2:1: C051 module missing 'implicit none'
+    nested/foo1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo1
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -977,18 +977,18 @@ fn check_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    base.f90:2:1: C051 module missing 'implicit none'
+    base.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    foo/foo.f90:2:1: C051 module missing 'implicit none'
+    foo/foo.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo
-      | ^^^^^^^^^^ C051
+      | ^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -1022,10 +1022,10 @@ fn check_extend_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    base.f90:2:1: C051 module missing 'implicit none'
+    base.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -1059,10 +1059,10 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    foo/foo.f90:2:1: C051 module missing 'implicit none'
+    foo/foo.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo
-      | ^^^^^^^^^^ C051
+      | ^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -1122,10 +1122,10 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    .venv/lib/site-packages/numpy/numpy.f90:2:1: C051 module missing 'implicit none'
+    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module numpy
-      | ^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -1175,7 +1175,7 @@ fn check_per_line_ignores() -> anyhow::Result<()> {
     fs::write(
         &test_file,
         r#"
-! allow(C051, unnamed-end-statement, literal-kind)
+! allow(C001, unnamed-end-statement, literal-kind)
 program test
   ! allow(star-kind)
   logical*4, parameter :: true = .true.
@@ -1189,7 +1189,7 @@ end program test
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg(test_file)
-                         .args(["--select=C051,S061,PORT011,PORT021,S101"]),
+                         .args(["--select=C001,S061,PORT011,PORT021,S101"]),
                          @r"
     success: false
     exit_code: 1
@@ -1350,17 +1350,17 @@ end program myprogram
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S001,S091,C051")
+                         .arg("--select=S001,S091,C001")
                          .current_dir(tempdir.path()),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
     myfile.ff:1:1: S091 file extension should be '.f90' or '.F90'
-    myfile.ff:2:1: C051 program missing 'implicit none'
+    myfile.ff:2:1: C001 program missing 'implicit none'
       |
     2 | program myprogram
-      | ^^^^^^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^^^^^^ C001
     3 | end program myprogram
       |
 
@@ -1442,18 +1442,18 @@ fn check_gitignore() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    include.f90:2:1: C051 module missing 'implicit none'
+    include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/include.f90:2:1: C051 module missing 'implicit none'
+    include/include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module include
-      | ^^^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -1485,66 +1485,66 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    exclude.f90:2:1: C051 module missing 'implicit none'
+    exclude.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    exclude/exclude.f90:2:1: C051 module missing 'implicit none'
+    exclude/exclude.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module exclude
-      | ^^^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    exclude/include.f90:2:1: C051 module missing 'implicit none'
+    exclude/include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module exclude
-      | ^^^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include.f90:2:1: C051 module missing 'implicit none'
+    include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/exclude.f90:2:1: C051 module missing 'implicit none'
+    include/exclude.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module include
-      | ^^^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/exclude/exclude.f90:2:1: C051 module missing 'implicit none'
+    include/exclude/exclude.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module exclude
-      | ^^^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/exclude/include.f90:2:1: C051 module missing 'implicit none'
+    include/exclude/include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module exclude
-      | ^^^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/include.f90:2:1: C051 module missing 'implicit none'
+    include/include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module include
-      | ^^^^^^^^^^^^^^ C051
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |

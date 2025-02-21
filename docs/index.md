@@ -72,13 +72,13 @@ You can select or ignore individual rules or whole groups with
 
 ```bash
 # Just check for missing `implicit none`
-fortitude check --select=C051
+fortitude check --select=C001
 # Also check for missing `implicit none` in interfaces
-fortitude check --select=C051,C052
+fortitude check --select=C001,C002
 # Ignore all styling rules
 fortitude check --ignore=S
 # Only check for style rules, but ignore superfluous implicit none
-fortitude check --select=S --ignore=T003
+fortitude check --select=S --ignore=S201
 # Rules and categories can also be referred to by name
 fortitude check --select=style --ignore=superfluous-implicit-none
 ```
@@ -140,7 +140,7 @@ should be under the command name:
 ```toml
 [check]
 select = ["C", "E", "S"]
-ignore = ["S001", "S051"]
+ignore = ["S001", "S082"]
 line-length = 132
 ```
 
@@ -150,7 +150,7 @@ For `fpm.toml` files, this has to be additionally nested under the
 ```toml
 [extra.fortitude.check]
 select = ["C", "E", "S"]
-ignore = ["S001", "S051"]
+ignore = ["S001", "S082"]
 line-length = 132
 ```
 
