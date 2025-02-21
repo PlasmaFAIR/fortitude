@@ -18,7 +18,7 @@ mod tests {
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
-            Path::new("modernization").join(path).as_path(),
+            Path::new("modernisation").join(path).as_path(),
             &[rule_code],
             &Settings::default(),
         )?;

@@ -62,7 +62,7 @@ pub enum Category {
     /// Update to modern Fortran features. Used for less severe issues than `Obsolescent`,
     /// and goes beyond recommendations in the Fortran standard.
     #[prefix = "MOD"]
-    Modernization,
+    Modernisation,
     /// Violation of style conventions.
     #[prefix = "S"]
     Style,

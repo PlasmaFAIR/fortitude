@@ -49,7 +49,7 @@
 | OB051 | [pause-statement](rules/pause-statement.md) | `pause` statements are a deleted feature | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | OB061 | [deprecated-assumed-size-character](rules/deprecated-assumed-size-character.md) | character '{name}' uses deprecated syntax for assumed size | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 
-### Modernization (MOD)
+### Modernisation (MOD)
 
 | Code | Name | Message | |
 | ---- | ---- | ------- | ------: |

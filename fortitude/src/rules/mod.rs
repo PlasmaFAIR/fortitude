@@ -4,7 +4,7 @@
 mod macros;
 pub(crate) mod correctness;
 pub(crate) mod error;
-pub(crate) mod modernization;
+pub(crate) mod modernisation;
 pub(crate) mod obsolescent;
 pub(crate) mod portability;
 pub(crate) mod style;
@@ -97,7 +97,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "132") => (RuleGroup::Preview, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
         (Correctness, "141") => (RuleGroup::Preview, Ast, Optional, correctness::include_statement::IncludeStatement),
         
-        (Modernization, "001") => (RuleGroup::Stable, Ast, Optional, modernization::double_precision::DoublePrecision),
+        (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),
         
         (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::magic_io_unit::NonPortableIoUnit),
         (Portability, "011") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKind),
