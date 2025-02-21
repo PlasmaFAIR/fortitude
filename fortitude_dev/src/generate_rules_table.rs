@@ -19,6 +19,8 @@ const PREVIEW_SYMBOL: &str = "🧪";
 const REMOVED_SYMBOL: &str = "❌";
 const WARNING_SYMBOL: &str = "⚠️";
 const STABLE_SYMBOL: &str = "✔️";
+const DEFAULT_SYMBOL: &str = "▶️";
+const PEDANTIC_SYMBOL: &str = "⏸️";
 const SPACER: &str = "&nbsp;&nbsp;&nbsp;&nbsp;";
 
 fn generate_table(
@@ -57,7 +59,16 @@ fn generate_table(
             }
         };
 
-        let tokens = format!("{status_token} {fix_token}");
+        let default_token = match rule.is_default() {
+            true => {
+                format!("<span title='Rule turned on by default'>{DEFAULT_SYMBOL}</span>")
+            }
+            false => {
+                format!("<span title='Rule not on by default'>{PEDANTIC_SYMBOL}</span>")
+            }
+        };
+
+        let tokens = format!("{status_token} {fix_token} {default_token}");
 
         let rule_name = rule.as_ref();
 
@@ -135,6 +146,17 @@ pub(crate) fn generate() -> String {
         "{SPACER}{FIX_SYMBOL}{SPACER} The rule is automatically fixable by the `--fix` command-line option."
     ));
     table_out.push_str("<br />");
+
+    table_out.push_str(&format!(
+        "{SPACER}{DEFAULT_SYMBOL}{SPACER} The rule is turned on by default."
+    ));
+    table_out.push_str("<br />");
+
+    table_out.push_str(&format!(
+        "{SPACER}{PEDANTIC_SYMBOL}{SPACER} The rule is turned off by default."
+    ));
+    table_out.push_str("<br />");
+
     table_out.push('\n');
 
     for linter in Category::iter() {

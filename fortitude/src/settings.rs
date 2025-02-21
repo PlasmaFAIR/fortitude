@@ -7,13 +7,16 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_diagnostics::Applicability;
 use ruff_macros::CacheKey;
 use serde::{de, Deserialize, Deserializer, Serialize};
+use strum::IntoEnumIterator;
 
 use crate::display_settings;
 use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
+use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
 
@@ -177,8 +180,19 @@ impl fmt::Display for PreviewMode {
     }
 }
 
-/// Default rule selection
-pub const DEFAULT_SELECTORS: &[RuleSelector] = &[RuleSelector::All];
+lazy_static! {
+    /// Default rule selection
+    pub static ref DEFAULT_SELECTORS: Vec<RuleSelector> = {
+        Rule::iter()
+            .filter(Rule::is_default)
+            .map(|rule| {
+                let code = rule.noqa_code();
+                let code = format!("{}{}", code.prefix(), code.suffix());
+                RuleSelector::from_str(code.as_str()).unwrap()
+            })
+            .collect()
+    };
+}
 
 /// Toggle for unsafe fixes.
 /// `Hint` will not apply unsafe fixes but a message will be shown when they are available.

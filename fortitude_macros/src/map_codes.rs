@@ -33,6 +33,8 @@ struct RuleMeta {
     path: Path,
     /// The rule attributes, e.g. for feature gates
     attrs: Vec<Attribute>,
+    /// Whether this is a `Default` rule, or `Optional`
+    defaultness: Path,
 }
 
 pub(crate) fn map_codes(func: &ItemFn) -> syn::Result<TokenStream> {
@@ -259,6 +261,7 @@ fn generate_rule_to_code(
 
     let mut rule_noqa_code_match_arms = quote!();
     let mut rule_group_match_arms = quote!();
+    let mut rule_defaultness_arms = quote!();
 
     for (rule, codes) in rule_to_codes {
         let rule_name = rule.segments.last().unwrap();
@@ -274,6 +277,7 @@ fn generate_rule_to_code(
             code,
             group,
             attrs,
+            defaultness,
             ..
         } = codes
             .iter()
@@ -287,6 +291,12 @@ fn generate_rule_to_code(
 
         rule_group_match_arms.extend(quote! {
             #(#attrs)* Rule::#rule_name => #group,
+        });
+
+        let is_default = defaultness.is_ident("Default");
+
+        rule_defaultness_arms.extend(quote! {
+            #(#attrs)* Rule::#rule_name => #is_default,
         });
     }
 
@@ -322,6 +332,12 @@ fn generate_rule_to_code(
 
             pub fn is_removed(&self) -> bool {
                 matches!(self.group(), RuleGroup::Removed)
+            }
+
+            pub fn is_default(&self) -> bool {
+                match self {
+                    #rule_defaultness_arms
+                }
             }
         }
 
@@ -715,6 +731,20 @@ impl Parse for RuleMeta {
         }
 
         let _: Token!(,) = pat_tuple.parse()?;
+        let defaultness: Path = pat_tuple.parse()?;
+        let defaultness_is_valid =
+            defaultness.is_ident("Default") || defaultness.is_ident("Optional");
+        if !defaultness_is_valid {
+            let defaultness = defaultness.get_ident().unwrap();
+            return Err(syn::Error::new(
+                pat_tuple.span(),
+                format!(
+                    "Invalid defaultness '{defaultness}', expected one of 'Default' or 'Optional'"
+                ),
+            ));
+        }
+
+        let _: Token!(,) = pat_tuple.parse()?;
         let rule_path: Path = pat_tuple.parse()?;
         let _: Token!(,) = input.parse()?;
         let rule_name = rule_path.segments.last().unwrap().ident.clone();
@@ -726,6 +756,7 @@ impl Parse for RuleMeta {
             kind,
             path: rule_path,
             attrs,
+            defaultness,
         })
     }
 }

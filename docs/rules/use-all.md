@@ -1,4 +1,6 @@
 # use-all (M011)
+This rule is turned on by default.
+
 ## What it does
 Checks whether `use` statements are used correctly.
 
