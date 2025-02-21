@@ -84,7 +84,6 @@ impl FromStr for RuleSelector {
                 }
 
                 // If passed a deprecated category, get list of all rules in that category.
-                // There's a lot of duplicate code here, but it can be removed in release 0.8 or 0.9
                 if let Some((rules, redirects)) = get_deprecated_category(s) {
                     let redirected_to = redirects
                         .iter()
@@ -287,9 +286,7 @@ impl RuleSelector {
     pub fn specificity(&self) -> Specificity {
         match self {
             RuleSelector::All => Specificity::All,
-            RuleSelector::Category(..) | RuleSelector::DeprecatedCategory { .. } => {
-                Specificity::Category
-            }
+            RuleSelector::Category(..) => Specificity::Category,
             RuleSelector::Rule { .. } => Specificity::Rule,
             RuleSelector::Prefix { prefix, .. } => {
                 let prefix: &'static str = prefix.short_code();
@@ -299,6 +296,23 @@ impl RuleSelector {
                     3 => Specificity::Prefix3Chars,
                     4 => Specificity::Prefix4Chars,
                     _ => panic!("RuleSelector::specificity doesn't yet support codes with so many characters"),
+                }
+            }
+            RuleSelector::DeprecatedCategory {
+                redirected_from, ..
+            } => {
+                let prefix = redirected_from
+                    .chars()
+                    .filter(|c| c.is_numeric())
+                    .collect::<String>();
+                match prefix.len() {
+                    0 => Specificity::Category,
+                    1 => Specificity::Prefix1Char,
+                    2 => Specificity::Prefix2Chars,
+                    3 => Specificity::Rule,
+                    _ => panic!(
+                        "Deprecated category rule codes should have exactly 3 numerical characters"
+                    ),
                 }
             }
         }
