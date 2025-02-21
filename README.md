@@ -164,7 +164,7 @@ should be under the command name:
 ```toml
 [check]
 select = ["C", "E", "S"]
-ignore = ["S001", "S051"]
+ignore = ["S001", "S082"]
 line-length = 132
 ```
 
@@ -174,7 +174,7 @@ For `fpm.toml` files, this has to be additionally nested under the
 ```toml
 [extra.fortitude.check]
 select = ["C", "E", "S"]
-ignore = ["S001", "S051"]
+ignore = ["S001", "S082"]
 line-length = 132
 ```
 
