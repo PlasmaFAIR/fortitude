@@ -1,4 +1,4 @@
-# non-standard-file-extension (F001)
+# non-standard-file-extension (S091)
 This rule is turned on by default.
 
 ## What it does

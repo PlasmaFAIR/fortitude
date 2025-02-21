@@ -1,4 +1,4 @@
-# assumed-size-character-intent (T042)
+# assumed-size-character-intent (C072)
 This rule is turned on by default.
 
 ## What does it do?

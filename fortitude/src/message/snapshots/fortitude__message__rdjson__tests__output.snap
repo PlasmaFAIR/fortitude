@@ -7,7 +7,7 @@ snapshot_kind: text
   "diagnostics": [
     {
       "code": {
-        "value": "T003"
+        "value": "S201"
       },
       "location": {
         "path": "test.f90",
@@ -60,7 +60,7 @@ snapshot_kind: text
     },
     {
       "code": {
-        "value": "T021"
+        "value": "PORT021"
       },
       "location": {
         "path": "star_kind.f90",

@@ -1,4 +1,4 @@
-# non-portable-io-unit (IO012)
+# non-portable-io-unit (PORT001)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does

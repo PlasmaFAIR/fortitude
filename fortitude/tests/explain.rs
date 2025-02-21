@@ -10,7 +10,7 @@ fn explain_all() -> anyhow::Result<()> {
         .arg("explain")
         .assert()
         .success()
-        .stdout(predicate::str::contains("T001"))
+        .stdout(predicate::str::contains("C001"))
         .stdout(predicate::str::contains("S061"));
 
     Ok(())
@@ -32,10 +32,10 @@ fn explain_nonexistent_rule() -> anyhow::Result<()> {
 fn explain_one_rule() -> anyhow::Result<()> {
     Command::cargo_bin(BIN_NAME)?
         .arg("explain")
-        .arg("T001")
+        .arg("C001")
         .assert()
         .success()
-        .stdout(predicate::str::contains("T001"))
+        .stdout(predicate::str::contains("C001"))
         .stdout(predicate::str::contains("S061").count(0));
 
     Ok(())
@@ -48,7 +48,7 @@ fn explain_one_rule_by_name() -> anyhow::Result<()> {
         .arg("implicit-typing")
         .assert()
         .success()
-        .stdout(predicate::str::contains("T001"))
+        .stdout(predicate::str::contains("C001"))
         .stdout(predicate::str::contains("S061").count(0));
 
     Ok(())
@@ -58,11 +58,11 @@ fn explain_one_rule_by_name() -> anyhow::Result<()> {
 fn explain_category() -> anyhow::Result<()> {
     Command::cargo_bin(BIN_NAME)?
         .arg("explain")
-        .arg("T")
+        .arg("C")
         .assert()
         .success()
-        .stdout(predicate::str::contains("T001"))
-        .stdout(predicate::str::contains("T002"))
+        .stdout(predicate::str::contains("C001"))
+        .stdout(predicate::str::contains("C002"))
         .stdout(predicate::str::contains("S061").count(0));
 
     Ok(())
@@ -72,11 +72,11 @@ fn explain_category() -> anyhow::Result<()> {
 fn explain_category_by_name() -> anyhow::Result<()> {
     Command::cargo_bin(BIN_NAME)?
         .arg("explain")
-        .arg("typing")
+        .arg("correctness")
         .assert()
         .success()
-        .stdout(predicate::str::contains("T001"))
-        .stdout(predicate::str::contains("T002"))
+        .stdout(predicate::str::contains("C001"))
+        .stdout(predicate::str::contains("C002"))
         .stdout(predicate::str::contains("S061").count(0));
 
     Ok(())
@@ -86,15 +86,15 @@ fn explain_category_by_name() -> anyhow::Result<()> {
 fn explain_mixed_multiple() -> anyhow::Result<()> {
     Command::cargo_bin(BIN_NAME)?
         .arg("explain")
-        .arg("T")
+        .arg("OB")
         .arg("use-all")
-        .arg("P021")
+        .arg("S201")
         .assert()
         .success()
-        .stdout(predicate::str::contains("T001"))
-        .stdout(predicate::str::contains("T002"))
-        .stdout(predicate::str::contains("M011"))
-        .stdout(predicate::str::contains("P021"))
+        .stdout(predicate::str::contains("OB001"))
+        .stdout(predicate::str::contains("OB011"))
+        .stdout(predicate::str::contains("C121"))
+        .stdout(predicate::str::contains("S201"))
         .stdout(predicate::str::contains("S061").count(0));
 
     Ok(())

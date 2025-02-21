@@ -453,6 +453,19 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
             {
                 redirects.insert(redirect_from, prefix);
             }
+            if let RuleSelector::DeprecatedCategory {
+                rules,
+                redirected_to,
+                redirected_from,
+            } = selector
+            {
+                warn_user_once_by_message!(
+                    "The selector `{redirected_from}` refers to a deprecated rule category."
+                );
+                for (from, to) in rules.iter().zip(redirected_to.iter()) {
+                    redirects.insert(from, to);
+                }
+            }
         }
     }
 
@@ -470,9 +483,7 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
                 "The following rules have been removed and cannot be selected:".to_string();
             for selection in removed_selectors {
                 let (prefix, code) = selection.prefix_and_code();
-                message.push_str("\n    - ");
-                message.push_str(prefix);
-                message.push_str(code);
+                message.push_str(format!("\n    - {prefix}{code}").as_str());
             }
             message.push('\n');
             return Err(anyhow!(message));
@@ -483,9 +494,7 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
         let mut rules = String::new();
         for selection in removed_ignored_rules.iter().sorted() {
             let (prefix, code) = selection.prefix_and_code();
-            rules.push_str("\n    - ");
-            rules.push_str(prefix);
-            rules.push_str(code);
+            rules.push_str(format!("\n    - {prefix}{code}").as_str());
         }
         rules.push('\n');
         warn_user_once_by_message!(
@@ -521,9 +530,7 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
                 let mut message = "Selection of deprecated rules is not allowed when preview is enabled. Remove selection of:".to_string();
                 for selection in deprecated_selectors {
                     let (prefix, code) = selection.prefix_and_code();
-                    message.push_str("\n\t- ");
-                    message.push_str(prefix);
-                    message.push_str(code);
+                    message.push_str(format!("\n\t- {prefix}{code}").as_str());
                 }
                 message.push('\n');
                 return Err(anyhow!(message));

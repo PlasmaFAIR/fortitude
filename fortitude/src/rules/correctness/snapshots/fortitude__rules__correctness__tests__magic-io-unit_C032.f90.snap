@@ -1,0 +1,67 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C032.f90:4:8: C032 Magic unit '10' in IO statement
+  |
+2 |   implicit none
+3 |   integer :: i, named_unit
+4 |   open(10, file="test.txt", action="read")
+  |        ^^ C032
+5 |   read(10, *) i
+6 |   close(10)
+  |
+  = help: Replace with named variable
+
+./resources/test/fixtures/correctness/C032.f90:5:8: C032 Magic unit '10' in IO statement
+  |
+3 |   integer :: i, named_unit
+4 |   open(10, file="test.txt", action="read")
+5 |   read(10, *) i
+  |        ^^ C032
+6 |   close(10)
+  |
+  = help: Replace with named variable
+
+./resources/test/fixtures/correctness/C032.f90:6:9: C032 Magic unit '10' in IO statement
+  |
+4 |   open(10, file="test.txt", action="read")
+5 |   read(10, *) i
+6 |   close(10)
+  |         ^^ C032
+7 |
+8 |   open(file="test_out.txt", action="write", unit=24)
+  |
+  = help: Replace with named variable
+
+./resources/test/fixtures/correctness/C032.f90:8:50: C032 Magic unit '24' in IO statement
+   |
+ 6 |   close(10)
+ 7 |
+ 8 |   open(file="test_out.txt", action="write", unit=24)
+   |                                                  ^^ C032
+ 9 |   write (fmt=*, unit=24) i
+10 |   close(24)
+   |
+   = help: Replace with named variable
+
+./resources/test/fixtures/correctness/C032.f90:9:22: C032 Magic unit '24' in IO statement
+   |
+ 8 |   open(file="test_out.txt", action="write", unit=24)
+ 9 |   write (fmt=*, unit=24) i
+   |                      ^^ C032
+10 |   close(24)
+   |
+   = help: Replace with named variable
+
+./resources/test/fixtures/correctness/C032.f90:10:9: C032 Magic unit '24' in IO statement
+   |
+ 8 |   open(file="test_out.txt", action="write", unit=24)
+ 9 |   write (fmt=*, unit=24) i
+10 |   close(24)
+   |         ^^ C032
+11 |
+12 |   open(newunit=named_unit, file="test.txt", action="write")
+   |
+   = help: Replace with named variable

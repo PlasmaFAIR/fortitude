@@ -1,0 +1,101 @@
+---
+source: fortitude/src/rules/modernisation/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/modernisation/MOD011.f90:2:21: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+  |
+1 | program test
+2 |   integer :: a(3) = (/1, 2, 3/)
+  |                     ^^^^^^^^^^^ MOD011
+3 |   integer :: b(3) = (/ &
+4 |        1, &
+  |
+  = help: Change `(/.../)` to `[...]`
+
+ℹ Safe fix
+1 1 | program test
+2   |-  integer :: a(3) = (/1, 2, 3/)
+  2 |+  integer :: a(3) = [1, 2, 3]
+3 3 |   integer :: b(3) = (/ &
+4 4 |        1, &
+5 5 |        2, &
+
+./resources/test/fixtures/modernisation/MOD011.f90:3:21: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+  |
+1 |   program test
+2 |     integer :: a(3) = (/1, 2, 3/)
+3 |     integer :: b(3) = (/ &
+  |  _____________________^
+4 | |        1, &
+5 | |        2, &
+6 | |        3 &
+7 | |        /)
+  | |_________^ MOD011
+8 |     if (.true.) a = (/4, 5, 6/)
+9 |     b(1:3) = (/ &
+  |
+  = help: Change `(/.../)` to `[...]`
+
+ℹ Safe fix
+1 1 | program test
+2 2 |   integer :: a(3) = (/1, 2, 3/)
+3   |-  integer :: b(3) = (/ &
+  3 |+  integer :: b(3) = [ &
+4 4 |        1, &
+5 5 |        2, &
+6 6 |        3 &
+7   |-       /)
+  7 |+       ]
+8 8 |   if (.true.) a = (/4, 5, 6/)
+9 9 |   b(1:3) = (/ &
+10 10 |        4, &
+
+./resources/test/fixtures/modernisation/MOD011.f90:8:19: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+   |
+ 6 |        3 &
+ 7 |        /)
+ 8 |   if (.true.) a = (/4, 5, 6/)
+   |                   ^^^^^^^^^^^ MOD011
+ 9 |   b(1:3) = (/ &
+10 |        4, &
+   |
+   = help: Change `(/.../)` to `[...]`
+
+ℹ Safe fix
+5 5 |        2, &
+6 6 |        3 &
+7 7 |        /)
+8   |-  if (.true.) a = (/4, 5, 6/)
+  8 |+  if (.true.) a = [4, 5, 6]
+9 9 |   b(1:3) = (/ &
+10 10 |        4, &
+11 11 |        5, &
+
+./resources/test/fixtures/modernisation/MOD011.f90:9:12: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+   |
+ 7 |          /)
+ 8 |     if (.true.) a = (/4, 5, 6/)
+ 9 |     b(1:3) = (/ &
+   |  ____________^
+10 | |        4, &
+11 | |        5, &
+12 | |        6 &
+13 | |        /)
+   | |_________^ MOD011
+14 |   end program test
+   |
+   = help: Change `(/.../)` to `[...]`
+
+ℹ Safe fix
+6  6  |        3 &
+7  7  |        /)
+8  8  |   if (.true.) a = (/4, 5, 6/)
+9     |-  b(1:3) = (/ &
+   9  |+  b(1:3) = [ &
+10 10 |        4, &
+11 11 |        5, &
+12 12 |        6 &
+13    |-       /)
+   13 |+       ]
+14 14 | end program test

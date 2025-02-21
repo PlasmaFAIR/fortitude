@@ -15,7 +15,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::registry::{Category, Rule, RuleNamespace, RuleSet};
-use crate::rule_redirects::get_redirect;
+use crate::rule_redirects::{get_deprecated_category, get_redirect};
 use crate::rules::{RuleCodePrefix, RuleGroup, RuleIter};
 use crate::settings::{PatternPrefixPair, PreviewMode};
 use crate::{display_settings, fs};
@@ -35,6 +35,12 @@ pub enum RuleSelector {
     Rule {
         prefix: RuleCodePrefix,
         redirected_from: Option<&'static str>,
+    },
+    /// Select rules from a removed category
+    DeprecatedCategory {
+        rules: Vec<&'static str>,
+        redirected_to: Vec<RuleCodePrefix>,
+        redirected_from: String,
     },
 }
 
@@ -75,6 +81,22 @@ impl FromStr for RuleSelector {
                 if let Ok(rule) = Rule::from_str(s) {
                     let c = rule.noqa_code().to_string();
                     return Self::from_str(c.as_str());
+                }
+
+                // If passed a deprecated category, get list of all rules in that category.
+                if let Some((rules, redirects)) = get_deprecated_category(s) {
+                    let redirected_to = redirects
+                        .iter()
+                        .map(|code| {
+                            let (category, code) = Category::parse_code(code).unwrap();
+                            RuleCodePrefix::parse(&category, code).unwrap()
+                        })
+                        .collect();
+                    return Ok(Self::DeprecatedCategory {
+                        rules,
+                        redirected_to,
+                        redirected_from: s.to_string(),
+                    });
                 }
 
                 let (category, code) =
@@ -129,13 +151,17 @@ pub enum ParseError {
 }
 
 impl RuleSelector {
-    pub fn prefix_and_code(&self) -> (&'static str, &'static str) {
+    pub fn prefix_and_code(&self) -> (String, String) {
         match self {
-            RuleSelector::All => ("", "ALL"),
-            RuleSelector::Prefix { prefix, .. } | RuleSelector::Rule { prefix, .. } => {
-                (prefix.category().common_prefix(), prefix.short_code())
-            }
-            RuleSelector::Category(l) => (l.common_prefix(), ""),
+            RuleSelector::All => ("".to_string(), "ALL".to_string()),
+            RuleSelector::Prefix { prefix, .. } | RuleSelector::Rule { prefix, .. } => (
+                prefix.category().common_prefix().to_string(),
+                prefix.short_code().to_string(),
+            ),
+            RuleSelector::Category(l) => (l.common_prefix().to_string(), "".to_string()),
+            RuleSelector::DeprecatedCategory {
+                redirected_from, ..
+            } => (redirected_from.to_string(), "".to_string()),
         }
     }
 }
@@ -192,6 +218,13 @@ impl RuleSelector {
             RuleSelector::Prefix { prefix, .. } | RuleSelector::Rule { prefix, .. } => {
                 RuleSelectorIter::Vec(prefix.clone().rules())
             }
+            RuleSelector::DeprecatedCategory { redirected_to, .. } => RuleSelectorIter::Vec(
+                redirected_to
+                    .iter()
+                    .flat_map(|prefix| prefix.clone().rules())
+                    .collect::<Vec<_>>()
+                    .into_iter(),
+            ),
         }
     }
 
@@ -263,6 +296,23 @@ impl RuleSelector {
                     3 => Specificity::Prefix3Chars,
                     4 => Specificity::Prefix4Chars,
                     _ => panic!("RuleSelector::specificity doesn't yet support codes with so many characters"),
+                }
+            }
+            RuleSelector::DeprecatedCategory {
+                redirected_from, ..
+            } => {
+                let prefix = redirected_from
+                    .chars()
+                    .filter(|c| c.is_numeric())
+                    .collect::<String>();
+                match prefix.len() {
+                    0 => Specificity::Category,
+                    1 => Specificity::Prefix1Char,
+                    2 => Specificity::Prefix2Chars,
+                    3 => Specificity::Rule,
+                    _ => panic!(
+                        "Deprecated category rule codes should have exactly 3 numerical characters"
+                    ),
                 }
             }
         }

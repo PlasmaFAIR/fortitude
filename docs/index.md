@@ -46,7 +46,7 @@ The `explain` command can be used to get extra information about any rules:
 # Print extra information for all rules
 fortitude explain
 # Only get information for selected rules, by code or by name
-fortitude explain T001 trailing-whitespace
+fortitude explain C001 trailing-whitespace
 # Print information on all style rules
 fortitude explain style
 ```
@@ -72,15 +72,15 @@ You can select or ignore individual rules or whole groups with
 
 ```bash
 # Just check for missing `implicit none`
-fortitude check --select=T001
+fortitude check --select=C001
 # Also check for missing `implicit none` in interfaces
-fortitude check --select=T001,T002
+fortitude check --select=C001,C002
 # Ignore all styling rules
 fortitude check --ignore=S
-# Only check for typing rules, but ignore superfluous implicit none
-fortitude check --select=T --ignore=T003
+# Only check for style rules, but ignore superfluous implicit none
+fortitude check --select=S --ignore=S201
 # Rules and categories can also be referred to by name
-fortitude check --select=typing --ignore=superfluous-implicit-none
+fortitude check --select=style --ignore=superfluous-implicit-none
 ```
 
 It is also possible to switch off individual rules or rule categories for specific
@@ -139,8 +139,8 @@ should be under the command name:
 
 ```toml
 [check]
-select = ["S", "T"]
-ignore = ["S001", "S051"]
+select = ["C", "E", "S"]
+ignore = ["S001", "S082"]
 line-length = 132
 ```
 
@@ -149,8 +149,8 @@ For `fpm.toml` files, this has to be additionally nested under the
 
 ```toml
 [extra.fortitude.check]
-select = ["S", "T"]
-ignore = ["S001", "S051"]
+select = ["C", "E", "S"]
+ignore = ["S001", "S082"]
 line-length = 132
 ```
 
@@ -160,8 +160,7 @@ so using `--select` will override the choices shown above. You should instead us
 the configuration file:
 
 ```bash
-# Selects S, T, and M categories
-fortitude check --extend-select=M
+fortitude check --extend-select=OB
 ```
 
 Similar options include `--extend-exclude`, `--extend-ignore`, and

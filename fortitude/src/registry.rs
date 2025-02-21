@@ -53,33 +53,22 @@ pub enum Category {
     /// Failure to parse a file.
     #[prefix = "E"]
     Error,
+    /// Detect code that is bug-prone or likely to be incorrect.
+    #[prefix = "C"]
+    Correctness,
+    /// Obsolescent language features, as determined by the Fortran standard.
+    #[prefix = "OB"]
+    Obsolescent,
+    /// Update to modern Fortran features. Used for less severe issues than `Obsolescent`,
+    /// and goes beyond recommendations in the Fortran standard.
+    #[prefix = "MOD"]
+    Modernisation,
     /// Violation of style conventions.
     #[prefix = "S"]
     Style,
-    /// Misuse of types and kinds.
-    #[prefix = "T"]
-    Typing,
-    /// Failure to use modules or use them appropriately.
-    #[prefix = "M"]
-    Modules,
-    /// Best practices for setting floating point precision.
-    #[prefix = "P"]
-    Precision,
-    /// Best practices when reading and writing to file or other IO streams.
-    #[prefix = "IO"]
-    Io,
-    /// Check path names, directory structures, etc.
-    #[prefix = "F"]
-    Filesystem,
-    /// Obsolescent features
-    #[prefix = "OB"]
-    Obsolescent,
-    /// Readability.
-    #[prefix = "R"]
-    Readability,
-    /// Issues that are susceptible to bugs.
-    #[prefix = "B"]
-    Bugprone,
+    /// Avoid platform/compiler-specific features.
+    #[prefix = "PORT"]
+    Portability,
 }
 
 pub trait RuleNamespace: Sized {

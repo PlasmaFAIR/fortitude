@@ -1,4 +1,4 @@
-# literal-kind-suffix (T012)
+# literal-kind-suffix (PORT012)
 This rule is turned on by default.
 
 ## What it does

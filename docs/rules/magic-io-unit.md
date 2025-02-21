@@ -1,4 +1,4 @@
-# magic-io-unit (IO011)
+# magic-io-unit (C032)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does

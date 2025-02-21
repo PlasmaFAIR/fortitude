@@ -1,4 +1,4 @@
-# magic-number-in-array-size (R001)
+# magic-number-in-array-size (C031)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does

@@ -1,4 +1,4 @@
-# implicit-real-kind (P021)
+# implicit-real-kind (C022)
 ## What it does
 Checks for `real` variables that don't have their kind explicitly specified.
 

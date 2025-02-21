@@ -1,4 +1,4 @@
-# missing-exit-or-cycle-label (S021)
+# missing-exit-or-cycle-label (C141)
 Fix is sometimes available.
 
 This rule is turned on by default.

@@ -1,4 +1,4 @@
-# star-kind (T021)
+# star-kind (PORT021)
 Fix is sometimes available.
 
 This rule is turned on by default.

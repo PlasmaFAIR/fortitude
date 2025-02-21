@@ -1,4 +1,4 @@
-# literal-kind (T011)
+# literal-kind (PORT011)
 This rule is turned on by default.
 
 ## What it does

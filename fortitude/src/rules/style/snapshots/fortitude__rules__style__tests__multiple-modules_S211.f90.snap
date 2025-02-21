@@ -1,0 +1,11 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S211.f90:9:1: S211 Multiple modules in one file, split into one module per file
+   |
+ 9 | module mod2
+   | ^^^^^^^^^^^ S211
+10 |     use :: mod1, only: test1
+   |

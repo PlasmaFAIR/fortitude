@@ -1,0 +1,30 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C022.f90:1:1: C022 real has implicit kind
+  |
+1 | real function my_func(a, b, c, d, e)       ! catch
+  | ^^^^ C022
+2 |   real, intent(in) :: a                    ! catch
+3 |   real(4), intent(in) :: b                 ! ignore
+  |
+
+./resources/test/fixtures/correctness/C022.f90:2:3: C022 real has implicit kind
+  |
+1 | real function my_func(a, b, c, d, e)       ! catch
+2 |   real, intent(in) :: a                    ! catch
+  |   ^^^^ C022
+3 |   real(4), intent(in) :: b                 ! ignore
+4 |   integer, intent(in) :: c                 ! ignore
+  |
+
+./resources/test/fixtures/correctness/C022.f90:5:3: C022 complex has implicit kind
+  |
+3 |   real(4), intent(in) :: b                 ! ignore
+4 |   integer, intent(in) :: c                 ! ignore
+5 |   complex, intent(in) :: d                 ! catch
+  |   ^^^^^^^ C022
+6 |   complex(8), intent(in) :: e              ! ignore
+  |

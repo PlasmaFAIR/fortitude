@@ -1,4 +1,4 @@
-# missing-intent (T031)
+# missing-intent (C061)
 This rule is turned on by default.
 
 ## What it does

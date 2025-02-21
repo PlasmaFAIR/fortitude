@@ -1,4 +1,4 @@
-# deprecated-relational-operator (S051)
+# deprecated-relational-operator (MOD021)
 Fix is always available.
 
 This rule is turned on by default.

@@ -1,0 +1,43 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C122.f90:2:5: C122 [*] 'use' for intrinsic module missing 'intrinsic' modifier
+  |
+1 | module my_module
+2 |     use iso_fortran_env
+  |     ^^^^^^^^^^^^^^^^^^^ C122
+3 |     use my_other_module
+4 |     use :: iso_fortran_env, only: real32
+  |
+  = help: Add 'intrinsic'
+
+ℹ Unsafe fix
+1 1 | module my_module
+2   |-    use iso_fortran_env
+  2 |+    use, intrinsic :: iso_fortran_env
+3 3 |     use my_other_module
+4 4 |     use :: iso_fortran_env, only: real32
+5 5 |     use, intrinsic :: iso_c_binding
+
+./resources/test/fixtures/correctness/C122.f90:4:5: C122 [*] 'use' for intrinsic module missing 'intrinsic' modifier
+  |
+2 |     use iso_fortran_env
+3 |     use my_other_module
+4 |     use :: iso_fortran_env, only: real32
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ C122
+5 |     use, intrinsic :: iso_c_binding
+6 |     use, non_intrinsic :: iso_c_binding
+  |
+  = help: Add 'intrinsic'
+
+ℹ Unsafe fix
+1 1 | module my_module
+2 2 |     use iso_fortran_env
+3 3 |     use my_other_module
+4   |-    use :: iso_fortran_env, only: real32
+  4 |+    use, intrinsic :: iso_fortran_env, only: real32
+5 5 |     use, intrinsic :: iso_c_binding
+6 6 |     use, non_intrinsic :: iso_c_binding
+7 7 |     use :: my_other_module

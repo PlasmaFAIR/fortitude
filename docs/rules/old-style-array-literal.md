@@ -1,4 +1,4 @@
-# old-style-array-literal (S041)
+# old-style-array-literal (MOD011)
 Fix is always available.
 
 This rule is turned on by default.

@@ -1,0 +1,154 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C031.f90:4:16: C031 Magic number in array size, consider replacing 221 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                ^^^ C031
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/correctness/C031.f90:4:27: C031 Magic number in array size, consider replacing 221 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                           ^^^ C031
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/correctness/C031.f90:4:37: C031 Magic number in array size, consider replacing 100 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                                     ^^^ C031
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/correctness/C031.f90:4:53: C031 Magic number in array size, consider replacing 33 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                                                     ^^ C031
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/correctness/C031.f90:4:56: C031 Magic number in array size, consider replacing 44 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                                                        ^^ C031
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/correctness/C031.f90:4:60: C031 Magic number in array size, consider replacing 5 with named `parameter`
+  |
+2 |   implicit none
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+  |                                                            ^ C031
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |
+
+./resources/test/fixtures/correctness/C031.f90:5:22: C031 Magic number in array size, consider replacing 57 with named `parameter`
+  |
+3 |   integer, parameter :: NUM_POINTS = 54
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+5 |   integer, dimension(57) :: E
+  |                      ^^ C031
+6 |   integer, dimension(57, 64) :: F
+7 |   integer, dimension(NUM_POINTS) :: G
+  |
+
+./resources/test/fixtures/correctness/C031.f90:6:22: C031 Magic number in array size, consider replacing 57 with named `parameter`
+  |
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |                      ^^ C031
+7 |   integer, dimension(NUM_POINTS) :: G
+8 |   integer :: H(NUM_POINTS)
+  |
+
+./resources/test/fixtures/correctness/C031.f90:6:26: C031 Magic number in array size, consider replacing 64 with named `parameter`
+  |
+4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
+5 |   integer, dimension(57) :: E
+6 |   integer, dimension(57, 64) :: F
+  |                          ^^ C031
+7 |   integer, dimension(NUM_POINTS) :: G
+8 |   integer :: H(NUM_POINTS)
+  |
+
+./resources/test/fixtures/correctness/C031.f90:13:24: C031 Magic number in array size, consider replacing 8 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                        ^ C031
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/correctness/C031.f90:13:26: C031 Magic number in array size, consider replacing 9 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                          ^ C031
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/correctness/C031.f90:13:29: C031 Magic number in array size, consider replacing 10 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                             ^^ C031
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/correctness/C031.f90:13:33: C031 Magic number in array size, consider replacing 11 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                                 ^^ C031
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/correctness/C031.f90:13:36: C031 Magic number in array size, consider replacing 12 with named `parameter`
+   |
+11 | contains
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                                    ^^ C031
+14 |     integer, intent(out) :: M(57)
+15 |   end subroutine foo
+   |
+
+./resources/test/fixtures/correctness/C031.f90:14:31: C031 Magic number in array size, consider replacing 57 with named `parameter`
+   |
+12 |   subroutine foo(L, M)
+13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+14 |     integer, intent(out) :: M(57)
+   |                               ^^ C031
+15 |   end subroutine foo
+16 | end module test
+   |

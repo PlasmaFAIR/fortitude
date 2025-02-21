@@ -1,0 +1,28 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C081.f90:10:16: C081 'foo' is initialised in its declaration and has no explicit `save` or `parameter` attribute
+   |
+ 9 |   subroutine init_decl1()
+10 |     integer :: foo = 1
+   |                ^^^^^^^ C081
+11 |   end subroutine init_decl1
+   |
+
+./resources/test/fixtures/correctness/C081.f90:19:21: C081 'bar' is initialised in its declaration and has no explicit `save` or `parameter` attribute
+   |
+18 |   subroutine init_decl3()
+19 |     integer :: foo, bar = 1, quazz, zapp = 2
+   |                     ^^^^^^^ C081
+20 |   end subroutine init_decl3
+   |
+
+./resources/test/fixtures/correctness/C081.f90:19:37: C081 'zapp' is initialised in its declaration and has no explicit `save` or `parameter` attribute
+   |
+18 |   subroutine init_decl3()
+19 |     integer :: foo, bar = 1, quazz, zapp = 2
+   |                                     ^^^^^^^^ C081
+20 |   end subroutine init_decl3
+   |

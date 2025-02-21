@@ -1,4 +1,4 @@
-# no-real-suffix (P001)
+# no-real-suffix (C021)
 ## What it does
 Checks for floating point literal constants that don't have their kinds
 explicitly specified.

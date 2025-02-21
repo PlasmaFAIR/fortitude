@@ -48,6 +48,74 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
 }
 
 #[test]
+fn deprecated_category() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+    implicit none
+    integer :: i
+    i = 1  ! Comment ending with backslash\
+    select case (i)  ! Select without default
+        case(1)
+            print *, "one"
+    end select
+end program test
+        "#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=bugprone")
+                         .arg("--preview")
+                         .arg(&test_file),
+                         @r#"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C051 Trailing backslash
+      |
+    3 |     implicit none
+    4 |     integer :: i
+    5 |     i = 1  ! Comment ending with backslash\
+      |                                           ^ C051
+    6 |     select case (i)  ! Select without default
+    7 |         case(1)
+      |
+
+    [TEMP_FILE] C011 Missing default case may not handle all values
+       |
+     4 |       integer :: i
+     5 |       i = 1  ! Comment ending with backslash\
+     6 | /     select case (i)  ! Select without default
+     7 | |         case(1)
+     8 | |             print *, "one"
+     9 | |     end select
+       | |______________^ C011
+    10 |   end program test
+       |
+       = help: Add 'case default'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    warning: The selector `bugprone` refers to a deprecated rule category.
+    warning: `B001` has been remapped to `C011`.
+    warning: `B011` has been remapped to `C051`.
+    "#
+    );
+    Ok(())
+}
+
+#[test]
 fn unknown_name_in_config() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let config_file = tempdir.path().join("fpm.toml");
@@ -98,34 +166,34 @@ end program
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S061,T001,T011,T021")
+                         .arg("--select=S061,C001,PORT011,PORT021")
                          .arg(test_file),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
 
-    [TEMP_FILE] T021 'logical*4' uses non-standard syntax
+    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
-      |          ^^ T021
+      |          ^^ PORT021
     4 | end program
       |
       = help: Replace with 'logical(4)'
 
-    [TEMP_FILE] T011 logical kind set with number literal '4'
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
-      |           ^ T011
+      |           ^ PORT011
     4 | end program
       |
       = help: Use the parameter 'int32' from 'iso_fortran_env'
@@ -170,15 +238,15 @@ end program
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg(test_file)
-                         .arg("--select=T001,style"),
+                         .arg("--select=C001,style"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -224,7 +292,7 @@ end program
         &config_file,
         r#"
 [check]
-select = ["T001", "style"]
+select = ["C001", "style"]
 "#,
     )?;
 
@@ -237,10 +305,10 @@ select = ["T001", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -286,7 +354,7 @@ end program
         &config_file,
         r#"
 [check]
-select = ["T001"]
+select = ["C001"]
 "#,
     )?;
 
@@ -301,10 +369,10 @@ select = ["T001"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -350,7 +418,7 @@ end program
         &config_file,
         r#"
 [extra.fortitude.check]
-select = ["T001", "style"]
+select = ["C001", "style"]
 "#,
     )?;
 
@@ -363,10 +431,10 @@ select = ["T001", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T001 program missing 'implicit none'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program test
-      | ^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -415,7 +483,7 @@ end program foo
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S071,P021,T003,T004")
+                         .arg("--select=S071,C022,S201,C003")
                          .arg("--preview")
                          .arg("--fix")
                          .arg(&test_file),
@@ -423,22 +491,22 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T004 'implicit none' missing 'external'
+    [TEMP_FILE] C003 'implicit none' missing 'external'
       |
     2 | program foo
     3 |   implicit none
-      |   ^^^^^^^^^^^^^ T004
+      |   ^^^^^^^^^^^^^ C003
     4 |   real :: i
     5 |   i = 4.0
       |
       = help: Add `(external)` to 'implicit none'
 
-    [TEMP_FILE] P021 real has implicit kind
+    [TEMP_FILE] C022 real has implicit kind
       |
     2 | program foo
     3 |   implicit none
     4 |   real :: i
-      |   ^^^^ P021
+      |   ^^^^ C022
     5 |   i = 4.0
     6 | contains
       |
@@ -494,7 +562,7 @@ end program foo
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S071,P021,T003,T004")
+                         .arg("--select=S071,C022,S201,C003")
                          .arg("--preview")
                          .arg("--fix")
                          .arg("--unsafe-fixes")
@@ -503,12 +571,12 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] P021 real has implicit kind
+    [TEMP_FILE] C022 real has implicit kind
       |
     2 | program foo
     3 |   implicit none (type, external)
     4 |   real :: i
-      |   ^^^^ P021
+      |   ^^^^ C022
     5 |   i = 4.0
     6 | contains
       |
@@ -698,57 +766,57 @@ end module {file}{idx}
     // - No files with index 2
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    bar0.f90:2:1: T001 module missing 'implicit none'
+    bar0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module bar0
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    baz0.f90:2:1: T001 module missing 'implicit none'
+    baz0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module baz0
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    foo0.f90:2:1: T001 module missing 'implicit none'
+    foo0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo0
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/bar1.f90:2:1: T001 module missing 'implicit none'
+    nested/bar1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module bar1
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/baz1.f90:2:1: T001 module missing 'implicit none'
+    nested/baz1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module baz1
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/foo1.f90:2:1: T001 module missing 'implicit none'
+    nested/foo1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo1
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -805,41 +873,41 @@ end module {file}{idx}
     // - No files with index 2
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    baz0.f90:2:1: T001 module missing 'implicit none'
+    baz0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module baz0
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    foo0.f90:2:1: T001 module missing 'implicit none'
+    foo0.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo0
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/baz1.f90:2:1: T001 module missing 'implicit none'
+    nested/baz1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module baz1
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    nested/foo1.f90:2:1: T001 module missing 'implicit none'
+    nested/foo1.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo1
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -902,25 +970,25 @@ fn check_exclude() -> anyhow::Result<()> {
     // - Don't see anything in venv
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg("--exclude=bar")
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    base.f90:2:1: T001 module missing 'implicit none'
+    base.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    foo/foo.f90:2:1: T001 module missing 'implicit none'
+    foo/foo.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo
-      | ^^^^^^^^^^ T001
+      | ^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -947,17 +1015,17 @@ fn check_extend_exclude() -> anyhow::Result<()> {
     // - Don't see anything in venv
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg("--extend-exclude=bar")
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    base.f90:2:1: T001 module missing 'implicit none'
+    base.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -984,17 +1052,17 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
     // - See error in foo.f90 despite it being in the exclude list
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg("foo/foo.f90")
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    foo/foo.f90:2:1: T001 module missing 'implicit none'
+    foo/foo.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module foo
-      | ^^^^^^^^^^ T001
+      | ^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -1021,7 +1089,7 @@ fn check_force_exclude() -> anyhow::Result<()> {
     // - Also shouldn't see numpy.f90
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg("--force-exclude")
                          .arg("foo/foo.f90")
                          .arg(".venv/lib/site-packages/numpy/numpy.f90")
@@ -1047,17 +1115,17 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
     // - See error in venv despite it being excluded by default
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg(".venv/lib/site-packages/")
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    .venv/lib/site-packages/numpy/numpy.f90:2:1: T001 module missing 'implicit none'
+    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module numpy
-      | ^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -1083,7 +1151,7 @@ fn check_force_exclude_builtin() -> anyhow::Result<()> {
     // - Don't see error in venv even though it was asked for
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg("--force-exclude")
                          .arg(".venv/lib/site-packages/")
                          .current_dir(exclude_test_path(tempdir.path())),
@@ -1107,7 +1175,7 @@ fn check_per_line_ignores() -> anyhow::Result<()> {
     fs::write(
         &test_file,
         r#"
-! allow(T001, unnamed-end-statement, literal-kind)
+! allow(C001, unnamed-end-statement, literal-kind)
 program test
   ! allow(star-kind)
   logical*4, parameter :: true = .true.
@@ -1121,17 +1189,17 @@ end program test
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg(test_file)
-                         .args(["--select=T001,S061,T011,T021,S101"]),
+                         .args(["--select=C001,S061,PORT011,PORT021,S101"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] T021 'logical*4' uses non-standard syntax
+    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
     7 |   logical*4, parameter :: false = .false.  
-      |          ^^ T021
+      |          ^^ PORT021
     8 | end program test
       |
       = help: Replace with 'logical(4)'
@@ -1282,17 +1350,17 @@ end program myprogram
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=S001,F001,T001")
+                         .arg("--select=S001,S091,C001")
                          .current_dir(tempdir.path()),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    myfile.ff:1:1: F001 file extension should be '.f90' or '.F90'
-    myfile.ff:2:1: T001 program missing 'implicit none'
+    myfile.ff:1:1: S091 file extension should be '.f90' or '.F90'
+    myfile.ff:2:1: C001 program missing 'implicit none'
       |
     2 | program myprogram
-      | ^^^^^^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^^^^^^ C001
     3 | end program myprogram
       |
 
@@ -1368,24 +1436,24 @@ fn check_gitignore() -> anyhow::Result<()> {
     // - Don't see file exclude.f90 in the base path or files in exclude directories
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .current_dir(gitignore_test_path(tempdir.path())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    include.f90:2:1: T001 module missing 'implicit none'
+    include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/include.f90:2:1: T001 module missing 'implicit none'
+    include/include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module include
-      | ^^^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
@@ -1410,73 +1478,73 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     // Expect to see all 8 files, even though exclude.f90 and exclude/ are in the .gitignore
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=typing")
+                         .arg("--select=implicit-typing")
                          .arg("--no-respect-gitignore")
                          .current_dir(gitignore_test_path(tempdir.path())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    exclude.f90:2:1: T001 module missing 'implicit none'
+    exclude.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    exclude/exclude.f90:2:1: T001 module missing 'implicit none'
+    exclude/exclude.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module exclude
-      | ^^^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    exclude/include.f90:2:1: T001 module missing 'implicit none'
+    exclude/include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module exclude
-      | ^^^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include.f90:2:1: T001 module missing 'implicit none'
+    include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
-      | ^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/exclude.f90:2:1: T001 module missing 'implicit none'
+    include/exclude.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module include
-      | ^^^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/exclude/exclude.f90:2:1: T001 module missing 'implicit none'
+    include/exclude/exclude.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module exclude
-      | ^^^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/exclude/include.f90:2:1: T001 module missing 'implicit none'
+    include/exclude/include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module exclude
-      | ^^^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |
 
-    include/include.f90:2:1: T001 module missing 'implicit none'
+    include/include.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module include
-      | ^^^^^^^^^^^^^^ T001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
       |

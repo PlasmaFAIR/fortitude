@@ -5,7 +5,7 @@ snapshot_kind: text
 ---
 [
   {
-    "code": "T003",
+    "code": "S201",
     "end_location": {
       "column": 18,
       "row": 6
@@ -49,7 +49,7 @@ snapshot_kind: text
     "message": "end statement should read 'end subroutine foo'"
   },
   {
-    "code": "T021",
+    "code": "PORT021",
     "end_location": {
       "column": 9,
       "row": 1
