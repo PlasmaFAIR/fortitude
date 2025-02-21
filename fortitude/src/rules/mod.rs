@@ -95,9 +95,12 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "122") => (RuleGroup::Preview, Ast, Default, correctness::use_statements::MissingIntrinsic),
         (Correctness, "131") => (RuleGroup::Preview, Ast, Default, correctness::accessibility_statements::MissingAccessibilityStatement),
         (Correctness, "132") => (RuleGroup::Preview, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
-        (Correctness, "141") => (RuleGroup::Preview, Ast, Optional, correctness::include_statement::IncludeStatement),
+        (Correctness, "141") => (RuleGroup::Stable, Ast, Default, correctness::exit_labels::MissingExitOrCycleLabel),
         
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),
+        (Modernisation, "011") => (RuleGroup::Stable, Ast, Default, modernisation::old_style_array_literal::OldStyleArrayLiteral),
+        (Modernisation, "021") => (RuleGroup::Stable, Ast, Default, modernisation::relational_operators::DeprecatedRelationalOperator),
+        (Modernisation, "031") => (RuleGroup::Preview, Ast, Optional, modernisation::include_statement::IncludeStatement),
         
         (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::magic_io_unit::NonPortableIoUnit),
         (Portability, "011") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKind),
@@ -105,9 +108,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Portability, "021") => (RuleGroup::Stable, Ast, Default, portability::star_kinds::StarKind),
 
         (Style, "001") => (RuleGroup::Stable, Text, Default, style::line_length::LineTooLong),
-        (Style, "021") => (RuleGroup::Stable, Ast, Default, style::exit_labels::MissingExitOrCycleLabel),
-        (Style, "041") => (RuleGroup::Stable, Ast, Default, style::old_style_array_literal::OldStyleArrayLiteral),
-        (Style, "051") => (RuleGroup::Stable, Ast, Default, style::relational_operators::DeprecatedRelationalOperator),
         (Style, "061") => (RuleGroup::Stable, Ast, Default, style::end_statements::UnnamedEndStatement),
         (Style, "071") => (RuleGroup::Stable, Ast, Default, style::double_colon_in_decl::MissingDoubleColon),
         (Style, "081") => (RuleGroup::Preview, Ast, Default, style::semicolons::SuperfluousSemicolon),

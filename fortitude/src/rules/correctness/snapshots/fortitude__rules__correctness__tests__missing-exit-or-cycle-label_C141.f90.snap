@@ -1,14 +1,14 @@
 ---
-source: fortitude/src/rules/style/mod.rs
+source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S021.f90:4:7: S021 [*] 'exit' statement in named 'do' loop missing label 'label1'
+./resources/test/fixtures/correctness/C141.f90:4:7: C141 [*] 'exit' statement in named 'do' loop missing label 'label1'
   |
 2 |   label1: do
 3 |     if (.true.) then
 4 |       EXIT
-  |       ^^^^ S021
+  |       ^^^^ C141
 5 |     end if
 6 |   end do label1
   |
@@ -24,11 +24,11 @@ snapshot_kind: text
 6 6 |   end do label1
 7 7 | 
 
-./resources/test/fixtures/style/S021.f90:9:17: S021 [*] 'exit' statement in named 'do' loop missing label 'label2'
+./resources/test/fixtures/correctness/C141.f90:9:17: C141 [*] 'exit' statement in named 'do' loop missing label 'label2'
    |
  8 |   label2: do
  9 |     if (.true.) exit
-   |                 ^^^^ S021
+   |                 ^^^^ C141
 10 |   end do label2
    |
    = help: Add label 'label2'
@@ -43,12 +43,12 @@ snapshot_kind: text
 11 11 | 
 12 12 |   label3: do
 
-./resources/test/fixtures/style/S021.f90:28:19: S021 [*] 'cycle' statement in named 'do' loop missing label 'inner'
+./resources/test/fixtures/correctness/C141.f90:28:19: C141 [*] 'cycle' statement in named 'do' loop missing label 'inner'
    |
 26 |   label6: do i = 1, 2
 27 |     inner: do j = 1, 2
 28 |       if (.true.) CYCLE ! named inner loop: warns on inner loop
-   |                   ^^^^^ S021
+   |                   ^^^^^ C141
 29 |     end do inner
 30 |   end do label6
    |

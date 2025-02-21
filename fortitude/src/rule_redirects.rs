@@ -20,6 +20,7 @@ pub(crate) fn get_redirect(code: &str) -> Option<(&'static str, &'static str)> {
 
 static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
     HashMap::from_iter([
+        // Deprecated categories
         ("B001", "C001"),
         ("B011", "C011"),
         ("P001", "C021"),
@@ -49,9 +50,13 @@ static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(
         ("M012", "C122"),
         ("M021", "C131"),
         ("M022", "C132"),
-        ("M031", "C141"),
+        ("M031", "MOD031"),
         ("M041", "S211"),
         ("M042", "S212"),
+        // Other redirects
+        ("S041", "MOD011"),
+        ("S051", "MOD021"),
+        ("S021", "C141"),
     ])
 });
 

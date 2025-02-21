@@ -1,4 +1,4 @@
-# include-statement (C141)
+# include-statement (MOD031)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does

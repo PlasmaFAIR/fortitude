@@ -1,11 +1,11 @@
 pub mod accessibility_statements;
 pub mod assumed_size;
 pub mod derived_default_init;
+pub mod exit_labels;
 pub mod external;
 pub mod external_functions;
 pub mod implicit_kinds;
 pub mod implicit_typing;
-pub mod include_statement;
 pub mod init_decls;
 pub mod intent;
 pub mod kind_suffixes;
@@ -50,7 +50,7 @@ mod tests {
     #[test_case(Rule::MissingIntrinsic, Path::new("C122.f90"))]
     #[test_case(Rule::MissingAccessibilityStatement, Path::new("C131.f90"))]
     #[test_case(Rule::DefaultPublicAccessibility, Path::new("C132.f90"))]
-    #[test_case(Rule::IncludeStatement, Path::new("C141.f90"))]
+    #[test_case(Rule::MissingExitOrCycleLabel, Path::new("C141.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
