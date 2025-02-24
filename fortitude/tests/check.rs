@@ -1630,16 +1630,16 @@ end program test
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg(test_file)
-                         .args(["--select=T001,S061,T011,T021,S101"])
+                         .args(["--select=C001,S061,PORT011,PORT021,S101"])
                          .arg("--statistics"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    2	T011	[ ] literal-kind
-    2	T021	[*] star-kind
-    1	S101	[*] trailing-whitespace
-    1	T001	[ ] implicit-typing
+    2	PORT011	[ ] literal-kind
+    2	PORT021	[*] star-kind
+    1	C001   	[ ] implicit-typing
+    1	S101   	[*] trailing-whitespace
     [*] fixable with `fortitude check --fix`
 
     ----- stderr -----
@@ -1666,7 +1666,7 @@ end program test
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
                          .arg(test_file)
-                         .args(["--select=T001,S061,T011,T021,S101"])
+                         .args(["--select=C001,S061,PORT011,PORT021,S101"])
                          .arg("--statistics")
                          .arg("--output-format=json"),
                          @r#"
@@ -1675,28 +1675,28 @@ end program test
     ----- stdout -----
     [
       {
-        "code": "T011",
+        "code": "PORT011",
         "name": "literal-kind",
         "count": 2,
         "fixable": false
       },
       {
-        "code": "T021",
+        "code": "PORT021",
         "name": "star-kind",
         "count": 2,
         "fixable": true
+      },
+      {
+        "code": "C001",
+        "name": "implicit-typing",
+        "count": 1,
+        "fixable": false
       },
       {
         "code": "S101",
         "name": "trailing-whitespace",
         "count": 1,
         "fixable": true
-      },
-      {
-        "code": "T001",
-        "name": "implicit-typing",
-        "count": 1,
-        "fixable": false
       }
     ]
 
