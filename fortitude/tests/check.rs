@@ -1611,3 +1611,97 @@ fn preview_disabled_direct() -> anyhow::Result<()> {
     ");
     Ok(())
 }
+
+#[test]
+fn show_statistics() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+  logical*4, parameter :: false = .false.  
+end program test
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg(test_file)
+                         .args(["--select=T001,S061,T011,T021,S101"])
+                         .arg("--statistics"),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    2	T011	[ ] literal-kind
+    2	T021	[*] star-kind
+    1	S101	[*] trailing-whitespace
+    1	T001	[ ] implicit-typing
+    [*] fixable with `fortitude check --fix`
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
+fn show_statistics_json() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+  logical*4, parameter :: false = .false.  
+end program test
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg(test_file)
+                         .args(["--select=T001,S061,T011,T021,S101"])
+                         .arg("--statistics")
+                         .arg("--output-format=json"),
+                         @r#"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [
+      {
+        "code": "T011",
+        "name": "literal-kind",
+        "count": 2,
+        "fixable": false
+      },
+      {
+        "code": "T021",
+        "name": "star-kind",
+        "count": 2,
+        "fixable": true
+      },
+      {
+        "code": "S101",
+        "name": "trailing-whitespace",
+        "count": 1,
+        "fixable": true
+      },
+      {
+        "code": "T001",
+        "name": "implicit-typing",
+        "count": 1,
+        "fixable": false
+      }
+    ]
+
+    ----- stderr -----
+    "#);
+
+    Ok(())
+}
