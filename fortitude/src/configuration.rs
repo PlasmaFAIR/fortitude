@@ -704,7 +704,7 @@ mod tests {
     fn select_one_preview_rule_without_preview() -> anyhow::Result<()> {
         let args = RuleSelection {
             ignore: vec![],
-            select: Some(vec![RuleSelector::from_str("E9911")?]),
+            select: Some(vec![RuleSelector::from_str("FORT9911")?]),
             extend_select: vec![],
             fixable: None,
             extend_fixable: vec![],
@@ -724,7 +724,7 @@ mod tests {
     fn select_one_preview_rule_with_preview() -> anyhow::Result<()> {
         let args = RuleSelection {
             ignore: vec![],
-            select: Some(vec![RuleSelector::from_str("E9911")?]),
+            select: Some(vec![RuleSelector::from_str("FORT9911")?]),
             extend_select: vec![],
             fixable: None,
             extend_fixable: vec![],

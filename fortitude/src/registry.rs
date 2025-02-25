@@ -69,6 +69,9 @@ pub enum Category {
     /// Avoid platform/compiler-specific features.
     #[prefix = "PORT"]
     Portability,
+    /// Fortitude specific rules.
+    #[prefix = "FORT"]
+    Fortitude,
 }
 
 pub trait RuleNamespace: Sized {

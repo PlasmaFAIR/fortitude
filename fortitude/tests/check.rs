@@ -1181,7 +1181,7 @@ program test
   logical*4, parameter :: true = .true.
   ! allow(trailing-whitespace)
   logical*4, parameter :: false = .false.  
-end program test
+end program
 "#,
     )?;
 
@@ -1200,7 +1200,7 @@ end program test
     6 |   ! allow(trailing-whitespace)
     7 |   logical*4, parameter :: false = .false.  
       |          ^^ PORT021
-    8 | end program test
+    8 | end program
       |
       = help: Replace with 'logical(4)'
 
@@ -1212,58 +1212,6 @@ end program test
         fortitude explain X001,Y002,...
 
     No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
-
-    ----- stderr -----
-    ");
-
-    Ok(())
-}
-
-#[test]
-fn check_invalid_per_line_ignores() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
-! allow(badbad, notgood)
-program test
-end program test
-"#,
-    )?;
-
-    apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg(test_file)
-                         .arg("--select=E011"),
-                         @r"
-    success: false
-    exit_code: 1
-    ----- stdout -----
-    [TEMP_FILE] E011 Unknown rule selector: `badbad`
-      |
-    2 | ! allow(badbad, notgood)
-      |         ^^^^^^ E011
-    3 | program test
-    4 | end program test
-      |
-
-    [TEMP_FILE] E011 Unknown rule selector: `notgood`
-      |
-    2 | ! allow(badbad, notgood)
-      |                 ^^^^^^^ E011
-    3 | program test
-    4 | end program test
-      |
-
-    fortitude: 1 files scanned.
-    Number of errors: 2
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     ");
@@ -1564,20 +1512,20 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
 
 #[test]
 fn preview_enabled_prefix() -> anyhow::Result<()> {
-    // All the E99XX test rules should be triggered
+    // All the FORT99XX test rules should be triggered
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .args(["--select=E99", "--output-format=concise", "--preview"])
+                         .args(["--select=FORT99", "--output-format=concise", "--preview"])
                          .arg("-"), @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    -:1:1: E9900 Hey this is a stable test rule.
-    -:1:1: E9901 [*] Hey this is a stable test rule with a safe fix.
-    -:1:1: E9902 Hey this is a stable test rule with an unsafe fix.
-    -:1:1: E9903 Hey this is a stable test rule with a display only fix.
-    -:1:1: E9911 Hey this is a preview test rule.
-    -:1:1: E9950 Hey this is a test rule that was redirected from another.
+    -:1:1: FORT9900 Hey this is a stable test rule.
+    -:1:1: FORT9901 [*] Hey this is a stable test rule with a safe fix.
+    -:1:1: FORT9902 Hey this is a stable test rule with an unsafe fix.
+    -:1:1: FORT9903 Hey this is a stable test rule with a display only fix.
+    -:1:1: FORT9911 Hey this is a preview test rule.
+    -:1:1: FORT9950 Hey this is a test rule that was redirected from another.
     fortitude: 1 files scanned.
     Number of errors: 6
 
@@ -1594,10 +1542,10 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
 
 #[test]
 fn preview_disabled_direct() -> anyhow::Result<()> {
-    // All the E99XX test rules should be triggered
+    // All the FORT99XX test rules should be triggered
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .args(["--select=E9911", "--output-format=concise"])
+                         .args(["--select=FORT9911", "--output-format=concise"])
                          .arg("-"), @r"
     success: true
     exit_code: 0
@@ -1607,7 +1555,7 @@ fn preview_disabled_direct() -> anyhow::Result<()> {
 
 
     ----- stderr -----
-    warning: Selection `E9911` has no effect because preview is not enabled.
+    warning: Selection `FORT9911` has no effect because preview is not enabled.
     ");
     Ok(())
 }

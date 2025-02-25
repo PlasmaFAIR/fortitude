@@ -9,7 +9,7 @@ use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
 use crate::rule_selector::{PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
-use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
+use crate::rules::fortitude::allow_comments::InvalidRuleCodeOrName;
 #[cfg(any(feature = "test-rules", test))]
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;

@@ -19,7 +19,7 @@ pub(crate) struct InvalidRuleCodeOrName {
     pub message: String,
 }
 
-/// E011
+/// FORT001
 impl Violation for InvalidRuleCodeOrName {
     #[derive_message_formats]
     fn message(&self) -> String {

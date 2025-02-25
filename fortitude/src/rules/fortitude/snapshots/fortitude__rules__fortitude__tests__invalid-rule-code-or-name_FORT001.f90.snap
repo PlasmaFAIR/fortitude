@@ -1,0 +1,20 @@
+---
+source: fortitude/src/rules/fortitude/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/fortitude/FORT001.f90:1:9: FORT001 Unknown rule selector: `badbad`
+  |
+1 | ! allow(badbad, notgood)
+  |         ^^^^^^ FORT001
+2 | program test
+3 | end program test
+  |
+
+./resources/test/fixtures/fortitude/FORT001.f90:1:17: FORT001 Unknown rule selector: `notgood`
+  |
+1 | ! allow(badbad, notgood)
+  |                 ^^^^^^^ FORT001
+2 | program test
+3 | end program test
+  |
