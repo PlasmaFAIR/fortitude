@@ -1,3 +1,4 @@
+mod allow_comments;
 mod ast;
 pub mod check;
 pub mod cli;
