@@ -1,0 +1,13 @@
+---
+source: fortitude/src/rules/fortitude/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/fortitude/FORT002.f90:1:9: FORT002 Unused rule `implicit-typing` in allow comment
+  |
+1 | ! allow(implicit-typing)
+  |         ^^^^^^^^^^^^^^^ FORT002
+2 | program foo
+3 |   implicit none
+  |
+  = help: Remove unused allow comment

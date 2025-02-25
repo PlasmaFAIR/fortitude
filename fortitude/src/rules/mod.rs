@@ -129,6 +129,10 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::assumed_size_character_syntax::DeprecatedAssumedSizeCharacter),
 
         (Fortitude, "001") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::InvalidRuleCodeOrName),
+        (Fortitude, "002") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::UnusedAllowComment),
+        (Fortitude, "003") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::RedirectedAllowComment),
+        (Fortitude, "004") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::DuplicatedAllowComment),
+        (Fortitude, "005") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::DisabledAllowComment),
 
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason

@@ -1,0 +1,13 @@
+---
+source: fortitude/src/rules/fortitude/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/fortitude/FORT005.f90:1:9: FORT005 Disabled rule `unnamed-end-statement` in allow comment
+  |
+1 | ! allow(unnamed-end-statement)
+  |         ^^^^^^^^^^^^^^^^^^^^^ FORT005
+2 | program foo
+3 |   implicit none
+  |
+  = help: Remove disabled allow comment

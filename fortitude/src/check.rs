@@ -7,14 +7,17 @@ use crate::fs::get_files;
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
-use crate::rule_selector::{PreviewOptions, RuleSelector};
+use crate::rule_redirects::get_redirect_target;
 use crate::rule_table::RuleTable;
-use crate::rules::fortitude::allow_comments::InvalidRuleCodeOrName;
+use crate::rules::fortitude::allow_comments::{
+    DisabledAllowComment, DuplicatedAllowComment, InvalidRuleCodeOrName, RedirectedAllowComment,
+    UnusedAllowComment,
+};
 #[cfg(any(feature = "test-rules", test))]
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{CheckSettings, FixMode, PreviewMode, ProgressBar, Settings};
+use crate::settings::{CheckSettings, FixMode, ProgressBar, Settings};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
@@ -30,7 +33,7 @@ use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::{TextRange, TextSize};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -155,56 +158,31 @@ pub(crate) fn check_file(
 }
 
 /// A single allowed rule and the range it applies to
-struct AllowComment {
-    pub rule: Rule,
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct AllowComment<'a> {
+    // The original rule/code/category in the comment
+    pub code: &'a str,
+    // Resolved rule
+    pub rule: Option<Rule>,
+    // The range the comment applies to
     pub range: TextRange,
+    // The location of the comment
+    pub loc: TextRange,
 }
 
 /// If this node is an `allow` comment, get all the rules allowed on the next line
-fn gather_allow_comments(
-    node: &Node,
-    file: &SourceFile,
-    rules: &RuleTable,
-) -> Result<Vec<AllowComment>, Vec<Diagnostic>> {
+fn gather_allow_comments<'a>(node: &Node, file: &'a SourceFile) -> Option<Vec<AllowComment<'a>>> {
     if node.kind() != "comment" {
-        return Ok(vec![]);
+        return None;
     }
 
     let mut allow_comments = Vec::new();
-    let mut errors = Vec::new();
 
     if let Some((_, allow_comment)) = regex_captures!(
         r#"! allow\((.*)\)\s*"#,
         node.to_text(file.source_text()).unwrap()
     ) {
-        let preview = PreviewOptions {
-            mode: PreviewMode::Enabled,
-            require_explicit: false,
-        };
-
-        // Partition the found selectors into valid and invalid
-        let rule_regex = regex!(r#"\w[-\w\d]*"#);
-        let mut allow_rules = Vec::new();
-        // 8 from length of "! allow("
-        let comment_start_offset =
-            TextSize::try_from(node.start_byte()).unwrap() + TextSize::new(8);
-        for rule in rule_regex.find_iter(allow_comment) {
-            match RuleSelector::from_str(rule.as_str()) {
-                Ok(rule) => allow_rules.push(rule),
-                Err(error) => {
-                    let start = comment_start_offset + TextSize::try_from(rule.start()).unwrap();
-                    let end = comment_start_offset + TextSize::try_from(rule.end()).unwrap();
-                    errors.push(Diagnostic::new(
-                        InvalidRuleCodeOrName {
-                            message: error.to_string(),
-                        },
-                        TextRange::new(start, end),
-                    ))
-                }
-            }
-        }
-
-        if let Some(next_node) = node.next_named_sibling() {
+        let range = if let Some(next_node) = node.next_named_sibling() {
             let start_byte = TextSize::try_from(next_node.start_byte()).unwrap();
             let end_byte = TextSize::try_from(next_node.end_byte()).unwrap();
 
@@ -218,27 +196,127 @@ fn gather_allow_comments(
             let start_line = src.line_start(start_index);
             let end_line = src.line_end(end_index);
 
-            let range = TextRange::new(start_line, end_line);
-            for rule_selector in allow_rules {
-                for rule in rule_selector.rules(&preview) {
-                    allow_comments.push(AllowComment { rule, range });
-                }
-            }
+            TextRange::new(start_line, end_line)
+        } else {
+            return None;
         };
+
+        // Partition the found selectors into valid and invalid
+        let rule_regex = regex!(r#"\w[-\w\d]*"#);
+        // 8 from length of "! allow("
+        let comment_start_offset =
+            TextSize::try_from(node.start_byte()).unwrap() + TextSize::new(8);
+        for rule in rule_regex.find_iter(allow_comment) {
+            let start = comment_start_offset + TextSize::try_from(rule.start()).unwrap();
+            let end = comment_start_offset + TextSize::try_from(rule.end()).unwrap();
+            let loc = TextRange::new(start, end);
+            let code = rule.as_str();
+            let redirect = get_redirect_target(code).unwrap_or(code);
+            let rule = match Rule::from_code(redirect).or(Rule::from_str(redirect)) {
+                Ok(rule) => Some(rule),
+                Err(_) => None,
+            };
+
+            allow_comments.push(AllowComment {
+                code,
+                rule,
+                range,
+                loc,
+            });
+        }
     }
 
-    if !errors.is_empty() && rules.enabled(Rule::InvalidRuleCodeOrName) {
-        Err(errors)
-    } else {
-        Ok(allow_comments)
-    }
+    Some(allow_comments)
 }
 
-/// Filter out allowed rules
-fn filter_allowed_rules(diagnostic: &Diagnostic, allow_comments: &[AllowComment]) -> bool {
-    allow_comments.iter().all(|allow| {
-        !(allow.rule == diagnostic.kind.rule() && allow.range.contains_range(diagnostic.range))
-    })
+/// Check allow comments, raise applicable violations, and ignore allowed diagnostics
+fn check_allow_comments(
+    diagnostics: &mut Vec<Diagnostic>,
+    allow_comments: &[AllowComment],
+    rules: &RuleTable,
+) -> Vec<usize> {
+    // Indices of diagnostics that were ignored by a `noqa` directive.
+    let mut ignored_diagnostics = vec![];
+
+    let mut used_codes = FxHashSet::default();
+
+    // Remove any ignored diagnostics
+    'outer: for (index, diagnostic) in diagnostics.iter().enumerate() {
+        for allow in allow_comments {
+            if let Some(rule) = allow.rule {
+                if rule == diagnostic.kind.rule() && allow.range.contains_range(diagnostic.range) {
+                    used_codes.insert(rule);
+                    ignored_diagnostics.push(index);
+                    // We've ignored this diagnostic, so no point
+                    // checking the other allow comments!
+                    continue 'outer;
+                };
+            }
+        }
+    }
+
+    let mut seen_codes = FxHashSet::default();
+
+    for comment in allow_comments {
+        let redirect = get_redirect_target(comment.code);
+        if rules.enabled(Rule::RedirectedAllowComment) {
+            if let Some(redirect) = redirect {
+                let new_name = Rule::from_code(redirect).unwrap().as_ref().to_string();
+                diagnostics.push(Diagnostic::new(
+                    RedirectedAllowComment {
+                        original: comment.code.to_string(),
+                        new_code: redirect.to_string(),
+                        new_name,
+                    },
+                    comment.loc,
+                ));
+            }
+        }
+
+        let code = redirect.unwrap_or(comment.code);
+
+        match comment.rule {
+            None => diagnostics.push(Diagnostic::new(
+                InvalidRuleCodeOrName {
+                    rule: code.to_string(),
+                },
+                comment.loc,
+            )),
+            Some(rule) => {
+                if !seen_codes.insert(rule) {
+                    if rules.enabled(Rule::DuplicatedAllowComment) {
+                        diagnostics.push(Diagnostic::new(
+                            DuplicatedAllowComment {
+                                rule: comment.code.to_string(),
+                            },
+                            comment.loc,
+                        ));
+                    }
+                } else if !used_codes.contains(&rule) {
+                    if rules.enabled(rule) {
+                        if rules.enabled(Rule::UnusedAllowComment) {
+                            diagnostics.push(Diagnostic::new(
+                                UnusedAllowComment {
+                                    rule: code.to_string(),
+                                },
+                                comment.loc,
+                            ));
+                        }
+                    } else if rules.enabled(Rule::DisabledAllowComment) {
+                        diagnostics.push(Diagnostic::new(
+                            DisabledAllowComment {
+                                rule: code.to_string(),
+                            },
+                            comment.loc,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    ignored_diagnostics.sort_unstable();
+    ignored_diagnostics
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -315,9 +393,8 @@ pub(crate) fn check_path(
                 }
             }
         }
-        match gather_allow_comments(&node, file, rules) {
-            Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
-            Err(mut errors) => violations.append(&mut errors),
+        if let Some(mut allow_rules) = gather_allow_comments(&node, file) {
+            allow_comments.append(&mut allow_rules);
         };
     }
 
@@ -353,10 +430,18 @@ pub(crate) fn check_path(
         }
     }
 
+    // if rules.enabled(Rule::InvalidRuleCodeOrName)
+    //     || rules.enabled(Rule::UnusedAllowComment)
+    //     || rules.enabled(Rule::RedirectedAllowComment)
+    //     || rules.enabled(Rule::DuplicatedAllowComment)
+    //     || rules.enabled(Rule::DisabledAllowComment)
+    // {
+    let ignored = check_allow_comments(&mut violations, &allow_comments, rules);
+    for index in ignored.iter().rev() {
+        violations.swap_remove(*index);
+    }
+
     violations
-        .into_iter()
-        .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
-        .collect_vec()
 }
 
 const MAX_ITERATIONS: usize = 100;
