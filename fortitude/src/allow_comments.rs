@@ -9,7 +9,7 @@ use crate::rules::fortitude::allow_comments::{
 use crate::rules::Rule;
 
 use lazy_regex::{regex, regex_captures};
-use ruff_diagnostics::Diagnostic;
+use ruff_diagnostics::{Diagnostic, Edit, Fix};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashSet;
@@ -124,14 +124,19 @@ pub fn check_allow_comments(
         if rules.enabled(Rule::RedirectedAllowComment) {
             if let Some(redirect) = redirect {
                 let new_name = Rule::from_code(redirect).unwrap().as_ref().to_string();
-                diagnostics.push(Diagnostic::new(
-                    RedirectedAllowComment {
-                        original: comment.code.to_string(),
-                        new_code: redirect.to_string(),
-                        new_name,
-                    },
-                    comment.loc,
-                ));
+                let edit =
+                    Edit::replacement(new_name.clone(), comment.loc.start(), comment.loc.end());
+                diagnostics.push(
+                    Diagnostic::new(
+                        RedirectedAllowComment {
+                            original: comment.code.to_string(),
+                            new_code: redirect.to_string(),
+                            new_name,
+                        },
+                        comment.loc,
+                    )
+                    .with_fix(Fix::safe_edit(edit)),
+                );
             }
         }
 
