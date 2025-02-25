@@ -66,15 +66,15 @@ pub(crate) struct UnusedAllowComment {
     pub rule: String,
 }
 
-impl AlwaysFixableViolation for UnusedAllowComment {
+impl Violation for UnusedAllowComment {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { rule } = self;
         format!("Unused rule `{rule}` in allow comment")
     }
 
-    fn fix_title(&self) -> String {
-        "Remove unused allow comment".to_string()
+    fn fix_title(&self) -> Option<String> {
+        Some("Remove unused allow comment".to_string())
     }
 }
 
@@ -88,15 +88,15 @@ pub(crate) struct DuplicatedAllowComment {
     pub rule: String,
 }
 
-impl AlwaysFixableViolation for DuplicatedAllowComment {
+impl Violation for DuplicatedAllowComment {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { rule } = self;
         format!("Duplicated rule `{rule}` in allow comment")
     }
 
-    fn fix_title(&self) -> String {
-        "Remove duplicated allow comment".to_string()
+    fn fix_title(&self) -> Option<String> {
+        Some("Remove duplicated allow comment".to_string())
     }
 }
 
@@ -110,14 +110,14 @@ pub(crate) struct DisabledAllowComment {
     pub rule: String,
 }
 
-impl AlwaysFixableViolation for DisabledAllowComment {
+impl Violation for DisabledAllowComment {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { rule } = self;
         format!("Disabled rule `{rule}` in allow comment")
     }
 
-    fn fix_title(&self) -> String {
-        "Remove disabled allow comment".to_string()
+    fn fix_title(&self) -> Option<String> {
+        Some("Remove disabled allow comment".to_string())
     }
 }
