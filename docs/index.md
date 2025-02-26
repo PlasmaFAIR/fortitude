@@ -15,10 +15,26 @@ Written in Rust :crab: and installable with Python :snake:.
 
 ## Quickstart
 
-Fortitude can be installed directly into your Python environment:
+Fortitude is available as
+[`fortitude-lint`](https://pypi.org/project/fortitude-lint) on PyPI:
 
 ```bash
+# With uv:
+uv tool install fortitude-lint@latest
+
+# With pip:
 pip install fortitude-lint
+```
+
+Starting with version `0.7.0`, Fortitude can be installed with our
+standalone installers:
+
+```bash
+# On macOS and Linux:
+curl -LsSf https://github.com/PlasmaFAIR/fortitude/releases/latest/download/fortitude-installer.sh | sh
+
+# On Windows:
+powershell -c "irm https://github.com/PlasmaFAIR/fortitude/releases/latest/download/fortitude-installer.psi | iex"
 ```
 
 You can then lint your whole project under the current working directory
