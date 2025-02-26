@@ -4,7 +4,8 @@ Fix is always available.
 This rule is turned on by default.
 
 ## What it does
-Checks for allow comments that aren't applicable.
+Checks for `allow` comments that are disabled globally.
 
 ## Why is this bad?
-Probably a mistake
+These `allow` comments will have no effect, and should be removed to avoid
+confusion.

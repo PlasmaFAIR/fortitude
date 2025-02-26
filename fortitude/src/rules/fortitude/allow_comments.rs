@@ -30,6 +30,24 @@ impl Violation for InvalidRuleCodeOrName {
 
 /// ## What it does
 /// Checks for redirected rules in allow comments.
+///
+/// ## Why is this bad?
+/// When one of Fortitude's rule codes has been redirected, the implication is that the rule has
+/// been deprecated in favor of another rule or code. To keep your codebase
+/// consistent and up-to-date, prefer the canonical rule code over the deprecated
+/// code.
+///
+/// ## Example
+/// ```f90
+/// ! allow(T001)
+/// program foo
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// ! allow(implicit-typing)
+/// program foo
+/// ```
 #[derive(ViolationMetadata)]
 pub(crate) struct RedirectedAllowComment {
     pub original: String,
@@ -55,10 +73,24 @@ impl AlwaysFixableViolation for RedirectedAllowComment {
 }
 
 /// ## What it does
-/// Checks for allow comments that aren't applicable.
+/// Checks for `allow` comments that aren't applicable.
 ///
 /// ## Why is this bad?
-/// Probably a mistake
+/// An `allow` comment that no longer matches any diagnostic violations
+/// is likely included by mistake, and should be removed to avoid confusion.
+///
+/// ## Example
+/// ```f90
+/// ! allow(implicit-typing)
+/// program foo
+///   implicit none
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// program foo
+///   implicit none
+/// ```
 #[derive(ViolationMetadata)]
 pub(crate) struct UnusedAllowComment {
     pub rule: String,
@@ -77,10 +109,23 @@ impl AlwaysFixableViolation for UnusedAllowComment {
 }
 
 /// ## What it does
-/// Checks for allow comments that aren't applicable.
+/// Checks for `allow` comments with duplicated rules.
 ///
 /// ## Why is this bad?
-/// Probably a mistake
+/// Duplicated rules in `allow` comments are very likely to be mistakes, and
+/// should be removed to avoid confusion.
+///
+/// ## Example
+/// ```f90
+/// ! allow(C001, C002, C001)
+/// program foo
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// ! allow(C001, C002)
+/// program foo
+/// ```
 #[derive(ViolationMetadata)]
 pub(crate) struct DuplicatedAllowComment {
     pub rule: String,
@@ -99,10 +144,11 @@ impl AlwaysFixableViolation for DuplicatedAllowComment {
 }
 
 /// ## What it does
-/// Checks for allow comments that aren't applicable.
+/// Checks for `allow` comments that are disabled globally.
 ///
 /// ## Why is this bad?
-/// Probably a mistake
+/// These `allow` comments will have no effect, and should be removed to avoid
+/// confusion.
 #[derive(ViolationMetadata)]
 pub(crate) struct DisabledAllowComment {
     pub rule: String,
