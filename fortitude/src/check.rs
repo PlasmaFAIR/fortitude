@@ -13,7 +13,7 @@ use crate::rule_table::RuleTable;
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{CheckSettings, FixMode, ProgressBar, Settings};
+use crate::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
@@ -71,6 +71,7 @@ pub(crate) fn check_file(
     file: &SourceFile,
     settings: &Settings,
     fix_mode: FixMode,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Diagnostics> {
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
@@ -85,6 +86,7 @@ pub(crate) fn check_file(
             path,
             file,
             settings,
+            ignore_allow_comments,
         ) {
             if !fixed.is_empty() {
                 match fix_mode {
@@ -109,6 +111,7 @@ pub(crate) fn check_file(
                 path,
                 file,
                 settings,
+                ignore_allow_comments,
             )?;
             let fixed = FxHashMap::default();
             (result, fixed)
@@ -122,6 +125,7 @@ pub(crate) fn check_file(
             path,
             file,
             settings,
+            ignore_allow_comments,
         )?;
         let fixed = FxHashMap::default();
         (result, fixed)
@@ -152,6 +156,7 @@ pub(crate) fn check_file(
 }
 
 /// Parse a file, check it for issues, and return the report.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn check_only_file(
     rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
@@ -160,6 +165,7 @@ pub(crate) fn check_only_file(
     path: &Path,
     file: &SourceFile,
     settings: &Settings,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Vec<DiagnosticMessage>> {
     let mut parser = Parser::new();
     parser
@@ -178,6 +184,7 @@ pub(crate) fn check_only_file(
         file,
         settings,
         &tree,
+        ignore_allow_comments,
     );
 
     Ok(violations
@@ -198,6 +205,7 @@ pub(crate) fn check_path(
     file: &SourceFile,
     settings: &Settings,
     tree: &Tree,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
@@ -262,15 +270,21 @@ pub(crate) fn check_path(
         }
     }
 
-    // if rules.enabled(Rule::InvalidRuleCodeOrName)
-    //     || rules.enabled(Rule::UnusedAllowComment)
-    //     || rules.enabled(Rule::RedirectedAllowComment)
-    //     || rules.enabled(Rule::DuplicatedAllowComment)
-    //     || rules.enabled(Rule::DisabledAllowComment)
-    // {
-    let ignored = check_allow_comments(&mut violations, &allow_comments, rules);
-    for index in ignored.iter().rev() {
-        violations.swap_remove(*index);
+    if (ignore_allow_comments.is_disabled() && !violations.is_empty())
+        || rules.any_enabled(&[
+            Rule::InvalidRuleCodeOrName,
+            Rule::UnusedAllowComment,
+            Rule::RedirectedAllowComment,
+            Rule::DuplicatedAllowComment,
+            Rule::DisabledAllowComment,
+        ])
+    {
+        let ignored = check_allow_comments(&mut violations, &allow_comments, rules);
+        if ignore_allow_comments.is_disabled() {
+            for index in ignored.iter().rev() {
+                violations.swap_remove(*index);
+            }
+        }
     }
 
     violations
@@ -298,6 +312,7 @@ pub(crate) fn check_and_fix_file<'a>(
     path: &Path,
     file: &'a SourceFile,
     settings: &Settings,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<FixerResult<'a>> {
     let mut transformed = Cow::Borrowed(file);
 
@@ -333,6 +348,7 @@ pub(crate) fn check_and_fix_file<'a>(
             &transformed,
             settings,
             &tree,
+            ignore_allow_comments,
         );
 
         if iterations == 0 {
@@ -634,6 +650,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         unsafe_fixes,
         show_fixes,
         output_format,
+        ignore_allow_comments,
         ..
     } = settings.check;
 
@@ -672,6 +689,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             &ast_entrypoints,
             &settings,
             fix_mode,
+            ignore_allow_comments,
         )?
     } else {
         check_files(
@@ -682,6 +700,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             &ast_entrypoints,
             &settings,
             fix_mode,
+            ignore_allow_comments,
         )?
     };
 
@@ -749,6 +768,7 @@ fn check_files(
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Result<CheckResults> {
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match settings.check.progress_bar {
@@ -816,6 +836,7 @@ fn check_files(
                 &file,
                 settings,
                 fix_mode,
+                ignore_allow_comments,
             ) {
                 Ok(violations) => {
                     if violations.is_empty() {
@@ -867,6 +888,7 @@ fn check_stdin(
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Result<CheckResults> {
     let stdin = read_from_stdin()?;
 
@@ -886,6 +908,7 @@ fn check_stdin(
             path,
             &file,
             settings,
+            ignore_allow_comments,
         ) {
             if !fixed.is_empty() {
                 match fix_mode {
@@ -911,6 +934,7 @@ fn check_stdin(
                 path,
                 &file,
                 settings,
+                ignore_allow_comments,
             )?;
             let fixed = FxHashMap::default();
             (result, fixed)
@@ -924,6 +948,7 @@ fn check_stdin(
             path,
             &file,
             settings,
+            ignore_allow_comments,
         )?;
         let fixed = FxHashMap::default();
         (result, fixed)

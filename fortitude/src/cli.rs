@@ -144,6 +144,10 @@ pub struct CheckArgs {
     #[clap(long, overrides_with("fix_only"), hide = true, action = SetTrue)]
     pub no_fix_only: Option<bool>,
 
+    /// Ignore any `allow` comments.
+    #[arg(long)]
+    pub ignore_allow_comments: bool,
+
     /// Output serialization format for violations.
     /// The default serialization format is "full".
     #[arg(long, value_enum, env = "FORTITUDE_OUTPUT_FORMAT")]

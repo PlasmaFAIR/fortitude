@@ -346,6 +346,7 @@ impl Configuration {
                 output_format,
                 show_fixes,
                 per_file_ignores,
+                ignore_allow_comments: args.ignore_allow_comments.into(),
             },
             file_resolver: FileResolverSettings {
                 project_root: project_root.to_path_buf(),

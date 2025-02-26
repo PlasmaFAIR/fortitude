@@ -1220,6 +1220,118 @@ end program
 }
 
 #[test]
+fn ignore_per_line_ignores() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+! allow(C001, unnamed-end-statement, literal-kind)
+program test
+  ! allow(star-kind)
+  logical*4, parameter :: true = .true.
+  ! allow(trailing-whitespace)
+  logical*4, parameter :: false = .false.  
+end program
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg(test_file)
+                         .args(["--select=C001,S061,PORT011,PORT021,S101"])
+                         .arg("--ignore-allow-comments"),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C001 program missing 'implicit none'
+      |
+    2 | ! allow(C001, unnamed-end-statement, literal-kind)
+    3 | program test
+      | ^^^^^^^^^^^^ C001
+    4 |   ! allow(star-kind)
+    5 |   logical*4, parameter :: true = .true.
+      |
+
+    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
+      |
+    3 | program test
+    4 |   ! allow(star-kind)
+    5 |   logical*4, parameter :: true = .true.
+      |          ^^ PORT021
+    6 |   ! allow(trailing-whitespace)
+    7 |   logical*4, parameter :: false = .false.  
+      |
+      = help: Replace with 'logical(4)'
+
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
+      |
+    3 | program test
+    4 |   ! allow(star-kind)
+    5 |   logical*4, parameter :: true = .true.
+      |           ^ PORT011
+    6 |   ! allow(trailing-whitespace)
+    7 |   logical*4, parameter :: false = .false.  
+      |
+      = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
+      |
+    5 |   logical*4, parameter :: true = .true.
+    6 |   ! allow(trailing-whitespace)
+    7 |   logical*4, parameter :: false = .false.  
+      |          ^^ PORT021
+    8 | end program
+      |
+      = help: Replace with 'logical(4)'
+
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
+      |
+    5 |   logical*4, parameter :: true = .true.
+    6 |   ! allow(trailing-whitespace)
+    7 |   logical*4, parameter :: false = .false.  
+      |           ^ PORT011
+    8 | end program
+      |
+      = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    [TEMP_FILE] S101 [*] trailing whitespace
+      |
+    5 |   logical*4, parameter :: true = .true.
+    6 |   ! allow(trailing-whitespace)
+    7 |   logical*4, parameter :: false = .false.  
+      |                                          ^^ S101
+    8 | end program
+      |
+      = help: Remove trailing whitespace
+
+    [TEMP_FILE] S061 [*] end statement should be named.
+      |
+    6 |   ! allow(trailing-whitespace)
+    7 |   logical*4, parameter :: false = .false.  
+    8 | end program
+      | ^^^^^^^^^^^ S061
+      |
+      = help: Write as 'end program test'.
+
+    fortitude: 1 files scanned.
+    Number of errors: 7
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 2 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
 fn apply_fixes_with_allow_comment() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let test_file = tempdir.path().join("test.f90");
