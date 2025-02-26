@@ -54,8 +54,6 @@ impl AlwaysFixableViolation for RedirectedAllowComment {
     }
 }
 
-// fn check_redirected_codes(diagnostics: &mut Vec<Diagnostics>, codes:
-
 /// ## What it does
 /// Checks for allow comments that aren't applicable.
 ///
