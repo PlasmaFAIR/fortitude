@@ -1,3 +1,4 @@
+use crate::allow_comments::{check_allow_comments, gather_allow_comments};
 use crate::ast::FortitudeNode;
 use crate::cli::{CheckArgs, GlobalConfigArgs};
 use crate::configuration::{self, parse_config_file, Configuration};
@@ -7,14 +8,12 @@ use crate::fs::get_files;
 use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
-use crate::rule_selector::{PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
-use crate::rules::error::allow_comments::InvalidRuleCodeOrName;
 #[cfg(any(feature = "test-rules", test))]
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{CheckSettings, FixMode, PreviewMode, ProgressBar, Settings};
+use crate::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
@@ -24,12 +23,11 @@ use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
-use lazy_regex::{regex, regex_captures};
 use log::{debug, warn};
 use rayon::prelude::*;
 use ruff_diagnostics::Diagnostic;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
-use ruff_text_size::{TextRange, TextSize};
+use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -39,9 +37,8 @@ use std::io::{self, BufWriter};
 use std::iter::once;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
-use std::str::FromStr;
 use std::time::Instant;
-use tree_sitter::{Node, Parser, Tree};
+use tree_sitter::{Parser, Tree};
 
 /// Returns true if the command should read from standard input.
 fn is_stdin(files: &[PathBuf], stdin_filename: Option<&Path>) -> bool {
@@ -74,6 +71,7 @@ pub(crate) fn check_file(
     file: &SourceFile,
     settings: &Settings,
     fix_mode: FixMode,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Diagnostics> {
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
@@ -88,6 +86,7 @@ pub(crate) fn check_file(
             path,
             file,
             settings,
+            ignore_allow_comments,
         ) {
             if !fixed.is_empty() {
                 match fix_mode {
@@ -112,6 +111,7 @@ pub(crate) fn check_file(
                 path,
                 file,
                 settings,
+                ignore_allow_comments,
             )?;
             let fixed = FxHashMap::default();
             (result, fixed)
@@ -125,6 +125,7 @@ pub(crate) fn check_file(
             path,
             file,
             settings,
+            ignore_allow_comments,
         )?;
         let fixed = FxHashMap::default();
         (result, fixed)
@@ -154,94 +155,8 @@ pub(crate) fn check_file(
     })
 }
 
-/// A single allowed rule and the range it applies to
-struct AllowComment {
-    pub rule: Rule,
-    pub range: TextRange,
-}
-
-/// If this node is an `allow` comment, get all the rules allowed on the next line
-fn gather_allow_comments(
-    node: &Node,
-    file: &SourceFile,
-    rules: &RuleTable,
-) -> Result<Vec<AllowComment>, Vec<Diagnostic>> {
-    if node.kind() != "comment" {
-        return Ok(vec![]);
-    }
-
-    let mut allow_comments = Vec::new();
-    let mut errors = Vec::new();
-
-    if let Some((_, allow_comment)) = regex_captures!(
-        r#"! allow\((.*)\)\s*"#,
-        node.to_text(file.source_text()).unwrap()
-    ) {
-        let preview = PreviewOptions {
-            mode: PreviewMode::Enabled,
-            require_explicit: false,
-        };
-
-        // Partition the found selectors into valid and invalid
-        let rule_regex = regex!(r#"\w[-\w\d]*"#);
-        let mut allow_rules = Vec::new();
-        // 8 from length of "! allow("
-        let comment_start_offset =
-            TextSize::try_from(node.start_byte()).unwrap() + TextSize::new(8);
-        for rule in rule_regex.find_iter(allow_comment) {
-            match RuleSelector::from_str(rule.as_str()) {
-                Ok(rule) => allow_rules.push(rule),
-                Err(error) => {
-                    let start = comment_start_offset + TextSize::try_from(rule.start()).unwrap();
-                    let end = comment_start_offset + TextSize::try_from(rule.end()).unwrap();
-                    errors.push(Diagnostic::new(
-                        InvalidRuleCodeOrName {
-                            message: error.to_string(),
-                        },
-                        TextRange::new(start, end),
-                    ))
-                }
-            }
-        }
-
-        if let Some(next_node) = node.next_named_sibling() {
-            let start_byte = TextSize::try_from(next_node.start_byte()).unwrap();
-            let end_byte = TextSize::try_from(next_node.end_byte()).unwrap();
-
-            // This covers the next statement _upto_ the end of the
-            // line that it _ends_ on -- i.e. including trailing
-            // whitespace and other statements. This might have weird
-            // edge cases.
-            let src = file.to_source_code();
-            let start_index = src.line_index(start_byte);
-            let end_index = src.line_index(end_byte);
-            let start_line = src.line_start(start_index);
-            let end_line = src.line_end(end_index);
-
-            let range = TextRange::new(start_line, end_line);
-            for rule_selector in allow_rules {
-                for rule in rule_selector.rules(&preview) {
-                    allow_comments.push(AllowComment { rule, range });
-                }
-            }
-        };
-    }
-
-    if !errors.is_empty() && rules.enabled(Rule::InvalidRuleCodeOrName) {
-        Err(errors)
-    } else {
-        Ok(allow_comments)
-    }
-}
-
-/// Filter out allowed rules
-fn filter_allowed_rules(diagnostic: &Diagnostic, allow_comments: &[AllowComment]) -> bool {
-    allow_comments.iter().all(|allow| {
-        !(allow.rule == diagnostic.kind.rule() && allow.range.contains_range(diagnostic.range))
-    })
-}
-
 /// Parse a file, check it for issues, and return the report.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn check_only_file(
     rules: &RuleTable,
     path_rules: &Vec<PathRuleEnum>,
@@ -250,6 +165,7 @@ pub(crate) fn check_only_file(
     path: &Path,
     file: &SourceFile,
     settings: &Settings,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Vec<DiagnosticMessage>> {
     let mut parser = Parser::new();
     parser
@@ -268,6 +184,7 @@ pub(crate) fn check_only_file(
         file,
         settings,
         &tree,
+        ignore_allow_comments,
     );
 
     Ok(violations
@@ -288,6 +205,7 @@ pub(crate) fn check_path(
     file: &SourceFile,
     settings: &Settings,
     tree: &Tree,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
@@ -315,9 +233,8 @@ pub(crate) fn check_path(
                 }
             }
         }
-        match gather_allow_comments(&node, file, rules) {
-            Ok(mut allow_rules) => allow_comments.append(&mut allow_rules),
-            Err(mut errors) => violations.append(&mut errors),
+        if let Some(allow_rules) = gather_allow_comments(&node, file) {
+            allow_comments.push(allow_rules);
         };
     }
 
@@ -353,10 +270,24 @@ pub(crate) fn check_path(
         }
     }
 
+    if (ignore_allow_comments.is_disabled() && !violations.is_empty())
+        || rules.any_enabled(&[
+            Rule::InvalidRuleCodeOrName,
+            Rule::UnusedAllowComment,
+            Rule::RedirectedAllowComment,
+            Rule::DuplicatedAllowComment,
+            Rule::DisabledAllowComment,
+        ])
+    {
+        let ignored = check_allow_comments(&mut violations, &allow_comments, rules, file);
+        if ignore_allow_comments.is_disabled() {
+            for index in ignored.iter().rev() {
+                violations.swap_remove(*index);
+            }
+        }
+    }
+
     violations
-        .into_iter()
-        .filter(|diagnostic| filter_allowed_rules(diagnostic, &allow_comments))
-        .collect_vec()
 }
 
 const MAX_ITERATIONS: usize = 100;
@@ -381,6 +312,7 @@ pub(crate) fn check_and_fix_file<'a>(
     path: &Path,
     file: &'a SourceFile,
     settings: &Settings,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<FixerResult<'a>> {
     let mut transformed = Cow::Borrowed(file);
 
@@ -416,6 +348,7 @@ pub(crate) fn check_and_fix_file<'a>(
             &transformed,
             settings,
             &tree,
+            ignore_allow_comments,
         );
 
         if iterations == 0 {
@@ -717,6 +650,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         unsafe_fixes,
         show_fixes,
         output_format,
+        ignore_allow_comments,
         ..
     } = settings.check;
 
@@ -755,6 +689,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             &ast_entrypoints,
             &settings,
             fix_mode,
+            ignore_allow_comments,
         )?
     } else {
         check_files(
@@ -765,6 +700,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             &ast_entrypoints,
             &settings,
             fix_mode,
+            ignore_allow_comments,
         )?
     };
 
@@ -832,6 +768,7 @@ fn check_files(
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Result<CheckResults> {
     let file_digits = files.len().to_string().len();
     let progress_bar_style = match settings.check.progress_bar {
@@ -899,6 +836,7 @@ fn check_files(
                 &file,
                 settings,
                 fix_mode,
+                ignore_allow_comments,
             ) {
                 Ok(violations) => {
                     if violations.is_empty() {
@@ -950,6 +888,7 @@ fn check_stdin(
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
+    ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Result<CheckResults> {
     let stdin = read_from_stdin()?;
 
@@ -969,6 +908,7 @@ fn check_stdin(
             path,
             &file,
             settings,
+            ignore_allow_comments,
         ) {
             if !fixed.is_empty() {
                 match fix_mode {
@@ -994,6 +934,7 @@ fn check_stdin(
                 path,
                 &file,
                 settings,
+                ignore_allow_comments,
             )?;
             let fixed = FxHashMap::default();
             (result, fixed)
@@ -1007,6 +948,7 @@ fn check_stdin(
             path,
             &file,
             settings,
+            ignore_allow_comments,
         )?;
         let fixed = FxHashMap::default();
         (result, fixed)

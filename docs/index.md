@@ -94,18 +94,18 @@ as well as for individual statements through "allow" comments of the
 form:
 
 ```f90
-! allow(rule-or-category)
+! allow(rule)
 ```
 
-Multiple rules or categories can be given as a comma-separated
-list. Allow comments apply to the next statement and its contents. So
-in the example below, we allow all of the `style` rules and
-`superfluous-implicit-none` throughout the whole module, and `use-all`
-on the `iso_fortran_env` `use` statement specifically, while
-`some_other_module` will still generate a warning.
+Multiple rules can be given as a comma-separated list. Allow comments
+apply to the next statement and its contents. So in the example below,
+we allow `line-too-long` and `superfluous-implicit-none` throughout
+the whole module, and `use-all` on the `iso_fortran_env` `use`
+statement specifically, while `some_other_module` will still generate
+a warning.
 
 ```f90
-! allow(style, superfluous-implicit-none)
+! allow(line-too-long, superfluous-implicit-none)
 module example
     ! allow(use-all)
     use, intrinsic :: iso_fortran_env

@@ -1,4 +1,4 @@
-# invalid-rule-code-or-name (E011)
+# invalid-rule-code-or-name (FORT001)
 This rule is turned on by default.
 
 ## What it does

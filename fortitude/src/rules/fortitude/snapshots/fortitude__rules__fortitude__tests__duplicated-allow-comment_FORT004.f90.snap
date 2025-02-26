@@ -1,0 +1,19 @@
+---
+source: fortitude/src/rules/fortitude/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/fortitude/FORT004.f90:1:26: FORT004 [*] Duplicated rule `implicit-typing` in allow comment
+  |
+1 | ! allow(implicit-typing, implicit-typing)
+  |                          ^^^^^^^^^^^^^^^ FORT004
+2 | program foo
+3 | end program foo
+  |
+  = help: Remove duplicated allow comment
+
+ℹ Safe fix
+1   |-! allow(implicit-typing, implicit-typing)
+  1 |+! allow(implicit-typing)
+2 2 | program foo
+3 3 | end program foo

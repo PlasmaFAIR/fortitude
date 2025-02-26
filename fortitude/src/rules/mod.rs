@@ -4,6 +4,7 @@
 mod macros;
 pub(crate) mod correctness;
 pub(crate) mod error;
+pub(crate) mod fortitude;
 pub(crate) mod modernisation;
 pub(crate) mod obsolescent;
 pub(crate) mod portability;
@@ -72,7 +73,6 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
     Some(match (category, code) {
         (Error, "000") => (RuleGroup::Stable, None, Default, error::ioerror::IoError),
         (Error, "001") => (RuleGroup::Stable, Ast, Default, error::syntax_error::SyntaxError),
-        (Error, "011") => (RuleGroup::Stable, None, Default, error::allow_comments::InvalidRuleCodeOrName),
 
         (Correctness, "001") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitTyping),
         (Correctness, "002") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::InterfaceImplicitTyping),
@@ -128,31 +128,37 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::assumed_size_character_syntax::DeprecatedAssumedSizeCharacter),
 
+        (Fortitude, "001") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::InvalidRuleCodeOrName),
+        (Fortitude, "002") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::UnusedAllowComment),
+        (Fortitude, "003") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::RedirectedAllowComment),
+        (Fortitude, "004") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::DuplicatedAllowComment),
+        (Fortitude, "005") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::DisabledAllowComment),
+
         // Rules for testing fortitude
         // Couldn't get a separate `Testing` category working for some reason
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9900") => (RuleGroup::Stable, None, Default, testing::test_rules::StableTestRule),
+        (Fortitude, "9900") => (RuleGroup::Stable, None, Default, testing::test_rules::StableTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9901") => (RuleGroup::Stable, None, Default, testing::test_rules::StableTestRuleSafeFix),
+        (Fortitude, "9901") => (RuleGroup::Stable, None, Default, testing::test_rules::StableTestRuleSafeFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9902") => (RuleGroup::Stable, None, Default, testing::test_rules::StableTestRuleUnsafeFix),
+        (Fortitude, "9902") => (RuleGroup::Stable, None, Default, testing::test_rules::StableTestRuleUnsafeFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9903") => (RuleGroup::Stable, None, Default, testing::test_rules::StableTestRuleDisplayOnlyFix),
+        (Fortitude, "9903") => (RuleGroup::Stable, None, Default, testing::test_rules::StableTestRuleDisplayOnlyFix),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9911") => (RuleGroup::Preview, None, Default, testing::test_rules::PreviewTestRule),
+        (Fortitude, "9911") => (RuleGroup::Preview, None, Default, testing::test_rules::PreviewTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9920") => (RuleGroup::Deprecated, None, Default, testing::test_rules::DeprecatedTestRule),
+        (Fortitude, "9920") => (RuleGroup::Deprecated, None, Default, testing::test_rules::DeprecatedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9921") => (RuleGroup::Deprecated, None, Default, testing::test_rules::AnotherDeprecatedTestRule),
+        (Fortitude, "9921") => (RuleGroup::Deprecated, None, Default, testing::test_rules::AnotherDeprecatedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9930") => (RuleGroup::Removed, None, Default, testing::test_rules::RemovedTestRule),
+        (Fortitude, "9930") => (RuleGroup::Removed, None, Default, testing::test_rules::RemovedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9931") => (RuleGroup::Removed, None, Default, testing::test_rules::AnotherRemovedTestRule),
+        (Fortitude, "9931") => (RuleGroup::Removed, None, Default, testing::test_rules::AnotherRemovedTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9940") => (RuleGroup::Removed, None, Default, testing::test_rules::RedirectedFromTestRule),
+        (Fortitude, "9940") => (RuleGroup::Removed, None, Default, testing::test_rules::RedirectedFromTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9950") => (RuleGroup::Stable, None, Default, testing::test_rules::RedirectedToTestRule),
+        (Fortitude, "9950") => (RuleGroup::Stable, None, Default, testing::test_rules::RedirectedToTestRule),
         #[cfg(any(feature = "test-rules", test))]
-        (Error, "9960") => (RuleGroup::Removed, None, Default, testing::test_rules::RedirectedFromPrefixTestRule),
+        (Fortitude, "9960") => (RuleGroup::Removed, None, Default, testing::test_rules::RedirectedFromPrefixTestRule),
     })
 }

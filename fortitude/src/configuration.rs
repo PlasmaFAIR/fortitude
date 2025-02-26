@@ -346,6 +346,7 @@ impl Configuration {
                 output_format,
                 show_fixes,
                 per_file_ignores,
+                ignore_allow_comments: args.ignore_allow_comments.into(),
             },
             file_resolver: FileResolverSettings {
                 project_root: project_root.to_path_buf(),
@@ -704,7 +705,7 @@ mod tests {
     fn select_one_preview_rule_without_preview() -> anyhow::Result<()> {
         let args = RuleSelection {
             ignore: vec![],
-            select: Some(vec![RuleSelector::from_str("E9911")?]),
+            select: Some(vec![RuleSelector::from_str("FORT9911")?]),
             extend_select: vec![],
             fixable: None,
             extend_fixable: vec![],
@@ -724,7 +725,7 @@ mod tests {
     fn select_one_preview_rule_with_preview() -> anyhow::Result<()> {
         let args = RuleSelection {
             ignore: vec![],
-            select: Some(vec![RuleSelector::from_str("E9911")?]),
+            select: Some(vec![RuleSelector::from_str("FORT9911")?]),
             extend_select: vec![],
             fixable: None,
             extend_fixable: vec![],

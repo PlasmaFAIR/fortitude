@@ -66,6 +66,7 @@ pub struct CheckSettings {
     pub output_format: OutputFormat,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
+    pub ignore_allow_comments: IgnoreAllowComments,
 }
 
 impl CheckSettings {
@@ -85,6 +86,7 @@ impl CheckSettings {
             output_format: OutputFormat::default(),
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
+            ignore_allow_comments: IgnoreAllowComments::default(),
         }
     }
 }
@@ -235,6 +237,23 @@ impl UnsafeFixes {
         match self {
             Self::Enabled => Applicability::Unsafe,
             Self::Disabled | Self::Hint => Applicability::Safe,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Hash, Default, is_macro::Is)]
+pub enum IgnoreAllowComments {
+    Enabled,
+    #[default]
+    Disabled,
+}
+
+impl From<bool> for IgnoreAllowComments {
+    fn from(value: bool) -> Self {
+        if value {
+            IgnoreAllowComments::Enabled
+        } else {
+            IgnoreAllowComments::Disabled
         }
     }
 }

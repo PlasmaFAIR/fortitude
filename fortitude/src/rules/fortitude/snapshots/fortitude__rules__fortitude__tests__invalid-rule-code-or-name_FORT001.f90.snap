@@ -1,0 +1,32 @@
+---
+source: fortitude/src/rules/fortitude/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/fortitude/FORT001.f90:1:17: FORT001 [*] Unknown rule or code `notgood` in allow comment
+  |
+1 | ! allow(badbad, notgood, implicit-typing)
+  |                 ^^^^^^^ FORT001
+2 | program test
+3 | end program test
+  |
+
+ℹ Safe fix
+1   |-! allow(badbad, notgood, implicit-typing)
+  1 |+! allow(badbad, implicit-typing)
+2 2 | program test
+3 3 | end program test
+
+./resources/test/fixtures/fortitude/FORT001.f90:1:9: FORT001 [*] Unknown rule or code `badbad` in allow comment
+  |
+1 | ! allow(badbad, notgood, implicit-typing)
+  |         ^^^^^^ FORT001
+2 | program test
+3 | end program test
+  |
+
+ℹ Safe fix
+1   |-! allow(badbad, notgood, implicit-typing)
+  1 |+! allow(notgood, implicit-typing)
+2 2 | program test
+3 3 | end program test

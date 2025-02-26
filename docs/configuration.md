@@ -77,6 +77,8 @@ Options:
           Show an enumeration of all fixed lint violations. Use `--no-show-fixes` to disable
       --fix-only
           Apply fixes to resolve lint violations, but don't report on, or exit non-zero for, leftover violations. Implies `--fix`. Use `--no-fix-only` to disable or `--unsafe-fixes` to include unsafe fixes
+      --ignore-allow-comments
+          Ignore any `allow` comments
       --output-format <OUTPUT_FORMAT>
           Output serialization format for violations. The default serialization format is "full" [env: FORTITUDE_OUTPUT_FORMAT=] [possible values: concise, full, json, json-lines, junit, grouped, github, gitlab, pylint, rdjson, azure, sarif]
   -o, --output-file <OUTPUT_FILE>

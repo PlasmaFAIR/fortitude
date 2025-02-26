@@ -10,7 +10,7 @@ use crate::{
     message::{Emitter, TextEmitter},
     rule_table::RuleTable,
     rules::Rule,
-    settings::{FixMode, Settings},
+    settings::{self, FixMode, Settings},
 };
 
 #[macro_export]
@@ -60,6 +60,7 @@ pub(crate) fn test_contents(
         file,
         settings,
         FixMode::Generate,
+        settings::IgnoreAllowComments::Disabled,
     ) {
         Ok(violations) => {
             if violations.messages.is_empty() {
