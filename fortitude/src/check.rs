@@ -233,8 +233,8 @@ pub(crate) fn check_path(
                 }
             }
         }
-        if let Some(mut allow_rules) = gather_allow_comments(&node, file) {
-            allow_comments.append(&mut allow_rules);
+        if let Some(allow_rules) = gather_allow_comments(&node, file) {
+            allow_comments.push(allow_rules);
         };
     }
 
@@ -279,7 +279,7 @@ pub(crate) fn check_path(
             Rule::DisabledAllowComment,
         ])
     {
-        let ignored = check_allow_comments(&mut violations, &allow_comments, rules);
+        let ignored = check_allow_comments(&mut violations, &allow_comments, rules, file);
         if ignore_allow_comments.is_disabled() {
             for index in ignored.iter().rev() {
                 violations.swap_remove(*index);

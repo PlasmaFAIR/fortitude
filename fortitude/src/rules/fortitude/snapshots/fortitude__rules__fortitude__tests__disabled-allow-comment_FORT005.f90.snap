@@ -3,7 +3,7 @@ source: fortitude/src/rules/fortitude/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/fortitude/FORT005.f90:1:9: FORT005 Disabled rule `unnamed-end-statement` in allow comment
+./resources/test/fixtures/fortitude/FORT005.f90:1:9: FORT005 [*] Disabled rule `unnamed-end-statement` in allow comment
   |
 1 | ! allow(unnamed-end-statement)
   |         ^^^^^^^^^^^^^^^^^^^^^ FORT005
@@ -11,3 +11,9 @@ snapshot_kind: text
 3 |   implicit none
   |
   = help: Remove disabled allow comment
+
+ℹ Safe fix
+1   |-! allow(unnamed-end-statement)
+2 1 | program foo
+3 2 |   implicit none
+4 3 | end program foo
