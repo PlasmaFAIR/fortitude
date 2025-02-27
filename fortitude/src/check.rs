@@ -12,11 +12,16 @@ use crate::rule_table::RuleTable;
 #[cfg(any(feature = "test-rules", test))]
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
-use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
+use crate::rules::{
+    error::ioerror::IoError, error::syntax_error::SyntaxError, AstRuleEnum, PathRuleEnum,
+    TextRuleEnum,
+};
 use crate::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
+use crate::warn_user_once_by_message;
+use crate::FromAstNode;
 use crate::{fs, locator::Locator, warn_user_once};
 
 use anyhow::{anyhow, Context, Result};
@@ -210,6 +215,38 @@ pub(crate) fn check_path(
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
 
+    // Perform AST analysis
+    let root = tree.root_node();
+    // If detecting syntax errors, ignore all other violations if a syntax error is found.
+    // This is because syntax errors can cause false positives in other rules.
+    if rules.enabled(Rule::SyntaxError) && root.has_error() {
+        warn_user_once_by_message!(
+            "Syntax errors detected in file: {}. No further checks will be performed.",
+            path.to_string_lossy()
+        );
+        for node in once(root).chain(root.descendants()) {
+            if node.is_error() {
+                violations.push(Diagnostic::from_node(SyntaxError {}, &node))
+            }
+        }
+        return violations;
+    } else {
+        for node in once(root).chain(root.descendants()) {
+            if let Some(rules) = ast_entrypoints.get(node.kind()) {
+                for rule in rules {
+                    if let Some(violation) = rule.check(settings, &node, file) {
+                        for v in violation {
+                            violations.push(v);
+                        }
+                    }
+                }
+            }
+            if let Some(allow_rules) = gather_allow_comments(&node, file) {
+                allow_comments.push(allow_rules);
+            };
+        }
+    }
+
     for rule in path_rules {
         if let Some(violation) = rule.check(settings, path) {
             violations.push(violation);
@@ -219,23 +256,6 @@ pub(crate) fn check_path(
     // Perform plain text analysis
     for rule in text_rules {
         violations.extend(rule.check(settings, file));
-    }
-
-    // Perform AST analysis
-    let root = tree.root_node();
-    for node in once(root).chain(root.descendants()) {
-        if let Some(rules) = ast_entrypoints.get(node.kind()) {
-            for rule in rules {
-                if let Some(violation) = rule.check(settings, &node, file) {
-                    for v in violation {
-                        violations.push(v);
-                    }
-                }
-            }
-        }
-        if let Some(allow_rules) = gather_allow_comments(&node, file) {
-            allow_comments.push(allow_rules);
-        };
     }
 
     // Raise violations for internal test rules
