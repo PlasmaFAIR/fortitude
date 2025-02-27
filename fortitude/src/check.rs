@@ -373,6 +373,15 @@ pub(crate) fn check_and_fix_file<'a>(
 
         if iterations == 0 {
             is_valid_syntax = !tree.root_node().has_error();
+            if !is_valid_syntax {
+                warn_user_once_by_message!(
+                    "Syntax errors detected in file: {}. No fixes will be applied.",
+                    path.to_string_lossy()
+                );
+                return Err(anyhow!(
+                    "File contains syntax errors, no fixes will be applied"
+                ));
+            }
         } else if is_valid_syntax && tree.root_node().has_error() {
             report_fix_syntax_error(path, transformed.source_text(), fixed.keys().copied());
             return Err(anyhow!("Fix introduced a syntax error"));
