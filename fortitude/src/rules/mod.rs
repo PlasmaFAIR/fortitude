@@ -76,7 +76,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Correctness, "001") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitTyping),
         (Correctness, "002") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::InterfaceImplicitTyping),
-        (Correctness, "003") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_typing::ImplicitExternalProcedures),
+        (Correctness, "003") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitExternalProcedures),
         (Correctness, "011") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultCase),
         (Correctness, "021") => (RuleGroup::Stable, Ast, Optional, correctness::kind_suffixes::NoRealSuffix),
         (Correctness, "022") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_kinds::ImplicitRealKind),

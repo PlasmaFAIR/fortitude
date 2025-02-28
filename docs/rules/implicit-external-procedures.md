@@ -1,4 +1,6 @@
 # implicit-external-procedures (C003)
+This rule is turned on by default.
+
 ## What it does
 Checks if `implicit none` is missing `external`
 
