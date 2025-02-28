@@ -12,6 +12,12 @@ use crate::{
 };
 
 #[derive(Debug, Parser)]
+#[command(
+    author,
+    name = "fortitude",
+    about = "Fortitude: A Fortran linter, inspired by (and built upon) Ruff.",
+    after_help = "For help with a specific command, see: `fortitude help <command>`."
+)]
 #[command(version = build::CLAP_LONG_VERSION, about)]
 pub struct Cli {
     #[clap(subcommand)]
@@ -86,10 +92,15 @@ impl From<&LogLevelArgs> for LogLevel {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Subcommand, Clone, PartialEq)]
+#[derive(Debug, Subcommand)]
 pub enum SubCommands {
     Check(CheckArgs),
     Explain(ExplainArgs),
+    /// Generate shell completion.
+    #[clap(hide = true)]
+    GenerateShellCompletion {
+        shell: clap_complete_command::Shell,
+    },
 }
 
 /// Get descriptions, rationales, and solutions for each rule.

@@ -52,6 +52,8 @@ Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+For help with a specific command, see: `fortitude help <command>`.
 ```
 
 <!-- End auto-generated command help. -->
@@ -138,3 +140,17 @@ Log levels:
 ```
 
 <!-- End auto-generated check help. -->
+
+## Shell autocompletion
+
+Fortitude supports autocompletion for most shells. A shell-specific completion script can be generated
+by `fortitude generate-shell-completion <SHELL>`, where `<SHELL>` is one of `bash`, `elvish`, `fig`, `fish`,
+`powershell`, or `zsh`.
+
+The exact steps required to enable autocompletion will vary by shell. For example instructions,
+see the [Poetry](https://python-poetry.org/docs/#enable-tab-completion-for-bash-fish-or-zsh) or
+[ripgrep](https://github.com/BurntSushi/ripgrep/blob/master/FAQ.md#complete) documentation.
+
+As an example: to enable autocompletion for Bash, run `fortitude
+generate-shell-completion bash > ~/.bash_completion`, then reload your
+shell.
