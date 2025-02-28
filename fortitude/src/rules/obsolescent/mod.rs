@@ -20,7 +20,6 @@ mod tests {
     use crate::settings::Settings;
     use crate::test::test_path;
 
-    #[test_case(Rule::StatementFunction, Path::new("OB001.f90"))]
     #[test_case(Rule::CommonBlock, Path::new("OB011.f90"))]
     #[test_case(Rule::EntryStatement, Path::new("OB021.f90"))]
     #[test_case(Rule::SpecificName, Path::new("OB031.f90"))]

@@ -6,7 +6,8 @@ use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
-/// Checks for statement functions.
+/// Checks for statement functions. This rule has been temporarily removed
+/// while we investigate false positives.
 ///
 /// ## Why is this bad?
 /// Statement functions are an obsolescent feature from Fortran 77,

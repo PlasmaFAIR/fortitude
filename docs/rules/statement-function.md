@@ -1,8 +1,11 @@
 # statement-function (OB001)
+**Warning: This rule has been removed and its documentation is only available for historical reasons.**
+
 This rule is turned on by default.
 
 ## What it does
-Checks for statement functions.
+Checks for statement functions. This rule has been temporarily removed
+while we investigate false positives.
 
 ## Why is this bad?
 Statement functions are an obsolescent feature from Fortran 77,

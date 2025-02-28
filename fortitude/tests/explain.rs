@@ -91,7 +91,6 @@ fn explain_mixed_multiple() -> anyhow::Result<()> {
         .arg("S201")
         .assert()
         .success()
-        .stdout(predicate::str::contains("OB001"))
         .stdout(predicate::str::contains("OB011"))
         .stdout(predicate::str::contains("C121"))
         .stdout(predicate::str::contains("S201"))
