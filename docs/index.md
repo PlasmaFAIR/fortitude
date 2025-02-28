@@ -15,10 +15,26 @@ Written in Rust :crab: and installable with Python :snake:.
 
 ## Quickstart
 
-Fortitude can be installed directly into your Python environment:
+Fortitude is available as
+[`fortitude-lint`](https://pypi.org/project/fortitude-lint) on PyPI:
 
 ```bash
+# With uv:
+uv tool install fortitude-lint@latest
+
+# With pip:
 pip install fortitude-lint
+```
+
+Starting with version `0.7.0`, Fortitude can be installed with our
+standalone installers:
+
+```bash
+# On macOS and Linux:
+curl -LsSf https://github.com/PlasmaFAIR/fortitude/releases/latest/download/fortitude-installer.sh | sh
+
+# On Windows:
+powershell -c "irm https://github.com/PlasmaFAIR/fortitude/releases/latest/download/fortitude-installer.psi | iex"
 ```
 
 You can then lint your whole project under the current working directory
@@ -52,7 +68,7 @@ fortitude explain style
 ```
 
 New rules and other features may be in 'preview' mode while they undergo further review
-and testing. To activate them, use the `--preview` flag:
+and testing. To activate them, use the [`--preview`](settings.md#preview) flag:
 
 ```bash
 fortitude check --preview
@@ -68,7 +84,7 @@ fortitude check --help
 ### Rule Selection
 
 You can select or ignore individual rules or whole groups with
-`--select` and `--ignore`:
+[`--select`](settings.md#select) and [`--ignore`](settings.md#ignore):
 
 ```bash
 # Just check for missing `implicit none`
@@ -84,7 +100,7 @@ fortitude check --select=style --ignore=superfluous-implicit-none
 ```
 
 It is also possible to switch off individual rules or rule categories for specific
-files using `--per-file-ignores`:
+files using [`--per-file-ignores`](settings.md#per-file-ignores):
 
 ```bash
 fortitude check --per-file-ignores=**/*.f95:non-standard-file-extension
@@ -117,15 +133,16 @@ module example
 ### Filtering Files
 
 Fortitude will automatically ignore files in some directories (`build/`, `.git/`,
-`.venv/`, etc.), and this behaviour can be extended using the `--exclude` option. For
-example, to ignore all files in the directory `benchmarks/`:
+`.venv/`, etc.), and this behaviour can be extended using the
+[`--exclude`](settings.md#exclude) option. For example, to ignore all files in
+the directory `benchmarks/`:
 
 ```bash
 fortitude check --exclude=benchmarks
 ```
 
 You can also configure what extensions Fortitude searches for in directories with
-`--file-extensions`:
+[`--file-extensions`](settings.md#file-extensions):
 
 ```bash
 fortitude check --file-extensions=f90,fpp
@@ -154,14 +171,15 @@ ignore = ["S001", "S082"]
 line-length = 132
 ```
 
-Arguments on the command line take precedence over those in the configuration file,
-so using `--select` will override the choices shown above. You should instead use
-`--extend-select` from the command line to select additional rules on top of those in
-the configuration file:
+Arguments on the command line take precedence over those in the configuration
+file, so using `--select` will override the choices shown above. You should
+instead use [`--extend-select`](settings.md#extend-select) from the command line
+to select additional rules on top of those in the configuration file:
 
 ```bash
 fortitude check --extend-select=OB
 ```
 
-Similar options include `--extend-exclude`, `--extend-ignore`, and
-`--extend-per-file-ignores`.
+Similar options include [`--extend-exclude`](settings.md#extend-exclude),
+`--extend-ignore` (command line only), and `--extend-per-file-ignores` (command
+line only).
