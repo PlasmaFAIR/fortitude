@@ -610,10 +610,11 @@ end program foo
     Ok(())
 }
 
-/// When checking a file with syntax errors, any violations after the syntax
+/// When checking a file with syntax errors, any AST violations after the syntax
 /// error are discarded.  This is to prevent the linter from raising false
 /// positives due to an inaccurate AST. In this case, the syntax error should
-/// cause the linter to ignore the second superfluous semi-colon violation.
+/// cause the linter to ignore the second superfluous semi-colon violation, but
+/// not the subsequent line length violation.
 #[test]
 fn check_syntax_errors() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
@@ -628,13 +629,15 @@ program foo
   i = 2;
   j = i ^ 2  ! This is a syntax error
   print *, j;
+  print *, i + i + i + i + i + i + i + i + i + i + i
 end program foo
 "#,
     )?;
     apply_common_filters!();
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .arg("check")
-                         .arg("--select=syntax-error,superfluous-semicolon")
+                         .arg("--select=syntax-error,superfluous-semicolon,line-too-long")
+                         .arg("--line-length=50")
                          .arg("--preview")
                          .arg(&test_file),
                          @r"
@@ -659,11 +662,20 @@ end program foo
     7 |   j = i ^ 2  ! This is a syntax error
       |         ^^^ E001
     8 |   print *, j;
-    9 | end program foo
+    9 |   print *, i + i + i + i + i + i + i + i + i + i + i
       |
 
+    [TEMP_FILE] S001 line length of 52, exceeds maximum 50
+       |
+     7 |   j = i ^ 2  ! This is a syntax error
+     8 |   print *, j;
+     9 |   print *, i + i + i + i + i + i + i + i + i + i + i
+       |                                                   ^^ S001
+    10 | end program foo
+       |
+
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of errors: 3
 
     For more information about specific rules, run:
 
@@ -672,7 +684,7 @@ end program foo
     [*] 1 fixable with the `--fix` option.
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations.
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST.
     ",);
     Ok(())
 }
@@ -800,7 +812,7 @@ end program foo
     [*] 2 fixable with the `--fix` option.
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations.
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST.
     ",);
     Ok(())
 }

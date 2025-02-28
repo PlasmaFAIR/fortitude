@@ -293,17 +293,28 @@ pub(crate) fn check_path(
     // after it, as they may be false positives.
     if rules.enabled(Rule::SyntaxError) && root.has_error() {
         warn_user_once_by_message!(
-            "Syntax errors detected in file: {}. Discarding subsequent violations.",
+            "Syntax errors detected in file: {}. Discarding subsequent violations from the AST.",
             path.to_string_lossy()
         );
         // Sort by byte-offset in the file
         violations.sort_by_key(|diagnostic| diagnostic.range.start());
         // Retain all violations up to the first syntax error, inclusive.
+        // Text and path rules can be safely retained.
         let syntax_error_idx = violations
             .iter()
             .position(|diagnostic| diagnostic.kind.rule() == Rule::SyntaxError);
         if let Some(syntax_error_idx) = syntax_error_idx {
-            violations.truncate(syntax_error_idx + 1);
+            violations = violations
+                .into_iter()
+                .enumerate()
+                .filter_map(|(idx, diagnostic)| {
+                    if idx <= syntax_error_idx || !diagnostic.kind.rule().is_ast_rule() {
+                        Some(diagnostic)
+                    } else {
+                        None
+                    }
+                })
+                .collect_vec();
         }
     }
 
