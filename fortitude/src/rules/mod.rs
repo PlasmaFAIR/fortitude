@@ -76,7 +76,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         (Correctness, "001") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitTyping),
         (Correctness, "002") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::InterfaceImplicitTyping),
-        (Correctness, "003") => (RuleGroup::Preview, Ast, Default, correctness::implicit_typing::ImplicitExternalProcedures),
+        (Correctness, "003") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitExternalProcedures),
         (Correctness, "011") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultCase),
         (Correctness, "021") => (RuleGroup::Stable, Ast, Optional, correctness::kind_suffixes::NoRealSuffix),
         (Correctness, "022") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_kinds::ImplicitRealKind),
@@ -93,8 +93,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "101") => (RuleGroup::Preview, Ast, Default, correctness::derived_default_init::MissingDefaultPointerInitalisation),
         (Correctness, "121") => (RuleGroup::Stable, Ast, Default, correctness::use_statements::UseAll),
         (Correctness, "122") => (RuleGroup::Preview, Ast, Default, correctness::use_statements::MissingIntrinsic),
-        (Correctness, "131") => (RuleGroup::Preview, Ast, Default, correctness::accessibility_statements::MissingAccessibilityStatement),
-        (Correctness, "132") => (RuleGroup::Preview, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
+        (Correctness, "131") => (RuleGroup::Stable, Ast, Default, correctness::accessibility_statements::MissingAccessibilityStatement),
+        (Correctness, "132") => (RuleGroup::Stable, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
         (Correctness, "141") => (RuleGroup::Stable, Ast, Default, correctness::exit_labels::MissingExitOrCycleLabel),
         
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),
