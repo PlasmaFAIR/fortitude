@@ -120,7 +120,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "211") => (RuleGroup::Preview, Ast, Optional, style::file_contents::MultipleModules),
         (Style, "212") => (RuleGroup::Preview, Ast, Optional, style::file_contents::ProgramWithModule),
 
-        (Obsolescent, "001") => (RuleGroup::Stable, Ast, Default, obsolescent::statement_functions::StatementFunction),
+        (Obsolescent, "001") => (RuleGroup::Removed, Ast, Default, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Stable, Ast, Default, obsolescent::common_blocks::CommonBlock),
         (Obsolescent, "021") => (RuleGroup::Stable, Ast, Default, obsolescent::entry_statement::EntryStatement),
         (Obsolescent, "031") => (RuleGroup::Preview, Ast, Default, obsolescent::specific_names::SpecificName),
