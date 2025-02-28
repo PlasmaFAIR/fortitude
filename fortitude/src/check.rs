@@ -17,6 +17,7 @@ use crate::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
+use crate::warn_user_once_by_message;
 use crate::{fs, locator::Locator, warn_user_once};
 
 use anyhow::{anyhow, Context, Result};
@@ -210,6 +211,7 @@ pub(crate) fn check_path(
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
 
+    // Check file paths directly
     for rule in path_rules {
         if let Some(violation) = rule.check(settings, path) {
             violations.push(violation);
@@ -287,6 +289,35 @@ pub(crate) fn check_path(
         }
     }
 
+    // Check violations for any remaining syntax errors. If any are found, discard violations
+    // after it, as they may be false positives.
+    if rules.enabled(Rule::SyntaxError) && root.has_error() {
+        warn_user_once_by_message!(
+            "Syntax errors detected in file: {}. Discarding subsequent violations from the AST.",
+            path.to_string_lossy()
+        );
+        // Sort by byte-offset in the file
+        violations.sort_by_key(|diagnostic| diagnostic.range.start());
+        // Retain all violations up to the first syntax error, inclusive.
+        // Text and path rules can be safely retained.
+        let syntax_error_idx = violations
+            .iter()
+            .position(|diagnostic| diagnostic.kind.rule() == Rule::SyntaxError);
+        if let Some(syntax_error_idx) = syntax_error_idx {
+            violations = violations
+                .into_iter()
+                .enumerate()
+                .filter_map(|(idx, diagnostic)| {
+                    if idx <= syntax_error_idx || !diagnostic.kind.rule().is_ast_rule() {
+                        Some(diagnostic)
+                    } else {
+                        None
+                    }
+                })
+                .collect_vec();
+        }
+    }
+
     violations
 }
 
@@ -353,6 +384,15 @@ pub(crate) fn check_and_fix_file<'a>(
 
         if iterations == 0 {
             is_valid_syntax = !tree.root_node().has_error();
+            if !is_valid_syntax {
+                warn_user_once_by_message!(
+                    "Syntax errors detected in file: {}. No fixes will be applied.",
+                    path.to_string_lossy()
+                );
+                return Err(anyhow!(
+                    "File contains syntax errors, no fixes will be applied"
+                ));
+            }
         } else if is_valid_syntax && tree.root_node().has_error() {
             report_fix_syntax_error(path, transformed.source_text(), fixed.keys().copied());
             return Err(anyhow!("Fix introduced a syntax error"));

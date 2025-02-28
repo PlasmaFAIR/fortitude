@@ -261,6 +261,9 @@ fn generate_rule_to_code(
 
     let mut rule_noqa_code_match_arms = quote!();
     let mut rule_group_match_arms = quote!();
+    let mut rule_is_path_rule_match_arms = quote!();
+    let mut rule_is_text_rule_match_arms = quote!();
+    let mut rule_is_ast_rule_match_arms = quote!();
     let mut rule_defaultness_arms = quote!();
 
     for (rule, codes) in rule_to_codes {
@@ -275,6 +278,7 @@ fn generate_rule_to_code(
         let RuleMeta {
             category,
             code,
+            kind,
             group,
             attrs,
             defaultness,
@@ -291,6 +295,20 @@ fn generate_rule_to_code(
 
         rule_group_match_arms.extend(quote! {
             #(#attrs)* Rule::#rule_name => #group,
+        });
+
+        let is_path = kind.is_ident("Path");
+        let is_text = kind.is_ident("Text");
+        let is_ast = kind.is_ident("Ast");
+
+        rule_is_path_rule_match_arms.extend(quote! {
+            #(#attrs)* Rule::#rule_name => #is_path,
+        });
+        rule_is_text_rule_match_arms.extend(quote! {
+            #(#attrs)* Rule::#rule_name => #is_text,
+        });
+        rule_is_ast_rule_match_arms.extend(quote! {
+            #(#attrs)* Rule::#rule_name => #is_ast,
         });
 
         let is_default = defaultness.is_ident("Default");
@@ -332,6 +350,24 @@ fn generate_rule_to_code(
 
             pub fn is_removed(&self) -> bool {
                 matches!(self.group(), RuleGroup::Removed)
+            }
+
+            pub fn is_path_rule(&self) -> bool {
+                match self {
+                    #rule_is_path_rule_match_arms
+                }
+            }
+
+            pub fn is_text_rule(&self) -> bool {
+                match self {
+                    #rule_is_text_rule_match_arms
+                }
+            }
+
+            pub fn is_ast_rule(&self) -> bool {
+                match self {
+                    #rule_is_ast_rule_match_arms
+                }
             }
 
             pub fn is_default(&self) -> bool {

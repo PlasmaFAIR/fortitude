@@ -610,6 +610,267 @@ end program foo
     Ok(())
 }
 
+/// When checking a file with syntax errors, any AST violations after the syntax
+/// error are discarded.  This is to prevent the linter from raising false
+/// positives due to an inaccurate AST. In this case, the syntax error should
+/// cause the linter to ignore the second superfluous semi-colon violation, but
+/// not the subsequent line length violation.
+#[test]
+fn check_syntax_errors() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none (type, external)
+  integer :: i
+  integer :: j
+  i = 2;
+  j = i ^ 2  ! This is a syntax error
+  print *, j;
+  print *, i + i + i + i + i + i + i + i + i + i + i
+end program foo
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=syntax-error,superfluous-semicolon,line-too-long")
+                         .arg("--line-length=50")
+                         .arg("--preview")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] S081 [*] unnecessary semicolon
+      |
+    4 |   integer :: i
+    5 |   integer :: j
+    6 |   i = 2;
+      |        ^ S081
+    7 |   j = i ^ 2  ! This is a syntax error
+    8 |   print *, j;
+      |
+      = help: Remove this character
+
+    [TEMP_FILE] E001 Syntax error
+      |
+    5 |   integer :: j
+    6 |   i = 2;
+    7 |   j = i ^ 2  ! This is a syntax error
+      |         ^^^ E001
+    8 |   print *, j;
+    9 |   print *, i + i + i + i + i + i + i + i + i + i + i
+      |
+
+    [TEMP_FILE] S001 line length of 52, exceeds maximum 50
+       |
+     7 |   j = i ^ 2  ! This is a syntax error
+     8 |   print *, j;
+     9 |   print *, i + i + i + i + i + i + i + i + i + i + i
+       |                                                   ^^ S001
+    10 | end program foo
+       |
+
+    fortitude: 1 files scanned.
+    Number of errors: 3
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option.
+
+    ----- stderr -----
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST.
+    ",);
+    Ok(())
+}
+
+/// The above behaviour can be overridden by ignoring syntax errors.
+#[test]
+fn check_ignore_syntax_errors() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none (type, external)
+  integer :: i
+  integer :: j
+  i = 2;
+  j = i ^ 2  ! This is a syntax error
+  print *, j;
+end program foo
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=superfluous-semicolon")
+                         .arg("--preview")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] S081 [*] unnecessary semicolon
+      |
+    4 |   integer :: i
+    5 |   integer :: j
+    6 |   i = 2;
+      |        ^ S081
+    7 |   j = i ^ 2  ! This is a syntax error
+    8 |   print *, j;
+      |
+      = help: Remove this character
+
+    [TEMP_FILE] S081 [*] unnecessary semicolon
+      |
+    6 |   i = 2;
+    7 |   j = i ^ 2  ! This is a syntax error
+    8 |   print *, j;
+      |             ^ S081
+    9 | end program foo
+      |
+      = help: Remove this character
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 2 fixable with the `--fix` option.
+
+    ----- stderr -----
+    ",);
+    Ok(())
+}
+
+/// Syntax errors can also be ignored with allow comments
+#[test]
+fn check_allow_syntax_errors() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none (type, external)
+  integer :: i
+  integer :: j
+  i = 2;
+  ! allow(syntax-error)
+  j = i ^ 2  ! This is a syntax error
+  print *, j;
+end program foo
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=syntax-error,superfluous-semicolon")
+                         .arg("--preview")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] S081 [*] unnecessary semicolon
+      |
+    4 |   integer :: i
+    5 |   integer :: j
+    6 |   i = 2;
+      |        ^ S081
+    7 |   ! allow(syntax-error)
+    8 |   j = i ^ 2  ! This is a syntax error
+      |
+      = help: Remove this character
+
+    [TEMP_FILE] S081 [*] unnecessary semicolon
+       |
+     7 |   ! allow(syntax-error)
+     8 |   j = i ^ 2  ! This is a syntax error
+     9 |   print *, j;
+       |             ^ S081
+    10 | end program foo
+       |
+       = help: Remove this character
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 2 fixable with the `--fix` option.
+
+    ----- stderr -----
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST.
+    ",);
+    Ok(())
+}
+
+/// Files with syntax errors should never be fixed under any circumstances.
+#[test]
+fn check_fix_with_syntax_errors() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none (type, external)
+  integer :: i
+  integer :: j
+  i = 2
+  j = i ^ 2  ! This is a syntax error
+  print *, j;  ! superfluous-semicolon
+end program foo
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=superfluous-semicolon")
+                         .arg("--preview")
+                         .arg("--fix")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] S081 [*] unnecessary semicolon
+      |
+    6 |   i = 2
+    7 |   j = i ^ 2  ! This is a syntax error
+    8 |   print *, j;  ! superfluous-semicolon
+      |             ^ S081
+    9 | end program foo
+      |
+      = help: Remove this character
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option.
+
+    ----- stderr -----
+    warning: Syntax errors detected in file: [TEMP_FILE] No fixes will be applied.
+    ",);
+    Ok(())
+}
+
 #[test]
 fn check_multibyte_utf8() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
