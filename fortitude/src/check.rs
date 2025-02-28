@@ -296,6 +296,8 @@ pub(crate) fn check_path(
             "Syntax errors detected in file: {}. Discarding subsequent violations.",
             path.to_string_lossy()
         );
+        // Sort by byte-offset in the file
+        violations.sort_by_key(|diagnostic| diagnostic.range.start());
         // Retain all violations up to the first syntax error, inclusive.
         let syntax_error_idx = violations
             .iter()
