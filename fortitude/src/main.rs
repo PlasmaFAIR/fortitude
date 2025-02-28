@@ -1,8 +1,8 @@
-use std::io::Write;
+use std::io::{stdout, Write};
 use std::process::ExitCode;
 
 use anyhow::Result;
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use colored::Colorize;
 use fortitude::check::check;
 use fortitude::cli::{Cli, SubCommands};
@@ -17,6 +17,10 @@ fn main() -> Result<ExitCode> {
     let status = match args.command {
         SubCommands::Check(check_args) => check(check_args, &args.global_options),
         SubCommands::Explain(args) => explain(args),
+        SubCommands::GenerateShellCompletion { shell } => {
+            shell.generate(&mut Cli::command(), &mut stdout());
+            return Ok(ExitCode::SUCCESS);
+        }
     };
     match status {
         Ok(code) => Ok(code),

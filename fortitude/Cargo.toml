@@ -23,6 +23,7 @@ anyhow = { workspace = true }
 bitflags = "2.6.0"
 chrono = { version = "0.4.35", default-features = false, features = ["clock"] }
 clap = { workspace = true }
+clap_complete_command = { workspace = true }
 colored = { workspace = true }
 ignore = "0.4.23"
 is-macro = "0.3.7"
