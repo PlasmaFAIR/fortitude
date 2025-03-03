@@ -204,6 +204,11 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: x64
+      - name: Install libatomic
+        # Fixes bug for 32-bit linux
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libatomic1
       - name: "Build wheels"
         uses: PyO3/maturin-action@v1
         with:
