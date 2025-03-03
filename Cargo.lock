@@ -1710,9 +1710,9 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-fortran"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c8f112a5b5b30030a8b5598ae789d1a0e14c72db9ebbf7c14dda99d225d06b2"
+checksum = "c0875228ea6c34e6b482bff08b1ce69f2afd99af38f5fdd69b1b1ddfbd5f2019"
 dependencies = [
  "cc",
  "tree-sitter-language",
