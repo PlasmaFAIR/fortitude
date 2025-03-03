@@ -1,5 +1,88 @@
 # Changelog
 
+## 0.7.0
+
+This release features 25 new rules, many more options for controlling
+exactly which rules are enabled anywhere from per-file to per-line,
+and some useful command line options.
+
+### Breaking changes
+
+We've reorganised a lot of the rules and categories. Rule and category
+redirects should minimise any breakages, but you should update your
+config appropriately.
+
+We have also changed the rules that are on by default. This may mean
+you now have to explicitly enable some rules there were previously
+checked, and you may find more warnings being raised from new rules.
+
+The rule `statement-function` has been temporarily removed while we
+work to reduce false positives.
+
+### Stabilisation
+
+The following rules have been stabilised and are no longer in preview:
+
+- [`missing-accessibility-statement`](https://fortitude.readthedocs.io/en/stable/rules/missing-accessibility-statement/) (`C131`)
+- [`default-public-accessibility`](https://fortitude.readthedocs.io/en/stable/rules/default-public-accessibility/) (`C132`)
+- [`implicit-external-procedures`](https://fortitude.readthedocs.io/en/stable/rules/implicit-external-procedures/) (`C003`)
+
+### Rule changes
+
+- Add `missing-default-case` ([#240](https://github.com/PlasmaFAIR/fortitude/pull/240))
+- Add check for use of specific names for intrinsic functions ([#254](https://github.com/PlasmaFAIR/fortitude/pull/254))
+- Add rule `magic-number-in-array-size` ([#236](https://github.com/PlasmaFAIR/fortitude/pull/236))
+- Add rule `missing-action-specifier` and `Io` rule category ([#230](https://github.com/PlasmaFAIR/fortitude/pull/230))
+- Add rule for deleted feature `pause` statements ([#304](https://github.com/PlasmaFAIR/fortitude/pull/304))
+- Add rule to find computed go to statements ([#264](https://github.com/PlasmaFAIR/fortitude/pull/264))
+- Add rule to find missing intrinsic specifiers in `use` statements ([#253](https://github.com/PlasmaFAIR/fortitude/pull/253))
+- Add rule to flag trailing backslash ([#311](https://github.com/PlasmaFAIR/fortitude/pull/311))
+- Add rule to test for uninitialized pointers in derived types ([#299](https://github.com/PlasmaFAIR/fortitude/pull/299))
+- Add rules for magic/non-portable IO units ([#239](https://github.com/PlasmaFAIR/fortitude/pull/239))
+- Add rules for multiple modules/programs in same file; Add rule for `include` statements ([#268](https://github.com/PlasmaFAIR/fortitude/pull/268))
+- Add rules for unused/duplicated/redirected allow comments ([#334](https://github.com/PlasmaFAIR/fortitude/pull/334))
+- Rule: `multiple-statements-per-line` ([#246](https://github.com/PlasmaFAIR/fortitude/pull/246))
+- Temporarily remove `statement-function` ([#339](https://github.com/PlasmaFAIR/fortitude/pull/339))
+- Warn about invalid rules in allow-comments ([#266](https://github.com/PlasmaFAIR/fortitude/pull/266))
+- Suggest `iso_fortran_env` parameters for literal kinds ([#245](https://github.com/PlasmaFAIR/fortitude/pull/245))
+
+### CLI
+
+- Add `--exit-zero` and `--exit-non-zero-on-fix` CLI options ([#328](https://github.com/PlasmaFAIR/fortitude/pull/328))
+- Add `--statistics` CLI flag to show counts of violations ([#330](https://github.com/PlasmaFAIR/fortitude/pull/330))
+- Add ability to read from stdin ([#307](https://github.com/PlasmaFAIR/fortitude/pull/307))
+- Add command to generate shell completion scripts ([#340](https://github.com/PlasmaFAIR/fortitude/pull/340))
+- Add logging framework and `--verbose/quiet/silent` flags ([#274](https://github.com/PlasmaFAIR/fortitude/pull/274))
+
+### Configuration
+
+- Add "allow" comments ([#242](https://github.com/PlasmaFAIR/fortitude/pull/242))
+- Add options to exclude files ([#238](https://github.com/PlasmaFAIR/fortitude/pull/238))
+- Add per-file-ignores ([#232](https://github.com/PlasmaFAIR/fortitude/pull/232))
+- Decouple CLI and config file ([#312](https://github.com/PlasmaFAIR/fortitude/pull/312))
+- Mark rules as `Default` or `Optional` in `map_codes` ([#324](https://github.com/PlasmaFAIR/fortitude/pull/324))
+- Recategorise rules ([#329](https://github.com/PlasmaFAIR/fortitude/pull/329))
+- Respect `.gitignore` ([#285](https://github.com/PlasmaFAIR/fortitude/pull/285))
+- Warn when selected rules are ignored for some reason ([#305](https://github.com/PlasmaFAIR/fortitude/pull/305))
+
+### Bug fixes
+
+- Bugfix: Catch negative exponents in `missing-kind-suffix` ([#244](https://github.com/PlasmaFAIR/fortitude/pull/244))
+- Bugfix: Count files scanned and files skipped correctly ([#309](https://github.com/PlasmaFAIR/fortitude/pull/309))
+- Bugfix: `line-length` and `file-extensions` ignored in toml files ([#251](https://github.com/PlasmaFAIR/fortitude/pull/251))
+- Bugfix: fix `get_files` force excluding with directories ([#296](https://github.com/PlasmaFAIR/fortitude/pull/296))
+- Bugfix: make `specific-names` an unsafe fix ([#263](https://github.com/PlasmaFAIR/fortitude/pull/263))
+- Catch syntax errors introduced by fixes ([#227](https://github.com/PlasmaFAIR/fortitude/pull/227))
+- Don't raise linter violations or apply fixes when syntax errors are detected ([#336](https://github.com/PlasmaFAIR/fortitude/pull/336))
+- Fix Windows testing issues ([#318](https://github.com/PlasmaFAIR/fortitude/pull/318))
+- Fix some issues with newlines in fixes on Windows ([#315](https://github.com/PlasmaFAIR/fortitude/pull/315))
+- Handle broken pipes ([#290](https://github.com/PlasmaFAIR/fortitude/pull/290))
+
+### Documentation
+
+- Add guide for adding new rules to `README.dev.md` ([#300](https://github.com/PlasmaFAIR/fortitude/pull/300))
+- T042: Fix example code in assumed-size-character-intent rule ([#234](https://github.com/PlasmaFAIR/fortitude/pull/234))
+
 ## 0.6.2
 
 ### Bug fixes
