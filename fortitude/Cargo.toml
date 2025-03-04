@@ -2,14 +2,11 @@
 name = "fortitude"
 version = "0.7.0"
 description = "A Fortran linter, written in Rust and installable with Python"
-authors = [
-  "Liam Pattinson <liampattinson@gmail.com>",
-  "Peter Hill <peter.hill@york.ac.uk>",
-]
 edition = "2021"
 readme = "../README.md"
-repository = "https://github.com/PlasmaFAIR/fortitude"
-license = "MIT"
+authors = { workspace = true }
+repository = { workspace = true}
+license = { workspace = true }
 keywords = ["Fortran", "linter"]
 categories = ["command-line-utilities", "development-tools"]
 exclude = [".*", "test.f90"]
