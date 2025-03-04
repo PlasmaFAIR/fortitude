@@ -40,6 +40,12 @@ module-name = "fortitude"
 python-source = "python"
 python-packages = ["fortitude"]
 manifest-path = "fortitude/Cargo.toml"
+include = [{ path = "LICENSE", format = "sdist" }]
+exclude = [
+    "fortitude/resources/test/fixtures/**/*",
+    "fortitude/src/rules/*/snapshots/**/*",
+    "fortitude/src/message/snapshots/*"
+]
 strip = true
 
 [tool.rooster]
