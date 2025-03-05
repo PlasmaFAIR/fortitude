@@ -90,13 +90,14 @@ impl Violation for DefaultPublicAccessibility {
 
 impl AstRule for DefaultPublicAccessibility {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        let module = node.parent()?;
-
-        let public_statement = module.child_with_name("public_statement")?;
-
         // Bare `public` statement`
-        if public_statement.named_child(0).is_none() {
-            let name = node.named_child(0)?.to_text(src.source_text())?.to_string();
+        if node.named_child(0).is_none() {
+            let module = node.parent()?;
+            let statement = module.child_with_name("module_statement")?;
+            let name = statement
+                .child_with_name("name")?
+                .to_text(src.source_text())?
+                .to_string();
             return some_vec![Diagnostic::from_node(
                 DefaultPublicAccessibility { name },
                 node
@@ -107,6 +108,6 @@ impl AstRule for DefaultPublicAccessibility {
     }
 
     fn entrypoints() -> Vec<&'static str> {
-        vec!["module_statement"]
+        vec!["public_statement"]
     }
 }
