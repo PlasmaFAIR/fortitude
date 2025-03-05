@@ -1,4 +1,4 @@
-// Adapated from ruff
+// Adapted from ruff
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 

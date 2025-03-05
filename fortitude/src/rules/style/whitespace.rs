@@ -51,7 +51,7 @@ impl TextRule for TrailingWhitespace {
 }
 
 /// ## What does it do?
-/// Checks for inline comments that aren't preceeded by at least two spaces.
+/// Checks for inline comments that aren't preceded by at least two spaces.
 ///
 /// ## Why is this bad?
 /// Inline comments that aren't separated from code by any whitespace can make

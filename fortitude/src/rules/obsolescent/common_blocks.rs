@@ -11,7 +11,7 @@ use tree_sitter::Node;
 /// ## Why is this bad?
 /// Common blocks are an obsolescent feature from Fortran 77 that may be used
 /// to share global data between functions and subroutines. They must be
-/// redeclared for each use, and the neither the types nor sizes contained
+/// redeclared for each use, and neither the types nor sizes contained
 /// within them are checked between uses. That means that the following code
 /// will compile without issue:
 ///
@@ -31,7 +31,7 @@ use tree_sitter::Node;
 /// ```
 ///
 /// Code using common blocks can therefore be unwieldy and error-prone. The
-/// use of modules obviates thier use.
+/// use of modules obviates their use.
 ///
 /// Derived types may also be used to encapsulate a set of related data, and
 /// this approach also helps to improve encapsulation.
