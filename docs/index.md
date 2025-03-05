@@ -9,7 +9,7 @@ Written in Rust :crab: and installable with Python :snake:.
 - :chart_with_upwards_trend: 30+ rules, with many more planned.
 - :page_with_curl: Multiple output formats, including SARIF and GitHub/GitLab CI.
 - :handshake: Follows [community best
-  practices](https://fortran-lang.org/en/learn/best_practices/).
+  practices](https://fortran-lang.org/learn/best_practices/).
 - :muscle: Built on a robust [tree-sitter](https://tree-sitter.github.io/tree-sitter/)
   parser -- even syntax errors won't stop it!
 
