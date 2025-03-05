@@ -3,12 +3,13 @@ source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C132.f90:8:1: C132 module 'bad_module' has default `public` accessibility
+./resources/test/fixtures/correctness/C132.f90:10:3: C132 module 'bad_module' has default `public` accessibility
    |
- 6 | end module good_module
- 7 |
  8 | module bad_module
-   | ^^^^^^^^^^^^^^^^^ C132
  9 |   ! This is bad
 10 |   public
+   |   ^^^^^^ C132
+11 | end module bad_module
+12 |
+13 | module only_some_private_module
    |
