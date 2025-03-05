@@ -52,7 +52,7 @@ impl AstRule for UseAll {
 }
 
 /// ## What it does
-/// Checks whether `use` statements for intrinic modules specify `intrinsic` or
+/// Checks whether `use` statements for intrinsic modules specify `intrinsic` or
 /// `non_intrinsic`.
 ///
 /// ## Why is this bad?

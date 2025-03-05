@@ -4,7 +4,7 @@ This rule is unstable and in [preview](../preview.md). The `--preview` flag is r
 This rule is turned on by default.
 
 ## What it does
-Checks whether `use` statements for intrinic modules specify `intrinsic` or
+Checks whether `use` statements for intrinsic modules specify `intrinsic` or
 `non_intrinsic`.
 
 ## Why is this bad?

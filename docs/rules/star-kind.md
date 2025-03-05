@@ -16,7 +16,7 @@ built-in functions 'selected_real_kind' and 'selected_int_kind'.
 Fixes to this rule are considered unsafe, as while `dtype*N` is generally
 understood to mean a `dtype` that occupied `N` bytes, this does not necessarily
 correspond to `dtype(N)`, which is a `dtype` of 'kind' `N`. For example, the NAG
-compiler may be conigured to use a sequential kind system in which `real*8`
+compiler may be configured to use a sequential kind system in which `real*8`
 corresponds to `real(2)`
 
 In a future version, we hope to upgrade this to a safe fix by use of parameters

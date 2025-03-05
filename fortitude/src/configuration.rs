@@ -56,7 +56,7 @@ pub fn fortitude_enabled<P: AsRef<Path>>(path: P) -> Result<bool> {
 }
 
 /// Return the path to the `fpm.toml` or `fortitude.toml` file in a given
-/// directory. Adapated from ruff
+/// directory. Adapted from ruff
 pub fn settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     // Check for `.fortitude.toml`.
     let fortitude_toml = path.as_ref().join(".fortitude.toml");
@@ -80,7 +80,7 @@ pub fn settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
 }
 
 /// Find the path to the `fpm.toml` or `fortitude.toml` file, if such a file
-/// exists. Adapated from ruff
+/// exists. Adapted from ruff
 pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     for directory in path.as_ref().ancestors() {
         if let Some(settings) = settings_toml(directory)? {

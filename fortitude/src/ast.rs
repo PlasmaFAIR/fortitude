@@ -1,7 +1,7 @@
 use ruff_diagnostics::Edit;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
-/// Contains methods to parse Fortran code into a tree-sitter Tree and utilites to simplify the
+/// Contains methods to parse Fortran code into a tree-sitter Tree and utilities to simplify the
 /// navigation of a Tree.
 use tree_sitter::{Node, TreeCursor};
 

@@ -69,7 +69,7 @@ impl AstRule for ProgramWithModule {
             return None;
         }
 
-        // Mark the violation on the second, and subsequent, occurences
+        // Mark the violation on the second, and subsequent, occurrences
         let violations: Vec<Diagnostic> = node
             .children(&mut node.walk())
             .filter(|node| node.kind() == "module" || node.kind() == "program")
