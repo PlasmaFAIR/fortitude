@@ -101,6 +101,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modernisation, "011") => (RuleGroup::Stable, Ast, Default, modernisation::old_style_array_literal::OldStyleArrayLiteral),
         (Modernisation, "021") => (RuleGroup::Stable, Ast, Default, modernisation::relational_operators::DeprecatedRelationalOperator),
         (Modernisation, "031") => (RuleGroup::Preview, Ast, Optional, modernisation::include_statement::IncludeStatement),
+        (Modernisation, "041") => (RuleGroup::Preview, Ast, Default, modernisation::old_style_character_syntax::OldStyleCharacterSyntax),
         
         (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::magic_io_unit::NonPortableIoUnit),
         (Portability, "011") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKind),

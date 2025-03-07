@@ -1,0 +1,87 @@
+---
+source: fortitude/src/rules/modernisation/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/modernisation/MOD041.f90:5:3: MOD041 [*] 'character*5' uses outdated syntax
+  |
+3 |   implicit none (type, external)
+4 |
+5 |   character*5 :: hello
+  |   ^^^^^^^^^^^ MOD041
+6 |   character(len=5) :: world
+7 |   character*   5 :: foo
+  |
+  = help: Replace with 'character(len=5)'
+
+ℹ Safe fix
+2 2 | 
+3 3 |   implicit none (type, external)
+4 4 | 
+5   |-  character*5 :: hello
+  5 |+  character(len=5) :: hello
+6 6 |   character(len=5) :: world
+7 7 |   character*   5 :: foo
+8 8 |   CHARACTER   *5 :: bar
+
+./resources/test/fixtures/modernisation/MOD041.f90:7:3: MOD041 [*] 'character*5' uses outdated syntax
+  |
+5 |   character*5 :: hello
+6 |   character(len=5) :: world
+7 |   character*   5 :: foo
+  |   ^^^^^^^^^^^^^^ MOD041
+8 |   CHARACTER   *5 :: bar
+9 |   charaCTeR   *  5 :: baz
+  |
+  = help: Replace with 'character(len=5)'
+
+ℹ Safe fix
+4 4 | 
+5 5 |   character*5 :: hello
+6 6 |   character(len=5) :: world
+7   |-  character*   5 :: foo
+  7 |+  character(len=5) :: foo
+8 8 |   CHARACTER   *5 :: bar
+9 9 |   charaCTeR   *  5 :: baz
+10 10 | 
+
+./resources/test/fixtures/modernisation/MOD041.f90:8:3: MOD041 [*] 'character*5' uses outdated syntax
+  |
+6 |   character(len=5) :: world
+7 |   character*   5 :: foo
+8 |   CHARACTER   *5 :: bar
+  |   ^^^^^^^^^^^^^^ MOD041
+9 |   charaCTeR   *  5 :: baz
+  |
+  = help: Replace with 'character(len=5)'
+
+ℹ Safe fix
+5 5 |   character*5 :: hello
+6 6 |   character(len=5) :: world
+7 7 |   character*   5 :: foo
+8   |-  CHARACTER   *5 :: bar
+  8 |+  character(len=5) :: bar
+9 9 |   charaCTeR   *  5 :: baz
+10 10 | 
+11 11 |   hello = "hello"
+
+./resources/test/fixtures/modernisation/MOD041.f90:9:3: MOD041 [*] 'character*5' uses outdated syntax
+   |
+ 7 |   character*   5 :: foo
+ 8 |   CHARACTER   *5 :: bar
+ 9 |   charaCTeR   *  5 :: baz
+   |   ^^^^^^^^^^^^^^^^ MOD041
+10 |
+11 |   hello = "hello"
+   |
+   = help: Replace with 'character(len=5)'
+
+ℹ Safe fix
+6  6  |   character(len=5) :: world
+7  7  |   character*   5 :: foo
+8  8  |   CHARACTER   *5 :: bar
+9     |-  charaCTeR   *  5 :: baz
+   9  |+  character(len=5) :: baz
+10 10 | 
+11 11 |   hello = "hello"
+12 12 |   world = "world"
