@@ -1,7 +1,6 @@
 pub mod double_precision;
 pub mod include_statement;
 pub mod old_style_array_literal;
-pub mod old_style_character_syntax;
 pub mod relational_operators;
 
 #[cfg(test)]
@@ -22,7 +21,6 @@ mod tests {
     #[test_case(Rule::OldStyleArrayLiteral, Path::new("MOD011.f90"))]
     #[test_case(Rule::DeprecatedRelationalOperator, Path::new("MOD021.f90"))]
     #[test_case(Rule::IncludeStatement, Path::new("MOD031.f90"))]
-    #[test_case(Rule::OldStyleCharacterSyntax, Path::new("MOD041.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

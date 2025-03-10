@@ -1,14 +1,14 @@
 ---
-source: fortitude/src/rules/modernisation/mod.rs
+source: fortitude/src/rules/obsolescent/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/modernisation/MOD041.f90:5:3: MOD041 [*] 'character*5' uses outdated syntax
+./resources/test/fixtures/obsolescent/OB062.f90:5:3: OB062 [*] 'character*5' uses outdated syntax
   |
 3 |   implicit none (type, external)
 4 |
 5 |   character*5 :: hello
-  |   ^^^^^^^^^^^ MOD041
+  |   ^^^^^^^^^^^ OB062
 6 |   character(len=5) :: world
 7 |   character*   5 :: foo
   |
@@ -24,12 +24,12 @@ snapshot_kind: text
 7 7 |   character*   5 :: foo
 8 8 |   CHARACTER   *5 :: bar
 
-./resources/test/fixtures/modernisation/MOD041.f90:7:3: MOD041 [*] 'character*5' uses outdated syntax
+./resources/test/fixtures/obsolescent/OB062.f90:7:3: OB062 [*] 'character*5' uses outdated syntax
   |
 5 |   character*5 :: hello
 6 |   character(len=5) :: world
 7 |   character*   5 :: foo
-  |   ^^^^^^^^^^^^^^ MOD041
+  |   ^^^^^^^^^^^^^^ OB062
 8 |   CHARACTER   *5 :: bar
 9 |   charaCTeR   *  5 :: baz
   |
@@ -45,12 +45,12 @@ snapshot_kind: text
 9 9 |   charaCTeR   *  5 :: baz
 10 10 | 
 
-./resources/test/fixtures/modernisation/MOD041.f90:8:3: MOD041 [*] 'character*5' uses outdated syntax
+./resources/test/fixtures/obsolescent/OB062.f90:8:3: OB062 [*] 'character*5' uses outdated syntax
   |
 6 |   character(len=5) :: world
 7 |   character*   5 :: foo
 8 |   CHARACTER   *5 :: bar
-  |   ^^^^^^^^^^^^^^ MOD041
+  |   ^^^^^^^^^^^^^^ OB062
 9 |   charaCTeR   *  5 :: baz
   |
   = help: Replace with 'character(len=5)'
@@ -65,12 +65,12 @@ snapshot_kind: text
 10 10 | 
 11 11 |   hello = "hello"
 
-./resources/test/fixtures/modernisation/MOD041.f90:9:3: MOD041 [*] 'character*5' uses outdated syntax
+./resources/test/fixtures/obsolescent/OB062.f90:9:3: OB062 [*] 'character*5' uses outdated syntax
    |
  7 |   character*   5 :: foo
  8 |   CHARACTER   *5 :: bar
  9 |   charaCTeR   *  5 :: baz
-   |   ^^^^^^^^^^^^^^^^ MOD041
+   |   ^^^^^^^^^^^^^^^^ OB062
 10 |
 11 |   hello = "hello"
    |

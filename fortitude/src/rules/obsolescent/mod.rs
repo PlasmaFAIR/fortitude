@@ -26,6 +26,7 @@ mod tests {
     #[test_case(Rule::ComputedGoTo, Path::new("OB041.f90"))]
     #[test_case(Rule::PauseStatement, Path::new("OB051.f90"))]
     #[test_case(Rule::DeprecatedAssumedSizeCharacter, Path::new("OB061.f90"))]
+    #[test_case(Rule::DeprecatedCharacterSyntax, Path::new("OB062.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
