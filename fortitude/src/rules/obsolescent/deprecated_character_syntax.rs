@@ -24,7 +24,7 @@ impl Violation for DeprecatedCharacterSyntax {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { original, .. } = self;
-        format!("'{original}' uses outdated syntax")
+        format!("'{original}' uses deprecated syntax")
     }
 
     fn fix_title(&self) -> Option<String> {
