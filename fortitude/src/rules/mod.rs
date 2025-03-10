@@ -126,8 +126,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "031") => (RuleGroup::Preview, Ast, Default, obsolescent::specific_names::SpecificName),
         (Obsolescent, "041") => (RuleGroup::Preview, Ast, Default, obsolescent::computed_goto::ComputedGoTo),
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
-        (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedAssumedSizeCharacter),
-        (Obsolescent, "062") => (RuleGroup::Preview, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedCharacterSyntax),
+        (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedCharacterSyntax),
 
         (Fortitude, "001") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::InvalidRuleCodeOrName),
         (Fortitude, "002") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::UnusedAllowComment),

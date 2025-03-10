@@ -1,6 +1,4 @@
-# deprecated-character-syntax (OB062)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
+# deprecated-character-syntax (OB061)
 This rule is turned on by default.
 
 ## What does it do?

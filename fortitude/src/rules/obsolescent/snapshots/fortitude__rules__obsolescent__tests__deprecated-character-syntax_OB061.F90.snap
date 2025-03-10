@@ -1,0 +1,126 @@
+---
+source: fortitude/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB061.F90:13:5: OB061 [*] 'character * ( * )' uses outdated syntax
+   |
+12 |     ! assumed size
+13 |     character * ( * ), intent(in) :: a
+   |     ^^^^^^^^^^^^^^^^^ OB061
+14 |     character*(*), intent(in) :: b, c*9
+   |
+   = help: Replace with 'character(len=*)'
+
+ℹ Safe fix
+10 10 |     use, intrinsic :: iso_c_binding, only: c_char
+11 11 | 
+12 12 |     ! assumed size
+13    |-    character * ( * ), intent(in) :: a
+   13 |+    character(len=*), intent(in) :: a
+14 14 |     character*(*), intent(in) :: b, c*9
+15 15 | 
+16 16 |     ! sized with a number literal
+
+./resources/test/fixtures/obsolescent/OB061.F90:14:5: OB061 [*] 'character*(*)' uses outdated syntax
+   |
+12 |     ! assumed size
+13 |     character * ( * ), intent(in) :: a
+14 |     character*(*), intent(in) :: b, c*9
+   |     ^^^^^^^^^^^^^ OB061
+15 |
+16 |     ! sized with a number literal
+   |
+   = help: Replace with 'character(len=*)'
+
+ℹ Safe fix
+11 11 | 
+12 12 |     ! assumed size
+13 13 |     character * ( * ), intent(in) :: a
+14    |-    character*(*), intent(in) :: b, c*9
+   14 |+    character(len=*), intent(in) :: b, c*9
+15 15 | 
+16 16 |     ! sized with a number literal
+17 17 |     character*5 d, e
+
+./resources/test/fixtures/obsolescent/OB061.F90:17:5: OB061 [*] 'character*5' uses outdated syntax
+   |
+16 |     ! sized with a number literal
+17 |     character*5 d, e
+   |     ^^^^^^^^^^^ OB061
+18 |     CHARACTer  *  10 f
+19 |     chAracTer* 3 g, h*7
+   |
+   = help: Replace with 'character(len=5)'
+
+ℹ Safe fix
+14 14 |     character*(*), intent(in) :: b, c*9
+15 15 | 
+16 16 |     ! sized with a number literal
+17    |-    character*5 d, e
+   17 |+    character(len=5) d, e
+18 18 |     CHARACTer  *  10 f
+19 19 |     chAracTer* 3 g, h*7
+20 20 | 
+
+./resources/test/fixtures/obsolescent/OB061.F90:18:5: OB061 [*] 'CHARACTer  *  10' uses outdated syntax
+   |
+16 |     ! sized with a number literal
+17 |     character*5 d, e
+18 |     CHARACTer  *  10 f
+   |     ^^^^^^^^^^^^^^^^ OB061
+19 |     chAracTer* 3 g, h*7
+   |
+   = help: Replace with 'character(len=10)'
+
+ℹ Safe fix
+15 15 | 
+16 16 |     ! sized with a number literal
+17 17 |     character*5 d, e
+18    |-    CHARACTer  *  10 f
+   18 |+    character(len=10) f
+19 19 |     chAracTer* 3 g, h*7
+20 20 | 
+21 21 |     ! should also work with macros
+
+./resources/test/fixtures/obsolescent/OB061.F90:19:5: OB061 [*] 'chAracTer* 3' uses outdated syntax
+   |
+17 |     character*5 d, e
+18 |     CHARACTer  *  10 f
+19 |     chAracTer* 3 g, h*7
+   |     ^^^^^^^^^^^^ OB061
+20 |
+21 |     ! should also work with macros
+   |
+   = help: Replace with 'character(len=3)'
+
+ℹ Safe fix
+16 16 |     ! sized with a number literal
+17 17 |     character*5 d, e
+18 18 |     CHARACTer  *  10 f
+19    |-    chAracTer* 3 g, h*7
+   19 |+    character(len=3) g, h*7
+20 20 | 
+21 21 |     ! should also work with macros
+22 22 |     ! FIXME the version with parentheses works, but the other
+
+./resources/test/fixtures/obsolescent/OB061.F90:25:5: OB061 [*] 'character*(MAX_LEN)' uses outdated syntax
+   |
+23 |     ! raises a syntax error
+24 |     !character*MAX_LEN, intent(in) :: j
+25 |     character*(MAX_LEN), intent(in) :: i
+   |     ^^^^^^^^^^^^^^^^^^^ OB061
+26 |
+27 |     ! these are ok
+   |
+   = help: Replace with 'character(len=MAX_LEN)'
+
+ℹ Safe fix
+22 22 |     ! FIXME the version with parentheses works, but the other
+23 23 |     ! raises a syntax error
+24 24 |     !character*MAX_LEN, intent(in) :: j
+25    |-    character*(MAX_LEN), intent(in) :: i
+   25 |+    character(len=MAX_LEN), intent(in) :: i
+26 26 | 
+27 27 |     ! these are ok
+28 28 |     character(*, c_char) :: j

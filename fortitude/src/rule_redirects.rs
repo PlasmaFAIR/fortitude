@@ -57,6 +57,10 @@ static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(
         ("S041", "MOD011"),
         ("S051", "MOD021"),
         ("S021", "C141"),
+        (
+            "deprecated-assumed-size-character",
+            "deprecated-character-syntax",
+        ),
     ])
 });
 
