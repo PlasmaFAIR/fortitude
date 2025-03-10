@@ -1,7 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use lazy_regex::regex_captures;
 use ruff_diagnostics::{Diagnostic, Fix, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
@@ -62,36 +61,15 @@ impl AstRule for DeprecatedCharacterSyntax {
         // - An integer literal
         // - '(*)'
         // - An integer expression within parentheses
-        // To test for the latter, we need to consider two cases. If some
-        // arithmetic takes place, we need to check for a math_expression node
-        // within the kind node. If there isn't, and the kind is instead something
-        // like '(3)', '(N)', or '((((4))))', we need to handle that with regex.
-        let length = match kind
-            .named_descendants()
-            .find(|n| n.kind() == "math_expression")
-        {
-            Some(math_expression) => math_expression.to_text(src)?.to_string(),
-            _ => {
-                // If there is no math_expression node, this may be an integer
-                // literal or '(*)', or it may also be something like '(N)', or
-                // '((((4))))'.
-                // An arbitrary amount of whitespace is permitted.
-                // Strangely, plain '*N' is not allowed.
-                let (_, length, star, expression) = regex_captures!(
-                    r#"^\*(?:\s*(\d+)|\s*\(\s*(\*)\s*\)|\([\s\(]*([[:word:]]+)[\s\)]*\))$"#,
-                    kind_text
-                )?;
-                // Only one of length, star, or expression should be present. The others will be empty.
-                if !length.is_empty() {
-                    length.to_string()
-                } else if !star.is_empty() {
-                    star.to_string()
-                } else if !expression.is_empty() {
-                    expression.to_string()
-                } else {
-                    panic!("This should not happen");
-                }
-            }
+        // For the first case, the first child_node will be a number_literal.
+        // For the latter two, the first child node will be `assumed_size`, and
+        // the second child node will be the length (which may be a
+        // number_literal, a math_expression, or another assumed_size).
+        let child = kind.named_child(0)?;
+        let length = if child.kind() == "assumed_size" {
+            kind.named_child(1)?.to_text(src)?.to_string()
+        } else {
+            child.to_text(src)?.to_string()
         };
 
         let original = node.to_text(src)?.to_string();
