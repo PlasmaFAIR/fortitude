@@ -71,17 +71,17 @@ snapshot_kind: text
    |     ^^^^^^^^^^^^^^^^ OB061
 19 |     chAracTer* 3 g, h*7
    |
-   = help: Replace with 'character(len=10)'
+   = help: Replace with 'CHARACTer(len=10)'
 
 ℹ Safe fix
 15 15 | 
 16 16 |     ! sized with a number literal
 17 17 |     character*5 d, e
 18    |-    CHARACTer  *  10 f
-   18 |+    character(len=10) f
+   18 |+    CHARACTer(len=10) f
 19 19 |     chAracTer* 3 g, h*7
 20 20 | 
-21 21 |     ! should also work with macros
+21 21 |     ! sized with an integer expression
 
 ./resources/test/fixtures/obsolescent/OB061.F90:19:5: OB061 [*] 'chAracTer* 3' uses outdated syntax
    |
@@ -90,37 +90,56 @@ snapshot_kind: text
 19 |     chAracTer* 3 g, h*7
    |     ^^^^^^^^^^^^ OB061
 20 |
-21 |     ! should also work with macros
+21 |     ! sized with an integer expression
    |
-   = help: Replace with 'character(len=3)'
+   = help: Replace with 'chAracTer(len=3)'
 
 ℹ Safe fix
 16 16 |     ! sized with a number literal
 17 17 |     character*5 d, e
 18 18 |     CHARACTer  *  10 f
 19    |-    chAracTer* 3 g, h*7
-   19 |+    character(len=3) g, h*7
+   19 |+    chAracTer(len=3) g, h*7
 20 20 | 
-21 21 |     ! should also work with macros
-22 22 |     ! FIXME the version with parentheses works, but the other
+21 21 |     ! sized with an integer expression
+22 22 |     character*(MAX_LEN), intent(in) :: i
 
-./resources/test/fixtures/obsolescent/OB061.F90:25:5: OB061 [*] 'character*(MAX_LEN)' uses outdated syntax
+./resources/test/fixtures/obsolescent/OB061.F90:22:5: OB061 [*] 'character*(MAX_LEN)' uses outdated syntax
    |
-23 |     ! raises a syntax error
-24 |     !character*MAX_LEN, intent(in) :: j
-25 |     character*(MAX_LEN), intent(in) :: i
+21 |     ! sized with an integer expression
+22 |     character*(MAX_LEN), intent(in) :: i
    |     ^^^^^^^^^^^^^^^^^^^ OB061
-26 |
-27 |     ! these are ok
+23 |     character * (2* (MAX_LEN) ) j
    |
    = help: Replace with 'character(len=MAX_LEN)'
 
 ℹ Safe fix
-22 22 |     ! FIXME the version with parentheses works, but the other
-23 23 |     ! raises a syntax error
-24 24 |     !character*MAX_LEN, intent(in) :: j
-25    |-    character*(MAX_LEN), intent(in) :: i
-   25 |+    character(len=MAX_LEN), intent(in) :: i
-26 26 | 
-27 27 |     ! these are ok
-28 28 |     character(*, c_char) :: j
+19 19 |     chAracTer* 3 g, h*7
+20 20 | 
+21 21 |     ! sized with an integer expression
+22    |-    character*(MAX_LEN), intent(in) :: i
+   22 |+    character(len=MAX_LEN), intent(in) :: i
+23 23 |     character * (2* (MAX_LEN) ) j
+24 24 | 
+25 25 |     ! these are ok
+
+./resources/test/fixtures/obsolescent/OB061.F90:23:5: OB061 [*] 'character * (2* (MAX_LEN) )' uses outdated syntax
+   |
+21 |     ! sized with an integer expression
+22 |     character*(MAX_LEN), intent(in) :: i
+23 |     character * (2* (MAX_LEN) ) j
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ OB061
+24 |
+25 |     ! these are ok
+   |
+   = help: Replace with 'character(len=2* (MAX_LEN))'
+
+ℹ Safe fix
+20 20 | 
+21 21 |     ! sized with an integer expression
+22 22 |     character*(MAX_LEN), intent(in) :: i
+23    |-    character * (2* (MAX_LEN) ) j
+   23 |+    character(len=2* (MAX_LEN)) j
+24 24 | 
+25 25 |     ! these are ok
+26 26 |     character(*, c_char) :: k

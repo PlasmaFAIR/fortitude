@@ -16,6 +16,7 @@ use tree_sitter::Node;
 #[derive(ViolationMetadata)]
 pub(crate) struct DeprecatedCharacterSyntax {
     original: String,
+    dtype: String,
     length: String,
 }
 
@@ -27,8 +28,8 @@ impl Violation for DeprecatedCharacterSyntax {
     }
 
     fn fix_title(&self) -> Option<String> {
-        let Self { length, .. } = self;
-        Some(format!("Replace with 'character(len={length})'"))
+        let Self { dtype, length, .. } = self;
+        Some(format!("Replace with '{dtype}(len={length})'"))
     }
 }
 
@@ -42,7 +43,8 @@ impl AstRule for DeprecatedCharacterSyntax {
 
         // Rule only applies to `character`.
         // Expect child(0) to always be present.
-        if node.child(0)?.kind().to_lowercase() != "character" {
+        let dtype = node.child(0)?;
+        if dtype.kind() != "character" {
             return None;
         }
 
@@ -50,29 +52,56 @@ impl AstRule for DeprecatedCharacterSyntax {
         let kind = node.child_by_field_name("kind")?;
         let kind_text = kind.to_text(src)?;
 
-        // Look for a kind that begins with a '*' and is followed by a length.
-        // The length itself might be within any number of parentheses, and may
-        // be either a number literal or any number of alphanumeric or
-        // underscore characters (by the standard it should be just a number
-        // literal, but preprocessor macros may be used with some compilers).
-        // Alternatively, the initial '*' may be followed by '(*)' with any
-        // amount of whitespace between each character. In this case there
-        // must strictly be only one set of parentheses.
-        // If 'kind' field doesn't match the regex, exit early
-        let (_, length, star) = regex_captures!(
-            r#"^\*(?:[\s\(]*([[:word:]]+)[\s\)]*|\s*\(\s*(\*)\s*\))$"#,
-            kind_text
-        )?;
-        // Only one of length or star should be present. The other will be empty.
-        let length = if length.is_empty() { star } else { length };
+        // If kind does not start with '*', exit early
+        if !kind_text.starts_with('*') {
+            return None;
+        }
 
-        let original = node.to_text(src)?;
-        let replacement = format!("character(len={})", length);
+        // The '*' should be followed by:
+        // - An integer literal
+        // - '(*)'
+        // - An integer expression within parentheses
+        // To test for the latter, we need to consider two cases. If some
+        // arithmetic takes place, we need to check for a math_expression node
+        // within the kind node. If there isn't, and the kind is instead something
+        // like '(3)', '(N)', or '((((4))))', we need to handle that with regex.
+        let length = match kind
+            .named_descendants()
+            .find(|n| n.kind() == "math_expression")
+        {
+            Some(math_expression) => math_expression.to_text(src)?.to_string(),
+            _ => {
+                // If there is no math_expression node, this may be an integer
+                // literal or '(*)', or it may also be something like '(N)', or
+                // '((((4))))'.
+                // An arbitrary amount of whitespace is permitted.
+                // Strangely, plain '*N' is not allowed.
+                let (_, length, star, expression) = regex_captures!(
+                    r#"^\*(?:\s*(\d+)|\s*\(\s*(\*)\s*\)|\([\s\(]*([[:word:]]+)[\s\)]*\))$"#,
+                    kind_text
+                )?;
+                // Only one of length, star, or expression should be present. The others will be empty.
+                if !length.is_empty() {
+                    length.to_string()
+                } else if !star.is_empty() {
+                    star.to_string()
+                } else if !expression.is_empty() {
+                    expression.to_string()
+                } else {
+                    panic!("This should not happen");
+                }
+            }
+        };
+
+        let original = node.to_text(src)?.to_string();
+        let dtype = dtype.to_text(src)?.to_string();
+        let replacement = format!("{}(len={})", dtype, length);
         let fix = Fix::safe_edit(node.edit_replacement(source_file, replacement));
         some_vec![Diagnostic::from_node(
             Self {
-                original: original.to_string(),
-                length: length.to_string()
+                original,
+                dtype,
+                length
             },
             node
         )
