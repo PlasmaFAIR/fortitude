@@ -1,6 +1,6 @@
-pub mod assumed_size_character_syntax;
 pub mod common_blocks;
 pub mod computed_goto;
+pub mod deprecated_character_syntax;
 pub mod entry_statement;
 pub mod pause_statement;
 pub mod specific_names;
