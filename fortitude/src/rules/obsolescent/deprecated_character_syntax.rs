@@ -40,26 +40,28 @@ impl AstRule for DeprecatedCharacterSyntax {
     ) -> Option<Vec<Diagnostic>> {
         let src = source_file.source_text();
 
-        // Only applies to `character`
+        // Rule only applies to `character`.
+        // Expect child(0) to always be present.
         if node.child(0)?.kind().to_lowercase() != "character" {
             return None;
         }
 
-        if let Some(kind) = node.child_by_field_name("kind") {
-            let kind_text = kind.to_text(src)?;
-            if let Some((_, length)) = regex_captures!(r#"\*\s*(\d*)"#, kind_text) {
-                let replacement = format!("character(len={})", length);
-                let fix = Fix::safe_edit(node.edit_replacement(source_file, replacement));
-                return some_vec![Diagnostic::from_node(
-                    Self {
-                        length: length.to_string()
-                    },
-                    node
-                )
-                .with_fix(fix)];
-            }
-        }
-        None
+        // If 'kind' field isn't present, exit early
+        let kind = node.child_by_field_name("kind")?;
+        let kind_text = kind.to_text(src)?;
+
+        // If 'kind' field doesn't match the regex, exit early
+        let (_, length) = regex_captures!(r#"\*\s*(\d*)"#, kind_text)?;
+
+        let replacement = format!("character(len={})", length);
+        let fix = Fix::safe_edit(node.edit_replacement(source_file, replacement));
+        some_vec![Diagnostic::from_node(
+            Self {
+                length: length.to_string()
+            },
+            node
+        )
+        .with_fix(fix)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
