@@ -9,6 +9,7 @@ snapshot_kind: text
 13 |     character * ( * ), intent(in) :: a
    |     ^^^^^^^^^^^^^^^^^ OB061
 14 |     character*(*), intent(in) :: b, c*9
+15 |     character*(:), allocatable :: d
    |
    = help: Replace with 'character(len=*)'
 
@@ -19,8 +20,8 @@ snapshot_kind: text
 13    |-    character * ( * ), intent(in) :: a
    13 |+    character(len=*), intent(in) :: a
 14 14 |     character*(*), intent(in) :: b, c*9
-15 15 | 
-16 16 |     ! sized with a number literal
+15 15 |     character*(:), allocatable :: d
+16 16 | 
 
 ./resources/test/fixtures/obsolescent/OB061.F90:14:5: OB061 [*] 'character*(*)' uses deprecated syntax
    |
@@ -28,8 +29,7 @@ snapshot_kind: text
 13 |     character * ( * ), intent(in) :: a
 14 |     character*(*), intent(in) :: b, c*9
    |     ^^^^^^^^^^^^^ OB061
-15 |
-16 |     ! sized with a number literal
+15 |     character*(:), allocatable :: d
    |
    = help: Replace with 'character(len=*)'
 
@@ -39,107 +39,128 @@ snapshot_kind: text
 13 13 |     character * ( * ), intent(in) :: a
 14    |-    character*(*), intent(in) :: b, c*9
    14 |+    character(len=*), intent(in) :: b, c*9
-15 15 | 
-16 16 |     ! sized with a number literal
-17 17 |     character*5 d, e
+15 15 |     character*(:), allocatable :: d
+16 16 | 
+17 17 |     ! sized with a number literal
 
-./resources/test/fixtures/obsolescent/OB061.F90:17:5: OB061 [*] 'character*5' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.F90:15:5: OB061 [*] 'character*(:)' uses deprecated syntax
    |
-16 |     ! sized with a number literal
-17 |     character*5 d, e
+13 |     character * ( * ), intent(in) :: a
+14 |     character*(*), intent(in) :: b, c*9
+15 |     character*(:), allocatable :: d
+   |     ^^^^^^^^^^^^^ OB061
+16 |
+17 |     ! sized with a number literal
+   |
+   = help: Replace with 'character(len=:)'
+
+ℹ Safe fix
+12 12 |     ! assumed size
+13 13 |     character * ( * ), intent(in) :: a
+14 14 |     character*(*), intent(in) :: b, c*9
+15    |-    character*(:), allocatable :: d
+   15 |+    character(len=:), allocatable :: d
+16 16 | 
+17 17 |     ! sized with a number literal
+18 18 |     character*5 e, f
+
+./resources/test/fixtures/obsolescent/OB061.F90:18:5: OB061 [*] 'character*5' uses deprecated syntax
+   |
+17 |     ! sized with a number literal
+18 |     character*5 e, f
    |     ^^^^^^^^^^^ OB061
-18 |     CHARACTer  *  10 f
-19 |     chAracTer* 3 g, h*7
+19 |     CHARACTer  *  10 g
+20 |     chAracTer* 3 h, i*7
    |
    = help: Replace with 'character(len=5)'
 
 ℹ Safe fix
-14 14 |     character*(*), intent(in) :: b, c*9
-15 15 | 
-16 16 |     ! sized with a number literal
-17    |-    character*5 d, e
-   17 |+    character(len=5) d, e
-18 18 |     CHARACTer  *  10 f
-19 19 |     chAracTer* 3 g, h*7
-20 20 | 
+15 15 |     character*(:), allocatable :: d
+16 16 | 
+17 17 |     ! sized with a number literal
+18    |-    character*5 e, f
+   18 |+    character(len=5) e, f
+19 19 |     CHARACTer  *  10 g
+20 20 |     chAracTer* 3 h, i*7
+21 21 | 
 
-./resources/test/fixtures/obsolescent/OB061.F90:18:5: OB061 [*] 'CHARACTer  *  10' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.F90:19:5: OB061 [*] 'CHARACTer  *  10' uses deprecated syntax
    |
-16 |     ! sized with a number literal
-17 |     character*5 d, e
-18 |     CHARACTer  *  10 f
+17 |     ! sized with a number literal
+18 |     character*5 e, f
+19 |     CHARACTer  *  10 g
    |     ^^^^^^^^^^^^^^^^ OB061
-19 |     chAracTer* 3 g, h*7
+20 |     chAracTer* 3 h, i*7
    |
    = help: Replace with 'CHARACTer(len=10)'
 
 ℹ Safe fix
-15 15 | 
-16 16 |     ! sized with a number literal
-17 17 |     character*5 d, e
-18    |-    CHARACTer  *  10 f
-   18 |+    CHARACTer(len=10) f
-19 19 |     chAracTer* 3 g, h*7
-20 20 | 
-21 21 |     ! sized with an integer expression
+16 16 | 
+17 17 |     ! sized with a number literal
+18 18 |     character*5 e, f
+19    |-    CHARACTer  *  10 g
+   19 |+    CHARACTer(len=10) g
+20 20 |     chAracTer* 3 h, i*7
+21 21 | 
+22 22 |     ! sized with an integer expression
 
-./resources/test/fixtures/obsolescent/OB061.F90:19:5: OB061 [*] 'chAracTer* 3' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.F90:20:5: OB061 [*] 'chAracTer* 3' uses deprecated syntax
    |
-17 |     character*5 d, e
-18 |     CHARACTer  *  10 f
-19 |     chAracTer* 3 g, h*7
+18 |     character*5 e, f
+19 |     CHARACTer  *  10 g
+20 |     chAracTer* 3 h, i*7
    |     ^^^^^^^^^^^^ OB061
-20 |
-21 |     ! sized with an integer expression
+21 |
+22 |     ! sized with an integer expression
    |
    = help: Replace with 'chAracTer(len=3)'
 
 ℹ Safe fix
-16 16 |     ! sized with a number literal
-17 17 |     character*5 d, e
-18 18 |     CHARACTer  *  10 f
-19    |-    chAracTer* 3 g, h*7
-   19 |+    chAracTer(len=3) g, h*7
-20 20 | 
-21 21 |     ! sized with an integer expression
-22 22 |     character*(MAX_LEN), intent(in) :: i
+17 17 |     ! sized with a number literal
+18 18 |     character*5 e, f
+19 19 |     CHARACTer  *  10 g
+20    |-    chAracTer* 3 h, i*7
+   20 |+    chAracTer(len=3) h, i*7
+21 21 | 
+22 22 |     ! sized with an integer expression
+23 23 |     character*(MAX_LEN), intent(in) :: j
 
-./resources/test/fixtures/obsolescent/OB061.F90:22:5: OB061 [*] 'character*(MAX_LEN)' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.F90:23:5: OB061 [*] 'character*(MAX_LEN)' uses deprecated syntax
    |
-21 |     ! sized with an integer expression
-22 |     character*(MAX_LEN), intent(in) :: i
+22 |     ! sized with an integer expression
+23 |     character*(MAX_LEN), intent(in) :: j
    |     ^^^^^^^^^^^^^^^^^^^ OB061
-23 |     character * (2* (MAX_LEN) ) j
+24 |     character * (2* (MAX_LEN) ) k
    |
    = help: Replace with 'character(len=MAX_LEN)'
 
 ℹ Safe fix
-19 19 |     chAracTer* 3 g, h*7
-20 20 | 
-21 21 |     ! sized with an integer expression
-22    |-    character*(MAX_LEN), intent(in) :: i
-   22 |+    character(len=MAX_LEN), intent(in) :: i
-23 23 |     character * (2* (MAX_LEN) ) j
-24 24 | 
-25 25 |     ! these are ok
+20 20 |     chAracTer* 3 h, i*7
+21 21 | 
+22 22 |     ! sized with an integer expression
+23    |-    character*(MAX_LEN), intent(in) :: j
+   23 |+    character(len=MAX_LEN), intent(in) :: j
+24 24 |     character * (2* (MAX_LEN) ) k
+25 25 | 
+26 26 |     ! these are ok
 
-./resources/test/fixtures/obsolescent/OB061.F90:23:5: OB061 [*] 'character * (2* (MAX_LEN) )' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.F90:24:5: OB061 [*] 'character * (2* (MAX_LEN) )' uses deprecated syntax
    |
-21 |     ! sized with an integer expression
-22 |     character*(MAX_LEN), intent(in) :: i
-23 |     character * (2* (MAX_LEN) ) j
+22 |     ! sized with an integer expression
+23 |     character*(MAX_LEN), intent(in) :: j
+24 |     character * (2* (MAX_LEN) ) k
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ OB061
-24 |
-25 |     ! these are ok
+25 |
+26 |     ! these are ok
    |
    = help: Replace with 'character(len=2* (MAX_LEN))'
 
 ℹ Safe fix
-20 20 | 
-21 21 |     ! sized with an integer expression
-22 22 |     character*(MAX_LEN), intent(in) :: i
-23    |-    character * (2* (MAX_LEN) ) j
-   23 |+    character(len=2* (MAX_LEN)) j
-24 24 | 
-25 25 |     ! these are ok
-26 26 |     character(*, c_char) :: k
+21 21 | 
+22 22 |     ! sized with an integer expression
+23 23 |     character*(MAX_LEN), intent(in) :: j
+24    |-    character * (2* (MAX_LEN) ) k
+   24 |+    character(len=2* (MAX_LEN)) k
+25 25 | 
+26 26 |     ! these are ok
+27 27 |     character(*, c_char) :: l
