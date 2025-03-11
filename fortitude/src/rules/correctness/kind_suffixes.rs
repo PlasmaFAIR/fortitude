@@ -55,7 +55,7 @@ use tree_sitter::Node;
 /// of cases where a floating point literal is found in an expression.
 ///
 /// ## References
-/// - [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/en/learn/best_practices/floating_point/)
+/// - [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/learn/best_practices/floating_point/)
 #[derive(ViolationMetadata)]
 pub(crate) struct NoRealSuffix {
     literal: String,

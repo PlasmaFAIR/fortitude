@@ -47,4 +47,4 @@ This rule will therefore require an explicit kind statement in the majority
 of cases where a floating point literal is found in an expression.
 
 ## References
-- [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/en/learn/best_practices/floating_point/)
+- [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/learn/best_practices/floating_point/)

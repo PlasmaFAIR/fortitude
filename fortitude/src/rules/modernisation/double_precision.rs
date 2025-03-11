@@ -30,7 +30,7 @@ use tree_sitter::Node;
 /// ## References
 /// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained: Incorporating Fortran
 ///   2018_, Oxford University Press, Appendix A 'Deprecated Features'
-/// - [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/en/learn/best_practices/floating_point/)
+/// - [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/learn/best_practices/floating_point/)
 #[derive(ViolationMetadata)]
 pub(crate) struct DoublePrecision {
     original: String, // TODO: could be &'static str
