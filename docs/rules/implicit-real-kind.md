@@ -31,4 +31,4 @@ which is set to either `sp` or `dp` and used throughout a project. This can
 then be easily toggled depending on the user's needs.
 
 ## References
-- [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/en/learn/best_practices/floating_point/)
+- [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/learn/best_practices/floating_point/)
