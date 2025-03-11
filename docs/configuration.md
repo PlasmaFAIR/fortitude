@@ -169,6 +169,6 @@ will set the commands `:FortitudeFix` and `:FortitudeFixUnsafe` which will
 apply fixes to the current file in your buffer:
 
 ```vim
-command! FortitudeFix execute ':%! fortitude check --fix-only --silent --stdin-filename=%'
-command! FortitudeFixUnsafe execute ':%! fortitude check --fix-only --unsafe-fixes --silent --stdin-filename=%'
+command! FortitudeFix execute ':%! fortitude check --fix-only --quiet --stdin-filename=%'
+command! FortitudeFixUnsafe execute ':%! fortitude check --fix-only --unsafe-fixes --quiet --stdin-filename=%'
 ```

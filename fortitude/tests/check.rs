@@ -2041,7 +2041,7 @@ end program test
                          .arg("--select=C003")
                          .arg("--fix-only")
                          .arg("--unsafe-fixes")
-                         .arg("--silent")
+                         .arg("--quiet")
                          .arg("--stdin-filename=test.f90")
                          .pass_stdin(input_file),
                          @r"
@@ -2072,7 +2072,7 @@ end program test
                          .arg("--select=C003")
                          .arg("--fix-only")
                          .arg("--unsafe-fixes")
-                         .arg("--silent")
+                         .arg("--quiet")
                          .arg("--stdin-filename=test.f90")
                          .pass_stdin(input_file),
                          @r"
