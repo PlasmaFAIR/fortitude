@@ -933,7 +933,7 @@ fn check_stdin(
     let stdin = read_from_stdin()?;
 
     let path = filename.unwrap_or_else(|| Path::new("-"));
-    let file = SourceFileBuilder::new(path.to_str().unwrap_or("-"), stdin.as_str()).finish();
+    let source_file = SourceFileBuilder::new(path.to_str().unwrap_or("-"), stdin.as_str()).finish();
 
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
@@ -946,21 +946,21 @@ fn check_stdin(
             text_rules,
             ast_entrypoints,
             path,
-            &file,
+            &source_file,
             settings,
             ignore_allow_comments,
         ) {
-            if !fixed.is_empty() {
-                match fix_mode {
-                    FixMode::Apply => {
-                        // Write the contents to stdout, regardless of whether any errors were fixed.
-                        let out_file = &mut io::stdout().lock();
-                        out_file.write_all(transformed.source_text().as_bytes())?;
-                    }
-                    // TODO: diff
-                    FixMode::Diff => {}
-                    FixMode::Generate => {}
+            match fix_mode {
+                FixMode::Apply => {
+                    // Write the contents to stdout, regardless of whether any errors were fixed.
+                    let out_file = &mut io::stdout().lock();
+                    out_file.write_all(transformed.source_text().as_bytes())?;
                 }
+                // TODO: diff
+                FixMode::Diff => {
+                    warn_user_once_by_message!("Diff mode is not yet supported for stdin");
+                }
+                FixMode::Generate => {}
             }
 
             (result, fixed)
@@ -972,10 +972,20 @@ fn check_stdin(
                 text_rules,
                 ast_entrypoints,
                 path,
-                &file,
+                &source_file,
                 settings,
                 ignore_allow_comments,
             )?;
+
+            // Write the input to stdout anyway.
+            // Necessary in case the user is using stdin fix mode to overwrite the current
+            // buffer in their editor of choice, e.g. in vim:
+            // `:%!fortitude check --fix-only --silent --stdin-filename=%`
+            if fix_mode.is_apply() {
+                let out_file = &mut io::stdout().lock();
+                out_file.write_all(source_file.source_text().as_bytes())?;
+            }
+
             let fixed = FxHashMap::default();
             (result, fixed)
         }
@@ -986,7 +996,7 @@ fn check_stdin(
             text_rules,
             ast_entrypoints,
             path,
-            &file,
+            &source_file,
             settings,
             ignore_allow_comments,
         )?;
