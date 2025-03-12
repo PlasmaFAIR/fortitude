@@ -36,11 +36,15 @@ cargo install cargo-insta
 
 When contributing, please use `cargo clippy` for linting and `cargo fmt` for formatting.
 If you edit any Python code, please also use `ruff check` and `ruff format`. To avoid
-accidentally pushing unlinted/unformatted code to GitHub, we recommend using the Git
-pre-commit hook provided:
+accidentally pushing unlinted/unformatted code to GitHub, we recommend using
+[`pre-commit`](https://pre-commit.com/) with the provided config file:
 
 ```bash
-git config --local core.hooksPath .githooks
+pip install pre-commit; pre-commit install
+# Or, to avoid installing something to your environment...
+pipx run pre-commit install
+# Or, even better yet for those using uv...
+uvx pre-commit install
 ```
 
 ## Adding Rules
