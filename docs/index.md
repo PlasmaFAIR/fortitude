@@ -6,12 +6,12 @@ Written in Rust :crab: and installable with Python :snake:.
 - :zap: Blazingly fast, up to hundreds of times faster than other open-source Fortran
   linters.
 - :wrench: Automatically fixes linter warnings.
-- :chart_with_upwards_trend: 30+ rules, with many more planned.
+- :chart_with_upwards_trend: 50+ rules, with many more planned.
 - :page_with_curl: Multiple output formats, including SARIF and GitHub/GitLab CI.
 - :handshake: Follows [community best
   practices](https://fortran-lang.org/learn/best_practices/).
 - :muscle: Built on a robust [tree-sitter](https://tree-sitter.github.io/tree-sitter/)
-  parser -- even syntax errors won't stop it!
+  parser.
 
 ## Quickstart
 
@@ -183,3 +183,5 @@ fortitude check --extend-select=OB
 Similar options include [`--extend-exclude`](settings.md#extend-exclude),
 `--extend-ignore` (command line only), and `--extend-per-file-ignores` (command
 line only).
+
+For a full list of options, please see the [settings page](settings.md).

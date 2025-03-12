@@ -2026,3 +2026,66 @@ end program test
 
     Ok(())
 }
+
+/// Check that fixing in stdin mode outputs the fixed file and nothing else.
+#[test]
+fn stdin_fix_mode() -> anyhow::Result<()> {
+    let input_file = r#"
+program test
+  implicit none
+end program test
+"#;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=C003")
+                         .arg("--fix-only")
+                         .arg("--unsafe-fixes")
+                         .arg("--silent")
+                         .arg("--stdin-filename=test.f90")
+                         .pass_stdin(input_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    program test
+      implicit none (type, external)
+    end program test
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+/// Check that fixing in stdin mode outputs the unmodified input file if there
+/// are no fixes to be made.
+#[test]
+fn stdin_fix_mode_no_fix() -> anyhow::Result<()> {
+    let input_file = r#"
+program test
+  implicit none (type, external)
+end program test
+"#;
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=C003")
+                         .arg("--fix-only")
+                         .arg("--unsafe-fixes")
+                         .arg("--silent")
+                         .arg("--stdin-filename=test.f90")
+                         .pass_stdin(input_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    program test
+      implicit none (type, external)
+    end program test
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}

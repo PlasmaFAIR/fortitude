@@ -154,3 +154,21 @@ see the [Poetry](https://python-poetry.org/docs/#enable-tab-completion-for-bash-
 As an example: to enable autocompletion for Bash, run `fortitude
 generate-shell-completion bash > ~/.bash_completion`, then reload your
 shell.
+
+## Editor integration
+
+We aim to add full Language Server Protocol (LSP) support in a future release
+which will enable Fortitude to run from within editors such as (Neo)Vim, Emacs
+and VSCode. In the meantime, it is possible to configure these editors to
+automate some tasks.
+
+### (NeoVim)
+
+Adding the following to your `~/.vimrc` or `~/.config/nvim/init.vim` file
+will set the commands `:FortitudeFix` and `:FortitudeFixUnsafe` which will
+apply fixes to the current file in your buffer:
+
+```vim
+command! FortitudeFix execute ':%! fortitude check --fix-only --silent --stdin-filename=%'
+command! FortitudeFixUnsafe execute ':%! fortitude check --fix-only --unsafe-fixes --silent --stdin-filename=%'
+```
