@@ -51,6 +51,7 @@ impl Violation for InvalidRuleCodeOrName {
 #[derive(ViolationMetadata)]
 pub(crate) struct RedirectedAllowComment {
     pub original: String,
+    pub redirect: String,
     pub new_code: String,
     pub new_name: String,
 }
@@ -58,8 +59,10 @@ pub(crate) struct RedirectedAllowComment {
 impl AlwaysFixableViolation for RedirectedAllowComment {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { original, .. } = self;
-        format!("`{original}` has been redirected")
+        let Self {
+            original, redirect, ..
+        } = self;
+        format!("`{original}` has been redirected to '{redirect}'")
     }
 
     fn fix_title(&self) -> String {

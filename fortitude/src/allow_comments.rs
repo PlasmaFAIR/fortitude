@@ -144,6 +144,7 @@ pub fn check_allow_comments(
                         Diagnostic::new(
                             RedirectedAllowComment {
                                 original: code.code.to_string(),
+                                redirect: redirect.to_string(),
                                 new_code,
                                 new_name,
                             },
