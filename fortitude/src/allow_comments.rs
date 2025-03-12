@@ -135,14 +135,16 @@ pub fn check_allow_comments(
             let redirect = get_redirect_target(code.code);
             if rules.enabled(Rule::RedirectedAllowComment) {
                 if let Some(redirect) = redirect {
-                    let new_name = Rule::from_code(redirect).unwrap().as_ref().to_string();
+                    let rule = Rule::from_code(redirect).unwrap();
+                    let new_code = rule.noqa_code().to_string();
+                    let new_name = rule.as_ref().to_string();
                     let edit =
                         Edit::replacement(new_name.clone(), code.loc.start(), code.loc.end());
                     diagnostics.push(
                         Diagnostic::new(
                             RedirectedAllowComment {
                                 original: code.code.to_string(),
-                                new_code: redirect.to_string(),
+                                new_code,
                                 new_name,
                             },
                             code.loc,

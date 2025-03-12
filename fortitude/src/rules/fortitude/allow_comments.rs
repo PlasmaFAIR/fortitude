@@ -58,10 +58,8 @@ pub(crate) struct RedirectedAllowComment {
 impl AlwaysFixableViolation for RedirectedAllowComment {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self {
-            original, new_code, ..
-        } = self;
-        format!("`{original}` is a redirect to `{new_code}`")
+        let Self { original, .. } = self;
+        format!("`{original}` has been redirected")
     }
 
     fn fix_title(&self) -> String {
