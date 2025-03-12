@@ -1,15 +1,56 @@
 # Fortitude Development
 
+## Building and running from source
+
+To build Fortitude from source, you must first have a working Rust environment
+(see [rustup](https://rustup.rs/)). An executable may then be built with the
+following command called from the project root directory:
+
+```bash
+cargo build
+```
+
+This will build an executable in debug mode at `./target/debug/fortitude`. To
+test the release version:
+
+```bash
+cargo build --release
+```
+
+This will instead build an executable at `./target/release/fortitude`.
+
+The project can also be run without prior building using the command:
+
+```bash
+cargo run --bin fortitude [--release]
+```
+
+For example, to test Fortitude over a local project:
+
+```bash
+cargo run --bin fortitude --release check /path/to/my/project
+```
+
 ## Installation from source
 
-To install from source, you must first have a working Rust environment (see
-[rustup](https://rustup.rs/)). The project may then be installed from the project
+Normally during development it is preferable to use one of the above methods to
+build and run Fortitude, but there are instances where you may wish to test
+installing the project from source. The project may installed from the project
 root directory using either `pip`:
 
 ```bash
-python -m venv venv # Or use your preferred virtual environment method...
-source venv/bin/activate
+# Generate virtual environment (recommended!)
+python -m venv .venv
+# Or better yet, for uv users:
+uv venv
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install and include linting/formatting utilities
 pip install .[lint]
+# Or for uv users...
+uv pip install .[lint]
 ```
 
 Or using `cargo`:
@@ -23,7 +64,7 @@ cargo install --path fortitude
 Unit tests can be run by calling:
 
 ```bash
-cargo test
+cargo test --all-targets --all-features
 ```
 
 You'll also need [Insta](https://insta.rs/docs/) to update snapshot tests:
