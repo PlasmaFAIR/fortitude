@@ -1,4 +1,5 @@
 use fortitude_macros::RuleNamespace;
+use rayon::str;
 use std::str::FromStr; // Needed by strum_macros
 
 pub use crate::rules::Rule;
@@ -78,6 +79,9 @@ pub trait RuleNamespace: Sized {
     /// Returns the prefix that every single code that fortitude uses to identify
     /// rules from this category starts with.
     fn common_prefix(&self) -> &'static str;
+
+    /// Returns the variant corresponding to the given prefix.
+    fn from_prefix(preifx: &str) -> Result<Self, &'static str>;
 
     /// Attempts to parse the given rule code. If the prefix is recognized
     /// returns the respective variant along with the code with the common

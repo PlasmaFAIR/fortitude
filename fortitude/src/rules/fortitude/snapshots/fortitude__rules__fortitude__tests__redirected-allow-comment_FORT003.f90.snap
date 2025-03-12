@@ -3,7 +3,7 @@ source: fortitude/src/rules/fortitude/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/fortitude/FORT003.f90:1:9: FORT003 [*] `T001` is a redirect to `C001`
+./resources/test/fixtures/fortitude/FORT003.f90:1:9: FORT003 [*] `T001` has been redirected to 'C001'
   |
 1 | ! allow(T001)
   |         ^^^^ FORT003

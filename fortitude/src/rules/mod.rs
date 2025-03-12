@@ -20,12 +20,12 @@ pub struct NoqaCode(&'static str, &'static str);
 
 impl NoqaCode {
     /// Return the prefix for the [`NoqaCode`], e.g., `SIM` for `SIM101`.
-    pub fn prefix(&self) -> &str {
+    pub fn prefix(&self) -> &'static str {
         self.0
     }
 
     /// Return the suffix for the [`NoqaCode`], e.g., `101` for `SIM101`.
-    pub fn suffix(&self) -> &str {
+    pub fn suffix(&self) -> &'static str {
         self.1
     }
 }
@@ -126,7 +126,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "031") => (RuleGroup::Preview, Ast, Default, obsolescent::specific_names::SpecificName),
         (Obsolescent, "041") => (RuleGroup::Preview, Ast, Default, obsolescent::computed_goto::ComputedGoTo),
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
-        (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::assumed_size_character_syntax::DeprecatedAssumedSizeCharacter),
+        (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedCharacterSyntax),
 
         (Fortitude, "001") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::InvalidRuleCodeOrName),
         (Fortitude, "002") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::UnusedAllowComment),

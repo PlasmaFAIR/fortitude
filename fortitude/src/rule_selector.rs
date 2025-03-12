@@ -77,13 +77,8 @@ impl FromStr for RuleSelector {
                     None => (s, None),
                 };
 
-                // If passed full name of rule, use the equivalent code instead.
-                if let Ok(rule) = Rule::from_str(s) {
-                    let c = rule.noqa_code().to_string();
-                    return Self::from_str(c.as_str());
-                }
-
                 // If passed a deprecated category, get list of all rules in that category.
+                // These are handled separately as they require unique warnings.
                 if let Some((rules, redirects)) = get_deprecated_category(s) {
                     let redirected_to = redirects
                         .iter()
