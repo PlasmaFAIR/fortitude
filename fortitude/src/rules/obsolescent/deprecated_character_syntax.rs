@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Fix, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -20,16 +20,16 @@ pub(crate) struct DeprecatedCharacterSyntax {
     length: String,
 }
 
-impl Violation for DeprecatedCharacterSyntax {
+impl AlwaysFixableViolation for DeprecatedCharacterSyntax {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { original, .. } = self;
         format!("'{original}' uses deprecated syntax")
     }
 
-    fn fix_title(&self) -> Option<String> {
+    fn fix_title(&self) -> String {
         let Self { dtype, length, .. } = self;
-        Some(format!("Replace with '{dtype}(len={length})'"))
+        format!("Replace with '{dtype}(len={length})'")
     }
 }
 
