@@ -3,7 +3,7 @@ source: fortitude/src/rules/obsolescent/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/obsolescent/OB061.F90:13:5: OB061 [*] 'character * ( * )' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.f90:13:5: OB061 [*] 'character * ( * )' uses deprecated syntax
    |
 12 |     ! assumed size
 13 |     character * ( * ), intent(in) :: a
@@ -23,7 +23,7 @@ snapshot_kind: text
 15 15 |     character*(:), allocatable :: d
 16 16 | 
 
-./resources/test/fixtures/obsolescent/OB061.F90:14:5: OB061 [*] 'character*(*)' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.f90:14:5: OB061 [*] 'character*(*)' uses deprecated syntax
    |
 12 |     ! assumed size
 13 |     character * ( * ), intent(in) :: a
@@ -43,7 +43,7 @@ snapshot_kind: text
 16 16 | 
 17 17 |     ! sized with a number literal
 
-./resources/test/fixtures/obsolescent/OB061.F90:15:5: OB061 [*] 'character*(:)' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.f90:15:5: OB061 [*] 'character*(:)' uses deprecated syntax
    |
 13 |     character * ( * ), intent(in) :: a
 14 |     character*(*), intent(in) :: b, c*9
@@ -64,7 +64,7 @@ snapshot_kind: text
 17 17 |     ! sized with a number literal
 18 18 |     character*5 e, f
 
-./resources/test/fixtures/obsolescent/OB061.F90:18:5: OB061 [*] 'character*5' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.f90:18:5: OB061 [*] 'character*5' uses deprecated syntax
    |
 17 |     ! sized with a number literal
 18 |     character*5 e, f
@@ -84,7 +84,7 @@ snapshot_kind: text
 20 20 |     chAracTer* 3 h, i*7
 21 21 | 
 
-./resources/test/fixtures/obsolescent/OB061.F90:19:5: OB061 [*] 'CHARACTer  *  10' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.f90:19:5: OB061 [*] 'CHARACTer  *  10' uses deprecated syntax
    |
 17 |     ! sized with a number literal
 18 |     character*5 e, f
@@ -104,7 +104,7 @@ snapshot_kind: text
 21 21 | 
 22 22 |     ! sized with an integer expression
 
-./resources/test/fixtures/obsolescent/OB061.F90:20:5: OB061 [*] 'chAracTer* 3' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.f90:20:5: OB061 [*] 'chAracTer* 3' uses deprecated syntax
    |
 18 |     character*5 e, f
 19 |     CHARACTer  *  10 g
@@ -125,7 +125,7 @@ snapshot_kind: text
 22 22 |     ! sized with an integer expression
 23 23 |     character*(MAX_LEN), intent(in) :: j
 
-./resources/test/fixtures/obsolescent/OB061.F90:23:5: OB061 [*] 'character*(MAX_LEN)' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.f90:23:5: OB061 [*] 'character*(MAX_LEN)' uses deprecated syntax
    |
 22 |     ! sized with an integer expression
 23 |     character*(MAX_LEN), intent(in) :: j
@@ -144,7 +144,7 @@ snapshot_kind: text
 25 25 | 
 26 26 |     ! these are ok
 
-./resources/test/fixtures/obsolescent/OB061.F90:24:5: OB061 [*] 'character * (2* (MAX_LEN) )' uses deprecated syntax
+./resources/test/fixtures/obsolescent/OB061.f90:24:5: OB061 [*] 'character * (2* (MAX_LEN) )' uses deprecated syntax
    |
 22 |     ! sized with an integer expression
 23 |     character*(MAX_LEN), intent(in) :: j
