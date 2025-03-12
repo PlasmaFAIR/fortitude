@@ -132,14 +132,6 @@ impl Printer {
             )
         };
 
-        let report = format!(
-            "fortitude: {} files scanned{}.",
-            results.files_checked.to_string().bold(),
-            skipped
-        );
-
-        writeln!(writer, "{report}")?;
-
         let fixables = FixableStatistics::try_from(&results.diagnostics, self.unsafe_fixes);
         let fixed = results
             .diagnostics
@@ -148,68 +140,115 @@ impl Printer {
             .flat_map(std::collections::HashMap::values)
             .sum::<usize>();
 
-        let remaining = results.diagnostics.messages.len();
-        let total = fixed + remaining;
+        if self.flags.intersects(Flags::SHOW_VIOLATIONS) {
+            let report = format!(
+                "fortitude: {} files scanned{}.",
+                results.files_checked.to_string().bold(),
+                skipped
+            );
 
-        let total_txt = total.to_string().bold();
-        let fixed_txt = fixed.to_string().bold();
-        let remaining_txt = remaining.to_string().bold();
+            writeln!(writer, "{report}")?;
 
-        let explain = format!(
-            "fortitude explain {},{},...",
-            "X001".bold().bright_red(),
-            "Y002".bold().bright_red()
-        );
-        let info = format!("For more information about specific rules, run:\n\n    {explain}\n");
+            let remaining = results.diagnostics.messages.len();
+            let total = fixed + remaining;
 
-        if fixed > 0 {
-            writeln!(writer, "Number of errors: {total_txt} ({fixed_txt} fixed, {remaining_txt} remaining)\n\n{info}")?;
-        } else if remaining > 0 {
-            writeln!(writer, "Number of errors: {remaining_txt}\n\n{info}")?;
-        } else {
-            let success = "All checks passed!".bright_green();
-            writeln!(writer, "{success}\n")?;
-        }
+            let total_txt = total.to_string().bold();
+            let fixed_txt = fixed.to_string().bold();
+            let remaining_txt = remaining.to_string().bold();
 
-        if let Some(fixables) = fixables {
-            let fix_prefix = format!("[{}]", "*".cyan());
+            let explain = format!(
+                "fortitude explain {},{},...",
+                "X001".bold().bright_red(),
+                "Y002".bold().bright_red()
+            );
+            let info =
+                format!("For more information about specific rules, run:\n\n    {explain}\n");
 
-            if self.unsafe_fixes.is_hint() {
-                if fixables.applicable > 0 && fixables.inapplicable_unsafe > 0 {
-                    let es = if fixables.inapplicable_unsafe == 1 {
-                        ""
+            if fixed > 0 {
+                writeln!(writer, "Number of errors: {total_txt} ({fixed_txt} fixed, {remaining_txt} remaining)\n\n{info}")?;
+            } else if remaining > 0 {
+                writeln!(writer, "Number of errors: {remaining_txt}\n\n{info}")?;
+            } else {
+                let success = "All checks passed!".bright_green();
+                writeln!(writer, "{success}\n")?;
+            }
+
+            if let Some(fixables) = fixables {
+                let fix_prefix = format!("[{}]", "*".cyan());
+
+                if self.unsafe_fixes.is_hint() {
+                    if fixables.applicable > 0 && fixables.inapplicable_unsafe > 0 {
+                        let es = if fixables.inapplicable_unsafe == 1 {
+                            ""
+                        } else {
+                            "es"
+                        };
+                        writeln!(writer,
+                                    "{fix_prefix} {} fixable with the `--fix` option ({} hidden fix{es} can be enabled with the `--unsafe-fixes` option).",
+                                    fixables.applicable, fixables.inapplicable_unsafe
+                                )?;
+                    } else if fixables.applicable > 0 {
+                        // Only applicable fixes
+                        writeln!(
+                            writer,
+                            "{fix_prefix} {} fixable with the `--fix` option.",
+                            fixables.applicable,
+                        )?;
                     } else {
-                        "es"
-                    };
-                    writeln!(writer,
-                                "{fix_prefix} {} fixable with the `--fix` option ({} hidden fix{es} can be enabled with the `--unsafe-fixes` option).",
-                                fixables.applicable, fixables.inapplicable_unsafe
-                            )?;
+                        // Only inapplicable fixes
+                        let es = if fixables.inapplicable_unsafe == 1 {
+                            ""
+                        } else {
+                            "es"
+                        };
+                        writeln!(writer,
+                                    "No fixes available ({} hidden fix{es} can be enabled with the `--unsafe-fixes` option).",
+                                    fixables.inapplicable_unsafe
+                                )?;
+                    }
                 } else if fixables.applicable > 0 {
-                    // Only applicable fixes
                     writeln!(
                         writer,
-                        "{fix_prefix} {} fixable with the `--fix` option.",
-                        fixables.applicable,
+                        "{fix_prefix} {} fixable with the --fix option.",
+                        fixables.applicable
+                    )?;
+                }
+            }
+        } else {
+            // Unset SHOW_VIOLATIONS implies fix-only
+            // Check if there are unapplied fixes
+            let unapplied = {
+                if let Some(fixables) = fixables {
+                    fixables.inapplicable_unsafe
+                } else {
+                    0
+                }
+            };
+
+            if unapplied > 0 {
+                let es = if unapplied == 1 { "" } else { "es" };
+                if fixed > 0 {
+                    let s = if fixed == 1 { "" } else { "s" };
+                    if self.fix_mode.is_apply() {
+                        writeln!(writer, "Fixed {fixed} error{s} ({unapplied} additional fix{es} available with `--unsafe-fixes`).")?;
+                    } else {
+                        writeln!(writer, "Would fix {fixed} error{s} ({unapplied} additional fix{es} available with `--unsafe-fixes`).")?;
+                    }
+                } else if self.fix_mode.is_apply() {
+                    writeln!(
+                        writer,
+                        "No errors fixed ({unapplied} fix{es} available with `--unsafe-fixes`)."
                     )?;
                 } else {
-                    // Only inapplicable fixes
-                    let es = if fixables.inapplicable_unsafe == 1 {
-                        ""
-                    } else {
-                        "es"
-                    };
-                    writeln!(writer,
-                                "No fixes available ({} hidden fix{es} can be enabled with the `--unsafe-fixes` option).",
-                                fixables.inapplicable_unsafe
-                            )?;
+                    writeln!(writer, "No errors would be fixed ({unapplied} fix{es} available with `--unsafe-fixes`).")?;
                 }
-            } else if fixables.applicable > 0 {
-                writeln!(
-                    writer,
-                    "{fix_prefix} {} fixable with the --fix option.",
-                    fixables.applicable
-                )?;
+            } else if fixed > 0 {
+                let s = if fixed == 1 { "" } else { "s" };
+                if self.fix_mode.is_apply() {
+                    writeln!(writer, "Fixed {fixed} error{s}.")?;
+                } else {
+                    writeln!(writer, "Would fix {fixed} error{s}.")?;
+                }
             }
         }
 
@@ -218,6 +257,23 @@ impl Printer {
 
     pub(crate) fn write_once(&self, results: &CheckResults, writer: &mut dyn Write) -> Result<()> {
         if matches!(self.log_level, LogLevel::Silent) {
+            return Ok(());
+        }
+
+        if !self.flags.intersects(Flags::SHOW_VIOLATIONS) {
+            if matches!(
+                self.format,
+                OutputFormat::Full | OutputFormat::Concise | OutputFormat::Grouped
+            ) {
+                if self.flags.intersects(Flags::SHOW_FIX_SUMMARY)
+                    && !results.diagnostics.fixed.is_empty()
+                {
+                    writeln!(writer)?;
+                    print_fix_summary(writer, &results.diagnostics.fixed)?;
+                    writeln!(writer)?;
+                }
+                self.write_summary_text(writer, results)?;
+            }
             return Ok(());
         }
 
