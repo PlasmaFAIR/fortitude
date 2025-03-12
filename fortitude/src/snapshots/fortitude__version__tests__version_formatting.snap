@@ -1,0 +1,6 @@
+---
+source: fortitude/src/version.rs
+expression: version
+snapshot_kind: text
+---
+0.0.0

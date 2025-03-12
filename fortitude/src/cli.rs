@@ -3,7 +3,6 @@ use serde::Deserialize;
 use std::path::PathBuf;
 
 use crate::{
-    build,
     fs::FilePattern,
     logging::LogLevel,
     rule_selector::RuleSelector,
@@ -18,7 +17,7 @@ use crate::{
     about = "Fortitude: A Fortran linter, inspired by (and built upon) Ruff.",
     after_help = "For help with a specific command, see: `fortitude help <command>`."
 )]
-#[command(version = build::CLAP_LONG_VERSION, about)]
+#[command(version, about)]
 pub struct Cli {
     #[clap(subcommand)]
     pub command: SubCommands,
@@ -101,6 +100,11 @@ pub enum SubCommands {
     GenerateShellCompletion {
         shell: clap_complete_command::Shell,
     },
+    /// Display Fortitude's version
+    Version {
+        #[arg(long, value_enum, default_value = "text")]
+        output_format: HelpFormat,
+    },
 }
 
 /// Get descriptions, rationales, and solutions for each rule.
@@ -115,6 +119,12 @@ pub struct ExplainArgs {
         hide_possible_values = true
     )]
     pub rules: Vec<RuleSelector>,
+}
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub enum HelpFormat {
+    Text,
+    Json,
 }
 
 /// Perform static analysis on files and report issues.
