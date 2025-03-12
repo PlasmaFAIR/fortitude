@@ -25,6 +25,7 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
     let mut parsed = Vec::new();
 
     let mut common_prefix_match_arms = quote!();
+    let mut from_prefix_match_arms = quote!();
     let mut name_match_arms = quote!();
     let mut description_match_arms = quote!();
 
@@ -81,6 +82,7 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
 
         if let [prefix] = &prefixes[..] {
             common_prefix_match_arms.extend(quote! { Self::#variant_ident => #prefix, });
+            from_prefix_match_arms.extend(quote! { #prefix => Ok(Self::#variant_ident), });
         } else {
             // There is more than one prefix. We already previously asserted
             // that prefixes of the same variant don't start with the same character
@@ -109,12 +111,27 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
                 if let Ok(variant) = Self::from_str(code) {
                     return Some((variant, ""));
                 }
+                if let Ok(rule_from_long_name) = Rule::from_str(code) {
+                    let noqa = rule_from_long_name.noqa_code();
+                    let prefix = noqa.prefix();
+                    let suffix = noqa.suffix();
+                    if let Ok(variant) = Self::from_prefix(prefix) {
+                        return Some((variant, suffix));
+                    }
+                }
                 #if_statements
                 None
             }
 
             fn common_prefix(&self) -> &'static str {
                 match self { #common_prefix_match_arms }
+            }
+
+            fn from_prefix(prefix: &str) -> Result<Self, &'static str> {
+                match prefix {
+                    #from_prefix_match_arms
+                    _ => Err("Unknown prefix")
+                }
             }
 
             fn name(&self) -> &'static str {
