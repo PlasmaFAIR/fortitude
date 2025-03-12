@@ -2,6 +2,7 @@ use crate::cli::CheckArgs;
 use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::options::Options;
 use crate::registry::RuleNamespace;
+use crate::rule_redirects::get_redirect;
 use crate::rule_selector::{
     collect_per_file_ignores, CompiledPerFileIgnoreList, PerFileIgnore, PreviewOptions,
     RuleSelector, Specificity,
@@ -504,12 +505,18 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
     }
 
     for (from, target) in redirects.iter().sorted_by_key(|item| item.0) {
-        warn_user_once_by_id!(
-            from,
-            "`{from}` has been remapped to `{}{}`.",
-            target.category().common_prefix(),
-            target.short_code()
-        );
+        // Some redirects are from one long-code to another, but the target will
+        // be converted to a short code as part of the redirection. To get around
+        // this, we need to check the redirect map from scratch.
+        let target = match get_redirect(from) {
+            Some(target) => target.1.to_string(),
+            None => format!(
+                "{}{}",
+                target.category().common_prefix(),
+                target.short_code()
+            ),
+        };
+        warn_user_once_by_id!(from, "`{from}` has been remapped to `{target}`.");
     }
 
     if preview.mode.is_disabled() {
