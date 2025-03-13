@@ -45,7 +45,6 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { workspace = true }
 similar = { version = "2.4.0", features = ["inline"] }
 similar-asserts = "1.6.0"
-shadow-rs = { version = "0.36.0", default-features = false }
 strum = { workspace = true }
 strum_macros = { workspace = true }
 textwrap = { workspace = true }
@@ -58,9 +57,6 @@ url = { version = "2.5.0" }
 globset = "0.4.15"
 log = "0.4.22"
 fern = "0.7.1"
-
-[build-dependencies]
-shadow-rs = { version = "0.36.0", default-features = false }
 
 [dev-dependencies]
 assert_cmd = "2.0.16"

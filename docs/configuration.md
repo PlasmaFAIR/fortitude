@@ -41,6 +41,7 @@ Usage: fortitude [OPTIONS] <COMMAND>
 Commands:
   check    Perform static analysis on files and report issues
   explain  Get descriptions, rationales, and solutions for each rule
+  version  Display Fortitude's version
   help     Print this message or the help of the given subcommand(s)
 
 Options:

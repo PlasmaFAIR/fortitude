@@ -1,3 +1,5 @@
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 mod allow_comments;
 mod ast;
 pub mod check;
@@ -25,6 +27,7 @@ pub mod stdin;
 #[cfg(test)]
 mod test;
 mod text_helpers;
+pub mod version;
 pub use crate::registry::clap_completion::RuleParser;
 pub use crate::rule_selector::clap_completion::RuleSelectorParser;
 
@@ -32,11 +35,8 @@ use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
-use shadow_rs::shadow;
 use std::path::Path;
 use tree_sitter::Node;
-
-shadow!(build);
 
 // Violation type
 // --------------

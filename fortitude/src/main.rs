@@ -21,6 +21,10 @@ fn main() -> Result<ExitCode> {
             shell.generate(&mut Cli::command(), &mut stdout());
             return Ok(ExitCode::SUCCESS);
         }
+        SubCommands::Version { output_format } => {
+            fortitude::version::version_command(output_format)?;
+            return Ok(ExitCode::SUCCESS);
+        }
     };
     match status {
         Ok(code) => Ok(code),

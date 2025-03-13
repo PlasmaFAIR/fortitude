@@ -11,11 +11,11 @@ use serde_json::json;
 
 use ruff_source_file::OneIndexed;
 
-use crate::build::VERSION;
 use crate::fs::normalize_path;
 use crate::message::Emitter;
 use crate::registry::{Category, RuleNamespace};
 use crate::rules::Rule;
+use crate::VERSION;
 
 use super::DiagnosticMessage;
 
