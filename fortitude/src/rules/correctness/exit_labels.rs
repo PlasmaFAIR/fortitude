@@ -85,3 +85,48 @@ impl AstRule for MissingExitOrCycleLabel {
         vec!["do_loop_statement"]
     }
 }
+
+/// ## What does it do?
+/// Checks for `exit` or `cycle` in unnamed `do` loops
+///
+/// ## Why is this bad?
+/// Using loop labels with `exit` and `cycle` statements prevents bugs from
+/// exiting the wrong loop. The danger is particularly enhanced when code is
+/// refactored to add further loops.
+#[derive(ViolationMetadata)]
+pub(crate) struct ExitOrCycleInUnlabelledLoop {
+    name: String,
+}
+
+impl Violation for ExitOrCycleInUnlabelledLoop {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("'{name}' statement in unlabelled 'do' loop")
+    }
+}
+
+impl AstRule for ExitOrCycleInUnlabelledLoop {
+    fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let src = source.source_text();
+        let name = node.to_text(src)?.to_lowercase();
+        if !matches!(name.as_str(), "exit" | "cycle") {
+            return None;
+        }
+
+        node.ancestors()
+            .filter(|ancestor| ancestor.kind() == "do_loop_statement")
+            .filter(|do_loop| {
+                do_loop
+                    .child_with_name("block_label_start_expression")
+                    .is_none()
+            })
+            .nth(0)?;
+
+        some_vec!(Diagnostic::from_node(Self { name }, node))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["keyword_statement"]
+    }
+}
