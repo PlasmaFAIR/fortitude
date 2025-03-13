@@ -4,12 +4,13 @@
 
 use std::path::PathBuf;
 
-use ruff_macros::OptionsMetadata;
+use ruff_macros::{CombineOptions, OptionsMetadata};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     rule_selector::RuleSelector,
+    rules::correctness::exit_labels,
     settings::{OutputFormat, ProgressBar},
 };
 
@@ -279,4 +280,32 @@ pub struct CheckOptions {
         "#
     )]
     pub per_file_ignores: Option<FxHashMap<String, Vec<RuleSelector>>>,
+
+    /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
+    #[option_group]
+    pub exit_labelled_loops: Option<ExitLabelledLoopOptions>,
+}
+
+/// Options for the `exit-or-cycle-in-unlabelled-loops` rule
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct ExitLabelledLoopOptions {
+    /// Whether to check for `exit`/`cycle` in unlabelled loops only if the loop has at
+    /// least one level of nesting
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "nested-loops-only = true"
+    )]
+    pub nested_loops_only: Option<bool>,
+}
+
+impl ExitLabelledLoopOptions {
+    pub fn into_settings(self) -> exit_labels::settings::Settings {
+        exit_labels::settings::Settings {
+            nested_loops_only: self.nested_loops_only.unwrap_or(false),
+        }
+    }
 }

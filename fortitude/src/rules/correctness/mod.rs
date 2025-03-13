@@ -25,7 +25,8 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::settings::Settings;
+    use crate::rules::correctness::exit_labels;
+    use crate::settings::{CheckSettings, Settings};
     use crate::test::test_path;
 
     #[test_case(Rule::ImplicitTyping, Path::new("C001.f90"))]
@@ -75,6 +76,36 @@ mod tests {
             diagnostics.is_empty(),
             "Test source has no warnings, but some were raised:\n{diagnostics}"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn warn_c142_on_nested_loops_only() -> Result<()> {
+        let rule_code = Rule::ExitOrCycleInUnlabelledLoop;
+        let path = Path::new("C142.f90");
+        let snapshot = format!(
+            "{}_{}_nested_loops_only",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+        let default = Settings::default();
+        #[allow(clippy::needless_update)]
+        let settings = Settings {
+            check: CheckSettings {
+                exit_labelled_loops: exit_labels::settings::Settings {
+                    nested_loops_only: true,
+                },
+                ..default.check
+            },
+            ..default
+        };
+        let diagnostics = test_path(
+            Path::new("correctness").join(path).as_path(),
+            &[rule_code],
+            &settings,
+        )?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
         Ok(())
     }
 }

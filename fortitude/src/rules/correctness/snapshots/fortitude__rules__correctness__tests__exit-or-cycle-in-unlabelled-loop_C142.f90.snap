@@ -20,5 +20,14 @@ snapshot_kind: text
 50 |     exit
    |     ^^^^ C142
 51 |   end do
-52 | end program test
+   |
+
+./resources/test/fixtures/correctness/C142.f90:56:7: C142 'exit' statement in unlabelled 'do' loop
+   |
+54 |     do
+55 |       ! should warn
+56 |       exit
+   |       ^^^^ C142
+57 |     end do
+58 |   end do
    |

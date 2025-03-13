@@ -93,6 +93,9 @@ impl AstRule for MissingExitOrCycleLabel {
 /// Using loop labels with `exit` and `cycle` statements prevents bugs from
 /// exiting the wrong loop. The danger is particularly enhanced when code is
 /// refactored to add further loops.
+///
+/// ## Settings
+/// See [nested-loops-only](../settings.md#check_exit-labelled-loops_nested-loops-only)
 #[derive(ViolationMetadata)]
 pub(crate) struct ExitOrCycleInUnlabelledLoop {
     name: String,
@@ -107,12 +110,20 @@ impl Violation for ExitOrCycleInUnlabelledLoop {
 }
 
 impl AstRule for ExitOrCycleInUnlabelledLoop {
-    fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
         let name = node.to_text(src)?.to_lowercase();
         if !matches!(name.as_str(), "exit" | "cycle") {
             return None;
         }
+
+        // If we're only supposed to check on nested loops, check if there are at least
+        // 2 `do` loops as ancestors, otherwise we just need to find one
+        let nth = if settings.check.exit_labelled_loops.nested_loops_only {
+            1
+        } else {
+            0
+        };
 
         node.ancestors()
             .filter(|ancestor| ancestor.kind() == "do_loop_statement")
@@ -121,12 +132,34 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
                     .child_with_name("block_label_start_expression")
                     .is_none()
             })
-            .nth(0)?;
+            .nth(nth)?;
 
         some_vec!(Diagnostic::from_node(Self { name }, node))
     }
 
     fn entrypoints() -> Vec<&'static str> {
         vec!["keyword_statement"]
+    }
+}
+
+pub(crate) mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub nested_loops_only: bool,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.exit_labelled_loops",
+                fields = [self.nested_loops_only]
+            }
+            Ok(())
+        }
     }
 }

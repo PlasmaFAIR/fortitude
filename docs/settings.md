@@ -571,3 +571,34 @@ If set to false, the hint will be hidden.
 
 ---
 
+### `check.exit-labelled-loops`
+
+Options for the `exit-or-cycle-in-unlabelled-loops` rule
+
+#### [`nested-loops-only`](#check_exit-labelled-loops_nested-loops-only) {: #check_exit-labelled-loops_nested-loops-only }
+<span id="nested-loops-only"></span>
+
+Whether to check for `exit`/`cycle` in unlabelled loops only if the loop has at
+least one level of nesting
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "fpm.toml"
+
+    ```toml
+    [fpm.extra.check.exit-labelled-loops]
+    nested-loops-only = true
+    ```
+=== "fortitude.toml"
+
+    ```toml
+    [check.exit-labelled-loops]
+    nested-loops-only = true
+    ```
+
+---
+

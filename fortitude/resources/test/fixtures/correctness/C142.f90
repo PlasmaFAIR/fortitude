@@ -49,4 +49,12 @@ program test
     ! should warn
     exit
   end do
+
+  do
+    do
+      ! should warn
+      exit
+    end do
+  end do
+
 end program test
