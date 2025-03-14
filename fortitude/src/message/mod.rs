@@ -89,7 +89,6 @@ impl DiagnosticMessage {
     }
 
     /// Returns `true` if the message contains a [`Fix`].
-    #[allow(dead_code)]
     pub fn fixable(&self) -> bool {
         self.fix().is_some()
     }

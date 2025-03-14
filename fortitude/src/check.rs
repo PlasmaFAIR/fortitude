@@ -770,7 +770,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     );
 
     if args.statistics {
-        printer.write_statistics(&results.diagnostics, &mut summary_writer)?;
+        printer.write_statistics(&results, &mut summary_writer)?;
     } else {
         printer.write_once(&results, &mut summary_writer)?;
     }
