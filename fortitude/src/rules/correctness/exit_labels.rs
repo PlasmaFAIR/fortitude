@@ -95,7 +95,7 @@ impl AstRule for MissingExitOrCycleLabel {
 /// particularly enhanced when code is refactored to add further loops.
 ///
 /// ## Settings
-/// See [nested-loops-only](../settings.md#check_exit-unlabelled-loops_allow-unnested-loops)
+/// See [allow-unnested-loops](../settings.md#check_exit-unlabelled-loops_allow-unnested-loops)
 #[derive(ViolationMetadata)]
 pub(crate) struct ExitOrCycleInUnlabelledLoop {
     name: String,
