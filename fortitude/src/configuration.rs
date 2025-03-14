@@ -1,6 +1,6 @@
 use crate::cli::CheckArgs;
 use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
-use crate::options::{ExitLabelledLoopOptions, Options};
+use crate::options::{ExitUnlabelledLoopOptions, Options};
 use crate::registry::RuleNamespace;
 use crate::rule_redirects::get_redirect;
 use crate::rule_selector::{
@@ -166,7 +166,7 @@ pub struct Configuration {
     pub exclude_mode: ExcludeMode,
     pub gitignore_mode: GitignoreMode,
     // Individual rules
-    pub exit_labelled_loops: Option<ExitLabelledLoopOptions>,
+    pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
 }
 
 impl Default for Configuration {
@@ -190,7 +190,7 @@ impl Default for Configuration {
             extend_exclude: Default::default(),
             exclude_mode: Default::default(),
             gitignore_mode: Default::default(),
-            exit_labelled_loops: Default::default(),
+            exit_unlabelled_loops: Default::default(),
         }
     }
 }
@@ -260,7 +260,7 @@ impl Configuration {
                 .unwrap_or_default(),
 
             // Individual rules
-            exit_labelled_loops: check.exit_labelled_loops,
+            exit_unlabelled_loops: check.exit_unlabelled_loops,
         }
     }
 
@@ -356,9 +356,9 @@ impl Configuration {
                 ignore_allow_comments: args.ignore_allow_comments.into(),
 
                 // Individual rules
-                exit_labelled_loops: self
-                    .exit_labelled_loops
-                    .map(ExitLabelledLoopOptions::into_settings)
+                exit_unlabelled_loops: self
+                    .exit_unlabelled_loops
+                    .map(ExitUnlabelledLoopOptions::into_settings)
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {

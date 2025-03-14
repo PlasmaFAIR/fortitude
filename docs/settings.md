@@ -571,15 +571,22 @@ If set to false, the hint will be hidden.
 
 ---
 
-### `check.exit-labelled-loops`
+### `check.exit-unlabelled-loops`
 
 Options for the `exit-or-cycle-in-unlabelled-loops` rule
 
-#### [`nested-loops-only`](#check_exit-labelled-loops_nested-loops-only) {: #check_exit-labelled-loops_nested-loops-only }
-<span id="nested-loops-only"></span>
+#### [`allow-unnested-loops`](#check_exit-unlabelled-loops_allow-unnested-loops) {: #check_exit-unlabelled-loops_allow-unnested-loops }
+<span id="allow-unnested-loops"></span>
 
 Whether to check for `exit`/`cycle` in unlabelled loops only if the loop has at
-least one level of nesting
+least one level of nesting. With this setting off (default), the following will
+raise a warning, and with it on, it won't:
+
+```f90
+do i = 1, 100
+    if (i == 50) exit
+end do
+```
 
 **Default value**: `false`
 
@@ -590,14 +597,14 @@ least one level of nesting
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check.exit-labelled-loops]
-    nested-loops-only = true
+    [fpm.extra.check.exit-unlabelled-loops]
+    allow-unnested-loops = true
     ```
 === "fortitude.toml"
 
     ```toml
-    [check.exit-labelled-loops]
-    nested-loops-only = true
+    [check.exit-unlabelled-loops]
+    allow-unnested-loops = true
     ```
 
 ---

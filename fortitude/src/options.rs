@@ -283,7 +283,7 @@ pub struct CheckOptions {
 
     /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
     #[option_group]
-    pub exit_labelled_loops: Option<ExitLabelledLoopOptions>,
+    pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -291,21 +291,28 @@ pub struct CheckOptions {
     Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
 )]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct ExitLabelledLoopOptions {
+pub struct ExitUnlabelledLoopOptions {
     /// Whether to check for `exit`/`cycle` in unlabelled loops only if the loop has at
-    /// least one level of nesting
+    /// least one level of nesting. With this setting off (default), the following will
+    /// raise a warning, and with it on, it won't:
+    ///
+    /// ```f90
+    /// do i = 1, 100
+    ///     if (i == 50) exit
+    /// end do
+    /// ```
     #[option(
         default = "false",
         value_type = "bool",
-        example = "nested-loops-only = true"
+        example = "allow-unnested-loops = true"
     )]
-    pub nested_loops_only: Option<bool>,
+    pub allow_unnested_loops: Option<bool>,
 }
 
-impl ExitLabelledLoopOptions {
+impl ExitUnlabelledLoopOptions {
     pub fn into_settings(self) -> exit_labels::settings::Settings {
         exit_labels::settings::Settings {
-            nested_loops_only: self.nested_loops_only.unwrap_or(false),
+            allow_unnested_loops: self.allow_unnested_loops.unwrap_or(false),
         }
     }
 }

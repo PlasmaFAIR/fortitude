@@ -92,8 +92,8 @@ mod tests {
         #[allow(clippy::needless_update)]
         let settings = Settings {
             check: CheckSettings {
-                exit_labelled_loops: exit_labels::settings::Settings {
-                    nested_loops_only: true,
+                exit_unlabelled_loops: exit_labels::settings::Settings {
+                    allow_unnested_loops: true,
                 },
                 ..default.check
             },

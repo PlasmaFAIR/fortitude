@@ -70,7 +70,7 @@ pub struct CheckSettings {
     pub ignore_allow_comments: IgnoreAllowComments,
 
     // Individual rule settings
-    pub exit_labelled_loops: exit_labels::settings::Settings,
+    pub exit_unlabelled_loops: exit_labels::settings::Settings,
 }
 
 impl CheckSettings {
@@ -91,7 +91,7 @@ impl CheckSettings {
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
             ignore_allow_comments: IgnoreAllowComments::default(),
-            exit_labelled_loops: exit_labels::settings::Settings::default(),
+            exit_unlabelled_loops: exit_labels::settings::Settings::default(),
         }
     }
 }
@@ -120,7 +120,7 @@ impl fmt::Display for CheckSettings {
             formatter = f,
             namespace = "check",
             fields = [
-                self.exit_labelled_loops | nested,
+                self.exit_unlabelled_loops | nested,
             ]
         }
         Ok(())

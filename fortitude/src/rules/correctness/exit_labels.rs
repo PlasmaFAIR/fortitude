@@ -90,12 +90,12 @@ impl AstRule for MissingExitOrCycleLabel {
 /// Checks for `exit` or `cycle` in unnamed `do` loops
 ///
 /// ## Why is this bad?
-/// Using loop labels with `exit` and `cycle` statements prevents bugs from
-/// exiting the wrong loop. The danger is particularly enhanced when code is
-/// refactored to add further loops.
+/// Using loop labels with `exit` and `cycle` statements prevents bugs when exiting the
+/// wrong loop, and helps readability in deeply nested or long loops. The danger is
+/// particularly enhanced when code is refactored to add further loops.
 ///
 /// ## Settings
-/// See [nested-loops-only](../settings.md#check_exit-labelled-loops_nested-loops-only)
+/// See [nested-loops-only](../settings.md#check_exit-unlabelled-loops_allow-unnested-loops)
 #[derive(ViolationMetadata)]
 pub(crate) struct ExitOrCycleInUnlabelledLoop {
     name: String,
@@ -134,7 +134,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
 
         // If we're only supposed to check on nested loops, check that there is at least
         // one more level of nesting
-        if settings.check.exit_labelled_loops.nested_loops_only {
+        if settings.check.exit_unlabelled_loops.allow_unnested_loops {
             parent_loop
                 .ancestors()
                 .filter(|ancestor| ancestor.kind() == "do_loop_statement")
@@ -156,15 +156,15 @@ pub(crate) mod settings {
 
     #[derive(Debug, Clone, Default, CacheKey)]
     pub struct Settings {
-        pub nested_loops_only: bool,
+        pub allow_unnested_loops: bool,
     }
 
     impl Display for Settings {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             display_settings! {
                 formatter = f,
-                namespace = "check.exit_labelled_loops",
-                fields = [self.nested_loops_only]
+                namespace = "check.exit_unlabelled_loops",
+                fields = [self.allow_unnested_loops]
             }
             Ok(())
         }
