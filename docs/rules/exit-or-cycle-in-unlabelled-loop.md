@@ -10,4 +10,4 @@ wrong loop, and helps readability in deeply nested or long loops. The danger is
 particularly enhanced when code is refactored to add further loops.
 
 ## Settings
-See [nested-loops-only](../settings.md#check_exit-unlabelled-loops_allow-unnested-loops)
+See [allow-unnested-loops](../settings.md#check_exit-unlabelled-loops_allow-unnested-loops)
