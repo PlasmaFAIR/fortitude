@@ -1958,10 +1958,61 @@ end program test
     exit_code: 1
     ----- stdout -----
     2	PORT011	[ ] literal-kind
+    2	PORT021	[ ] star-kind
+    1	C001   	[ ] implicit-typing
+    1	S101   	[*] trailing-whitespace
+    fortitude: 1 files scanned.
+    Number of errors: 6
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
+fn show_statistics_unsafe_fixes() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+  logical*4, parameter :: false = .false.  
+end program test
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg(test_file)
+                         .args(["--select=C001,S061,PORT011,PORT021,S101"])
+                         .arg("--statistics")
+                         .arg("--unsafe-fixes"),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    2	PORT011	[ ] literal-kind
     2	PORT021	[*] star-kind
     1	C001   	[ ] implicit-typing
     1	S101   	[*] trailing-whitespace
-    [*] fixable with `fortitude check --fix`
+    fortitude: 1 files scanned.
+    Number of errors: 6
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 3 fixable with the `--fix` option.
 
     ----- stderr -----
     ");
@@ -2005,7 +2056,7 @@ end program test
         "code": "PORT021",
         "name": "star-kind",
         "count": 2,
-        "fixable": true
+        "fixable": false
       },
       {
         "code": "C001",

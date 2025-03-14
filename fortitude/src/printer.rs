@@ -209,7 +209,7 @@ impl Printer {
                 } else if fixables.applicable > 0 {
                     writeln!(
                         writer,
-                        "{fix_prefix} {} fixable with the --fix option.",
+                        "{fix_prefix} {} fixable with the `--fix` option.",
                         fixables.applicable
                     )?;
                 }
@@ -348,10 +348,11 @@ impl Printer {
 
     pub(crate) fn write_statistics(
         &self,
-        diagnostics: &Diagnostics,
+        diagnostics: &CheckResults,
         writer: &mut dyn Write,
     ) -> Result<()> {
         let statistics: Vec<ExpandedStatistics> = diagnostics
+            .diagnostics
             .messages
             .iter()
             .sorted_by_key(|message| (message.rule(), message.fixable()))
@@ -373,7 +374,11 @@ impl Printer {
                 code: message.rule().map(std::convert::Into::into),
                 name: message.rule().into(),
                 count,
-                fixable: message.fixable(),
+                fixable: if let Some(fix) = message.fix() {
+                    fix.applies(self.unsafe_fixes.required_applicability())
+                } else {
+                    false
+                },
             })
             .sorted_by_key(|statistic| Reverse(statistic.count))
             .collect();
@@ -432,9 +437,7 @@ impl Printer {
                     )?;
                 }
 
-                if any_fixable {
-                    writeln!(writer, "[*] fixable with `fortitude check --fix`",)?;
-                }
+                self.write_summary_text(writer, diagnostics)?;
                 return Ok(());
             }
             OutputFormat::Json => {
