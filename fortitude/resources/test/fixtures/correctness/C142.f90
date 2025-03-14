@@ -46,7 +46,7 @@ program test
   end do label8
 
   do
-    ! should warn
+    ! should warn, except if `nested-loops-only` is true
     exit
   end do
 
@@ -54,6 +54,15 @@ program test
     do
       ! should warn
       exit
+    end do
+  end do
+
+  do
+    do
+      label9: do
+        ! shouldn't warn in either case, this is missing-exit-or-cycle-label!
+        exit
+      end do label9
     end do
   end do
 

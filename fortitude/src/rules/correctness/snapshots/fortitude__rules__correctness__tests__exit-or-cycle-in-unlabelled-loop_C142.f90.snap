@@ -16,7 +16,7 @@ snapshot_kind: text
 ./resources/test/fixtures/correctness/C142.f90:50:5: C142 'exit' statement in unlabelled 'do' loop
    |
 48 |   do
-49 |     ! should warn
+49 |     ! should warn, except if `nested-loops-only` is true
 50 |     exit
    |     ^^^^ C142
 51 |   end do

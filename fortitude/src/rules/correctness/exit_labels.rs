@@ -113,26 +113,33 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
     fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
         let name = node.to_text(src)?.to_lowercase();
+        // This filters to the keywords we want that _also_ don't have a label
         if !matches!(name.as_str(), "exit" | "cycle") {
             return None;
         }
 
-        // If we're only supposed to check on nested loops, check if there are at least
-        // 2 `do` loops as ancestors, otherwise we just need to find one
-        let nth = if settings.check.exit_labelled_loops.nested_loops_only {
-            1
-        } else {
-            0
-        };
-
-        node.ancestors()
+        let parent_loop = node
+            .ancestors()
             .filter(|ancestor| ancestor.kind() == "do_loop_statement")
-            .filter(|do_loop| {
-                do_loop
-                    .child_with_name("block_label_start_expression")
-                    .is_none()
-            })
-            .nth(nth)?;
+            .nth(0)?;
+
+        // Immediate parent loop has a label, but we don't want to warn here, because
+        // that's covered by missing-exit-or-cycle-label
+        if parent_loop
+            .child_with_name("block_label_start_expression")
+            .is_some()
+        {
+            return None;
+        }
+
+        // If we're only supposed to check on nested loops, check that there is at least
+        // one more level of nesting
+        if settings.check.exit_labelled_loops.nested_loops_only {
+            parent_loop
+                .ancestors()
+                .filter(|ancestor| ancestor.kind() == "do_loop_statement")
+                .nth(0)?;
+        }
 
         some_vec!(Diagnostic::from_node(Self { name }, node))
     }
