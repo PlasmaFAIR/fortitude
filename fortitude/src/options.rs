@@ -4,12 +4,13 @@
 
 use std::path::PathBuf;
 
-use ruff_macros::OptionsMetadata;
+use ruff_macros::{CombineOptions, OptionsMetadata};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     rule_selector::RuleSelector,
+    rules::correctness::exit_labels,
     settings::{OutputFormat, ProgressBar},
 };
 
@@ -279,4 +280,39 @@ pub struct CheckOptions {
         "#
     )]
     pub per_file_ignores: Option<FxHashMap<String, Vec<RuleSelector>>>,
+
+    /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
+    #[option_group]
+    pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
+}
+
+/// Options for the `exit-or-cycle-in-unlabelled-loops` rule
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct ExitUnlabelledLoopOptions {
+    /// Whether to check for `exit`/`cycle` in unlabelled loops only if the loop has at
+    /// least one level of nesting. With this setting off (default), the following will
+    /// raise a warning, and with it on, it won't:
+    ///
+    /// ```f90
+    /// do i = 1, 100
+    ///     if (i == 50) exit
+    /// end do
+    /// ```
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "allow-unnested-loops = true"
+    )]
+    pub allow_unnested_loops: Option<bool>,
+}
+
+impl ExitUnlabelledLoopOptions {
+    pub fn into_settings(self) -> exit_labels::settings::Settings {
+        exit_labels::settings::Settings {
+            allow_unnested_loops: self.allow_unnested_loops.unwrap_or(false),
+        }
+    }
 }

@@ -19,6 +19,7 @@ use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
+use crate::rules::correctness::exit_labels;
 
 #[derive(Debug)]
 pub struct Settings {
@@ -67,6 +68,9 @@ pub struct CheckSettings {
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
     pub ignore_allow_comments: IgnoreAllowComments,
+
+    // Individual rule settings
+    pub exit_unlabelled_loops: exit_labels::settings::Settings,
 }
 
 impl CheckSettings {
@@ -87,6 +91,7 @@ impl CheckSettings {
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
             ignore_allow_comments: IgnoreAllowComments::default(),
+            exit_unlabelled_loops: exit_labels::settings::Settings::default(),
         }
     }
 }
@@ -108,6 +113,14 @@ impl fmt::Display for CheckSettings {
                 self.output_format,
                 self.progress_bar,
                 self.preview,
+            ]
+        }
+        writeln!(f, "\n# Individual rules")?;
+        display_settings! {
+            formatter = f,
+            namespace = "check",
+            fields = [
+                self.exit_unlabelled_loops | nested,
             ]
         }
         Ok(())

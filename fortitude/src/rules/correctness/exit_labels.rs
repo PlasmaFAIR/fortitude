@@ -85,3 +85,88 @@ impl AstRule for MissingExitOrCycleLabel {
         vec!["do_loop_statement"]
     }
 }
+
+/// ## What does it do?
+/// Checks for `exit` or `cycle` in unnamed `do` loops
+///
+/// ## Why is this bad?
+/// Using loop labels with `exit` and `cycle` statements prevents bugs when exiting the
+/// wrong loop, and helps readability in deeply nested or long loops. The danger is
+/// particularly enhanced when code is refactored to add further loops.
+///
+/// ## Settings
+/// See [allow-unnested-loops](../settings.md#check_exit-unlabelled-loops_allow-unnested-loops)
+#[derive(ViolationMetadata)]
+pub(crate) struct ExitOrCycleInUnlabelledLoop {
+    name: String,
+}
+
+impl Violation for ExitOrCycleInUnlabelledLoop {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { name } = self;
+        format!("'{name}' statement in unlabelled 'do' loop")
+    }
+}
+
+impl AstRule for ExitOrCycleInUnlabelledLoop {
+    fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let src = source.source_text();
+        let name = node.to_text(src)?.to_lowercase();
+        // This filters to the keywords we want that _also_ don't have a label
+        if !matches!(name.as_str(), "exit" | "cycle") {
+            return None;
+        }
+
+        let parent_loop = node
+            .ancestors()
+            .filter(|ancestor| ancestor.kind() == "do_loop_statement")
+            .nth(0)?;
+
+        // Immediate parent loop has a label, but we don't want to warn here, because
+        // that's covered by missing-exit-or-cycle-label
+        if parent_loop
+            .child_with_name("block_label_start_expression")
+            .is_some()
+        {
+            return None;
+        }
+
+        // If we're only supposed to check on nested loops, check that there is at least
+        // one more level of nesting
+        if settings.check.exit_unlabelled_loops.allow_unnested_loops {
+            parent_loop
+                .ancestors()
+                .filter(|ancestor| ancestor.kind() == "do_loop_statement")
+                .nth(0)?;
+        }
+
+        some_vec!(Diagnostic::from_node(Self { name }, node))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["keyword_statement"]
+    }
+}
+
+pub(crate) mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub allow_unnested_loops: bool,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.exit_unlabelled_loops",
+                fields = [self.allow_unnested_loops]
+            }
+            Ok(())
+        }
+    }
+}

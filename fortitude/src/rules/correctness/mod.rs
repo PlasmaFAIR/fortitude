@@ -25,7 +25,8 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::settings::Settings;
+    use crate::rules::correctness::exit_labels;
+    use crate::settings::{CheckSettings, Settings};
     use crate::test::test_path;
 
     #[test_case(Rule::ImplicitTyping, Path::new("C001.f90"))]
@@ -50,6 +51,7 @@ mod tests {
     #[test_case(Rule::MissingAccessibilityStatement, Path::new("C131.f90"))]
     #[test_case(Rule::DefaultPublicAccessibility, Path::new("C132.f90"))]
     #[test_case(Rule::MissingExitOrCycleLabel, Path::new("C141.f90"))]
+    #[test_case(Rule::ExitOrCycleInUnlabelledLoop, Path::new("C142.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -74,6 +76,36 @@ mod tests {
             diagnostics.is_empty(),
             "Test source has no warnings, but some were raised:\n{diagnostics}"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn warn_c142_on_nested_loops_only() -> Result<()> {
+        let rule_code = Rule::ExitOrCycleInUnlabelledLoop;
+        let path = Path::new("C142.f90");
+        let snapshot = format!(
+            "{}_{}_nested_loops_only",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+        let default = Settings::default();
+        #[allow(clippy::needless_update)]
+        let settings = Settings {
+            check: CheckSettings {
+                exit_unlabelled_loops: exit_labels::settings::Settings {
+                    allow_unnested_loops: true,
+                },
+                ..default.check
+            },
+            ..default
+        };
+        let diagnostics = test_path(
+            Path::new("correctness").join(path).as_path(),
+            &[rule_code],
+            &settings,
+        )?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
         Ok(())
     }
 }

@@ -1,0 +1,24 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C142.f90:27:7: C142 'cycle' statement in unlabelled 'do' loop
+   |
+25 |     ! should warn
+26 |     do j = 1, 2
+27 |       cycle
+   |       ^^^^^ C142
+28 |     end do
+29 |   end do label5
+   |
+
+./resources/test/fixtures/correctness/C142.f90:56:7: C142 'exit' statement in unlabelled 'do' loop
+   |
+54 |     do
+55 |       ! should warn
+56 |       exit
+   |       ^^^^ C142
+57 |     end do
+58 |   end do
+   |
