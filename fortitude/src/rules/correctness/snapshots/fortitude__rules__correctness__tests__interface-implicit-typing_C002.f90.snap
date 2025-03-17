@@ -11,6 +11,7 @@ snapshot_kind: text
   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ C002
 5 |       integer, intent(in) :: x
 6 |     end function myfunc
+7 |   end interface
   |
 
 ./resources/test/fixtures/correctness/C002.f90:13:5: C002 interface 'subroutine' missing 'implicit none'
@@ -21,4 +22,5 @@ snapshot_kind: text
    |     ^^^^^^^^^^^^^^^^^^^^^ C002
 14 |       integer, intent(inout) :: x
 15 |     end subroutine myfunc2
+16 |   end interface
    |

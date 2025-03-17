@@ -8,4 +8,6 @@ snapshot_kind: text
  9 | module mod2
    | ^^^^^^^^^^^ S211
 10 |     use :: mod1, only: test1
+11 |
+12 | contains
    |

@@ -1040,6 +1040,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     baz0.f90:2:1: C001 module missing 'implicit none'
@@ -1048,6 +1049,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     foo0.f90:2:1: C001 module missing 'implicit none'
@@ -1056,6 +1058,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     nested/bar1.f90:2:1: C001 module missing 'implicit none'
@@ -1064,6 +1067,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     nested/baz1.f90:2:1: C001 module missing 'implicit none'
@@ -1072,6 +1076,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     nested/foo1.f90:2:1: C001 module missing 'implicit none'
@@ -1080,6 +1085,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     fortitude: 9 files scanned.
@@ -1147,6 +1153,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     foo0.f90:2:1: C001 module missing 'implicit none'
@@ -1155,6 +1162,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     nested/baz1.f90:2:1: C001 module missing 'implicit none'
@@ -1163,6 +1171,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     nested/foo1.f90:2:1: C001 module missing 'implicit none'
@@ -1171,6 +1180,7 @@ end module {file}{idx}
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     fortitude: 9 files scanned.
@@ -1244,6 +1254,7 @@ fn check_exclude() -> anyhow::Result<()> {
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     foo/foo.f90:2:1: C001 module missing 'implicit none'
@@ -1252,6 +1263,7 @@ fn check_exclude() -> anyhow::Result<()> {
       | ^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     fortitude: 2 files scanned.
@@ -1289,6 +1301,7 @@ fn check_extend_exclude() -> anyhow::Result<()> {
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     fortitude: 1 files scanned.
@@ -1326,6 +1339,7 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
       | ^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     fortitude: 1 files scanned.
@@ -1389,6 +1403,7 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
       | ^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     fortitude: 1 files scanned.
@@ -1514,6 +1529,7 @@ end program
       | ^^^^^^^^^^^^ C001
     4 |   ! allow(star-kind)
     5 |   logical*4, parameter :: true = .true.
+    6 |   ! allow(trailing-whitespace)
       |
 
     [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
@@ -1769,6 +1785,7 @@ fn check_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     include/include.f90:2:1: C001 module missing 'implicit none'
@@ -1777,6 +1794,7 @@ fn check_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     fortitude: 2 files scanned.
@@ -1812,6 +1830,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     exclude/exclude.f90:2:1: C001 module missing 'implicit none'
@@ -1820,6 +1839,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     exclude/include.f90:2:1: C001 module missing 'implicit none'
@@ -1828,6 +1848,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     include.f90:2:1: C001 module missing 'implicit none'
@@ -1836,6 +1857,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     include/exclude.f90:2:1: C001 module missing 'implicit none'
@@ -1844,6 +1866,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     include/exclude/exclude.f90:2:1: C001 module missing 'implicit none'
@@ -1852,6 +1875,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     include/exclude/include.f90:2:1: C001 module missing 'implicit none'
@@ -1860,6 +1884,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     include/include.f90:2:1: C001 module missing 'implicit none'
@@ -1868,6 +1893,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
+    5 |   integer function f()
       |
 
     fortitude: 8 files scanned.
