@@ -132,6 +132,19 @@ tree-sitter parse /path/to/fortran/file.f90
    consider edge cases and any scenarios where false positives could occur.
 7. Update the generated documentation using `cargo dev generate-all`.
 
+You can automatically add a lot of this boilerplate by running
+[scripts/add_rule.py](scripts/add_rule.py):
+
+```bash
+python3 scripts/add_rule.py --name MyNewRule --prefix C --code 123 \
+  --category correctness
+```
+
+This runs steps 2-6 above for an AST rule. You can also use this for
+other kinds of rules, you'll just need to manually change the `impl
+AstRule` block to the correct one in the new rule file, and the new
+line added in `rules/mod.rs`.
+
 For some rules, it may be possible to automatically apply a fix for the user,
 though it isn't essential to include a fix when adding a new rule. These are
 typically applied using
