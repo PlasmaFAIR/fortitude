@@ -9,6 +9,7 @@ snapshot_kind: text
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^ C092
 2 |   integer, intent(in) :: x
 3 |   double = 2 * x
+4 | end function double
   |
 
 ./resources/test/fixtures/correctness/C092.f90:6:1: C092 subroutine not contained within (sub)module or program
@@ -19,4 +20,5 @@ snapshot_kind: text
   | ^^^^^^^^^^^^^^^^^^^^ C092
 7 |   integer, intent(inout) :: x
 8 |   x = 3 * x
+9 | end subroutine triple
   |

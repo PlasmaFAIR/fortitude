@@ -4,10 +4,12 @@ expression: diagnostics
 snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S212.f90:8:1: S212 Program and module in one file, split into their own files
-  |
-6 | end module mod1
-7 |
-8 | program main
-  | ^^^^^^^^^^^^ S212
-9 |     use :: mod1, only: test1
-  |
+   |
+ 6 | end module mod1
+ 7 |
+ 8 | program main
+   | ^^^^^^^^^^^^ S212
+ 9 |     use :: mod1, only: test1
+10 |
+11 | end program main
+   |

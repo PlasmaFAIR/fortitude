@@ -21,4 +21,5 @@ snapshot_kind: text
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ C131
 25 |   ! This is bad
 26 |   private :: foo
+27 |   public :: bar
    |
