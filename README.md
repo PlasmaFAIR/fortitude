@@ -58,6 +58,8 @@ cd fortitude
 cargo install --path fortitude
 ```
 
+Fortitude can also be installed via [other package managers](https://fortitude.readthedocs.io/en/stable/installation/)
+
 ## Usage
 
 Fortitude can lint your whole project under the working directory
