@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.7.1
+
+This is a bug-fix release, with one new rule. Thanks to our new
+contributors for improving the documentation, and packaging for AUR!
+
+### Rule changes
+
+- Add rule for `exit`/`cycle` in unlabelled loop ([#364](https://github.com/PlasmaFAIR/fortitude/pull/364))
+- Expand rule for `character*(*)` to handle `character*N`, `character*(:)`, and `character*(expression)` ([#354](https://github.com/PlasmaFAIR/fortitude/pull/354))
+
+### Bug fixes
+
+- Don't print diagnostics in `--fix-only` mode ([#359](https://github.com/PlasmaFAIR/fortitude/pull/359))
+- Fix `--statistics` reporting for unsafe fixes ([#368](https://github.com/PlasmaFAIR/fortitude/pull/368))
+- Fix false positive `real-implicit-kind` in `type` declaration ([#378](https://github.com/PlasmaFAIR/fortitude/pull/378))
+- Move `default-public-accessibility` highlight to `public` statement ([#351](https://github.com/PlasmaFAIR/fortitude/pull/351))
+- Write to stdout even when no fixes are applied in stdin mode ([#358](https://github.com/PlasmaFAIR/fortitude/pull/358))
+
+### Documentation
+
+- Update introduction to `README.dev.md` ([#360](https://github.com/PlasmaFAIR/fortitude/pull/360))
+- docs(index): fix link to best practices ([#350](https://github.com/PlasmaFAIR/fortitude/pull/350))
+- docs: add package manager install instructions ([#377](https://github.com/PlasmaFAIR/fortitude/pull/377))
+- docs: fix links to best practice ([#357](https://github.com/PlasmaFAIR/fortitude/pull/357))
+- fixing some spelling and grammar ([#352](https://github.com/PlasmaFAIR/fortitude/pull/352))
+
+### Other changes
+
+- Add pre-commit hooks ([#376](https://github.com/PlasmaFAIR/fortitude/pull/376))
+
 ## 0.7.0
 
 This release features 25 new rules, many more options for controlling
