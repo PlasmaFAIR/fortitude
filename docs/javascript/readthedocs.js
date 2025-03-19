@@ -28,5 +28,7 @@ ${ config.versions.active.map(
 </ul>
 </div>`;
 
+    document.querySelector(".md-version").remove();
+    document.querySelector(".md-version__list").remove();
     document.querySelector(".md-header__topic").insertAdjacentHTML("beforeend", versioning);
 });
