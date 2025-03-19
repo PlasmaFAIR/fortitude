@@ -64,6 +64,10 @@ impl AstRule for ImplicitRealKind {
             return None;
         }
 
+        if node.parent()?.kind() == "derived_type" && node.next_named_sibling()?.kind() == "kind" {
+            return None;
+        }
+
         some_vec![Diagnostic::from_node(ImplicitRealKind { dtype }, node)]
     }
 

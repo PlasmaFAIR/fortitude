@@ -27,4 +27,5 @@ snapshot_kind: text
 5 |   complex, intent(in) :: d                 ! catch
   |   ^^^^^^^ C022
 6 |   complex(8), intent(in) :: e              ! ignore
+7 |   type(real(kind=kind(1.0d0))) :: bar      ! ignore
   |
