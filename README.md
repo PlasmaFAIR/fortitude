@@ -204,6 +204,11 @@ rules on top of those in the configuration file.
 fortitude check --extend-select=OB
 ```
 
+## pre-commit
+
+[Pre-commit](https://pre-commit.com/) hooks for Fortitude are available
+at [fortitude-pre-commit](https://github.com/PlasmaFAIR/fortitude-pre-commit).
+
 ## Documentation
 
 See [table of rules](https://fortitude.readthedocs.io/en/stable/rules/) for a list of all rules.
