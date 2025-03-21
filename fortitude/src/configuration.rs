@@ -1,5 +1,5 @@
 use crate::cli::CheckArgs;
-use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
+use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FIXED_FORTRAN_EXTS, FORTRAN_EXTS};
 use crate::options::{ExitUnlabelledLoopOptions, Options};
 use crate::registry::RuleNamespace;
 use crate::rule_redirects::get_redirect;
@@ -154,6 +154,7 @@ pub struct Configuration {
     pub per_file_ignores: Option<Vec<PerFileIgnore>>,
     pub line_length: usize,
     pub file_extensions: Vec<String>,
+    pub fixed_extensions: Vec<String>,
     pub fix: bool,
     pub fix_only: bool,
     pub show_fixes: bool,
@@ -179,6 +180,10 @@ impl Default for Configuration {
             per_file_ignores: Default::default(),
             line_length: Settings::default().check.line_length,
             file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
+            fixed_extensions: FIXED_FORTRAN_EXTS
+                .iter()
+                .map(|ext| ext.to_string())
+                .collect(),
             fix: Default::default(),
             fix_only: Default::default(),
             show_fixes: Default::default(),
@@ -219,6 +224,12 @@ impl Configuration {
             file_extensions: check
                 .file_extensions
                 .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
+            fixed_extensions: check.fixed_extensions.unwrap_or(
+                FIXED_FORTRAN_EXTS
+                    .iter()
+                    .map(|ext| ext.to_string())
+                    .collect_vec(),
+            ),
             fix: check.fix.unwrap_or_default(),
             fix_only: check.fix_only.unwrap_or_default(),
             show_fixes: check.show_fixes.unwrap_or_default(),
@@ -269,6 +280,7 @@ impl Configuration {
 
         let files = args.files.unwrap_or(self.files);
         let file_extensions = args.file_extensions.unwrap_or(self.file_extensions);
+        let fixed_extensions = args.fixed_form_extensions.unwrap_or(self.fixed_extensions);
 
         let per_file_ignores = if let Some(per_file_ignores) = args.per_file_ignores {
             Some(collect_per_file_ignores(per_file_ignores))
@@ -366,6 +378,7 @@ impl Configuration {
                 excludes: exclude,
                 files,
                 file_extensions,
+                fixed_extensions,
                 respect_gitignore: respect_gitignore.is_respect_gitignore(),
                 force_exclude: force_exclude.is_force(),
             },

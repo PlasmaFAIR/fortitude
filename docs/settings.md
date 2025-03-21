@@ -229,6 +229,32 @@ Like [`fix`](#fix), but disables reporting on leftover violation. Implies [`fix`
 
 ---
 
+#### [`fixed-extensions`](#check_fixed-extensions) {: #check_fixed-extensions }
+<span id="fixed-extensions"></span>
+
+A list of extensions to parse as fixed-form
+
+**Default value**: `["f", "ftn"]`
+
+**Type**: `list[str]`
+
+**Example usage**:
+
+=== "fpm.toml"
+
+    ```toml
+    [fpm.extra.check]
+    ["f", "FOR"]
+    ```
+=== "fortitude.toml"
+
+    ```toml
+    [check]
+    ["f", "FOR"]
+    ```
+
+---
+
 #### [`force-exclude`](#check_force-exclude) {: #check_force-exclude }
 <span id="force-exclude"></span>
 

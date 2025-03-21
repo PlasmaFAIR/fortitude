@@ -169,6 +169,14 @@ pub struct CheckOptions {
     )]
     pub file_extensions: Option<Vec<String>>,
 
+    /// A list of extensions to parse as fixed-form
+    #[option(
+        default = r#"["f", "ftn"]"#,
+        value_type = "list[str]",
+        example = r#"["f", "FOR"]"#
+    )]
+    pub fixed_extensions: Option<Vec<String>>,
+
     /// A list of file patterns to exclude from formatting and linting.
     ///
     /// Exclusions are based on globs, and can be either:
