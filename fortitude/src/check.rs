@@ -13,7 +13,7 @@ use crate::rule_table::RuleTable;
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
 use crate::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use crate::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
+use crate::settings::{self, CheckSettings, FileResolverSettings, FixMode, ProgressBar, Settings};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
@@ -156,6 +156,26 @@ pub(crate) fn check_file(
     })
 }
 
+fn parser_from_extension(path: &Path, resolver: &FileResolverSettings) -> anyhow::Result<Parser> {
+    let extension = path
+        .extension()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
+    let language = if resolver.fixed_extensions.contains(&extension) {
+        tree_sitter_fixed_form_fortran::LANGUAGE
+    } else {
+        tree_sitter_fortran::LANGUAGE
+    };
+
+    let mut parser = Parser::new();
+    parser
+        .set_language(&language.into())
+        .context("Error loading Fortran grammar")?;
+
+    Ok(parser)
+}
+
 /// Parse a file, check it for issues, and return the report.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn check_only_file(
@@ -168,10 +188,7 @@ pub(crate) fn check_only_file(
     settings: &Settings,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Vec<DiagnosticMessage>> {
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_fortran::LANGUAGE.into())
-        .context("Error loading Fortran grammar")?;
+    let mut parser = parser_from_extension(path, &settings.file_resolver)?;
     let tree = parser
         .parse(file.source_text(), None)
         .context("Failed to parse")?;
@@ -356,10 +373,7 @@ pub(crate) fn check_and_fix_file<'a>(
     // Track whether the _initial_ source code is valid syntax.
     let mut is_valid_syntax = false;
 
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_fortran::LANGUAGE.into())
-        .context("Error loading Fortran grammar")?;
+    let mut parser = parser_from_extension(path, &settings.file_resolver)?;
 
     // Continuously fix until the source code stabilizes.
     loop {

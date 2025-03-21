@@ -267,6 +267,15 @@ pub struct CheckArgs {
     )]
     pub file_extensions: Option<Vec<String>>,
 
+    /// File extensions to parse as fixed-form
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "FIXED_EXTENSION",
+        help_heading = "File selection"
+    )]
+    pub fixed_form_extensions: Option<Vec<String>>,
+
     /// List of paths, used to omit files and/or directories from analysis.
     #[arg(
         long,

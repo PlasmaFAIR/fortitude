@@ -481,6 +481,7 @@ dependencies = [
  "thiserror 1.0.66",
  "toml",
  "tree-sitter",
+ "tree-sitter-fixed-form-fortran",
  "tree-sitter-fortran",
  "unicode-width 0.2.0",
  "url",
@@ -1604,6 +1605,15 @@ dependencies = [
  "regex",
  "regex-syntax",
  "streaming-iterator",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-fixed-form-fortran"
+version = "0.0.1"
+source = "git+https://github.com/ZedThree/tree-sitter-fixed-form-fortran.git?branch=f77-rebase#7f57e47f040479380e9f344b4174fba0efc57610"
+dependencies = [
+ "cc",
  "tree-sitter-language",
 ]
 
