@@ -50,7 +50,7 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
             ):
                 indent = get_indent(line)
                 lines.append(
-                    f'{indent}#[test_case(Rule::{name}, Path::new("{filestem}.py"))]',
+                    f'{indent}#[test_case(Rule::{name}, Path::new("{filestem}.f90"))]',
                 )
                 fp.write("\n".join(lines))
                 fp.write("\n")
