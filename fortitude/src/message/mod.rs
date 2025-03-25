@@ -143,9 +143,9 @@ impl Ranged for DiagnosticMessage {
     }
 }
 
-/// Display format for a [`Message`]s.
+/// Display format for a [`DiagnosticMessage`]s.
 ///
-/// The emitter serializes a slice of [`Message`]'s and writes them to a [`Write`].
+/// The emitter serializes a slice of [`DiagnosticMessage`]'s and writes them to a [`Write`].
 pub trait Emitter {
     /// Serializes the `messages` and writes the output to `writer`.
     fn emit(

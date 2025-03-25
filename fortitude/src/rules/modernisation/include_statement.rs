@@ -21,7 +21,7 @@ use tree_sitter::Node;
 ///   Incorporating Fortran 2018_, Oxford University Press, Appendix A
 ///   'Deprecated Features'
 /// - _Difference between INCLUDE and modules in Fortran_, 2013,
-///   https://stackoverflow.com/a/15668209
+///   <https://stackoverflow.com/a/15668209>
 #[derive(ViolationMetadata)]
 pub(crate) struct IncludeStatement {}
 

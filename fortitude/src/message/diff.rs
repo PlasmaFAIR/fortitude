@@ -23,7 +23,7 @@ use crate::text_helpers::ShowNonprinting;
 /// * Replace tabs with spaces for a consistent experience across terminals
 /// * Replace zero-width whitespaces
 /// * Print a simpler diff if only a single line has changed
-/// * Compute the diff from the [`Edit`] because diff calculation is expensive.
+/// * Compute the diff from the [`ruff_diagnostics::Edit`] because diff calculation is expensive.
 pub(super) struct Diff<'a> {
     fix: &'a Fix,
     source_code: &'a SourceFile,

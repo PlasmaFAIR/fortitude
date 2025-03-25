@@ -50,6 +50,7 @@ pub(crate) struct VersionInfo {
 }
 
 impl fmt::Display for VersionInfo {
+    #[allow(rustdoc::invalid_html_tags)]
     /// Formatted version information: "<version>[+<commits>] (<commit> <date>)"
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.version)?;
