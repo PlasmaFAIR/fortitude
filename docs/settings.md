@@ -36,7 +36,7 @@ Note that you'll typically want to use
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     exclude = [".venv"]
     ```
 === "fortitude.toml"
@@ -75,7 +75,7 @@ For more information on the glob syntax, refer to the [`globset` documentation](
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     # In addition to the standard set of exclusions, omit all tests, plus a specific file.
     extend-exclude = ["tests", "src/bad.f90"]
     ```
@@ -104,7 +104,7 @@ specified by [`select`](#check_select).
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
     extend-select = ["T031", "R"]
     ```
@@ -132,7 +132,7 @@ A list of file extensions to check
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     ["f90", "fpp"]
     ```
 === "fortitude.toml"
@@ -163,7 +163,7 @@ For more information on the glob syntax, refer to the [`globset` documentation](
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     files = ["foo.f90"]
     ```
 === "fortitude.toml"
@@ -191,7 +191,7 @@ Only includes automatic fixes unless `--unsafe-fixes` is provided.
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     fix = true
     ```
 === "fortitude.toml"
@@ -217,7 +217,7 @@ Like [`fix`](#fix), but disables reporting on leftover violation. Implies [`fix`
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     fix-only = true
     ```
 === "fortitude.toml"
@@ -251,7 +251,7 @@ own settings.
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     force-exclude = true
     ```
 === "fortitude.toml"
@@ -283,7 +283,7 @@ specific prefixes.
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     ignore = ["superfluous-implicit-none"]
     ```
 === "fortitude.toml"
@@ -312,7 +312,7 @@ For these lines, the [unicode width](https://unicode.org/reports/tr11/) of each 
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     # Allow lines to be as long as 120.
     line-length = 120
     ```
@@ -344,7 +344,7 @@ Actions annotations), `"gitlab"` (GitLab CI code quality report),
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     # Group violations by containing file.
     output-format = "grouped"
     ```
@@ -374,7 +374,7 @@ the file pattern.
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check.per-file-ignores]
+    [extra.fortitude.check.per-file-ignores]
     # Ignore `T003` (superfluous implicit none) in all `test.f90` files, and in `path/to/file.f90`.
     "test.f90" = ["T003"]
     "path/to/file.f90" = ["T003"]
@@ -409,7 +409,7 @@ use unstable rules, fixes, and formatting.
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     # Enable preview features.
     preview = true
     ```
@@ -438,7 +438,7 @@ Options are "off" (default), "ascii", and "fancy"
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check.progress-bar]
+    [extra.fortitude.check.progress-bar]
     # Enable unicode progress bar
     progress-bar = "fancy"
     ```
@@ -468,7 +468,7 @@ Enabled by default.
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     respect-gitignore = false
     ```
 === "fortitude.toml"
@@ -500,7 +500,7 @@ specific prefixes.
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     # Only check errors and obsolescent features
     select = ["E", "OB"]
     ```
@@ -529,7 +529,7 @@ Whether to show an enumeration of all fixed lint violations
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     # Enumerate all fixed violations.
     show-fixes = true
     ```
@@ -559,7 +559,7 @@ If set to false, the hint will be hidden.
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check]
+    [extra.fortitude.check]
     unsafe-fixes = true
     ```
 === "fortitude.toml"
@@ -597,7 +597,7 @@ end do
 === "fpm.toml"
 
     ```toml
-    [fpm.extra.check.exit-unlabelled-loops]
+    [extra.fortitude.check.exit-unlabelled-loops]
     allow-unnested-loops = true
     ```
 === "fortitude.toml"
