@@ -205,7 +205,7 @@ fn format_tab(tab_name: &str, header: &str, content: &str) -> String {
 
 /// Format the TOML header for the example usage for a given option.
 ///
-/// For example: `[extra.foritutde.check]` in `fpm.toml`` or `[check]` in
+/// For example: `[extra.fortitude.check]` in `fpm.toml`` or `[check]` in
 /// `fortitude.toml`.
 fn format_header(scope: Option<&str>, parents: &[Set], configuration: ConfigurationFile) -> String {
     let tool_parent = match configuration {
