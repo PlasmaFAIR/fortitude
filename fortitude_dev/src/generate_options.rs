@@ -205,10 +205,11 @@ fn format_tab(tab_name: &str, header: &str, content: &str) -> String {
 
 /// Format the TOML header for the example usage for a given option.
 ///
-/// For example: `[fpm.extra.format]` or `[fpm.extra.lint.isort]`.
+/// For example: `[extra.fortitude.check]` in `fpm.toml`` or `[check]` in
+/// `fortitude.toml`.
 fn format_header(scope: Option<&str>, parents: &[Set], configuration: ConfigurationFile) -> String {
     let tool_parent = match configuration {
-        ConfigurationFile::FpmToml => Some("fpm.extra"),
+        ConfigurationFile::FpmToml => Some("extra.fortitude"),
         ConfigurationFile::FortitudeToml => None,
     };
 
