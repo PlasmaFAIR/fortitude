@@ -106,7 +106,7 @@ impl OptionSet {
     /// ### Test for the existence of a child option
     ///
     /// ```rust
-    /// # use ruff_workspace::options_base::{OptionField, OptionsMetadata, Visit};
+    /// # use fortitude::options_base::{OptionField, OptionsMetadata, Visit};
     ///
     /// struct WithOptions;
     ///
@@ -129,7 +129,7 @@ impl OptionSet {
     /// ### Test for the existence of a nested option
     ///
     /// ```rust
-    /// # use ruff_workspace::options_base::{OptionField, OptionsMetadata, Visit};
+    /// # use fortitude::options_base::{OptionField, OptionsMetadata, Visit};
     ///
     /// struct Root;
     ///
@@ -180,7 +180,7 @@ impl OptionSet {
     /// ### Find a child option
     ///
     /// ```rust
-    /// # use ruff_workspace::options_base::{OptionEntry, OptionField, OptionsMetadata, Visit};
+    /// # use fortitude::options_base::{OptionEntry, OptionField, OptionsMetadata, Visit};
     ///
     /// struct WithOptions;
     ///
@@ -205,7 +205,7 @@ impl OptionSet {
     /// ### Find a nested option
     ///
     /// ```rust
-    /// # use ruff_workspace::options_base::{OptionEntry, OptionField, OptionsMetadata, Visit};
+    /// # use fortitude::options_base::{OptionEntry, OptionField, OptionsMetadata, Visit};
     ///
     /// static HARD_TABS: OptionField = OptionField {
     ///     doc: "Use hard tabs for indentation and spaces for alignment.",
