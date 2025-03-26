@@ -80,7 +80,7 @@ impl<'a> Locator<'a> {
     ///
     /// ```
     /// # use ruff_text_size::{Ranged, TextRange, TextSize};
-    /// # use ruff_linter::Locator;
+    /// # use fortitude::locator::Locator;
     ///
     /// let locator = Locator::new("Hello");
     ///
@@ -137,7 +137,7 @@ impl<'a> Locator<'a> {
     ///
     /// ```
     /// use ruff_text_size::{Ranged, TextSize};
-    /// use ruff_linter::Locator;
+    /// use fortitude::locator::Locator;
     ///
     /// let locator = Locator::new("❤️🧡💛💚💙💜");
     /// assert_eq!(locator.text_len(), TextSize::from(26));
@@ -152,7 +152,7 @@ impl<'a> Locator<'a> {
     ///
     /// ```
     /// use ruff_text_size::{Ranged, TextRange, TextSize};
-    /// use ruff_linter::Locator;
+    /// use fortitude::locator::Locator;
     ///
     /// let locator = Locator::new("Hello");
     ///

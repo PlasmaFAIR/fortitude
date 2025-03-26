@@ -16,4 +16,4 @@ others and instead use modules.
   Incorporating Fortran 2018_, Oxford University Press, Appendix A
   'Deprecated Features'
 - _Difference between INCLUDE and modules in Fortran_, 2013,
-  https://stackoverflow.com/a/15668209
+  <https://stackoverflow.com/a/15668209>
