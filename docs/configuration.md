@@ -39,10 +39,11 @@ A Fortran linter, written in Rust and installable with Python
 Usage: fortitude [OPTIONS] <COMMAND>
 
 Commands:
-  check    Perform static analysis on files and report issues
-  explain  Get descriptions, rationales, and solutions for each rule
-  version  Display Fortitude's version
-  help     Print this message or the help of the given subcommand(s)
+  check          Perform static analysis on files and report issues
+  convert-fixed  Convert fixed form files to free form
+  explain        Get descriptions, rationales, and solutions for each rule
+  version        Display Fortitude's version
+  help           Print this message or the help of the given subcommand(s)
 
 Options:
       --config-file <CONFIG_FILE>  Path to a TOML configuration file
@@ -114,6 +115,8 @@ Rule selection:
 File selection:
       --file-extensions <EXTENSION>
           File extensions to check
+      --fixed-form-extensions <FIXED_EXTENSION>
+          File extensions to parse as fixed-form
       --exclude <FILE_PATTERN>
           List of paths, used to omit files and/or directories from analysis
       --extend-exclude <FILE_PATTERN>

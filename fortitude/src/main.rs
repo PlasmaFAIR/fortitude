@@ -6,6 +6,7 @@ use clap::{CommandFactory, Parser};
 use colored::Colorize;
 use fortitude::check::check;
 use fortitude::cli::{Cli, SubCommands};
+use fortitude::convert_fixed::convert_fixed;
 use fortitude::explain::explain;
 use fortitude::logging::set_up_logging;
 
@@ -25,6 +26,7 @@ fn main() -> Result<ExitCode> {
             fortitude::version::version_command(output_format)?;
             return Ok(ExitCode::SUCCESS);
         }
+        SubCommands::ConvertFixed(args) => convert_fixed(args),
     };
     match status {
         Ok(code) => Ok(code),

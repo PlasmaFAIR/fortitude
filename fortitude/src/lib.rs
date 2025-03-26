@@ -5,6 +5,7 @@ mod ast;
 pub mod check;
 pub mod cli;
 mod configuration;
+pub mod convert_fixed;
 mod diagnostics;
 pub mod explain;
 mod fix;

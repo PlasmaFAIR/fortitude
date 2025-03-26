@@ -247,6 +247,9 @@ pub const FORTRAN_EXTS: &[&str] = &[
     "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
 ];
 
+/// Default fixed-form extensions
+pub const FIXED_FORTRAN_EXTS: &[&str] = &["f", "ftn", "for", "fpp", "f77"];
+
 // Default paths to exclude when searching paths
 pub(crate) static EXCLUDE_BUILTINS: &[FilePattern] = &[
     FilePattern::Builtin(".git"),
@@ -325,6 +328,9 @@ pub fn get_files(resolver: &FileResolverSettings, is_stdin: bool) -> anyhow::Res
         // Directories will be skipped
         let mut file_types = TypesBuilder::new();
         for ext in &resolver.file_extensions {
+            file_types.add(ext.as_ref(), format!("*.{}", ext).as_str())?;
+        }
+        for ext in &resolver.fixed_extensions {
             file_types.add(ext.as_ref(), format!("*.{}", ext).as_str())?;
         }
         file_types.select("all");
