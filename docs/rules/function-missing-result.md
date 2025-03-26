@@ -1,4 +1,4 @@
-# function-missing-result (S220)
+# function-missing-result (S221)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does

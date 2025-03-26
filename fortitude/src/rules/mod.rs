@@ -125,7 +125,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "201") => (RuleGroup::Stable, Ast, Optional, style::implicit_none::SuperfluousImplicitNone),
         (Style, "211") => (RuleGroup::Preview, Ast, Optional, style::file_contents::MultipleModules),
         (Style, "212") => (RuleGroup::Preview, Ast, Optional, style::file_contents::ProgramWithModule),
-        (Style, "220") => (RuleGroup::Preview, Ast, Optional, style::functions::FunctionMissingResult),
+        (Style, "221") => (RuleGroup::Preview, Ast, Optional, style::functions::FunctionMissingResult),
 
         // obsolescent
         (Obsolescent, "001") => (RuleGroup::Removed, Ast, Default, obsolescent::statement_functions::StatementFunction),

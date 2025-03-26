@@ -1,3 +1,4 @@
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -84,13 +85,8 @@ impl AstRule for FunctionMissingResult {
         node: &'a Node,
         _src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {
-        let mut node_cursor = node.walk();
-
         // Just need to check for the presence of the function_result node
-        if node
-            .named_children(&mut node_cursor)
-            .any(|node| node.kind() == "function_result")
-        {
+        if node.child_with_name("function_result").is_some() {
             return None;
         }
 

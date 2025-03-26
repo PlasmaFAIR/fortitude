@@ -32,7 +32,7 @@ mod tests {
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201.f90"))]
     #[test_case(Rule::MultipleModules, Path::new("S211.f90"))]
     #[test_case(Rule::ProgramWithModule, Path::new("S212.f90"))]
-    #[test_case(Rule::FunctionMissingResult, Path::new("S220.f90"))]
+    #[test_case(Rule::FunctionMissingResult, Path::new("S221.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
