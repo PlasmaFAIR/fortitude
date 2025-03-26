@@ -215,4 +215,5 @@ fn process_documentation(documentation: &str, out: &mut String, rule_name: &str)
         out.push('\n');
         out.push_str(&after);
     }
+    out.push('\n');
 }
