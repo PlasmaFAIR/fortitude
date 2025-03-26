@@ -73,8 +73,8 @@ impl AstRule for NoRealSuffix {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
-        // Exponentiation with d or D are ignored, and should be handled with a different
-        // rule.
+        // Exponentiation with d or D are ignored, and should be handled with the
+        // rule `double_precision_literal`.
         let txt = node.to_text(src.source_text())?;
         if !regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]-?\d+)$", txt) {
             return None;
