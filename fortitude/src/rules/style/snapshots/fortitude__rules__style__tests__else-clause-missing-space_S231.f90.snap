@@ -1,0 +1,46 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S231.f90:13:5: S231 [*] Prefer 'else where' over 'elsewhere'
+   |
+11 |     where (A > 5.0)
+12 |         A = A * 2.0
+13 |     eLseWHere
+   |     ^^^^^^^^^ S231
+14 |         A = A + 10.0
+15 |     end where
+   |
+   = help: Add missing space
+
+ℹ Safe fix
+10 10 | 
+11 11 |     where (A > 5.0)
+12 12 |         A = A * 2.0
+13    |-    eLseWHere
+   13 |+    eLse WHere
+14 14 |         A = A + 10.0
+15 15 |     end where
+16 16 | 
+
+./resources/test/fixtures/style/S231.f90:25:5: S231 [*] Prefer 'else if' over 'elseif'
+   |
+23 |     if (A(1) == 11.0) then
+24 |       print *, "foo"
+25 |     eLsEIf (A(1) == 12.0) then
+   |     ^^^^^^ S231
+26 |       print *, "bar"
+27 |     else if (A(2) == 12.0) then
+   |
+   = help: Add missing space
+
+ℹ Safe fix
+22 22 | 
+23 23 |     if (A(1) == 11.0) then
+24 24 |       print *, "foo"
+25    |-    eLsEIf (A(1) == 12.0) then
+   25 |+    eLsE If (A(1) == 12.0) then
+26 26 |       print *, "bar"
+27 27 |     else if (A(2) == 12.0) then
+28 28 |       print *, "baz"
