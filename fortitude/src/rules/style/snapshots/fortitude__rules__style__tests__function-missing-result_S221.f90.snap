@@ -1,0 +1,14 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/style/S221.f90:15:5: S221 Function missing result() specifier
+   |
+13 |     ! While this is technically correct, as a style rule we want the
+14 |     ! result() clause on here
+15 |     function length(b, c)
+   |     ^^^^^^^^^^^^^^^^^^^^^ S221
+16 |         real :: b, c
+17 |
+18 |         length = sqrt( b**2 + c**2 )
+   |
