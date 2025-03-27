@@ -4,6 +4,7 @@ pub mod file_contents;
 pub mod file_extensions;
 pub mod functions;
 pub mod implicit_none;
+pub mod keywords;
 pub mod line_length;
 pub mod semicolons;
 pub mod whitespace;
@@ -33,6 +34,7 @@ mod tests {
     #[test_case(Rule::MultipleModules, Path::new("S211.f90"))]
     #[test_case(Rule::ProgramWithModule, Path::new("S212.f90"))]
     #[test_case(Rule::FunctionMissingResult, Path::new("S221.f90"))]
+    #[test_case(Rule::ElseClauseMissingSpace, Path::new("S231.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
