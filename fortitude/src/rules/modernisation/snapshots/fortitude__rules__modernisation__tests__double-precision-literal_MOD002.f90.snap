@@ -1,0 +1,58 @@
+---
+source: fortitude/src/rules/modernisation/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/modernisation/MOD002.f90:9:30: MOD002 Use of 'd' exponentiation in '1.23456d1' is discouraged
+   |
+ 7 |   real(dp), parameter :: b = 1.34e-4 ! Okay: default real kind
+ 8 |   real(dp), parameter :: c = .25E1 ! Okay: default real kind
+ 9 |   real(dp), parameter :: d = 1.23456d1
+   |                              ^^^^^^^^^ MOD002
+10 |   real(dp), parameter :: e = 1.23456D-32
+11 |   real(dp), parameter :: f = 3d11
+   |
+   = help: Prefer '1.23456e1_real64' (see 'iso_fortran_env')
+
+./resources/test/fixtures/modernisation/MOD002.f90:10:30: MOD002 Use of 'd' exponentiation in '1.23456D-32' is discouraged
+   |
+ 8 |   real(dp), parameter :: c = .25E1 ! Okay: default real kind
+ 9 |   real(dp), parameter :: d = 1.23456d1
+10 |   real(dp), parameter :: e = 1.23456D-32
+   |                              ^^^^^^^^^^^ MOD002
+11 |   real(dp), parameter :: f = 3d11
+12 |   real(dp), parameter :: g = .23456D-45
+   |
+   = help: Prefer '1.23456e-32_real64' (see 'iso_fortran_env')
+
+./resources/test/fixtures/modernisation/MOD002.f90:11:30: MOD002 Use of 'd' exponentiation in '3d11' is discouraged
+   |
+ 9 |   real(dp), parameter :: d = 1.23456d1
+10 |   real(dp), parameter :: e = 1.23456D-32
+11 |   real(dp), parameter :: f = 3d11
+   |                              ^^^^ MOD002
+12 |   real(dp), parameter :: g = .23456D-45
+13 |   real(dp), parameter :: h = 23456.D21
+   |
+   = help: Prefer '3e11_real64' (see 'iso_fortran_env')
+
+./resources/test/fixtures/modernisation/MOD002.f90:12:30: MOD002 Use of 'd' exponentiation in '.23456D-45' is discouraged
+   |
+10 |   real(dp), parameter :: e = 1.23456D-32
+11 |   real(dp), parameter :: f = 3d11
+12 |   real(dp), parameter :: g = .23456D-45
+   |                              ^^^^^^^^^^ MOD002
+13 |   real(dp), parameter :: h = 23456.D21
+   |
+   = help: Prefer '.23456e-45_real64' (see 'iso_fortran_env')
+
+./resources/test/fixtures/modernisation/MOD002.f90:13:30: MOD002 Use of 'd' exponentiation in '23456.D21' is discouraged
+   |
+11 |   real(dp), parameter :: f = 3d11
+12 |   real(dp), parameter :: g = .23456D-45
+13 |   real(dp), parameter :: h = 23456.D21
+   |                              ^^^^^^^^^ MOD002
+14 |
+15 |   ! Okay if in a type cast
+   |
+   = help: Prefer '23456.e21_real64' (see 'iso_fortran_env')

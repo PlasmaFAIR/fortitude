@@ -99,9 +99,10 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "132") => (RuleGroup::Stable, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
         (Correctness, "141") => (RuleGroup::Stable, Ast, Default, correctness::exit_labels::MissingExitOrCycleLabel),
         (Correctness, "142") => (RuleGroup::Preview, Ast, Optional, correctness::exit_labels::ExitOrCycleInUnlabelledLoop),
-        
+
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),
+        (Modernisation, "002") => (RuleGroup::Preview, Ast, Optional, modernisation::double_precision::DoublePrecisionLiteral),
         (Modernisation, "011") => (RuleGroup::Stable, Ast, Default, modernisation::old_style_array_literal::OldStyleArrayLiteral),
         (Modernisation, "021") => (RuleGroup::Stable, Ast, Default, modernisation::relational_operators::DeprecatedRelationalOperator),
         (Modernisation, "031") => (RuleGroup::Preview, Ast, Optional, modernisation::include_statement::IncludeStatement),
