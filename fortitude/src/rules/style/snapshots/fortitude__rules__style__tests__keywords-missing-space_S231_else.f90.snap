@@ -3,7 +3,7 @@ source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S231.f90:13:5: S231 [*] Prefer 'else where' over 'elsewhere'
+./resources/test/fixtures/style/S231_else.f90:13:5: S231 [*] Missing space in 'elsewhere'
    |
 11 |     where (A > 5.0)
 12 |         A = A * 2.0
@@ -12,7 +12,7 @@ snapshot_kind: text
 14 |         A = A + 10.0
 15 |     end where
    |
-   = help: Add missing space
+   = help: Replace with 'else where'
 
 ℹ Safe fix
 10 10 | 
@@ -24,7 +24,7 @@ snapshot_kind: text
 15 15 |     end where
 16 16 | 
 
-./resources/test/fixtures/style/S231.f90:25:5: S231 [*] Prefer 'else if' over 'elseif'
+./resources/test/fixtures/style/S231_else.f90:25:5: S231 [*] Missing space in 'elseif'
    |
 23 |     if (A(1) == 11.0) then
 24 |       print *, "foo"
@@ -33,7 +33,7 @@ snapshot_kind: text
 26 |       print *, "bar"
 27 |     else if (A(2) == 12.0) then
    |
-   = help: Add missing space
+   = help: Replace with 'else if'
 
 ℹ Safe fix
 22 22 | 
