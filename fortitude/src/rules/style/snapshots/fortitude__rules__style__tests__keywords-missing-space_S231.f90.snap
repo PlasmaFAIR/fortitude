@@ -1,0 +1,145 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S231.f90:6:5: S231 [*] Missing space in 'doubleprecision'
+  |
+4 |     double precision :: A(n)
+5 |     double complex :: b
+6 |     DoublePrecision :: c
+  |     ^^^^^^^^^^^^^^^ S231
+7 |     DoubleComplex :: d
+8 |     integer :: i, j, k
+  |
+  = help: Replace with 'double precision'
+
+ℹ Safe fix
+3 3 |     integer, parameter :: n = 10
+4 4 |     double precision :: A(n)
+5 5 |     double complex :: b
+6   |-    DoublePrecision :: c
+  6 |+    Double Precision :: c
+7 7 |     DoubleComplex :: d
+8 8 |     integer :: i, j, k
+9 9 |     ! Ignore all of the following
+
+./resources/test/fixtures/style/S231.f90:7:5: S231 [*] Missing space in 'doublecomplex'
+  |
+5 |     double complex :: b
+6 |     DoublePrecision :: c
+7 |     DoubleComplex :: d
+  |     ^^^^^^^^^^^^^ S231
+8 |     integer :: i, j, k
+9 |     ! Ignore all of the following
+  |
+  = help: Replace with 'double complex'
+
+ℹ Safe fix
+4 4 |     double precision :: A(n)
+5 5 |     double complex :: b
+6 6 |     DoublePrecision :: c
+7   |-    DoubleComplex :: d
+  7 |+    Double Complex :: d
+8 8 |     integer :: i, j, k
+9 9 |     ! Ignore all of the following
+10 10 |     character(len=10) :: elsewhere, endif, endmodule, selectcase
+
+./resources/test/fixtures/style/S231.f90:18:5: S231 [*] Missing space in 'elsewhere'
+   |
+16 |     where (A > 5.0)
+17 |         A = A * 2.0
+18 |     eLseWHere
+   |     ^^^^^^^^^ S231
+19 |         A = A + 10.0
+20 |     endwheRe
+   |
+   = help: Replace with 'else where'
+
+ℹ Safe fix
+15 15 | 
+16 16 |     where (A > 5.0)
+17 17 |         A = A * 2.0
+18    |-    eLseWHere
+   18 |+    eLse WHere
+19 19 |         A = A + 10.0
+20 20 |     endwheRe
+21 21 | 
+
+./resources/test/fixtures/style/S231.f90:20:5: S231 [*] Missing space in 'endwhere'
+   |
+18 |     eLseWHere
+19 |         A = A + 10.0
+20 |     endwheRe
+   |     ^^^^^^^^ S231
+21 |
+22 |     where (A > 15.0)
+   |
+   = help: Replace with 'end where'
+
+ℹ Safe fix
+17 17 |         A = A * 2.0
+18 18 |     eLseWHere
+19 19 |         A = A + 10.0
+20    |-    endwheRe
+   20 |+    end wheRe
+21 21 | 
+22 22 |     where (A > 15.0)
+23 23 |         A = A + 3.0
+
+./resources/test/fixtures/style/S231.f90:30:5: S231 [*] Missing space in 'elseif'
+   |
+28 |     if (A(1) == 11.0) then
+29 |       print *, "foo"
+30 |     eLsEIf (A(1) == 12.0) then
+   |     ^^^^^^ S231
+31 |       print *, "bar"
+32 |     else if (A(2) == 12.0) then
+   |
+   = help: Replace with 'else if'
+
+ℹ Safe fix
+27 27 | 
+28 28 |     if (A(1) == 11.0) then
+29 29 |       print *, "foo"
+30    |-    eLsEIf (A(1) == 12.0) then
+   30 |+    eLsE If (A(1) == 12.0) then
+31 31 |       print *, "bar"
+32 32 |     else if (A(2) == 12.0) then
+33 33 |       print *, "baz"
+
+./resources/test/fixtures/style/S231.f90:40:5: S231 [*] Missing space in 'endif'
+   |
+38 |     if (A(1) == 11.0) then
+39 |       print *, "foo"
+40 |     EndIf
+   |     ^^^^^ S231
+41 |
+42 | endprogram p
+   |
+   = help: Replace with 'end if'
+
+ℹ Safe fix
+37 37 | 
+38 38 |     if (A(1) == 11.0) then
+39 39 |       print *, "foo"
+40    |-    EndIf
+   40 |+    End If
+41 41 | 
+42 42 | endprogram p
+
+./resources/test/fixtures/style/S231.f90:42:1: S231 [*] Missing space in 'endprogram'
+   |
+40 |     EndIf
+41 |
+42 | endprogram p
+   | ^^^^^^^^^^ S231
+   |
+   = help: Replace with 'end program'
+
+ℹ Safe fix
+39 39 |       print *, "foo"
+40 40 |     EndIf
+41 41 | 
+42    |-endprogram p
+   42 |+end program p

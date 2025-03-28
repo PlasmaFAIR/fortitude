@@ -101,6 +101,7 @@ impl AstRule for UnnamedEndStatement {
     }
 
     fn entrypoints() -> Vec<&'static str> {
+        // TODO: Can also do end associate, end block, end do, etc, but these are optionally named
         vec![
             "end_module_statement",
             "end_submodule_statement",
