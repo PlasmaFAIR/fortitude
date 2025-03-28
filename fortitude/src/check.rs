@@ -9,6 +9,7 @@ use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
 use crate::rule_table::RuleTable;
+use crate::rules::error::syntax_error::SyntaxError;
 #[cfg(any(feature = "test-rules", test))]
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
@@ -17,8 +18,8 @@ use crate::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
-use crate::warn_user_once_by_message;
 use crate::{fs, locator::Locator, warn_user_once};
+use crate::{warn_user_once_by_message, FromAstNode};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
@@ -226,6 +227,10 @@ pub(crate) fn check_path(
     // Perform AST analysis
     let root = tree.root_node();
     for node in once(root).chain(root.descendants()) {
+        if node.is_missing() {
+            violations.push(Diagnostic::from_node(SyntaxError {}, &node));
+        }
+
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for rule in rules {
                 if let Some(violation) = rule.check(settings, &node, file) {
