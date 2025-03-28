@@ -3,6 +3,8 @@ Fix is always available.
 
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
+This rule is turned on by default.
+
 ## What it does
 Checks for the use of keywords comprised of two words where the space is
 omitted, such as `elseif` instead of `else if` and `endmodule` instead of

@@ -129,6 +129,13 @@ impl AstRule for KeywordsMissingSpace {
     }
 
     fn entrypoints() -> Vec<&'static str> {
-        vec!["elseif_clause", "elsewhere_clause"]
+        vec![
+            "elseif_clause",
+            "elsewhere_clause",
+            "intrinsic_type",
+            "end_program_statement",
+            "end_where_statement",
+            "end_if_statement",
+        ]
     }
 }

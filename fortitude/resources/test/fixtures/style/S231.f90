@@ -1,18 +1,23 @@
 program p
     implicit none
     integer, parameter :: n = 10
-    real :: A(n)
-    integer :: i
+    double precision :: A(n)
+    double complex :: b
+    DoublePrecision :: c
+    DoubleComplex :: d
+    integer :: i, j, k
+    ! Ignore all of the following
+    character(len=10) :: elsewhere, endif, endmodule, selectcase
 
     do i = 1, n
         A(i) = real(i)
-    end do
+    enddo
 
     where (A > 5.0)
         A = A * 2.0
     eLseWHere
         A = A + 10.0
-    end where
+    endwheRe
 
     where (A > 15.0)
         A = A + 3.0
@@ -30,4 +35,8 @@ program p
       print *, "helloworld"
     end if
 
-end program p
+    if (A(1) == 11.0) then
+      print *, "foo"
+    EndIf
+
+endprogram p
