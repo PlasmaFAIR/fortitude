@@ -9,6 +9,9 @@ use ruff_text_size::TextSize;
 use std::str::FromStr;
 use tree_sitter::Node;
 
+// TODO Add rule for `go to` -> `goto`, `in out` -> `inout` and `end file` -> `endfile`
+// TODO Add options to split `inout`, `goto`, and `endfile`. Both rules should use the same options.
+
 #[derive(strum_macros::EnumString, strum_macros::Display)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 enum DoubleKeyword {
@@ -113,6 +116,7 @@ impl AlwaysFixableViolation for KeywordsMissingSpace {
 
 impl AstRule for KeywordsMissingSpace {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        // TODO inout needs special attention
         let first_child = node.child(0)?;
         let text = first_child.to_text(src.source_text())?;
         let keywords = DoubleKeyword::from_str(text).ok()?;
@@ -129,6 +133,30 @@ impl AstRule for KeywordsMissingSpace {
     }
 
     fn entrypoints() -> Vec<&'static str> {
-        vec!["elseif_clause", "elsewhere_clause"]
+        vec![
+            "elseif_clause",
+            "elsewhere_clause",
+            "end_associate_statement",
+            "end_block_construct_statement",
+            "end_coarray_critical_statement",
+            "end_coarray_team_statement",
+            "end_do_loop_statement",
+            "end_enum_statement",
+            "end_forall_statement",
+            "end_function_statement",
+            "end_if_statement",
+            "end_interface_statement",
+            "end_module_procedure_statement",
+            "end_module_statement",
+            "end_program_statement",
+            "end_select_statement",
+            "end_submodule_statement",
+            "end_subroutine_statement",
+            "end_type_statement",
+            "end_where_statement",
+            "intrinsic_type", // double precision and double complex
+            "select_case_statement",
+            "select_type_statement",
+        ]
     }
 }
