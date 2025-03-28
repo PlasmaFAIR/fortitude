@@ -75,7 +75,7 @@
 | S211 | [multiple-modules](rules/multiple-modules.md) | Multiple modules in one file, split into one module per file | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S212 | [program-with-module](rules/program-with-module.md) | Program and module in one file, split into their own files | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S221 | [function-missing-result](rules/function-missing-result.md) | Function missing result() specifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
-| S231 | [else-clause-missing-space](rules/else-clause-missing-space.md) | Prefer 'else if' over 'elseif' | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S231 | [keywords-missing-space](rules/keywords-missing-space.md) | Missing space in '{keywords}' | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Portability (PORT)
 
