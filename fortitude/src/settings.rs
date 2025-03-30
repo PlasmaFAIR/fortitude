@@ -15,7 +15,7 @@ use serde::{de, Deserialize, Deserializer, Serialize};
 use strum::IntoEnumIterator;
 
 use crate::display_settings;
-use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
+use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FIXED_FORTRAN_EXTS, FORTRAN_EXTS};
 use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
@@ -132,6 +132,7 @@ pub struct FileResolverSettings {
     pub force_exclude: bool,
     pub files: Vec<PathBuf>,
     pub file_extensions: Vec<String>,
+    pub fixed_extensions: Vec<String>,
     pub respect_gitignore: bool,
     pub project_root: PathBuf,
 }
@@ -147,6 +148,7 @@ impl fmt::Display for FileResolverSettings {
                 self.force_exclude,
                 self.files | paths,
                 self.file_extensions | array,
+                self.fixed_extensions | array,
                 self.respect_gitignore,
                 self.project_root | path,
             ]
@@ -164,6 +166,10 @@ impl FileResolverSettings {
             respect_gitignore: true,
             files: Vec::default(),
             file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
+            fixed_extensions: FIXED_FORTRAN_EXTS
+                .iter()
+                .map(|ext| ext.to_string())
+                .collect(),
         }
     }
 }
