@@ -19,4 +19,9 @@ contains
     integer :: foo, bar = 1, quazz, zapp = 2
   end subroutine init_decl3
 
+  ! This is handled in C082
+  subroutine init_pointer()
+    integer, pointer :: foo => null()
+  end subroutine init_pointer
+
 end module test

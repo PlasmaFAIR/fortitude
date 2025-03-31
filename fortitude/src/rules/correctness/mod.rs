@@ -43,6 +43,7 @@ mod tests {
     #[test_case(Rule::AssumedSize, Path::new("C071.f90"))]
     #[test_case(Rule::AssumedSizeCharacterIntent, Path::new("C072.f90"))]
     #[test_case(Rule::InitialisationInDeclaration, Path::new("C081.f90"))]
+    #[test_case(Rule::PointerInitialisationInDeclaration, Path::new("C082.f90"))]
     #[test_case(Rule::ExternalProcedure, Path::new("C091.f90"))]
     #[test_case(Rule::ProcedureNotInModule, Path::new("C092.f90"))]
     #[test_case(Rule::MissingDefaultPointerInitalisation, Path::new("C101.f90"))]

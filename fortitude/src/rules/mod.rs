@@ -90,6 +90,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "071") => (RuleGroup::Stable, Ast, Default, correctness::assumed_size::AssumedSize),
         (Correctness, "072") => (RuleGroup::Stable, Ast, Default, correctness::assumed_size::AssumedSizeCharacterIntent),
         (Correctness, "081") => (RuleGroup::Stable, Ast, Default, correctness::init_decls::InitialisationInDeclaration),
+        (Correctness, "082") => (RuleGroup::Preview, Ast, Default, correctness::init_decls::PointerInitialisationInDeclaration),
         (Correctness, "091") => (RuleGroup::Stable, Ast, Default, correctness::external::ExternalProcedure),
         (Correctness, "092") => (RuleGroup::Stable, Ast, Default, correctness::external::ProcedureNotInModule),
         (Correctness, "101") => (RuleGroup::Preview, Ast, Default, correctness::derived_default_init::MissingDefaultPointerInitalisation),
