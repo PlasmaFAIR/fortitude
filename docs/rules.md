@@ -94,4 +94,3 @@
 | FORT003 | [redirected-allow-comment](rules/redirected-allow-comment.md) | `{original}` has been redirected to '{redirect}' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | FORT004 | [duplicated-allow-comment](rules/duplicated-allow-comment.md) | Duplicated rule `{rule}` in allow comment | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | FORT005 | [disabled-allow-comment](rules/disabled-allow-comment.md) | Disabled rule `{rule}` in allow comment | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
-
