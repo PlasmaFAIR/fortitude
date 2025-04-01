@@ -20,6 +20,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
+    use crate::rules::style::keywords;
     use crate::settings::{CheckSettings, Settings};
     use crate::test::test_path;
 
@@ -70,6 +71,36 @@ mod tests {
         let settings = Settings {
             check: CheckSettings {
                 line_length: 20,
+                ..default.check
+            },
+            ..default
+        };
+        let diagnostics = test_path(
+            Path::new("style").join(path).as_path(),
+            &[rule_code],
+            &settings,
+        )?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
+    fn keyword_missing_space_include_inout_goto(rule_code: Rule, path: &Path) -> Result<()> {
+        let snapshot = format!(
+            "{}_{}_include_inout_goto",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+
+        let default = Settings::default();
+        #[allow(clippy::needless_update)]
+        let settings = Settings {
+            check: CheckSettings {
+                keyword_whitespace: keywords::settings::Settings {
+                    inout_with_space: true,
+                    goto_with_space: true,
+                },
                 ..default.check
             },
             ..default

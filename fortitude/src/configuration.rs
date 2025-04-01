@@ -1,6 +1,6 @@
 use crate::cli::CheckArgs;
 use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
-use crate::options::{ExitUnlabelledLoopOptions, Options};
+use crate::options::{ExitUnlabelledLoopOptions, KeywordWhitespaceOptions, Options};
 use crate::registry::RuleNamespace;
 use crate::rule_redirects::get_redirect;
 use crate::rule_selector::{
@@ -167,6 +167,7 @@ pub struct Configuration {
     pub gitignore_mode: GitignoreMode,
     // Individual rules
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
+    pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
 }
 
 impl Default for Configuration {
@@ -191,6 +192,7 @@ impl Default for Configuration {
             exclude_mode: Default::default(),
             gitignore_mode: Default::default(),
             exit_unlabelled_loops: Default::default(),
+            keyword_whitespace: Default::default(),
         }
     }
 }
@@ -261,6 +263,7 @@ impl Configuration {
 
             // Individual rules
             exit_unlabelled_loops: check.exit_unlabelled_loops,
+            keyword_whitespace: check.keyword_whitespace,
         }
     }
 
@@ -359,6 +362,10 @@ impl Configuration {
                 exit_unlabelled_loops: self
                     .exit_unlabelled_loops
                     .map(ExitUnlabelledLoopOptions::into_settings)
+                    .unwrap_or_default(),
+                keyword_whitespace: self
+                    .keyword_whitespace
+                    .map(KeywordWhitespaceOptions::into_settings)
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {

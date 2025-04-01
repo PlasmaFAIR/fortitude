@@ -14,4 +14,5 @@ default, but may be included by supplying the relevant options
 TODO list options
 
 ## Why is this bad?
-Contracting two keywords into one can make code less readable
+Contracting two keywords into one can make code less readable. Enforcing
+this rule can help maintain a consistent style.

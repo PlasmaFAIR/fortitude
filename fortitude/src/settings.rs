@@ -20,6 +20,7 @@ use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
 use crate::rules::correctness::exit_labels;
+use crate::rules::style::keywords;
 
 #[derive(Debug)]
 pub struct Settings {
@@ -71,6 +72,7 @@ pub struct CheckSettings {
 
     // Individual rule settings
     pub exit_unlabelled_loops: exit_labels::settings::Settings,
+    pub keyword_whitespace: keywords::settings::Settings,
 }
 
 impl CheckSettings {
@@ -92,6 +94,7 @@ impl CheckSettings {
             preview: PreviewMode::default(),
             ignore_allow_comments: IgnoreAllowComments::default(),
             exit_unlabelled_loops: exit_labels::settings::Settings::default(),
+            keyword_whitespace: keywords::settings::Settings::default(),
         }
     }
 }
@@ -121,6 +124,7 @@ impl fmt::Display for CheckSettings {
             namespace = "check",
             fields = [
                 self.exit_unlabelled_loops | nested,
+                self.keyword_whitespace | nested,
             ]
         }
         Ok(())

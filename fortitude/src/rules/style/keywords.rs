@@ -9,8 +9,8 @@ use ruff_text_size::TextSize;
 use std::str::FromStr;
 use tree_sitter::Node;
 
-// TODO Add rule for `go to` -> `goto`, `in out` -> `inout` and `end file` -> `endfile`
 // TODO Add options to split `inout`, `goto`, and `endfile`. Both rules should use the same options.
+// TODO Support for `endfile`/`end file`
 
 #[derive(strum_macros::EnumString, strum_macros::Display)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
@@ -26,7 +26,6 @@ enum DoubleKeyword {
     EndCritical,
     EndDo,
     EndEnum,
-    EndFile,
     EndForAll,
     EndFunction,
     EndIf,
@@ -59,7 +58,6 @@ impl DoubleKeyword {
             | DoubleKeyword::EndCritical
             | DoubleKeyword::EndDo
             | DoubleKeyword::EndEnum
-            | DoubleKeyword::EndFile
             | DoubleKeyword::EndForAll
             | DoubleKeyword::EndFunction
             | DoubleKeyword::EndIf
@@ -95,7 +93,8 @@ impl DoubleKeyword {
 /// TODO list options
 ///
 /// ## Why is this bad?
-/// Contracting two keywords into one can make code less readable
+/// Contracting two keywords into one can make code less readable. Enforcing
+/// this rule can help maintain a consistent style.
 #[derive(ViolationMetadata)]
 pub struct KeywordsMissingSpace {
     keywords: DoubleKeyword,
@@ -115,15 +114,24 @@ impl AlwaysFixableViolation for KeywordsMissingSpace {
 }
 
 impl AstRule for KeywordsMissingSpace {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        // TODO inout needs special attention
-        let first_child = node.child(0)?;
+    fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let first_child = if node.kind() == "inout" {
+            *node
+        } else {
+            node.child(0)?
+        };
         let text = first_child.to_text(src.source_text())?;
         let keywords = DoubleKeyword::from_str(text).ok()?;
 
         // Exit early if the keyword is permitted
-        // TODO add options to also split these
-        if matches!(keywords, DoubleKeyword::InOut | DoubleKeyword::GoTo) {
+        if matches!(keywords, DoubleKeyword::InOut)
+            && !settings.check.keyword_whitespace.inout_with_space
+        {
+            return None;
+        }
+        if matches!(keywords, DoubleKeyword::GoTo)
+            && !settings.check.keyword_whitespace.goto_with_space
+        {
             return None;
         }
 
@@ -154,9 +162,34 @@ impl AstRule for KeywordsMissingSpace {
             "end_subroutine_statement",
             "end_type_statement",
             "end_where_statement",
-            "intrinsic_type", // double precision and double complex
+            "inout",
+            "intrinsic_type",    // double precision and double complex
+            "keyword_statement", // goto
             "select_case_statement",
             "select_type_statement",
         ]
+    }
+}
+
+pub(crate) mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub inout_with_space: bool,
+        pub goto_with_space: bool,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.keyword-whitespace",
+                fields = [self.inout_with_space, self.goto_with_space]
+            }
+            Ok(())
+        }
     }
 }

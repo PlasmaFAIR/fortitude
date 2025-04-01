@@ -40,7 +40,7 @@ module m
 
 contains
   integer function f1(x, y)
-    integer, intent(inout) :: x
+    integer, intent(inoUt) :: x
     integer, intent(in out) :: y
     select case (x)
       case(1)
@@ -211,5 +211,11 @@ program p
   p3d%y = 4.0
   p3d%z = 5.0
   call s2(p2d, p3d)
+
+  i = 1
+  10 continue
+  i = i + 1
+  if (i < 10) goto 10
+  if (i < 20) go to 10
 
 endprogram p
