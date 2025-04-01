@@ -1,5 +1,6 @@
 [workspace]
 members = ["fortitude", "fortitude_macros", "fortitude_dev"]
+default-members = ["fortitude"]
 resolver = "2"
 
 [workspace.package]
