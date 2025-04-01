@@ -86,8 +86,8 @@ impl DoubleKeyword {
 /// omitted, such as `elseif` instead of `else if` and `endmodule` instead of
 /// `endmodule`. The keywords `inout` and `goto` are exempt from this rule by
 /// default, but may be included by setting the options
-/// [`inout_with_space`](settings.md#inout-with-space) and
-/// [`goto_with_space`](settings.md#goto-with-space).
+/// [`inout_with_space`](../settings.md#inout-with-space) and
+/// [`goto_with_space`](../settings.md#goto-with-space).
 ///
 /// ## Why is this bad?
 /// Contracting two keywords into one can make code less readable. Enforcing
@@ -171,8 +171,8 @@ impl AstRule for KeywordsMissingSpace {
 /// ## What it does
 /// Checks for the use of `in out` instead of `inout` and `go to` instead of `goto`.
 /// Either may be exempted from this rule by setting the options
-/// [`inout_with_space`](settings.md#inout-with-space) and
-/// [`goto_with_space`](settings.md#goto-with-space).
+/// [`inout_with_space`](../settings.md#inout-with-space) and
+/// [`goto_with_space`](../settings.md#goto-with-space).
 ///
 /// ## Why is this bad?
 /// By convention, `inout` in normally preferred to `in out`. Both `go to` and
