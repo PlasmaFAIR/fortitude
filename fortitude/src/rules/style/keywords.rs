@@ -207,15 +207,11 @@ impl AstRule for KeywordHasWhitespace {
         if node.kind() == "keyword_statement" && settings.check.keyword_whitespace.goto_with_space {
             return None;
         }
-        let first_child = if node.kind() == "inout" {
-            *node
-        } else {
-            node.child(0)?
-        };
-        let (first, second, violation) = if node.kind() == "inout" {
+        let (first, second, first_child, violation) = if node.kind() == "inout" {
             (
                 "in",
                 "out",
+                *node,
                 Self {
                     keywords: DoubleKeyword::InOut,
                 },
@@ -224,6 +220,7 @@ impl AstRule for KeywordHasWhitespace {
             (
                 "go",
                 "to",
+                node.child(0)?,
                 Self {
                     keywords: DoubleKeyword::GoTo,
                 },
@@ -233,10 +230,10 @@ impl AstRule for KeywordHasWhitespace {
         if first_child.to_text(src.source_text())?.to_lowercase() != first {
             return None;
         }
-        // Check if immediate sibling is also an `inout` keyword
+        // Check if immediate sibling is 'out'/'to'
         let sibling = first_child.next_sibling()?;
         if sibling.to_text(src.source_text())?.to_lowercase() == second {
-            let start = TextSize::try_from(node.start_byte()).unwrap();
+            let start = TextSize::try_from(first_child.start_byte()).unwrap();
             let end = TextSize::try_from(sibling.end_byte()).unwrap();
             let fix_start = TextSize::try_from(first_child.end_byte()).unwrap();
             let fix_end = TextSize::try_from(sibling.start_byte()).unwrap();
