@@ -215,8 +215,8 @@ program p
   i = 1
   10 continue
   i = i + 1
-  if (i < 10) goto 10
-  if (i < 20) go to 10
+  if (i < 10) goTo 10
+  if (i < 20) gO To 10
   if (i < 30) go  & ! helpful comment!
     to 10
 

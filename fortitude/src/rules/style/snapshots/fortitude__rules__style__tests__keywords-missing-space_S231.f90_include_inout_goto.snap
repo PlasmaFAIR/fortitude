@@ -551,9 +551,9 @@ snapshot_kind: text
     |
 216 |   10 continue
 217 |   i = i + 1
-218 |   if (i < 10) goto 10
+218 |   if (i < 10) goTo 10
     |               ^^^^ S231
-219 |   if (i < 20) go to 10
+219 |   if (i < 20) gO To 10
 220 |   if (i < 30) go  & ! helpful comment!
     |
     = help: Replace with 'go to'
@@ -562,9 +562,9 @@ snapshot_kind: text
 215 215 |   i = 1
 216 216 |   10 continue
 217 217 |   i = i + 1
-218     |-  if (i < 10) goto 10
-    218 |+  if (i < 10) go to 10
-219 219 |   if (i < 20) go to 10
+218     |-  if (i < 10) goTo 10
+    218 |+  if (i < 10) go To 10
+219 219 |   if (i < 20) gO To 10
 220 220 |   if (i < 30) go  & ! helpful comment!
 221 221 |     to 10
 

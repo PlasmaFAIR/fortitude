@@ -190,7 +190,7 @@ impl Violation for KeywordHasWhitespace {
     #[derive_message_formats]
     fn message(&self) -> String {
         let keywords = self.keywords.with_space();
-        format!("Space included in '{keywords}'")
+        format!("Whitespace included in '{keywords}'")
     }
 
     fn fix_title(&self) -> Option<String> {
@@ -201,40 +201,56 @@ impl Violation for KeywordHasWhitespace {
 
 impl AstRule for KeywordHasWhitespace {
     fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if node.kind() == "inout" {
-            if settings.check.keyword_whitespace.inout_with_space {
-                return None;
-            }
-            // Verify that the node is 'in'
-            if node.to_text(src.source_text())?.to_lowercase() != "in" {
-                return None;
-            }
-            let violation = Self {
-                keywords: DoubleKeyword::InOut,
-            };
-            // Check if immediate sibling is also an `inout` keyword
-            let silbing = node.next_sibling()?;
-            if silbing.kind() == "inout" {
-                let start = TextSize::try_from(node.start_byte()).unwrap();
-                let end = TextSize::try_from(silbing.end_byte()).unwrap();
-                let fix_start = TextSize::try_from(node.end_byte()).unwrap();
-                let fix_end = TextSize::try_from(silbing.start_byte()).unwrap();
-                let fix = Fix::safe_edit(Edit::deletion(fix_start, fix_end));
-                return some_vec!(
-                    Diagnostic::new(violation, TextRange::new(start, end)).with_fix(fix)
-                );
-            } else {
-                // Can't fix this case, it may contain line continuations, comments, etc.
-                return some_vec!(Diagnostic::from_node(violation, node));
-            }
+        if node.kind() == "inout" && settings.check.keyword_whitespace.inout_with_space {
+            return None;
         }
-        None
+        if node.kind() == "keyword_statement" && settings.check.keyword_whitespace.goto_with_space {
+            return None;
+        }
+        let first_child = if node.kind() == "inout" {
+            *node
+        } else {
+            node.child(0)?
+        };
+        let (first, second, violation) = if node.kind() == "inout" {
+            (
+                "in",
+                "out",
+                Self {
+                    keywords: DoubleKeyword::InOut,
+                },
+            )
+        } else {
+            (
+                "go",
+                "to",
+                Self {
+                    keywords: DoubleKeyword::GoTo,
+                },
+            )
+        };
+        // Verify that the node is 'in' / 'go'
+        if first_child.to_text(src.source_text())?.to_lowercase() != first {
+            return None;
+        }
+        // Check if immediate sibling is also an `inout` keyword
+        let sibling = first_child.next_sibling()?;
+        if sibling.to_text(src.source_text())?.to_lowercase() == second {
+            let start = TextSize::try_from(node.start_byte()).unwrap();
+            let end = TextSize::try_from(sibling.end_byte()).unwrap();
+            let fix_start = TextSize::try_from(first_child.end_byte()).unwrap();
+            let fix_end = TextSize::try_from(sibling.start_byte()).unwrap();
+            let fix = Fix::safe_edit(Edit::deletion(fix_start, fix_end));
+            return some_vec!(Diagnostic::new(violation, TextRange::new(start, end)).with_fix(fix));
+        }
+        // Can't fix this case, it may contain line continuations, comments, etc.
+        some_vec!(Diagnostic::from_node(violation, &first_child))
     }
 
     fn entrypoints() -> Vec<&'static str> {
         vec![
             "inout",
-            // "keyword_statement", // goto
+            "keyword_statement", // goto
         ]
     }
 }
