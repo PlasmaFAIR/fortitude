@@ -22,13 +22,13 @@ This will instead build an executable at `./target/release/fortitude`.
 The project can also be run without prior building using the command:
 
 ```bash
-cargo run --bin fortitude [--release]
+cargo run [--release]
 ```
 
 For example, to test Fortitude over a local project:
 
 ```bash
-cargo run --bin fortitude --release check /path/to/my/project
+cargo run [--release] check /path/to/my/project
 ```
 
 ## Installation from source
