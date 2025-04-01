@@ -1,0 +1,2 @@
+program foo
+endprogram foo

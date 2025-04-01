@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{BufReader, BufWriter},
+    io::{BufReader, BufWriter, Write},
     path::PathBuf,
     process::ExitCode,
 };
@@ -20,6 +20,21 @@ fn topiary_query() -> &'static str {
     include_str!("../resources/format/fortran.scm")
 }
 
+/// Create the topiary formatter
+fn create_formatter() -> Language {
+    let grammar: topiary_tree_sitter_facade::Language = tree_sitter_fortran::LANGUAGE.into();
+    let query = TopiaryQuery::new(&grammar, topiary_query()).expect("building topiary query");
+    Language {
+        name: "fortran".to_string(),
+        query,
+        grammar,
+        indent: None,
+    }
+}
+
+/// Run the formatter over a whole project
+///
+/// TODO: Proper options like ``check``
 pub fn format(args: FormatArgs) -> Result<ExitCode> {
     let files = args.files.unwrap_or_default();
     let file_extensions = args
@@ -27,14 +42,7 @@ pub fn format(args: FormatArgs) -> Result<ExitCode> {
         .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec());
     let project_root = configuration::project_root(path_absolutize::path_dedot::CWD.as_path())?;
 
-    let grammar: topiary_tree_sitter_facade::Language = tree_sitter_fortran::LANGUAGE.into();
-    let query = TopiaryQuery::new(&grammar, topiary_query()).expect("building topiary query");
-    let language = Language {
-        name: "fortran".to_string(),
-        query,
-        grammar,
-        indent: None,
-    };
+    let language = create_formatter();
 
     let file_resolver = FileResolverSettings {
         excludes: FilePatternSet::default(),
@@ -46,7 +54,10 @@ pub fn format(args: FormatArgs) -> Result<ExitCode> {
     };
 
     for file in get_files(&file_resolver, false)? {
-        match format_file(file, &language) {
+        let output = std::io::stdout();
+        let mut buf_output = BufWriter::new(output);
+
+        match format_file(file, &language, &mut buf_output) {
             Ok(_) => continue,
             Err(err) => {
                 println!("Formatter error: {err}");
@@ -58,17 +69,20 @@ pub fn format(args: FormatArgs) -> Result<ExitCode> {
     Ok(ExitCode::SUCCESS)
 }
 
-fn format_file(file: PathBuf, language: &Language) -> Result<(), FormatterError> {
+/// Format an individual file
+pub(crate) fn format_file(
+    file: PathBuf,
+    language: &Language,
+    output: &mut impl Write,
+) -> Result<(), FormatterError> {
     println!("formatting {file:?}");
     let input = File::open(file)?;
 
-    let output = std::io::stdout();
     let mut buf_input = BufReader::new(input);
-    let mut buf_output = BufWriter::new(output);
 
     formatter(
         &mut buf_input,
-        &mut buf_output,
+        output,
         language,
         // TODO: user args?
         Operation::Format {
@@ -77,6 +91,40 @@ fn format_file(file: PathBuf, language: &Language) -> Result<(), FormatterError>
         },
     )?;
 
-    buf_output.into_inner()?;
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+
+    use anyhow::Result;
+    use insta::assert_snapshot;
+    use lazy_static::lazy_static;
+    use test_case::test_case;
+    use topiary_core::{FormatterError, Language};
+
+    use crate::apply_common_filters;
+
+    use super::{create_formatter, format_file};
+
+    lazy_static! {
+        pub static ref TEST_FORMATTER: Language = create_formatter();
+    }
+
+    #[test_case(Path::new("simple.f90"))]
+    fn format(path: &Path) -> Result<(), FormatterError> {
+        let snapshot = format!("{}", path.to_string_lossy());
+
+        let path = Path::new("./resources/test/fixtures/format").join(path);
+
+        let mut buf = Vec::new();
+        format_file(path, &TEST_FORMATTER, &mut buf)?;
+        apply_common_filters!();
+
+        let string = String::from_utf8(buf)?;
+        assert_snapshot!(snapshot, string);
+
+        Ok(())
+    }
 }
