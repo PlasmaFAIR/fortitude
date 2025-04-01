@@ -170,5 +170,9 @@ pub(crate) fn generate() -> String {
         generate_table(&mut table_out, linter.all_rules(), &linter);
     }
 
+    // Ensure only one newline at the end
+    let mut table_out = table_out.trim_end().to_string();
+    table_out.push('\n');
+
     table_out
 }
