@@ -286,7 +286,7 @@ pub struct CheckOptions {
     #[option_group]
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
 
-    /// Options for the `keyword-missing-spaces` and `keyword-has-whitespace` rules
+    /// Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
     #[option_group]
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
 }
@@ -322,7 +322,7 @@ impl ExitUnlabelledLoopOptions {
     }
 }
 
-/// Options for the `keyword-missing-spaces` and `keyword-has-whitespace` rules
+/// Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
 #[derive(
     Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
 )]

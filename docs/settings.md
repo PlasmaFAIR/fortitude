@@ -611,7 +611,7 @@ end do
 
 ### `check.keyword-whitespace`
 
-Options for the `keyword-missing-spaces` and `keyword-has-whitespace` rules
+Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
 
 #### [`goto-with-space`](#check_keyword-whitespace_goto-with-space) {: #check_keyword-whitespace_goto-with-space }
 <span id="goto-with-space"></span>

@@ -1,0 +1,36 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S231.f90:44:21: S232 [*] Space included in 'in out'
+   |
+42 |   integer function f1(x, y)
+43 |     integer, intent(inoUt) :: x
+44 |     integer, intent(in out) :: y
+   |                     ^^^^^^ S232
+45 |     select case (x)
+46 |       case(1)
+   |
+   = help: Replace with 'inout'
+
+ℹ Safe fix
+41 41 | contains
+42 42 |   integer function f1(x, y)
+43 43 |     integer, intent(inoUt) :: x
+44    |-    integer, intent(in out) :: y
+   44 |+    integer, intent(inout) :: y
+45 45 |     select case (x)
+46 46 |       case(1)
+47 47 |         print *, x
+
+./resources/test/fixtures/style/S231.f90:225:21: S232 Space included in 'in out'
+    |
+223 | contains
+224 |   integer function fff(x)
+225 |     integer, intent(in & !helpful comment
+    |                     ^^ S232
+226 |       out) :: x
+227 |     fff = x
+    |
+    = help: Replace with 'inout'

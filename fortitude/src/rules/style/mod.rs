@@ -36,6 +36,7 @@ mod tests {
     #[test_case(Rule::ProgramWithModule, Path::new("S212.f90"))]
     #[test_case(Rule::FunctionMissingResult, Path::new("S221.f90"))]
     #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
+    #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -86,7 +87,8 @@ mod tests {
     }
 
     #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
-    fn keyword_missing_space_include_inout_goto(rule_code: Rule, path: &Path) -> Result<()> {
+    #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
+    fn keyword_whitespace_include_inout_goto(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!(
             "{}_{}_include_inout_goto",
             rule_code.as_ref(),

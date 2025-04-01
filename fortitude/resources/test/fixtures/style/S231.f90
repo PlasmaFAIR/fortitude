@@ -217,5 +217,13 @@ program p
   i = i + 1
   if (i < 10) goto 10
   if (i < 20) go to 10
+  if (i < 30) go  & ! helpful comment!
+    to 10
 
+contains
+  integer function fff(x)
+    integer, intent(in & !helpful comment
+      out) :: x
+    fff = x
+  end function fff
 endprogram p

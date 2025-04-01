@@ -554,6 +554,7 @@ snapshot_kind: text
 218 |   if (i < 10) goto 10
     |               ^^^^ S231
 219 |   if (i < 20) go to 10
+220 |   if (i < 30) go  & ! helpful comment!
     |
     = help: Replace with 'go to'
 
@@ -564,21 +565,21 @@ snapshot_kind: text
 218     |-  if (i < 10) goto 10
     218 |+  if (i < 10) go to 10
 219 219 |   if (i < 20) go to 10
-220 220 | 
-221 221 | endprogram p
+220 220 |   if (i < 30) go  & ! helpful comment!
+221 221 |     to 10
 
-./resources/test/fixtures/style/S231.f90:221:1: S231 [*] Missing space in 'endprogram'
+./resources/test/fixtures/style/S231.f90:229:1: S231 [*] Missing space in 'endprogram'
     |
-219 |   if (i < 20) go to 10
-220 |
-221 | endprogram p
+227 |     fff = x
+228 |   end function fff
+229 | endprogram p
     | ^^^^^^^^^^ S231
     |
     = help: Replace with 'end program'
 
 ℹ Safe fix
-218 218 |   if (i < 10) goto 10
-219 219 |   if (i < 20) go to 10
-220 220 | 
-221     |-endprogram p
-    221 |+end program p
+226 226 |       out) :: x
+227 227 |     fff = x
+228 228 |   end function fff
+229     |-endprogram p
+    229 |+end program p

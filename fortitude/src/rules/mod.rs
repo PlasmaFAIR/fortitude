@@ -128,6 +128,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "212") => (RuleGroup::Preview, Ast, Optional, style::file_contents::ProgramWithModule),
         (Style, "221") => (RuleGroup::Preview, Ast, Optional, style::functions::FunctionMissingResult),
         (Style, "231") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordsMissingSpace),
+        (Style, "232") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordHasWhitespace),
 
         // obsolescent
         (Obsolescent, "001") => (RuleGroup::Removed, Ast, Default, obsolescent::statement_functions::StatementFunction),

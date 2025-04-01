@@ -2,14 +2,13 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
-use ruff_text_size::TextSize;
+use ruff_text_size::{TextRange, TextSize};
 use std::str::FromStr;
 use tree_sitter::Node;
 
-// TODO Add options to split `inout`, `goto`, and `endfile`. Both rules should use the same options.
 // TODO Support for `endfile`/`end file`
 
 #[derive(strum_macros::EnumString, strum_macros::Display)]
@@ -74,23 +73,21 @@ impl DoubleKeyword {
         }
     }
 
-    /// Return the ideal form of the combined keywords.
-    fn preferred(&self) -> String {
+    /// Return keywords with a space between them.
+    fn with_space(&self) -> String {
         let mut result = self.to_string();
         result.insert(self.offset(), ' ');
         result
     }
 }
 
-// implement display for DoubleKeyword.
-
 /// ## What it does
 /// Checks for the use of keywords comprised of two words where the space is
 /// omitted, such as `elseif` instead of `else if` and `endmodule` instead of
 /// `endmodule`. The keywords `inout` and `goto` are exempt from this rule by
-/// default, but may be included by supplying the relevant options
-///
-/// TODO list options
+/// default, but may be included by setting the options
+/// [`inout_with_space`](settings.md#inout-with-space) and
+/// [`goto_with_space`](settings.md#goto-with-space).
 ///
 /// ## Why is this bad?
 /// Contracting two keywords into one can make code less readable. Enforcing
@@ -108,7 +105,7 @@ impl AlwaysFixableViolation for KeywordsMissingSpace {
     }
 
     fn fix_title(&self) -> String {
-        let preferred = self.keywords.preferred();
+        let preferred = self.keywords.with_space();
         format!("Replace with '{preferred}'")
     }
 }
@@ -167,6 +164,77 @@ impl AstRule for KeywordsMissingSpace {
             "keyword_statement", // goto
             "select_case_statement",
             "select_type_statement",
+        ]
+    }
+}
+
+/// ## What it does
+/// Checks for the use of `in out` instead of `inout` and `go to` instead of `goto`.
+/// Either may be exempted from this rule by setting the options
+/// [`inout_with_space`](settings.md#inout-with-space) and
+/// [`goto_with_space`](settings.md#goto-with-space).
+///
+/// ## Why is this bad?
+/// By convention, `inout` in normally preferred to `in out`. Both `go to` and
+/// `goto` are valid, but Fortitude prefers the latter as `goto` is most common
+/// in other languages, and neither `go` nor `to` have secondary purposes in
+/// other keywords. Enforcing this rule can help maintain a consistent style.
+#[derive(ViolationMetadata)]
+pub struct KeywordHasWhitespace {
+    keywords: DoubleKeyword,
+}
+
+impl Violation for KeywordHasWhitespace {
+    const FIX_AVAILABILITY: FixAvailability = FixAvailability::Sometimes;
+
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let keywords = self.keywords.with_space();
+        format!("Space included in '{keywords}'")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let preferred = self.keywords.to_string();
+        Some(format!("Replace with '{preferred}'"))
+    }
+}
+
+impl AstRule for KeywordHasWhitespace {
+    fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        if node.kind() == "inout" {
+            if settings.check.keyword_whitespace.inout_with_space {
+                return None;
+            }
+            // Verify that the node is 'in'
+            if node.to_text(src.source_text())?.to_lowercase() != "in" {
+                return None;
+            }
+            let violation = Self {
+                keywords: DoubleKeyword::InOut,
+            };
+            // Check if immediate sibling is also an `inout` keyword
+            let silbing = node.next_sibling()?;
+            if silbing.kind() == "inout" {
+                let start = TextSize::try_from(node.start_byte()).unwrap();
+                let end = TextSize::try_from(silbing.end_byte()).unwrap();
+                let fix_start = TextSize::try_from(node.end_byte()).unwrap();
+                let fix_end = TextSize::try_from(silbing.start_byte()).unwrap();
+                let fix = Fix::safe_edit(Edit::deletion(fix_start, fix_end));
+                return some_vec!(
+                    Diagnostic::new(violation, TextRange::new(start, end)).with_fix(fix)
+                );
+            } else {
+                // Can't fix this case, it may contain line continuations, comments, etc.
+                return some_vec!(Diagnostic::from_node(violation, node));
+            }
+        }
+        None
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec![
+            "inout",
+            // "keyword_statement", // goto
         ]
     }
 }
