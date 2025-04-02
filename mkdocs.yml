@@ -58,3 +58,6 @@ markdown_extensions:
 # Too many rules, don't include them in the left-hand nav bar
 not_in_nav: |
   /rules/*
+
+plugins:
+  - include-markdown
