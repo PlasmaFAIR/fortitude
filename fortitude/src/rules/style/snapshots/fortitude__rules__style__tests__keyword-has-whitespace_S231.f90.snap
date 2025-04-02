@@ -1,0 +1,67 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S231.f90:44:21: S232 [*] Whitespace included in 'in out'
+   |
+42 |   integer function f1(x, y)
+43 |     integer, intent(inoUt) :: x
+44 |     integer, intent(in out) :: y
+   |                     ^^^^^^ S232
+45 |     select case (x)
+46 |       case(1)
+   |
+   = help: Replace with 'inout'
+
+ℹ Safe fix
+41 41 | contains
+42 42 |   integer function f1(x, y)
+43 43 |     integer, intent(inoUt) :: x
+44    |-    integer, intent(in out) :: y
+   44 |+    integer, intent(inout) :: y
+45 45 |     select case (x)
+46 46 |       case(1)
+47 47 |         print *, x
+
+./resources/test/fixtures/style/S231.f90:219:15: S232 [*] Whitespace included in 'go to'
+    |
+217 |   i = i + 1
+218 |   if (i < 10) goTo 10
+219 |   if (i < 20) gO To 10
+    |               ^^^^^ S232
+220 |   if (i < 30) go  & ! helpful comment!
+221 |     to 10
+    |
+    = help: Replace with 'goto'
+
+ℹ Safe fix
+216 216 |   10 continue
+217 217 |   i = i + 1
+218 218 |   if (i < 10) goTo 10
+219     |-  if (i < 20) gO To 10
+    219 |+  if (i < 20) gOTo 10
+220 220 |   if (i < 30) go  & ! helpful comment!
+221 221 |     to 10
+222 222 | 
+
+./resources/test/fixtures/style/S231.f90:220:15: S232 Whitespace included in 'go to'
+    |
+218 |   if (i < 10) goTo 10
+219 |   if (i < 20) gO To 10
+220 |   if (i < 30) go  & ! helpful comment!
+    |               ^^ S232
+221 |     to 10
+    |
+    = help: Replace with 'goto'
+
+./resources/test/fixtures/style/S231.f90:225:21: S232 Whitespace included in 'in out'
+    |
+223 | contains
+224 |   integer function fff(x)
+225 |     integer, intent(in & !helpful comment
+    |                     ^^ S232
+226 |       out) :: x
+227 |     fff = x
+    |
+    = help: Replace with 'inout'

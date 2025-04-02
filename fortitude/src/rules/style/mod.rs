@@ -4,6 +4,7 @@ pub mod file_contents;
 pub mod file_extensions;
 pub mod functions;
 pub mod implicit_none;
+pub mod keywords;
 pub mod line_length;
 pub mod semicolons;
 pub mod whitespace;
@@ -19,6 +20,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
+    use crate::rules::style::keywords;
     use crate::settings::{CheckSettings, Settings};
     use crate::test::test_path;
 
@@ -33,6 +35,8 @@ mod tests {
     #[test_case(Rule::MultipleModules, Path::new("S211.f90"))]
     #[test_case(Rule::ProgramWithModule, Path::new("S212.f90"))]
     #[test_case(Rule::FunctionMissingResult, Path::new("S221.f90"))]
+    #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
+    #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -68,6 +72,37 @@ mod tests {
         let settings = Settings {
             check: CheckSettings {
                 line_length: 20,
+                ..default.check
+            },
+            ..default
+        };
+        let diagnostics = test_path(
+            Path::new("style").join(path).as_path(),
+            &[rule_code],
+            &settings,
+        )?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
+    #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
+    fn keyword_whitespace_include_inout_goto(rule_code: Rule, path: &Path) -> Result<()> {
+        let snapshot = format!(
+            "{}_{}_include_inout_goto",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+
+        let default = Settings::default();
+        #[allow(clippy::needless_update)]
+        let settings = Settings {
+            check: CheckSettings {
+                keyword_whitespace: keywords::settings::Settings {
+                    inout_with_space: true,
+                    goto_with_space: true,
+                },
                 ..default.check
             },
             ..default

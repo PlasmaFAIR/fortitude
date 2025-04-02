@@ -609,3 +609,59 @@ end do
 
 ---
 
+### `check.keyword-whitespace`
+
+Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
+
+#### [`goto-with-space`](#check_keyword-whitespace_goto-with-space) {: #check_keyword-whitespace_goto-with-space }
+<span id="goto-with-space"></span>
+
+Whether to enforce the use of `go to` instead of `goto`.
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "fpm.toml"
+
+    ```toml
+    [extra.fortitude.check.keyword-whitespace]
+    goto_with_space = true
+    ```
+=== "fortitude.toml"
+
+    ```toml
+    [check.keyword-whitespace]
+    goto_with_space = true
+    ```
+
+---
+
+#### [`inout-with-space`](#check_keyword-whitespace_inout-with-space) {: #check_keyword-whitespace_inout-with-space }
+<span id="inout-with-space"></span>
+
+Whether to enforce the use of `in out` instead of `inout`.
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "fpm.toml"
+
+    ```toml
+    [extra.fortitude.check.keyword-whitespace]
+    inout_with_space = true
+    ```
+=== "fortitude.toml"
+
+    ```toml
+    [check.keyword-whitespace]
+    inout_with_space = true
+    ```
+
+---
+
