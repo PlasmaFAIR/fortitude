@@ -1,0 +1,8 @@
+---
+source: fortitude/src/format.rs
+expression: string
+---
+module test
+  useother, only:operator(), assignment( = )public :: assignment( = )
+  privateoperator()
+end module

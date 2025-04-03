@@ -1,0 +1,7 @@
+---
+source: fortitude/src/format.rs
+expression: string
+---
+interfaceassignment( = )
+  module procedure int_equals_char
+end interfaceassignment( = )

@@ -1,2 +1,2 @@
 program foo
-endprogram foo
+end program foo
