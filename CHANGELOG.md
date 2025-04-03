@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.2
+
+### Rule changes
+
+- Add rule `double-precision-literal` ([#390](https://github.com/PlasmaFAIR/fortitude/pull/390))
+- Add rule to detect missing function result clause ([#386](https://github.com/PlasmaFAIR/fortitude/pull/386))
+- Add rule to flag implicit save in pointer initialization ([#396](https://github.com/PlasmaFAIR/fortitude/pull/396))
+- Add rules preferring multi-word keywords to include spaces ([#393](https://github.com/PlasmaFAIR/fortitude/pull/393))
+
+### Documentation
+
+- Fix `fpm.toml` examples in `docs/settings.md` ([#387](https://github.com/PlasmaFAIR/fortitude/pull/387))
+
+### Other changes
+
+- Raise `SyntaxError` for missing nodes ([#394](https://github.com/PlasmaFAIR/fortitude/pull/394))
+
 ## 0.7.1
 
 This is a bug-fix release, with one new rule. Thanks to our new

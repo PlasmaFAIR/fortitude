@@ -238,6 +238,8 @@ To make a new release, the following steps must be completed in order:
 
 1. Install `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
+1. Install [`gh`](https://cli.github.com/) and login with `gh auth login`
+
 1. Run `./scripts/release.sh`; this command will:
 
     - Generate a temporary virtual environment with `rooster`
