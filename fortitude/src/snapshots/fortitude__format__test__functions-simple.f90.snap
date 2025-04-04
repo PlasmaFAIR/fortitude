@@ -4,7 +4,7 @@ expression: string
 ---
 real(8) function current_time()
   ! returns the wall clock time in seconds.
-  usempicurrent_time = mpi_wtime()
+  use mpi current_time = mpi_wtime()
 end function
 type(object) function new_object
   ! returns the current date string

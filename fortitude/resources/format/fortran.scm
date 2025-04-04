@@ -26,6 +26,7 @@
 (elseif_clause "elseif" @append_space)
 (elseif_clause "elseif" @append_space)
 (enumerator_statement "enumerator" @append_space)
+(assignment "assignment" @append_space)
 
 
 [
@@ -94,6 +95,12 @@
 (block_data_statement _ @append_space)
 (common_statement _ @append_space)
 (data_statement _ @append_space)
+(interface_statement _ @append_space)
+(use_statement _ @append_space)
+(included_items _ @append_space)
+(private_statement _ @append_space)
+(public_statement _ @append_space)
+(end_interface_statement _ @append_space)
 
 (procedure_kind
     _ @append_space
@@ -164,17 +171,24 @@
  (format_identifier)
 ] @append_antispace
 
+[
+ (included_items)
+] @prepend_antispace
+
 (subroutine_statement "(" @prepend_antispace)
 (subroutine_statement (parameters) @prepend_antispace)
 (function_statement "(" @prepend_antispace)
 (function_statement (parameters) @prepend_antispace)
 ("/" . (_) @prepend_antispace @append_antispace . "/")
+; remove space around operators and assignment
+(assignment "(" . _ @prepend_antispace @append_antispace . ")")
+(operator "(" . _ @prepend_antispace @append_antispace . ")")
 
 ; make sure anything preceeding a comma "," has no space
-((_) @append_antispace
-.
-","
-)
+((_) @append_antispace . ",")
+
+; make sure anything preceeding a semicolon ";" has no space
+((_) @append_antispace . ";")
 
 (derived_type_statement
 _ @append_antispace

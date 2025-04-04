@@ -2,6 +2,6 @@
 source: fortitude/src/format.rs
 expression: string
 ---
-interfaceassignment( = )
+interface assignment (=)
   module procedure int_equals_char
-end interfaceassignment( = )
+end interface assignment (=)

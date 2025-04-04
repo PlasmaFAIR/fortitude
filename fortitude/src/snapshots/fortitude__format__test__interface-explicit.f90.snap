@@ -4,7 +4,7 @@ expression: string
 ---
 module unit_test_module
   private
-  useiso_c_bindinginterface assert_equals
+  use iso_c_binding interface assert_equals
     module procedure assert_equals_int
     module procedure assert_equals_real8
   end interface

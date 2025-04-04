@@ -20,7 +20,7 @@ program test
     ! instance method
     procedure, public, pass(self) :: pass_method
     generic, pass :: binding_name => method_name, method_name2
-    generic, private :: assignment( = ) => assign_method
+    generic, private :: assignment (=) => assign_method
     generic, private :: operator() => add_method
     procedure :: one, two => three
     final :: finalize
