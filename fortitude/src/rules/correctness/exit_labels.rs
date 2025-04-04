@@ -155,13 +155,13 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
 /// ## Why is this bad?
 /// This is a compile error!
 #[derive(ViolationMetadata)]
-pub(crate) struct MissingBlockLabel {
+pub(crate) struct MissingEndLabel {
     start_name: String,
     end_name: String,
     label: String,
 }
 
-impl AlwaysFixableViolation for MissingBlockLabel {
+impl AlwaysFixableViolation for MissingEndLabel {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self {
@@ -178,7 +178,7 @@ impl AlwaysFixableViolation for MissingBlockLabel {
     }
 }
 
-impl AstRule for MissingBlockLabel {
+impl AstRule for MissingEndLabel {
     fn check<'a>(
         _settings: &Settings,
         node: &'a Node,

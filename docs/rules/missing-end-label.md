@@ -1,4 +1,4 @@
-# missing-block-label (C143)
+# missing-end-label (C143)
 Fix is always available.
 
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
