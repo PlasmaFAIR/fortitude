@@ -100,6 +100,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "132") => (RuleGroup::Stable, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
         (Correctness, "141") => (RuleGroup::Stable, Ast, Default, correctness::exit_labels::MissingExitOrCycleLabel),
         (Correctness, "142") => (RuleGroup::Preview, Ast, Optional, correctness::exit_labels::ExitOrCycleInUnlabelledLoop),
+        (Correctness, "143") => (RuleGroup::Preview, Ast, Optional, correctness::exit_labels::MissingBlockLabel),
 
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),

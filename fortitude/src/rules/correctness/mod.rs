@@ -53,6 +53,7 @@ mod tests {
     #[test_case(Rule::DefaultPublicAccessibility, Path::new("C132.f90"))]
     #[test_case(Rule::MissingExitOrCycleLabel, Path::new("C141.f90"))]
     #[test_case(Rule::ExitOrCycleInUnlabelledLoop, Path::new("C142.f90"))]
+    #[test_case(Rule::MissingBlockLabel, Path::new("C143.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
