@@ -1,6 +1,7 @@
 ; Don't format strings or comments
 [
  (string_literal)
+ (comment)
 ] @leaf
 
 
