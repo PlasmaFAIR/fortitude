@@ -6,7 +6,7 @@ real(8) function current_time()
   ! returns the wall clock time in seconds.
   usempicurrent_time = mpi_wtime()
 end function
-type(object)function new_object
+type(object) function new_object
   ! returns the current date string
   TYPE(object) :: obj
   obj%counter = 0
