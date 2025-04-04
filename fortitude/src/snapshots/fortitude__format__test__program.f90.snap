@@ -2,5 +2,7 @@
 source: fortitude/src/format.rs
 expression: string
 ---
-program foo
-end program foo
+PROGRAM TEST
+END PROGRAM
+PROGRAM TEST
+END PROGRAM TEST

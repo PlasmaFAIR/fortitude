@@ -1,0 +1,7 @@
+---
+source: fortitude/src/format.rs
+expression: string
+---
+interface operator();
+  module procedure test_plus;
+end interface

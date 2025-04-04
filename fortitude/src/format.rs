@@ -113,6 +113,29 @@ mod test {
     }
 
     #[test_case(Path::new("simple.f90"))]
+    #[test_case(Path::new("block-construct.f90"))]
+    #[test_case(Path::new("block-data-obsolescent.f90"))]
+    #[test_case(Path::new("deferred-binding.f90"))]
+    #[test_case(Path::new("derived-type-attributes.f90"))]
+    #[test_case(Path::new("derived-type-private-type-bound-procedures.f90"))]
+    #[test_case(Path::new("derived-type-procedure-pointer-components.f90"))]
+    #[test_case(Path::new("derived-type-variable-declarations.f90"))]
+    #[test_case(Path::new("enumeration-type.f90"))]
+    #[test_case(Path::new("functions-complex.f90"))]
+    #[test_case(Path::new("functions-simple.f90"))]
+    #[test_case(Path::new("interface-abstract.f90"))]
+    #[test_case(Path::new("interface-assignment.f90"))]
+    #[test_case(Path::new("interface-explicit-2.f90"))]
+    #[test_case(Path::new("interface-explicit.f90"))]
+    #[test_case(Path::new("interface-generic.f90"))]
+    #[test_case(Path::new("interface-operator.f90"))]
+    #[test_case(Path::new("module-definition-with-internal-module-procedures.f90"))]
+    #[test_case(Path::new("procedure-as-argument.f90"))]
+    #[test_case(Path::new("program.f90"))]
+    #[test_case(Path::new("semicolon-in-interface.f90"))]
+    #[test_case(Path::new("submodule-definition-simple.f90"))]
+    #[test_case(Path::new("subroutine.f90"))]
+    #[test_case(Path::new("use-operator-and-assignment.f90"))]
     fn format(path: &Path) -> Result<(), FormatterError> {
         let snapshot = format!("{}", path.to_string_lossy());
 

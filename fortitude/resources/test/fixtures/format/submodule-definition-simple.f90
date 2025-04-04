@@ -1,0 +1,11 @@
+SUBMODULE(BoundingBox_Method) ConstructorMethods
+IMPLICIT NONE
+CONTAINS
+
+END SUBMODULE ConstructorMethods
+
+SUBMODULE(BoundingBox_Method:ConstructorMethods) ConstructorMethods_child
+IMPLICIT NONE
+CONTAINS
+
+END SUBMODULE ConstructorMethods_child
