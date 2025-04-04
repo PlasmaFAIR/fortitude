@@ -3,6 +3,7 @@ source: fortitude/src/format.rs
 expression: string
 ---
 module test
-  use other, only : operator(), assignment (=) public :: assignment (=)
+  use other, only : operator(), assignment (=)
+  public :: assignment (=)
   private operator()
 end module

@@ -19,6 +19,7 @@
  (data_statement)
  (private_statement)
  (public_statement)
+ (use_statement)
  (sequence_statement)
 ] @append_hardline
 
