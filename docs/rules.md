@@ -37,6 +37,7 @@
 | C132 | [default-public-accessibility](rules/default-public-accessibility.md) | module '{}' has default `public` accessibility | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | C141 | [missing-exit-or-cycle-label](rules/missing-exit-or-cycle-label.md) | '{name}' statement in named 'do' loop missing label '{label}' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C142 | [exit-or-cycle-in-unlabelled-loop](rules/exit-or-cycle-in-unlabelled-loop.md) | '{name}' statement in unlabelled 'do' loop | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| C143 | [missing-end-label](rules/missing-end-label.md) | '{end_name}' statement in named '{start_name}' block missing label | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 
 ### Obsolescent (OB)
 

@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
@@ -146,6 +146,100 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
 
     fn entrypoints() -> Vec<&'static str> {
         vec!["keyword_statement"]
+    }
+}
+
+/// ## What does it do?
+/// Check for missing block labels on `end` statements
+///
+/// ## Why is this bad?
+/// This is a compile error!
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingEndLabel {
+    start_name: String,
+    end_name: String,
+    label: String,
+}
+
+impl AlwaysFixableViolation for MissingEndLabel {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self {
+            start_name,
+            end_name,
+            ..
+        } = self;
+        format!("'{end_name}' statement in named '{start_name}' block missing label")
+    }
+
+    fn fix_title(&self) -> String {
+        let Self { label, .. } = self;
+        format!("Add label '{label}'")
+    }
+}
+
+impl AstRule for MissingEndLabel {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
+        let src = src.source_text();
+        // Skip unlabelled loops
+        let label = node
+            .child_with_name("block_label_start_expression")?
+            .to_text(src)?
+            .trim_end_matches(':');
+
+        let end = match node.kind() {
+            "select_case_statement" | "select_type_statement" | "select_rank_statement" => {
+                "end_select_statement".to_string()
+            }
+            _ => format!("end_{}", node.kind()),
+        };
+
+        let violation: Diagnostic = node
+            .child_with_name(&end)
+            .filter(|node| node.child_with_name("block_label").is_none())
+            .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
+            .map(|(stmt, end_name)| {
+                let label_with_space = format!(" {label}");
+                let edit = Edit::insertion(
+                    label_with_space,
+                    TextSize::try_from(stmt.end_byte()).unwrap(),
+                );
+                let fix = Fix::safe_edit(edit);
+
+                let start_name = node.child(1).unwrap().to_text(src).unwrap().to_lowercase();
+
+                Diagnostic::from_node(
+                    Self {
+                        end_name: end_name.to_string(),
+                        start_name,
+                        label: label.to_string(),
+                    },
+                    &stmt,
+                )
+                .with_fix(fix)
+            })?;
+
+        Some(vec![violation])
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec![
+            "associate_statement",
+            "block_construct",
+            "coarray_critical_statement",
+            "coarray_team_statement",
+            "do_loop_statement",
+            "forall_statement",
+            "if_statement",
+            "select_case_statement",
+            "select_rank_statement",
+            "select_type_statement",
+            "where_statement",
+        ]
     }
 }
 
