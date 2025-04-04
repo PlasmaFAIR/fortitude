@@ -180,6 +180,7 @@
 (subroutine_statement (parameters) @prepend_antispace)
 (function_statement "(" @prepend_antispace)
 (function_statement (parameters) @prepend_antispace)
+(submodule_statement (module_name) @prepend_antispace @append_antispace)
 ("/" . (_) @prepend_antispace @append_antispace . "/")
 ; remove space around operators and assignment
 (assignment "(" . _ @prepend_antispace @append_antispace . ")")
