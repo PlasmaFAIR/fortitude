@@ -19,3 +19,6 @@ entry into the routine can be safely ignored.
 Finally, `intent(inout)` arguments can be both read and modified by the
 routine. If an `intent` is not specified, it will default to
 `intent(inout)`.
+
+This rule will permit the absence of `intent` for dummy arguments
+that include the `value` attribute.
