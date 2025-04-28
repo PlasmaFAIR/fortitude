@@ -82,10 +82,7 @@ pub fn gather_allow_comments<'a, 'b>(
         let loc = TextRange::new(start, end);
         let code = rule.as_str();
         let redirect = get_redirect_target(code).unwrap_or(code);
-        let rule = match Rule::from_code(redirect).or(Rule::from_str(redirect)) {
-            Ok(rule) => Some(rule),
-            Err(_) => None,
-        };
+        let rule = Rule::from_code(redirect).or(Rule::from_str(redirect)).ok();
 
         codes.push(Code { code, rule, loc });
     }

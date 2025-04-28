@@ -538,20 +538,14 @@ pub(crate) fn read_to_string(path: &Path) -> std::io::Result<String> {
 pub(crate) fn rules_to_path_rules(rules: &RuleTable) -> Vec<PathRuleEnum> {
     rules
         .iter_enabled()
-        .filter_map(|rule| match TryFrom::try_from(rule) {
-            Ok(path) => Some(path),
-            _ => None,
-        })
+        .filter_map(|rule| TryFrom::try_from(rule).ok())
         .collect_vec()
 }
 
 pub(crate) fn rules_to_text_rules(rules: &RuleTable) -> Vec<TextRuleEnum> {
     rules
         .iter_enabled()
-        .filter_map(|rule| match TryFrom::try_from(rule) {
-            Ok(text) => Some(text),
-            _ => None,
-        })
+        .filter_map(|rule| TryFrom::try_from(rule).ok())
         .collect_vec()
 }
 
@@ -559,10 +553,7 @@ pub(crate) fn rules_to_text_rules(rules: &RuleTable) -> Vec<TextRuleEnum> {
 pub(crate) fn ast_entrypoint_map<'a>(rules: &RuleTable) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
     let ast_rules: Vec<AstRuleEnum> = rules
         .iter_enabled()
-        .filter_map(|rule| match TryFrom::try_from(rule) {
-            Ok(ast) => Some(ast),
-            _ => None,
-        })
+        .filter_map(|rule| TryFrom::try_from(rule).ok())
         .collect();
 
     let mut map: BTreeMap<&'a str, Vec<_>> = BTreeMap::new();
