@@ -108,6 +108,8 @@ pub enum SubCommands {
         #[arg(long, value_enum, default_value = "text")]
         output_format: HelpFormat,
     },
+    /// LSP server
+    Server,
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]

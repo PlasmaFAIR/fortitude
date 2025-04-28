@@ -104,7 +104,7 @@ pub fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
 
 /// Read either the "extra.fortitude" table from "fpm.toml", or the
 /// whole "fortitude.toml" file
-fn load_options<P: AsRef<Path>>(path: P) -> Result<Options> {
+pub fn load_options<P: AsRef<Path>>(path: P) -> Result<Options> {
     if path.as_ref().ends_with("fpm.toml") {
         let config = parse_fpm_toml(&path)?;
         // Unwrap should be ok here because we've already checked this
