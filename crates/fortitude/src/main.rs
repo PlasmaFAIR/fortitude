@@ -32,6 +32,9 @@ fn main() -> Result<ExitCode> {
             fortitude::commands::config::config(option.as_deref(), output_format)?;
             return Ok(ExitCode::SUCCESS);
         }
+        SubCommands::Server => {
+            return Ok(fortitude_server::server()?);
+        }
     };
     match status {
         Ok(code) => Ok(code),

@@ -15,6 +15,7 @@ build = "build.rs"
 
 [dependencies]
 fortitude_linter = { workspace = true }
+fortitude_server = { workspace = true }
 fortitude_workspace = { workspace = true }
 
 anyhow = { workspace = true }
@@ -43,12 +44,12 @@ terminal-light = { workspace = true }
 textwrap = { workspace = true }
 
 [dev-dependencies]
-assert_cmd = "2.0.16"
+assert_cmd = { workspace = true }
 # Disable colored output in tests
 colored = { workspace = true, features = ["no-color"] }
-insta = { version = "1.41.1", features = ["filters", "json", "redactions"] }
-insta-cmd = "0.6.0"
-predicates = "3.1.2"
-tempfile = "3.13.0"
+insta = { workspace = true }
+insta-cmd = { workspace = true }
+predicates = { workspace = true }
+tempfile = { workspace = true }
 # Include test rules when we run the tests
 fortitude_linter = { workspace = true, features = ["test-rules"] }
