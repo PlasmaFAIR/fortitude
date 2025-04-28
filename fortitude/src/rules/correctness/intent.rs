@@ -24,6 +24,9 @@ use tree_sitter::Node;
 /// Finally, `intent(inout)` arguments can be both read and modified by the
 /// routine. If an `intent` is not specified, it will default to
 /// `intent(inout)`.
+///
+/// This rule will permit the absence of `intent` for dummy arguments
+/// that include the `value` attribute.
 #[derive(ViolationMetadata)]
 pub(crate) struct MissingIntent {
     entity: String,
@@ -54,7 +57,7 @@ impl AstRule for MissingIntent {
         // Logic here is:
         // 1. find variable declarations
         // 2. ignore `procedure` arguments
-        // 3. filter to the declarations that don't have an `intent`
+        // 3. filter to the declarations that don't have an `intent` or `value` attribute
         // 4. filter to the ones that contain any of the dummy arguments
         // 5. collect into a vec of violations
         //
@@ -76,10 +79,8 @@ impl AstRule for MissingIntent {
                 !decl
                     .children_by_field_name("attribute", &mut decl.walk())
                     .any(|attr| {
-                        attr.to_text(src)
-                            .unwrap_or("")
-                            .to_lowercase()
-                            .starts_with("intent")
+                        let attr = attr.to_text(src).unwrap_or("").to_lowercase();
+                        attr.starts_with("intent") || attr.starts_with("value")
                     })
             })
             .flat_map(|decl| {
