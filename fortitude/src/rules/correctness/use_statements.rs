@@ -4,7 +4,6 @@ use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
-use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 // TODO Check that 'used' entity is actually used somewhere
@@ -115,7 +114,7 @@ impl AstRule for MissingIntrinsic {
             let use_field = node
                 .children(&mut node.walk())
                 .find(|&child| child.to_text(_src.source_text()) == Some("use"))?;
-            let start_pos = TextSize::try_from(use_field.end_byte()).unwrap();
+            let start_pos = use_field.end_textsize();
             let fix = Fix::unsafe_edit(Edit::insertion(intrinsic.to_string(), start_pos));
 
             return some_vec![Diagnostic::from_node(MissingIntrinsic {}, node).with_fix(fix)];

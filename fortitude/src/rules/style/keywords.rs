@@ -132,7 +132,7 @@ impl AstRule for KeywordsMissingSpace {
             return None;
         }
 
-        let space_pos = TextSize::try_from(node.start_byte() + keywords.offset()).unwrap();
+        let space_pos = node.start_textsize() + TextSize::try_from(keywords.offset()).unwrap();
         let fix = Fix::safe_edit(Edit::insertion(" ".to_string(), space_pos));
         some_vec!(Diagnostic::from_node(Self { keywords }, &first_child).with_fix(fix))
     }
@@ -233,10 +233,10 @@ impl AstRule for KeywordHasWhitespace {
         // Check if immediate sibling is 'out'/'to'
         let sibling = first_child.next_sibling()?;
         if sibling.to_text(src.source_text())?.to_lowercase() == second {
-            let start = TextSize::try_from(first_child.start_byte()).unwrap();
-            let end = TextSize::try_from(sibling.end_byte()).unwrap();
-            let fix_start = TextSize::try_from(first_child.end_byte()).unwrap();
-            let fix_end = TextSize::try_from(sibling.start_byte()).unwrap();
+            let start = first_child.start_textsize();
+            let end = sibling.end_textsize();
+            let fix_start = first_child.end_textsize();
+            let fix_end = sibling.start_textsize();
             let fix = Fix::safe_edit(Edit::deletion(fix_start, fix_end));
             return some_vec!(Diagnostic::new(violation, TextRange::new(start, end)).with_fix(fix));
         }

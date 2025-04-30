@@ -57,8 +57,8 @@ impl AstRule for SingleQuoteString {
                 )]);
             }
 
-            let start_byte = TextSize::try_from(node.start_byte()).unwrap();
-            let end_byte = TextSize::try_from(node.end_byte()).unwrap();
+            let start_byte = node.start_textsize();
+            let end_byte = node.end_textsize();
             let edit_start =
                 Edit::replacement("\"".to_string(), start_byte, start_byte + TextSize::from(1));
             let edit_end =

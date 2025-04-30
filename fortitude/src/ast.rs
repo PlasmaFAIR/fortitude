@@ -112,6 +112,15 @@ pub trait FortitudeNode<'tree> {
 
     /// Creates an edit that inserts `content`, replacing the whole node
     fn edit_replacement(&self, original: &SourceFile, content: String) -> Edit;
+
+    /// Get the [`TextSize`] offset where this node starts
+    fn start_textsize(&self) -> TextSize;
+
+    /// Get the [`TextSize`] offset where this node ends
+    fn end_textsize(&self) -> TextSize;
+
+    /// Get the [`TextRange`] of this node
+    fn textrange(&self) -> TextRange;
 }
 
 impl FortitudeNode<'_> for Node<'_> {
@@ -166,7 +175,7 @@ impl FortitudeNode<'_> for Node<'_> {
 
     fn indentation(&self, source_file: &SourceFile) -> String {
         let src = source_file.to_source_code();
-        let start_byte = TextSize::try_from(self.start_byte()).unwrap();
+        let start_byte = self.start_textsize();
         let start_index = src.line_index(start_byte);
         let start_line = src.line_start(start_index);
         let start_offset = start_byte - start_line;
@@ -180,8 +189,8 @@ impl FortitudeNode<'_> for Node<'_> {
         // If deletion results in an empty line (or multiple), remove it
         // TODO handle case where removal should also remove a preceding comma
         let src = source_file.to_source_code();
-        let start_byte = TextSize::try_from(self.start_byte()).unwrap();
-        let end_byte = TextSize::try_from(self.end_byte()).unwrap();
+        let start_byte = self.start_textsize();
+        let end_byte = self.end_textsize();
         let start_index = src.line_index(start_byte);
         let end_index = src.line_index(end_byte);
         let start_line = src.line_start(start_index);
@@ -203,10 +212,22 @@ impl FortitudeNode<'_> for Node<'_> {
         // whitespace in the replacement
         let text = self.to_text(original.source_text()).unwrap();
         let len = text.trim().len();
-        let start = TextSize::try_from(self.start_byte()).unwrap();
+        let start = self.start_textsize();
         let end = start + TextSize::try_from(len).unwrap();
 
         Edit::replacement(content, start, end)
+    }
+
+    fn start_textsize(&self) -> TextSize {
+        TextSize::try_from(self.start_byte()).unwrap()
+    }
+
+    fn end_textsize(&self) -> TextSize {
+        TextSize::try_from(self.end_byte()).unwrap()
+    }
+
+    fn textrange(&self) -> TextRange {
+        TextRange::new(self.start_textsize(), self.end_textsize())
     }
 }
 

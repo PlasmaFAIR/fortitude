@@ -4,7 +4,6 @@ use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
-use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -61,10 +60,7 @@ impl AstRule for MissingExitOrCycleLabel {
             .filter(|(_, name)| name == "exit" || name == "cycle")
             .map(|(stmt, name)| {
                 let label_with_space = format!(" {label}");
-                let edit = Edit::insertion(
-                    label_with_space,
-                    TextSize::try_from(stmt.end_byte()).unwrap(),
-                );
+                let edit = Edit::insertion(label_with_space, stmt.end_textsize());
                 let fix = Fix::unsafe_edit(edit);
 
                 Diagnostic::from_node(
@@ -204,10 +200,7 @@ impl AstRule for MissingEndLabel {
             .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .map(|(stmt, end_name)| {
                 let label_with_space = format!(" {label}");
-                let edit = Edit::insertion(
-                    label_with_space,
-                    TextSize::try_from(stmt.end_byte()).unwrap(),
-                );
+                let edit = Edit::insertion(label_with_space, stmt.end_textsize());
                 let fix = Fix::safe_edit(edit);
 
                 let start_name = node.child(1).unwrap().to_text(src).unwrap().to_lowercase();
