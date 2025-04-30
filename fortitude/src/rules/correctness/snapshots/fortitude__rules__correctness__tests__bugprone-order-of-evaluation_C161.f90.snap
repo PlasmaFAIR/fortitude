@@ -1,0 +1,24 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C161.f90:11:29: C161 use of optional `arg1` in same logical expression as `present(arg1)`
+   |
+ 9 |     end if
+10 |
+11 |     if (present(arg1) .and. arg1 > 1) then
+   |                             ^^^^ C161
+12 |       bad = .true.
+13 |     end if
+   |
+
+./resources/test/fixtures/correctness/C161.f90:19:35: C161 use of optional `arg2` in same logical expression as `present(arg2)`
+   |
+17 |     end if
+18 |
+19 |     if (present(arg2) .and. (size(arg2) > 4)) then
+   |                                   ^^^^ C161
+20 |       bad = .true.
+21 |     end if
+   |

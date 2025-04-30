@@ -1,5 +1,6 @@
 pub mod accessibility_statements;
 pub mod assumed_size;
+pub mod bugprone_order_of_evaluation;
 pub mod conditionals;
 pub mod derived_default_init;
 pub mod exit_labels;
@@ -61,6 +62,7 @@ mod tests {
     #[test_case(Rule::MissingEndLabel, Path::new("C143.f90"))]
     #[test_case(Rule::IfStatementSemicolon, Path::new("C151.f90"))]
     #[test_case(Rule::MisleadingInlineIfContinuation, Path::new("C152.f90"))]
+    #[test_case(Rule::BugproneOrderOfEvaluation, Path::new("C161.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
