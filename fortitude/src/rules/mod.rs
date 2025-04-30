@@ -131,6 +131,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "221") => (RuleGroup::Preview, Ast, Optional, style::functions::FunctionMissingResult),
         (Style, "231") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordsMissingSpace),
         (Style, "232") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordHasWhitespace),
+        (Style, "241") => (RuleGroup::Preview, Ast, Default, style::strings::SingleQuoteString),
 
         // obsolescent
         (Obsolescent, "001") => (RuleGroup::Removed, Ast, Default, obsolescent::statement_functions::StatementFunction),

@@ -7,6 +7,7 @@ pub mod implicit_none;
 pub mod keywords;
 pub mod line_length;
 pub mod semicolons;
+pub mod strings;
 pub mod whitespace;
 
 #[cfg(test)]
@@ -37,6 +38,7 @@ mod tests {
     #[test_case(Rule::FunctionMissingResult, Path::new("S221.f90"))]
     #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
     #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
+    #[test_case(Rule::SingleQuoteString, Path::new("S241.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
