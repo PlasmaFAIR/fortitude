@@ -31,9 +31,9 @@ pub mod version;
 pub use crate::registry::clap_completion::RuleParser;
 pub use crate::rule_selector::clap_completion::RuleSelectorParser;
 
+use ast::FortitudeNode;
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::SourceFile;
-use ruff_text_size::{TextRange, TextSize};
 use settings::Settings;
 use std::path::Path;
 use tree_sitter::Node;
@@ -47,13 +47,7 @@ pub trait FromAstNode {
 
 impl FromAstNode for Diagnostic {
     fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
-        Self::new(
-            violation,
-            TextRange::new(
-                TextSize::try_from(node.start_byte()).unwrap(),
-                TextSize::try_from(node.end_byte()).unwrap(),
-            ),
-        )
+        Self::new(violation, node.textrange())
     }
 }
 
