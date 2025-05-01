@@ -20,11 +20,17 @@ if (condition) print *, "Hello"; print *, "World"
 It is equivalent to:
 
 ```f90
-if (condition) then
-   print *, "Hello"
-end if
+if (condition) print *, "Hello"
 print *, "World"
 ```
 
-When applying fixes, the if statement is converted to the second form and
-the semicolon is removed.
+Users should be cautious applying this fix. If the intent was to have
+both statements execute only if the condition is true, then the user
+should rewrite the code to use an `if` statement with a block:
+
+```f90
+if (condition) then
+    print *, "Hello"
+    print *, "World"
+end if
+```

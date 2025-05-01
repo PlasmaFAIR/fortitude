@@ -12,20 +12,18 @@ snapshot_kind: text
 7 |
 8 |   if (condition) print * , &
   |
-  = help: Convert to `if(...) then` statement
+  = help: Replace with newline, or convert to `if(...) then` statement
 
 ℹ Safe fix
-3  3  |   logical, parameter :: condition = .false.
-4  4  |   integer :: i
-5  5  | 
-6     |-  if (condition) print *, "Hello"; print *, "World!"
-   6  |+  if (condition) then
-   7  |+    print *, "Hello"
-   8  |+  end if
-   9  |+  print *, "World!"
-7  10 | 
-8  11 |   if (condition) print * , &
-9  12 |     "Hello"; print *, "World!"
+3 3 |   logical, parameter :: condition = .false.
+4 4 |   integer :: i
+5 5 | 
+6   |-  if (condition) print *, "Hello"; print *, "World!"
+  6 |+  if (condition) print *, "Hello"
+  7 |+  print *, "World!"
+7 8 | 
+8 9 |   if (condition) print * , &
+9 10 |     "Hello"; print *, "World!"
 
 ./resources/test/fixtures/correctness/C151.f90:9:12: C151 [*] Semicolon following inline if-statement is misleading
    |
@@ -35,22 +33,18 @@ snapshot_kind: text
 10 |
 11 |   ! The following is bad practice, but shouldn't trigger
    |
-   = help: Convert to `if(...) then` statement
+   = help: Replace with newline, or convert to `if(...) then` statement
 
 ℹ Safe fix
-5  5  | 
 6  6  |   if (condition) print *, "Hello"; print *, "World!"
 7  7  | 
-8     |-  if (condition) print * , &
+8  8  |   if (condition) print * , &
 9     |-    "Hello"; print *, "World!"
-   8  |+  if (condition) then
-   9  |+    print * , &
-   10 |+    "Hello"
-   11 |+  end if
-   12 |+  print *, "World!"
-10 13 | 
-11 14 |   ! The following is bad practice, but shouldn't trigger
-12 15 |   if (condition) then
+   9  |+    "Hello"
+   10 |+  print *, "World!"
+10 11 | 
+11 12 |   ! The following is bad practice, but shouldn't trigger
+12 13 |   if (condition) then
 
 ./resources/test/fixtures/correctness/C151.f90:35:32: C151 [*] Semicolon following inline if-statement is misleading
    |
@@ -61,20 +55,18 @@ snapshot_kind: text
 36 |
 37 |   ! The indentation will get a little weird in some cases:
    |
-   = help: Convert to `if(...) then` statement
+   = help: Replace with newline, or convert to `if(...) then` statement
 
 ℹ Safe fix
 32 32 |   ! For multiple inline if statements, each should be moved to its own line.
 33 33 |   ! To confirm that the fixes work when combined, see the test
 34 34 |   ! `c151_fix_multiple_inline_if` in `rules/correctness/mod.rs`
 35    |-  if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
-   35 |+  if (condition) then
-   36 |+    print *, "foo"
-   37 |+  end if
-   38 |+  if(.true.) print *, "bar"; if(.false.) print *, "baz";
-36 39 | 
-37 40 |   ! The indentation will get a little weird in some cases:
-38 41 |   do i = 1, 3; if (i == 2) print *, "foo"; end do
+   35 |+  if (condition) print *, "foo"
+   36 |+  if(.true.) print *, "bar"; if(.false.) print *, "baz";
+36 37 | 
+37 38 |   ! The indentation will get a little weird in some cases:
+38 39 |   do i = 1, 3; if (i == 2) print *, "foo"; end do
 
 ./resources/test/fixtures/correctness/C151.f90:35:59: C151 [*] Semicolon following inline if-statement is misleading
    |
@@ -85,37 +77,15 @@ snapshot_kind: text
 36 |
 37 |   ! The indentation will get a little weird in some cases:
    |
-   = help: Convert to `if(...) then` statement
+   = help: Replace with newline, or convert to `if(...) then` statement
 
 ℹ Safe fix
 32 32 |   ! For multiple inline if statements, each should be moved to its own line.
 33 33 |   ! To confirm that the fixes work when combined, see the test
 34 34 |   ! `c151_fix_multiple_inline_if` in `rules/correctness/mod.rs`
 35    |-  if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
-   35 |+  if (condition) print *, "foo"; if(.true.) then
-   36 |+    print *, "bar"
-   37 |+  end if
-   38 |+  if(.false.) print *, "baz";
-36 39 | 
-37 40 |   ! The indentation will get a little weird in some cases:
-38 41 |   do i = 1, 3; if (i == 2) print *, "foo"; end do
-
-./resources/test/fixtures/correctness/C151.f90:38:42: C151 [*] Semicolon following inline if-statement is misleading
-   |
-37 |   ! The indentation will get a little weird in some cases:
-38 |   do i = 1, 3; if (i == 2) print *, "foo"; end do
-   |                                          ^ C151
-39 | end program p
-   |
-   = help: Convert to `if(...) then` statement
-
-ℹ Safe fix
-35 35 |   if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
-36 36 | 
-37 37 |   ! The indentation will get a little weird in some cases:
-38    |-  do i = 1, 3; if (i == 2) print *, "foo"; end do
-   38 |+  do i = 1, 3; if (i == 2) then
-   39 |+    print *, "foo"
-   40 |+  end if
-   41 |+  end do
-39 42 | end program p
+   35 |+  if (condition) print *, "foo"; if(.true.) print *, "bar"
+   36 |+  if(.false.) print *, "baz";
+36 37 | 
+37 38 |   ! The indentation will get a little weird in some cases:
+38 39 |   do i = 1, 3; if (i == 2) print *, "foo"; end do

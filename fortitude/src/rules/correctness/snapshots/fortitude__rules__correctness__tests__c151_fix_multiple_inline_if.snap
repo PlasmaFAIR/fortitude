@@ -6,11 +6,7 @@ snapshot_kind: text
         program test
             implicit none
             integer :: i
-            if (i == 1) then
-              print *, "foo"
-            end if
-            if (i == 2) then
-              print *, "bar"
-            end if
+            if (i == 1) print *, "foo"
+            if (i == 2) print *, "bar"
             if (i == 3) print *, "baz"
         end program test

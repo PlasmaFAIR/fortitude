@@ -22,14 +22,20 @@ use tree_sitter::Node;
 /// It is equivalent to:
 ///
 /// ```f90
-/// if (condition) then
-///    print *, "Hello"
-/// end if
+/// if (condition) print *, "Hello"
 /// print *, "World"
 /// ```
 ///
-/// When applying fixes, the if statement is converted to the second form and
-/// the semicolon is removed.
+/// Users should be cautious applying this fix. If the intent was to have
+/// both statements execute only if the condition is true, then the user
+/// should rewrite the code to use an `if` statement with a block:
+///
+/// ```f90
+/// if (condition) then
+///     print *, "Hello"
+///     print *, "World"
+/// end if
+/// ```
 #[derive(ViolationMetadata)]
 pub(crate) struct IfStatementSemicolon {}
 
@@ -40,7 +46,7 @@ impl AlwaysFixableViolation for IfStatementSemicolon {
     }
 
     fn fix_title(&self) -> String {
-        "Convert to `if(...) then` statement".to_string()
+        "Replace with newline, or convert to `if(...) then` statement".to_string()
     }
 }
 impl AstRule for IfStatementSemicolon {
@@ -55,6 +61,9 @@ impl AstRule for IfStatementSemicolon {
             // Find the first following non-semicolon node, and check that it's
             // on the same line as the first semicolon node.
             // Comments on the same line are permitted.
+            // Also permit the following node kind being an end statement, as
+            // this permits lines such as:
+            // do i = 1, 10; if (i == 5) print *, "Hello"; end do
             let mut current_node = semicolon_node;
             while let Some(next) = current_node.next_sibling() {
                 if next.kind() == ";" {
@@ -63,27 +72,27 @@ impl AstRule for IfStatementSemicolon {
                 }
                 if next.start_position().row != semicolon_node.start_position().row
                     || next.kind() == "comment"
+                    || next.kind().starts_with("end_")
                 {
                     return None;
                 }
                 break;
             }
-            let if_edit = node.edit_replacement(src, ifthenify(node, src)?);
-            let indentation = node.indentation(src);
-            // To replace the semicolon node, we should also replace all
-            // trailing whitespace.
-            let semicolon_start = semicolon_node.start_textsize();
-            let mut semicolon_end = semicolon_node.end_byte();
+            // Replace semicolon node with a newline to make it clear that the
+            // second statement is not part of the if statement. We should also
+            // take care to handle indentation and other whitespace.
+            let start = semicolon_node.start_textsize();
+            let mut end = semicolon_node.end_byte();
             let text = src.source_text().as_bytes();
-            while text[semicolon_end] == b' ' || text[semicolon_end] == b'\t' {
-                semicolon_end += 1;
+            while text[end] == b' ' || text[end] == b'\t' {
+                end += 1;
             }
-            let semicolon_end = TextSize::try_from(semicolon_end).unwrap();
-            let semicolon_edit =
-                Edit::replacement(format!("\n{indentation}"), semicolon_start, semicolon_end);
+            let end = TextSize::try_from(end).unwrap();
+            let indentation = node.indentation(src);
+            let edit = Edit::replacement(format!("\n{indentation}"), start, end);
             return some_vec!(
                 Diagnostic::from_node(IfStatementSemicolon {}, &semicolon_node)
-                    .with_fix(Fix::safe_edits(if_edit, [semicolon_edit]))
+                    .with_fix(Fix::safe_edit(edit))
             );
         }
         None
@@ -92,41 +101,6 @@ impl AstRule for IfStatementSemicolon {
     fn entrypoints() -> Vec<&'static str> {
         vec!["if_statement"]
     }
-}
-
-/// Given an if statement node, convert it from a one-line if statement
-/// to a block if statement.
-/// Returns None if the node is already a block if statement.
-pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
-    let source_text = src.source_text();
-    // check that the node is an if statement without an end if statement
-    if !inline_if_statement(node) {
-        return None;
-    }
-    // Divide the if statement into everything up to the end of the condition
-    // and the body.
-    let condition_node = node.child_with_name("parenthesized_expression")?;
-    let condition_end_byte = condition_node.end_byte();
-    let mut body_start_byte = condition_end_byte;
-    let source_bytes = source_text.as_bytes();
-    while body_start_byte < node.end_byte() && source_bytes[body_start_byte].is_ascii_whitespace() {
-        body_start_byte += 1;
-    }
-    // Concatenate bytes to the end of the condition, " then\n", the body, and
-    // "\nend if". Take care to get the indentation right.
-    let if_start_byte = node.start_byte();
-    let if_end_byte = node.end_byte();
-    let indentation = node.indentation(src);
-    let mut correction = String::new();
-    correction.push_str(&source_text[if_start_byte..condition_end_byte]);
-    correction.push_str(" then\n");
-    correction.push_str(&indentation);
-    correction.push_str("  "); // Assume two-space indent for the if body
-    correction.push_str(&source_text[body_start_byte..if_end_byte]);
-    correction.push('\n');
-    correction.push_str(&indentation);
-    correction.push_str("end if");
-    Some(correction)
 }
 
 /// Given an if statement, return true if it is inline.
