@@ -23,6 +23,7 @@ use crate::{warn_user_once_by_message, FromAstNode};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
+use encoding_rs_io::DecodeReaderBytes;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use log::{debug, warn};
@@ -34,8 +35,8 @@ use rustc_hash::FxHashMap;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fs::File;
-use std::io::Write;
 use std::io::{self, BufWriter};
+use std::io::{Read, Write};
 use std::iter::once;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -532,7 +533,14 @@ pub(crate) fn read_to_string(path: &Path) -> std::io::Result<String> {
             format!("larger than maximum 4 GiB ({length_in_GiB} GiB)"),
         ));
     }
-    std::fs::read_to_string(path)
+    // Get UTF-8, regardless of what the file encoding is
+    let file = std::fs::File::open(path)?;
+    // This handles UTF-16 etc
+    let mut decoder = DecodeReaderBytes::new(file);
+    let mut dest = Vec::new();
+    decoder.read_to_end(&mut dest)?;
+    // Lossy, to handle non-unicode extended ASCII encodings
+    Ok(String::from_utf8_lossy(&dest).into_owned())
 }
 
 pub(crate) fn rules_to_path_rules(rules: &RuleTable) -> Vec<PathRuleEnum> {

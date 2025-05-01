@@ -2166,3 +2166,61 @@ end program test
 
     Ok(())
 }
+
+/// Check we can read some non-utf8 files
+#[test]
+fn read_non_utf8_iso8859() -> anyhow::Result<()> {
+    let input_file = b"
+! this is fin\xe9
+program test
+  implicit none (type, external)
+end program test
+";
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(&test_file, input_file)?;
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=C003")
+                         .arg("--fix-only")
+                         .arg("--unsafe-fixes")
+                         .arg(test_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
+fn read_non_utf8_utf16le() -> anyhow::Result<()> {
+    let input_file = "
+! this is finé
+program test
+  implicit none (type, external)
+end program test
+";
+    let input_file = encoding_rs::UTF_16LE.encode(input_file).0;
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(&test_file, input_file)?;
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=C003")
+                         .arg("--fix-only")
+                         .arg("--unsafe-fixes")
+                         .arg(test_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
