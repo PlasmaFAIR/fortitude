@@ -1,0 +1,12 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: fixed
+snapshot_kind: text
+---
+        program test
+            implicit none
+            integer :: i
+            if (i == 1) print *, "foo"
+            if (i == 2) print *, "bar"
+            if (i == 3) print *, "baz"
+        end program test

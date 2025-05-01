@@ -1,5 +1,6 @@
 pub mod accessibility_statements;
 pub mod assumed_size;
+pub mod conditionals;
 pub mod derived_default_init;
 pub mod exit_labels;
 pub mod external;
@@ -17,10 +18,14 @@ pub mod use_statements;
 #[cfg(test)]
 mod tests {
     use std::convert::AsRef;
+    use std::fs;
     use std::path::Path;
+    use std::process::Command;
 
     use anyhow::Result;
+    use assert_cmd::prelude::*;
     use insta::assert_snapshot;
+    use tempfile::TempDir;
     use test_case::test_case;
 
     use crate::apply_common_filters;
@@ -54,6 +59,7 @@ mod tests {
     #[test_case(Rule::MissingExitOrCycleLabel, Path::new("C141.f90"))]
     #[test_case(Rule::ExitOrCycleInUnlabelledLoop, Path::new("C142.f90"))]
     #[test_case(Rule::MissingEndLabel, Path::new("C143.f90"))]
+    #[test_case(Rule::IfStatementSemicolon, Path::new("C151.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -108,6 +114,32 @@ mod tests {
         )?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn c151_fix_multiple_inline_if() -> Result<()> {
+        let tempdir = TempDir::new()?;
+        let path = tempdir.path().join("C151.f90");
+        let code = r#"
+        program test
+            implicit none
+            integer :: i
+            if (i == 1) print *, "foo"; if (i == 2) print *, "bar"; if (i == 3) print *, "baz"
+        end program test
+        "#;
+        fs::write(&path, code)?;
+        Command::cargo_bin("fortitude")?
+            .arg("check")
+            .arg("--fix")
+            .arg("--preview")
+            .arg("--select=C151")
+            .arg(path.as_os_str())
+            .status()?;
+        let fixed = String::from_utf8(fs::read(path.as_os_str())?)?;
+        let snapshot = "c151_fix_multiple_inline_if";
+        apply_common_filters!();
+        assert_snapshot!(snapshot, fixed);
         Ok(())
     }
 }

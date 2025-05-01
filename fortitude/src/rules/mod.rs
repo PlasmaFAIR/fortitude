@@ -101,6 +101,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "141") => (RuleGroup::Stable, Ast, Default, correctness::exit_labels::MissingExitOrCycleLabel),
         (Correctness, "142") => (RuleGroup::Preview, Ast, Optional, correctness::exit_labels::ExitOrCycleInUnlabelledLoop),
         (Correctness, "143") => (RuleGroup::Preview, Ast, Default, correctness::exit_labels::MissingEndLabel),
+        (Correctness, "151") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::IfStatementSemicolon),
 
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),
