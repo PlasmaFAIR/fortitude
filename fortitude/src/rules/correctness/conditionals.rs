@@ -61,9 +61,6 @@ impl AstRule for IfStatementSemicolon {
             // Find the first following non-semicolon node, and check that it's
             // on the same line as the first semicolon node.
             // Comments on the same line are permitted.
-            // Also permit the following node kind being an end statement, as
-            // this permits lines such as:
-            // do i = 1, 10; if (i == 5) print *, "Hello"; end do
             let mut current_node = semicolon_node;
             while let Some(next) = current_node.next_sibling() {
                 if next.kind() == ";" {
@@ -72,7 +69,6 @@ impl AstRule for IfStatementSemicolon {
                 }
                 if next.start_position().row != semicolon_node.start_position().row
                     || next.kind() == "comment"
-                    || next.kind().starts_with("end_")
                 {
                     return None;
                 }

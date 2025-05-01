@@ -89,3 +89,21 @@ snapshot_kind: text
 36 37 | 
 37 38 |   ! The indentation will get a little weird in some cases:
 38 39 |   do i = 1, 3; if (i == 2) print *, "foo"; end do
+
+./resources/test/fixtures/correctness/C151.f90:38:42: C151 [*] Semicolon following inline if-statement is misleading
+   |
+37 |   ! The indentation will get a little weird in some cases:
+38 |   do i = 1, 3; if (i == 2) print *, "foo"; end do
+   |                                          ^ C151
+39 | end program p
+   |
+   = help: Replace with newline, or convert to `if(...) then` statement
+
+ℹ Safe fix
+35 35 |   if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
+36 36 | 
+37 37 |   ! The indentation will get a little weird in some cases:
+38    |-  do i = 1, 3; if (i == 2) print *, "foo"; end do
+   38 |+  do i = 1, 3; if (i == 2) print *, "foo"
+   39 |+  end do
+39 40 | end program p
