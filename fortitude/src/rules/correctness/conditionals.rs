@@ -107,6 +107,11 @@ pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
     // and the body.
     let condition_node = node.child_with_name("parenthesized_expression")?;
     let condition_end_byte = condition_node.end_byte();
+    let mut body_start_byte = condition_end_byte;
+    let source_bytes = source_text.as_bytes();
+    while body_start_byte < node.end_byte() && source_bytes[body_start_byte].is_ascii_whitespace() {
+        body_start_byte += 1;
+    }
     // Concatenate bytes to the end of the condition, " then\n", the body, and
     // "\nend if". Take care to get the indentation right.
     let if_start_byte = node.start_byte();
@@ -117,7 +122,7 @@ pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
     correction.push_str(" then\n");
     correction.push_str(&indentation);
     correction.push_str("  "); // Assume two-space indent for the if body
-    correction.push_str(&source_text[condition_end_byte..if_end_byte]);
+    correction.push_str(&source_text[body_start_byte..if_end_byte]);
     correction.push('\n');
     correction.push_str(&indentation);
     correction.push_str("end if");

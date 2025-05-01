@@ -20,7 +20,7 @@ snapshot_kind: text
 4 4 | 
 5   |-  if (condition) print *, "Hello"; print *, "World!"
   5 |+  if (condition) then
-  6 |+     print *, "Hello"
+  6 |+    print *, "Hello"
   7 |+  end if
   8 |+  print *, "World!"
 6 9 | 
@@ -44,7 +44,7 @@ snapshot_kind: text
 7     |-  if (condition) print * , &
 8     |-    "Hello"; print *, "World!"
    7  |+  if (condition) then
-   8  |+     print * , &
+   8  |+    print * , &
    9  |+    "Hello"
    10 |+  end if
    11 |+  print *, "World!"
