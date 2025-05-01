@@ -51,3 +51,45 @@ snapshot_kind: text
 9  12 | 
 10 13 |   ! The following is bad practice, but shouldn't trigger
 11 14 |   if (condition) then
+
+./resources/test/fixtures/correctness/C151.f90:34:32: C151 [*] Semicolon following inline if-statement is misleading
+   |
+32 |   ! To confirm that the fixes work when combined, see the test
+33 |   ! `c151_fix_multiple_inline_if` in `rules/correctness/mod.rs`
+34 |   if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
+   |                                ^ C151
+35 | end program p
+   |
+   = help: Convert to `if(...) then` statement
+
+ℹ Safe fix
+31 31 |   ! For multiple inline if statements, each should be moved to its own line.
+32 32 |   ! To confirm that the fixes work when combined, see the test
+33 33 |   ! `c151_fix_multiple_inline_if` in `rules/correctness/mod.rs`
+34    |-  if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
+   34 |+  if (condition) then
+   35 |+    print *, "foo"
+   36 |+  end if
+   37 |+  if(.true.) print *, "bar"; if(.false.) print *, "baz";
+35 38 | end program p
+
+./resources/test/fixtures/correctness/C151.f90:34:59: C151 [*] Semicolon following inline if-statement is misleading
+   |
+32 |   ! To confirm that the fixes work when combined, see the test
+33 |   ! `c151_fix_multiple_inline_if` in `rules/correctness/mod.rs`
+34 |   if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
+   |                                                           ^ C151
+35 | end program p
+   |
+   = help: Convert to `if(...) then` statement
+
+ℹ Safe fix
+31 31 |   ! For multiple inline if statements, each should be moved to its own line.
+32 32 |   ! To confirm that the fixes work when combined, see the test
+33 33 |   ! `c151_fix_multiple_inline_if` in `rules/correctness/mod.rs`
+34    |-  if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
+   34 |+  if (condition) print *, "foo"; if(.true.) then
+   35 |+    print *, "bar"
+   36 |+  end if
+   37 |+  if(.false.) print *, "baz";
+35 38 | end program p

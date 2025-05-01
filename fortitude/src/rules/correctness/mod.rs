@@ -18,10 +18,14 @@ pub mod use_statements;
 #[cfg(test)]
 mod tests {
     use std::convert::AsRef;
+    use std::fs;
     use std::path::Path;
+    use std::process::Command;
 
     use anyhow::Result;
+    use assert_cmd::prelude::*;
     use insta::assert_snapshot;
+    use tempfile::TempDir;
     use test_case::test_case;
 
     use crate::apply_common_filters;
@@ -110,6 +114,32 @@ mod tests {
         )?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn c151_fix_multiple_inline_if() -> Result<()> {
+        let tempdir = TempDir::new()?;
+        let path = tempdir.path().join("C151.f90");
+        let code = r#"
+        program test
+            implicit none
+            integer :: i
+            if (i == 1) print *, "foo"; if (i == 2) print *, "bar"; if (i == 3) print *, "baz"
+        end program test
+        "#;
+        fs::write(&path, code)?;
+        Command::cargo_bin("fortitude")?
+            .arg("check")
+            .arg("--fix")
+            .arg("--preview")
+            .arg("--select=C151")
+            .arg(path.as_os_str())
+            .status()?;
+        let fixed = String::from_utf8(fs::read(path.as_os_str())?)?;
+        let snapshot = "c151_fix_multiple_inline_if";
+        apply_common_filters!();
+        assert_snapshot!(snapshot, fixed);
         Ok(())
     }
 }
