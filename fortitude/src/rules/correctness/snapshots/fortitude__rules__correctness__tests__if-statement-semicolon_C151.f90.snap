@@ -1,0 +1,53 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C151.f90:5:34: C151 [*] Semicolon following inline if-statement is misleading
+  |
+3 |   logical, parameter :: condition = .false.
+4 |
+5 |   if (condition) print *, "Hello"; print *, "World!"
+  |                                  ^ C151
+6 |
+7 |   if (condition) print * , &
+  |
+  = help: Convert to `if(...) then` statement
+
+ℹ Safe fix
+2 2 |   implicit none (type, external)
+3 3 |   logical, parameter :: condition = .false.
+4 4 | 
+5   |-  if (condition) print *, "Hello"; print *, "World!"
+  5 |+  if (condition) then
+  6 |+     print *, "Hello"
+  7 |+  end if
+  8 |+  print *, "World!"
+6 9 | 
+7 10 |   if (condition) print * , &
+8 11 |     "Hello"; print *, "World!"
+
+./resources/test/fixtures/correctness/C151.f90:8:12: C151 [*] Semicolon following inline if-statement is misleading
+   |
+ 7 |   if (condition) print * , &
+ 8 |     "Hello"; print *, "World!"
+   |            ^ C151
+ 9 |
+10 |   ! The following is bad practice, but shouldn't trigger
+   |
+   = help: Convert to `if(...) then` statement
+
+ℹ Safe fix
+4  4  | 
+5  5  |   if (condition) print *, "Hello"; print *, "World!"
+6  6  | 
+7     |-  if (condition) print * , &
+8     |-    "Hello"; print *, "World!"
+   7  |+  if (condition) then
+   8  |+     print * , &
+   9  |+    "Hello"
+   10 |+  end if
+   11 |+  print *, "World!"
+9  12 | 
+10 13 |   ! The following is bad practice, but shouldn't trigger
+11 14 |   if (condition) then

@@ -1,5 +1,6 @@
 pub mod accessibility_statements;
 pub mod assumed_size;
+pub mod conditionals;
 pub mod derived_default_init;
 pub mod exit_labels;
 pub mod external;
@@ -54,6 +55,7 @@ mod tests {
     #[test_case(Rule::MissingExitOrCycleLabel, Path::new("C141.f90"))]
     #[test_case(Rule::ExitOrCycleInUnlabelledLoop, Path::new("C142.f90"))]
     #[test_case(Rule::MissingEndLabel, Path::new("C143.f90"))]
+    #[test_case(Rule::IfStatementSemicolon, Path::new("C151.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
