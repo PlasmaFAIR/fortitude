@@ -1,6 +1,7 @@
 program p
   implicit none (type, external)
   logical, parameter :: condition = .false.
+  integer :: i
 
   if (condition) print *, "Hello"; print *, "World!"
 
@@ -32,4 +33,7 @@ program p
   ! To confirm that the fixes work when combined, see the test
   ! `c151_fix_multiple_inline_if` in `rules/correctness/mod.rs`
   if (condition) print *, "foo"; if(.true.) print *, "bar"; if(.false.) print *, "baz";
+
+  ! The indentation will get a little weird in some cases:
+  do i = 1, 3; if (i == 2) print *, "foo"; end do
 end program p
