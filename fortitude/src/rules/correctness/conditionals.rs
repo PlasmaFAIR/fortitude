@@ -1,7 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use anyhow::{Context, Result};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
@@ -47,10 +46,7 @@ impl AlwaysFixableViolation for IfStatementSemicolon {
 impl AstRule for IfStatementSemicolon {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // If this is an `if (...) then` construct, exit early
-        if node
-            .named_descendants()
-            .any(|n| n.kind() == "end_if_statement")
-        {
+        if !inline_if_statement(node) {
             return None;
         }
 
@@ -72,7 +68,7 @@ impl AstRule for IfStatementSemicolon {
                 }
                 break;
             }
-            let if_edit = node.edit_replacement(src, ifthenify(node, src).ok()?);
+            let if_edit = node.edit_replacement(src, ifthenify(node, src)?);
             let indentation = node.indentation(src);
             // To replace the semicolon node, we should also replace all
             // trailing whitespace.
@@ -100,21 +96,16 @@ impl AstRule for IfStatementSemicolon {
 
 /// Given an if statement node, convert it from a one-line if statement
 /// to a block if statement.
-/// This is a no-op if the node is already a block if statement.
-pub fn ifthenify(node: &Node, src: &SourceFile) -> Result<String> {
+/// Returns None if the node is already a block if statement.
+pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
     let source_text = src.source_text();
     // check that the node is an if statement without an end if statement
-    if node
-        .named_descendants()
-        .any(|n| n.kind() == "end_if_statement")
-    {
-        return Ok(source_text.to_string());
+    if !inline_if_statement(node) {
+        return None;
     }
     // Divide the if statement into everything up to the end of the condition
     // and the body.
-    let condition_node = node
-        .child_with_name("parenthesized_expression")
-        .context("If statement missing conditional")?;
+    let condition_node = node.child_with_name("parenthesized_expression")?;
     let condition_end_byte = condition_node.end_byte();
     // Concatenate bytes to the end of the condition, " then\n", the body, and
     // "\nend if". Take care to get the indentation right.
@@ -130,5 +121,10 @@ pub fn ifthenify(node: &Node, src: &SourceFile) -> Result<String> {
     correction.push('\n');
     correction.push_str(&indentation);
     correction.push_str("end if");
-    Ok(correction)
+    Some(correction)
+}
+
+/// Given an if statement, return true if it is inline.
+pub fn inline_if_statement(node: &Node) -> bool {
+    node.child(2).is_none_or(|n| n.kind() != "then")
 }
