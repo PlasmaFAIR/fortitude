@@ -5,6 +5,7 @@ use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
+use std::io::Write;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -196,19 +197,16 @@ pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
     {
         body_start_byte += 1;
     }
-    // Concatenate bytes to the end of the condition, " then\n", the body, and
-    // "\nend if". Take care to get the indentation right.
+    // Build the new if statement.
     let if_start_byte = node.start_byte();
     let if_end_byte = node.end_byte();
+    let prelude = &source_text[if_start_byte..condition_end_byte];
+    let body = &source_text[body_start_byte..if_end_byte];
     let indentation = node.indentation(src);
-    let mut correction = String::new();
-    correction.push_str(&source_text[if_start_byte..condition_end_byte]);
-    correction.push_str(" then\n");
-    correction.push_str(&indentation);
-    correction.push_str("  "); // Assume two-space indent for the if body
-    correction.push_str(&source_text[body_start_byte..if_end_byte]);
-    correction.push('\n');
-    correction.push_str(&indentation);
-    correction.push_str("end if");
-    Some(correction)
+    let mut buf = Vec::new();
+    writeln!(&mut buf, "{} then", prelude).ok()?;
+    // Assume two-space indent for the if body
+    writeln!(&mut buf, "{indentation}  {}", body).ok()?;
+    write!(&mut buf, "{indentation}end if").ok()?;
+    String::from_utf8(buf).ok()
 }
