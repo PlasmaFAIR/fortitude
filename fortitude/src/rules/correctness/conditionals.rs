@@ -3,9 +3,8 @@ use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
-use ruff_source_file::SourceFile;
+use ruff_source_file::{find_newline, LineEnding, SourceFile};
 use ruff_text_size::TextSize;
-use std::io::Write;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -155,7 +154,9 @@ impl AstRule for MisleadingInlineIfContinuation {
         let end_line = node.end_position().row;
         if end_line > start_line {
             let content = ifthenify(node, src)?;
-            let edit = node.edit_replacement(src, content);
+            let start_byte = node.start_textsize();
+            let end_byte = node.end_textsize();
+            let edit = Edit::replacement(content, start_byte, end_byte);
             return some_vec!(
                 Diagnostic::from_node(MisleadingInlineIfContinuation {}, node)
                     .with_fix(Fix::safe_edit(edit))
@@ -178,35 +179,36 @@ pub fn inline_if_statement(node: &Node) -> bool {
 /// to a block if statement.
 /// Returns None if the node is already a block if statement.
 pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
-    let source_text = src.source_text();
     // check that the node is an if statement without an end if statement
     if !inline_if_statement(node) {
         return None;
     }
+    let text = node.to_text(src.source_text())?.trim();
+    let bytes = text.as_bytes();
+    // If CrLf line endings are used, be careful to keep them in the fix
+    let nl = find_newline(text)
+        .map(|(_, ending)| ending)
+        .unwrap_or(LineEnding::Lf)
+        .as_str();
     // Divide the if statement into everything up to the end of the condition
     // and the body.
     let condition_node = node.child_with_name("parenthesized_expression")?;
-    let condition_end_byte = condition_node.end_byte();
+    let condition_end_byte = condition_node.end_byte() - node.start_byte();
     let mut body_start_byte = condition_end_byte;
-    let source_bytes = source_text.as_bytes();
     // Skip over any whitespace or line continuations between the condition
     // and the body.
     while body_start_byte < node.end_byte()
-        && (source_bytes[body_start_byte].is_ascii_whitespace()
-            || source_bytes[body_start_byte] == b'&')
+        && (bytes[body_start_byte].is_ascii_whitespace() || bytes[body_start_byte] == b'&')
     {
         body_start_byte += 1;
     }
     // Build the new if statement.
-    let if_start_byte = node.start_byte();
-    let if_end_byte = node.end_byte();
-    let prelude = &source_text[if_start_byte..condition_end_byte];
-    let body = &source_text[body_start_byte..if_end_byte];
+    let prelude = &text[..condition_end_byte];
+    let body = &text[body_start_byte..];
     let indentation = node.indentation(src);
-    let mut buf = Vec::new();
-    writeln!(&mut buf, "{} then", prelude).ok()?;
     // Assume two-space indent for the if body
-    writeln!(&mut buf, "{indentation}  {}", body).ok()?;
-    write!(&mut buf, "{indentation}end if").ok()?;
-    String::from_utf8(buf).ok()
+    Some(format!(
+        "{} then{nl}{indentation}  {}{nl}{indentation}end if",
+        prelude, body
+    ))
 }
