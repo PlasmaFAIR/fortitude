@@ -60,6 +60,7 @@ mod tests {
     #[test_case(Rule::ExitOrCycleInUnlabelledLoop, Path::new("C142.f90"))]
     #[test_case(Rule::MissingEndLabel, Path::new("C143.f90"))]
     #[test_case(Rule::IfStatementSemicolon, Path::new("C151.f90"))]
+    #[test_case(Rule::MisleadingInlineIfContinuation, Path::new("C152.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

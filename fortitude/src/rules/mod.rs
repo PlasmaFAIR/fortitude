@@ -11,6 +11,7 @@ pub(crate) mod portability;
 pub(crate) mod style;
 pub(crate) mod testing;
 pub mod utilities;
+
 use crate::registry::{AsRule, Category};
 
 use std::fmt::Formatter;
@@ -102,6 +103,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "142") => (RuleGroup::Preview, Ast, Optional, correctness::exit_labels::ExitOrCycleInUnlabelledLoop),
         (Correctness, "143") => (RuleGroup::Preview, Ast, Default, correctness::exit_labels::MissingEndLabel),
         (Correctness, "151") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::IfStatementSemicolon),
+        (Correctness, "152") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::MisleadingInlineIfContinuation),
 
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),

@@ -39,6 +39,7 @@
 | C142 | [exit-or-cycle-in-unlabelled-loop](rules/exit-or-cycle-in-unlabelled-loop.md) | '{name}' statement in unlabelled 'do' loop | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | C143 | [missing-end-label](rules/missing-end-label.md) | '{end_name}' statement in named '{start_name}' block missing label | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C151 | [if-statement-semicolon](rules/if-statement-semicolon.md) | Semicolon following inline if-statement is misleading | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| C152 | [misleading-inline-if-continuation](rules/misleading-inline-if-continuation.md) | Line continuation in inline if-statement is misleading | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 
 ### Obsolescent (OB)
 
