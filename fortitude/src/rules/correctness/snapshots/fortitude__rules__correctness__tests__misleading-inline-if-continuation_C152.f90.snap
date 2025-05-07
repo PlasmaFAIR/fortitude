@@ -107,7 +107,8 @@ snapshot_kind: text
    |  ________________^
 29 | |     print *, "foo"; end do
    | |__________________^ C152
-30 |   end program p
+30 |
+31 |     ! Permit multi-line conditions
    |
    = help: Convert to `if(...) then` block
 
@@ -120,4 +121,30 @@ snapshot_kind: text
    28 |+  do i = 1, 3; if (i == 2) then
    29 |+    print *, "foo"
    30 |+  end if; end do
-30 31 | end program p
+30 31 | 
+31 32 |   ! Permit multi-line conditions
+32 33 |   if (condition &
+
+./resources/test/fixtures/correctness/C152.f90:36:3: C152 [*] Line continuation in inline if-statement is misleading
+   |
+35 |     ! ... but not if the body is also multi-line
+36 | /   if (condition &
+37 | |       .and. i > 0) print *, &
+38 | |         "Hello world!"
+   | |______________________^ C152
+39 |
+40 |   end program p
+   |
+   = help: Convert to `if(...) then` block
+
+ℹ Safe fix
+34 34 | 
+35 35 |   ! ... but not if the body is also multi-line
+36 36 |   if (condition &
+37    |-      .and. i > 0) print *, &
+   37 |+      .and. i > 0) then
+   38 |+    print *, &
+38 39 |         "Hello world!"
+   40 |+  end if
+39 41 | 
+40 42 | end program p

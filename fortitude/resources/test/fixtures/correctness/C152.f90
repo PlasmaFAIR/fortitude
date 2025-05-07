@@ -27,4 +27,14 @@ program p
   ! Some cases might result in weird indentation.
   do i = 1, 3; if (i == 2) &
     print *, "foo"; end do
+
+  ! Permit multi-line conditions
+  if (condition &
+      .and. i > 0) print *, "Hello world!"
+
+  ! ... but not if the body is also multi-line
+  if (condition &
+      .and. i > 0) print *, &
+        "Hello world!"
+
 end program p
