@@ -149,13 +149,11 @@ impl AstRule for MisleadingInlineIfContinuation {
             return None;
         }
 
-        // Check if the if body is on different line than the end of the condition
-        let condition_end_line = node
+        // Check if the condition is immediately following by a continuation
+        let body_start = node
             .child_with_name("parenthesized_expression")?
-            .end_position()
-            .row;
-        let if_end_line = node.end_position().row;
-        if if_end_line > condition_end_line {
+            .next_sibling()?;
+        if body_start.kind() == "&" {
             let content = ifthenify(node, src)?;
             let start_byte = node.start_textsize();
             let end_byte = node.end_textsize();

@@ -3,148 +3,100 @@ source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C152.f90:6:3: C152 [*] Line continuation in inline if-statement is misleading
-  |
-4 |     integer :: i
-5 |
-6 | /   if (condition) &
-7 | |       print *, "Hello"
-  | |______________________^ C152
-8 |         print *, "World!"
-  |
-  = help: Convert to `if(...) then` block
-
-ℹ Safe fix
-3 3 |   logical, parameter :: condition = .false.
-4 4 |   integer :: i
-5 5 | 
-6   |-  if (condition) &
-7   |-      print *, "Hello"
-  6 |+  if (condition) then
-  7 |+    print *, "Hello"
-  8 |+  end if
-8 9 |       print *, "World!"
-9 10 | 
-10 11 |   if (condition) &
-
-./resources/test/fixtures/correctness/C152.f90:10:3: C152 [*] Line continuation in inline if-statement is misleading
+./resources/test/fixtures/correctness/C152.f90:25:3: C152 [*] Line continuation in inline if-statement is misleading
    |
- 8 |         print *, "World!"
- 9 |
-10 | /   if (condition) &
-11 | |       print *, "Hello"; print *, "World!"
+24 |     ! Raise an error if the body is on a new line.
+25 | /   if (condition) &
+26 | |       print *, "Hello"
    | |______________________^ C152
-12 |
-13 |     if (condition) print *, &
+27 |         print *, "World!"
    |
    = help: Convert to `if(...) then` block
 
 ℹ Safe fix
-7  7  |       print *, "Hello"
-8  8  |       print *, "World!"
-9  9  | 
-10    |-  if (condition) &
-11    |-      print *, "Hello"; print *, "World!"
-   10 |+  if (condition) then
-   11 |+    print *, "Hello"
-   12 |+  end if; print *, "World!"
-12 13 | 
-13 14 |   if (condition) print *, &
-14 15 |     "Hello world!"
+22 22 |       "Hello world!"; end if
+23 23 | 
+24 24 |   ! Raise an error if the body is on a new line.
+25    |-  if (condition) &
+26    |-      print *, "Hello"
+   25 |+  if (condition) then
+   26 |+    print *, "Hello"
+   27 |+  end if
+27 28 |       print *, "World!"
+28 29 | 
+29 30 |   ! Misleading semicolons: the second statement in the body should be placed
 
-./resources/test/fixtures/correctness/C152.f90:13:3: C152 [*] Line continuation in inline if-statement is misleading
+./resources/test/fixtures/correctness/C152.f90:31:3: C152 [*] Line continuation in inline if-statement is misleading
    |
-11 |         print *, "Hello"; print *, "World!"
-12 |
-13 | /   if (condition) print *, &
-14 | |     "Hello world!"
-   | |__________________^ C152
-15 |
-16 |     if (condition) print *, &
-   |
-   = help: Convert to `if(...) then` block
-
-ℹ Safe fix
-10 10 |   if (condition) &
-11 11 |       print *, "Hello"; print *, "World!"
-12 12 | 
-13    |-  if (condition) print *, &
-   13 |+  if (condition) then
-   14 |+    print *, &
-14 15 |     "Hello world!"
-   16 |+  end if
-15 17 | 
-16 18 |   if (condition) print *, &
-17 19 |      & "Hello"
-
-./resources/test/fixtures/correctness/C152.f90:16:3: C152 [*] Line continuation in inline if-statement is misleading
-   |
-14 |       "Hello world!"
-15 |
-16 | /   if (condition) print *, &
-17 | |      & "Hello"
-   | |______________^ C152
+29 |     ! Misleading semicolons: the second statement in the body should be placed
+30 |     ! after the `end if` in the fix.
+31 | /   if (condition) &
+32 | |       print *, "Hello"; print *, "World!"
+   | |______________________^ C152
+33 |
+34 |     ! Permit body split across multiple lines.
    |
    = help: Convert to `if(...) then` block
 
 ℹ Safe fix
-13 13 |   if (condition) print *, &
-14 14 |     "Hello world!"
-15 15 | 
-16    |-  if (condition) print *, &
-   16 |+  if (condition) then
-   17 |+    print *, &
-17 18 |      & "Hello"
-   19 |+  end if
-18 20 | 
-19 21 | 
-20 22 |   ! Inline if statements on a single line are permitted.
+28 28 | 
+29 29 |   ! Misleading semicolons: the second statement in the body should be placed
+30 30 |   ! after the `end if` in the fix.
+31    |-  if (condition) &
+32    |-      print *, "Hello"; print *, "World!"
+   31 |+  if (condition) then
+   32 |+    print *, "Hello"
+   33 |+  end if; print *, "World!"
+33 34 | 
+34 35 |   ! Permit body split across multiple lines.
+35 36 |   if (condition) print *, &
 
-./resources/test/fixtures/correctness/C152.f90:28:16: C152 [*] Line continuation in inline if-statement is misleading
+./resources/test/fixtures/correctness/C152.f90:47:3: C152 [*] Line continuation in inline if-statement is misleading
    |
-27 |     ! Some cases might result in weird indentation.
-28 |     do i = 1, 3; if (i == 2) &
+46 |     ! ... but not if the body starts on a new line
+47 | /   if (condition &
+48 | |       .and. i > 0) &
+49 | |         print *, "Hello world!"
+   | |_______________________________^ C152
+50 |
+51 |     ! Some cases might result in weird indentation.
+   |
+   = help: Convert to `if(...) then` block
+
+ℹ Safe fix
+45 45 | 
+46 46 |   ! ... but not if the body starts on a new line
+47 47 |   if (condition &
+48    |-      .and. i > 0) &
+49    |-        print *, "Hello world!"
+   48 |+      .and. i > 0) then
+   49 |+    print *, "Hello world!"
+   50 |+  end if
+50 51 | 
+51 52 |   ! Some cases might result in weird indentation.
+52 53 |   do i = 1, 3; if (i == 2) &
+
+./resources/test/fixtures/correctness/C152.f90:52:16: C152 [*] Line continuation in inline if-statement is misleading
+   |
+51 |     ! Some cases might result in weird indentation.
+52 |     do i = 1, 3; if (i == 2) &
    |  ________________^
-29 | |     print *, "foo"; end do
+53 | |     print *, "foo"; end do
    | |__________________^ C152
-30 |
-31 |     ! Permit multi-line conditions
+54 |
+55 |     ! We don't handle misleading semicolons here.
    |
    = help: Convert to `if(...) then` block
 
 ℹ Safe fix
-25 25 |     print *, "baz"
-26 26 | 
-27 27 |   ! Some cases might result in weird indentation.
-28    |-  do i = 1, 3; if (i == 2) &
-29    |-    print *, "foo"; end do
-   28 |+  do i = 1, 3; if (i == 2) then
-   29 |+    print *, "foo"
-   30 |+  end if; end do
-30 31 | 
-31 32 |   ! Permit multi-line conditions
-32 33 |   if (condition &
-
-./resources/test/fixtures/correctness/C152.f90:36:3: C152 [*] Line continuation in inline if-statement is misleading
-   |
-35 |     ! ... but not if the body is also multi-line
-36 | /   if (condition &
-37 | |       .and. i > 0) print *, &
-38 | |         "Hello world!"
-   | |______________________^ C152
-39 |
-40 |   end program p
-   |
-   = help: Convert to `if(...) then` block
-
-ℹ Safe fix
-34 34 | 
-35 35 |   ! ... but not if the body is also multi-line
-36 36 |   if (condition &
-37    |-      .and. i > 0) print *, &
-   37 |+      .and. i > 0) then
-   38 |+    print *, &
-38 39 |         "Hello world!"
-   40 |+  end if
-39 41 | 
-40 42 | end program p
+49 49 |         print *, "Hello world!"
+50 50 | 
+51 51 |   ! Some cases might result in weird indentation.
+52    |-  do i = 1, 3; if (i == 2) &
+53    |-    print *, "foo"; end do
+   52 |+  do i = 1, 3; if (i == 2) then
+   53 |+    print *, "foo"
+   54 |+  end if; end do
+54 55 | 
+55 56 |   ! We don't handle misleading semicolons here.
+56 57 |   if (condition) print *, "foo"; print *, "bar"; &
