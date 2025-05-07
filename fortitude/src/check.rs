@@ -227,7 +227,7 @@ pub(crate) fn check_path(
     // Perform AST analysis
     let root = tree.root_node();
     for node in once(root).chain(root.descendants()) {
-        if node.is_missing() {
+        if rules.enabled(Rule::SyntaxError) && node.is_missing() {
             violations.push(Diagnostic::from_node(SyntaxError {}, &node));
         }
 
