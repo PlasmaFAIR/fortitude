@@ -18,7 +18,7 @@ languages). Unfortunately, any `else` branches may need to be duplicated or
 refactored to accommodate this change.
 
 This lack of short-circuiting also affects other inquiry functions such as
-`associated` and `allocated`.
+`associated` and `allocated` which are used to guard invalid accesses.
 
 ## Example
 Don't do this:

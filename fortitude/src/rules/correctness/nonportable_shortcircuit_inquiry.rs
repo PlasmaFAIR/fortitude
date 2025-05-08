@@ -25,7 +25,7 @@ use tree_sitter::Node;
 /// refactored to accommodate this change.
 ///
 /// This lack of short-circuiting also affects other inquiry functions such as
-/// `associated` and `allocated`.
+/// `associated` and `allocated` which are used to guard invalid accesses.
 ///
 /// ## Example
 /// Don't do this:
@@ -75,6 +75,7 @@ use tree_sitter::Node;
 #[derive(ViolationMetadata)]
 pub(crate) struct NonportableShortcircuitInquiry {
     arg: String,
+    function: String,
     // Useful for when we get multiple notes in DiagnosticMessages
     #[allow(dead_code)]
     present: TextRange,
@@ -83,8 +84,8 @@ pub(crate) struct NonportableShortcircuitInquiry {
 impl Violation for NonportableShortcircuitInquiry {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { arg, .. } = self;
-        format!("variable inquiry `present({arg})` and use in same logical expression")
+        let Self { arg, function, .. } = self;
+        format!("variable inquiry `{function}({arg})` and use in same logical expression")
     }
 }
 
@@ -94,14 +95,19 @@ struct PresentCall {
     pub arg: String,
 }
 
-fn present_call(expr: &Node, src: &str) -> Option<PresentCall> {
+fn present_call(expr: &Node, src: &str, function: &str) -> Option<PresentCall> {
     if expr.kind() != "call_expression" {
         return None;
     }
-    if expr.child(0)?.to_text(src)?.to_lowercase() != "present" {
+    if expr.child(0)?.to_text(src)?.to_lowercase() != function {
         return None;
     }
     let arg_list = expr.child_with_name("argument_list")?;
+    // Make sure we skip the two-arg version of `associated`
+    // Length 3: "(", "identifier, ")"
+    if arg_list.children(&mut arg_list.walk()).len() != 3 {
+        return None;
+    }
 
     let identifier = arg_list.child_with_name("identifier")?;
     let arg = identifier.to_text(src)?.to_lowercase().to_string();
@@ -121,40 +127,56 @@ impl AstRule for NonportableShortcircuitInquiry {
         let expr = node.child(1)?;
         let text = src.source_text();
 
-        // First find all the `present(foo)` calls
-        let calls = expr
-            .descendants()
-            .filter_map(|e| present_call(&e, text))
+        let violations = ["present", "allocated", "associated"]
+            .iter()
+            .flat_map(|function| find_nonportable_shortcircuits(&expr, text, function))
             .collect_vec();
 
-        // Now check if any identifier appears in this `if` statement
-        // that is an argument of a `present()` call
-        let violations = expr
-            .descendants()
-            .filter(|node| {
-                // Filter out any nodes that overlap one of the
-                // `present()` calls we found. This stops us catching
-                // multiple `present()` calls with the same argument
-                !calls
-                    .iter()
-                    .any(|call| call.range.contains(node.start_textsize()))
-            })
-            .filter(|expr| expr.kind() == "identifier")
-            .filter_map(|expr| {
-                // Now check if this identifier matches any in the `present()` calls
-                let id = expr.to_text(text).unwrap_or_default().to_lowercase();
-                if let Some(PresentCall { range, .. }) = calls.iter().find(|call| call.arg == id) {
-                    Some((expr, id, range))
-                } else {
-                    None
-                }
-            })
-            .map(|(node, arg, &present)| Diagnostic::from_node(Self { arg, present }, &node))
-            .collect_vec();
         Some(violations)
     }
 
     fn entrypoints() -> Vec<&'static str> {
         vec!["if_statement"]
     }
+}
+
+fn find_nonportable_shortcircuits(node: &Node, text: &str, function: &str) -> Vec<Diagnostic> {
+    // First find all the `present(foo)` calls
+    let calls = node
+        .descendants()
+        .filter_map(|e| present_call(&e, text, function))
+        .collect_vec();
+
+    // Now check if any identifier appears in this `if` statement
+    // that is an argument of a `present()` call
+    node.descendants()
+        .filter(|node| {
+            // Filter out any nodes that overlap one of the
+            // `present()` calls we found. This stops us catching
+            // multiple `present()` calls with the same argument
+            !calls
+                .iter()
+                .any(|call| call.range.contains(node.start_textsize()))
+        })
+        .filter(|expr| expr.kind() == "identifier")
+        .filter_map(|expr| {
+            // Now check if this identifier matches any in the `present()` calls
+            let id = expr.to_text(text).unwrap_or_default().to_lowercase();
+            if let Some(PresentCall { range, .. }) = calls.iter().find(|call| call.arg == id) {
+                Some((expr, id, range))
+            } else {
+                None
+            }
+        })
+        .map(|(node, arg, &present)| {
+            Diagnostic::from_node(
+                NonportableShortcircuitInquiry {
+                    arg,
+                    function: function.to_string(),
+                    present,
+                },
+                &node,
+            )
+        })
+        .collect_vec()
 }

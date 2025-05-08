@@ -3,22 +3,82 @@ source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C161.f90:11:29: C161 variable inquiry `present(arg1)` and use in same logical expression
+./resources/test/fixtures/correctness/C161.f90:13:29: C161 variable inquiry `present(arg1)` and use in same logical expression
    |
- 9 |     end if
-10 |
-11 |     if (present(arg1) .and. arg1 > 1) then
+11 |     end if
+12 |
+13 |     if (present(arg1) .and. arg1 > 1) then
    |                             ^^^^ C161
-12 |       bad = .true.
-13 |     end if
+14 |       bad = .true.
+15 |     end if
    |
 
-./resources/test/fixtures/correctness/C161.f90:19:35: C161 variable inquiry `present(arg2)` and use in same logical expression
+./resources/test/fixtures/correctness/C161.f90:21:35: C161 variable inquiry `present(arg2)` and use in same logical expression
    |
-17 |     end if
-18 |
-19 |     if (present(arg2) .and. (size(arg2) > 4)) then
+19 |     end if
+20 |
+21 |     if (present(arg2) .and. (size(arg2) > 4)) then
    |                                   ^^^^ C161
-20 |       bad = .true.
-21 |     end if
+22 |       bad = .true.
+23 |     end if
+   |
+
+./resources/test/fixtures/correctness/C161.f90:33:40: C161 variable inquiry `present(arg1)` and use in same logical expression
+   |
+31 |     end if
+32 |
+33 |     if (present(arg1) .and. associated(arg1)) then
+   |                                        ^^^^ C161
+34 |       bad = .true.
+35 |     end if
+   |
+
+./resources/test/fixtures/correctness/C161.f90:33:17: C161 variable inquiry `associated(arg1)` and use in same logical expression
+   |
+31 |     end if
+32 |
+33 |     if (present(arg1) .and. associated(arg1)) then
+   |                 ^^^^ C161
+34 |       bad = .true.
+35 |     end if
+   |
+
+./resources/test/fixtures/correctness/C161.f90:42:32: C161 variable inquiry `associated(arg1)` and use in same logical expression
+   |
+40 |     end if
+41 |
+42 |     if (associated(arg1) .and. arg1 > 1) then
+   |                                ^^^^ C161
+43 |       bad = .true.
+44 |     end if
+   |
+
+./resources/test/fixtures/correctness/C161.f90:46:26: C161 variable inquiry `present(arg2)` and use in same logical expression
+   |
+44 |     end if
+45 |
+46 |     if ((.not. allocated(arg2)) .or. (.not. present(arg2))) then
+   |                          ^^^^ C161
+47 |       bad = .true.
+48 |     end if
+   |
+
+./resources/test/fixtures/correctness/C161.f90:46:53: C161 variable inquiry `allocated(arg2)` and use in same logical expression
+   |
+44 |     end if
+45 |
+46 |     if ((.not. allocated(arg2)) .or. (.not. present(arg2))) then
+   |                                                     ^^^^ C161
+47 |       bad = .true.
+48 |     end if
+   |
+
+./resources/test/fixtures/correctness/C161.f90:50:36: C161 variable inquiry `allocated(arg2)` and use in same logical expression
+   |
+48 |     end if
+49 |
+50 |     if (allocated(arg2) .and. size(arg2) > 1) then
+   |                                    ^^^^ C161
+51 |       bad = .true.
+52 |     end if
    |
