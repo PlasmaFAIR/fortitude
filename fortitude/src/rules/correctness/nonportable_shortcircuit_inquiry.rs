@@ -9,8 +9,7 @@ use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
 /// ## What it does
-/// Checks for use of optional dummy arguments in the same logical expression as
-/// `present(<arg>)`.
+/// Checks for use of a variable in the same logical expression as "definedness" inquiry.
 ///
 /// ## Why is this bad?
 /// Unlike many other languages, the Fortran standard doesn't mandate (or prohibit)
@@ -25,6 +24,9 @@ use tree_sitter::Node;
 /// languages). Unfortunately, any `else` branches may need to be duplicated or
 /// refactored to accommodate this change.
 ///
+/// This lack of short-circuiting also affects other inquiry functions such as
+/// `associated` and `allocated`.
+///
 /// ## Example
 /// Don't do this:
 /// ```f90
@@ -37,6 +39,8 @@ use tree_sitter::Node;
 ///     example = 1
 ///   end if
 /// ```
+/// The compiler may or may not evaluate `arg1 > 2` _even if_ `present(arg1)` is
+/// false. This is a runtime error, and may crash your program.
 ///
 /// Use instead, noting that we either need to duplicate the `else` branch, or refactor
 /// differently:
@@ -62,24 +66,25 @@ use tree_sitter::Node;
 ///
 ///   example = present(arg1) ? (arg1 > 2 ? arg1 * arg1 : 1) : 1
 /// ```
-/// Note that it's still not possible to use a compound logical expression here, so we
-/// still duplicate the default value.
+/// Note that although the true/false arms of the conditional-expression are lazily
+/// evaluated, it's still not possible to use a compound logical expression here, so we
+/// still must have a nested expression and duplicate the default value.
 ///
 /// ## References
 /// - <https://www.scivision.dev/fortran-short-circuit-logic/>
 #[derive(ViolationMetadata)]
-pub(crate) struct BugproneOrderOfEvaluation {
+pub(crate) struct NonportableShortcircuitInquiry {
     arg: String,
     // Useful for when we get multiple notes in DiagnosticMessages
     #[allow(dead_code)]
     present: TextRange,
 }
 
-impl Violation for BugproneOrderOfEvaluation {
+impl Violation for NonportableShortcircuitInquiry {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { arg, .. } = self;
-        format!("use of optional `{arg}` in same logical expression as `present({arg})`")
+        format!("variable inquiry `present({arg})` and use in same logical expression")
     }
 }
 
@@ -107,7 +112,7 @@ fn present_call(expr: &Node, src: &str) -> Option<PresentCall> {
     })
 }
 
-impl AstRule for BugproneOrderOfEvaluation {
+impl AstRule for NonportableShortcircuitInquiry {
     fn check<'a>(
         _settings: &Settings,
         node: &'a Node,

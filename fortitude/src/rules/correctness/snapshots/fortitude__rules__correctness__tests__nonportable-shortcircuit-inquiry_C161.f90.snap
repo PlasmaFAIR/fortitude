@@ -3,7 +3,7 @@ source: fortitude/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C161.f90:11:29: C161 use of optional `arg1` in same logical expression as `present(arg1)`
+./resources/test/fixtures/correctness/C161.f90:11:29: C161 variable inquiry `present(arg1)` and use in same logical expression
    |
  9 |     end if
 10 |
@@ -13,7 +13,7 @@ snapshot_kind: text
 13 |     end if
    |
 
-./resources/test/fixtures/correctness/C161.f90:19:35: C161 use of optional `arg2` in same logical expression as `present(arg2)`
+./resources/test/fixtures/correctness/C161.f90:19:35: C161 variable inquiry `present(arg2)` and use in same logical expression
    |
 17 |     end if
 18 |
