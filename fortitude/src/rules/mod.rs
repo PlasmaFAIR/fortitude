@@ -104,6 +104,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "143") => (RuleGroup::Preview, Ast, Default, correctness::exit_labels::MissingEndLabel),
         (Correctness, "151") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::IfStatementSemicolon),
         (Correctness, "152") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::MisleadingInlineIfContinuation),
+        (Correctness, "161") => (RuleGroup::Preview, Ast, Default, correctness::nonportable_shortcircuit_inquiry::NonportableShortcircuitInquiry),
 
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),
