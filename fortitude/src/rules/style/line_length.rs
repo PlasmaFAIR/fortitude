@@ -23,6 +23,10 @@ use ruff_text_size::{TextLen, TextRange, TextSize};
 /// difficult to squeeze lines into that width, especially when using large indents
 /// and multiple levels of indentation.
 ///
+/// Some lines that are longer than the maximum length may be acceptable, such as
+/// long strings or comments. This is to allow for long URLs or other text that cannot
+/// be reasonably split across multiple lines.
+///
 /// Note that the Fortran standard states a maximum line length of 132 characters,
 /// and while some modern compilers will support longer lines, for portability it
 /// is recommended to stay beneath this limit.
