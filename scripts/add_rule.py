@@ -36,6 +36,7 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
 
     plugin_module = ROOT_DIR / "fortitude/src/rules" / dir_name(category)
     rule_name_snake = snake_case(name)
+    new_mod = f"pub mod {rule_name_snake};\n"
 
     # Add the relevant `#testcase` macro.
     mod_rs = plugin_module / "mod.rs"
@@ -43,8 +44,13 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
 
     with mod_rs.open("w") as fp:
         has_added_testcase = False
+        has_added_mod = False
         lines = []
         for line in content.splitlines():
+            if not has_added_mod and not line.startswith("pub mod"):
+                fp.write(new_mod)
+                has_added_mod = True
+
             if not has_added_testcase and (
                 line.strip() == "fn rules(rule_code: Rule, path: &Path) -> Result<()> {"
             ):
@@ -67,30 +73,8 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
             else:
                 lines.append(line)
 
-    # Add the exports
     rules_dir = plugin_module
     rules_mod = rules_dir / "mod.rs"
-
-    contents = rules_mod.read_text()
-    parts = contents.split("\n\n")
-
-    new_pub_use = f"pub(crate) use {rule_name_snake}::*"
-    new_mod = f"mod {rule_name_snake};"
-
-    if len(parts) == 2:
-        new_contents = parts[0]
-        new_contents += "\n" + new_pub_use + ";"
-        new_contents += "\n\n"
-        new_contents += parts[1] + new_mod
-        new_contents += "\n"
-
-        rules_mod.write_text(new_contents)
-    else:
-        with rules_mod.open("a") as fp:
-            fp.write(f"{new_pub_use};")
-            fp.write("\n\n")
-            fp.write(f"{new_mod}")
-            fp.write("\n")
 
     # Add the relevant rule function.
     with (rules_dir / f"{rule_name_snake}.rs").open("w") as fp:
@@ -154,7 +138,7 @@ impl AstRule for {name} {{
 
         variant = pascal_case(category)
         linter_name = category.split(" ")[0].replace("-", "_")
-        rule = f"""rules::{linter_name}::rules::{name}"""
+        rule = f"""{linter_name}::{rule_name_snake}::{name}"""
         lines.append(
             " " * 8 + f"""({variant}, "{code}") => (RuleGroup::Preview, Ast, Optional, {rule}),\n""",
         )
