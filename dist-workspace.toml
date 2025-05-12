@@ -53,3 +53,19 @@ pr-run-mode = "skip"
 dispatch-releases = true
 # Which phase dist should use to create the GitHub release
 github-release = "announce"
+
+[dist.github-custom-runners]
+# Use an `ubuntu-latest` runner for all "global" steps of the release process,
+# rather than cargo-dist's default of using the oldest possible Linux runner.
+# This includes `plan`, `build-global-artifacts`, `host`, and `announce`, none
+# of which actually rely on the specific Linux version.
+global = "ubuntu-latest"
+
+[dist.github-custom-runners.aarch64-pc-windows-msvc]
+# This setup is nearly identical to specifying nothing, but dist defaults to the oldest possible
+# ubuntu runner, and is sometimes slow to update when they are EOL-ed by GitHub. We use a container,
+# so we can use latest and not have to worry about their EOL.
+# https://github.com/axodotdev/cargo-dist/blob/c8ba950c63f9c38c77782912ec6cdb6807bd0fbd/cargo-dist/src/backend/ci/github.rs#L678-L688
+runner = "ubuntu-latest"
+host = "x86_64-unknown-linux-gnu"
+container = { image = "messense/cargo-xwin", host = "x86_64-unknown-linux-musl", package_manager = "apt" }
