@@ -102,7 +102,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "141") => (RuleGroup::Stable, Ast, Default, correctness::exit_labels::MissingExitOrCycleLabel),
         (Correctness, "142") => (RuleGroup::Preview, Ast, Optional, correctness::exit_labels::ExitOrCycleInUnlabelledLoop),
         (Correctness, "143") => (RuleGroup::Preview, Ast, Default, correctness::exit_labels::MissingEndLabel),
-        (Correctness, "151") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::IfStatementSemicolon),
+        (Correctness, "151") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::MisleadingInlineIfSemicolon),
         (Correctness, "152") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::MisleadingInlineIfContinuation),
         (Correctness, "161") => (RuleGroup::Preview, Ast, Default, correctness::nonportable_shortcircuit_inquiry::NonportableShortcircuitInquiry),
 

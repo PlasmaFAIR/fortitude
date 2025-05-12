@@ -60,7 +60,7 @@ mod tests {
     #[test_case(Rule::MissingExitOrCycleLabel, Path::new("C141.f90"))]
     #[test_case(Rule::ExitOrCycleInUnlabelledLoop, Path::new("C142.f90"))]
     #[test_case(Rule::MissingEndLabel, Path::new("C143.f90"))]
-    #[test_case(Rule::IfStatementSemicolon, Path::new("C151.f90"))]
+    #[test_case(Rule::MisleadingInlineIfSemicolon, Path::new("C151.f90"))]
     #[test_case(Rule::MisleadingInlineIfContinuation, Path::new("C152.f90"))]
     #[test_case(Rule::NonportableShortcircuitInquiry, Path::new("C161.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
