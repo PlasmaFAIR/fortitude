@@ -13,6 +13,7 @@ pub mod magic_numbers;
 pub mod missing_io_specifier;
 pub mod nonportable_shortcircuit_inquiry;
 pub mod select_default;
+pub mod split_escaped_quote;
 pub mod trailing_backslash;
 pub mod use_statements;
 
@@ -63,6 +64,7 @@ mod tests {
     #[test_case(Rule::MisleadingInlineIfSemicolon, Path::new("C151.f90"))]
     #[test_case(Rule::MisleadingInlineIfContinuation, Path::new("C152.f90"))]
     #[test_case(Rule::NonportableShortcircuitInquiry, Path::new("C161.f90"))]
+    #[test_case(Rule::SplitEscapedQuote, Path::new("C171.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
