@@ -1,4 +1,4 @@
-# if-statement-semicolon (C151)
+# misleading-inline-if-semicolon (C151)
 Fix is always available.
 
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.

@@ -37,9 +37,9 @@ use tree_sitter::Node;
 /// end if
 /// ```
 #[derive(ViolationMetadata)]
-pub(crate) struct IfStatementSemicolon {}
+pub(crate) struct MisleadingInlineIfSemicolon {}
 
-impl AlwaysFixableViolation for IfStatementSemicolon {
+impl AlwaysFixableViolation for MisleadingInlineIfSemicolon {
     #[derive_message_formats]
     fn message(&self) -> String {
         "Semicolon following inline if-statement is misleading".to_string()
@@ -49,7 +49,7 @@ impl AlwaysFixableViolation for IfStatementSemicolon {
         "Replace with newline, or convert to `if(...) then` statement".to_string()
     }
 }
-impl AstRule for IfStatementSemicolon {
+impl AstRule for MisleadingInlineIfSemicolon {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // If this is an `if (...) then` construct, exit early
         if !inline_if_statement(node) {
@@ -86,10 +86,11 @@ impl AstRule for IfStatementSemicolon {
             let end = TextSize::try_from(end).unwrap();
             let indentation = node.indentation(src);
             let edit = Edit::replacement(format!("\n{indentation}"), start, end);
-            return some_vec!(
-                Diagnostic::from_node(IfStatementSemicolon {}, &semicolon_node)
-                    .with_fix(Fix::safe_edit(edit))
-            );
+            return some_vec!(Diagnostic::from_node(
+                MisleadingInlineIfSemicolon {},
+                &semicolon_node
+            )
+            .with_fix(Fix::safe_edit(edit)));
         }
         None
     }
