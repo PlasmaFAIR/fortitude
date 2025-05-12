@@ -11,6 +11,7 @@ This release adds 5 new rules along with some minor bug fixes and other improvem
 - Add rule `misleading-inline-if-semicolon` ([#426](https://github.com/PlasmaFAIR/fortitude/pull/426))
 - Add rule `misleading-inline-if-continuation` ([#428](https://github.com/PlasmaFAIR/fortitude/pull/428))
 - Add rule `nonportable-shortcircuit-inquiry` ([#431](https://github.com/PlasmaFAIR/fortitude/pull/431))
+- Add rule `split-escaped-quote` ([#438](https://github.com/PlasmaFAIR/fortitude/pull/438))
 - Permit `value` dummy args in `missing-intent` ([#421](https://github.com/PlasmaFAIR/fortitude/pull/421))
 
 ### Bug fixes
