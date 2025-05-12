@@ -41,6 +41,7 @@
 | C151 | [if-statement-semicolon](rules/if-statement-semicolon.md) | Semicolon following inline if-statement is misleading | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C152 | [misleading-inline-if-continuation](rules/misleading-inline-if-continuation.md) | Line continuation in inline if-statement is misleading | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C161 | [nonportable-shortcircuit-inquiry](rules/nonportable-shortcircuit-inquiry.md) | variable inquiry `{function}({arg})` and use in same logical expression | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| C171 | [split-escaped-quote](rules/split-escaped-quote.md) | line continuation in split escaped quote looks like implicit concatenation | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Obsolescent (OB)
 
