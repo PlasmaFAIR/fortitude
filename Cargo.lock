@@ -434,7 +434,7 @@ dependencies = [
 
 [[package]]
 name = "fortitude"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "annotate-snippets",
  "anyhow",

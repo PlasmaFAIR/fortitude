@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "fortitude-lint"
-version = "0.7.2"
+version = "0.7.3"
 description = "A Fortran linter, written in Rust and installable with Python"
 readme = "README.md"
 authors = [
