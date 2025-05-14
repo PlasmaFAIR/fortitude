@@ -74,8 +74,6 @@ impl AstRule for UnnamedEndStatement {
         node: &'a Node,
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {
-        // TODO Also check for optionally labelled constructs like 'do' or 'select'
-
         // If end node is named, move on.
         // Not catching incorrect end statement name here, as the compiler should
         // do that for us.
