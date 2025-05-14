@@ -93,7 +93,17 @@ impl AstRule for UnnamedEndStatement {
             .to_text(src.source_text())?
             .to_string();
         let statement = statement.to_string();
-        let replacement = format!("end {statement} {name}");
+
+        // Preserve existing case of end statement
+        let text = node.to_text(src.source_text())?;
+        let is_lower_case = text == text.to_lowercase();
+        let end_statement = if is_lower_case {
+            format!("end {statement}")
+        } else {
+            format!("end {statement}").to_uppercase()
+        };
+
+        let replacement = format!("{end_statement} {name}");
         let fix = Fix::safe_edit(node.edit_replacement(src, replacement));
         some_vec![Diagnostic::from_node(Self { statement, name }, node).with_fix(fix)]
     }
