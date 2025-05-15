@@ -1,7 +1,7 @@
-use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
-use ruff_text_size::TextSize;
+use ruff_text_size::{TextLen, TextSize};
 use settings::Quote;
 use tree_sitter::Node;
 
@@ -112,6 +112,150 @@ impl AstRule for BadQuoteString {
     }
 }
 
+/// ## What it does
+/// Checks for strings that include escaped quotes that can be removed if the
+/// quote style is changed.
+///
+/// ## Why is this bad?
+/// It's preferable to avoid escaped quotes in strings. By changing the
+/// outer quote style, you can avoid escaping inner quotes.
+///
+/// ## Example
+/// ```f90
+/// foo = 'bar''s'
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// foo = "bar's"
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct AvoidableEscapedQuote;
+
+impl AlwaysFixableViolation for AvoidableEscapedQuote {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Change outer quotes to avoid escaping inner quotes".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "Change outer quotes to avoid escaping inner quotes".to_string()
+    }
+}
+
+impl AstRule for AvoidableEscapedQuote {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
+        let text = node.to_text(src.source_text())?;
+
+        let first_quote = text.chars().nth(0)?;
+        let quote_style =
+            Quote::try_from(first_quote).expect("string literal doesn't begin with a quote");
+
+        if !text.contains(quote_style.escaped()) || text.contains(quote_style.opposite().as_char())
+        {
+            return None;
+        }
+
+        let end = text.text_len() - TextSize::new(1);
+        let contents = &text[1..end.to_usize()];
+        let fixed = format!(
+            "{quote}{value}{quote}",
+            quote = quote_style.opposite().as_char(),
+            value = unescape_string(contents, quote_style.as_char())
+        );
+
+        let edit = node.edit_replacement(src, fixed);
+        some_vec!(Diagnostic::from_node(Self, node).with_fix(Fix::safe_edit(edit)))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["string_literal"]
+    }
+}
+
+/// ## What it does
+/// Checks for strings that include unnecessarily escaped quotes.
+///
+/// ## Why is this bad?
+/// If a string contains an escaped quote that doesn't match the quote
+/// character used for the string, it's unnecessary and can be removed.
+///
+/// ## Example
+/// ```f90
+/// foo = "bar''s"
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// foo = "bar's"
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct UnnecessaryEscapedQuote;
+
+impl AlwaysFixableViolation for UnnecessaryEscapedQuote {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Unnecessary escaped quote character".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "Remove second quote character".to_string()
+    }
+}
+
+impl AstRule for UnnecessaryEscapedQuote {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
+        let text = node.to_text(src.source_text())?;
+
+        let first_quote = text.chars().nth(0)?;
+        let quote_style =
+            Quote::try_from(first_quote).expect("string literal doesn't begin with a quote");
+
+        if !text.contains(quote_style.opposite().escaped()) {
+            return None;
+        }
+
+        let fixed = unescape_string(text, quote_style.opposite().as_char());
+        let edit = node.edit_replacement(src, fixed);
+        some_vec!(Diagnostic::from_node(Self, node).with_fix(Fix::safe_edit(edit)))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["string_literal"]
+    }
+}
+
+fn unescape_string(haystack: &str, quote: char) -> String {
+    let mut fixed_contents = String::with_capacity(haystack.len());
+
+    let mut chars = haystack.chars().peekable();
+    while let Some(char_) = chars.next() {
+        if char_ != quote {
+            fixed_contents.push(char_);
+            continue;
+        }
+        // If we're at the end of the line
+        let Some(next_char) = chars.peek() else {
+            fixed_contents.push(char_);
+            continue;
+        };
+        // Remove quote escape
+        if *next_char == quote {
+            continue;
+        }
+        fixed_contents.push(char_);
+    }
+    fixed_contents
+}
+
 pub(crate) mod settings {
     use crate::display_settings;
     use ruff_macros::CacheKey;
@@ -130,6 +274,18 @@ pub(crate) mod settings {
     impl Default for Quote {
         fn default() -> Self {
             Self::Double
+        }
+    }
+
+    impl TryFrom<char> for Quote {
+        type Error = &'static str;
+
+        fn try_from(value: char) -> Result<Self, Self::Error> {
+            match value {
+                '"' => Ok(Self::Double),
+                '\'' => Ok(Self::Single),
+                _ => Err("not a quote"),
+            }
         }
     }
 
