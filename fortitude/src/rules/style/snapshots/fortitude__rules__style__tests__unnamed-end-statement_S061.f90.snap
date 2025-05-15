@@ -211,7 +211,7 @@ snapshot_kind: text
 89 |   SUBROUTINE MYSUB1()
 90 |     WRITE (*,*) 'HELLO WORLD'
    |
-   = help: Write as 'end type MYTYPE'.
+   = help: Write as 'END TYPE MYTYPE'.
 
 ℹ Safe fix
 84 84 |   TYPE MYTYPE
@@ -233,7 +233,7 @@ snapshot_kind: text
 94 |     WRITE (*,*) 'HELLO WORLD'
 95 |     ! IGNORE THIS
    |
-   = help: Write as 'end subroutine MYSUB1'.
+   = help: Write as 'END SUBROUTINE MYSUB1'.
 
 ℹ Safe fix
 89 89 |   SUBROUTINE MYSUB1()
@@ -255,7 +255,7 @@ snapshot_kind: text
 100 |   IMPLICIT NONE
 101 |   TYPE MYTYPE
     |
-    = help: Write as 'end module MYMOD1_UPPER'.
+    = help: Write as 'END MODULE MYMOD1_UPPER'.
 
 ℹ Safe fix
 95 95 |     ! IGNORE THIS
@@ -277,7 +277,7 @@ snapshot_kind: text
 111 |     MYFUNC2 = 1
 112 |     ! IGNORE THIS
     |
-    = help: Write as 'end function MYFUNC1'.
+    = help: Write as 'END FUNCTION MYFUNC1'.
 
 ℹ Safe fix
 106 106 |   INTEGER FUNCTION MYFUNC1()
@@ -296,7 +296,7 @@ snapshot_kind: text
 115 | END MODULE
     | ^^^^^^^^^^ S061
     |
-    = help: Write as 'end module MYMOD2_UPPER'.
+    = help: Write as 'END MODULE MYMOD2_UPPER'.
 
 ℹ Safe fix
 112 112 |     ! IGNORE THIS

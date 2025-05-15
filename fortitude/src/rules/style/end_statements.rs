@@ -38,8 +38,7 @@ use tree_sitter::Node;
 /// Similar rules apply for many other Fortran statements
 #[derive(ViolationMetadata)]
 pub(crate) struct UnnamedEndStatement {
-    statement: String,
-    name: String,
+    replacement: String,
 }
 
 impl AlwaysFixableViolation for UnnamedEndStatement {
@@ -49,8 +48,8 @@ impl AlwaysFixableViolation for UnnamedEndStatement {
     }
 
     fn fix_title(&self) -> String {
-        let Self { statement, name } = self;
-        format!("Write as 'end {statement} {name}'.")
+        let Self { replacement } = self;
+        format!("Write as '{replacement}'.")
     }
 }
 
@@ -92,7 +91,6 @@ impl AstRule for UnnamedEndStatement {
             .child_with_name(name_kind)?
             .to_text(src.source_text())?
             .to_string();
-        let statement = statement.to_string();
 
         // Preserve existing case of end statement
         let text = node.to_text(src.source_text())?;
@@ -104,8 +102,8 @@ impl AstRule for UnnamedEndStatement {
         };
 
         let replacement = format!("{end_statement} {name}");
-        let fix = Fix::safe_edit(node.edit_replacement(src, replacement));
-        some_vec![Diagnostic::from_node(Self { statement, name }, node).with_fix(fix)]
+        let fix = Fix::safe_edit(node.edit_replacement(src, replacement.clone()));
+        some_vec![Diagnostic::from_node(Self { replacement }, node).with_fix(fix)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
