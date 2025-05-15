@@ -10,8 +10,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     rule_selector::RuleSelector,
-    rules::correctness::exit_labels,
-    rules::style::keywords,
+    rules::{
+        correctness::exit_labels,
+        style::{
+            keywords,
+            strings::{self, settings::Quote},
+        },
+    },
     settings::{OutputFormat, ProgressBar},
 };
 
@@ -289,6 +294,10 @@ pub struct CheckOptions {
     /// Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
     #[option_group]
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
+
+    /// Options for the `bad-string-quote` rule
+    #[option_group]
+    pub strings: Option<StringOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -350,6 +359,29 @@ impl KeywordWhitespaceOptions {
         keywords::settings::Settings {
             inout_with_space: self.inout_with_space.unwrap_or(false),
             goto_with_space: self.goto_with_space.unwrap_or(false),
+        }
+    }
+}
+
+/// Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct StringOptions {
+    /// Quote style to prefer for string literals (either "single" or "double").
+    #[option(
+        default = r#""double""#,
+        value_type = r#""single" | "double""#,
+        example = r#"quotes = "single""#
+    )]
+    pub quotes: Option<Quote>,
+}
+
+impl StringOptions {
+    pub fn into_settings(self) -> strings::settings::Settings {
+        strings::settings::Settings {
+            quotes: self.quotes.unwrap_or_default(),
         }
     }
 }

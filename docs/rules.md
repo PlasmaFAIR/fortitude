@@ -83,7 +83,7 @@
 | S221 | [function-missing-result](rules/function-missing-result.md) | Function missing result() specifier | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S231 | [keywords-missing-space](rules/keywords-missing-space.md) | Missing space in '{keywords}' | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S232 | [keyword-has-whitespace](rules/keyword-has-whitespace.md) | Whitespace included in '{keywords}' | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
-| S241 | [single-quote-string](rules/single-quote-string.md) | Character string uses single quotes | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| S241 | [bad-quote-string](rules/bad-quote-string.md) | String uses single quotes but double quotes preferred | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 
 ### Portability (PORT)
 

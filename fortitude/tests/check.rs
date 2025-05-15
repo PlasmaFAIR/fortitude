@@ -145,7 +145,7 @@ unknown-key = 1
           |
         3 | unknown-key = 1
           | ^^^^^^^^^^^
-        unknown field `unknown-key`, expected one of `files`, `fix`, `unsafe-fixes`, `show-fixes`, `fix-only`, `output-format`, `preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `respect-gitignore`, `line-length`, `per-file-ignores`, `exit-unlabelled-loops`, `keyword-whitespace`
+        unknown field `unknown-key`, expected one of `files`, `fix`, `unsafe-fixes`, `show-fixes`, `fix-only`, `output-format`, `preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `respect-gitignore`, `line-length`, `per-file-ignores`, `exit-unlabelled-loops`, `keyword-whitespace`, `strings`
     ");
     Ok(())
 }

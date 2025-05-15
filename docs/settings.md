@@ -665,3 +665,33 @@ Whether to enforce the use of `in out` instead of `inout`.
 
 ---
 
+### `check.strings`
+
+Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
+
+#### [`quotes`](#check_strings_quotes) {: #check_strings_quotes }
+<span id="quotes"></span>
+
+Quote style to prefer for string literals (either "single" or "double").
+
+**Default value**: `"double"`
+
+**Type**: `"single" | "double"`
+
+**Example usage**:
+
+=== "fpm.toml"
+
+    ```toml
+    [extra.fortitude.check.strings]
+    quotes = "single"
+    ```
+=== "fortitude.toml"
+
+    ```toml
+    [check.strings]
+    quotes = "single"
+    ```
+
+---
+
