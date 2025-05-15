@@ -38,8 +38,7 @@ use tree_sitter::Node;
 /// Similar rules apply for many other Fortran statements
 #[derive(ViolationMetadata)]
 pub(crate) struct UnnamedEndStatement {
-    statement: String,
-    name: String,
+    replacement: String,
 }
 
 impl AlwaysFixableViolation for UnnamedEndStatement {
@@ -49,8 +48,8 @@ impl AlwaysFixableViolation for UnnamedEndStatement {
     }
 
     fn fix_title(&self) -> String {
-        let Self { statement, name } = self;
-        format!("Write as 'end {statement} {name}'.")
+        let Self { replacement } = self;
+        format!("Write as '{replacement}'.")
     }
 }
 
@@ -74,8 +73,6 @@ impl AstRule for UnnamedEndStatement {
         node: &'a Node,
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {
-        // TODO Also check for optionally labelled constructs like 'do' or 'select'
-
         // If end node is named, move on.
         // Not catching incorrect end statement name here, as the compiler should
         // do that for us.
@@ -94,10 +91,19 @@ impl AstRule for UnnamedEndStatement {
             .child_with_name(name_kind)?
             .to_text(src.source_text())?
             .to_string();
-        let statement = statement.to_string();
-        let replacement = format!("end {statement} {name}");
-        let fix = Fix::safe_edit(node.edit_replacement(src, replacement));
-        some_vec![Diagnostic::from_node(Self { statement, name }, node).with_fix(fix)]
+
+        // Preserve existing case of end statement
+        let text = node.to_text(src.source_text())?;
+        let is_lower_case = text == text.to_lowercase();
+        let end_statement = if is_lower_case {
+            format!("end {statement}")
+        } else {
+            format!("end {statement}").to_uppercase()
+        };
+
+        let replacement = format!("{end_statement} {name}");
+        let fix = Fix::safe_edit(node.edit_replacement(src, replacement.clone()));
+        some_vec![Diagnostic::from_node(Self { replacement }, node).with_fix(fix)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
