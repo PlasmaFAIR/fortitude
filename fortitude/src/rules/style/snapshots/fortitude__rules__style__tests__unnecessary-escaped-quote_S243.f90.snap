@@ -1,0 +1,63 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S243.f90:4:11: S243 [*] Unnecessary escaped quote character
+  |
+2 |   implicit none (type, external)
+3 |
+4 |   print*, "This isn''t necessary"
+  |           ^^^^^^^^^^^^^^^^^^^^^^^ S243
+5 |   print*, 'This ""is not"" necessary'
+6 |   print*, "This ""isn't"" unnecessary"
+  |
+  = help: Remove second quote character
+
+ℹ Safe fix
+1 1 | program test
+2 2 |   implicit none (type, external)
+3 3 | 
+4   |-  print*, "This isn''t necessary"
+  4 |+  print*, "This isn't necessary"
+5 5 |   print*, 'This ""is not"" necessary'
+6 6 |   print*, "This ""isn't"" unnecessary"
+7 7 |   print*, 'This ''is not'' necessary'
+
+./resources/test/fixtures/style/S243.f90:5:11: S243 [*] Unnecessary escaped quote character
+  |
+4 |   print*, "This isn''t necessary"
+5 |   print*, 'This ""is not"" necessary'
+  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ S243
+6 |   print*, "This ""isn't"" unnecessary"
+7 |   print*, 'This ''is not'' necessary'
+  |
+  = help: Remove second quote character
+
+ℹ Safe fix
+2 2 |   implicit none (type, external)
+3 3 | 
+4 4 |   print*, "This isn''t necessary"
+5   |-  print*, 'This ""is not"" necessary'
+  5 |+  print*, 'This "is not" necessary'
+6 6 |   print*, "This ""isn't"" unnecessary"
+7 7 |   print*, 'This ''is not'' necessary'
+8 8 |   print*, 4_"Does this ''break''?"
+
+./resources/test/fixtures/style/S243.f90:8:13: S243 [*] Unnecessary escaped quote character
+  |
+6 |   print*, "This ""isn't"" unnecessary"
+7 |   print*, 'This ''is not'' necessary'
+8 |   print*, 4_"Does this ''break''?"
+  |             ^^^^^^^^^^^^^^^^^^^^^^ S243
+9 | end program test
+  |
+  = help: Remove second quote character
+
+ℹ Safe fix
+5 5 |   print*, 'This ""is not"" necessary'
+6 6 |   print*, "This ""isn't"" unnecessary"
+7 7 |   print*, 'This ''is not'' necessary'
+8   |-  print*, 4_"Does this ''break''?"
+  8 |+  print*, 4_"Does this 'break'?"
+9 9 | end program test
