@@ -61,6 +61,7 @@ static REDIRECTS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(
             "deprecated-assumed-size-character",
             "deprecated-character-syntax",
         ),
+        ("single-quote-string", "bad-quote-string"),
     ])
 });
 
