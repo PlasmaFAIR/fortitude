@@ -177,62 +177,6 @@ impl AstRule for AvoidableEscapedQuote {
     }
 }
 
-/// ## What it does
-/// Checks for strings that include unnecessarily escaped quotes.
-///
-/// ## Why is this bad?
-/// If a string contains an escaped quote that doesn't match the quote
-/// character used for the string, it's unnecessary and can be removed.
-///
-/// ## Example
-/// ```f90
-/// foo = "bar''s"
-/// ```
-///
-/// Use instead:
-/// ```f90
-/// foo = "bar's"
-/// ```
-#[derive(ViolationMetadata)]
-pub(crate) struct UnnecessaryEscapedQuote;
-
-impl AlwaysFixableViolation for UnnecessaryEscapedQuote {
-    #[derive_message_formats]
-    fn message(&self) -> String {
-        "Unnecessary escaped quote character".to_string()
-    }
-
-    fn fix_title(&self) -> String {
-        "Remove second quote character".to_string()
-    }
-}
-
-impl AstRule for UnnecessaryEscapedQuote {
-    fn check<'a>(
-        _settings: &Settings,
-        node: &'a Node,
-        src: &'a SourceFile,
-    ) -> Option<Vec<Diagnostic>> {
-        let text = node.to_text(src.source_text())?;
-        if text.len() <= 2 {
-            return None;
-        }
-        let quote_style = Quote::from_literal(node, text);
-
-        if !text.contains(quote_style.opposite().escaped()) {
-            return None;
-        }
-
-        let fixed = unescape_string(text, quote_style.opposite().as_char());
-        let edit = node.edit_replacement(src, fixed);
-        some_vec!(Diagnostic::from_node(Self, node).with_fix(Fix::safe_edit(edit)))
-    }
-
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["string_literal"]
-    }
-}
-
 fn unescape_string(haystack: &str, quote: char) -> String {
     let mut fixed_contents = String::with_capacity(haystack.len());
 
