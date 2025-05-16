@@ -667,7 +667,7 @@ Whether to enforce the use of `in out` instead of `inout`.
 
 ### `check.strings`
 
-Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
+Options for the string literal rules
 
 #### [`quotes`](#check_strings_quotes) {: #check_strings_quotes }
 <span id="quotes"></span>

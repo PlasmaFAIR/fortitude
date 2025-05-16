@@ -363,7 +363,7 @@ impl KeywordWhitespaceOptions {
     }
 }
 
-/// Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
+/// Options for the string literal rules
 #[derive(
     Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
 )]

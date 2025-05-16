@@ -26,7 +26,7 @@ use crate::{AstRule, FromAstNode};
 /// ```
 ///
 /// Assuming `quotes` is set to `double`, use instead:
-/// ```python
+/// ```f90
 /// foo = "bar"
 /// ```
 ///
