@@ -3,61 +3,131 @@ source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S243.f90:4:11: S243 [*] Unnecessary escaped quote character
-  |
-2 |   implicit none (type, external)
-3 |
-4 |   print*, "This isn''t necessary"
-  |           ^^^^^^^^^^^^^^^^^^^^^^^ S243
-5 |   print*, 'This ""is not"" necessary'
-6 |   print*, "This ""isn't"" unnecessary"
-  |
-  = help: Remove second quote character
-
-ℹ Safe fix
-1 1 | program test
-2 2 |   implicit none (type, external)
-3 3 | 
-4   |-  print*, "This isn''t necessary"
-  4 |+  print*, "This isn't necessary"
-5 5 |   print*, 'This ""is not"" necessary'
-6 6 |   print*, "This ""isn't"" unnecessary"
-7 7 |   print*, 'This ''is not'' necessary'
-
 ./resources/test/fixtures/style/S243.f90:5:11: S243 [*] Unnecessary escaped quote character
   |
-4 |   print*, "This isn''t necessary"
-5 |   print*, 'This ""is not"" necessary'
+3 |   implicit none (type, external)
+4 |
+5 |   print*, "This isn''t necessary"
+  |           ^^^^^^^^^^^^^^^^^^^^^^^ S243
+6 |   print*, 'This ""is not"" necessary'
+7 |   print*, "This ""isn't"" unnecessary"
+  |
+  = help: Remove second quote character
+
+ℹ Safe fix
+2 2 |   use, intrinsic :: iso_c_binding, only: c_char
+3 3 |   implicit none (type, external)
+4 4 | 
+5   |-  print*, "This isn''t necessary"
+  5 |+  print*, "This isn't necessary"
+6 6 |   print*, 'This ""is not"" necessary'
+7 7 |   print*, "This ""isn't"" unnecessary"
+8 8 |   print*, 'This ''is not'' necessary'
+
+./resources/test/fixtures/style/S243.f90:6:11: S243 [*] Unnecessary escaped quote character
+  |
+5 |   print*, "This isn''t necessary"
+6 |   print*, 'This ""is not"" necessary'
   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ S243
-6 |   print*, "This ""isn't"" unnecessary"
-7 |   print*, 'This ''is not'' necessary'
+7 |   print*, "This ""isn't"" unnecessary"
+8 |   print*, 'This ''is not'' necessary'
   |
   = help: Remove second quote character
 
 ℹ Safe fix
-2 2 |   implicit none (type, external)
-3 3 | 
-4 4 |   print*, "This isn''t necessary"
-5   |-  print*, 'This ""is not"" necessary'
-  5 |+  print*, 'This "is not" necessary'
-6 6 |   print*, "This ""isn't"" unnecessary"
-7 7 |   print*, 'This ''is not'' necessary'
-8 8 |   print*, 4_"Does this ''break''?"
+3 3 |   implicit none (type, external)
+4 4 | 
+5 5 |   print*, "This isn''t necessary"
+6   |-  print*, 'This ""is not"" necessary'
+  6 |+  print*, 'This "is not" necessary'
+7 7 |   print*, "This ""isn't"" unnecessary"
+8 8 |   print*, 'This ''is not'' necessary'
+9 9 |   print*, 4_"Does this ''break''?"
 
-./resources/test/fixtures/style/S243.f90:8:13: S243 [*] Unnecessary escaped quote character
-  |
-6 |   print*, "This ""isn't"" unnecessary"
-7 |   print*, 'This ''is not'' necessary'
-8 |   print*, 4_"Does this ''break''?"
-  |             ^^^^^^^^^^^^^^^^^^^^^^ S243
-9 | end program test
-  |
-  = help: Remove second quote character
+./resources/test/fixtures/style/S243.f90:9:13: S243 [*] Unnecessary escaped quote character
+   |
+ 7 |   print*, "This ""isn't"" unnecessary"
+ 8 |   print*, 'This ''is not'' necessary'
+ 9 |   print*, 4_"Does this ''break''?"
+   |             ^^^^^^^^^^^^^^^^^^^^^^ S243
+10 |   print*, c_char_"Does this ''break''?"
+11 |   print*, "This &
+   |
+   = help: Remove second quote character
 
 ℹ Safe fix
-5 5 |   print*, 'This ""is not"" necessary'
-6 6 |   print*, "This ""isn't"" unnecessary"
-7 7 |   print*, 'This ''is not'' necessary'
-8   |-  print*, 4_"Does this ''break''?"
-  8 |+  print*, 4_"Does this 'break'?"
-9 9 | end program test
+6  6  |   print*, 'This ""is not"" necessary'
+7  7  |   print*, "This ""isn't"" unnecessary"
+8  8  |   print*, 'This ''is not'' necessary'
+9     |-  print*, 4_"Does this ''break''?"
+   9  |+  print*, 4_"Does this 'break'?"
+10 10 |   print*, c_char_"Does this ''break''?"
+11 11 |   print*, "This &
+12 12 |        &isn''t &
+
+./resources/test/fixtures/style/S243.f90:10:11: S243 [*] Unnecessary escaped quote character
+   |
+ 8 |   print*, 'This ''is not'' necessary'
+ 9 |   print*, 4_"Does this ''break''?"
+10 |   print*, c_char_"Does this ''break''?"
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S243
+11 |   print*, "This &
+12 |        &isn''t &
+   |
+   = help: Remove second quote character
+
+ℹ Safe fix
+7  7  |   print*, "This ""isn't"" unnecessary"
+8  8  |   print*, 'This ''is not'' necessary'
+9  9  |   print*, 4_"Does this ''break''?"
+10    |-  print*, c_char_"Does this ''break''?"
+   10 |+  print*, c_char_"Does this 'break'?"
+11 11 |   print*, "This &
+12 12 |        &isn''t &
+13 13 |        &necessary"
+
+./resources/test/fixtures/style/S243.f90:11:11: S243 [*] Unnecessary escaped quote character
+   |
+ 9 |     print*, 4_"Does this ''break''?"
+10 |     print*, c_char_"Does this ''break''?"
+11 |     print*, "This &
+   |  ___________^
+12 | |        &isn''t &
+13 | |        &necessary"
+   | |__________________^ S243
+14 |     print*, "This &
+15 |          &""isn''t"" &
+   |
+   = help: Remove second quote character
+
+ℹ Safe fix
+9  9  |   print*, 4_"Does this ''break''?"
+10 10 |   print*, c_char_"Does this ''break''?"
+11 11 |   print*, "This &
+12    |-       &isn''t &
+   12 |+       &isn't &
+13 13 |        &necessary"
+14 14 |   print*, "This &
+15 15 |        &""isn''t"" &
+
+./resources/test/fixtures/style/S243.f90:14:11: S243 [*] Unnecessary escaped quote character
+   |
+12 |          &isn''t &
+13 |          &necessary"
+14 |     print*, "This &
+   |  ___________^
+15 | |        &""isn''t"" &
+16 | |        &unnecessary"
+   | |____________________^ S243
+17 |   end program test
+   |
+   = help: Remove second quote character
+
+ℹ Safe fix
+12 12 |        &isn''t &
+13 13 |        &necessary"
+14 14 |   print*, "This &
+15    |-       &""isn''t"" &
+   15 |+       &""isn't"" &
+16 16 |        &unnecessary"
+17 17 | end program test

@@ -135,7 +135,7 @@ pub(crate) struct AvoidableEscapedQuote;
 impl AlwaysFixableViolation for AvoidableEscapedQuote {
     #[derive_message_formats]
     fn message(&self) -> String {
-        "Change outer quotes to avoid escaping inner quotes".to_string()
+        "Avoidable escaped quotes".to_string()
     }
 
     fn fix_title(&self) -> String {
@@ -150,10 +150,10 @@ impl AstRule for AvoidableEscapedQuote {
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {
         let text = node.to_text(src.source_text())?;
-
-        let first_quote = text.chars().nth(0)?;
-        let quote_style =
-            Quote::try_from(first_quote).expect("string literal doesn't begin with a quote");
+        if text.len() <= 2 {
+            return None;
+        }
+        let quote_style = Quote::from_literal(node, text);
 
         if !text.contains(quote_style.escaped()) || text.contains(quote_style.opposite().as_char())
         {
@@ -214,10 +214,10 @@ impl AstRule for UnnecessaryEscapedQuote {
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {
         let text = node.to_text(src.source_text())?;
-
-        let first_quote = text.chars().nth(0)?;
-        let quote_style =
-            Quote::try_from(first_quote).expect("string literal doesn't begin with a quote");
+        if text.len() <= 2 {
+            return None;
+        }
+        let quote_style = Quote::from_literal(node, text);
 
         if !text.contains(quote_style.opposite().escaped()) {
             return None;
@@ -257,6 +257,7 @@ fn unescape_string(haystack: &str, quote: char) -> String {
 }
 
 pub(crate) mod settings {
+    use super::*;
     use crate::display_settings;
     use ruff_macros::CacheKey;
     use serde::{Deserialize, Serialize};
@@ -312,6 +313,18 @@ pub(crate) mod settings {
                 Self::Double => '"',
                 Self::Single => '\'',
             }
+        }
+
+        pub fn from_literal(node: &Node, text: &str) -> Self {
+            let mut start = TextSize::new(0);
+            if let Some(kind) = node.child_by_field_name("kind") {
+                start = kind.textrange().len() + TextSize::new(1);
+            }
+            let first_quote = text
+                .chars()
+                .nth(start.to_usize())
+                .expect("couldn't slice string literal correctly");
+            Quote::try_from(first_quote).expect("string literal doesn't begin with a quote")
         }
     }
 
