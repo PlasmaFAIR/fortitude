@@ -11,14 +11,15 @@ use tree_sitter::Node;
 /// Checks for the literals `5` or `6` as units in `read`/`write` statements.
 ///
 /// ## Why is this bad?
-/// The Fortran standard does not specify numeric values for `stdin` or
-/// `stdout`. Instead, use the named constants `input_unit` and `output_unit`
-/// from the `iso_fortran_env` module.
+/// The Fortran standard does not specify numeric values for `stdin` or `stdout`, and
+/// although many compilers do "pre-connect" units `5` and `6` respectively, some use
+/// other numbers. Instead, use the named constants `input_unit` and `output_unit` from
+/// the `iso_fortran_env` module.
 #[derive(ViolationMetadata)]
 pub(crate) struct NonPortableIoUnit {
     value: i32,
     kind: String,
-    replacement: Option<String>,
+    replacement: String,
 }
 
 impl Violation for NonPortableIoUnit {
@@ -30,9 +31,7 @@ impl Violation for NonPortableIoUnit {
 
     fn fix_title(&self) -> Option<String> {
         let Self { replacement, .. } = self;
-        replacement
-            .as_ref()
-            .map(|replacement| format!("Use `{replacement}` from `iso_fortran_env`"))
+        Some(format!("Use `{replacement}` from `iso_fortran_env`"))
     }
 }
 
@@ -50,11 +49,11 @@ impl AstRule for NonPortableIoUnit {
         let kind = if is_read { "read" } else { "write" }.to_string();
 
         let replacement = if is_read && value == 5 {
-            Some("input_unit".to_string())
+            "input_unit".to_string()
         } else if is_write && value == 6 {
-            Some("output_unit".to_string())
+            "output_unit".to_string()
         } else {
-            None
+            return None;
         };
 
         some_vec!(Diagnostic::from_node(
