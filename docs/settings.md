@@ -628,13 +628,13 @@ Whether to enforce the use of `go to` instead of `goto`.
 
     ```toml
     [extra.fortitude.check.keyword-whitespace]
-    goto_with_space = true
+    goto-with-space = true
     ```
 === "fortitude.toml"
 
     ```toml
     [check.keyword-whitespace]
-    goto_with_space = true
+    goto-with-space = true
     ```
 
 ---
@@ -654,13 +654,13 @@ Whether to enforce the use of `in out` instead of `inout`.
 
     ```toml
     [extra.fortitude.check.keyword-whitespace]
-    inout_with_space = true
+    inout-with-space = true
     ```
 === "fortitude.toml"
 
     ```toml
     [check.keyword-whitespace]
-    inout_with_space = true
+    inout-with-space = true
     ```
 
 ---

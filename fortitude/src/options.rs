@@ -341,7 +341,7 @@ pub struct KeywordWhitespaceOptions {
     #[option(
         default = "false",
         value_type = "bool",
-        example = "inout_with_space = true"
+        example = "inout-with-space = true"
     )]
     pub inout_with_space: Option<bool>,
 
@@ -349,7 +349,7 @@ pub struct KeywordWhitespaceOptions {
     #[option(
         default = "false",
         value_type = "bool",
-        example = "goto_with_space = true"
+        example = "goto-with-space = true"
     )]
     pub goto_with_space: Option<bool>,
 }
