@@ -33,3 +33,13 @@ snapshot_kind: text
 9 |   open(newunit=named_unit, file="test.txt", action="write")
   |
   = help: Use `output_unit` from `iso_fortran_env`
+
+./resources/test/fixtures/portability/PORT001.f90:17:9: PORT001 Non-portable unit '0' in 'write' statement
+   |
+15 |   close(17)
+16 |
+17 |   write(0, *) "this is stderr"
+   |         ^ PORT001
+18 | end program test
+   |
+   = help: Use `error_unit` from `iso_fortran_env`

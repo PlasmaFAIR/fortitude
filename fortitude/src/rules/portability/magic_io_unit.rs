@@ -52,6 +52,8 @@ impl AstRule for NonPortableIoUnit {
             "input_unit".to_string()
         } else if is_write && value == 6 {
             "output_unit".to_string()
+        } else if is_write && value == 0 {
+            "error_unit".to_string()
         } else {
             return None;
         };

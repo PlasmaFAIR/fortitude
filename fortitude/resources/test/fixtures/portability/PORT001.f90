@@ -13,4 +13,6 @@ program test
   open(unit=17, file="ok.txt")
   write(17, *) "this is a magic number, but portable"
   close(17)
+
+  write(0, *) "this is stderr"
 end program test
