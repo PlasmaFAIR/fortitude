@@ -44,34 +44,3 @@ snapshot_kind: text
 19 |   ! Cray file units
    |
    = help: Use `error_unit` from `iso_fortran_env`
-
-./resources/test/fixtures/portability/PORT001.f90:20:9: PORT001 Non-portable unit '101' in 'write' statement
-   |
-19 |   ! Cray file units
-20 |   write(101,*) "enter an integer"
-   |         ^^^ PORT001
-21 |   read(unit=100,fmt=*) i
-22 |   write(fmt=*, unit=102) "thanks"
-   |
-   = help: Use `output_unit` from `iso_fortran_env`
-
-./resources/test/fixtures/portability/PORT001.f90:21:13: PORT001 Non-portable unit '100' in 'read' statement
-   |
-19 |   ! Cray file units
-20 |   write(101,*) "enter an integer"
-21 |   read(unit=100,fmt=*) i
-   |             ^^^ PORT001
-22 |   write(fmt=*, unit=102) "thanks"
-23 | end program test
-   |
-   = help: Use `input_unit` from `iso_fortran_env`
-
-./resources/test/fixtures/portability/PORT001.f90:22:21: PORT001 Non-portable unit '102' in 'write' statement
-   |
-20 |   write(101,*) "enter an integer"
-21 |   read(unit=100,fmt=*) i
-22 |   write(fmt=*, unit=102) "thanks"
-   |                     ^^^ PORT001
-23 | end program test
-   |
-   = help: Use `error_unit` from `iso_fortran_env`

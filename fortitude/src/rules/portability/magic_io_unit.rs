@@ -8,13 +8,16 @@ use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
-/// Checks for the literals `5` or `6` as units in `read`/`write` statements.
+/// Checks for certain literals as units in `read`/`write` statements.
 ///
 /// ## Why is this bad?
-/// The Fortran standard does not specify numeric values for `stdin` or `stdout`, and
-/// although many compilers do "pre-connect" units `5` and `6` respectively, some use
-/// other numbers. Instead, use the named constants `input_unit` and `output_unit` from
-/// the `iso_fortran_env` module.
+/// The Fortran standard does not specify numeric values for `stdin`, `stdout`, or
+/// `stderr`, and although many compilers do "pre-connect" units `5`, `6`, and `0`,
+/// respectively, some use other numbers. Instead, use the named constants `input_unit`,
+/// `output_unit`, or `error_unit` from the `iso_fortran_env` module.
+///
+/// ## Options
+/// - `check.portability.allow-cray-file-units`
 #[derive(ViolationMetadata)]
 pub(crate) struct NonPortableIoUnit {
     value: i32,
@@ -36,7 +39,7 @@ impl Violation for NonPortableIoUnit {
 }
 
 impl AstRule for NonPortableIoUnit {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let unit = literal_as_io_unit(node, src)?;
 
         let value = unit
@@ -48,15 +51,26 @@ impl AstRule for NonPortableIoUnit {
 
         let kind = if is_read { "read" } else { "write" }.to_string();
 
-        let replacement = if is_read && value == 5 {
-            "input_unit".to_string()
-        } else if is_write && value == 6 {
-            "output_unit".to_string()
-        } else if is_write && value == 0 {
-            "error_unit".to_string()
+        let mut stdin = vec![5];
+        let mut stdout = vec![6];
+        let mut stderr = vec![0];
+
+        if !settings.check.portability.allow_cray_file_units {
+            stdin.push(100);
+            stdout.push(101);
+            stderr.push(102);
+        }
+
+        let replacement = if is_read && stdin.contains(&value) {
+            "input_unit"
+        } else if is_write && stdout.contains(&value) {
+            "output_unit"
+        } else if is_write && stderr.contains(&value) {
+            "error_unit"
         } else {
             return None;
-        };
+        }
+        .to_string();
 
         some_vec!(Diagnostic::from_node(
             Self {

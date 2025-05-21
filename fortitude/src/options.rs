@@ -12,6 +12,7 @@ use crate::{
     rule_selector::RuleSelector,
     rules::{
         correctness::exit_labels,
+        portability::{self},
         style::{
             keywords,
             strings::{self, settings::Quote},
@@ -298,6 +299,10 @@ pub struct CheckOptions {
     /// Options for the `bad-string-quote` rule
     #[option_group]
     pub strings: Option<StringOptions>,
+
+    /// Options for the `portability` set of rules
+    #[option_group]
+    pub portability: Option<PortabilityOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -382,6 +387,31 @@ impl StringOptions {
     pub fn into_settings(self) -> strings::settings::Settings {
         strings::settings::Settings {
             quotes: self.quotes.unwrap_or_default(),
+        }
+    }
+}
+
+/// Options for the portability rules
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct PortabilityOptions {
+    /// Whether to allow file units of `100`, `101`, `102` for
+    /// `non-portable-io-unit`. The Cray compiler pre-connects these to `stdin`,
+    /// `stdout`, and `stderr`, respectively.
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "allow-cray-file-units = true"
+    )]
+    pub allow_cray_file_units: Option<bool>,
+}
+
+impl PortabilityOptions {
+    pub fn into_settings(self) -> portability::settings::Settings {
+        portability::settings::Settings {
+            allow_cray_file_units: self.allow_cray_file_units.unwrap_or_default(),
         }
     }
 }

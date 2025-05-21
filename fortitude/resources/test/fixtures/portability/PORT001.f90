@@ -15,4 +15,9 @@ program test
   close(17)
 
   write(0, *) "this is stderr"
+
+  ! Cray file units
+  write(101,*) "enter an integer"
+  read(unit=100,fmt=*) i
+  write(fmt=*, unit=102) "thanks"
 end program test

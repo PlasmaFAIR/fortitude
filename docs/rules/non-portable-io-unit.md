@@ -9,3 +9,10 @@ The Fortran standard does not specify numeric values for `stdin`, `stdout`, or
 `stderr`, and although many compilers do "pre-connect" units `5`, `6`, and `0`,
 respectively, some use other numbers. Instead, use the named constants `input_unit`,
 `output_unit`, or `error_unit` from the `iso_fortran_env` module.
+
+## Options
+- [`check.portability.allow-cray-file-units`][check.portability.allow-cray-file-units]
+
+
+[check.portability.allow-cray-file-units]: ../settings.md#check_portability_allow-cray-file-units
+
