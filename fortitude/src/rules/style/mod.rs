@@ -41,6 +41,7 @@ mod tests {
     #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
     #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
     #[test_case(Rule::BadQuoteString, Path::new("S241.f90"))]
+    #[test_case(Rule::AvoidableEscapedQuote, Path::new("S242.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

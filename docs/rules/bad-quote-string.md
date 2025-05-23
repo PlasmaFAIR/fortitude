@@ -11,10 +11,7 @@ Catches use of single- or double-quoted strings, depending on the value of
 
 ## Why is this bad?
 For consistency, all strings should be either single-quoted or double-quoted.
-Exceptions are made for strings containing quotes.
-
-Fixes are not currently available for strings containing escaped quotes
-(`"''"` or `""""`).
+Exceptions are made for strings containing escaped quotes.
 
 ## Example
 ```f90

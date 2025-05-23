@@ -1,7 +1,7 @@
-use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
-use ruff_text_size::TextSize;
+use ruff_text_size::{TextLen, TextSize};
 use settings::Quote;
 use tree_sitter::Node;
 
@@ -15,10 +15,7 @@ use crate::{AstRule, FromAstNode};
 ///
 /// ## Why is this bad?
 /// For consistency, all strings should be either single-quoted or double-quoted.
-/// Exceptions are made for strings containing quotes.
-///
-/// Fixes are not currently available for strings containing escaped quotes
-/// (`"''"` or `""""`).
+/// Exceptions are made for strings containing escaped quotes.
 ///
 /// ## Example
 /// ```f90
@@ -112,7 +109,101 @@ impl AstRule for BadQuoteString {
     }
 }
 
+/// ## What it does
+/// Checks for strings that include escaped quotes that can be removed if the
+/// quote style is changed.
+///
+/// ## Why is this bad?
+/// It's preferable to avoid escaped quotes in strings. By changing the
+/// outer quote style, you can avoid escaping inner quotes.
+///
+/// ## Example
+/// ```f90
+/// foo = 'bar''s'
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// foo = "bar's"
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct AvoidableEscapedQuote;
+
+impl AlwaysFixableViolation for AvoidableEscapedQuote {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Avoidable escaped quotes".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "Change outer quotes to avoid escaping inner quotes".to_string()
+    }
+}
+
+impl AstRule for AvoidableEscapedQuote {
+    fn check<'a>(
+        _settings: &Settings,
+        node: &'a Node,
+        src: &'a SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
+        let text = node.to_text(src.source_text())?;
+        if text.len() <= 2 {
+            return None;
+        }
+        let quote_style = Quote::from_literal(node, text);
+
+        if !text.contains(quote_style.escaped()) || text.contains(quote_style.opposite().as_char())
+        {
+            return None;
+        }
+
+        let end = text.text_len() - TextSize::new(1);
+        let contents = &text[1..end.to_usize()];
+        let fixed = format!(
+            "{quote}{value}{quote}",
+            quote = quote_style.opposite().as_char(),
+            value = unescape_string(contents, quote_style.as_char())
+        );
+
+        let edit = node.edit_replacement(src, fixed);
+        some_vec!(Diagnostic::from_node(Self, node).with_fix(Fix::safe_edit(edit)))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["string_literal"]
+    }
+}
+
+fn unescape_string(haystack: &str, quote: char) -> String {
+    let mut fixed_contents = String::with_capacity(haystack.len());
+
+    let mut chars = haystack.chars().peekable();
+    let mut seen_quote = false;
+    while let Some(char_) = chars.next() {
+        // Not a quote, or the previous character was a quote, which
+        // we've removed
+        if char_ != quote || seen_quote {
+            fixed_contents.push(char_);
+            seen_quote = false;
+            continue;
+        }
+        // If we're at the end of the line
+        let Some(next_char) = chars.peek() else {
+            fixed_contents.push(char_);
+            continue;
+        };
+        // Remove first of two consecutive quotes
+        if *next_char == quote {
+            seen_quote = true;
+            continue;
+        }
+        fixed_contents.push(char_);
+    }
+    fixed_contents
+}
+
 pub(crate) mod settings {
+    use super::*;
     use crate::display_settings;
     use ruff_macros::CacheKey;
     use serde::{Deserialize, Serialize};
@@ -130,6 +221,18 @@ pub(crate) mod settings {
     impl Default for Quote {
         fn default() -> Self {
             Self::Double
+        }
+    }
+
+    impl TryFrom<char> for Quote {
+        type Error = &'static str;
+
+        fn try_from(value: char) -> Result<Self, Self::Error> {
+            match value {
+                '"' => Ok(Self::Double),
+                '\'' => Ok(Self::Single),
+                _ => Err("not a quote"),
+            }
         }
     }
 
@@ -156,6 +259,18 @@ pub(crate) mod settings {
                 Self::Double => '"',
                 Self::Single => '\'',
             }
+        }
+
+        pub fn from_literal(node: &Node, text: &str) -> Self {
+            let mut start = TextSize::new(0);
+            if let Some(kind) = node.child_by_field_name("kind") {
+                start = kind.textrange().len() + TextSize::new(1);
+            }
+            let first_quote = text
+                .chars()
+                .nth(start.to_usize())
+                .expect("couldn't slice string literal correctly");
+            Quote::try_from(first_quote).expect("string literal doesn't begin with a quote")
         }
     }
 
