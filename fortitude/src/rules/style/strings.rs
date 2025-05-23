@@ -178,9 +178,13 @@ fn unescape_string(haystack: &str, quote: char) -> String {
     let mut fixed_contents = String::with_capacity(haystack.len());
 
     let mut chars = haystack.chars().peekable();
+    let mut seen_quote = false;
     while let Some(char_) = chars.next() {
-        if char_ != quote {
+        // Not a quote, or the previous character was a quote, which
+        // we've removed
+        if char_ != quote || seen_quote {
             fixed_contents.push(char_);
+            seen_quote = false;
             continue;
         }
         // If we're at the end of the line
@@ -188,8 +192,9 @@ fn unescape_string(haystack: &str, quote: char) -> String {
             fixed_contents.push(char_);
             continue;
         };
-        // Remove quote escape
+        // Remove first of two consecutive quotes
         if *next_char == quote {
+            seen_quote = true;
             continue;
         }
         fixed_contents.push(char_);

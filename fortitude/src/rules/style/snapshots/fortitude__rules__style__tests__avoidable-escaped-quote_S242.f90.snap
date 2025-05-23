@@ -92,3 +92,127 @@ snapshot_kind: text
 14 14 |   print*, 'This &
 15 15 |        &""isn''t"" &
 16 16 |        &unnecessary'
+
+./resources/test/fixtures/style/S242.f90:21:11: S242 [*] Avoidable escaped quotes
+   |
+19 |   print*, ''                    ! empty
+20 |   print*, ""                    ! empty
+21 |   print*, ''''                  ! '
+   |           ^^^^ S242
+22 |   print*, """"                  ! "
+23 |   print*, ''''''                ! ''
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+18 18 |   ! Multiple quotes
+19 19 |   print*, ''                    ! empty
+20 20 |   print*, ""                    ! empty
+21    |-  print*, ''''                  ! '
+   21 |+  print*, "'"                  ! '
+22 22 |   print*, """"                  ! "
+23 23 |   print*, ''''''                ! ''
+24 24 |   print*, ''''''''              ! '''
+
+./resources/test/fixtures/style/S242.f90:22:11: S242 [*] Avoidable escaped quotes
+   |
+20 |   print*, ""                    ! empty
+21 |   print*, ''''                  ! '
+22 |   print*, """"                  ! "
+   |           ^^^^ S242
+23 |   print*, ''''''                ! ''
+24 |   print*, ''''''''              ! '''
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+19 19 |   print*, ''                    ! empty
+20 20 |   print*, ""                    ! empty
+21 21 |   print*, ''''                  ! '
+22    |-  print*, """"                  ! "
+   22 |+  print*, '"'                  ! "
+23 23 |   print*, ''''''                ! ''
+24 24 |   print*, ''''''''              ! '''
+25 25 |   print*, """"""                ! ""
+
+./resources/test/fixtures/style/S242.f90:23:11: S242 [*] Avoidable escaped quotes
+   |
+21 |   print*, ''''                  ! '
+22 |   print*, """"                  ! "
+23 |   print*, ''''''                ! ''
+   |           ^^^^^^ S242
+24 |   print*, ''''''''              ! '''
+25 |   print*, """"""                ! ""
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+20 20 |   print*, ""                    ! empty
+21 21 |   print*, ''''                  ! '
+22 22 |   print*, """"                  ! "
+23    |-  print*, ''''''                ! ''
+   23 |+  print*, "''"                ! ''
+24 24 |   print*, ''''''''              ! '''
+25 25 |   print*, """"""                ! ""
+26 26 |   print*, """"""""              ! """
+
+./resources/test/fixtures/style/S242.f90:24:11: S242 [*] Avoidable escaped quotes
+   |
+22 |   print*, """"                  ! "
+23 |   print*, ''''''                ! ''
+24 |   print*, ''''''''              ! '''
+   |           ^^^^^^^^ S242
+25 |   print*, """"""                ! ""
+26 |   print*, """"""""              ! """
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+21 21 |   print*, ''''                  ! '
+22 22 |   print*, """"                  ! "
+23 23 |   print*, ''''''                ! ''
+24    |-  print*, ''''''''              ! '''
+   24 |+  print*, "'''"              ! '''
+25 25 |   print*, """"""                ! ""
+26 26 |   print*, """"""""              ! """
+27 27 | 
+
+./resources/test/fixtures/style/S242.f90:25:11: S242 [*] Avoidable escaped quotes
+   |
+23 |   print*, ''''''                ! ''
+24 |   print*, ''''''''              ! '''
+25 |   print*, """"""                ! ""
+   |           ^^^^^^ S242
+26 |   print*, """"""""              ! """
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+22 22 |   print*, """"                  ! "
+23 23 |   print*, ''''''                ! ''
+24 24 |   print*, ''''''''              ! '''
+25    |-  print*, """"""                ! ""
+   25 |+  print*, '""'                ! ""
+26 26 |   print*, """"""""              ! """
+27 27 | 
+28 28 | end program test
+
+./resources/test/fixtures/style/S242.f90:26:11: S242 [*] Avoidable escaped quotes
+   |
+24 |   print*, ''''''''              ! '''
+25 |   print*, """"""                ! ""
+26 |   print*, """"""""              ! """
+   |           ^^^^^^^^ S242
+27 |
+28 | end program test
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+23 23 |   print*, ''''''                ! ''
+24 24 |   print*, ''''''''              ! '''
+25 25 |   print*, """"""                ! ""
+26    |-  print*, """"""""              ! """
+   26 |+  print*, '"""'              ! """
+27 27 | 
+28 28 | end program test

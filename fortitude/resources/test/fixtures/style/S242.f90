@@ -14,4 +14,15 @@ program test
   print*, 'This &
        &""isn''t"" &
        &unnecessary'
+
+  ! Multiple quotes
+  print*, ''                    ! empty
+  print*, ""                    ! empty
+  print*, ''''                  ! '
+  print*, """"                  ! "
+  print*, ''''''                ! ''
+  print*, ''''''''              ! '''
+  print*, """"""                ! ""
+  print*, """"""""              ! """
+
 end program test
