@@ -10,6 +10,12 @@ The Fortran standard does not specify numeric values for `stdin`, `stdout`, or
 respectively, some use other numbers. Instead, use the named constants `input_unit`,
 `output_unit`, or `error_unit` from the `iso_fortran_env` module.
 
+!!! note
+    An `open` statement with one of these units is completely portable, it is just
+    the use to mean `stdin`/`stdout`/`stderr` without an explicit `open` that is
+    non-portable -- but see also [`magic-io-unit`](magic-io-unit.md) for why it's
+    best to avoid literal integers as IO units altogether.
+
 ## Options
 - [`check.portability.allow-cray-file-units`][check.portability.allow-cray-file-units]
 
