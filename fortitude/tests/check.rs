@@ -127,6 +127,13 @@ unknown-key = 1
 "#,
     )?;
     apply_common_filters!();
+    let mut settings = insta::Settings::clone_current();
+    settings.add_filter(
+        r"(unknown field `unknown-key`, expected one of).*",
+        "$1 [OPTIONS]",
+    );
+    let _bound = settings.bind_to_scope();
+
     assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
                          .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
                          .arg("check")
@@ -145,7 +152,7 @@ unknown-key = 1
           |
         3 | unknown-key = 1
           | ^^^^^^^^^^^
-        unknown field `unknown-key`, expected one of `files`, `fix`, `unsafe-fixes`, `show-fixes`, `fix-only`, `output-format`, `preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `respect-gitignore`, `line-length`, `per-file-ignores`, `exit-unlabelled-loops`, `keyword-whitespace`, `strings`, `portability`
+        unknown field `unknown-key`, expected one of [OPTIONS]
     ");
     Ok(())
 }
