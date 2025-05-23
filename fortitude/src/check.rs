@@ -9,6 +9,7 @@ use crate::message::DiagnosticMessage;
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::registry::AsRule;
 use crate::rule_table::RuleTable;
+use crate::rules::error::syntax_error::SyntaxError;
 #[cfg(any(feature = "test-rules", test))]
 use crate::rules::testing::test_rules::{self, TestRule, TEST_RULES};
 use crate::rules::Rule;
@@ -17,8 +18,8 @@ use crate::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
-use crate::warn_user_once_by_message;
 use crate::{fs, locator::Locator, warn_user_once};
+use crate::{warn_user_once_by_message, FromAstNode};
 
 use anyhow::{anyhow, Context, Result};
 use colored::Colorize;
@@ -226,6 +227,10 @@ pub(crate) fn check_path(
     // Perform AST analysis
     let root = tree.root_node();
     for node in once(root).chain(root.descendants()) {
+        if rules.enabled(Rule::SyntaxError) && node.is_missing() {
+            violations.push(Diagnostic::from_node(SyntaxError {}, &node));
+        }
+
         if let Some(rules) = ast_entrypoints.get(node.kind()) {
             for rule in rules {
                 if let Some(violation) = rule.check(settings, &node, file) {
@@ -533,20 +538,14 @@ pub(crate) fn read_to_string(path: &Path) -> std::io::Result<String> {
 pub(crate) fn rules_to_path_rules(rules: &RuleTable) -> Vec<PathRuleEnum> {
     rules
         .iter_enabled()
-        .filter_map(|rule| match TryFrom::try_from(rule) {
-            Ok(path) => Some(path),
-            _ => None,
-        })
+        .filter_map(|rule| TryFrom::try_from(rule).ok())
         .collect_vec()
 }
 
 pub(crate) fn rules_to_text_rules(rules: &RuleTable) -> Vec<TextRuleEnum> {
     rules
         .iter_enabled()
-        .filter_map(|rule| match TryFrom::try_from(rule) {
-            Ok(text) => Some(text),
-            _ => None,
-        })
+        .filter_map(|rule| TryFrom::try_from(rule).ok())
         .collect_vec()
 }
 
@@ -554,10 +553,7 @@ pub(crate) fn rules_to_text_rules(rules: &RuleTable) -> Vec<TextRuleEnum> {
 pub(crate) fn ast_entrypoint_map<'a>(rules: &RuleTable) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
     let ast_rules: Vec<AstRuleEnum> = rules
         .iter_enabled()
-        .filter_map(|rule| match TryFrom::try_from(rule) {
-            Ok(ast) => Some(ast),
-            _ => None,
-        })
+        .filter_map(|rule| TryFrom::try_from(rule).ok())
         .collect();
 
     let mut map: BTreeMap<&'a str, Vec<_>> = BTreeMap::new();

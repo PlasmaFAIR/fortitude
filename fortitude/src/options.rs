@@ -10,7 +10,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     rule_selector::RuleSelector,
-    rules::correctness::exit_labels,
+    rules::{
+        correctness::exit_labels,
+        portability::{self},
+        style::{
+            keywords,
+            strings::{self, settings::Quote},
+        },
+    },
     settings::{OutputFormat, ProgressBar},
 };
 
@@ -284,6 +291,18 @@ pub struct CheckOptions {
     /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
     #[option_group]
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
+
+    /// Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
+    #[option_group]
+    pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
+
+    /// Options for the `bad-string-quote` rule
+    #[option_group]
+    pub strings: Option<StringOptions>,
+
+    /// Options for the `portability` set of rules
+    #[option_group]
+    pub portability: Option<PortabilityOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -313,6 +332,89 @@ impl ExitUnlabelledLoopOptions {
     pub fn into_settings(self) -> exit_labels::settings::Settings {
         exit_labels::settings::Settings {
             allow_unnested_loops: self.allow_unnested_loops.unwrap_or(false),
+        }
+    }
+}
+
+/// Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct KeywordWhitespaceOptions {
+    /// Whether to enforce the use of `in out` instead of `inout`.
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "inout-with-space = true"
+    )]
+    pub inout_with_space: Option<bool>,
+
+    /// Whether to enforce the use of `go to` instead of `goto`.
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "goto-with-space = true"
+    )]
+    pub goto_with_space: Option<bool>,
+}
+
+impl KeywordWhitespaceOptions {
+    pub fn into_settings(self) -> keywords::settings::Settings {
+        keywords::settings::Settings {
+            inout_with_space: self.inout_with_space.unwrap_or(false),
+            goto_with_space: self.goto_with_space.unwrap_or(false),
+        }
+    }
+}
+
+/// Options for the string literal rules
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct StringOptions {
+    /// Quote style to prefer for string literals (either "single" or "double").
+    #[option(
+        default = r#""double""#,
+        value_type = r#""single" | "double""#,
+        example = r#"quotes = "single""#
+    )]
+    pub quotes: Option<Quote>,
+}
+
+impl StringOptions {
+    pub fn into_settings(self) -> strings::settings::Settings {
+        strings::settings::Settings {
+            quotes: self.quotes.unwrap_or_default(),
+        }
+    }
+}
+
+/// Options for the portability rules
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct PortabilityOptions {
+    /// Whether to allow file units of `100`, `101`, `102` in `read/write` statements
+    /// for [`non-portable-io-unit`](rules/non-portable-io-unit.md). The Cray
+    /// compiler pre-connects these to `stdin`, `stdout`, and `stderr`,
+    /// respectively. However, if you are `open`-ing these units explicitly, you may
+    /// wish to switch this to `true` -- but see also
+    /// [`magic-io-unit`](rules/magic-io-unit.md).
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "allow-cray-file-units = true"
+    )]
+    pub allow_cray_file_units: Option<bool>,
+}
+
+impl PortabilityOptions {
+    pub fn into_settings(self) -> portability::settings::Settings {
+        portability::settings::Settings {
+            allow_cray_file_units: self.allow_cray_file_units.unwrap_or_default(),
         }
     }
 }

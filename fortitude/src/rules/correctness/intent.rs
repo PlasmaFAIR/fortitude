@@ -18,12 +18,18 @@ use tree_sitter::Node;
 /// Arguments with `intent(in)` are read-only input variables, and cannot be
 /// modified by the routine.
 ///
-/// Arguments with `intent(out)` are output variables, and their value on
-/// entry into the routine can be safely ignored.
+/// Arguments with `intent(out)` are output variables, and their value
+/// on entry into the routine can be safely ignored -- technically,
+/// they become undefined on entry, which includes deallocation and/or
+/// finalisation.
 ///
-/// Finally, `intent(inout)` arguments can be both read and modified by the
-/// routine. If an `intent` is not specified, it will default to
-/// `intent(inout)`.
+/// Finally, `intent(inout)` arguments can be both read and modified
+/// by the routine. If an `intent` is not specified, it will default
+/// to essentially `intent(inout)` -- however, this can be dangerous
+/// if passing literals or expressions that can't be modified.
+///
+/// This rule will permit the absence of `intent` for dummy arguments
+/// that include the `value` attribute.
 #[derive(ViolationMetadata)]
 pub(crate) struct MissingIntent {
     entity: String,
@@ -54,7 +60,7 @@ impl AstRule for MissingIntent {
         // Logic here is:
         // 1. find variable declarations
         // 2. ignore `procedure` arguments
-        // 3. filter to the declarations that don't have an `intent`
+        // 3. filter to the declarations that don't have an `intent` or `value` attribute
         // 4. filter to the ones that contain any of the dummy arguments
         // 5. collect into a vec of violations
         //
@@ -76,10 +82,8 @@ impl AstRule for MissingIntent {
                 !decl
                     .children_by_field_name("attribute", &mut decl.walk())
                     .any(|attr| {
-                        attr.to_text(src)
-                            .unwrap_or("")
-                            .to_lowercase()
-                            .starts_with("intent")
+                        let attr = attr.to_text(src).unwrap_or("").to_lowercase();
+                        attr.starts_with("intent") || attr.starts_with("value")
                     })
             })
             .flat_map(|decl| {

@@ -1,0 +1,71 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S241.f90:5:12: S241 [*] String uses single quotes but double quotes preferred
+  |
+4 |   print *, "Hello, World!"
+5 |   print *, 'Hello, World!'
+  |            ^^^^^^^^^^^^^^^ S241
+6 |   print *, 'Hello, "World"!'
+7 |   print *, "Hello, ""World""!"
+  |
+  = help: Replace single quotes with double quotes
+
+ℹ Safe fix
+2 2 |   implicit none (type, external)
+3 3 | 
+4 4 |   print *, "Hello, World!"
+5   |-  print *, 'Hello, World!'
+  5 |+  print *, "Hello, World!"
+6 6 |   print *, 'Hello, "World"!'
+7 7 |   print *, "Hello, ""World""!"
+8 8 |   print *, 'Hello, ''World''!'
+
+./resources/test/fixtures/style/S241.f90:8:12: S241 String uses single quotes but double quotes preferred
+   |
+ 6 |   print *, 'Hello, "World"!'
+ 7 |   print *, "Hello, ""World""!"
+ 8 |   print *, 'Hello, ''World''!'
+   |            ^^^^^^^^^^^^^^^^^^^ S241
+ 9 |   print *, "Hello, &
+10 |             & World!"
+   |
+
+./resources/test/fixtures/style/S241.f90:11:12: S241 [*] String uses single quotes but double quotes preferred
+   |
+ 9 |     print *, "Hello, &
+10 |               & World!"
+11 |     print *, 'Hello, &
+   |  ____________^
+12 | |             & World!'
+   | |_____________________^ S241
+13 |     print *, 'Hello, &
+14 |               & "World"!'
+   |
+   = help: Replace single quotes with double quotes
+
+ℹ Safe fix
+8  8  |   print *, 'Hello, ''World''!'
+9  9  |   print *, "Hello, &
+10 10 |             & World!"
+11    |-  print *, 'Hello, &
+12    |-            & World!'
+   11 |+  print *, "Hello, &
+   12 |+            & World!"
+13 13 |   print *, 'Hello, &
+14 14 |             & "World"!'
+15 15 |   print *, "Hello, &
+
+./resources/test/fixtures/style/S241.f90:17:12: S241 String uses single quotes but double quotes preferred
+   |
+15 |     print *, "Hello, &
+16 |               & ""World""!"
+17 |     print *, 'Hello, &
+   |  ____________^
+18 | |             & ''World''!'
+   | |_________________________^ S241
+19 |
+20 |     ! TODO: Add tests for multiline strings with a comment line in the middle
+   |

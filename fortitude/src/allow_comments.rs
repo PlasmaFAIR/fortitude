@@ -54,8 +54,8 @@ pub fn gather_allow_comments<'a, 'b>(
         node.to_text(file.source_text()).unwrap()
     )?;
     let range = if let Some(next_node) = node.next_named_sibling() {
-        let start_byte = TextSize::try_from(next_node.start_byte()).unwrap();
-        let end_byte = TextSize::try_from(next_node.end_byte()).unwrap();
+        let start_byte = next_node.start_textsize();
+        let end_byte = next_node.end_textsize();
 
         // This covers the next statement _upto_ the end of the
         // line that it _ends_ on -- i.e. including trailing
@@ -75,17 +75,14 @@ pub fn gather_allow_comments<'a, 'b>(
     // Partition the found selectors into valid and invalid
     let rule_regex = regex!(r#"\w[-\w\d]*"#);
     // 8 from length of "! allow("
-    let comment_start_offset = TextSize::try_from(node.start_byte()).unwrap() + TextSize::new(8);
+    let comment_start_offset = node.start_textsize() + TextSize::new(8);
     for rule in rule_regex.find_iter(allow_comment) {
         let start = comment_start_offset + TextSize::try_from(rule.start()).unwrap();
         let end = comment_start_offset + TextSize::try_from(rule.end()).unwrap();
         let loc = TextRange::new(start, end);
         let code = rule.as_str();
         let redirect = get_redirect_target(code).unwrap_or(code);
-        let rule = match Rule::from_code(redirect).or(Rule::from_str(redirect)) {
-            Ok(rule) => Some(rule),
-            Err(_) => None,
-        };
+        let rule = Rule::from_code(redirect).or(Rule::from_str(redirect)).ok();
 
         codes.push(Code { code, rule, loc });
     }

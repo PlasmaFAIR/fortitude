@@ -1,5 +1,5 @@
 pub mod literal_kinds;
-pub mod magic_io_unit;
+pub mod non_portable_io_unit;
 pub mod star_kinds;
 
 #[cfg(test)]
@@ -13,7 +13,8 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::settings::Settings;
+    use crate::rules::portability;
+    use crate::settings::{CheckSettings, Settings};
     use crate::test::test_path;
 
     #[test_case(Rule::NonPortableIoUnit, Path::new("PORT001.f90"))]
@@ -30,5 +31,57 @@ mod tests {
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
+    }
+
+    #[test]
+    fn warn_port001_no_cray_units() -> Result<()> {
+        let rule_code = Rule::NonPortableIoUnit;
+        let path = Path::new("PORT001.f90");
+        let snapshot = format!(
+            "{}_{}_no_cray_units",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+        let default = Settings::default();
+        #[allow(clippy::needless_update)]
+        let settings = Settings {
+            check: CheckSettings {
+                portability: portability::settings::Settings {
+                    allow_cray_file_units: true,
+                },
+                ..default.check
+            },
+            ..default
+        };
+        let diagnostics = test_path(
+            Path::new("portability").join(path).as_path(),
+            &[rule_code],
+            &settings,
+        )?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+}
+
+pub(crate) mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub allow_cray_file_units: bool,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.portability",
+                fields = [self.allow_cray_file_units]
+            }
+            Ok(())
+        }
     }
 }

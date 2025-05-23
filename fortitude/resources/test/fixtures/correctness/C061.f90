@@ -19,4 +19,8 @@ contains
     type(integer(kind=int64)), intent(inout) :: f
     integer :: g
   end subroutine bar
+
+  subroutine baz(x)
+    integer, value :: x  ! Permitted
+  end subroutine baz
 end module mod_test

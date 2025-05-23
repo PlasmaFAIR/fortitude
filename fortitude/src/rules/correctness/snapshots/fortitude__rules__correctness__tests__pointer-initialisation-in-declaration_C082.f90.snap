@@ -1,0 +1,46 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/correctness/C082.f90:10:25: C082 Pointer 'foo' is initialized in its declaration and has no explicit `save` attribute
+   |
+ 9 |   subroutine init_decl1()
+10 |     integer, pointer :: foo => null()
+   |                         ^^^^^^^^^^^^^ C082
+11 |   end subroutine init_decl1
+   |
+
+./resources/test/fixtures/correctness/C082.f90:14:25: C082 Pointer 'foo' is initialized in its declaration and has no explicit `save` attribute
+   |
+13 |   subroutine init_decl2()
+14 |     integer, pointer :: foo(:) => null()  ! Not ok
+   |                         ^^^^^^^^^^^^^^^^ C082
+15 |     integer, pointer, dimension(:) :: foo1 => null()  ! Not ok
+16 |     integer, pointer, save :: bar => null()  ! Ok with explicit save
+   |
+
+./resources/test/fixtures/correctness/C082.f90:15:39: C082 Pointer 'foo1' is initialized in its declaration and has no explicit `save` attribute
+   |
+13 |   subroutine init_decl2()
+14 |     integer, pointer :: foo(:) => null()  ! Not ok
+15 |     integer, pointer, dimension(:) :: foo1 => null()  ! Not ok
+   |                                       ^^^^^^^^^^^^^^ C082
+16 |     integer, pointer, save :: bar => null()  ! Ok with explicit save
+17 |   end subroutine init_decl2
+   |
+
+./resources/test/fixtures/correctness/C082.f90:20:30: C082 Pointer 'bar' is initialized in its declaration and has no explicit `save` attribute
+   |
+19 |   subroutine init_decl3()
+20 |     integer, pointer :: foo, bar(:) => null(), quazz(:), zapp => null()
+   |                              ^^^^^^^^^^^^^^^^ C082
+21 |   end subroutine init_decl3
+   |
+
+./resources/test/fixtures/correctness/C082.f90:20:58: C082 Pointer 'zapp' is initialized in its declaration and has no explicit `save` attribute
+   |
+19 |   subroutine init_decl3()
+20 |     integer, pointer :: foo, bar(:) => null(), quazz(:), zapp => null()
+   |                                                          ^^^^^^^^^^^^^^ C082
+21 |   end subroutine init_decl3
+   |

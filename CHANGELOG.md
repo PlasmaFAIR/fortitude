@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.7.3
+
+This release adds 5 new rules along with some minor bug fixes and other improvements.
+
+### Rule changes
+
+- Add rule `missing-end-label` ([#407](https://github.com/PlasmaFAIR/fortitude/pull/407))
+- Add rule `single-quote-string` ([#423](https://github.com/PlasmaFAIR/fortitude/pull/423))
+- Add rule `misleading-inline-if-semicolon` ([#426](https://github.com/PlasmaFAIR/fortitude/pull/426))
+- Add rule `misleading-inline-if-continuation` ([#428](https://github.com/PlasmaFAIR/fortitude/pull/428))
+- Add rule `nonportable-shortcircuit-inquiry` ([#431](https://github.com/PlasmaFAIR/fortitude/pull/431))
+- Add rule `split-escaped-quote` ([#438](https://github.com/PlasmaFAIR/fortitude/pull/438))
+- Permit `value` dummy args in `missing-intent` ([#421](https://github.com/PlasmaFAIR/fortitude/pull/421))
+
+### Bug fixes
+
+- Don't raise `SyntaxError` for missing nodes if rule not enabled ([#430](https://github.com/PlasmaFAIR/fortitude/pull/430))
+
+### Documentation
+
+- Clarify `line-too-long` behaviour for long strings and comments ([#434](https://github.com/PlasmaFAIR/fortitude/pull/434))
+
+## 0.7.2
+
+### Rule changes
+
+- Add rule `double-precision-literal` ([#390](https://github.com/PlasmaFAIR/fortitude/pull/390))
+- Add rule to detect missing function result clause ([#386](https://github.com/PlasmaFAIR/fortitude/pull/386))
+- Add rule to flag implicit save in pointer initialization ([#396](https://github.com/PlasmaFAIR/fortitude/pull/396))
+- Add rules preferring multi-word keywords to include spaces ([#393](https://github.com/PlasmaFAIR/fortitude/pull/393))
+
+### Documentation
+
+- Fix `fpm.toml` examples in `docs/settings.md` ([#387](https://github.com/PlasmaFAIR/fortitude/pull/387))
+
+### Other changes
+
+- Raise `SyntaxError` for missing nodes ([#394](https://github.com/PlasmaFAIR/fortitude/pull/394))
+
 ## 0.7.1
 
 This is a bug-fix release, with one new rule. Thanks to our new
@@ -249,5 +288,3 @@ The following rules have been stabilised and are no longer in preview:
 ## 0.2.0
 
 <!-- No changes -->
-
-

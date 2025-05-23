@@ -5,6 +5,7 @@ use ruff_source_file::{SourceFile, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
 
+use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode, TextRule};
 
@@ -77,7 +78,7 @@ impl AlwaysFixableViolation for IncorrectSpaceBeforeComment {
 impl AstRule for IncorrectSpaceBeforeComment {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let source = src.to_source_code();
-        let comment_start = TextSize::try_from(node.start_byte()).unwrap();
+        let comment_start = node.start_textsize();
         // Get the line up to the start of the comment
         let line_index = source.line_index(comment_start);
         let line_start = source.line_start(line_index);

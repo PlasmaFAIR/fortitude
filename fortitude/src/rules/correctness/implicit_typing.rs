@@ -5,7 +5,6 @@ use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
-use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 pub fn implicit_statement_is_none(node: &Node) -> bool {
@@ -191,15 +190,9 @@ impl AstRule for ImplicitExternalProcedures {
                 // Seems unlikely someone would have `implicit none (type)`
                 // without `external` -- is that a sign they _explicitly_ don't
                 // want it? That's probably still unwise though
-                Edit::insertion(
-                    ", external".to_string(),
-                    TextSize::try_from(type_node.end_byte()).unwrap(),
-                )
+                Edit::insertion(", external".to_string(), type_node.end_textsize())
             } else {
-                Edit::insertion(
-                    " (type, external)".to_string(),
-                    TextSize::try_from(node.end_byte()).unwrap(),
-                )
+                Edit::insertion(" (type, external)".to_string(), node.end_textsize())
             };
             let fix = Fix::unsafe_edit(edit);
 

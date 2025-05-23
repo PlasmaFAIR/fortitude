@@ -145,7 +145,7 @@ unknown-key = 1
           |
         3 | unknown-key = 1
           | ^^^^^^^^^^^
-        unknown field `unknown-key`, expected one of `files`, `fix`, `unsafe-fixes`, `show-fixes`, `fix-only`, `output-format`, `preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `respect-gitignore`, `line-length`, `per-file-ignores`, `exit-unlabelled-loops`
+        unknown field `unknown-key`, expected one of `files`, `fix`, `unsafe-fixes`, `show-fixes`, `fix-only`, `output-format`, `preview`, `progress-bar`, `ignore`, `select`, `extend-select`, `file-extensions`, `exclude`, `extend-exclude`, `force-exclude`, `respect-gitignore`, `line-length`, `per-file-ignores`, `exit-unlabelled-loops`, `keyword-whitespace`, `strings`, `portability`
     ");
     Ok(())
 }
@@ -2160,6 +2160,40 @@ end program test
     program test
       implicit none (type, external)
     end program test
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+/// Issue 429, ignoring syntax errors from missing nodes
+#[test]
+fn ignore_syntax_errors() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none (type, external)
+  type(bar, pointer :: zing
+end program foo
+"#,
+    )?;
+
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=C003")
+                         .arg("--ignore=E001")
+                         .arg(test_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 1 files scanned.
+    All checks passed!
+
 
     ----- stderr -----
     ");

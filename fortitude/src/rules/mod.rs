@@ -11,6 +11,7 @@ pub(crate) mod portability;
 pub(crate) mod style;
 pub(crate) mod testing;
 pub mod utilities;
+
 use crate::registry::{AsRule, Category};
 
 use std::fmt::Formatter;
@@ -90,6 +91,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "071") => (RuleGroup::Stable, Ast, Default, correctness::assumed_size::AssumedSize),
         (Correctness, "072") => (RuleGroup::Stable, Ast, Default, correctness::assumed_size::AssumedSizeCharacterIntent),
         (Correctness, "081") => (RuleGroup::Stable, Ast, Default, correctness::init_decls::InitialisationInDeclaration),
+        (Correctness, "082") => (RuleGroup::Preview, Ast, Default, correctness::init_decls::PointerInitialisationInDeclaration),
         (Correctness, "091") => (RuleGroup::Stable, Ast, Default, correctness::external::ExternalProcedure),
         (Correctness, "092") => (RuleGroup::Stable, Ast, Default, correctness::external::ProcedureNotInModule),
         (Correctness, "101") => (RuleGroup::Preview, Ast, Default, correctness::derived_default_init::MissingDefaultPointerInitalisation),
@@ -99,6 +101,11 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "132") => (RuleGroup::Stable, Ast, Optional, correctness::accessibility_statements::DefaultPublicAccessibility),
         (Correctness, "141") => (RuleGroup::Stable, Ast, Default, correctness::exit_labels::MissingExitOrCycleLabel),
         (Correctness, "142") => (RuleGroup::Preview, Ast, Optional, correctness::exit_labels::ExitOrCycleInUnlabelledLoop),
+        (Correctness, "143") => (RuleGroup::Preview, Ast, Default, correctness::exit_labels::MissingEndLabel),
+        (Correctness, "151") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::MisleadingInlineIfSemicolon),
+        (Correctness, "152") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::MisleadingInlineIfContinuation),
+        (Correctness, "161") => (RuleGroup::Preview, Ast, Default, correctness::nonportable_shortcircuit_inquiry::NonportableShortcircuitInquiry),
+        (Correctness, "171") => (RuleGroup::Preview, Text, Optional, correctness::split_escaped_quote::SplitEscapedQuote),
 
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),
@@ -108,7 +115,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modernisation, "031") => (RuleGroup::Preview, Ast, Optional, modernisation::include_statement::IncludeStatement),
 
         // portability
-        (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::magic_io_unit::NonPortableIoUnit),
+        (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::non_portable_io_unit::NonPortableIoUnit),
         (Portability, "011") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKind),
         (Portability, "012") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKindSuffix),
         (Portability, "021") => (RuleGroup::Stable, Ast, Default, portability::star_kinds::StarKind),
@@ -127,6 +134,10 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "211") => (RuleGroup::Preview, Ast, Optional, style::file_contents::MultipleModules),
         (Style, "212") => (RuleGroup::Preview, Ast, Optional, style::file_contents::ProgramWithModule),
         (Style, "221") => (RuleGroup::Preview, Ast, Optional, style::functions::FunctionMissingResult),
+        (Style, "231") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordsMissingSpace),
+        (Style, "232") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordHasWhitespace),
+        (Style, "241") => (RuleGroup::Preview, Ast, Default, style::strings::BadQuoteString),
+        (Style, "242") => (RuleGroup::Preview, Ast, Optional, style::strings::AvoidableEscapedQuote),
 
         // obsolescent
         (Obsolescent, "001") => (RuleGroup::Removed, Ast, Default, obsolescent::statement_functions::StatementFunction),

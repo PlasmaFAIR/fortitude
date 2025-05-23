@@ -4,7 +4,6 @@ use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
-use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -101,7 +100,7 @@ impl AstRule for MissingDefaultPointerInitalisation {
                 let var_name = node.to_text(src.source_text()).unwrap_or("").to_string();
 
                 let init_var = format!(" => null()");
-                let start_pos = TextSize::try_from(node.end_byte()).unwrap();
+                let start_pos = node.end_textsize();
                 let fix = Fix::unsafe_edit(Edit::insertion(init_var, start_pos));
 
                 Diagnostic::from_node(Self { var: var_name }, &node).with_fix(fix)

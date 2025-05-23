@@ -185,6 +185,9 @@ snapshot_kind: text
 78 |   ! catch this
 79 | end
    | ^^^ S061
+80 |
+81 | ! uppercase versions, check preserve case
+82 | MODULE MYMOD1_UPPER
    |
    = help: Write as 'end program myprog'.
 
@@ -194,3 +197,110 @@ snapshot_kind: text
 78 78 |   ! catch this
 79    |-end
    79 |+end program myprog
+80 80 | 
+81 81 | ! uppercase versions, check preserve case
+82 82 | MODULE MYMOD1_UPPER
+
+./resources/test/fixtures/style/S061.f90:87:3: S061 [*] end statement should be named.
+   |
+85 |     INTEGER :: X
+86 |     ! CATCH THIS
+87 |   END TYPE
+   |   ^^^^^^^^ S061
+88 | CONTAINS
+89 |   SUBROUTINE MYSUB1()
+90 |     WRITE (*,*) 'HELLO WORLD'
+   |
+   = help: Write as 'END TYPE MYTYPE'.
+
+ℹ Safe fix
+84 84 |   TYPE MYTYPE
+85 85 |     INTEGER :: X
+86 86 |     ! CATCH THIS
+87    |-  END TYPE
+   87 |+  END TYPE MYTYPE
+88 88 | CONTAINS
+89 89 |   SUBROUTINE MYSUB1()
+90 90 |     WRITE (*,*) 'HELLO WORLD'
+
+./resources/test/fixtures/style/S061.f90:92:3: S061 [*] end statement should be named.
+   |
+90 |     WRITE (*,*) 'HELLO WORLD'
+91 |     ! CATCH THIS
+92 |   END SUBROUTINE
+   |   ^^^^^^^^^^^^^^ S061
+93 |   SUBROUTINE MYSUB2()
+94 |     WRITE (*,*) 'HELLO WORLD'
+95 |     ! IGNORE THIS
+   |
+   = help: Write as 'END SUBROUTINE MYSUB1'.
+
+ℹ Safe fix
+89 89 |   SUBROUTINE MYSUB1()
+90 90 |     WRITE (*,*) 'HELLO WORLD'
+91 91 |     ! CATCH THIS
+92    |-  END SUBROUTINE
+   92 |+  END SUBROUTINE MYSUB1
+93 93 |   SUBROUTINE MYSUB2()
+94 94 |     WRITE (*,*) 'HELLO WORLD'
+95 95 |     ! IGNORE THIS
+
+./resources/test/fixtures/style/S061.f90:98:1: S061 [*] end statement should be named.
+    |
+ 96 |   END SUBROUTINE MYSUB2
+ 97 |   ! CATCH THIS
+ 98 | END
+    | ^^^ S061
+ 99 | MODULE MYMOD2_UPPER
+100 |   IMPLICIT NONE
+101 |   TYPE MYTYPE
+    |
+    = help: Write as 'END MODULE MYMOD1_UPPER'.
+
+ℹ Safe fix
+95 95 |     ! IGNORE THIS
+96 96 |   END SUBROUTINE MYSUB2
+97 97 |   ! CATCH THIS
+98    |-END
+   98 |+END MODULE MYMOD1_UPPER
+99 99 | MODULE MYMOD2_UPPER
+100 100 |   IMPLICIT NONE
+101 101 |   TYPE MYTYPE
+
+./resources/test/fixtures/style/S061.f90:109:3: S061 [*] end statement should be named.
+    |
+107 |     MYFUNC1 = 1
+108 |     ! CATCH THIS
+109 |   END FUNCTION
+    |   ^^^^^^^^^^^^ S061
+110 |   INTEGER FUNCTION MYFUNC2()
+111 |     MYFUNC2 = 1
+112 |     ! IGNORE THIS
+    |
+    = help: Write as 'END FUNCTION MYFUNC1'.
+
+ℹ Safe fix
+106 106 |   INTEGER FUNCTION MYFUNC1()
+107 107 |     MYFUNC1 = 1
+108 108 |     ! CATCH THIS
+109     |-  END FUNCTION
+    109 |+  END FUNCTION MYFUNC1
+110 110 |   INTEGER FUNCTION MYFUNC2()
+111 111 |     MYFUNC2 = 1
+112 112 |     ! IGNORE THIS
+
+./resources/test/fixtures/style/S061.f90:115:1: S061 [*] end statement should be named.
+    |
+113 |   END FUNCTION MYFUNC2
+114 |   ! CATCH THIS
+115 | END MODULE
+    | ^^^^^^^^^^ S061
+    |
+    = help: Write as 'END MODULE MYMOD2_UPPER'.
+
+ℹ Safe fix
+112 112 |     ! IGNORE THIS
+113 113 |   END FUNCTION MYFUNC2
+114 114 |   ! CATCH THIS
+115     |-END MODULE
+    115 |+END MODULE MYMOD2_UPPER

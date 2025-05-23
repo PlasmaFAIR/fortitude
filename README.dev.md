@@ -238,6 +238,8 @@ To make a new release, the following steps must be completed in order:
 
 1. Install `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
+1. Install [`gh`](https://cli.github.com/) and login with `gh auth login`
+
 1. Run `./scripts/release.sh`; this command will:
 
     - Generate a temporary virtual environment with `rooster`
@@ -248,6 +250,10 @@ To make a new release, the following steps must be completed in order:
 
 1. `rooster` currently doesn't update `CITATION.cff`, so this needs to be done
    manually for now
+
+1. Some sections of the docs also directly reference the version number and
+   need to be manually updated. Use `grep <current_version> docs -r` to find
+   them.
 
 1. The changelog should then be editorialised for consistency
 
@@ -262,6 +268,8 @@ To make a new release, the following steps must be completed in order:
 1. Create a pull request with the changelog and version updates
 
 1. Merge the PR
+
+1. Update the tag on `main`
 
 1. Run the [release workflow](https://github.com/astral-sh/ruff/actions/workflows/release.yml) with:
 
