@@ -1,6 +1,8 @@
 use crate::cli::CheckArgs;
 use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
-use crate::options::{ExitUnlabelledLoopOptions, KeywordWhitespaceOptions, Options, StringOptions};
+use crate::options::{
+    ExitUnlabelledLoopOptions, KeywordWhitespaceOptions, Options, PortabilityOptions, StringOptions,
+};
 use crate::registry::RuleNamespace;
 use crate::rule_redirects::get_redirect;
 use crate::rule_selector::{
@@ -169,6 +171,7 @@ pub struct Configuration {
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
     pub strings: Option<StringOptions>,
+    pub portability: Option<PortabilityOptions>,
 }
 
 impl Default for Configuration {
@@ -195,6 +198,7 @@ impl Default for Configuration {
             exit_unlabelled_loops: Default::default(),
             keyword_whitespace: Default::default(),
             strings: Default::default(),
+            portability: Default::default(),
         }
     }
 }
@@ -267,6 +271,7 @@ impl Configuration {
             exit_unlabelled_loops: check.exit_unlabelled_loops,
             keyword_whitespace: check.keyword_whitespace,
             strings: check.strings,
+            portability: check.portability,
         }
     }
 
@@ -373,6 +378,10 @@ impl Configuration {
                 strings: self
                     .strings
                     .map(StringOptions::into_settings)
+                    .unwrap_or_default(),
+                portability: self
+                    .portability
+                    .map(PortabilityOptions::into_settings)
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {

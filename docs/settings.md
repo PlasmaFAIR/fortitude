@@ -665,6 +665,41 @@ Whether to enforce the use of `in out` instead of `inout`.
 
 ---
 
+### `check.portability`
+
+Options for the portability rules
+
+#### [`allow-cray-file-units`](#check_portability_allow-cray-file-units) {: #check_portability_allow-cray-file-units }
+<span id="allow-cray-file-units"></span>
+
+Whether to allow file units of `100`, `101`, `102` in `read/write` statements
+for [`non-portable-io-unit`](rules/non-portable-io-unit.md). The Cray
+compiler pre-connects these to `stdin`, `stdout`, and `stderr`,
+respectively. However, if you are `open`-ing these units explicitly, you may
+wish to switch this to `true` -- but see also
+[`magic-io-unit`](rules/magic-io-unit.md).
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "fpm.toml"
+
+    ```toml
+    [extra.fortitude.check.portability]
+    allow-cray-file-units = true
+    ```
+=== "fortitude.toml"
+
+    ```toml
+    [check.portability]
+    allow-cray-file-units = true
+    ```
+
+---
+
 ### `check.strings`
 
 Options for the string literal rules
