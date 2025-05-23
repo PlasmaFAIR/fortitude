@@ -1,5 +1,5 @@
 pub mod literal_kinds;
-pub mod magic_io_unit;
+pub mod non_portable_io_unit;
 pub mod star_kinds;
 
 #[cfg(test)]

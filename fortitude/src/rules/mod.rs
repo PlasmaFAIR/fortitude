@@ -115,7 +115,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modernisation, "031") => (RuleGroup::Preview, Ast, Optional, modernisation::include_statement::IncludeStatement),
 
         // portability
-        (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::magic_io_unit::NonPortableIoUnit),
+        (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::non_portable_io_unit::NonPortableIoUnit),
         (Portability, "011") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKind),
         (Portability, "012") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKindSuffix),
         (Portability, "021") => (RuleGroup::Stable, Ast, Default, portability::star_kinds::StarKind),
