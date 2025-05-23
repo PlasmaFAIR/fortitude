@@ -348,4 +348,16 @@ pub struct FormatArgs {
         help_heading = "File selection"
     )]
     pub file_extensions: Option<Vec<String>>,
+    /// The format command is still in development and may break your code (although it
+    /// _probably_ won't), and future changes may give different results. To use the
+    /// format command, you must enable this flag on the command line to acknowledge the
+    /// risks.
+    #[arg(long, action = SetTrue)]
+    pub i_understand_the_risks: Option<bool>,
+    /// Enable preview mode; enables unstable formatting.
+    /// Use `--no-preview` to disable.
+    #[arg(long, overrides_with("no_preview"), action = SetTrue)]
+    pub preview: Option<bool>,
+    #[clap(long, overrides_with("preview"), hide = true, action = SetTrue)]
+    pub no_preview: Option<bool>,
 }
