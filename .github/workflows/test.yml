@@ -43,7 +43,7 @@ jobs:
       shell: bash
       env:
         NEXTEST_PROFILE: "ci"
-      run: cargo insta test --all-features --unreferenced reject --test-runner nextest
+      run: cargo insta test --all-features --workspace --unreferenced reject --test-runner nextest
     - name: "Check docs"
       run: cargo dev generate-all --mode=check
     - name: "Check docs for broken links"

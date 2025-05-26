@@ -16,10 +16,10 @@ use strum::IntoEnumIterator;
 
 use ruff_diagnostics::FixAvailability;
 
-use fortitude::{
+use fortitude_linter::registry::Rule;
+use fortitude_workspace::{
     options::Options,
     options_base::{OptionEntry, OptionsMetadata},
-    registry::Rule,
 };
 
 use crate::{

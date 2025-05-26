@@ -9,7 +9,9 @@ license = { workspace = true }
 
 [dependencies]
 fortitude = { workspace = true }
+fortitude_linter = { workspace = true }
 fortitude_macros = { workspace = true }
+fortitude_workspace = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true }

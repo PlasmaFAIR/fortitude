@@ -556,12 +556,85 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "bitflags",
- "chrono",
  "clap",
  "clap_complete_command",
  "colored",
- "fern",
+ "fortitude_linter",
+ "fortitude_macros",
+ "fortitude_workspace",
+ "indicatif",
+ "insta",
+ "insta-cmd",
+ "is-macro",
+ "itertools 0.12.1",
+ "lazy_static",
+ "log",
+ "path-absolutize",
+ "predicates",
+ "pretty_assertions",
+ "quick-junit",
+ "rayon",
+ "ruff_cache",
+ "ruff_diagnostics",
+ "ruff_macros",
+ "ruff_source_file",
+ "ruff_text_size",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "similar",
+ "strum",
+ "strum_macros",
+ "tempfile",
+ "test-case",
+ "textwrap",
+ "toml",
+ "tree-sitter",
+ "tree-sitter-fortran",
+ "url",
+]
+
+[[package]]
+name = "fortitude_dev"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
  "fortitude",
+ "fortitude_linter",
+ "fortitude_macros",
+ "fortitude_workspace",
+ "itertools 0.12.1",
+ "pretty_assertions",
+ "regex",
+ "ruff_cache",
+ "ruff_diagnostics",
+ "ruff_macros",
+ "ruff_source_file",
+ "ruff_text_size",
+ "serde_json",
+ "strum",
+ "strum_macros",
+ "textwrap",
+ "tree-sitter",
+ "tree-sitter-cli",
+ "tree-sitter-fortran",
+]
+
+[[package]]
+name = "fortitude_linter"
+version = "0.1.0"
+dependencies = [
+ "annotate-snippets",
+ "anyhow",
+ "assert_cmd",
+ "bitflags",
+ "chrono",
+ "clap",
+ "colored",
+ "fern",
+ "fortitude_linter",
  "fortitude_macros",
  "globset",
  "ignore",
@@ -603,32 +676,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fortitude_dev"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "colored",
- "fortitude",
- "fortitude_macros",
- "itertools 0.12.1",
- "pretty_assertions",
- "regex",
- "ruff_cache",
- "ruff_diagnostics",
- "ruff_macros",
- "ruff_source_file",
- "ruff_text_size",
- "serde_json",
- "strum",
- "strum_macros",
- "textwrap",
- "tree-sitter",
- "tree-sitter-cli",
- "tree-sitter-fortran",
-]
-
-[[package]]
 name = "fortitude_macros"
 version = "0.1.0"
 dependencies = [
@@ -636,6 +683,59 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "fortitude_workspace"
+version = "0.1.0"
+dependencies = [
+ "annotate-snippets",
+ "anyhow",
+ "assert_cmd",
+ "bitflags",
+ "chrono",
+ "clap",
+ "colored",
+ "fern",
+ "fortitude_linter",
+ "fortitude_macros",
+ "globset",
+ "ignore",
+ "indicatif",
+ "insta",
+ "insta-cmd",
+ "is-macro",
+ "itertools 0.12.1",
+ "lazy-regex",
+ "lazy_static",
+ "log",
+ "path-absolutize",
+ "pathdiff",
+ "predicates",
+ "pretty_assertions",
+ "quick-junit",
+ "rayon",
+ "ruff_cache",
+ "ruff_diagnostics",
+ "ruff_macros",
+ "ruff_source_file",
+ "ruff_text_size",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "similar",
+ "similar-asserts",
+ "strum",
+ "strum_macros",
+ "tempfile",
+ "test-case",
+ "textwrap",
+ "thiserror 1.0.66",
+ "toml",
+ "tree-sitter",
+ "tree-sitter-fortran",
+ "unicode-width 0.2.0",
+ "url",
 ]
 
 [[package]]

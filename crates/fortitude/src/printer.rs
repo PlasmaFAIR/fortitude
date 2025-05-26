@@ -9,16 +9,16 @@ use itertools::{iterate, Itertools};
 use serde::Serialize;
 
 use crate::check::CheckResults;
-use crate::diagnostics::{Diagnostics, FixMap};
-use crate::fs::relativize_path;
-use crate::logging::LogLevel;
-use crate::message::{
-    AzureEmitter, DiagnosticMessage, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter,
-    JsonEmitter, JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter,
-    TextEmitter,
+use fortitude_linter::diagnostic_message::DiagnosticMessage;
+use fortitude_linter::diagnostics::{Diagnostics, FixMap};
+use fortitude_linter::fs::relativize_path;
+use fortitude_linter::logging::LogLevel;
+use fortitude_linter::message::{
+    AzureEmitter, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
+    JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
 };
-use crate::rules::Rule;
-use crate::settings::{FixMode, OutputFormat, UnsafeFixes};
+use fortitude_linter::rules::Rule;
+use fortitude_linter::settings::{FixMode, OutputFormat, UnsafeFixes};
 
 bitflags! {
     #[derive(Default, Debug, Copy, Clone)]
@@ -285,7 +285,7 @@ impl Printer {
                     .with_show_fix_status(true)
                     .with_show_fix_diff(self.flags.intersects(Flags::SHOW_FIX_DIFF))
                     .with_show_source(self.format == OutputFormat::Full)
-                    .with_unsafe_fixes(crate::settings::UnsafeFixes::Hint)
+                    .with_unsafe_fixes(fortitude_linter::settings::UnsafeFixes::Hint)
                     .emit(writer, &results.diagnostics.messages)?;
 
                 if self.flags.intersects(Flags::SHOW_FIX_SUMMARY)

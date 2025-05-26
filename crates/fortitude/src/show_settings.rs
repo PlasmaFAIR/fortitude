@@ -2,7 +2,7 @@ use std::io::Write;
 
 use anyhow::Result;
 
-use crate::settings::Settings;
+use fortitude_linter::settings::Settings;
 
 pub(crate) fn show_settings(settings: &Settings, writer: &mut impl Write) -> Result<()> {
     writeln!(

@@ -7,7 +7,7 @@ use colored::Colorize;
 use fortitude::check::check;
 use fortitude::cli::{Cli, SubCommands};
 use fortitude::explain::explain;
-use fortitude::logging::set_up_logging;
+use fortitude_linter::logging::set_up_logging;
 
 fn main() -> Result<ExitCode> {
     let args = Cli::parse();

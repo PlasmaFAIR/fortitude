@@ -1,12 +1,12 @@
 use std::collections::BTreeSet;
 use std::process::ExitCode;
 
-use crate::cli::ExplainArgs;
-use crate::rule_selector::PreviewOptions;
-use crate::rules::Rule;
-use crate::settings::DEFAULT_SELECTORS;
 use anyhow::Result;
 use colored::Colorize;
+use fortitude_linter::cli::ExplainArgs;
+use fortitude_linter::rule_selector::PreviewOptions;
+use fortitude_linter::rules::Rule;
+use fortitude_linter::settings::DEFAULT_SELECTORS;
 use itertools::Itertools;
 use ruff_diagnostics::FixAvailability;
 use textwrap::dedent;
@@ -15,7 +15,7 @@ use textwrap::dedent;
 fn ruleset(args: &ExplainArgs) -> anyhow::Result<Vec<Rule>> {
     // TODO: Take this as an option
     let preview = PreviewOptions {
-        mode: crate::settings::PreviewMode::Enabled,
+        mode: fortitude_linter::settings::PreviewMode::Enabled,
         require_explicit: false,
     };
 

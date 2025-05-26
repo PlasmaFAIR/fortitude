@@ -10,8 +10,8 @@ use std::fmt::Write;
 use std::fs;
 use std::path::PathBuf;
 
-use fortitude::options::Options;
-use fortitude::options_base::{OptionField, OptionSet, OptionsMetadata, Visit};
+use fortitude_workspace::options::Options;
+use fortitude_workspace::options_base::{OptionField, OptionSet, OptionsMetadata, Visit};
 
 use crate::generate_all::{Mode, REGENERATE_ALL_COMMAND};
 use crate::ROOT_DIR;
