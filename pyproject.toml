@@ -39,12 +39,13 @@ bindings = "bin"
 module-name = "fortitude"
 python-source = "python"
 python-packages = ["fortitude"]
-manifest-path = "fortitude/Cargo.toml"
+manifest-path = "crates/fortitude/Cargo.toml"
 include = [{ path = "LICENSE", format = "sdist" }]
 exclude = [
-    "fortitude/resources/test/fixtures/**/*",
-    "fortitude/src/rules/*/snapshots/**/*",
-    "fortitude/src/message/snapshots/*"
+    "crates/fortitude_dev/*",
+    "crates/fortitude_linter/resources/test/fixtures/**/*",
+    "crates/fortitude_linter/src/rules/*/snapshots/**/*",
+    "crates/fortitude_linter/src/message/snapshots/*"
 ]
 strip = true
 
