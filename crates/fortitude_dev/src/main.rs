@@ -12,7 +12,7 @@ mod generate_docs;
 mod generate_options;
 mod generate_rules_table;
 
-const ROOT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../");
+const ROOT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../");
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

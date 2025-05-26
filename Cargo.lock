@@ -436,7 +436,6 @@ dependencies = [
 name = "fortitude"
 version = "0.7.3"
 dependencies = [
- "annotate-snippets",
  "anyhow",
  "assert_cmd",
  "bitflags",
@@ -444,38 +443,23 @@ dependencies = [
  "clap_complete_command",
  "colored",
  "fortitude_linter",
- "fortitude_macros",
  "fortitude_workspace",
  "indicatif",
  "insta",
  "insta-cmd",
- "is-macro",
  "itertools 0.12.1",
- "lazy_static",
  "log",
  "path-absolutize",
  "predicates",
- "pretty_assertions",
- "quick-junit",
  "rayon",
- "ruff_cache",
  "ruff_diagnostics",
- "ruff_macros",
  "ruff_source_file",
  "ruff_text_size",
  "rustc-hash",
  "serde",
  "serde_json",
- "similar",
- "strum",
- "strum_macros",
  "tempfile",
- "test-case",
  "textwrap",
- "toml",
- "tree-sitter",
- "tree-sitter-fortran",
- "url",
 ]
 
 [[package]]
@@ -484,22 +468,14 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "clap",
- "colored",
  "fortitude",
  "fortitude_linter",
- "fortitude_macros",
  "fortitude_workspace",
  "itertools 0.12.1",
  "pretty_assertions",
  "regex",
- "ruff_cache",
  "ruff_diagnostics",
- "ruff_macros",
- "ruff_source_file",
- "ruff_text_size",
- "serde_json",
  "strum",
- "strum_macros",
  "textwrap",
 ]
 
@@ -519,9 +495,7 @@ dependencies = [
  "fortitude_macros",
  "globset",
  "ignore",
- "indicatif",
  "insta",
- "insta-cmd",
  "is-macro",
  "itertools 0.12.1",
  "lazy-regex",
@@ -529,7 +503,6 @@ dependencies = [
  "log",
  "path-absolutize",
  "pathdiff",
- "predicates",
  "pretty_assertions",
  "quick-junit",
  "rayon",
@@ -542,14 +515,12 @@ dependencies = [
  "serde",
  "serde_json",
  "similar",
- "similar-asserts",
  "strum",
  "strum_macros",
  "tempfile",
  "test-case",
  "textwrap",
  "thiserror 1.0.66",
- "toml",
  "tree-sitter",
  "tree-sitter-fortran",
  "unicode-width 0.2.0",
@@ -570,53 +541,20 @@ dependencies = [
 name = "fortitude_workspace"
 version = "0.1.0"
 dependencies = [
- "annotate-snippets",
  "anyhow",
- "assert_cmd",
- "bitflags",
- "chrono",
- "clap",
  "colored",
- "fern",
  "fortitude_linter",
- "fortitude_macros",
- "globset",
- "ignore",
- "indicatif",
- "insta",
- "insta-cmd",
  "is-macro",
  "itertools 0.12.1",
- "lazy-regex",
- "lazy_static",
  "log",
  "path-absolutize",
- "pathdiff",
- "predicates",
- "pretty_assertions",
- "quick-junit",
- "rayon",
- "ruff_cache",
- "ruff_diagnostics",
  "ruff_macros",
- "ruff_source_file",
- "ruff_text_size",
  "rustc-hash",
  "serde",
- "serde_json",
- "similar",
- "similar-asserts",
  "strum",
- "strum_macros",
  "tempfile",
- "test-case",
  "textwrap",
- "thiserror 1.0.66",
  "toml",
- "tree-sitter",
- "tree-sitter-fortran",
- "unicode-width 0.2.0",
- "url",
 ]
 
 [[package]]
@@ -1449,20 +1387,6 @@ name = "similar"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1de1d4f81173b03af4c0cbed3c898f6bff5b870e4a7f5d6f4057d62a7a4b686e"
-dependencies = [
- "bstr",
- "unicode-segmentation",
-]
-
-[[package]]
-name = "similar-asserts"
-version = "1.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfe85670573cd6f0fa97940f26e7e6601213c3b0555246c24234131f88c5709e"
-dependencies = [
- "console",
- "similar",
-]
 
 [[package]]
 name = "smallvec"
