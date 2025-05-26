@@ -1,9 +1,0 @@
----
-source: crates/fortitude_linter/src/message/json_lines.rs
-assertion_line: 41
-expression: content
-snapshot_kind: text
----
-{"code":"S201","message":"'implicit none' set on the enclosing module","fix":{"applicability":"unsafe","message":"Remove unnecessary 'implicit none'","edits":[{"content":"","location":{"row":6,"column":5},"end_location":{"row":6,"column":18}}]},"location":{"row":6,"column":5},"end_location":{"row":6,"column":18},"filename":"test.f90"}
-{"code":"S061","message":"end statement should read 'end subroutine foo'","fix":null,"location":{"row":7,"column":3},"end_location":{"row":7,"column":17},"filename":"test.f90"}
-{"code":"PORT021","message":"integer*4 is non-standard, use integer(4)","fix":null,"location":{"row":1,"column":8},"end_location":{"row":1,"column":9},"filename":"star_kind.f90"}

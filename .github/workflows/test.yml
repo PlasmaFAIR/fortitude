@@ -79,7 +79,7 @@ jobs:
       shell: bash
       env:
         NEXTEST_PROFILE: "ci"
-      run: cargo insta test --all-features --unreferenced reject --test-runner nextest
+      run: cargo insta test --all-features --workspace --unreferenced reject --test-runner nextest
 
   build-macos:
     name: Build and Test (macos)
@@ -103,7 +103,7 @@ jobs:
       shell: bash
       env:
         NEXTEST_PROFILE: "ci"
-      run: cargo insta test --all-features --unreferenced reject --test-runner nextest
+      run: cargo insta test --all-features --workspace --unreferenced reject --test-runner nextest
 
   cargo-install:
     name: Test cargo installation

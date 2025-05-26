@@ -30,9 +30,9 @@ pub fn read_to_string(path: &Path) -> std::io::Result<String> {
     if TryInto::<u32>::try_into(file_length).is_err() {
         #[allow(non_snake_case)]
         let length_in_GiB = file_length as f64 / 1024.0 / 1024.0 / 1024.0;
-        return Err(std::io::Error::other(
-            format!("larger than maximum 4 GiB ({length_in_GiB} GiB)"),
-        ));
+        return Err(std::io::Error::other(format!(
+            "larger than maximum 4 GiB ({length_in_GiB} GiB)"
+        )));
     }
     std::fs::read_to_string(path)
 }
