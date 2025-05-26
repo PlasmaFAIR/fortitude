@@ -3,7 +3,8 @@ use std::io::Write;
 use anyhow::Result;
 use itertools::Itertools;
 
-use crate::{fs::get_files, settings::FileResolverSettings};
+use fortitude_linter::fs::get_files;
+use fortitude_linter::settings::FileResolverSettings;
 
 pub(crate) fn show_files(
     resolver: &FileResolverSettings,

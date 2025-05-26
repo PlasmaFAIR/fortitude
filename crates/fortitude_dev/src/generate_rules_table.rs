@@ -6,8 +6,8 @@
 //!
 //! Used for <https://docs.astral.sh/ruff/rules/>.
 
-use fortitude::registry::{Category, Rule, RuleNamespace};
-use fortitude::rules::RuleGroup;
+use fortitude_linter::registry::{Category, Rule, RuleNamespace};
+use fortitude_linter::rules::RuleGroup;
 
 use std::borrow::Cow;
 use strum::IntoEnumIterator;
