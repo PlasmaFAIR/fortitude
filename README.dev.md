@@ -145,6 +145,11 @@ other kinds of rules, you'll just need to manually change the `impl
 AstRule` block to the correct one in the new rule file, and the new
 line added in `rules/mod.rs`.
 
+It can be very helpful to look at the AST for a sample file to know
+what to look for when writing your rule: run `cargo dev print-ast` to
+see a pretty-printed AST. You can add `--cst` to see a "concrete
+syntax tree" that includes unnamed nodes.
+
 For some rules, it may be possible to automatically apply a fix for the user,
 though it isn't essential to include a fix when adding a new rule. These are
 typically applied using
