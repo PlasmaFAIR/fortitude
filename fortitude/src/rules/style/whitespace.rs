@@ -160,3 +160,69 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
         vec!["::"]
     }
 }
+    
+/// Checks for spaces following an opening brace.
+///
+/// ## Why is this bad?
+///
+///
+/// ## References
+///
+#[derive(ViolationMetadata)]
+pub(crate) struct IncorrectSpaceAfterOpeningBracket {}
+
+impl AlwaysFixableViolation for IncorrectSpaceAfterOpeningBracket {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Should be 0 spaces after opening bracket".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "remove extra whitespace".to_string()
+    }
+}
+impl AstRule for IncorrectSpaceAfterOpeningBracket {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let source = src.to_source_code();
+        let bracket_end = node.end_textsize();
+        let line_index = source.line_index(bracket_end);
+
+        // Get line after bracket
+        let line_end = source.line_end(line_index);
+        let range_after = TextRange::new(bracket_end, line_end);
+        let line_after = source.slice(range_after);
+
+        // Count whitespace characters after the bracket
+        let whitespace_iter = line_after.chars().take_while(|c| c.is_whitespace());
+        let whitespace_count = whitespace_iter.count();
+        let whitespace_end = bracket_end + TextSize::from(whitespace_count as u32);
+
+        // Ignore if after the bracket is empty or just filled with whitespace
+        if line_after.len() == whitespace_count {
+            return None;
+        }
+
+        // Ignore if bracket is followed by a line wrap, i.e. &
+        let range_after_whitespace = TextRange::new(whitespace_end, line_end);
+        let line_after_whitespace = source.slice(range_after_whitespace);
+        let wrap_count = line_after_whitespace
+            .chars()
+            .take_while(|c| *c == '&')
+            .count();
+        println!("wrap_count: {wrap_count}");
+        if wrap_count > 0 {
+            return None;
+        }
+
+        // Fail if this is more than 0
+        if whitespace_count > 0 {
+            let edit = Edit::deletion(bracket_end, whitespace_end);
+            return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
+        }
+        None
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["(", "["]
+    }
+}
