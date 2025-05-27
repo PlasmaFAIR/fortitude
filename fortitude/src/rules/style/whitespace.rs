@@ -101,3 +101,82 @@ impl AstRule for IncorrectSpaceBeforeComment {
         vec!["comment"]
     }
 }
+
+/// ## What does it do?
+/// Checks for `::` that aren't surrounded by a space on either side.
+///
+/// ## Why is this bad?
+/// TBC
+///
+/// ## References
+/// TBC
+#[derive(ViolationMetadata)]
+pub(crate) struct IncorrectSpacingAroundDoubleColon {}
+
+impl AlwaysFixableViolation for IncorrectSpacingAroundDoubleColon {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "need at least 1 space before and after `::`".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "add extra whitespace".to_string()
+    }
+}
+impl AstRule for IncorrectSpacingAroundDoubleColon {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let mut result = None;
+
+        let source = src.to_source_code();
+        let double_colon_start = node.start_textsize();
+        let double_colon_end = node.end_textsize();
+        let line_index = source.line_index(double_colon_start);
+
+        // Check before
+        // Get the line up to the start of the double colon
+        let line_start = source.line_start(line_index);
+        let range_before = TextRange::new(line_start, double_colon_start);
+        let line_before = source.slice(range_before);
+        // println!("line before - |{}|", line_before);
+        // Count whitespace characters at the end of the line
+        let whitespace_before = line_before
+            .chars()
+            .rev()
+            .take_while(|c| c.is_whitespace())
+            .count();
+        // If the line is empty or just filled with whitespace, exit
+        if line_before.len() == whitespace_before {
+            result = None;
+        }
+        if whitespace_before < 1 {
+            let edit = Edit::insertion(" "[whitespace_before..].to_string(), double_colon_start);
+            result = some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
+        }
+
+        if result.is_some() {
+            return result;
+        }
+
+        // Check after
+        // Get the line after the end of the double colon
+        let line_end = source.line_end(line_index);
+        let range_after = TextRange::new(double_colon_end, line_end);
+        let line_after = source.slice(range_after);
+        // println!("line after - |{}|", line_after);
+        // Count whitespace characters at the end of the line
+        let whitespace_after = line_after.chars().take_while(|c| c.is_whitespace()).count();
+        // If the line is empty or just filled with whitespace, exit
+        if line_after.len() == whitespace_after {
+            result = None;
+        }
+        if whitespace_after < 1 {
+            let edit = Edit::insertion(" "[whitespace_after..].to_string(), double_colon_end);
+            result = some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
+        }
+        return result;
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["::"]
+    }
+}
