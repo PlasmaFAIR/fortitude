@@ -2,7 +2,7 @@
 source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 ---
-./resources/test/fixtures/style/S104.f90:5:13: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:5:13: S104 [*] Should be 0 space after the opening bracket
   |
 3 |   integer :: a(3)
 4 |   a = [1, 2, 3] ! This should be unchanged
@@ -23,7 +23,7 @@ expression: diagnostics
 7 7 |   subroutine mysub( a) ! This should remove the space after the (
 8 8 |     implicit none
 
-./resources/test/fixtures/style/S104.f90:7:19: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:7:19: S104 [*] Should be 0 space after the opening bracket
   |
 5 |   call mysub( a) ! This should remove the space after the (
 6 | contains
@@ -44,7 +44,7 @@ expression: diagnostics
 9 9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
 10 10 |     integer, dimension(2) :: b ! This should be unchanged
 
-./resources/test/fixtures/style/S104.f90:9:20: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:9:20: S104 [*] Should be 0 space after the opening bracket
    |
  7 |   subroutine mysub( a) ! This should remove the space after the (
  8 |     implicit none
@@ -65,7 +65,7 @@ expression: diagnostics
 11 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after both the (
 12 12 |     b = [ 4, & ! This should remove the space after the [
 
-./resources/test/fixtures/style/S104.f90:9:30: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:9:30: S104 [*] Should be 0 space after the opening bracket
    |
  7 |   subroutine mysub( a) ! This should remove the space after the (
  8 |     implicit none
@@ -86,7 +86,7 @@ expression: diagnostics
 11 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after both the (
 12 12 |     b = [ 4, & ! This should remove the space after the [
 
-./resources/test/fixtures/style/S104.f90:11:23: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:11:23: S104 [*] Should be 0 space after the opening bracket
    |
  9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
 10 |     integer, dimension(2) :: b ! This should be unchanged
@@ -107,7 +107,7 @@ expression: diagnostics
 13 13 |           5 ] ! This should remove the space before the ]
 14 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
 
-./resources/test/fixtures/style/S104.f90:12:9: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:12:9: S104 [*] Should be 0 space after the opening bracket
    |
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after both the (
@@ -128,7 +128,7 @@ expression: diagnostics
 14 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
 15 15 |   end subroutine mysub
 
-./resources/test/fixtures/style/S104.f90:13:13: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:13:13: S104 [*] Should be 0 space before the closing bracket
    |
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after both the (
 12 |     b = [ 4, & ! This should remove the space after the [
@@ -149,7 +149,7 @@ expression: diagnostics
 15 15 |   end subroutine mysub
 16 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
 
-./resources/test/fixtures/style/S104.f90:14:10: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:14:10: S104 [*] Should be 0 space after the opening bracket
    |
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
@@ -170,7 +170,7 @@ expression: diagnostics
 16 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
 17 17 |     a &
 
-./resources/test/fixtures/style/S104.f90:14:16: S104 [*] Should be 0 space between opening or closing brackets and their contents
+./resources/test/fixtures/style/S104.f90:14:16: S104 [*] Should be 0 space before the closing bracket
    |
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]

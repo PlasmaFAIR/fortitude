@@ -15,8 +15,9 @@ contains
   end subroutine mysub
   subroutine myothersub( & ! This should be allowed for long parameter lists
     a &
-  )
+  ) ! This should be unchanged
     implicit none
-    integer :: a
+    integer :: a = (1 + 1 &
+    & ) ! This should be unchanged
   end subroutine myothersub
 end program myprog
