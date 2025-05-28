@@ -72,7 +72,7 @@ impl AlwaysFixableViolation for IncorrectSpaceBeforeComment {
     }
 
     fn fix_title(&self) -> String {
-        "add extra whitespace".to_string()
+        "Add extra whitespace".to_string()
     }
 }
 impl AstRule for IncorrectSpaceBeforeComment {
@@ -99,5 +99,64 @@ impl AstRule for IncorrectSpaceBeforeComment {
 
     fn entrypoints() -> Vec<&'static str> {
         vec!["comment"]
+    }
+}
+
+/// ## What does it do?
+/// Checks for `::` that aren't surrounded by a space on either side.
+///
+/// ## Why is this bad?
+/// Omitting any whitespace surrounding the double colon separator can make code harder
+/// to read:
+///
+/// ```f90
+/// character(len=256)::x
+/// ! vs
+/// character(len=256) :: x
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct IncorrectSpaceAroundDoubleColon {}
+
+impl AlwaysFixableViolation for IncorrectSpaceAroundDoubleColon {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Missing space around `::`".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "Add extra whitespace".to_string()
+    }
+}
+impl AstRule for IncorrectSpaceAroundDoubleColon {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let double_colon_start = node.start_byte();
+        let double_colon_end = node.end_byte();
+
+        let bytes = src.source_text().as_bytes();
+        let has_space_before =
+            double_colon_start > 0 && bytes[double_colon_start - 1].is_ascii_whitespace();
+        let has_space_after =
+            double_colon_end < bytes.len() && bytes[double_colon_end].is_ascii_whitespace();
+        let before_edit = Edit::insertion(" ".to_string(), node.start_textsize());
+        let after_edit = Edit::insertion(" ".to_string(), node.end_textsize());
+
+        if !has_space_before {
+            if !has_space_after {
+                return some_vec!(Diagnostic::from_node(Self {}, node)
+                    .with_fix(Fix::safe_edits(before_edit, [after_edit])));
+            }
+            return some_vec!(
+                Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(before_edit))
+            );
+        } else if !has_space_after {
+            return some_vec!(
+                Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(after_edit))
+            );
+        }
+        None
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["::"]
     }
 }

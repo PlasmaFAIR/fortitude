@@ -1,7 +1,6 @@
 ---
 source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S102.f90:3:13: S102 [*] need at least 2 spaces before inline comment
   |
@@ -12,7 +11,7 @@ snapshot_kind: text
 4 |   implicit none ! This should be given one extra space
 5 |   private  ! This is fine
   |
-  = help: add extra whitespace
+  = help: Add extra whitespace
 
 ℹ Safe fix
 1 1 | ! This is fine
@@ -32,7 +31,7 @@ snapshot_kind: text
 5 |   private  ! This is fine
 6 |   ! This is fine
   |
-  = help: add extra whitespace
+  = help: Add extra whitespace
 
 ℹ Safe fix
 1 1 | ! This is fine
