@@ -129,7 +129,6 @@ impl AlwaysFixableViolation for IncorrectSpaceAroundDoubleColon {
 }
 impl AstRule for IncorrectSpaceAroundDoubleColon {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        let source = src.to_source_code();
         let double_colon_start = node.start_byte();
         let double_colon_end = node.end_byte();
         // let line_index = source.line_index(double_colon_start);
