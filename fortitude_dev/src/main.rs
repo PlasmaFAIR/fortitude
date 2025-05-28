@@ -11,6 +11,7 @@ mod generate_cli_help;
 mod generate_docs;
 mod generate_options;
 mod generate_rules_table;
+mod parse;
 
 const ROOT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../");
 
@@ -37,6 +38,8 @@ enum Command {
     GenerateCliHelp(generate_cli_help::Args),
     /// Generate Markdown docs.
     GenerateDocs(generate_docs::Args),
+    /// Print the AST for a given Fortran file
+    PrintAST(parse::Args),
 }
 
 fn main() -> Result<ExitCode> {
@@ -49,6 +52,7 @@ fn main() -> Result<ExitCode> {
         Command::GenerateOptions(args) => generate_options::main(&args)?,
         Command::GenerateCliHelp(args) => generate_cli_help::main(&args)?,
         Command::GenerateDocs(args) => generate_docs::main(&args)?,
+        Command::PrintAST(args) => parse::main(&args)?,
     }
     Ok(ExitCode::SUCCESS)
 }

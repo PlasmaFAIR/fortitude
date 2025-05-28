@@ -31,6 +31,9 @@ serde_json = { version = "1.0.113" }
 strum = { version = "0.27.1", features = ["strum_macros"] }
 strum_macros = { version = "0.27.1" }
 textwrap = { version = "0.16.0" }
+tree-sitter = "~0.25.0"
+tree-sitter-cli = "~0.25.0"
+tree-sitter-fortran = "0.5.1"
 
 [profile.dev.package]
 insta.opt-level = 3

@@ -50,8 +50,8 @@ strum_macros = { workspace = true }
 textwrap = { workspace = true }
 thiserror = { version = "1.0.58" }
 toml = "0.8.19"
-tree-sitter = "~0.24.0"
-tree-sitter-fortran = "0.5.1"
+tree-sitter = { workspace = true }
+tree-sitter-fortran = { workspace = true }
 unicode-width = "0.2.0"
 url = { version = "2.5.0" }
 globset = "0.4.15"
