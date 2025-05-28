@@ -8,7 +8,7 @@ contains
     implicit none
     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
     integer, dimension(2) :: b ! This should be unchanged
-    integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after both the (
+    integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
     b = [ 4, & ! This should remove the space after the [
           5 ] ! This should remove the space before the ]
     write( *,* ) a, b, c ! This should remove the space before the ) and after the (

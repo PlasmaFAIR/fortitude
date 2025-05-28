@@ -197,7 +197,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
         let line_index = source.line_index(bracket_end);
 
         let is_open_bracket = matches!(node_as_str, "(" | "[");
-        let edit = if is_open_bracket {
+        let (whitespace_start, whitespace_end) = if is_open_bracket {
             // Get line after bracket
             let line_end = source.line_end(line_index);
             let range_after = TextRange::new(bracket_end, line_end);
@@ -213,12 +213,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
             let whitespace_count = whitespace_iter.count();
             let whitespace_end = bracket_end + TextSize::from(whitespace_count as u32);
 
-            // Fail if this is more than 0
-            if whitespace_count > 0 {
-                Some(Edit::deletion(bracket_end, whitespace_end))
-            } else {
-                None
-            }
+            (bracket_end, whitespace_end)
         } else {
             // Get line before bracket
             let line_start = source.line_start(line_index);
@@ -226,7 +221,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
             let line_before = source.slice(range_before);
 
             // Ignore if following a line wrap, i.e. &
-            if line_before.trim_end().ends_with('&') {
+            if line_before.trim_end().ends_with('&') || line_before.trim().is_empty() {
                 return None;
             }
 
@@ -235,20 +230,15 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
             let whitespace_count = whitespace_iter.count();
             let whitespace_start = bracket_start - TextSize::from(whitespace_count as u32);
 
-            // Ignore if bracket is preceded by nothing or just whitespace
-            if line_before.len() == whitespace_count {
-                return None;
-            }
+            (whitespace_start, bracket_start)
+        };
 
-            if whitespace_count > 0 {
-                Some(Edit::deletion(whitespace_start, bracket_start))
-            } else {
-                None
-            }
-        }?;
-        some_vec!(
-            Diagnostic::from_node(Self { is_open_bracket }, node).with_fix(Fix::safe_edit(edit))
-        )
+        if whitespace_start == whitespace_end {
+            return None; // No whitespace to fix
+        }
+        let whitespace_range = TextRange::new(whitespace_start, whitespace_end);
+        some_vec!(Diagnostic::new(Self { is_open_bracket }, whitespace_range)
+            .with_fix(Fix::safe_edit(Edit::range_deletion(whitespace_range))))
     }
 
     fn entrypoints() -> Vec<&'static str> {
