@@ -81,10 +81,10 @@ impl Violation for ComputedGoTo {
 
 impl AstRule for ComputedGoTo {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if node.child(0)?.kind() == "goto"
+        if matches!(node.child(0)?.kind(), "goto" | "go")
             && node
                 .children(&mut node.walk())
-                .filter(|node| node.kind() != "goto")
+                .filter(|node| !matches!(node.kind(), "go" | "to" | "goto"))
                 .count()
                 > 1
         {
