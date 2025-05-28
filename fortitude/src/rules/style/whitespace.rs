@@ -131,7 +131,6 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let double_colon_start = node.start_byte();
         let double_colon_end = node.end_byte();
-        // let line_index = source.line_index(double_colon_start);
 
         let bytes = src.source_text().as_bytes();
         let has_space_before =
