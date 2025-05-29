@@ -201,13 +201,24 @@ impl Violation for KeywordHasWhitespace {
 
 impl AstRule for KeywordHasWhitespace {
     fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if node.kind() == "inout" && settings.check.keyword_whitespace.inout_with_space {
+        if node.kind() == "in" && settings.check.keyword_whitespace.inout_with_space {
             return None;
         }
         if node.kind() == "keyword_statement" && settings.check.keyword_whitespace.goto_with_space {
             return None;
         }
-        let (first, second, first_child, violation) = if node.kind() == "inout" {
+        let (first, second, first_child, violation) = if node.kind() == "in" {
+            // We don't want to match just `in`, so need to check the
+            // next node, but not if someone has perversely put a
+            // comment and/or line break inbetween
+            let mut sibling = node.next_sibling()?;
+            while matches!(sibling.kind(), "comment" | "&") {
+                sibling = sibling.next_sibling()?;
+            }
+            if sibling.kind() != "out" {
+                return None;
+            }
+
             (
                 "in",
                 "out",
@@ -246,7 +257,7 @@ impl AstRule for KeywordHasWhitespace {
 
     fn entrypoints() -> Vec<&'static str> {
         vec![
-            "inout",
+            "in",
             "keyword_statement", // goto
         ]
     }
