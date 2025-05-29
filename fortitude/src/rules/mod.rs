@@ -131,6 +131,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "101") => (RuleGroup::Stable, Text, Default, style::whitespace::TrailingWhitespace),
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
         (Style, "103") => (RuleGroup::Preview, Ast, Optional, style::whitespace::IncorrectSpaceAroundDoubleColon),
+        (Style, "104") => (RuleGroup::Preview, Ast, Optional, style::whitespace::IncorrectSpaceBetweenBrackets),
         (Style, "201") => (RuleGroup::Stable, Ast, Optional, style::implicit_none::SuperfluousImplicitNone),
         (Style, "211") => (RuleGroup::Preview, Ast, Optional, style::file_contents::MultipleModules),
         (Style, "212") => (RuleGroup::Preview, Ast, Optional, style::file_contents::ProgramWithModule),

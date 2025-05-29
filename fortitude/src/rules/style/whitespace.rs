@@ -160,3 +160,88 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
         vec!["::"]
     }
 }
+
+/// ## What does it do?
+/// Checks for spaces between brackets and their contents.
+///
+/// ## Why is this bad?
+/// Including spaces between brackets and their contents can lead to
+/// inconsistent formatting and readability issues if the same style is
+/// not applied consistently throughout the codebase.
+#[derive(ViolationMetadata)]
+pub(crate) struct IncorrectSpaceBetweenBrackets {
+    is_open_bracket: bool,
+}
+
+impl AlwaysFixableViolation for IncorrectSpaceBetweenBrackets {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        if self.is_open_bracket {
+            "Should be 0 space after the opening bracket".to_string()
+        } else {
+            "Should be 0 space before the closing bracket".to_string()
+        }
+    }
+
+    fn fix_title(&self) -> String {
+        "remove extra whitespace".to_string()
+    }
+}
+impl AstRule for IncorrectSpaceBetweenBrackets {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let node_as_str = node.to_text(src.source_text())?;
+
+        let source = src.to_source_code();
+        let bracket_start = node.start_textsize();
+        let bracket_end = node.end_textsize();
+        let line_index = source.line_index(bracket_end);
+
+        let is_open_bracket = matches!(node_as_str, "(" | "[");
+        let (whitespace_start, whitespace_end) = if is_open_bracket {
+            // Get line after bracket
+            let line_end = source.line_end(line_index);
+            let range_after = TextRange::new(bracket_end, line_end);
+            let line_after = source.slice(range_after);
+
+            // Ignore if preceding a line wrap, i.e. &
+            if line_after.trim_start().starts_with('&') {
+                return None;
+            }
+
+            // Count whitespace characters after the bracket
+            let whitespace_iter = line_after.chars().take_while(|c| c.is_whitespace());
+            let whitespace_count = whitespace_iter.count();
+            let whitespace_end = bracket_end + TextSize::from(whitespace_count as u32);
+
+            (bracket_end, whitespace_end)
+        } else {
+            // Get line before bracket
+            let line_start = source.line_start(line_index);
+            let range_before = TextRange::new(line_start, bracket_start);
+            let line_before = source.slice(range_before);
+
+            // Ignore if following a line wrap, i.e. &
+            if line_before.trim_end().ends_with('&') || line_before.trim().is_empty() {
+                return None;
+            }
+
+            // Count whitespace characters before the bracket
+            let whitespace_iter = line_before.chars().rev().take_while(|c| c.is_whitespace());
+            let whitespace_count = whitespace_iter.count();
+            let whitespace_start = bracket_start - TextSize::from(whitespace_count as u32);
+
+            (whitespace_start, bracket_start)
+        };
+
+        if whitespace_start == whitespace_end {
+            return None; // No whitespace to fix
+        }
+        let whitespace_range = TextRange::new(whitespace_start, whitespace_end);
+        some_vec!(Diagnostic::new(Self { is_open_bracket }, whitespace_range)
+            .with_fix(Fix::safe_edit(Edit::range_deletion(whitespace_range))))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["(", "[", ")", "]"]
+    }
+}
