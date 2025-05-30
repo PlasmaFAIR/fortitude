@@ -253,41 +253,46 @@ impl AstRule for IncorrectSpaceBetweenStatements {
             is_if_type_statement || is_allocate_type_statement || is_io_type_statement;
 
         // Map statement_name to starting node
-        let mut start_node = node.child(0)?;
-        let start_node_as_str = start_node.to_text(src.source_text())?;
-        let node_of_interest = if is_if_type_statement {
-            // Check for 'else if' case
-            let lowercase_value = start_node_as_str.to_lowercase();
-            if matches!(lowercase_value.as_str(), "else") {
-                start_node = node.child(1)?;
-            }
-
-            if matches!(
-                start_node
-                    .to_text(src.source_text())?
-                    .to_lowercase()
-                    .as_str(),
-                "if"
-            ) {
-                Some(start_node)
-            } else {
-                None
-            }
-        } else if is_allocate_type_statement {
-            if matches!(start_node_as_str.to_lowercase().as_str(), "allocate") {
-                Some(start_node)
-            } else {
-                None
-            }
-        } else if is_io_type_statement {
-            // let start_node = node.child(0)?;
-            if matches!(start_node_as_str.to_lowercase().as_str(), "read" | "write") {
-                Some(start_node)
-            } else {
-                None
-            }
+        let node_of_interest = if !is_opening_node {
+            Some(*node)
         } else {
-            None
+            if is_if_type_statement {
+                let start_node = if matches!(node_kind, "elseif_clause") {
+                    node.child(1)
+                } else {
+                    node.child(0)
+                }?;
+
+                if matches!(
+                    start_node
+                        .to_text(src.source_text())?
+                        .to_lowercase()
+                        .as_str(),
+                    "if"
+                ) {
+                    Some(start_node)
+                } else {
+                    None
+                }
+            } else if is_allocate_type_statement {
+                let start_node = node.child(0)?;
+                let start_node_as_str = start_node.to_text(src.source_text())?;
+                if matches!(start_node_as_str.to_lowercase().as_str(), "allocate") {
+                    Some(start_node)
+                } else {
+                    None
+                }
+            } else if is_io_type_statement {
+                let start_node = node.child(0)?;
+                let start_node_as_str = start_node.to_text(src.source_text())?;
+                if matches!(start_node_as_str.to_lowercase().as_str(), "read" | "write") {
+                    Some(start_node)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
         }?;
 
         let (whitespace_start, whitespace_end) =
@@ -330,6 +335,7 @@ impl AstRule for IncorrectSpaceBetweenStatements {
         vec![
             "if_statement",
             "elseif_clause",
+            "then",
             "allocate_statement",
             "read_statement",
             "write_statement",
