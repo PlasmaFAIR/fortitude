@@ -158,9 +158,8 @@ contains
     deallocate(x, stat=status)
   end subroutine io
 
-  subroutine cmd_line()
-    integer :: status
+  integer function cmd_line() result(status)
     call execute_command_line("ls", cmdstat=status)
-  end subroutine cmd_line
+  end function cmd_line
 
 end program p
