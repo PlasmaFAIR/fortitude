@@ -276,10 +276,10 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
         }
     }
     if ancestor.kind() == "keyword_argument" {
-        // TODO check that the next-highest ancestor is allocate, execute_command_line,
-        // or an IO statement.
         if let Some(name_node) = ancestor.child_by_field_name("name") {
-            if StatType::try_from(name_node.to_text(src).context("to_text error")?).is_ok() {
+            if is_error_checking_routine(&ancestor, src)?
+                && StatType::try_from(name_node.to_text(src).context("to_text error")?).is_ok()
+            {
                 return Ok(CheckStatus::Overwritten);
             }
         }
@@ -303,4 +303,46 @@ fn new_branch(node: &Node) -> bool {
         node.kind(),
         "elseif_clause" | "else_clause" | "case_statement"
     )
+}
+
+fn is_error_checking_routine(node: &Node, src: &str) -> Result<bool> {
+    // runs on keyword_argument node
+    for ancestor in node.ancestors() {
+        if ancestor.kind() == "call_expression" {
+            let identifier_node = ancestor
+                .child(0)
+                .context("Could not retrieve routine name")?;
+            let identifier_text = identifier_node
+                .to_text(src)
+                .context("Failed to parse identifier text")?
+                .to_lowercase();
+            return Ok(matches!(
+                identifier_text.as_str(),
+                "deallocate" | "wait" | "flush"
+            ));
+        }
+        if ancestor.kind() == "subroutine_call" {
+            let subroutine_node = ancestor
+                .child_by_field_name("subroutine")
+                .context("Could not retrieve subroutine name")?;
+            let subroutine_text = subroutine_node
+                .to_text(src)
+                .context("Failed to parse subroutine text")?
+                .to_lowercase();
+            return Ok(subroutine_text == "execute_command_line");
+        }
+        if matches!(
+            ancestor.kind(),
+            "allocate_statement"
+                | "open_statement"
+                | "close_statement"
+                | "read_statement"
+                | "write_statement"
+                | "inquire_statement"
+                | "file_position_statement"
+        ) {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }

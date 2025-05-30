@@ -59,7 +59,7 @@ program p
   allocate (x(10), stat=status_x)
   if (.true.) then
     allocate (y(10), stat=status_y)
-    call handle_error(status_y)
+    call handle_error(stat=status_y)
   end if
 
   deallocate (x)
