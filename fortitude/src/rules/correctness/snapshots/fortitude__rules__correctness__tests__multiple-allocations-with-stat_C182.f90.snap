@@ -1,0 +1,12 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C182.f90:17:27: C182 'stat' parameter used with multiple allocations.
+   |
+16 |   ! stat params, combined in one statement
+17 |   allocate (x(10), y(10), stat=status)
+   |                           ^^^^^^^^^^^ C182
+18 |   deallocate (x, y, stat=status)
+   |
