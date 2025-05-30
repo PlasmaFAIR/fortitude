@@ -10,6 +10,4 @@ snapshot_kind: text
 10 |   public
    |   ^^^^^^ C132
 11 | end module bad_module
-12 |
-13 | module only_some_private_module
    |
