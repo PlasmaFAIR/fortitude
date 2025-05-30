@@ -4,8 +4,8 @@ This rule is unstable and in [preview](../preview.md). The `--preview` flag is r
 This rule is turned on by default.
 
 ## What does it do?
-This rule detects whether a `stat`, `iostat`, and `cmdstat` variable is used
-within the same scope it is set, and not overwritten or ignored.
+This rule detects whether a `stat`, `iostat`, and `cmdstat` variable is checked
+within the same scope it is set.
 
 ## Why is this bad?
 By default, `allocate` statements will crash the program if the allocation
