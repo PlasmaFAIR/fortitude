@@ -138,4 +138,29 @@ contains
     end if
   end subroutine handle_error
 
+  subroutine io()
+    integer :: status
+    character(len=100) :: line
+    real(8), allocatable :: x(:)
+    logical :: file_exist
+    inquire(unit=10, iostat=status, exist=file_exist)
+    open (file="file.txt", unit=10, iostat=status, asynchronous="YES")
+    write(10, *, iostat=status) line
+    flush(10, iostat=status)
+    backspace(10, iostat=status)
+    rewind(10, iostat=status)
+    read(10, *, iostat=status, asynchronous="YES") line
+    wait(10, iostat=status)
+    endfile(10, iostat=status)
+    close(10, iostat=status)
+    ! Something other than IO statement, reuse status
+    allocate(x(10), stat=status)
+    deallocate(x, stat=status)
+  end subroutine io
+
+  subroutine cmd_line()
+    integer :: status
+    call execute_command_line("ls", cmdstat=status)
+  end subroutine cmd_line
+
 end program p
