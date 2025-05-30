@@ -194,7 +194,7 @@ impl AstRule for UncheckedStat {
                     return some_vec!(Diagnostic::from_node(
                         Self {
                             name,
-                            stat: StatType::Stat,
+                            stat: stat_type,
                             result: CheckStatus::Overwritten
                         },
                         &stat_node
@@ -213,7 +213,7 @@ impl AstRule for UncheckedStat {
         some_vec!(Diagnostic::from_node(
             Self {
                 name,
-                stat: StatType::Stat,
+                stat: stat_type,
                 result: CheckStatus::Unchecked
             },
             &stat_node
@@ -290,11 +290,7 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
 fn not_scope_boundary(node: &Node) -> bool {
     !matches!(
         node.kind(),
-        "function_statement"
-            | "subroutine_statement"
-            | "program_statement"
-            | "block_construct"
-            | "module_procedure_statement"
+        "function" | "subroutine" | "program" | "module_procedure" | "block_construct"
     )
 }
 
