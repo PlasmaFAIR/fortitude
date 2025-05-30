@@ -3,18 +3,75 @@ use std::iter::once;
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, strum_macros::Display, strum_macros::EnumString)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    strum_macros::Display,
+    strum_macros::IntoStaticStr,
+    strum_macros::EnumString,
+)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 enum StatType {
     Stat,
     IoStat,
     CmdStat,
+}
+
+impl StatType {
+    fn from_node(node: &Node, src: &str) -> Result<Self> {
+        let node_kind = match node.kind() {
+            "call_expression" => {
+                // For call expressions, we need to check the name of the function.
+                let identifier_node = node.child(0).context("Could not retrieve routine name")?;
+                let identifier_text = identifier_node
+                    .to_text(src)
+                    .context("Failed to parse identifier text")?
+                    .to_lowercase();
+                match identifier_text.as_str() {
+                    "deallocate" => "stat",
+                    "wait" | "flush" => "iostat",
+                    _ => return Err(anyhow!("Unknown routine: {identifier_text}")),
+                }
+            }
+            "subroutine_call" => {
+                // Looking only for execute_command_line
+                let subroutine_node = node
+                    .child_by_field_name("subroutine")
+                    .context("Could not retrieve subroutine name")?;
+                let subroutine_text = subroutine_node
+                    .to_text(src)
+                    .context("Failed to parse subroutine text")?
+                    .to_lowercase();
+                if subroutine_text == "execute_command_line" {
+                    "cmdstat"
+                } else {
+                    return Err(anyhow!("Unknown subroutine: {subroutine_text}"));
+                }
+            }
+            some_string => some_string,
+        };
+        match node_kind {
+            "allocate_statement" | "stat" => Ok(StatType::Stat),
+            "open_statement"
+            | "close_statement"
+            | "read_statement"
+            | "write_statement"
+            | "inquire_statement"
+            | "file_position_statement"
+            | "iostat" => Ok(StatType::IoStat),
+            "cmdstat" => Ok(StatType::CmdStat),
+            _ => Err(anyhow!("Node does not have a stat type")),
+        }
+    }
 }
 
 enum CheckStatus {
@@ -23,12 +80,9 @@ enum CheckStatus {
     Overwritten,
 }
 
-// TODO Generalise to catch iostat and other error handling variables.
 /// ## What does it do?
-/// If the status of an `allocate` statement is checked by passing a variable to
-/// the `stat` argument, that variable must be checked. To avoid confusing and
-/// bug-prone control flow, the `stat` variable should be checked within the
-/// same scope as the `allocate` statement.
+/// This rule detects whether a `stat`, `iostat`, and `cmdstat` variable is used
+/// within the same scope it is set, and not overwritten or ignored.
 ///
 /// ## Why is this bad?
 /// By default, `allocate` statements will crash the program if the allocation
@@ -46,14 +100,19 @@ enum CheckStatus {
 ///
 /// However, if the `stat` variable is not checked, the program will continue to
 /// run despite the allocation failure, which can lead to undefined behaviour.
+/// Similar behaviour is exhibited by `deallocate` and IO statements such as
+/// `open`, `read`, and `close`.
+///
+/// To avoid confusing and bug-prone control flow, the checks on status parameters
+/// should occur within the same scope in which they are set.
 #[derive(ViolationMetadata)]
-pub(crate) struct UncheckedAllocateStat {
+pub(crate) struct UncheckedStat {
     name: String,
     stat: StatType,
     result: CheckStatus,
 }
 
-impl Violation for UncheckedAllocateStat {
+impl Violation for UncheckedStat {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { name, stat, result } = self;
@@ -66,16 +125,25 @@ impl Violation for UncheckedAllocateStat {
     }
 }
 
-impl AstRule for UncheckedAllocateStat {
+impl AstRule for UncheckedStat {
     fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
 
+        // Check this is an error checking statement, and get the stat type
+        let stat_type = StatType::from_node(node, src).ok()?;
+        let stat_name: &'static str = stat_type.into();
+
         // Find a 'stat' argument in the allocate statement
-        let stat_node = node.named_children(&mut node.walk()).find(|child| {
+        let arg_list = if matches!(node.kind(), "subroutine_call" | "call_expression") {
+            node.child_with_name("argument_list")?
+        } else {
+            *node
+        };
+        let stat_node = arg_list.named_children(&mut node.walk()).find(|child| {
             child.kind() == "keyword_argument"
-                && child
-                    .child_by_field_name("name")
-                    .is_some_and(|n| n.to_text(src) == Some("stat"))
+                && child.child_by_field_name("name").is_some_and(|n| {
+                    n.to_text(src).map(|s| s.to_lowercase()) == Some(stat_name.to_string())
+                })
         })?;
 
         let name = stat_node
@@ -153,7 +221,17 @@ impl AstRule for UncheckedAllocateStat {
     }
 
     fn entrypoints() -> Vec<&'static str> {
-        vec!["allocate_statement"]
+        vec![
+            "allocate_statement",
+            "open_statement",
+            "close_statement",
+            "read_statement",
+            "write_statement",
+            "inquire_statement",
+            "file_position_statement",
+            "call_expression", // various: deallocate, wait, flush
+            "subroutine_call", // for execute_command_line
+        ]
     }
 }
 
