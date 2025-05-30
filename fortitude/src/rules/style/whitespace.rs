@@ -237,6 +237,18 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
             return None; // No whitespace to fix
         }
         let whitespace_range = TextRange::new(whitespace_start, whitespace_end);
+
+        // If the space is between empty brackets only raise for closing bracket
+        let whitespace_range_plus_one_char = source.slice(whitespace_range + TextSize::from(1));
+        if !whitespace_range_plus_one_char
+            .find(|c: char| c == ')' || c == ']')
+            .is_none()
+        {
+            if is_open_bracket {
+                return None;
+            }
+        }
+
         some_vec!(Diagnostic::new(Self { is_open_bracket }, whitespace_range)
             .with_fix(Fix::safe_edit(Edit::range_deletion(whitespace_range))))
     }

@@ -190,3 +190,23 @@ expression: diagnostics
 15 15 |   end subroutine mysub
 16 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
 17 17 |     a &
+
+./resources/test/fixtures/style/S104.f90:24:33: S104 [*] Should be 0 space before the closing bracket
+   |
+22 |     & ) ! This should be unchanged
+23 |   end subroutine myothersub
+24 |   subroutine emptyparantesessub( ) ! This should remove the space between the brackets
+   |                                 ^ S104
+25 |   end subroutine emptyparantesessub
+26 | end program myprog
+   |
+   = help: remove extra whitespace
+
+ℹ Safe fix
+21 21 |     a = (1 + 1 &
+22 22 |     & ) ! This should be unchanged
+23 23 |   end subroutine myothersub
+24    |-  subroutine emptyparantesessub( ) ! This should remove the space between the brackets
+   24 |+  subroutine emptyparantesessub() ! This should remove the space between the brackets
+25 25 |   end subroutine emptyparantesessub
+26 26 | end program myprog
