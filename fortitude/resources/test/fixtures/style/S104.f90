@@ -17,7 +17,10 @@ contains
     a &
   ) ! This should be unchanged
     implicit none
-    integer :: a = (1 + 1 &
+    integer :: a
+    a = (1 + 1 &
     & ) ! This should be unchanged
   end subroutine myothersub
+  subroutine emptyparantesessub( ) ! This should remove the space between the brackets
+  end subroutine emptyparantesessub
 end program myprog
