@@ -2,7 +2,16 @@
 source: fortitude/src/rules/style/mod.rs
 expression: diagnostics
 ---
-./resources/test/fixtures/style/S105.f90:5:5: S105 [*] Should be exactly 1 space following if
+./resources/test/fixtures/style/S105.f90:5:5: S105 [*] Should be exactly 1 space following if(a ==1)then  ! A space should be added after if and before then
+    a = 2
+  else if  (a == 2)then ! A space should be removed after if and added before then
+    a = 3
+  else if &
+    (a == 3) then ! This should be unchanged
+    a = 4
+  else if(a == 4)  then ! A space should be added after if and removed before then
+    a = 5
+  end if
   |
 3 |   integer :: a = 1
 4 |   integer, allocatable :: b(:)
@@ -23,28 +32,9 @@ expression: diagnostics
 7 7 |   else if  (a == 2)then ! A space should be removed after if and added before then
 8 8 |     a = 3
 
-./resources/test/fixtures/style/S105.f90:5:12: S105 [*] Should be exactly 1 space before then
-  |
-3 |   integer :: a = 1
-4 |   integer, allocatable :: b(:)
-5 |   if(a ==1)then  ! A space should be added after if and before then
-  |            ^ S105
-6 |     a = 2
-7 |   else if  (a == 2)then ! A space should be removed after if and added before then
-  |
-  = help: add missing whitespace
+./resources/test/fixtures/style/S105.f90:7:10: S105 [*] Should be exactly 1 space following else if  (a == 2)then ! A space should be removed after if and added before then
+    a = 3
 
-ℹ Safe fix
-2 2 |   implicit none
-3 3 |   integer :: a = 1
-4 4 |   integer, allocatable :: b(:)
-5   |-  if(a ==1)then  ! A space should be added after if and before then
-  5 |+  if(a ==1) then  ! A space should be added after if and before then
-6 6 |     a = 2
-7 7 |   else if  (a == 2)then ! A space should be removed after if and added before then
-8 8 |     a = 3
-
-./resources/test/fixtures/style/S105.f90:7:10: S105 [*] Should be exactly 1 space following if
   |
 5 |   if(a ==1)then  ! A space should be added after if and before then
 6 |     a = 2
@@ -65,28 +55,9 @@ expression: diagnostics
 9 9 |   else if &
 10 10 |     (a == 3) then ! This should be unchanged
 
-./resources/test/fixtures/style/S105.f90:7:20: S105 [*] Should be exactly 1 space before then
-  |
-5 |   if(a ==1)then  ! A space should be added after if and before then
-6 |     a = 2
-7 |   else if  (a == 2)then ! A space should be removed after if and added before then
-  |                    ^ S105
-8 |     a = 3
-9 |   else if &
-  |
-  = help: add missing whitespace
+./resources/test/fixtures/style/S105.f90:12:10: S105 [*] Should be exactly 1 space following else if(a == 4)  then ! A space should be added after if and removed before then
+    a = 5
 
-ℹ Safe fix
-4 4 |   integer, allocatable :: b(:)
-5 5 |   if(a ==1)then  ! A space should be added after if and before then
-6 6 |     a = 2
-7   |-  else if  (a == 2)then ! A space should be removed after if and added before then
-  7 |+  else if  (a == 2) then ! A space should be removed after if and added before then
-8 8 |     a = 3
-9 9 |   else if &
-10 10 |     (a == 3) then ! This should be unchanged
-
-./resources/test/fixtures/style/S105.f90:12:10: S105 [*] Should be exactly 1 space following if
    |
 10 |     (a == 3) then ! This should be unchanged
 11 |     a = 4
@@ -105,66 +76,255 @@ expression: diagnostics
    12 |+  else if (a == 4)  then ! A space should be added after if and removed before then
 13 13 |     a = 5
 14 14 |   end if
-15 15 |   write (*,*) "a = ", a  ! This should be unchanged
+15 15 |   allocate (b(3))  ! This should be unchanged
 
-./resources/test/fixtures/style/S105.f90:12:18: S105 [*] Should be exactly 1 space before then
+./resources/test/fixtures/style/S105.f90:16:7: S105 [*] Should be exactly 1 space following read(*,*) b
    |
-10 |     (a == 3) then ! This should be unchanged
-11 |     a = 4
-12 |   else if(a == 4)  then ! A space should be added after if and removed before then
-   |                  ^^ S105
-13 |     a = 5
 14 |   end if
+15 |   allocate (b(3))  ! This should be unchanged
+16 |   read(*,*) b  ! A space should be added after write
+   |       ^ S105
+17 |   write(*,*) "b = ", b  ! This should be unchanged
+18 |   read (*,*) b  ! This should be unchanged
+   |
+   = help: add missing whitespace
+
+ℹ Safe fix
+13 13 |     a = 5
+14 14 |   end if
+15 15 |   allocate (b(3))  ! This should be unchanged
+16    |-  read(*,*) b  ! A space should be added after write
+   16 |+  read (*,*) b  ! A space should be added after write
+17 17 |   write(*,*) "b = ", b  ! This should be unchanged
+18 18 |   read (*,*) b  ! This should be unchanged
+19 19 |   write (*,*) "b = ", b  ! This should be unchanged
+
+./resources/test/fixtures/style/S105.f90:17:8: S105 [*] Should be exactly 1 space following write(*,*) "b = ", b
+   |
+15 |   allocate (b(3))  ! This should be unchanged
+16 |   read(*,*) b  ! A space should be added after write
+17 |   write(*,*) "b = ", b  ! This should be unchanged
+   |        ^ S105
+18 |   read (*,*) b  ! This should be unchanged
+19 |   write (*,*) "b = ", b  ! This should be unchanged
+   |
+   = help: add missing whitespace
+
+ℹ Safe fix
+14 14 |   end if
+15 15 |   allocate (b(3))  ! This should be unchanged
+16 16 |   read(*,*) b  ! A space should be added after write
+17    |-  write(*,*) "b = ", b  ! This should be unchanged
+   17 |+  write (*,*) "b = ", b  ! This should be unchanged
+18 18 |   read (*,*) b  ! This should be unchanged
+19 19 |   write (*,*) "b = ", b  ! This should be unchanged
+20 20 |   read  (*,*) b  ! This should be unchanged
+
+./resources/test/fixtures/style/S105.f90:20:7: S105 [*] Should be exactly 1 space following read  (*,*) b
+   |
+18 |   read (*,*) b  ! This should be unchanged
+19 |   write (*,*) "b = ", b  ! This should be unchanged
+20 |   read  (*,*) b  ! This should be unchanged
+   |       ^^ S105
+21 |   write  (*,*) "b = ", b  ! This should be unchanged
+22 |   deallocate (b)  ! This should be unchanged
    |
    = help: remove extra whitespace
 
 ℹ Safe fix
-9  9  |   else if &
-10 10 |     (a == 3) then ! This should be unchanged
-11 11 |     a = 4
-12    |-  else if(a == 4)  then ! A space should be added after if and removed before then
-   12 |+  else if(a == 4) then ! A space should be added after if and removed before then
-13 13 |     a = 5
-14 14 |   end if
-15 15 |   write (*,*) "a = ", a  ! This should be unchanged
+17 17 |   write(*,*) "b = ", b  ! This should be unchanged
+18 18 |   read (*,*) b  ! This should be unchanged
+19 19 |   write (*,*) "b = ", b  ! This should be unchanged
+20    |-  read  (*,*) b  ! This should be unchanged
+   20 |+  read (*,*) b  ! This should be unchanged
+21 21 |   write  (*,*) "b = ", b  ! This should be unchanged
+22 22 |   deallocate (b)  ! This should be unchanged
+23 23 |   allocate(b(4))  ! A space should be added after allocate
 
-./resources/test/fixtures/style/S105.f90:20:11: S105 [*] Should be exactly 1 space following allocate
+./resources/test/fixtures/style/S105.f90:21:8: S105 [*] Should be exactly 1 space following write  (*,*) "b = ", b
    |
-18 |   write (*,*) "b = ", b  ! This should be unchanged
-19 |   deallocate (b)  ! This should be unchanged
-20 |   allocate(b(4))  ! A space should be added after allocate
+19 |   write (*,*) "b = ", b  ! This should be unchanged
+20 |   read  (*,*) b  ! This should be unchanged
+21 |   write  (*,*) "b = ", b  ! This should be unchanged
+   |        ^^ S105
+22 |   deallocate (b)  ! This should be unchanged
+23 |   allocate(b(4))  ! A space should be added after allocate
+   |
+   = help: remove extra whitespace
+
+ℹ Safe fix
+18 18 |   read (*,*) b  ! This should be unchanged
+19 19 |   write (*,*) "b = ", b  ! This should be unchanged
+20 20 |   read  (*,*) b  ! This should be unchanged
+21    |-  write  (*,*) "b = ", b  ! This should be unchanged
+   21 |+  write (*,*) "b = ", b  ! This should be unchanged
+22 22 |   deallocate (b)  ! This should be unchanged
+23 23 |   allocate(b(4))  ! A space should be added after allocate
+24 24 |   READ(*,*) b  ! A space should be added after write
+
+./resources/test/fixtures/style/S105.f90:23:11: S105 [*] Should be exactly 1 space following allocate(b(4))
+   |
+21 |   write  (*,*) "b = ", b  ! This should be unchanged
+22 |   deallocate (b)  ! This should be unchanged
+23 |   allocate(b(4))  ! A space should be added after allocate
    |           ^ S105
-21 |   b = [1, 2, 3, 4]
-22 |   write(*,*) "b = ", b  ! A space should be added after write
+24 |   READ(*,*) b  ! A space should be added after write
+25 |   WRITE(*,*) "b = ", b  ! A space should be added after write
    |
    = help: add missing whitespace
 
 ℹ Safe fix
-17 17 |   b = [1, 2, 3]
-18 18 |   write (*,*) "b = ", b  ! This should be unchanged
-19 19 |   deallocate (b)  ! This should be unchanged
-20    |-  allocate(b(4))  ! A space should be added after allocate
-   20 |+  allocate (b(4))  ! A space should be added after allocate
-21 21 |   b = [1, 2, 3, 4]
-22 22 |   write(*,*) "b = ", b  ! A space should be added after write
-23 23 |   deallocate(b)  ! A space should be added after deallocate
+20 20 |   read  (*,*) b  ! This should be unchanged
+21 21 |   write  (*,*) "b = ", b  ! This should be unchanged
+22 22 |   deallocate (b)  ! This should be unchanged
+23    |-  allocate(b(4))  ! A space should be added after allocate
+   23 |+  allocate (b(4))  ! A space should be added after allocate
+24 24 |   READ(*,*) b  ! A space should be added after write
+25 25 |   WRITE(*,*) "b = ", b  ! A space should be added after write
+26 26 |   READ (*,*) b  ! This should be unchanged
 
-./resources/test/fixtures/style/S105.f90:22:8: S105 [*] Should be exactly 1 space following write
+./resources/test/fixtures/style/S105.f90:24:7: S105 [*] Should be exactly 1 space following READ(*,*) b
    |
-20 |   allocate(b(4))  ! A space should be added after allocate
-21 |   b = [1, 2, 3, 4]
-22 |   write(*,*) "b = ", b  ! A space should be added after write
+22 |   deallocate (b)  ! This should be unchanged
+23 |   allocate(b(4))  ! A space should be added after allocate
+24 |   READ(*,*) b  ! A space should be added after write
+   |       ^ S105
+25 |   WRITE(*,*) "b = ", b  ! A space should be added after write
+26 |   READ (*,*) b  ! This should be unchanged
+   |
+   = help: add missing whitespace
+
+ℹ Safe fix
+21 21 |   write  (*,*) "b = ", b  ! This should be unchanged
+22 22 |   deallocate (b)  ! This should be unchanged
+23 23 |   allocate(b(4))  ! A space should be added after allocate
+24    |-  READ(*,*) b  ! A space should be added after write
+   24 |+  READ (*,*) b  ! A space should be added after write
+25 25 |   WRITE(*,*) "b = ", b  ! A space should be added after write
+26 26 |   READ (*,*) b  ! This should be unchanged
+27 27 |   WRITE (*,*) "b = ", b  ! This should be unchanged
+
+./resources/test/fixtures/style/S105.f90:25:8: S105 [*] Should be exactly 1 space following WRITE(*,*) "b = ", b
+   |
+23 |   allocate(b(4))  ! A space should be added after allocate
+24 |   READ(*,*) b  ! A space should be added after write
+25 |   WRITE(*,*) "b = ", b  ! A space should be added after write
    |        ^ S105
-23 |   deallocate(b)  ! A space should be added after deallocate
-24 | end program myprog
+26 |   READ (*,*) b  ! This should be unchanged
+27 |   WRITE (*,*) "b = ", b  ! This should be unchanged
    |
    = help: add missing whitespace
 
 ℹ Safe fix
-19 19 |   deallocate (b)  ! This should be unchanged
-20 20 |   allocate(b(4))  ! A space should be added after allocate
-21 21 |   b = [1, 2, 3, 4]
-22    |-  write(*,*) "b = ", b  ! A space should be added after write
-   22 |+  write (*,*) "b = ", b  ! A space should be added after write
-23 23 |   deallocate(b)  ! A space should be added after deallocate
-24 24 | end program myprog
+22 22 |   deallocate (b)  ! This should be unchanged
+23 23 |   allocate(b(4))  ! A space should be added after allocate
+24 24 |   READ(*,*) b  ! A space should be added after write
+25    |-  WRITE(*,*) "b = ", b  ! A space should be added after write
+   25 |+  WRITE (*,*) "b = ", b  ! A space should be added after write
+26 26 |   READ (*,*) b  ! This should be unchanged
+27 27 |   WRITE (*,*) "b = ", b  ! This should be unchanged
+28 28 |   READ  (*,*) b  ! A space should be removed after READ
+
+./resources/test/fixtures/style/S105.f90:28:7: S105 [*] Should be exactly 1 space following READ  (*,*) b
+   |
+26 |   READ (*,*) b  ! This should be unchanged
+27 |   WRITE (*,*) "b = ", b  ! This should be unchanged
+28 |   READ  (*,*) b  ! A space should be removed after READ
+   |       ^^ S105
+29 |   WRITE  (*,*) "b = ", b  ! A space should be removed after READ
+30 |   deallocate(b)  ! A space should be added after deallocate
+   |
+   = help: remove extra whitespace
+
+ℹ Safe fix
+25 25 |   WRITE(*,*) "b = ", b  ! A space should be added after write
+26 26 |   READ (*,*) b  ! This should be unchanged
+27 27 |   WRITE (*,*) "b = ", b  ! This should be unchanged
+28    |-  READ  (*,*) b  ! A space should be removed after READ
+   28 |+  READ (*,*) b  ! A space should be removed after READ
+29 29 |   WRITE  (*,*) "b = ", b  ! A space should be removed after READ
+30 30 |   deallocate(b)  ! A space should be added after deallocate
+31 31 |   allocate  (b(4))  ! A space should be removed after allocate
+
+./resources/test/fixtures/style/S105.f90:29:8: S105 [*] Should be exactly 1 space following WRITE  (*,*) "b = ", b
+   |
+27 |   WRITE (*,*) "b = ", b  ! This should be unchanged
+28 |   READ  (*,*) b  ! A space should be removed after READ
+29 |   WRITE  (*,*) "b = ", b  ! A space should be removed after READ
+   |        ^^ S105
+30 |   deallocate(b)  ! A space should be added after deallocate
+31 |   allocate  (b(4))  ! A space should be removed after allocate
+   |
+   = help: remove extra whitespace
+
+ℹ Safe fix
+26 26 |   READ (*,*) b  ! This should be unchanged
+27 27 |   WRITE (*,*) "b = ", b  ! This should be unchanged
+28 28 |   READ  (*,*) b  ! A space should be removed after READ
+29    |-  WRITE  (*,*) "b = ", b  ! A space should be removed after READ
+   29 |+  WRITE (*,*) "b = ", b  ! A space should be removed after READ
+30 30 |   deallocate(b)  ! A space should be added after deallocate
+31 31 |   allocate  (b(4))  ! A space should be removed after allocate
+32 32 |   deallocate  (b)  ! A space should be removed after deallocate
+
+./resources/test/fixtures/style/S105.f90:31:11: S105 [*] Should be exactly 1 space following allocate  (b(4))
+   |
+29 |   WRITE  (*,*) "b = ", b  ! A space should be removed after READ
+30 |   deallocate(b)  ! A space should be added after deallocate
+31 |   allocate  (b(4))  ! A space should be removed after allocate
+   |           ^^ S105
+32 |   deallocate  (b)  ! A space should be removed after deallocate
+33 |   ALLOCATE(b(4))  ! A space should be added after allocate
+   |
+   = help: remove extra whitespace
+
+ℹ Safe fix
+28 28 |   READ  (*,*) b  ! A space should be removed after READ
+29 29 |   WRITE  (*,*) "b = ", b  ! A space should be removed after READ
+30 30 |   deallocate(b)  ! A space should be added after deallocate
+31    |-  allocate  (b(4))  ! A space should be removed after allocate
+   31 |+  allocate (b(4))  ! A space should be removed after allocate
+32 32 |   deallocate  (b)  ! A space should be removed after deallocate
+33 33 |   ALLOCATE(b(4))  ! A space should be added after allocate
+34 34 |   DEALLOCATE(b)  ! A space should be added after deallocate
+
+./resources/test/fixtures/style/S105.f90:33:11: S105 [*] Should be exactly 1 space following ALLOCATE(b(4))
+   |
+31 |   allocate  (b(4))  ! A space should be removed after allocate
+32 |   deallocate  (b)  ! A space should be removed after deallocate
+33 |   ALLOCATE(b(4))  ! A space should be added after allocate
+   |           ^ S105
+34 |   DEALLOCATE(b)  ! A space should be added after deallocate
+35 |   ALLOCATE (b(3))  ! This should be unchanged
+   |
+   = help: add missing whitespace
+
+ℹ Safe fix
+30 30 |   deallocate(b)  ! A space should be added after deallocate
+31 31 |   allocate  (b(4))  ! A space should be removed after allocate
+32 32 |   deallocate  (b)  ! A space should be removed after deallocate
+33    |-  ALLOCATE(b(4))  ! A space should be added after allocate
+   33 |+  ALLOCATE (b(4))  ! A space should be added after allocate
+34 34 |   DEALLOCATE(b)  ! A space should be added after deallocate
+35 35 |   ALLOCATE (b(3))  ! This should be unchanged
+36 36 |   DEALLOCATE (b)  ! This should be unchanged
+
+./resources/test/fixtures/style/S105.f90:37:11: S105 [*] Should be exactly 1 space following ALLOCATE  (b(4))
+   |
+35 |   ALLOCATE (b(3))  ! This should be unchanged
+36 |   DEALLOCATE (b)  ! This should be unchanged
+37 |   ALLOCATE  (b(4))  ! A space should be removed after ALLOCATE
+   |           ^^ S105
+38 |   DEALLOCATE  (b)  ! A space should be removed after DEALLOCATE
+39 | end program myprog
+   |
+   = help: remove extra whitespace
+
+ℹ Safe fix
+34 34 |   DEALLOCATE(b)  ! A space should be added after deallocate
+35 35 |   ALLOCATE (b(3))  ! This should be unchanged
+36 36 |   DEALLOCATE (b)  ! This should be unchanged
+37    |-  ALLOCATE  (b(4))  ! A space should be removed after ALLOCATE
+   37 |+  ALLOCATE (b(4))  ! A space should be removed after ALLOCATE
+38 38 |   DEALLOCATE  (b)  ! A space should be removed after DEALLOCATE
+39 39 | end program myprog

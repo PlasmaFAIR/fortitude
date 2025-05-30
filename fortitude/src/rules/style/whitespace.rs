@@ -245,12 +245,53 @@ impl AstRule for IncorrectSpaceBetweenStatements {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let node_as_str = node.to_text(src.source_text())?;
 
-        let is_opening_node = matches!(
-            node_as_str,
-            "if" | "allocate" | "deallocate" | "write" | "read"
-        );
+        let node_kind = node.kind();
+        let is_if_type_statement = matches!(node_kind, "if_statement" | "elseif_clause");
+        let is_allocate_type_statement = matches!(node_kind, "allocate_statement");
+        let is_io_type_statement = matches!(node_kind, "read_statement" | "write_statement");
+        let is_opening_node =
+            is_if_type_statement || is_allocate_type_statement || is_io_type_statement;
+
+        // Map statement_name to starting node
+        let mut start_node = node.child(0)?;
+        let start_node_as_str = start_node.to_text(src.source_text())?;
+        let node_of_interest = if is_if_type_statement {
+            // Check for 'else if' case
+            let lowercase_value = start_node_as_str.to_lowercase();
+            if matches!(lowercase_value.as_str(), "else") {
+                start_node = node.child(1)?;
+            }
+
+            if matches!(
+                start_node
+                    .to_text(src.source_text())?
+                    .to_lowercase()
+                    .as_str(),
+                "if"
+            ) {
+                Some(start_node)
+            } else {
+                None
+            }
+        } else if is_allocate_type_statement {
+            if matches!(start_node_as_str.to_lowercase().as_str(), "allocate") {
+                Some(start_node)
+            } else {
+                None
+            }
+        } else if is_io_type_statement {
+            // let start_node = node.child(0)?;
+            if matches!(start_node_as_str.to_lowercase().as_str(), "read" | "write") {
+                Some(start_node)
+            } else {
+                None
+            }
+        } else {
+            None
+        }?;
+
         let (whitespace_start, whitespace_end) =
-            get_whitspace_between_open_and_close_nodes(node, src, is_opening_node)?;
+            get_whitspace_between_open_and_close_nodes(&node_of_interest, src, is_opening_node)?;
 
         let whitespace_range = TextRange::new(whitespace_start, whitespace_end);
         if whitespace_range.len().to_usize() > 1 {
@@ -286,7 +327,13 @@ impl AstRule for IncorrectSpaceBetweenStatements {
     }
 
     fn entrypoints() -> Vec<&'static str> {
-        vec!["if", "allocate", "write", "read", "then", "end"]
+        vec![
+            "if_statement",
+            "elseif_clause",
+            "allocate_statement",
+            "read_statement",
+            "write_statement",
+        ]
     }
 }
 

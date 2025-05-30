@@ -12,13 +12,28 @@ program myprog
   else if(a == 4)  then ! A space should be added after if and removed before then
     a = 5
   end if
-  write (*,*) "a = ", a  ! This should be unchanged
   allocate (b(3))  ! This should be unchanged
-  b = [1, 2, 3]
+  read(*,*) b  ! A space should be added after write
+  write(*,*) "b = ", b  ! This should be unchanged
+  read (*,*) b  ! This should be unchanged
   write (*,*) "b = ", b  ! This should be unchanged
+  read  (*,*) b  ! This should be unchanged
+  write  (*,*) "b = ", b  ! This should be unchanged
   deallocate (b)  ! This should be unchanged
   allocate(b(4))  ! A space should be added after allocate
-  b = [1, 2, 3, 4]
-  write(*,*) "b = ", b  ! A space should be added after write
+  READ(*,*) b  ! A space should be added after write
+  WRITE(*,*) "b = ", b  ! A space should be added after write
+  READ (*,*) b  ! This should be unchanged
+  WRITE (*,*) "b = ", b  ! This should be unchanged
+  READ  (*,*) b  ! A space should be removed after READ
+  WRITE  (*,*) "b = ", b  ! A space should be removed after READ
   deallocate(b)  ! A space should be added after deallocate
+  allocate  (b(4))  ! A space should be removed after allocate
+  deallocate  (b)  ! A space should be removed after deallocate
+  ALLOCATE(b(4))  ! A space should be added after allocate
+  DEALLOCATE(b)  ! A space should be added after deallocate
+  ALLOCATE (b(3))  ! This should be unchanged
+  DEALLOCATE (b)  ! This should be unchanged
+  ALLOCATE  (b(4))  ! A space should be removed after ALLOCATE
+  DEALLOCATE  (b)  ! A space should be removed after DEALLOCATE
 end program myprog
