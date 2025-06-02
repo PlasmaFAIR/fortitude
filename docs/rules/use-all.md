@@ -3,6 +3,8 @@ This rule is turned on by default.
 
 ## What it does
 Checks whether `use` statements are used correctly.
+Specific modules may be exempted from this rule by setting the
+[`allow-mods`](../settings.md#allow-mods) option.
 
 ## Why is this bad?
 When using a module, it is recommended to add an 'only' clause to specify which

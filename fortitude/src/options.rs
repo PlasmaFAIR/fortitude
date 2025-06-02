@@ -11,7 +11,10 @@ use serde::{Deserialize, Serialize};
 use crate::{
     rule_selector::RuleSelector,
     rules::{
-        correctness::exit_labels,
+        correctness::{
+            exit_labels,
+            use_statements,
+        },
         portability::{self},
         style::{
             keywords,
@@ -296,6 +299,10 @@ pub struct CheckOptions {
     #[option_group]
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
 
+    /// Options for the `use-all-allow-mods` rule
+    #[option_group]
+    pub use_all: Option<UseAllOptions>,
+
     /// Options for the `bad-string-quote` rule
     #[option_group]
     pub strings: Option<StringOptions>,
@@ -364,6 +371,32 @@ impl KeywordWhitespaceOptions {
         keywords::settings::Settings {
             inout_with_space: self.inout_with_space.unwrap_or(false),
             goto_with_space: self.goto_with_space.unwrap_or(false),
+        }
+    }
+}
+
+/// Options for the `use-all-allow-mods` rules
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct UseAllOptions {
+    /// Whether to enforce the use of `in out` instead of `inout`.
+    #[option(
+        default = "[]",
+        value_type = "list[str]",
+        example = r#"
+            # In addition to the standard set of exclusions, omit all tests, plus a specific file.
+            extend-exclude = ["tests", "src/bad.f90"]
+        "#
+    )]
+    pub allow_mods: Option<Vec<String>>
+}
+
+impl UseAllOptions {
+    pub fn into_settings(self) -> use_statements::settings::Settings {
+        use_statements::settings::Settings {
+            allow_mods: self.allow_mods.unwrap_or_default()
         }
     }
 }
