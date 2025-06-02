@@ -124,6 +124,66 @@ snapshot_kind: text
 30 30 |   label8: select case(i)
 31 31 |   end select
 
+./resources/test/fixtures/correctness/C143.f90:31:3: C143 [*] 'end select' statement in named 'select' block missing label
+   |
+30 |   label8: select case(i)
+31 |   end select
+   |   ^^^^^^^^^^ C143
+32 |
+33 |   label9: select rank(i)
+   |
+   = help: Add label 'label8'
+
+ℹ Safe fix
+28 28 |   end if
+29 29 | 
+30 30 |   label8: select case(i)
+31    |-  end select
+   31 |+  end select label8
+32 32 | 
+33 33 |   label9: select rank(i)
+34 34 |   end select
+
+./resources/test/fixtures/correctness/C143.f90:34:3: C143 [*] 'end select' statement in named 'select' block missing label
+   |
+33 |   label9: select rank(i)
+34 |   end select
+   |   ^^^^^^^^^^ C143
+35 |
+36 |   label10: select type(i)
+   |
+   = help: Add label 'label9'
+
+ℹ Safe fix
+31 31 |   end select
+32 32 | 
+33 33 |   label9: select rank(i)
+34    |-  end select
+   34 |+  end select label9
+35 35 | 
+36 36 |   label10: select type(i)
+37 37 |   end select
+
+./resources/test/fixtures/correctness/C143.f90:37:3: C143 [*] 'end select' statement in named 'select' block missing label
+   |
+36 |   label10: select type(i)
+37 |   end select
+   |   ^^^^^^^^^^ C143
+38 |
+39 |   label11: where(i > 0)
+   |
+   = help: Add label 'label10'
+
+ℹ Safe fix
+34 34 |   end select
+35 35 | 
+36 36 |   label10: select type(i)
+37    |-  end select
+   37 |+  end select label10
+38 38 | 
+39 39 |   label11: where(i > 0)
+40 40 |   end where
+
 ./resources/test/fixtures/correctness/C143.f90:40:3: C143 [*] 'end where' statement in named 'where' block missing label
    |
 39 |   label11: where(i > 0)

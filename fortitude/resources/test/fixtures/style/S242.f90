@@ -7,7 +7,7 @@ program test
   print*, 'This "isn''t" unnecessary'
   print*, "This ""isn't"" unnecessary"
   print*, 4_"Does this ""break""?"
-  print*, c_char_"Does this ''break''?"
+  print*, c_char_'Does this ''break''?'
   print*, 'This &
        &isn''t &
        &necessary'
