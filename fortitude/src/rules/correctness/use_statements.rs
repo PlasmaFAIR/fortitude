@@ -39,8 +39,16 @@ impl Violation for UseAll {
 
 impl AstRule for UseAll {
     fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if node.child_with_name("included_items").is_none() {
-            return some_vec![Diagnostic::from_node(UseAll {}, node)];
+        let module_name = node
+            .child_with_name("module_name")?
+            .to_text(_src.source_text())?
+            .to_lowercase();
+
+        if _settings.check.use_all.allow_mods.iter().all(|m| *m != module_name)
+        {
+            if node.child_with_name("included_items").is_none() {
+                return some_vec![Diagnostic::from_node(UseAll {}, node)];
+            }
         }
         None
     }
@@ -124,5 +132,30 @@ impl AstRule for MissingIntrinsic {
 
     fn entrypoints() -> Vec<&'static str> {
         vec!["use_statement"]
+    }
+}
+
+pub(crate) mod settings {
+    use ruff_macros::CacheKey;
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub allow_mods: Vec<String>
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            if self.allow_mods.is_empty() {
+                write!(f, "{{}}")?;
+            } else {
+                writeln!(f, "{{")?;
+                for allow_mods in &self.allow_mods {
+                    writeln!(f, "\t{allow_mods}")?;
+                }
+                write!(f, "}}")?;
+            }
+            Ok(())
+        }
     }
 }

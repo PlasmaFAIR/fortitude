@@ -1,7 +1,7 @@
 use crate::cli::CheckArgs;
 use crate::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::options::{
-    ExitUnlabelledLoopOptions, KeywordWhitespaceOptions, Options, PortabilityOptions, StringOptions,
+    ExitUnlabelledLoopOptions, KeywordWhitespaceOptions, UseAllOptions, Options, PortabilityOptions, StringOptions,
 };
 use crate::registry::RuleNamespace;
 use crate::rule_redirects::get_redirect;
@@ -170,6 +170,7 @@ pub struct Configuration {
     // Individual rules
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
+    pub use_all: Option<UseAllOptions>,
     pub strings: Option<StringOptions>,
     pub portability: Option<PortabilityOptions>,
 }
@@ -197,6 +198,7 @@ impl Default for Configuration {
             gitignore_mode: Default::default(),
             exit_unlabelled_loops: Default::default(),
             keyword_whitespace: Default::default(),
+            use_all: Default::default(),
             strings: Default::default(),
             portability: Default::default(),
         }
@@ -270,6 +272,7 @@ impl Configuration {
             // Individual rules
             exit_unlabelled_loops: check.exit_unlabelled_loops,
             keyword_whitespace: check.keyword_whitespace,
+            use_all: check.use_all,
             strings: check.strings,
             portability: check.portability,
         }
@@ -374,6 +377,10 @@ impl Configuration {
                 keyword_whitespace: self
                     .keyword_whitespace
                     .map(KeywordWhitespaceOptions::into_settings)
+                    .unwrap_or_default(),
+                use_all: self
+                    .use_all
+                    .map(UseAllOptions::into_settings)
                     .unwrap_or_default(),
                 strings: self
                     .strings

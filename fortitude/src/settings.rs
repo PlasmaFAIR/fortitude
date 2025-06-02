@@ -19,7 +19,7 @@ use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
-use crate::rules::correctness::exit_labels;
+use crate::rules::correctness::{exit_labels, use_statements};
 use crate::rules::portability::{self};
 use crate::rules::style::{keywords, strings};
 
@@ -74,6 +74,7 @@ pub struct CheckSettings {
     // Individual rule settings
     pub exit_unlabelled_loops: exit_labels::settings::Settings,
     pub keyword_whitespace: keywords::settings::Settings,
+    pub use_all: use_statements::settings::Settings,
     pub strings: strings::settings::Settings,
     pub portability: portability::settings::Settings,
 }
@@ -98,6 +99,7 @@ impl CheckSettings {
             ignore_allow_comments: IgnoreAllowComments::default(),
             exit_unlabelled_loops: exit_labels::settings::Settings::default(),
             keyword_whitespace: keywords::settings::Settings::default(),
+            use_all: use_statements::settings::Settings::default(),
             strings: strings::settings::Settings::default(),
             portability: portability::settings::Settings::default(),
         }
@@ -130,6 +132,7 @@ impl fmt::Display for CheckSettings {
             fields = [
                 self.exit_unlabelled_loops | nested,
                 self.keyword_whitespace | nested,
+                self.use_all | nested,
                 self.strings | nested,
                 self.portability | nested,
             ]

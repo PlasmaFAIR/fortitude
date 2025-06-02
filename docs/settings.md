@@ -730,3 +730,32 @@ Quote style to prefer for string literals (either "single" or "double").
 
 ---
 
+### `check.use-all`
+
+Options for the use all rule
+
+#### [`allow-mods`](#check_use-all_allow-mods) {: #check_use-all_allow-mods }
+<span id="allow-mods"></span>
+
+Allow use all for specific modules.
+
+**Default value**: `[]`
+
+**Type**: `List[str]`
+
+**Example usage**:
+
+=== "fpm.toml"
+
+    ```toml
+    [extra.fortitude.check.use-all]
+    allow-mods = ["my_env_mod"]
+    ```
+=== "fortitude.toml"
+
+    ```toml
+    [check.use-all]
+    allow-mods = ["my_env_mod"]
+    ```
+
+---
