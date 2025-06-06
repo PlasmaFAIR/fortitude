@@ -50,7 +50,7 @@ snapshot_kind: text
  8 |   print*, "This ""isn't"" unnecessary"
  9 |   print*, 4_"Does this ""break""?"
    |             ^^^^^^^^^^^^^^^^^^^^^^ S242
-10 |   print*, c_char_"Does this ''break''?"
+10 |   print*, c_char_'Does this ''break''?'
 11 |   print*, 'This &
    |
    = help: Change outer quotes to avoid escaping inner quotes
@@ -61,14 +61,35 @@ snapshot_kind: text
 8  8  |   print*, "This ""isn't"" unnecessary"
 9     |-  print*, 4_"Does this ""break""?"
    9  |+  print*, 4_'Does this "break"?'
-10 10 |   print*, c_char_"Does this ''break''?"
+10 10 |   print*, c_char_'Does this ''break''?'
 11 11 |   print*, 'This &
 12 12 |        &isn''t &
+
+./resources/test/fixtures/style/S242.f90:10:18: S242 [*] Avoidable escaped quotes
+   |
+ 8 |   print*, "This ""isn't"" unnecessary"
+ 9 |   print*, 4_"Does this ""break""?"
+10 |   print*, c_char_'Does this ''break''?'
+   |                  ^^^^^^^^^^^^^^^^^^^^^^ S242
+11 |   print*, 'This &
+12 |        &isn''t &
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+7  7  |   print*, 'This "isn''t" unnecessary'
+8  8  |   print*, "This ""isn't"" unnecessary"
+9  9  |   print*, 4_"Does this ""break""?"
+10    |-  print*, c_char_'Does this ''break''?'
+   10 |+  print*, c_char_"Does this 'break'?"
+11 11 |   print*, 'This &
+12 12 |        &isn''t &
+13 13 |        &necessary'
 
 ./resources/test/fixtures/style/S242.f90:11:11: S242 [*] Avoidable escaped quotes
    |
  9 |     print*, 4_"Does this ""break""?"
-10 |     print*, c_char_"Does this ''break''?"
+10 |     print*, c_char_'Does this ''break''?'
 11 |     print*, 'This &
    |  ___________^
 12 | |        &isn''t &
@@ -82,7 +103,7 @@ snapshot_kind: text
 ℹ Safe fix
 8  8  |   print*, "This ""isn't"" unnecessary"
 9  9  |   print*, 4_"Does this ""break""?"
-10 10 |   print*, c_char_"Does this ''break''?"
+10 10 |   print*, c_char_'Does this ''break''?'
 11    |-  print*, 'This &
 12    |-       &isn''t &
 13    |-       &necessary'

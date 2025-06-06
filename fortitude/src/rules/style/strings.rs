@@ -157,16 +157,29 @@ impl AstRule for AvoidableEscapedQuote {
             return None;
         }
 
+        // Because the kind appears as a child node, the interesting
+        // literal bit doesn't start at the beginning of the node
+        let (start, kind) = if let Some(kind) = node.child_by_field_name("kind") {
+            let kind_text = kind.to_text(src.source_text())?;
+            (kind_text.len() + 1, format!("{}_", kind_text))
+        } else {
+            (0, "".to_string())
+        };
+
         let end = text.text_len() - TextSize::new(1);
-        let contents = &text[1..end.to_usize()];
+        let contents = &text[start + 1..end.to_usize()];
         let fixed = format!(
-            "{quote}{value}{quote}",
+            "{kind}{quote}{value}{quote}",
             quote = quote_style.opposite().as_char(),
             value = unescape_string(contents, quote_style.as_char())
         );
 
         let edit = node.edit_replacement(src, fixed);
-        some_vec!(Diagnostic::from_node(Self, node).with_fix(Fix::safe_edit(edit)))
+        // Offset start of node by kind, if any
+        let range = node
+            .textrange()
+            .add_start(TextSize::try_from(start).unwrap());
+        some_vec!(Diagnostic::new(Self, range).with_fix(Fix::safe_edit(edit)))
     }
 
     fn entrypoints() -> Vec<&'static str> {

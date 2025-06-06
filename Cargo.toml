@@ -33,7 +33,7 @@ strum_macros = { version = "0.27.1" }
 textwrap = { version = "0.16.0" }
 tree-sitter = "~0.25.0"
 tree-sitter-cli = "~0.25.0"
-tree-sitter-fortran = { git = "https://github.com/stadelmanma/tree-sitter-fortran.git", branch = "recent-changes" }
+tree-sitter-fortran = { git = "https://github.com/stadelmanma/tree-sitter-fortran.git", branch = "more-extensions" }
 
 [profile.dev.package]
 insta.opt-level = 3
