@@ -28,20 +28,14 @@ enum StatType {
 
 impl StatType {
     fn from_node(node: &Node, src: &str) -> Result<Self> {
-        let node_kind = match node.kind() {
-            "call_expression" => {
-                // For call expressions, we need to check the name of the function.
-                let identifier_node = node.child(0).context("Could not retrieve routine name")?;
-                let identifier_text = identifier_node
-                    .to_text(src)
-                    .context("Failed to parse identifier text")?
-                    .to_lowercase();
-                match identifier_text.as_str() {
-                    "deallocate" => "stat",
-                    "wait" | "flush" => "iostat",
-                    _ => return Err(anyhow!("Unknown routine: {identifier_text}")),
-                }
-            }
+        match node.kind() {
+            "allocate_statement" | "deallocate_statement" => Ok(StatType::Stat),
+            "open_statement"
+            | "close_statement"
+            | "read_statement"
+            | "write_statement"
+            | "inquire_statement"
+            | "file_position_statement" => Ok(StatType::IoStat),
             "subroutine_call" => {
                 // Looking only for execute_command_line
                 let subroutine_node = node
@@ -52,23 +46,23 @@ impl StatType {
                     .context("Failed to parse subroutine text")?
                     .to_lowercase();
                 if subroutine_text == "execute_command_line" {
-                    "cmdstat"
+                    Ok(StatType::CmdStat)
                 } else {
-                    return Err(anyhow!("Unknown subroutine: {subroutine_text}"));
+                    Err(anyhow!("Unknown subroutine: {subroutine_text}"))
                 }
             }
-            some_string => some_string,
-        };
-        match node_kind {
-            "allocate_statement" | "stat" => Ok(StatType::Stat),
-            "open_statement"
-            | "close_statement"
-            | "read_statement"
-            | "write_statement"
-            | "inquire_statement"
-            | "file_position_statement"
-            | "iostat" => Ok(StatType::IoStat),
-            "cmdstat" => Ok(StatType::CmdStat),
+            "call_expression" => {
+                let identifier_node = node.child(0).context("Could not retrieve routine name")?;
+                let identifier_text = identifier_node
+                    .to_text(src)
+                    .context("Failed to parse identifier text")?
+                    .to_lowercase();
+                if matches!(identifier_text.as_str(), "wait" | "flush") {
+                    Ok(StatType::IoStat)
+                } else {
+                    Err(anyhow!("Unknown routine: {identifier_text}"))
+                }
+            }
             _ => Err(anyhow!("Node does not have a stat type")),
         }
     }
@@ -223,14 +217,15 @@ impl AstRule for UncheckedStat {
     fn entrypoints() -> Vec<&'static str> {
         vec![
             "allocate_statement",
+            "deallocate_statement",
             "open_statement",
             "close_statement",
             "read_statement",
             "write_statement",
             "inquire_statement",
             "file_position_statement",
-            "call_expression", // various: deallocate, wait, flush
             "subroutine_call", // for execute_command_line
+            "call_expression", // for wait and flush
         ]
     }
 }
@@ -312,10 +307,7 @@ fn is_error_checking_routine(node: &Node, src: &str) -> Result<bool> {
                 .to_text(src)
                 .context("Failed to parse identifier text")?
                 .to_lowercase();
-            return Ok(matches!(
-                identifier_text.as_str(),
-                "deallocate" | "wait" | "flush"
-            ));
+            return Ok(matches!(identifier_text.as_str(), "wait" | "flush"));
         }
         if ancestor.kind() == "subroutine_call" {
             let subroutine_node = ancestor
@@ -330,6 +322,7 @@ fn is_error_checking_routine(node: &Node, src: &str) -> Result<bool> {
         if matches!(
             ancestor.kind(),
             "allocate_statement"
+                | "deallocate_statement"
                 | "open_statement"
                 | "close_statement"
                 | "read_statement"
