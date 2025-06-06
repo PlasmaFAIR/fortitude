@@ -306,7 +306,7 @@ impl AllocationType {
     fn from_node(node: &Node) -> Result<Self> {
         match node.kind() {
             "allocate_statement" => Ok(AllocationType::Allocate),
-            "dellocate_statement" => Ok(AllocationType::Deallocate),
+            "deallocate_statement" => Ok(AllocationType::Deallocate),
             _ => Err(anyhow!("Node is not an allocation type")),
         }
     }
@@ -353,9 +353,11 @@ impl AstRule for MultipleAllocationsWithStat {
         })?;
 
         // Count allocations
-        let count = node
-            .children_by_field_name("allocation", &mut node.walk())
-            .count();
+        let count = match node.kind() {
+            "allocate_statement" => count_allocations(node),
+            "deallocate_statement" => count_deallocations(node),
+            _ => return None,
+        };
         if count <= 1 {
             return None;
         }
@@ -368,4 +370,15 @@ impl AstRule for MultipleAllocationsWithStat {
     fn entrypoints() -> Vec<&'static str> {
         vec!["allocate_statement", "deallocate_statement"]
     }
+}
+
+fn count_allocations(node: &Node) -> usize {
+    node.children_by_field_name("allocation", &mut node.walk())
+        .count()
+}
+
+fn count_deallocations(node: &Node) -> usize {
+    node.named_children(&mut node.walk())
+        .filter(|c| c.kind() == "identifier")
+        .count()
 }
