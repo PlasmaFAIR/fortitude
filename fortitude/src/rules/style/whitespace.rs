@@ -191,51 +191,14 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let node_as_str = node.to_text(src.source_text())?;
 
-        let source = src.to_source_code();
-        let bracket_start = node.start_textsize();
-        let bracket_end = node.end_textsize();
-        let line_index = source.line_index(bracket_end);
-
         let is_open_bracket = matches!(node_as_str, "(" | "[");
-        let (whitespace_start, whitespace_end) = if is_open_bracket {
-            // Get line after bracket
-            let line_end = source.line_end(line_index);
-            let range_after = TextRange::new(bracket_end, line_end);
-            let line_after = source.slice(range_after);
-
-            // Ignore if preceding a line wrap, i.e. &
-            if line_after.trim_start().starts_with('&') {
-                return None;
-            }
-
-            // Count whitespace characters after the bracket
-            let whitespace_iter = line_after.chars().take_while(|c| c.is_whitespace());
-            let whitespace_count = whitespace_iter.count();
-            let whitespace_end = bracket_end + TextSize::from(whitespace_count as u32);
-
-            (bracket_end, whitespace_end)
-        } else {
-            // Get line before bracket
-            let line_start = source.line_start(line_index);
-            let range_before = TextRange::new(line_start, bracket_start);
-            let line_before = source.slice(range_before);
-
-            // Ignore if following a line wrap, i.e. &
-            if line_before.trim_end().ends_with('&') || line_before.trim().is_empty() {
-                return None;
-            }
-
-            // Count whitespace characters before the bracket
-            let whitespace_iter = line_before.chars().rev().take_while(|c| c.is_whitespace());
-            let whitespace_count = whitespace_iter.count();
-            let whitespace_start = bracket_start - TextSize::from(whitespace_count as u32);
-
-            (whitespace_start, bracket_start)
-        };
+        let (whitespace_start, whitespace_end) =
+            get_whitspace_between_open_and_close_nodes(node, src, is_open_bracket)?;
 
         if whitespace_start == whitespace_end {
             return None; // No whitespace to fix
         }
+
         let whitespace_range = TextRange::new(whitespace_start, whitespace_end);
 
         // If the space is between empty brackets only raise for closing bracket
@@ -251,4 +214,187 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
     fn entrypoints() -> Vec<&'static str> {
         vec!["(", "[", ")", "]"]
     }
+}
+
+/// ## What does it do?
+/// Checks for spaces between statements and their contents.
+///
+/// ## Why is this bad?
+/// Including spaces between statements and their contents can lead to
+/// inconsistent formatting and readability issues if the same style is
+/// not applied consistently throughout the codebase.
+#[derive(ViolationMetadata)]
+pub(crate) struct IncorrectSpaceBetweenStatements {
+    is_opening_node: bool,
+    node_as_str: String,
+    remove_whitespace: bool,
+}
+
+impl AlwaysFixableViolation for IncorrectSpaceBetweenStatements {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        if self.is_opening_node {
+            format!("Should be exactly 1 space following {}", self.node_as_str)
+        } else {
+            format!("Should be exactly 1 space before {}", self.node_as_str)
+        }
+    }
+
+    fn fix_title(&self) -> String {
+        if self.remove_whitespace {
+            "remove extra whitespace".to_string()
+        } else {
+            "add missing whitespace".to_string()
+        }
+    }
+}
+impl AstRule for IncorrectSpaceBetweenStatements {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let node_as_str = node.to_text(src.source_text())?;
+
+        let node_kind = node.kind();
+        let is_if_type_statement = matches!(node_kind, "if_statement" | "elseif_clause");
+        let is_allocate_type_statement = matches!(node_kind, "allocate_statement");
+        let is_io_type_statement = matches!(node_kind, "read_statement" | "write_statement");
+        let is_opening_node =
+            is_if_type_statement || is_allocate_type_statement || is_io_type_statement;
+
+        // Map statement_name to starting node
+        let node_of_interest = if !is_opening_node {
+            Some(*node)
+        } else {
+            if is_if_type_statement {
+                let start_node = if matches!(node_kind, "elseif_clause") {
+                    node.child(1)
+                } else {
+                    node.child(0)
+                }?;
+
+                if matches!(
+                    start_node
+                        .to_text(src.source_text())?
+                        .to_lowercase()
+                        .as_str(),
+                    "if"
+                ) {
+                    Some(start_node)
+                } else {
+                    None
+                }
+            } else if is_allocate_type_statement {
+                let start_node = node.child(0)?;
+                let start_node_as_str = start_node.to_text(src.source_text())?;
+                if matches!(start_node_as_str.to_lowercase().as_str(), "allocate") {
+                    Some(start_node)
+                } else {
+                    None
+                }
+            } else if is_io_type_statement {
+                let start_node = node.child(0)?;
+                let start_node_as_str = start_node.to_text(src.source_text())?;
+                if matches!(start_node_as_str.to_lowercase().as_str(), "read" | "write") {
+                    Some(start_node)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        }?;
+
+        let (whitespace_start, whitespace_end) =
+            get_whitspace_between_open_and_close_nodes(&node_of_interest, src, is_opening_node)?;
+
+        let whitespace_range = TextRange::new(whitespace_start, whitespace_end);
+        if whitespace_range.len().to_usize() > 1 {
+            // Remove excess whitespace
+            some_vec!(Diagnostic::new(
+                Self {
+                    is_opening_node,
+                    node_as_str: node_as_str.to_string(),
+                    remove_whitespace: true
+                },
+                whitespace_range
+            )
+            .with_fix(Fix::safe_edit(Edit::range_replacement(
+                " ".to_string(),
+                whitespace_range
+            ))))
+        } else if whitespace_range.is_empty() {
+            some_vec!(Diagnostic::new(
+                Self {
+                    is_opening_node,
+                    node_as_str: node_as_str.to_string(),
+                    remove_whitespace: false
+                },
+                whitespace_range
+            )
+            .with_fix(Fix::safe_edit(Edit::insertion(
+                " ".to_string(),
+                whitespace_start
+            ))))
+        } else {
+            None
+        }
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec![
+            "if_statement",
+            "elseif_clause",
+            "then",
+            "allocate_statement",
+            "read_statement",
+            "write_statement",
+        ]
+    }
+}
+
+// Helper functions
+fn get_whitspace_between_open_and_close_nodes(
+    node: &Node,
+    src: &SourceFile,
+    is_opening_node: bool,
+) -> Option<(TextSize, TextSize)> {
+    let source = src.to_source_code();
+    let node_start = node.start_textsize();
+    let node_end = node.end_textsize();
+
+    Some(if is_opening_node {
+        // Get line after bracket
+        let line_index = source.line_index(node_end);
+        let line_end = source.line_end(line_index);
+        let range_after = TextRange::new(node_end, line_end);
+        let line_after = source.slice(range_after);
+
+        // Ignore if preceding a line wrap, i.e. &
+        if line_after.trim_start().starts_with('&') {
+            return None;
+        }
+
+        // Count whitespace characters after the bracket
+        let whitespace_iter = line_after.chars().take_while(|c| c.is_whitespace());
+        let whitespace_count = whitespace_iter.count();
+        let whitespace_end = node_end + TextSize::from(whitespace_count as u32);
+
+        (node_end, whitespace_end)
+    } else {
+        // Get line before bracket
+        let line_index = source.line_index(node_start);
+        let line_start = source.line_start(line_index);
+        let range_before = TextRange::new(line_start, node_start);
+        let line_before = source.slice(range_before);
+
+        // Ignore if following a line wrap, i.e. &
+        if line_before.trim_end().ends_with('&') || line_before.trim().is_empty() {
+            return None;
+        }
+
+        // Count whitespace characters before the bracket
+        let whitespace_iter = line_before.chars().rev().take_while(|c| c.is_whitespace());
+        let whitespace_count = whitespace_iter.count();
+        let whitespace_start = node_start - TextSize::from(whitespace_count as u32);
+
+        (whitespace_start, node_start)
+    })
 }
