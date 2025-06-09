@@ -1,4 +1,4 @@
-use crate::ast::{is_keyword_argument, FortitudeNode};
+use crate::ast::FortitudeNode;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -16,9 +16,7 @@ pub fn literal_as_io_unit<'a>(node: &'a Node, src: &SourceFile) -> Option<Node<'
     let unit = if let Some(unit) = node.child_with_name("unit_identifier") {
         unit.child(0)?
     } else {
-        node.named_children(&mut node.walk())
-            .find(|child| is_keyword_argument(child, "unit", src.source_text()))
-            .map(|node| node.child_by_field_name("value"))??
+        node.kwarg_value("unit", src.source_text())?
     };
 
     if unit.kind() == "number_literal" {

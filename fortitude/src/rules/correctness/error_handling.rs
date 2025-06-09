@@ -133,12 +133,7 @@ impl AstRule for UncheckedStat {
         } else {
             *node
         };
-        let stat_node = arg_list.named_children(&mut node.walk()).find(|child| {
-            child.kind() == "keyword_argument"
-                && child.child_by_field_name("name").is_some_and(|n| {
-                    n.to_text(src).map(|s| s.to_lowercase()) == Some(stat_name.to_string())
-                })
-        })?;
+        let stat_node = arg_list.kwarg(stat_name, src)?;
 
         let name = stat_node
             .child_by_field_name("value")?

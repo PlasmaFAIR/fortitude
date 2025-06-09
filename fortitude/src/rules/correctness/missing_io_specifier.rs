@@ -30,15 +30,8 @@ impl Violation for MissingActionSpecifier {
 
 impl AstRule for MissingActionSpecifier {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        let txt = src.source_text();
-        for arg in node.named_children(&mut node.walk()) {
-            if arg.kind() == "keyword_argument" {
-                if let Some(key) = arg.child_by_field_name("name") {
-                    if let Some("action") = key.to_text(txt) {
-                        return None;
-                    }
-                }
-            }
+        if node.kwarg_exists("action", src.source_text()) {
+            return None;
         }
         some_vec![Diagnostic::from_node(Self {}, node)]
     }
