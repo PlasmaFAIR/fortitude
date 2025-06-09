@@ -173,7 +173,7 @@ impl AstRule for UncheckedStat {
             .chain(node.ancestors())
             .take_while(not_scope_boundary)
         {
-            match find_stat_in_siblings(&ancestor, &name, src) {
+            match find_stat_in_siblings(&ancestor, &name.to_lowercase(), src) {
                 Ok(CheckStatus::Checked) => {
                     // Found the variable, so stop checking.
                     return None;
@@ -237,10 +237,11 @@ fn find_stat_in_siblings(node: &Node, stat_name: &str, src: &str) -> Result<Chec
             continue;
         }
 
-        if let Some(stat_node) = once(sibling)
-            .chain(sibling.descendants())
-            .find(|d| d.kind() == "identifier" && d.to_text(src) == Some(stat_name))
-        {
+        if let Some(stat_node) = once(sibling).chain(sibling.descendants()).find(|d| {
+            d.kind() == "identifier"
+                && d.to_text(src)
+                    .is_some_and(|d| d.to_lowercase().as_str() == stat_name)
+        }) {
             return stat_check_status(&stat_node, stat_name, src);
         }
     }
@@ -260,18 +261,36 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
 
     if ancestor.kind() == "assignment_statement" {
         if let Some(lhs) = ancestor.child_by_field_name("left") {
-            if lhs.to_text(src).context("to_text error")? == stat_name {
+            let lhs_text = lhs.to_text(src).context("to_text error")?;
+            if lhs_text.to_lowercase().as_str() == stat_name {
                 return Ok(CheckStatus::Overwritten);
             }
         }
     }
     if ancestor.kind() == "keyword_argument" {
-        if let Some(name_node) = ancestor.child_by_field_name("name") {
-            if is_error_checking_routine(&ancestor, src)?
-                && StatType::try_from(name_node.to_text(src).context("to_text error")?).is_ok()
-            {
-                return Ok(CheckStatus::Overwritten);
-            }
+        // See if the stat variable is passed to another error handling routine.
+        let routine = ancestor
+            .parent()
+            .context("Keyword argument should have a parent")?;
+        // If the parent is an argument list, then the routine is the grandparent.
+        let routine = if routine.kind() == "argument_list" {
+            routine
+                .parent()
+                .context("Argument list should have a parent")?
+        } else {
+            routine
+        };
+        let is_in_error_checking_routine = StatType::from_node(&routine, src).is_ok();
+        let kwarg_name_is_stat_type = StatType::try_from(
+            ancestor
+                .child_by_field_name("name")
+                .context("Keyword argument should have a name")?
+                .to_text(src)
+                .context("to_text error")?,
+        )
+        .is_ok();
+        if is_in_error_checking_routine && kwarg_name_is_stat_type {
+            return Ok(CheckStatus::Overwritten);
         }
     }
     Ok(CheckStatus::Checked)
@@ -289,44 +308,4 @@ fn new_branch(node: &Node) -> bool {
         node.kind(),
         "elseif_clause" | "else_clause" | "case_statement"
     )
-}
-
-fn is_error_checking_routine(node: &Node, src: &str) -> Result<bool> {
-    // runs on keyword_argument node
-    for ancestor in node.ancestors() {
-        if ancestor.kind() == "call_expression" {
-            let identifier_node = ancestor
-                .child(0)
-                .context("Could not retrieve routine name")?;
-            let identifier_text = identifier_node
-                .to_text(src)
-                .context("Failed to parse identifier text")?
-                .to_lowercase();
-            return Ok(matches!(identifier_text.as_str(), "wait" | "flush"));
-        }
-        if ancestor.kind() == "subroutine_call" {
-            let subroutine_node = ancestor
-                .child_by_field_name("subroutine")
-                .context("Could not retrieve subroutine name")?;
-            let subroutine_text = subroutine_node
-                .to_text(src)
-                .context("Failed to parse subroutine text")?
-                .to_lowercase();
-            return Ok(subroutine_text == "execute_command_line");
-        }
-        if matches!(
-            ancestor.kind(),
-            "allocate_statement"
-                | "deallocate_statement"
-                | "open_statement"
-                | "close_statement"
-                | "read_statement"
-                | "write_statement"
-                | "inquire_statement"
-                | "file_position_statement"
-        ) {
-            return Ok(true);
-        }
-    }
-    Ok(false)
 }

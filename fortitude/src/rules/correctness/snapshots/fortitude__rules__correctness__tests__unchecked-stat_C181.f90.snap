@@ -7,7 +7,7 @@ snapshot_kind: text
    |
 12 |   ! Set stat, but don't check it until after another allocate.
 13 |   ! Should raise an error.
-14 |   allocate (x(10), stat=status)
+14 |   ALLOCATE (x(10), stat=status)
    |                    ^^^^^^^^^^^ C181
 15 |
 16 |   ! Set same stat and check it.
@@ -16,26 +16,26 @@ snapshot_kind: text
 ./resources/test/fixtures/correctness/C181.f90:29:20: C181 stat argument 'status' is overwritten before being checked in this scope.
    |
 28 |   ! Repeat, but the second allocate is not a direct sibling
-29 |   allocate (x(10), stat=status)
+29 |   ALLOCATE (x(10), Stat=status)
    |                    ^^^^^^^^^^^ C181
 30 |   if (.true.) then
-31 |     allocate (y(10), stat=status)
+31 |     ALLOCATE (y(10), STAT=statUs)
    |
 
-./resources/test/fixtures/correctness/C181.f90:59:20: C181 stat argument 'status_x' is overwritten before being checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:59:20: C181 stat argument 'STATUS_X' is overwritten before being checked in this scope.
    |
 58 |   ! Repeat, but using a custom error handler
-59 |   allocate (x(10), stat=status_x)
+59 |   allocate (x(10), stat=STATUS_X)
    |                    ^^^^^^^^^^^^^ C181
 60 |   if (.true.) then
-61 |     allocate (y(10), stat=status_y)
+61 |     allocate (y(10), STAT=status_y)
    |
 
-./resources/test/fixtures/correctness/C181.f90:103:22: C181 stat argument 'status_x' is not checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:103:22: C181 stat argument 'STATUS_X' is not checked in this scope.
     |
 101 |   ! Stat is not checked in any cases. Should raise for all four.
 102 |   if(if_option == 1) then
-103 |     allocate (x(10), stat=status_x)
+103 |     allocate (x(10), stat=STATUS_X)
     |                      ^^^^^^^^^^^^^ C181
 104 |   else
 105 |     allocate (x(30), stat=status_x)
@@ -43,7 +43,7 @@ snapshot_kind: text
 
 ./resources/test/fixtures/correctness/C181.f90:105:22: C181 stat argument 'status_x' is not checked in this scope.
     |
-103 |     allocate (x(10), stat=status_x)
+103 |     allocate (x(10), stat=STATUS_X)
 104 |   else
 105 |     allocate (x(30), stat=status_x)
     |                      ^^^^^^^^^^^^^ C181
@@ -51,11 +51,11 @@ snapshot_kind: text
 107 |   select case (select_option)
     |
 
-./resources/test/fixtures/correctness/C181.f90:109:22: C181 stat argument 'status_y' is not checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:109:22: C181 stat argument 'Status_y' is not checked in this scope.
     |
 107 |   select case (select_option)
 108 |   case(1)
-109 |     allocate (y(10), stat=status_y)
+109 |     allocate (y(10), stat=Status_y)
     |                      ^^^^^^^^^^^^^ C181
 110 |   case default
 111 |     allocate (y(20), stat=status_y)
@@ -63,7 +63,7 @@ snapshot_kind: text
 
 ./resources/test/fixtures/correctness/C181.f90:111:22: C181 stat argument 'status_y' is not checked in this scope.
     |
-109 |     allocate (y(10), stat=status_y)
+109 |     allocate (y(10), stat=Status_y)
 110 |   case default
 111 |     allocate (y(20), stat=status_y)
     |                      ^^^^^^^^^^^^^ C181
@@ -74,10 +74,10 @@ snapshot_kind: text
     |
 114 |   ! Set stat, but overwrite it before checking it.
 115 |   ! Should raise an error.
-116 |   allocate (w(10), stat=status_w)
+116 |   allocate (w(10), STAT=status_w)
     |                    ^^^^^^^^^^^^^ C181
-117 |   status_w = 0
-118 |   if (status_w /= 0) then
+117 |   STATUS_W = 0
+118 |   if (Status_w /= 0) then
     |
 
 ./resources/test/fixtures/correctness/C181.f90:126:20: C181 stat argument 'status_z' is not checked in this scope.
@@ -96,105 +96,105 @@ snapshot_kind: text
 145 |     logical :: file_exist
 146 |     inquire(unit=10, iostat=status, exist=file_exist)
     |                      ^^^^^^^^^^^^^ C181
-147 |     open (file="file.txt", unit=10, iostat=status, asynchronous="YES")
+147 |     open (file="file.txt", unit=10, IOSTAT=Status, asynchronous="YES")
 148 |     write(10, *, iostat=status) line
     |
 
-./resources/test/fixtures/correctness/C181.f90:147:37: C181 iostat argument 'status' is overwritten before being checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:147:37: C181 iostat argument 'Status' is overwritten before being checked in this scope.
     |
 145 |     logical :: file_exist
 146 |     inquire(unit=10, iostat=status, exist=file_exist)
-147 |     open (file="file.txt", unit=10, iostat=status, asynchronous="YES")
+147 |     open (file="file.txt", unit=10, IOSTAT=Status, asynchronous="YES")
     |                                     ^^^^^^^^^^^^^ C181
 148 |     write(10, *, iostat=status) line
-149 |     flush(10, iostat=status)
+149 |     flush(10, iostat=STATUS)
     |
 
 ./resources/test/fixtures/correctness/C181.f90:148:18: C181 iostat argument 'status' is overwritten before being checked in this scope.
     |
 146 |     inquire(unit=10, iostat=status, exist=file_exist)
-147 |     open (file="file.txt", unit=10, iostat=status, asynchronous="YES")
+147 |     open (file="file.txt", unit=10, IOSTAT=Status, asynchronous="YES")
 148 |     write(10, *, iostat=status) line
     |                  ^^^^^^^^^^^^^ C181
-149 |     flush(10, iostat=status)
-150 |     backspace(10, iostat=status)
+149 |     flush(10, iostat=STATUS)
+150 |     backspace(10, iostat=Status)
     |
 
-./resources/test/fixtures/correctness/C181.f90:149:15: C181 iostat argument 'status' is overwritten before being checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:149:15: C181 iostat argument 'STATUS' is overwritten before being checked in this scope.
     |
-147 |     open (file="file.txt", unit=10, iostat=status, asynchronous="YES")
+147 |     open (file="file.txt", unit=10, IOSTAT=Status, asynchronous="YES")
 148 |     write(10, *, iostat=status) line
-149 |     flush(10, iostat=status)
+149 |     flush(10, iostat=STATUS)
     |               ^^^^^^^^^^^^^ C181
-150 |     backspace(10, iostat=status)
-151 |     rewind(10, iostat=status)
+150 |     backspace(10, iostat=Status)
+151 |     rewind(10, IOSTAT=status)
     |
 
-./resources/test/fixtures/correctness/C181.f90:150:19: C181 iostat argument 'status' is overwritten before being checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:150:19: C181 iostat argument 'Status' is overwritten before being checked in this scope.
     |
 148 |     write(10, *, iostat=status) line
-149 |     flush(10, iostat=status)
-150 |     backspace(10, iostat=status)
+149 |     flush(10, iostat=STATUS)
+150 |     backspace(10, iostat=Status)
     |                   ^^^^^^^^^^^^^ C181
-151 |     rewind(10, iostat=status)
+151 |     rewind(10, IOSTAT=status)
 152 |     read(10, *, iostat=status, asynchronous="YES") line
     |
 
 ./resources/test/fixtures/correctness/C181.f90:151:16: C181 iostat argument 'status' is overwritten before being checked in this scope.
     |
-149 |     flush(10, iostat=status)
-150 |     backspace(10, iostat=status)
-151 |     rewind(10, iostat=status)
+149 |     flush(10, iostat=STATUS)
+150 |     backspace(10, iostat=Status)
+151 |     rewind(10, IOSTAT=status)
     |                ^^^^^^^^^^^^^ C181
 152 |     read(10, *, iostat=status, asynchronous="YES") line
-153 |     wait(10, iostat=status)
+153 |     wait(10, Iostat=STATUS)
     |
 
 ./resources/test/fixtures/correctness/C181.f90:152:17: C181 iostat argument 'status' is overwritten before being checked in this scope.
     |
-150 |     backspace(10, iostat=status)
-151 |     rewind(10, iostat=status)
+150 |     backspace(10, iostat=Status)
+151 |     rewind(10, IOSTAT=status)
 152 |     read(10, *, iostat=status, asynchronous="YES") line
     |                 ^^^^^^^^^^^^^ C181
-153 |     wait(10, iostat=status)
+153 |     wait(10, Iostat=STATUS)
 154 |     endfile(10, iostat=status)
     |
 
-./resources/test/fixtures/correctness/C181.f90:153:14: C181 iostat argument 'status' is overwritten before being checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:153:14: C181 iostat argument 'STATUS' is overwritten before being checked in this scope.
     |
-151 |     rewind(10, iostat=status)
+151 |     rewind(10, IOSTAT=status)
 152 |     read(10, *, iostat=status, asynchronous="YES") line
-153 |     wait(10, iostat=status)
+153 |     wait(10, Iostat=STATUS)
     |              ^^^^^^^^^^^^^ C181
 154 |     endfile(10, iostat=status)
-155 |     close(10, iostat=status)
+155 |     close(10, iostat=STATUS)
     |
 
 ./resources/test/fixtures/correctness/C181.f90:154:17: C181 iostat argument 'status' is overwritten before being checked in this scope.
     |
 152 |     read(10, *, iostat=status, asynchronous="YES") line
-153 |     wait(10, iostat=status)
+153 |     wait(10, Iostat=STATUS)
 154 |     endfile(10, iostat=status)
     |                 ^^^^^^^^^^^^^ C181
-155 |     close(10, iostat=status)
+155 |     close(10, iostat=STATUS)
 156 |     ! Something other than IO statement, reuse status
     |
 
-./resources/test/fixtures/correctness/C181.f90:155:15: C181 iostat argument 'status' is overwritten before being checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:155:15: C181 iostat argument 'STATUS' is overwritten before being checked in this scope.
     |
-153 |     wait(10, iostat=status)
+153 |     wait(10, Iostat=STATUS)
 154 |     endfile(10, iostat=status)
-155 |     close(10, iostat=status)
+155 |     close(10, iostat=STATUS)
     |               ^^^^^^^^^^^^^ C181
 156 |     ! Something other than IO statement, reuse status
-157 |     allocate(x(10), stat=status)
+157 |     allocate(x(10), STAT=Status)
     |
 
-./resources/test/fixtures/correctness/C181.f90:157:21: C181 stat argument 'status' is overwritten before being checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:157:21: C181 stat argument 'Status' is overwritten before being checked in this scope.
     |
-155 |     close(10, iostat=status)
+155 |     close(10, iostat=STATUS)
 156 |     ! Something other than IO statement, reuse status
-157 |     allocate(x(10), stat=status)
+157 |     allocate(x(10), STAT=Status)
     |                     ^^^^^^^^^^^ C181
 158 |     deallocate(x, stat=status)
 159 |   end subroutine io
@@ -203,16 +203,26 @@ snapshot_kind: text
 ./resources/test/fixtures/correctness/C181.f90:158:19: C181 stat argument 'status' is not checked in this scope.
     |
 156 |     ! Something other than IO statement, reuse status
-157 |     allocate(x(10), stat=status)
+157 |     allocate(x(10), STAT=Status)
 158 |     deallocate(x, stat=status)
     |                   ^^^^^^^^^^^ C181
 159 |   end subroutine io
     |
 
-./resources/test/fixtures/correctness/C181.f90:162:37: C181 cmdstat argument 'status' is not checked in this scope.
+./resources/test/fixtures/correctness/C181.f90:162:37: C181 cmdstat argument 'Status' is overwritten before being checked in this scope.
     |
 161 |   integer function cmd_line() result(status)
-162 |     call execute_command_line("ls", cmdstat=status)
+162 |     call execute_command_line("ls", cmdstat=Status)
     |                                     ^^^^^^^^^^^^^^ C181
-163 |   end function cmd_line
+163 |     call execute_command_line("ls", Cmdstat=status)
+164 |   end function cmd_line
+    |
+
+./resources/test/fixtures/correctness/C181.f90:163:37: C181 cmdstat argument 'status' is not checked in this scope.
+    |
+161 |   integer function cmd_line() result(status)
+162 |     call execute_command_line("ls", cmdstat=Status)
+163 |     call execute_command_line("ls", Cmdstat=status)
+    |                                     ^^^^^^^^^^^^^^ C181
+164 |   end function cmd_line
     |
