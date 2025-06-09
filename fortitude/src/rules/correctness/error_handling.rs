@@ -148,8 +148,8 @@ impl AstRule for UncheckedStat {
         //
         // - If we reach the end of the siblings without finding one, try again
         //   from the sibling's ancestors. This is to cover cases where the allocate
-        //   statement is nested something like an if statement, but the variable is
-        //   checkout in the parent scope, e.g.:
+        //   statement is nested in something like an if statement, but the variable
+        //   is checked in the parent scope, e.g.:
         //
         // ```f90
         // if (twice_as_big) then
@@ -251,6 +251,7 @@ fn find_stat_in_siblings(node: &Node, stat_name: &str, src: &str) -> Result<Chec
 fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckStatus> {
     let ancestor = node.parent().context("Node should have a parent")?;
 
+    // stat_name should be lowercase.
     // Two cases to consider:
     //
     // - The stat variable is on the left hand side of an assignment statement.
