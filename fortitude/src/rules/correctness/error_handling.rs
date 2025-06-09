@@ -345,12 +345,7 @@ impl AstRule for MultipleAllocationsWithStat {
         let src = source.source_text();
 
         // Check this has a stat parameter
-        let stat_node = node.named_children(&mut node.walk()).find(|child| {
-            child.kind() == "keyword_argument"
-                && child.child_by_field_name("name").is_some_and(|n| {
-                    n.to_text(src).map(|s| s.to_lowercase()) == Some("stat".to_string())
-                })
-        })?;
+        let stat_node = node.kwarg("stat", src)?;
 
         // Count allocations
         let count = match node.kind() {
