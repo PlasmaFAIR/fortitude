@@ -108,6 +108,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "171") => (RuleGroup::Preview, Text, Optional, correctness::split_escaped_quote::SplitEscapedQuote),
         (Correctness, "181") => (RuleGroup::Preview, Ast, Default, correctness::error_handling::UncheckedStat),
         (Correctness, "182") => (RuleGroup::Preview, Ast, Default, correctness::error_handling::MultipleAllocationsWithStat),
+        (Correctness, "183") => (RuleGroup::Preview, Ast, Optional, correctness::error_handling::StatWithoutMessage),
 
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),
