@@ -51,18 +51,6 @@ impl StatType {
                     Err(anyhow!("Unknown subroutine: {subroutine_text}"))
                 }
             }
-            "call_expression" => {
-                let identifier_node = node.child(0).context("Could not retrieve routine name")?;
-                let identifier_text = identifier_node
-                    .to_text(src)
-                    .context("Failed to parse identifier text")?
-                    .to_lowercase();
-                if matches!(identifier_text.as_str(), "wait" | "flush") {
-                    Ok(StatType::IoStat)
-                } else {
-                    Err(anyhow!("Unknown routine: {identifier_text}"))
-                }
-            }
             _ => Err(anyhow!("Node does not have a stat type")),
         }
     }
@@ -128,7 +116,7 @@ impl AstRule for UncheckedStat {
         let stat_name: &'static str = stat_type.into();
 
         // Find a 'stat' argument in the allocate statement
-        let arg_list = if matches!(node.kind(), "subroutine_call" | "call_expression") {
+        let arg_list = if node.kind() == "subroutine_call" {
             node.child_with_name("argument_list")?
         } else {
             *node
@@ -220,7 +208,6 @@ impl AstRule for UncheckedStat {
             "inquire_statement",
             "file_position_statement",
             "subroutine_call", // for execute_command_line
-            "call_expression", // for wait and flush
         ]
     }
 }
