@@ -131,25 +131,11 @@ fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
     if let Some(literal) = node.child_with_name("number_literal") {
         return Some(literal);
     }
-
-    for child in node.named_children(&mut node.walk()) {
-        if child.kind() == "number_literal" {
-            return Some(child);
-        }
-
-        if child.kind() != "keyword_argument" {
-            continue;
-        }
-
-        // find instances of `kind=8` etc
-        let name = child.child_by_field_name("name")?;
-        if &name.to_text(src)?.to_lowercase() != "kind" {
-            continue;
-        }
-        let value = child.child_by_field_name("value")?;
-        if value.kind() == "number_literal" {
-            return Some(value);
-        }
+    if let Some(literal) = node
+        .kwarg_value("kind", src)
+        .filter(|v| v.kind() == "number_literal")
+    {
+        return Some(literal);
     }
     None
 }

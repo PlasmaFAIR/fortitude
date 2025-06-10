@@ -97,6 +97,15 @@ pub trait FortitudeNode<'tree> {
     /// Get the first child with a given name. Returns None if not found.
     fn child_with_name(&self, name: &str) -> Option<Node>;
 
+    /// Get a named `keyword_argument` child node, if it exists.
+    fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node>;
+
+    /// Get the value of a named `keyword_argument` child node, if it exists.
+    fn kwarg_value<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node>;
+
+    /// Check if a named `keyword_argument` child node exists.
+    fn kwarg_exists<S: AsRef<str>>(&self, keyword: S, src: &str) -> bool;
+
     /// Convert a node to text, collapsing any raised errors to None.
     fn to_text<'a>(&self, src: &'a str) -> Option<&'a str>;
 
@@ -159,6 +168,24 @@ impl FortitudeNode<'_> for Node<'_> {
     fn child_with_name(&self, name: &str) -> Option<Self> {
         self.named_children(&mut self.walk())
             .find(|x| x.kind() == name)
+    }
+
+    fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node> {
+        let keyword = keyword.as_ref().to_lowercase();
+        self.named_children(&mut self.walk()).find(|child| {
+            child.kind() == "keyword_argument"
+                && child
+                    .child_by_field_name("name")
+                    .is_some_and(|n| n.to_text(src).is_some_and(|s| s.to_lowercase() == keyword))
+        })
+    }
+
+    fn kwarg_value<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node> {
+        self.kwarg(keyword, src)?.child_by_field_name("value")
+    }
+
+    fn kwarg_exists<S: AsRef<str>>(&self, keyword: S, src: &str) -> bool {
+        self.kwarg(keyword, src).is_some()
     }
 
     fn to_text<'a>(&self, src: &'a str) -> Option<&'a str> {
@@ -243,18 +270,4 @@ pub fn dtype_is_plain_number(dtype: &str) -> bool {
         dtype.to_lowercase().as_str(),
         "integer" | "real" | "logical" | "complex"
     )
-}
-
-/// Returns `true` if `node` is a keyword argument with name `keyword`.
-pub fn is_keyword_argument<S: AsRef<str>>(node: &Node, keyword: S, src: &str) -> bool {
-    if node.kind() != "keyword_argument" {
-        return false;
-    }
-
-    if let Some(kwarg) = node.child_by_field_name("name") {
-        if let Some(name) = &kwarg.to_text(src) {
-            return name.to_lowercase() == keyword.as_ref();
-        }
-    }
-    false
 }
