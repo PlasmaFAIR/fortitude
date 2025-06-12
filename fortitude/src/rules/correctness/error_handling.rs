@@ -348,10 +348,10 @@ impl AstRule for MultipleAllocationsWithStat {
         let stat_node = node.kwarg("stat", src)?;
 
         // Count allocations
-        let count = match node.kind() {
-            "allocate_statement" => count_allocations(node),
-            "deallocate_statement" => count_deallocations(node),
-            _ => return None,
+        let count = if node.kind() == "allocate_statement" {
+            count_allocations(node)
+        } else {
+            count_deallocations(node)
         };
         if count <= 1 {
             return None;
