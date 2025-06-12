@@ -16,7 +16,7 @@ error code:
 ```f90
 real, allocatable :: x(:)
 integer :: status
-character(256) :: message
+character(256) :: message ! N.B. Can be allocatable in F2023+
 
 allocate (x(100), stat=status, errmsg=message)
 open (unit=10, file="data.txt", iostat=status, iomsg=message)
