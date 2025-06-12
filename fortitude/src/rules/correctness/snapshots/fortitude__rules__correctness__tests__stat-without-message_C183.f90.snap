@@ -1,0 +1,94 @@
+---
+source: fortitude/src/rules/correctness/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/correctness/C183.f90:20:20: C183 'stat' used without 'errmsg'.
+   |
+19 |   ! stat params, no message
+20 |   allocate (x(10), Stat=status)
+   |                    ^^^^^^^^^^^ C183
+21 |   deallocate (x, &
+22 |     stat=STATUS)
+   |
+
+./resources/test/fixtures/correctness/C183.f90:22:5: C183 'stat' used without 'errmsg'.
+   |
+20 |   allocate (x(10), Stat=status)
+21 |   deallocate (x, &
+22 |     stat=STATUS)
+   |     ^^^^^^^^^^^ C183
+23 |   open (10, file="test.txt", iostat=status)
+24 |   write (10,*,iosTAT=Status) "Allocation and deallocation without stat parameters completed successfully."
+   |
+
+./resources/test/fixtures/correctness/C183.f90:23:30: C183 'iostat' used without 'iomsg'.
+   |
+21 |   deallocate (x, &
+22 |     stat=STATUS)
+23 |   open (10, file="test.txt", iostat=status)
+   |                              ^^^^^^^^^^^^^ C183
+24 |   write (10,*,iosTAT=Status) "Allocation and deallocation without stat parameters completed successfully."
+25 |   inquire(unit=10, &
+   |
+
+./resources/test/fixtures/correctness/C183.f90:24:15: C183 'iostat' used without 'iomsg'.
+   |
+22 |     stat=STATUS)
+23 |   open (10, file="test.txt", iostat=status)
+24 |   write (10,*,iosTAT=Status) "Allocation and deallocation without stat parameters completed successfully."
+   |               ^^^^^^^^^^^^^ C183
+25 |   inquire(unit=10, &
+26 |     iostat=status, exist=file_exist)
+   |
+
+./resources/test/fixtures/correctness/C183.f90:26:5: C183 'iostat' used without 'iomsg'.
+   |
+24 |   write (10,*,iosTAT=Status) "Allocation and deallocation without stat parameters completed successfully."
+25 |   inquire(unit=10, &
+26 |     iostat=status, exist=file_exist)
+   |     ^^^^^^^^^^^^^ C183
+27 |   wait (10, iostat=status)
+28 |   flush(10, IOSTAT=&
+   |
+
+./resources/test/fixtures/correctness/C183.f90:27:13: C183 'iostat' used without 'iomsg'.
+   |
+25 |   inquire(unit=10, &
+26 |     iostat=status, exist=file_exist)
+27 |   wait (10, iostat=status)
+   |             ^^^^^^^^^^^^^ C183
+28 |   flush(10, IOSTAT=&
+29 |     STATUS)
+   |
+
+./resources/test/fixtures/correctness/C183.f90:28:13: C183 'iostat' used without 'iomsg'.
+   |
+26 |       iostat=status, exist=file_exist)
+27 |     wait (10, iostat=status)
+28 |     flush(10, IOSTAT=&
+   |  _____________^
+29 | |     STATUS)
+   | |__________^ C183
+30 |     close (10, Iostat=Status)
+31 |     call execute_command_line("ls", cmdstat=Status)
+   |
+
+./resources/test/fixtures/correctness/C183.f90:30:14: C183 'iostat' used without 'iomsg'.
+   |
+28 |   flush(10, IOSTAT=&
+29 |     STATUS)
+30 |   close (10, Iostat=Status)
+   |              ^^^^^^^^^^^^^ C183
+31 |   call execute_command_line("ls", cmdstat=Status)
+   |
+
+./resources/test/fixtures/correctness/C183.f90:31:35: C183 'cmdstat' used without 'cmdmsg'.
+   |
+29 |     STATUS)
+30 |   close (10, Iostat=Status)
+31 |   call execute_command_line("ls", cmdstat=Status)
+   |                                   ^^^^^^^^^^^^^^ C183
+32 |
+33 |   ! stat params, with message
+   |
