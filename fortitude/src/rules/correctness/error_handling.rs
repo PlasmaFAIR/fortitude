@@ -63,13 +63,13 @@ enum CheckStatus {
 }
 
 /// ## What does it do?
-/// This rule detects whether a `stat`, `iostat`, and `cmdstat` variable is checked
+/// This rule detects whether a `stat`, `iostat`, and `cmdstat` argument is checked
 /// within the same scope it is set.
 ///
 /// ## Why is this bad?
-/// By default, `allocate` statements will crash the program if the allocation
+/// By default, `allocate` statements will abort the program if the allocation
 /// fails. This is often the desired behaviour, but to provide for cases in
-/// which the user wants to handle allocation errors gracefully, they may
+/// which the developer wants to handle allocation errors gracefully, they may
 /// optionally check the status of an `allocate` statement by passing a variable
 /// to the `stat` argument:
 ///
@@ -317,13 +317,13 @@ impl AllocationType {
 /// deallocations.
 ///
 /// ## Why is this bad?
-/// When allocating or deallocating multiple arrays at once, the use of a `stat`
+/// When allocating or deallocating multiple variables at once, the use of a `stat`
 /// parameter will permit the program to continue running even if one of the
 /// allocations or deallocations fails. However, it may not be clear which
 /// allocation or deallocation caused the error.
 ///
 /// To avoid confusion, it is recommended to use separate allocate or deallocate
-/// statements for each array and check the `stat` parameters individually.
+/// statements for each variable and check the `stat` parameters individually.
 #[derive(ViolationMetadata)]
 pub(crate) struct MultipleAllocationsWithStat {
     alloc_type: AllocationType,

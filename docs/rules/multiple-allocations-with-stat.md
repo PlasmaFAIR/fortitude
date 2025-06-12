@@ -8,10 +8,10 @@ This rule detects whether `stat` is used alongside multiple allocations or
 deallocations.
 
 ## Why is this bad?
-When allocating or deallocating multiple arrays at once, the use of a `stat`
+When allocating or deallocating multiple variables at once, the use of a `stat`
 parameter will permit the program to continue running even if one of the
 allocations or deallocations fails. However, it may not be clear which
 allocation or deallocation caused the error.
 
 To avoid confusion, it is recommended to use separate allocate or deallocate
-statements for each array and check the `stat` parameters individually.
+statements for each variable and check the `stat` parameters individually.
