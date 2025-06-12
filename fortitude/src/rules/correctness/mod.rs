@@ -67,6 +67,7 @@ mod tests {
     #[test_case(Rule::NonportableShortcircuitInquiry, Path::new("C161.f90"))]
     #[test_case(Rule::SplitEscapedQuote, Path::new("C171.f90"))]
     #[test_case(Rule::UncheckedStat, Path::new("C181.f90"))]
+    #[test_case(Rule::MultipleAllocationsWithStat, Path::new("C182.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

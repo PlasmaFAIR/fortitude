@@ -63,13 +63,13 @@ enum CheckStatus {
 }
 
 /// ## What does it do?
-/// This rule detects whether a `stat`, `iostat`, and `cmdstat` variable is checked
+/// This rule detects whether a `stat`, `iostat`, and `cmdstat` argument is checked
 /// within the same scope it is set.
 ///
 /// ## Why is this bad?
-/// By default, `allocate` statements will crash the program if the allocation
+/// By default, `allocate` statements will abort the program if the allocation
 /// fails. This is often the desired behaviour, but to provide for cases in
-/// which the user wants to handle allocation errors gracefully, they may
+/// which the developer wants to handle allocation errors gracefully, they may
 /// optionally check the status of an `allocate` statement by passing a variable
 /// to the `stat` argument:
 ///
@@ -296,4 +296,84 @@ fn new_branch(node: &Node) -> bool {
         node.kind(),
         "elseif_clause" | "else_clause" | "case_statement"
     )
+}
+
+enum AllocationType {
+    Allocate,
+    Deallocate,
+}
+impl AllocationType {
+    fn from_node(node: &Node) -> Result<Self> {
+        match node.kind() {
+            "allocate_statement" => Ok(AllocationType::Allocate),
+            "deallocate_statement" => Ok(AllocationType::Deallocate),
+            _ => Err(anyhow!("Node is not an allocation type")),
+        }
+    }
+}
+
+/// ## What does it do?
+/// This rule detects whether `stat` is used alongside multiple allocations or
+/// deallocations.
+///
+/// ## Why is this bad?
+/// When allocating or deallocating multiple variables at once, the use of a `stat`
+/// parameter will permit the program to continue running even if one of the
+/// allocations or deallocations fails. However, it may not be clear which
+/// allocation or deallocation caused the error.
+///
+/// To avoid confusion, it is recommended to use separate allocate or deallocate
+/// statements for each variable and check the `stat` parameters individually.
+#[derive(ViolationMetadata)]
+pub(crate) struct MultipleAllocationsWithStat {
+    alloc_type: AllocationType,
+}
+
+impl Violation for MultipleAllocationsWithStat {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let allocations = match self.alloc_type {
+            AllocationType::Allocate => "allocations",
+            AllocationType::Deallocate => "deallocations",
+        };
+        format!("'stat' parameter used with multiple {allocations}.")
+    }
+}
+
+impl AstRule for MultipleAllocationsWithStat {
+    fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let src = source.source_text();
+
+        // Check this has a stat parameter
+        let stat_node = node.kwarg("stat", src)?;
+
+        // Count allocations
+        let count = if node.kind() == "allocate_statement" {
+            count_allocations(node)
+        } else {
+            count_deallocations(node)
+        };
+        if count <= 1 {
+            return None;
+        }
+
+        let alloc_type = AllocationType::from_node(node).ok()?;
+
+        some_vec!(Diagnostic::from_node(Self { alloc_type }, &stat_node))
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["allocate_statement", "deallocate_statement"]
+    }
+}
+
+fn count_allocations(node: &Node) -> usize {
+    node.children_by_field_name("allocation", &mut node.walk())
+        .count()
+}
+
+fn count_deallocations(node: &Node) -> usize {
+    node.named_children(&mut node.walk())
+        .filter(|c| c.kind() == "identifier")
+        .count()
 }
