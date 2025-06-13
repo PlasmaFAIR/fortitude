@@ -1,0 +1,68 @@
+[package]
+name = "fortitude_linter"
+version = "0.1.0"
+publish = false
+authors = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+fortitude_macros = { workspace = true }
+
+annotate-snippets = { workspace = true }
+anyhow = { workspace = true }
+bitflags = { workspace = true }
+chrono = { workspace = true, default-features = false, features = ["clock"] }
+clap = { workspace = true }
+colored = { workspace = true }
+fern = { workspace = true }
+globset = { workspace = true }
+ignore = { workspace = true }
+is-macro = { workspace = true }
+itertools = { workspace = true }
+lazy-regex = { workspace = true }
+lazy_static = { workspace = true }
+log = { workspace = true }
+pathdiff = { workspace = true }
+path-absolutize = { workspace = true, features = [
+    "once_cell_cache",
+    "use_unix_paths_on_wasm",
+]}
+quick-junit = { workspace = true }
+rayon = { workspace = true }
+ruff_cache = { workspace = true }
+ruff_diagnostics = { workspace = true, features = ["serde"] }
+ruff_macros = { workspace = true }
+ruff_source_file = { workspace = true, features = ["serde"] }
+ruff_text_size = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+similar = { workspace = true, features = ["inline"] }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+textwrap = { workspace = true }
+thiserror = { workspace = true }
+tree-sitter = { workspace = true }
+tree-sitter-fortran = { workspace = true }
+unicode-width = { workspace = true }
+url = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = "2.0.16"
+# Disable colored output in tests
+colored = { workspace = true, features = ["no-color"] }
+insta = { version = "1.41.1", features = ["filters", "json", "redactions"] }
+pretty_assertions = "1.4.1"
+tempfile = "3.13.0"
+test-case = "3.3.1"
+# This is a bit weird, but this enables the test rules when we run the tests
+fortitude_linter = { workspace = true, features = ["test-rules"] }
+
+[features]
+# Enables rules for internal integration tests
+test-rules = []

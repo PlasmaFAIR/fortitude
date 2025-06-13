@@ -19,7 +19,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 
-from _utils import ROOT_DIR, dir_name, get_indent, pascal_case, snake_case
+from _utils import LINTER_DIR, dir_name, get_indent, pascal_case, snake_case
 
 
 def main(*, name: str, prefix: str, code: str, category: str) -> None:
@@ -27,14 +27,11 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
     # Create a test fixture.
     filestem = f"{prefix}{code}"
     with (
-        ROOT_DIR
-        / "fortitude/resources/test/fixtures"
-        / dir_name(category)
-        / f"{filestem}.f90"
+        LINTER_DIR / "resources/test/fixtures" / dir_name(category) / f"{filestem}.f90"
     ).open("a"):
         pass
 
-    plugin_module = ROOT_DIR / "fortitude/src/rules" / dir_name(category)
+    plugin_module = LINTER_DIR / "src/rules" / dir_name(category)
     rule_name_snake = snake_case(name)
     new_mod = f"pub mod {rule_name_snake};\n"
 
@@ -127,7 +124,7 @@ impl AstRule for {name} {{
         )
 
     text = ""
-    with (ROOT_DIR / "fortitude/src/rules/mod.rs").open("r") as fp:
+    with (LINTER_DIR / "src/rules/mod.rs").open("r") as fp:
         while (line := next(fp)).strip() != f"// {category}":
             text += line
         text += line
@@ -140,13 +137,14 @@ impl AstRule for {name} {{
         linter_name = category.split(" ")[0].replace("-", "_")
         rule = f"""{linter_name}::{rule_name_snake}::{name}"""
         lines.append(
-            " " * 8 + f"""({variant}, "{code}") => (RuleGroup::Preview, Ast, Optional, {rule}),\n""",
+            " " * 8
+            + f"""({variant}, "{code}") => (RuleGroup::Preview, Ast, Optional, {rule}),\n""",
         )
         lines.sort()
         text += "".join(lines)
         text += "\n"
         text += fp.read()
-    with (ROOT_DIR / "fortitude/src/rules/mod.rs").open("w") as fp:
+    with (LINTER_DIR / "src/rules/mod.rs").open("w") as fp:
         fp.write(text)
 
     _rustfmt(rules_mod)

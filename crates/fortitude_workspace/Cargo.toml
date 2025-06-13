@@ -1,0 +1,35 @@
+[package]
+name = "fortitude_workspace"
+version = "0.1.0"
+publish = false
+authors = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+fortitude_linter = { workspace = true }
+
+anyhow = { workspace = true }
+colored = { workspace = true }
+is-macro = { workspace = true }
+itertools = { workspace = true }
+log = { workspace = true }
+path-absolutize = { workspace = true, features = [
+    "once_cell_cache",
+    "use_unix_paths_on_wasm",
+]}
+ruff_macros = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+strum = { workspace = true }
+textwrap = { workspace = true }
+toml = { workspace = true }
+
+[dev-dependencies]
+# Disable colored output in tests
+colored = { workspace = true, features = ["no-color"] }
+tempfile = "3.13.0"

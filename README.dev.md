@@ -64,7 +64,7 @@ cargo install --path fortitude
 Unit tests can be run by calling:
 
 ```bash
-cargo test --all-targets --all-features
+cargo test --workspace
 ```
 
 You'll also need [Insta](https://insta.rs/docs/) to update snapshot tests:
@@ -217,11 +217,11 @@ Once you've completed the code for the rule itself, you can define tests with th
     against. If you're adding a new category, you'll need to create a new `mod.rs` file (see,
     e.g., `fortitude/src/rules/typing/mod.rs`)
 
-1. Run `cargo test`. Your test will fail, but you'll be prompted to follow-up
+1. Run `cargo test --workspace`. Your test will fail, but you'll be prompted to follow-up
     with `cargo insta review`. Run `cargo insta review`, review and accept the generated snapshot,
     then commit the snapshot file alongside the rest of your changes.
 
-1. Run `cargo test` again to ensure that your test passes.
+1. Run `cargo test --workspace` again to ensure that your test passes.
 
 
 ## Building Docs

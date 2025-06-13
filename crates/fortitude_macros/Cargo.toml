@@ -1,0 +1,13 @@
+[package]
+name = "fortitude_macros"
+version = "0.1.0"
+edition = { workspace = true }
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.89"
+quote = "1.0.37"
+syn = "2.0.86"
+itertools = { workspace = true }
