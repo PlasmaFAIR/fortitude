@@ -77,6 +77,15 @@ for in directories with `--file-extensions`:
 fortitude check --file-extensions=f90,fpp
 ```
 
+Be default, Fortitude will ignore files and directories in your `.gitignore`.
+This can be disabled by setting `--no-respect-gitignore`. Additional excludes
+can be set using `--excludes`:
+
+```bash
+# Don't check in the `benchmarks/` and `tests/` directories.
+fortitude check --exclude=benchmarks,tests
+```
+
 You can select or ignore individual rules or whole groups with
 `--select` and `--ignore`:
 

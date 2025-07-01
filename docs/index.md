@@ -112,21 +112,39 @@ module example
 
 ### Filtering Files
 
-Fortitude will automatically ignore files in some directories (`build/`, `.git/`,
-`.venv/`, etc.), and this behaviour can be extended using the
-[`--exclude`](settings.md#exclude) option. For example, to ignore all files in
-the directory `benchmarks/`:
-
-```bash
-fortitude check --exclude=benchmarks
-```
-
-You can also configure what extensions Fortitude searches for in directories with
+You can configure what extensions Fortitude searches for in directories with
 [`--file-extensions`](settings.md#file-extensions):
 
 ```bash
 fortitude check --file-extensions=f90,fpp
 ```
+
+Files in your `.gitignore` will be excluded from the file search automatically,
+though this behaviour can be deactivated by passing `--no-respect-gitignore`.
+Files in certain directories (`build/`, `.git/`, `.venv/`, etc.) will also be
+excluded by default. An additional comma-separated list of excluded files and
+directories can be set using the [`--exclude`](settings.md#exclude) option. For
+example, to exclude all files in the directories `benchmarks/` and `tests/`:
+
+```bash
+fortitude check --exclude=benchmarks,tests
+```
+
+You can also use pattern matching with a glob (`*`) symbol:
+
+```bash
+fortitude check --exclude=test_*
+```
+
+Note that Fortitude will still check excluded files if you pass their paths
+directly, so the following will still check the `benchmarks/` directory:
+
+```bash
+fortitude check --exclude=benchmarks benchmarks
+```
+
+Passing [`--force-excludes`](settings.md#force-exclude) will enforce exclusions
+even in this scenario.
 
 ### Configuration
 

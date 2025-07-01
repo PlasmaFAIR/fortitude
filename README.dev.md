@@ -229,7 +229,7 @@ Once you've completed the code for the rule itself, you can define tests with th
 The documentation can be built locally using:
 
 ```bash
-pip install mkdocs-material
+pip install -r requirements.docs.txt
 mkdocs serve
 ```
 
