@@ -1,0 +1,12 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/obsolescent/OB091.f90:7:5: OB091 omp_lib.h include is deprecated, use the omp_lib module instead
+  |
+6 |     ! Deprecated since OpenMP 6.0
+7 |     include "omp_lib.h"
+  |     ^^^^^^^^^^^^^^^^^^^ OB091
+8 |
+9 | end module obsolete_openmp
+  |

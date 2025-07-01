@@ -3,6 +3,7 @@ pub(crate) mod computed_goto;
 pub(crate) mod deprecated_character_syntax;
 pub(crate) mod entry_statement;
 pub(crate) mod mpi;
+pub(crate) mod openmp;
 pub(crate) mod pause_statement;
 pub(crate) mod specific_names;
 pub(crate) mod statement_functions;
@@ -28,6 +29,8 @@ mod tests {
     #[test_case(Rule::PauseStatement, Path::new("OB051.f90"))]
     #[test_case(Rule::DeprecatedCharacterSyntax, Path::new("OB061.f90"))]
     #[test_case(Rule::DeprecatedMPIInclude, Path::new("OB071.f90"))]
+    #[test_case(Rule::DeprecatedOmpInclude, Path::new("OB081.f90"))]
+
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
