@@ -209,6 +209,6 @@ fn remove_code_from_allow_comment(
     } else {
         comment
             .node
-            .edit_replacement(file, format!("! allow({})", remaining_codes))
+            .edit_replacement(file, format!("! allow({remaining_codes})"))
     }
 }

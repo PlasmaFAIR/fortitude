@@ -210,7 +210,6 @@ pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
     let indentation = node.indentation(src);
     // Assume two-space indent for the if body
     Some(format!(
-        "{} then{nl}{indentation}  {}{nl}{indentation}end if",
-        prelude, body
+        "{prelude} then{nl}{indentation}  {body}{nl}{indentation}end if"
     ))
 }

@@ -74,7 +74,7 @@ impl AstRule for DeprecatedCharacterSyntax {
 
         let original = node.to_text(src)?.to_string();
         let dtype = dtype.to_text(src)?.to_string();
-        let replacement = format!("{}(len={})", dtype, length);
+        let replacement = format!("{dtype}(len={length})");
         let fix = Fix::safe_edit(node.edit_replacement(source_file, replacement));
         some_vec![Diagnostic::from_node(
             Self {
