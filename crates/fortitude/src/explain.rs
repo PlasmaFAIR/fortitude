@@ -83,7 +83,7 @@ pub fn explain(args: ExplainArgs) -> Result<ExitCode> {
         a_code.cmp(b_code)
     });
     for (code, desc) in outputs {
-        println!("{}\n{}", code, desc);
+        println!("{code}\n{desc}");
     }
     Ok(ExitCode::SUCCESS)
 }

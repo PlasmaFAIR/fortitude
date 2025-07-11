@@ -316,13 +316,13 @@ pub fn get_files(resolver: &FileResolverSettings, is_stdin: bool) -> anyhow::Res
                     .ancestor_matches(p, &resolver.project_root)
             });
         if !excluded.is_empty() {
-            debug!("Force excluded paths: {:?}", excluded);
+            debug!("Force excluded paths: {excluded:?}");
         }
         paths
     } else {
         paths.iter().map(normalize_path).unique().collect()
     };
-    debug!("Paths provided: {:?}", paths);
+    debug!("Paths provided: {paths:?}");
 
     // The remaining non-directory paths are always included; split into directories and files.
     // Note that this includes paths that do not exist, as these should be reported to the user.
@@ -345,7 +345,7 @@ pub fn get_files(resolver: &FileResolverSettings, is_stdin: bool) -> anyhow::Res
         // Directories will be skipped
         let mut file_types = TypesBuilder::new();
         for ext in &resolver.file_extensions {
-            file_types.add(ext.as_ref(), format!("*.{}", ext).as_str())?;
+            file_types.add(ext.as_ref(), format!("*.{ext}").as_str())?;
         }
         file_types.select("all");
         builder.types(file_types.build()?);

@@ -161,7 +161,7 @@ impl AstRule for AvoidableEscapedQuote {
         // literal bit doesn't start at the beginning of the node
         let (start, kind) = if let Some(kind) = node.child_by_field_name("kind") {
             let kind_text = kind.to_text(src.source_text())?;
-            (kind_text.len() + 1, format!("{}_", kind_text))
+            (kind_text.len() + 1, format!("{kind_text}_"))
         } else {
             (0, "".to_string())
         };
