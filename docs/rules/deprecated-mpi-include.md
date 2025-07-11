@@ -1,4 +1,4 @@
-# deprecated-mpi-include (OB071)
+# deprecated-mpi-include (OB201)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 This rule is turned on by default.

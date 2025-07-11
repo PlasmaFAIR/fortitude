@@ -28,8 +28,8 @@ mod tests {
     #[test_case(Rule::ComputedGoTo, Path::new("OB041.f90"))]
     #[test_case(Rule::PauseStatement, Path::new("OB051.f90"))]
     #[test_case(Rule::DeprecatedCharacterSyntax, Path::new("OB061.f90"))]
-    #[test_case(Rule::DeprecatedMPIInclude, Path::new("OB071.f90"))]
-    #[test_case(Rule::DeprecatedOmpInclude, Path::new("OB081.f90"))]
+    #[test_case(Rule::DeprecatedMPIInclude, Path::new("OB201.f90"))]
+    #[test_case(Rule::DeprecatedOmpInclude, Path::new("OB211.f90"))]
 
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());

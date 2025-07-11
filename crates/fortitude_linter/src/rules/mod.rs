@@ -117,7 +117,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Modernisation, "011") => (RuleGroup::Stable, Ast, Default, modernisation::old_style_array_literal::OldStyleArrayLiteral),
         (Modernisation, "021") => (RuleGroup::Stable, Ast, Default, modernisation::relational_operators::DeprecatedRelationalOperator),
         (Modernisation, "031") => (RuleGroup::Preview, Ast, Optional, modernisation::include_statement::IncludeStatement),
-        (Modernisation, "041") => (RuleGroup::Preview, Ast, Optional, modernisation::mpi::OldMPIModule),
+        (Modernisation, "201") => (RuleGroup::Preview, Ast, Optional, modernisation::mpi::OldMPIModule),
 
         // portability
         (Portability, "001") => (RuleGroup::Preview, Ast, Optional, portability::non_portable_io_unit::NonPortableIoUnit),
@@ -154,8 +154,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "041") => (RuleGroup::Preview, Ast, Default, obsolescent::computed_goto::ComputedGoTo),
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedCharacterSyntax),
-        (Obsolescent, "071") => (RuleGroup::Preview, Ast, Default, obsolescent::mpi::DeprecatedMPIInclude),
-        (Obsolescent, "081") => (RuleGroup::Preview, Ast, Default, obsolescent::openmp::DeprecatedOmpInclude),
+        (Obsolescent, "201") => (RuleGroup::Preview, Ast, Default, obsolescent::mpi::DeprecatedMPIInclude),
+        (Obsolescent, "211") => (RuleGroup::Preview, Ast, Default, obsolescent::openmp::DeprecatedOmpInclude),
 
         // fortitude
         (Fortitude, "001") => (RuleGroup::Stable, None, Default, fortitude::allow_comments::InvalidRuleCodeOrName),

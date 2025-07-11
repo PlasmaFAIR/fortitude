@@ -1,4 +1,4 @@
-# deprecated-omp-include (OB081)
+# deprecated-omp-include (OB211)
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 This rule is turned on by default.
