@@ -6,6 +6,7 @@ pub(crate) mod functions;
 pub(crate) mod implicit_none;
 pub mod keywords;
 pub(crate) mod line_length;
+pub(crate) mod maths_missing_parentheses;
 pub(crate) mod semicolons;
 pub mod strings;
 pub(crate) mod whitespace;
@@ -44,6 +45,7 @@ mod tests {
     #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
     #[test_case(Rule::BadQuoteString, Path::new("S241.f90"))]
     #[test_case(Rule::AvoidableEscapedQuote, Path::new("S242.f90"))]
+    #[test_case(Rule::MathsMissingParentheses, Path::new("S251.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
