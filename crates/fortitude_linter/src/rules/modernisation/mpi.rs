@@ -18,9 +18,9 @@ use tree_sitter::Node;
 ///
 /// The older `mpi` module and `mpif.h` include used integers for named
 /// constants and the various MPI objects, which could lead to passing the wrong
-/// constants into arguments (e.g., passing a communicator into an operation)
-/// becausethis was not caught by the compiler. The new `mpi_f08` module uses
-/// derived types, allowing compile-time catching of these errors.
+/// constants into arguments (e.g., passing a communicator into an operation).
+/// The new `mpi_f08` module uses derived types, allowing these errors to be
+/// caught at compile-time.
 ///
 /// Note: Switching from the `mpi` module to the `mpi_f08` module will require more
 /// source code changes than just changing the `use` statement, since it uses
