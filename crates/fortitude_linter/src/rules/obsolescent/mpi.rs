@@ -4,6 +4,7 @@ use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
+use std::path::Path;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -111,7 +112,10 @@ impl AstRule for DeprecatedMPIInclude {
             .to_text(_src.source_text())?
             .to_lowercase();
 
-        if include_file.contains("mpif.h") {
+        // Strip quotes from the include file name
+        let include_file = include_file.trim_matches('"').trim_matches('\'');
+
+        if Path::new(&include_file).file_name() == Some("mpif.h".as_ref()) {
             return some_vec![Diagnostic::from_node(DeprecatedMPIInclude {}, node)];
         }
         None
