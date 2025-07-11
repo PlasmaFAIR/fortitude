@@ -57,6 +57,8 @@
 | OB041 | [computed-go-to](rules/computed-go-to.md) | computed go to statements are obsolescent, use a select case statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | OB051 | [pause-statement](rules/pause-statement.md) | `pause` statements are a deleted feature | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | OB061 | [deprecated-character-syntax](rules/deprecated-character-syntax.md) | '{original}' uses deprecated syntax | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| OB201 | [deprecated-mpi-include](rules/deprecated-mpi-include.md) | mpif.h include is deprecated, use mpi or mpi_f08 module instead | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| OB211 | [deprecated-omp-include](rules/deprecated-omp-include.md) | omp_lib.h include is deprecated, use the omp_lib module instead | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 
 ### Modernisation (MOD)
 
@@ -67,6 +69,7 @@
 | MOD011 | [old-style-array-literal](rules/old-style-array-literal.md) | Array literal uses old-style syntax: prefer `[...]` | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | MOD021 | [deprecated-relational-operator](rules/deprecated-relational-operator.md) | deprecated relational operator '{symbol}', prefer '{new_symbol}' instead | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | MOD031 | [include-statement](rules/include-statement.md) | Include statement is deprecated, use modules instead | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| MOD201 | [old-mpi-module](rules/old-mpi-module.md) | Use of mpi module discouraged, use mpi_f08 instead | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Style (S)
 
