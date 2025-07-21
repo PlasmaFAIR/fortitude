@@ -60,4 +60,5 @@ not_in_nav: |
   /rules/*
 
 plugins:
+  - search
   - include-markdown
