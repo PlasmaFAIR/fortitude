@@ -1,0 +1,12 @@
+---
+source: crates/fortitude_linter/src/rules/modernisation/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/modernisation/MOD201.f90:7:5: MOD201 Use of mpi module discouraged, use mpi_f08 instead
+  |
+6 |     ! Not technically deprecated, but discouraged
+7 |     use mpi
+  |     ^^^^^^^ MOD201
+8 |
+9 |     ! This is fine
+  |
