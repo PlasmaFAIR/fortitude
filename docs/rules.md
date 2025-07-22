@@ -93,6 +93,7 @@
 | S232 | [keyword-has-whitespace](rules/keyword-has-whitespace.md) | Whitespace included in '{keywords}' | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S241 | [bad-quote-string](rules/bad-quote-string.md) | String uses single quotes but double quotes preferred | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S242 | [avoidable-escaped-quote](rules/avoidable-escaped-quote.md) | Avoidable escaped quotes | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S251 | [maths-missing-parentheses](rules/maths-missing-parentheses.md) | '{op1}' has higher precedence than '{op2}'; add parentheses for clarity | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Portability (PORT)
 
