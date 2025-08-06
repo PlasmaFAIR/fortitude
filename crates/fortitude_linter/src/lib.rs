@@ -1,6 +1,5 @@
 pub mod allow_comments;
 pub mod ast;
-pub mod cli;
 pub mod diagnostic_message;
 pub mod diagnostics;
 pub mod fix;

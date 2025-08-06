@@ -3,13 +3,14 @@ use std::process::ExitCode;
 
 use anyhow::Result;
 use colored::Colorize;
-use fortitude_linter::cli::ExplainCommand;
 use fortitude_linter::rule_selector::PreviewOptions;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::settings::DEFAULT_SELECTORS;
 use itertools::Itertools;
 use ruff_diagnostics::FixAvailability;
 use textwrap::dedent;
+
+use crate::cli::ExplainCommand;
 
 /// Get the list of active rules for this session.
 fn ruleset(args: &ExplainCommand) -> anyhow::Result<Vec<Rule>> {
