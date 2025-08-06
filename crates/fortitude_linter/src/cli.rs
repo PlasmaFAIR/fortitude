@@ -11,7 +11,7 @@ use crate::{
 /// Perform static analysis on files and report issues.
 #[derive(Debug, Parser, Deserialize, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct CheckArgs {
+pub struct CheckCommand {
     /// List of files or directories to check. Directories are searched recursively for
     /// Fortran files. The `--file-extensions` option can be used to control which files
     /// are included in the search.
@@ -213,7 +213,7 @@ pub struct CheckArgs {
 
 /// Get descriptions, rationales, and solutions for each rule.
 #[derive(Debug, clap::Parser, Clone, PartialEq)]
-pub struct ExplainArgs {
+pub struct ExplainCommand {
     /// List of rules to explain. If omitted, explains all rules.
     #[arg(
         value_delimiter = ',',

@@ -1,7 +1,7 @@
 use crate::options::{
     ExitUnlabelledLoopOptions, KeywordWhitespaceOptions, Options, PortabilityOptions, StringOptions,
 };
-use fortitude_linter::cli::CheckArgs;
+use fortitude_linter::cli::CheckCommand;
 use fortitude_linter::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
 use fortitude_linter::registry::RuleNamespace;
 use fortitude_linter::rule_redirects::get_redirect;
@@ -235,7 +235,7 @@ impl Configuration {
         }
     }
 
-    pub fn into_settings(self, project_root: &Path, args: &CheckArgs) -> Result<Settings> {
+    pub fn into_settings(self, project_root: &Path, args: &CheckCommand) -> Result<Settings> {
         let args = args.clone();
 
         let files = args.files.or(self.files).unwrap_or_default();

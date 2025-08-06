@@ -3,7 +3,7 @@ use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
-use fortitude_linter::cli::CheckArgs;
+use fortitude_linter::cli::CheckCommand;
 use fortitude_linter::diagnostic_message::DiagnosticMessage;
 use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, get_files, read_to_string};
@@ -123,7 +123,7 @@ enum CheckStatus {
 }
 
 /// Check all files, report issues found, and return error code.
-pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
+pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
     // First we need to find and read any config file
     let project_root = configuration::project_root(path_absolutize::path_dedot::CWD.as_path())?;
     let file_configuration = Configuration::from_options(

@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use fortitude_linter::cli::{CheckArgs, ExplainArgs};
+use fortitude_linter::cli::{CheckCommand, ExplainCommand};
 use fortitude_linter::logging::LogLevel;
 
 #[derive(Debug, Parser)]
@@ -87,8 +87,8 @@ impl From<&LogLevelArgs> for LogLevel {
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand)]
 pub enum SubCommands {
-    Check(CheckArgs),
-    Explain(ExplainArgs),
+    Check(CheckCommand),
+    Explain(ExplainCommand),
     /// Generate shell completion.
     #[clap(hide = true)]
     GenerateShellCompletion {
