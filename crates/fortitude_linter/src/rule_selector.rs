@@ -450,7 +450,7 @@ pub mod clap_completion {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PerFileIgnore {
     basename: String,
     absolute: PathBuf,

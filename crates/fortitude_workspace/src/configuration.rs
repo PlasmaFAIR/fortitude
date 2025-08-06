@@ -12,8 +12,8 @@ use fortitude_linter::rule_selector::{
 use fortitude_linter::rule_table::RuleTable;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::settings::{
-    CheckSettings, ExcludeMode, FileResolverSettings, GitignoreMode, OutputFormat, PreviewMode,
-    ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    CheckSettings, ExcludeMode, FileResolverSettings, GitignoreMode, OutputFormat,
+    PatternPrefixPair, PreviewMode, ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
 };
 use fortitude_linter::{fs, warn_user_once_by_id, warn_user_once_by_message};
 
@@ -147,60 +147,32 @@ pub fn parse_config_file(config_file: &Option<PathBuf>) -> Result<Options> {
 
 // This is our "known good" intermediate settings struct after we've
 // read the config file, but before we've overridden it from the CLI
-#[derive(Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Configuration {
-    pub files: Vec<PathBuf>,
-    pub ignore: Vec<RuleSelector>,
+    pub files: Option<Vec<PathBuf>>,
+    pub ignore: Option<Vec<RuleSelector>>,
     pub select: Option<Vec<RuleSelector>>,
     pub extend_select: Vec<RuleSelector>,
     pub per_file_ignores: Option<Vec<PerFileIgnore>>,
-    pub line_length: usize,
-    pub file_extensions: Vec<String>,
-    pub fix: bool,
-    pub fix_only: bool,
-    pub show_fixes: bool,
-    pub unsafe_fixes: UnsafeFixes,
-    pub output_format: OutputFormat,
-    pub progress_bar: ProgressBar,
-    pub preview: PreviewMode,
+    pub extend_per_file_ignores: Vec<PerFileIgnore>,
+    pub line_length: Option<usize>,
+    pub file_extensions: Option<Vec<String>>,
+    pub fix: Option<bool>,
+    pub fix_only: Option<bool>,
+    pub show_fixes: Option<bool>,
+    pub unsafe_fixes: Option<UnsafeFixes>,
+    pub output_format: Option<OutputFormat>,
+    pub progress_bar: Option<ProgressBar>,
+    pub preview: Option<PreviewMode>,
     pub exclude: Option<Vec<FilePattern>>,
     pub extend_exclude: Vec<FilePattern>,
-    pub exclude_mode: ExcludeMode,
-    pub gitignore_mode: GitignoreMode,
+    pub force_exclude: Option<bool>,
+    pub respect_gitignore: Option<bool>,
     // Individual rules
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
     pub strings: Option<StringOptions>,
     pub portability: Option<PortabilityOptions>,
-}
-
-impl Default for Configuration {
-    fn default() -> Self {
-        Self {
-            files: Default::default(),
-            ignore: Default::default(),
-            select: Default::default(),
-            extend_select: Default::default(),
-            per_file_ignores: Default::default(),
-            line_length: Settings::default().check.line_length,
-            file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
-            fix: Default::default(),
-            fix_only: Default::default(),
-            show_fixes: Default::default(),
-            unsafe_fixes: Default::default(),
-            output_format: Default::default(),
-            progress_bar: Default::default(),
-            preview: Default::default(),
-            exclude: Default::default(),
-            extend_exclude: Default::default(),
-            exclude_mode: Default::default(),
-            gitignore_mode: Default::default(),
-            exit_unlabelled_loops: Default::default(),
-            keyword_whitespace: Default::default(),
-            strings: Default::default(),
-            portability: Default::default(),
-        }
-    }
 }
 
 impl Configuration {
@@ -209,8 +181,8 @@ impl Configuration {
         let check = options.check.unwrap_or_default();
 
         Self {
-            files: check.files.unwrap_or_default(),
-            ignore: check.ignore.unwrap_or_default(),
+            files: check.files,
+            ignore: check.ignore,
             select: check.select,
             extend_select: check.extend_select.unwrap_or_default(),
             per_file_ignores: check.per_file_ignores.map(|per_file_ignores| {
@@ -221,22 +193,16 @@ impl Configuration {
                     })
                     .collect()
             }),
-            line_length: check
-                .line_length
-                .unwrap_or(Settings::default().check.line_length),
-            file_extensions: check
-                .file_extensions
-                .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect_vec()),
-            fix: check.fix.unwrap_or_default(),
-            fix_only: check.fix_only.unwrap_or_default(),
-            show_fixes: check.show_fixes.unwrap_or_default(),
-            unsafe_fixes: check
-                .unsafe_fixes
-                .map(UnsafeFixes::from)
-                .unwrap_or_default(),
-            output_format: check.output_format.unwrap_or_default(),
-            progress_bar: check.progress_bar.unwrap_or_default(),
-            preview: check.preview.map(PreviewMode::from).unwrap_or_default(),
+            extend_per_file_ignores: vec![],
+            line_length: check.line_length,
+            file_extensions: check.file_extensions,
+            fix: check.fix,
+            fix_only: check.fix_only,
+            show_fixes: check.show_fixes,
+            unsafe_fixes: check.unsafe_fixes.map(UnsafeFixes::from),
+            output_format: check.output_format,
+            progress_bar: check.progress_bar,
+            preview: check.preview.map(PreviewMode::from),
             exclude: check.exclude.map(|paths| {
                 paths
                     .into_iter()
@@ -258,14 +224,8 @@ impl Configuration {
                         .collect()
                 })
                 .unwrap_or_default(),
-            exclude_mode: check
-                .force_exclude
-                .map(ExcludeMode::from)
-                .unwrap_or_default(),
-            gitignore_mode: check
-                .respect_gitignore
-                .map(GitignoreMode::from)
-                .unwrap_or_default(),
+            force_exclude: check.force_exclude,
+            respect_gitignore: check.respect_gitignore,
 
             // Individual rules
             exit_unlabelled_loops: check.exit_unlabelled_loops,
@@ -278,8 +238,11 @@ impl Configuration {
     pub fn into_settings(self, project_root: &Path, args: &CheckArgs) -> Result<Settings> {
         let args = args.clone();
 
-        let files = args.files.unwrap_or(self.files);
-        let file_extensions = args.file_extensions.unwrap_or(self.file_extensions);
+        let files = args.files.or(self.files).unwrap_or_default();
+        let file_extensions = args
+            .file_extensions
+            .or(self.file_extensions)
+            .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect());
 
         let per_file_ignores = if let Some(per_file_ignores) = args.per_file_ignores {
             Some(collect_per_file_ignores(per_file_ignores))
@@ -313,21 +276,23 @@ impl Configuration {
         )?;
 
         let force_exclude = resolve_bool_arg(args.force_exclude, args.no_force_exclude)
+            .or(self.force_exclude)
             .map(ExcludeMode::from)
-            .unwrap_or(self.exclude_mode);
+            .unwrap_or_default();
 
         let respect_gitignore = resolve_bool_arg(args.respect_gitignore, args.no_respect_gitignore)
+            .or(self.respect_gitignore)
             .map(GitignoreMode::from)
-            .unwrap_or(self.gitignore_mode);
+            .unwrap_or_default();
 
         let preview = resolve_bool_arg(args.preview, args.no_preview)
             .map(PreviewMode::from)
-            .unwrap_or(self.preview);
+            .unwrap_or(self.preview.unwrap_or_default());
 
         let rule_selection = RuleSelection {
             select: args.select.or(self.select),
             // TODO: CLI ignore should _extend_ file ignore
-            ignore: args.ignore.unwrap_or(self.ignore),
+            ignore: args.ignore.or(self.ignore).unwrap_or_default(),
             extend_select: args.extend_select.unwrap_or(self.extend_select),
             fixable: None,
             unfixable: vec![],
@@ -335,7 +300,7 @@ impl Configuration {
         };
         let rules = to_rule_table(rule_selection, &preview)?;
 
-        let mut progress_bar = args.progress_bar.unwrap_or(self.progress_bar);
+        let mut progress_bar = args.progress_bar.or(self.progress_bar).unwrap_or_default();
         // Override progress bar settings if not using colour terminal
         if progress_bar == ProgressBar::Fancy
             && !colored::control::SHOULD_COLORIZE.should_colorize()
@@ -343,22 +308,30 @@ impl Configuration {
             progress_bar = ProgressBar::Ascii;
         }
 
-        let output_format = args.output_format.unwrap_or(self.output_format);
+        let output_format = args
+            .output_format
+            .or(self.output_format)
+            .unwrap_or_default();
 
-        let show_fixes =
-            resolve_bool_arg(args.show_fixes, args.no_show_fixes).unwrap_or(self.show_fixes);
+        let show_fixes = resolve_bool_arg(args.show_fixes, args.no_show_fixes)
+            .or(self.show_fixes)
+            .unwrap_or_default();
 
         Ok(Settings {
             check: CheckSettings {
                 project_root: project_root.to_path_buf(),
                 rules,
-                fix: resolve_bool_arg(args.fix, args.no_fix).unwrap_or(self.fix),
+                fix: resolve_bool_arg(args.fix, args.no_fix)
+                    .or(self.fix)
+                    .unwrap_or_default(),
                 fix_only: resolve_bool_arg(args.fix_only, args.no_fix_only)
-                    .unwrap_or(self.fix_only),
-                line_length: args.line_length.unwrap_or(self.line_length),
+                    .or(self.fix_only)
+                    .unwrap_or_default(),
+                line_length: args.line_length.or(self.line_length).unwrap_or(Settings::default().check.line_length),
                 unsafe_fixes: resolve_bool_arg(args.unsafe_fixes, args.no_unsafe_fixes)
                     .map(UnsafeFixes::from)
-                    .unwrap_or(self.unsafe_fixes),
+                    .or(self.unsafe_fixes)
+                    .unwrap_or_default(),
                 preview,
                 progress_bar,
                 output_format,
