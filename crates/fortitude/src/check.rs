@@ -1,9 +1,8 @@
-use crate::cli::GlobalConfigArgs;
+use crate::cli::{CheckCommand, GlobalConfigArgs};
 use crate::printer::{Flags as PrinterFlags, Printer};
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
-use fortitude_linter::cli::CheckArgs;
 use fortitude_linter::diagnostic_message::DiagnosticMessage;
 use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, get_files, read_to_string};
@@ -16,7 +15,9 @@ use fortitude_linter::{
     rules_to_text_rules, FixerResult,
 };
 use fortitude_linter::{warn_user_once, warn_user_once_by_message};
-use fortitude_workspace::configuration::{self, parse_config_file, Configuration};
+use fortitude_workspace::configuration::{
+    self, parse_config_file, Configuration, ConfigurationTransformer,
+};
 
 use anyhow::Result;
 use colored::Colorize;
@@ -123,7 +124,9 @@ enum CheckStatus {
 }
 
 /// Check all files, report issues found, and return error code.
-pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
+pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
+    let (cli, config_arguments) = args.partition()?;
+
     // First we need to find and read any config file
     let project_root = configuration::project_root(path_absolutize::path_dedot::CWD.as_path())?;
     let file_configuration = Configuration::from_options(
@@ -133,11 +136,12 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
 
     // Now, we can override settings from the config file with options
     // from the CLI
-    let settings = file_configuration.into_settings(&project_root, &args)?;
+    let config = config_arguments.transform(file_configuration);
+    let settings = config.into_settings(&project_root)?;
 
-    let stdin_filename = args.stdin_filename;
+    let stdin_filename = cli.stdin_filename;
 
-    let mut writer: Box<dyn Write> = match args.output_file {
+    let mut writer: Box<dyn Write> = match cli.output_file {
         Some(path) => {
             colored::control::set_override(false);
             if let Some(parent) = path.parent() {
@@ -150,14 +154,14 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
     };
     let stderr_writer = Box::new(BufWriter::new(io::stderr()));
 
-    let is_stdin = is_stdin(&args.files.unwrap_or_default(), stdin_filename.as_deref());
+    let is_stdin = is_stdin(&settings.file_resolver.files, stdin_filename.as_deref());
 
-    if args.show_settings {
+    if cli.show_settings {
         show_settings(&settings, &mut writer)?;
         return Ok(ExitCode::SUCCESS);
     }
 
-    if args.show_files {
+    if cli.show_files {
         show_files(&settings.file_resolver, is_stdin, &mut writer)?;
         return Ok(ExitCode::SUCCESS);
     }
@@ -169,7 +173,6 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         unsafe_fixes,
         show_fixes,
         output_format,
-        ignore_allow_comments,
         ..
     } = settings.check;
 
@@ -208,7 +211,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             &ast_entrypoints,
             &settings,
             fix_mode,
-            ignore_allow_comments,
+            cli.ignore_allow_comments,
         )?
     } else {
         check_files(
@@ -219,7 +222,7 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
             &ast_entrypoints,
             &settings,
             fix_mode,
-            ignore_allow_comments,
+            cli.ignore_allow_comments,
         )?
     };
 
@@ -248,25 +251,25 @@ pub fn check(args: CheckArgs, global_options: &GlobalConfigArgs) -> Result<ExitC
         unsafe_fixes,
     );
 
-    if args.statistics {
+    if cli.statistics {
         printer.write_statistics(&results, &mut summary_writer)?;
     } else {
         printer.write_once(&results, &mut summary_writer)?;
     }
 
     let diagnostics = results.diagnostics;
-    if !args.exit_zero {
+    if !cli.exit_zero {
         if fix_only {
             // If we're only fixing, we want to exit zero (since we've fixed all fixable
             // violations), unless we're explicitly asked to exit non-zero on fix.
-            if args.exit_non_zero_on_fix && !diagnostics.fixed.is_empty() {
+            if cli.exit_non_zero_on_fix && !diagnostics.fixed.is_empty() {
                 return Ok(ExitCode::FAILURE);
             }
         } else {
             // If we're running the linter (not just fixing), we want to exit non-zero if
             // there are any violations, unless we're explicitly asked to exit zero on
             // fix.
-            if args.exit_non_zero_on_fix {
+            if cli.exit_non_zero_on_fix {
                 if !diagnostics.fixed.is_empty() || !diagnostics.messages.is_empty() {
                     return Ok(ExitCode::FAILURE);
                 }

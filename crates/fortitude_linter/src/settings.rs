@@ -69,7 +69,6 @@ pub struct CheckSettings {
     pub output_format: OutputFormat,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
-    pub ignore_allow_comments: IgnoreAllowComments,
 
     // Individual rule settings
     pub exit_unlabelled_loops: exit_labels::settings::Settings,
@@ -95,7 +94,6 @@ impl CheckSettings {
             output_format: OutputFormat::default(),
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
-            ignore_allow_comments: IgnoreAllowComments::default(),
             exit_unlabelled_loops: exit_labels::settings::Settings::default(),
             keyword_whitespace: keywords::settings::Settings::default(),
             strings: strings::settings::Settings::default(),

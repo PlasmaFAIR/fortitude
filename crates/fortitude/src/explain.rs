@@ -3,7 +3,6 @@ use std::process::ExitCode;
 
 use anyhow::Result;
 use colored::Colorize;
-use fortitude_linter::cli::ExplainArgs;
 use fortitude_linter::rule_selector::PreviewOptions;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::settings::DEFAULT_SELECTORS;
@@ -11,8 +10,10 @@ use itertools::Itertools;
 use ruff_diagnostics::FixAvailability;
 use textwrap::dedent;
 
+use crate::cli::ExplainCommand;
+
 /// Get the list of active rules for this session.
-fn ruleset(args: &ExplainArgs) -> anyhow::Result<Vec<Rule>> {
+fn ruleset(args: &ExplainCommand) -> anyhow::Result<Vec<Rule>> {
     // TODO: Take this as an option
     let preview = PreviewOptions {
         mode: fortitude_linter::settings::PreviewMode::Enabled,
@@ -40,7 +41,7 @@ fn ruleset(args: &ExplainArgs) -> anyhow::Result<Vec<Rule>> {
 }
 
 /// Check all files, report issues found, and return error code.
-pub fn explain(args: ExplainArgs) -> Result<ExitCode> {
+pub fn explain(args: ExplainCommand) -> Result<ExitCode> {
     let rules = ruleset(&args)?;
 
     let mut outputs = Vec::new();
