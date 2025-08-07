@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+CRATES_DIR = ROOT_DIR / "crates"
+LINTER_DIR = CRATES_DIR / "fortitude_linter"
 
 
 def dir_name(linter_name: str) -> str:

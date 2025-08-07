@@ -64,7 +64,7 @@ cargo install --path fortitude
 Unit tests can be run by calling:
 
 ```bash
-cargo test --all-targets --all-features
+cargo test --workspace
 ```
 
 You'll also need [Insta](https://insta.rs/docs/) to update snapshot tests:
@@ -196,7 +196,7 @@ Fortitude's output for each fixture, which you can then commit alongside your ch
 
 Once you've completed the code for the rule itself, you can define tests with the following steps:
 
-1. Add a Fortran file to `fortitude/resources/test/fixtures/[category]` that contains the code you
+1. Add a Fortran file to `crates/fortitude_linter/resources/test/fixtures/[category]` that contains the code you
     want to test. The file name should match the rule name (e.g., `E402.f90`), and it should include
     examples of both violations and non-violations.
 
@@ -205,23 +205,23 @@ Once you've completed the code for the rule itself, you can define tests with th
     For example, if you're adding a new rule named `E402`, you would run:
 
     ```shell
-    cargo run -- check fortitude/resources/test/fixtures/typing/E402.f90 --select E402
+    cargo run -- check crates/fortitude_linter/resources/test/fixtures/typing/E402.f90 --select E402
     ```
 
     **Note:** Only a subset of rules are enabled by default. When testing a new rule, ensure that
     you activate it by adding `--select ${rule_code}` to the command, and if the rule is in the `Preview`
     category, add `--preview` as well.
 
-1. Add the test to the relevant `fortitude/src/rules/[category]/mod.rs` file. If you're contributing
+1. Add the test to the relevant `crates/fortitude_linter/src/rules/[category]/mod.rs` file. If you're contributing
     a rule to a pre-existing set, you should be able to find a similar example to pattern-match
     against. If you're adding a new category, you'll need to create a new `mod.rs` file (see,
-    e.g., `fortitude/src/rules/typing/mod.rs`)
+    e.g., `crates/fortitude_linter/src/rules/typing/mod.rs`)
 
-1. Run `cargo test`. Your test will fail, but you'll be prompted to follow-up
+1. Run `cargo test --workspace`. Your test will fail, but you'll be prompted to follow-up
     with `cargo insta review`. Run `cargo insta review`, review and accept the generated snapshot,
     then commit the snapshot file alongside the rest of your changes.
 
-1. Run `cargo test` again to ensure that your test passes.
+1. Run `cargo test --workspace` again to ensure that your test passes.
 
 
 ## Building Docs
@@ -229,7 +229,8 @@ Once you've completed the code for the rule itself, you can define tests with th
 The documentation can be built locally using:
 
 ```bash
-pip install mkdocs-material
+pip install -r requirements.docs.txt
+cargo dev generate-all
 mkdocs serve
 ```
 

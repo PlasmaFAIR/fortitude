@@ -1,0 +1,239 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S242.f90:5:11: S242 [*] Avoidable escaped quotes
+  |
+3 |   implicit none (type, external)
+4 |
+5 |   print*, 'This isn''t necessary'
+  |           ^^^^^^^^^^^^^^^^^^^^^^^ S242
+6 |   print*, "This ""is not"" necessary"
+7 |   print*, 'This "isn''t" unnecessary'
+  |
+  = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+2 2 |   use, intrinsic :: iso_c_binding, only: c_char
+3 3 |   implicit none (type, external)
+4 4 | 
+5   |-  print*, 'This isn''t necessary'
+  5 |+  print*, "This isn't necessary"
+6 6 |   print*, "This ""is not"" necessary"
+7 7 |   print*, 'This "isn''t" unnecessary'
+8 8 |   print*, "This ""isn't"" unnecessary"
+
+./resources/test/fixtures/style/S242.f90:6:11: S242 [*] Avoidable escaped quotes
+  |
+5 |   print*, 'This isn''t necessary'
+6 |   print*, "This ""is not"" necessary"
+  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ S242
+7 |   print*, 'This "isn''t" unnecessary'
+8 |   print*, "This ""isn't"" unnecessary"
+  |
+  = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+3 3 |   implicit none (type, external)
+4 4 | 
+5 5 |   print*, 'This isn''t necessary'
+6   |-  print*, "This ""is not"" necessary"
+  6 |+  print*, 'This "is not" necessary'
+7 7 |   print*, 'This "isn''t" unnecessary'
+8 8 |   print*, "This ""isn't"" unnecessary"
+9 9 |   print*, 4_"Does this ""break""?"
+
+./resources/test/fixtures/style/S242.f90:9:13: S242 [*] Avoidable escaped quotes
+   |
+ 7 |   print*, 'This "isn''t" unnecessary'
+ 8 |   print*, "This ""isn't"" unnecessary"
+ 9 |   print*, 4_"Does this ""break""?"
+   |             ^^^^^^^^^^^^^^^^^^^^^^ S242
+10 |   print*, c_char_'Does this ''break''?'
+11 |   print*, 'This &
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+6  6  |   print*, "This ""is not"" necessary"
+7  7  |   print*, 'This "isn''t" unnecessary'
+8  8  |   print*, "This ""isn't"" unnecessary"
+9     |-  print*, 4_"Does this ""break""?"
+   9  |+  print*, 4_'Does this "break"?'
+10 10 |   print*, c_char_'Does this ''break''?'
+11 11 |   print*, 'This &
+12 12 |        &isn''t &
+
+./resources/test/fixtures/style/S242.f90:10:18: S242 [*] Avoidable escaped quotes
+   |
+ 8 |   print*, "This ""isn't"" unnecessary"
+ 9 |   print*, 4_"Does this ""break""?"
+10 |   print*, c_char_'Does this ''break''?'
+   |                  ^^^^^^^^^^^^^^^^^^^^^^ S242
+11 |   print*, 'This &
+12 |        &isn''t &
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+7  7  |   print*, 'This "isn''t" unnecessary'
+8  8  |   print*, "This ""isn't"" unnecessary"
+9  9  |   print*, 4_"Does this ""break""?"
+10    |-  print*, c_char_'Does this ''break''?'
+   10 |+  print*, c_char_"Does this 'break'?"
+11 11 |   print*, 'This &
+12 12 |        &isn''t &
+13 13 |        &necessary'
+
+./resources/test/fixtures/style/S242.f90:11:11: S242 [*] Avoidable escaped quotes
+   |
+ 9 |     print*, 4_"Does this ""break""?"
+10 |     print*, c_char_'Does this ''break''?'
+11 |     print*, 'This &
+   |  ___________^
+12 | |        &isn''t &
+13 | |        &necessary'
+   | |__________________^ S242
+14 |     print*, 'This &
+15 |          &""isn''t"" &
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+8  8  |   print*, "This ""isn't"" unnecessary"
+9  9  |   print*, 4_"Does this ""break""?"
+10 10 |   print*, c_char_'Does this ''break''?'
+11    |-  print*, 'This &
+12    |-       &isn''t &
+13    |-       &necessary'
+   11 |+  print*, "This &
+   12 |+       &isn't &
+   13 |+       &necessary"
+14 14 |   print*, 'This &
+15 15 |        &""isn''t"" &
+16 16 |        &unnecessary'
+
+./resources/test/fixtures/style/S242.f90:21:11: S242 [*] Avoidable escaped quotes
+   |
+19 |   print*, ''                    ! empty
+20 |   print*, ""                    ! empty
+21 |   print*, ''''                  ! '
+   |           ^^^^ S242
+22 |   print*, """"                  ! "
+23 |   print*, ''''''                ! ''
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+18 18 |   ! Multiple quotes
+19 19 |   print*, ''                    ! empty
+20 20 |   print*, ""                    ! empty
+21    |-  print*, ''''                  ! '
+   21 |+  print*, "'"                  ! '
+22 22 |   print*, """"                  ! "
+23 23 |   print*, ''''''                ! ''
+24 24 |   print*, ''''''''              ! '''
+
+./resources/test/fixtures/style/S242.f90:22:11: S242 [*] Avoidable escaped quotes
+   |
+20 |   print*, ""                    ! empty
+21 |   print*, ''''                  ! '
+22 |   print*, """"                  ! "
+   |           ^^^^ S242
+23 |   print*, ''''''                ! ''
+24 |   print*, ''''''''              ! '''
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+19 19 |   print*, ''                    ! empty
+20 20 |   print*, ""                    ! empty
+21 21 |   print*, ''''                  ! '
+22    |-  print*, """"                  ! "
+   22 |+  print*, '"'                  ! "
+23 23 |   print*, ''''''                ! ''
+24 24 |   print*, ''''''''              ! '''
+25 25 |   print*, """"""                ! ""
+
+./resources/test/fixtures/style/S242.f90:23:11: S242 [*] Avoidable escaped quotes
+   |
+21 |   print*, ''''                  ! '
+22 |   print*, """"                  ! "
+23 |   print*, ''''''                ! ''
+   |           ^^^^^^ S242
+24 |   print*, ''''''''              ! '''
+25 |   print*, """"""                ! ""
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+20 20 |   print*, ""                    ! empty
+21 21 |   print*, ''''                  ! '
+22 22 |   print*, """"                  ! "
+23    |-  print*, ''''''                ! ''
+   23 |+  print*, "''"                ! ''
+24 24 |   print*, ''''''''              ! '''
+25 25 |   print*, """"""                ! ""
+26 26 |   print*, """"""""              ! """
+
+./resources/test/fixtures/style/S242.f90:24:11: S242 [*] Avoidable escaped quotes
+   |
+22 |   print*, """"                  ! "
+23 |   print*, ''''''                ! ''
+24 |   print*, ''''''''              ! '''
+   |           ^^^^^^^^ S242
+25 |   print*, """"""                ! ""
+26 |   print*, """"""""              ! """
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+21 21 |   print*, ''''                  ! '
+22 22 |   print*, """"                  ! "
+23 23 |   print*, ''''''                ! ''
+24    |-  print*, ''''''''              ! '''
+   24 |+  print*, "'''"              ! '''
+25 25 |   print*, """"""                ! ""
+26 26 |   print*, """"""""              ! """
+27 27 | 
+
+./resources/test/fixtures/style/S242.f90:25:11: S242 [*] Avoidable escaped quotes
+   |
+23 |   print*, ''''''                ! ''
+24 |   print*, ''''''''              ! '''
+25 |   print*, """"""                ! ""
+   |           ^^^^^^ S242
+26 |   print*, """"""""              ! """
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+22 22 |   print*, """"                  ! "
+23 23 |   print*, ''''''                ! ''
+24 24 |   print*, ''''''''              ! '''
+25    |-  print*, """"""                ! ""
+   25 |+  print*, '""'                ! ""
+26 26 |   print*, """"""""              ! """
+27 27 | 
+28 28 | end program test
+
+./resources/test/fixtures/style/S242.f90:26:11: S242 [*] Avoidable escaped quotes
+   |
+24 |   print*, ''''''''              ! '''
+25 |   print*, """"""                ! ""
+26 |   print*, """"""""              ! """
+   |           ^^^^^^^^ S242
+27 |
+28 | end program test
+   |
+   = help: Change outer quotes to avoid escaping inner quotes
+
+ℹ Safe fix
+23 23 |   print*, ''''''                ! ''
+24 24 |   print*, ''''''''              ! '''
+25 25 |   print*, """"""                ! ""
+26    |-  print*, """"""""              ! """
+   26 |+  print*, '"""'              ! """
+27 27 | 
+28 28 | end program test

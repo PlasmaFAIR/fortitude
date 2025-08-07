@@ -1,0 +1,103 @@
+---
+source: fortitude/src/rules/style/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/style/S103.f90:3:17: S103 [*] Missing space around `::`
+  |
+1 | program myprog
+2 |   implicit none
+3 |   use, intrinsic:: iso_fortran_env, only:int64, real64 ! This should add a space before the double colon and not change the single colon
+  |                 ^^ S103
+4 |   private
+5 |   integer ::i ! This should add a space after the double colon
+  |
+  = help: Add extra whitespace
+
+ℹ Safe fix
+1 1 | program myprog
+2 2 |   implicit none
+3   |-  use, intrinsic:: iso_fortran_env, only:int64, real64 ! This should add a space before the double colon and not change the single colon
+  3 |+  use, intrinsic :: iso_fortran_env, only:int64, real64 ! This should add a space before the double colon and not change the single colon
+4 4 |   private
+5 5 |   integer ::i ! This should add a space after the double colon
+6 6 |   integer :: j ! ::in comments should be unchanged
+
+./resources/test/fixtures/style/S103.f90:5:11: S103 [*] Missing space around `::`
+  |
+3 |   use, intrinsic:: iso_fortran_env, only:int64, real64 ! This should add a space before the double colon and not change the single colon
+4 |   private
+5 |   integer ::i ! This should add a space after the double colon
+  |           ^^ S103
+6 |   integer :: j ! ::in comments should be unchanged
+7 |   integer :: k ! This should be unchanged
+  |
+  = help: Add extra whitespace
+
+ℹ Safe fix
+2 2 |   implicit none
+3 3 |   use, intrinsic:: iso_fortran_env, only:int64, real64 ! This should add a space before the double colon and not change the single colon
+4 4 |   private
+5   |-  integer ::i ! This should add a space after the double colon
+  5 |+  integer :: i ! This should add a space after the double colon
+6 6 |   integer :: j ! ::in comments should be unchanged
+7 7 |   integer :: k ! This should be unchanged
+8 8 |   character::x, y, z! This should add spaces before and after the double colon
+
+./resources/test/fixtures/style/S103.f90:8:12: S103 [*] Missing space around `::`
+   |
+ 6 |   integer :: j ! ::in comments should be unchanged
+ 7 |   integer :: k ! This should be unchanged
+ 8 |   character::x, y, z! This should add spaces before and after the double colon
+   |            ^^ S103
+ 9 |   allocate(character(10) :: x) ! This should be unchanged
+10 |   allocate(character(10):: y) ! This should add a space before the double colon
+   |
+   = help: Add extra whitespace
+
+ℹ Safe fix
+5 5 |   integer ::i ! This should add a space after the double colon
+6 6 |   integer :: j ! ::in comments should be unchanged
+7 7 |   integer :: k ! This should be unchanged
+8   |-  character::x, y, z! This should add spaces before and after the double colon
+  8 |+  character :: x, y, z! This should add spaces before and after the double colon
+9 9 |   allocate(character(10) :: x) ! This should be unchanged
+10 10 |   allocate(character(10):: y) ! This should add a space before the double colon
+11 11 |   allocate(character(10) ::z) ! This should add a space after the double colon
+
+./resources/test/fixtures/style/S103.f90:10:25: S103 [*] Missing space around `::`
+   |
+ 8 |   character::x, y, z! This should add spaces before and after the double colon
+ 9 |   allocate(character(10) :: x) ! This should be unchanged
+10 |   allocate(character(10):: y) ! This should add a space before the double colon
+   |                         ^^ S103
+11 |   allocate(character(10) ::z) ! This should add a space after the double colon
+12 | end program myprog
+   |
+   = help: Add extra whitespace
+
+ℹ Safe fix
+7  7  |   integer :: k ! This should be unchanged
+8  8  |   character::x, y, z! This should add spaces before and after the double colon
+9  9  |   allocate(character(10) :: x) ! This should be unchanged
+10    |-  allocate(character(10):: y) ! This should add a space before the double colon
+   10 |+  allocate(character(10) :: y) ! This should add a space before the double colon
+11 11 |   allocate(character(10) ::z) ! This should add a space after the double colon
+12 12 | end program myprog
+
+./resources/test/fixtures/style/S103.f90:11:26: S103 [*] Missing space around `::`
+   |
+ 9 |   allocate(character(10) :: x) ! This should be unchanged
+10 |   allocate(character(10):: y) ! This should add a space before the double colon
+11 |   allocate(character(10) ::z) ! This should add a space after the double colon
+   |                          ^^ S103
+12 | end program myprog
+   |
+   = help: Add extra whitespace
+
+ℹ Safe fix
+8  8  |   character::x, y, z! This should add spaces before and after the double colon
+9  9  |   allocate(character(10) :: x) ! This should be unchanged
+10 10 |   allocate(character(10):: y) ! This should add a space before the double colon
+11    |-  allocate(character(10) ::z) ! This should add a space after the double colon
+   11 |+  allocate(character(10) :: z) ! This should add a space after the double colon
+12 12 | end program myprog

@@ -13,9 +13,9 @@ dependencies = [
 
 [[package]]
 name = "adler2"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "512761e0bb2578dd7380c6baaa0f4ce03e84f95e960231d1dec8bf4d7d6e2627"
+checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "aho-corasick"
@@ -144,9 +144,9 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "backtrace"
-version = "0.3.74"
+version = "0.3.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d82cb332cdfaed17ae235a638438ac4d4839913cc2af585c3c6746e8f8bee1a"
+checksum = "6806a6321ec58106fea15becdad98371e28d92ccbc7c8f1b3b6dd724fe8f1002"
 dependencies = [
  "addr2line",
  "cfg-if",
@@ -582,22 +582,69 @@ dependencies = [
 name = "fortitude"
 version = "0.7.3"
 dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "bitflags",
+ "clap",
+ "clap_complete_command",
+ "colored",
+ "fortitude_linter",
+ "fortitude_workspace",
+ "indicatif",
+ "insta",
+ "insta-cmd",
+ "itertools 0.12.1",
+ "log",
+ "path-absolutize",
+ "predicates",
+ "rayon",
+ "ruff_diagnostics",
+ "ruff_source_file",
+ "ruff_text_size",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "textwrap",
+]
+
+[[package]]
+name = "fortitude_dev"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "fortitude",
+ "fortitude_linter",
+ "fortitude_workspace",
+ "itertools 0.12.1",
+ "pretty_assertions",
+ "regex",
+ "ruff_diagnostics",
+ "strum",
+ "textwrap",
+ "tree-sitter",
+ "tree-sitter-cli",
+ "tree-sitter-fortran",
+]
+
+[[package]]
+name = "fortitude_linter"
+version = "0.1.0"
+dependencies = [
  "annotate-snippets",
  "anyhow",
  "assert_cmd",
  "bitflags",
  "chrono",
  "clap",
- "clap_complete_command",
  "colored",
  "fern",
- "fortitude",
+ "fortitude_linter",
  "fortitude_macros",
  "globset",
  "ignore",
- "indicatif",
  "insta",
- "insta-cmd",
  "is-macro",
  "itertools 0.12.1",
  "lazy-regex",
@@ -605,7 +652,6 @@ dependencies = [
  "log",
  "path-absolutize",
  "pathdiff",
- "predicates",
  "pretty_assertions",
  "quick-junit",
  "rayon",
@@ -618,47 +664,18 @@ dependencies = [
  "serde",
  "serde_json",
  "similar",
- "similar-asserts",
  "strum",
  "strum_macros",
  "tempfile",
  "test-case",
  "textwrap",
  "thiserror 1.0.66",
- "toml",
  "topiary-core",
  "topiary-tree-sitter-facade",
  "tree-sitter",
  "tree-sitter-fortran",
  "unicode-width 0.2.0",
  "url",
- "walkdir",
-]
-
-[[package]]
-name = "fortitude_dev"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "colored",
- "fortitude",
- "fortitude_macros",
- "itertools 0.12.1",
- "pretty_assertions",
- "regex",
- "ruff_cache",
- "ruff_diagnostics",
- "ruff_macros",
- "ruff_source_file",
- "ruff_text_size",
- "serde_json",
- "strum",
- "strum_macros",
- "textwrap",
- "tree-sitter",
- "tree-sitter-cli",
- "tree-sitter-fortran",
 ]
 
 [[package]]
@@ -669,6 +686,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "fortitude_workspace"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "colored",
+ "fortitude_linter",
+ "is-macro",
+ "itertools 0.12.1",
+ "log",
+ "path-absolutize",
+ "ruff_macros",
+ "rustc-hash",
+ "serde",
+ "strum",
+ "tempfile",
+ "textwrap",
+ "toml",
 ]
 
 [[package]]
@@ -1115,6 +1152,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "io-uring"
+version = "0.7.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d93587f37623a1a17d94ef2bc9ada592f5465fe7732084ab7beefabe5c77c0c4"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
 name = "is-macro"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1290,11 +1338,22 @@ checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
 name = "miniz_oxide"
-version = "0.8.5"
+version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e3e04debbb59698c15bacbb6d93584a8c0ca9cc3213cb423d31f760d8843ce5"
+checksum = "1fa76a2c86f704bdb222d66965fb3d63269ce38518b83cb0575fca855ebb6316"
 dependencies = [
  "adler2",
+]
+
+[[package]]
+name = "mio"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "78bed444cc8a2160f01cbcf811ef18cac863ad68ae8ca62092e8db51d51c761c"
+dependencies = [
+ "libc",
+ "wasi 0.11.0+wasi-snapshot-preview1",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1387,18 +1446,9 @@ checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
 
 [[package]]
 name = "owo-colors"
-version = "4.2.1"
+version = "4.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26995317201fa17f3656c36716aed4a7c81743a9634ac4c99c0eeda495db0cec"
-
-[[package]]
-name = "pad"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2ad9b889f1b12e0b9ee24db044b5129150d5eada288edc800f789928dc8c0e3"
-dependencies = [
- "unicode-width 0.1.14",
-]
+checksum = "48dd4f4a2c8405440fd0462561f0e5806bd0f77e86f51c761481bdd4018b545e"
 
 [[package]]
 name = "path-absolutize"
@@ -1550,12 +1600,11 @@ dependencies = [
 
 [[package]]
 name = "prettydiff"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf0668e945d7caa9b3e3a4cb360d7dd1f2613d62233f8846dbfb7ea3c3df0910"
+checksum = "b9a475bdea0881b8c65eb81f91fe53187b8522352a701b919c5a2c8a2f262808"
 dependencies = [
  "owo-colors",
- "pad",
 ]
 
 [[package]]
@@ -1771,9 +1820,9 @@ dependencies = [
 
 [[package]]
 name = "rustc-demangle"
-version = "0.1.24"
+version = "0.1.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
+checksum = "56f7d92ca342cea22a06f2121d944b4fd82af56988c270852495420f961d4ace"
 
 [[package]]
 name = "rustc-hash"
@@ -1913,29 +1962,12 @@ name = "similar"
 version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
-dependencies = [
- "bstr",
- "unicode-segmentation",
-]
-
-[[package]]
-name = "similar-asserts"
-version = "1.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfe85670573cd6f0fa97940f26e7e6601213c3b0555246c24234131f88c5709e"
-dependencies = [
- "console",
- "similar",
-]
 
 [[package]]
 name = "slab"
-version = "0.4.9"
+version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f92a496fb766b417c996b9c5e57daf2f7ad3b0bebe1ccfca4856390e3d3bb67"
-dependencies = [
- "autocfg",
-]
+checksum = "04dc19736151f35336d325007ac991178d504a119863a2fcb3758cdb5e52c50d"
 
 [[package]]
 name = "smallbitvec"
@@ -2163,12 +2195,16 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.44.1"
+version = "1.47.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f382da615b842244d4b8738c82ed1275e6c5dd90c459a30941cd07080b06c91a"
+checksum = "89e49afdadebb872d3145a5638b59eb0691ea23e46ca484037cfab3b76b95038"
 dependencies = [
  "backtrace",
+ "io-uring",
+ "libc",
+ "mio",
  "pin-project-lite",
+ "slab",
  "tokio-macros",
 ]
 
@@ -2341,8 +2377,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-fortran"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce58ab374a2cc3a2ff8a5dab2e5230530dbfcb439475afa75233f59d1d115b40"
+source = "git+https://github.com/stadelmanma/tree-sitter-fortran.git?rev=1b08f4c#1b08f4c65fb47c76d3532cd3f7432d03abb9ef69"
 dependencies = [
  "cc",
  "tree-sitter-language",

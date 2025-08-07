@@ -1,0 +1,9 @@
+---
+source: crates/fortitude_linter/src/format.rs
+expression: string
+snapshot_kind: text
+---
+interface operator(+);
+  module procedure test_plus
+  ;
+end interface
