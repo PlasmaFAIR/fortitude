@@ -1,7 +1,7 @@
 use std::{io::BufWriter, process::ExitCode};
 
+use fortitude_formatter::{create_formatter, format_file};
 use fortitude_linter::{
-    format::{create_formatter, format_file},
     fs::{get_files, FilePatternSet, FORTRAN_EXTS},
     settings::{FileResolverSettings, PreviewMode},
 };

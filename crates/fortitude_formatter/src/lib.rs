@@ -58,7 +58,14 @@ mod test {
     use test_case::test_case;
     use topiary_core::{FormatterError, Language};
 
-    use crate::apply_common_filters;
+    macro_rules! apply_common_filters {
+        {} => {
+            let mut settings = insta::Settings::clone_current();
+            // Convert windows paths to Unix Paths.
+            settings.add_filter(r"\\\\?([\w\d.])", "/$1");
+            let _bound = settings.bind_to_scope();
+        }
+    }
 
     use super::{create_formatter, format_file};
 

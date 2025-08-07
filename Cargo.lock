@@ -588,6 +588,7 @@ dependencies = [
  "clap",
  "clap_complete_command",
  "colored",
+ "fortitude_formatter",
  "fortitude_linter",
  "fortitude_workspace",
  "indicatif",
@@ -629,6 +630,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "fortitude_formatter"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "insta",
+ "lazy_static",
+ "test-case",
+ "topiary-core",
+ "topiary-tree-sitter-facade",
+ "tree-sitter-fortran",
+]
+
+[[package]]
 name = "fortitude_linter"
 version = "0.1.0"
 dependencies = [
@@ -640,7 +654,6 @@ dependencies = [
  "clap",
  "colored",
  "fern",
- "fortitude_linter",
  "fortitude_macros",
  "globset",
  "ignore",
@@ -670,8 +683,6 @@ dependencies = [
  "test-case",
  "textwrap",
  "thiserror 1.0.66",
- "topiary-core",
- "topiary-tree-sitter-facade",
  "tree-sitter",
  "tree-sitter-fortran",
  "unicode-width 0.2.0",

@@ -1,0 +1,22 @@
+[package]
+name = "fortitude_formatter"
+version = "0.1.0"
+publish = false
+authors = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+anyhow = { workspace = true }
+lazy_static = { workspace = true }
+topiary-core = { workspace = true }
+topiary-tree-sitter-facade = { workspace = true }
+tree-sitter-fortran = { workspace = true }
+
+[dev-dependencies]
+insta = { version = "1.41.1", features = ["filters", "json", "redactions"] }
+test-case = "3.3.1"

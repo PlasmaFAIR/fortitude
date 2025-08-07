@@ -14,6 +14,7 @@ exclude = [".*"]
 build = "build.rs"
 
 [dependencies]
+fortitude_formatter = { workspace = true }
 fortitude_linter = { workspace = true }
 fortitude_workspace = { workspace = true }
 

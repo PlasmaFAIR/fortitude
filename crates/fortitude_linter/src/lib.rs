@@ -3,7 +3,6 @@ pub mod ast;
 pub mod diagnostic_message;
 pub mod diagnostics;
 pub mod fix;
-pub mod format;
 pub mod fs;
 pub mod locator;
 #[macro_use]
