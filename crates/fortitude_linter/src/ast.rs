@@ -74,34 +74,34 @@ impl<'a> Iterator for AncestorsIterator<'a> {
 /// Adds some extra functionality to [`tree_sitter::Node`]
 pub trait FortitudeNode<'tree> {
     /// Iterate over all nodes beneath the current node in a depth-first manner.
-    fn descendants(&self) -> impl Iterator<Item = Node>;
+    fn descendants(&self) -> impl Iterator<Item = Node<'_>>;
 
     /// Iterate over all named nodes beneath the current node in a depth-first manner.
-    fn named_descendants(&self) -> impl Iterator<Item = Node>;
+    fn named_descendants(&self) -> impl Iterator<Item = Node<'_>>;
 
     /// Iterate over all nodes beneath the current node in a depth-first manner, never going deeper
     /// than any node types in the exceptions list.
-    fn descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node>
+    fn descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node<'_>>
     where
         I: IntoIterator<Item = &'a str>;
 
     /// Iterate over all nodes beneath the current node in a depth-first manner, never going deeper
     /// than any node types in the exceptions list.
-    fn named_descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node>
+    fn named_descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node<'_>>
     where
         I: IntoIterator<Item = &'a str>;
 
     /// Iterate over all nodes above the current node.
-    fn ancestors(&self) -> impl Iterator<Item = Node>;
+    fn ancestors(&self) -> impl Iterator<Item = Node<'_>>;
 
     /// Get the first child with a given name. Returns None if not found.
-    fn child_with_name(&self, name: &str) -> Option<Node>;
+    fn child_with_name(&self, name: &str) -> Option<Node<'_>>;
 
     /// Get a named `keyword_argument` child node, if it exists.
-    fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node>;
+    fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>>;
 
     /// Get the value of a named `keyword_argument` child node, if it exists.
-    fn kwarg_value<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node>;
+    fn kwarg_value<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>>;
 
     /// Check if a named `keyword_argument` child node exists.
     fn kwarg_exists<S: AsRef<str>>(&self, keyword: S, src: &str) -> bool;
@@ -133,17 +133,17 @@ pub trait FortitudeNode<'tree> {
 }
 
 impl FortitudeNode<'_> for Node<'_> {
-    fn descendants(&self) -> impl Iterator<Item = Node> {
+    fn descendants(&self) -> impl Iterator<Item = Node<'_>> {
         DepthFirstIterator {
             cursor: self.walk(),
         }
     }
 
-    fn named_descendants(&self) -> impl Iterator<Item = Node> {
+    fn named_descendants(&self) -> impl Iterator<Item = Node<'_>> {
         self.descendants().filter(|&x| x.is_named())
     }
 
-    fn descendants_except<'tree, I>(&self, exceptions: I) -> impl Iterator<Item = Node>
+    fn descendants_except<'tree, I>(&self, exceptions: I) -> impl Iterator<Item = Node<'_>>
     where
         I: IntoIterator<Item = &'tree str>,
     {
@@ -153,7 +153,7 @@ impl FortitudeNode<'_> for Node<'_> {
         }
     }
 
-    fn named_descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node>
+    fn named_descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node<'_>>
     where
         I: IntoIterator<Item = &'a str>,
     {
@@ -161,7 +161,7 @@ impl FortitudeNode<'_> for Node<'_> {
             .filter(|&x| x.is_named())
     }
 
-    fn ancestors(&self) -> impl Iterator<Item = Node> {
+    fn ancestors(&self) -> impl Iterator<Item = Node<'_>> {
         AncestorsIterator { node: *self }
     }
 
@@ -170,7 +170,7 @@ impl FortitudeNode<'_> for Node<'_> {
             .find(|x| x.kind() == name)
     }
 
-    fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node> {
+    fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>> {
         let keyword = keyword.as_ref().to_lowercase();
         self.named_children(&mut self.walk()).find(|child| {
             child.kind() == "keyword_argument"
@@ -180,7 +180,7 @@ impl FortitudeNode<'_> for Node<'_> {
         })
     }
 
-    fn kwarg_value<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node> {
+    fn kwarg_value<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>> {
         self.kwarg(keyword, src)?.child_by_field_name("value")
     }
 

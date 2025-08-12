@@ -46,7 +46,7 @@ where
 }
 
 /// Metadata of an option that can either be a [`OptionField`] or [`OptionSet`].
-#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(untagged)]
 pub enum OptionEntry {
     /// A single option.
@@ -54,6 +54,15 @@ pub enum OptionEntry {
 
     /// A set of options.
     Set(OptionSet),
+}
+
+impl OptionEntry {
+    pub fn into_field(self) -> Option<OptionField> {
+        match self {
+            OptionEntry::Field(field) => Some(field),
+            OptionEntry::Set(_) => None,
+        }
+    }
 }
 
 impl Display for OptionEntry {
@@ -69,7 +78,7 @@ impl Display for OptionEntry {
 ///
 /// It extracts the options by calling the [`OptionsMetadata::record`] of a type implementing
 /// [`OptionsMetadata`].
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone)]
 pub struct OptionSet {
     record: fn(&mut dyn Visit),
     doc: fn() -> Option<&'static str>,
@@ -199,8 +208,8 @@ impl OptionSet {
     ///     }
     /// }
     ///
-    /// assert_eq!(WithOptions::metadata().find("ignore-git-ignore"), Some(OptionEntry::Field(IGNORE_GIT_IGNORE.clone())));
-    /// assert_eq!(WithOptions::metadata().find("does-not-exist"), None);
+    /// assert_eq!(WithOptions::metadata().find("ignore-git-ignore").and_then(OptionEntry::into_field), Some(IGNORE_GIT_IGNORE.clone()));
+    /// assert!(WithOptions::metadata().find("does-not-exist").is_none());
     /// ```
     /// ### Find a nested option
     ///
@@ -241,10 +250,10 @@ impl OptionSet {
     ///     }
     /// }
     ///
-    /// assert_eq!(Root::metadata().find("format.hard-tabs"), Some(OptionEntry::Field(HARD_TABS.clone())));
-    /// assert_eq!(Root::metadata().find("format"), Some(OptionEntry::Set(Nested::metadata())));
-    /// assert_eq!(Root::metadata().find("format.spaces"), None);
-    /// assert_eq!(Root::metadata().find("lint.hard-tabs"), None);
+    /// assert_eq!(Root::metadata().find("format.hard-tabs").and_then(OptionEntry::into_field), Some(HARD_TABS.clone()));
+    /// assert!(matches!(Root::metadata().find("format"), Some(OptionEntry::Set(_))));
+    /// assert!(Root::metadata().find("format.spaces").is_none());
+    /// assert!(Root::metadata().find("lint.hard-tabs").is_none());
     /// ```
     pub fn find(&self, name: &str) -> Option<OptionEntry> {
         struct FindOptionVisitor<'a> {
