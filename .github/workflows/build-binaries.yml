@@ -297,8 +297,21 @@ jobs:
           manylinux: musllinux_1_2
           args: --release --locked --out dist
           docker-options: ${{ matrix.platform.maturin_docker_options }}
+      - name: "Test wheel x86"
+        if: matrix.platform.target == 'x86_64-unknown-linux-musl'
+        uses: addnab/docker-run-action@v3
+        with:
+          image: alpine:latest
+          options: -v ${{ github.workspace }}:/io -w /io
+          run: |
+            apk add python3
+            python -m venv .venv
+            .venv/bin/pip3 install ${{ env.PACKAGE_NAME }} --no-index --find-links dist/ --force-reinstall
+            .venv/bin/${{ env.MODULE_NAME }} --help
+
       - uses: uraimo/run-on-arch-action@v2
-        name: Test wheel
+        name: "Test wheel non-x86"
+        if: matrix.platform.target != 'x86_64-unknown-linux-musl'
         with:
           arch: ${{ matrix.platform.arch }}
           distro: alpine_latest
