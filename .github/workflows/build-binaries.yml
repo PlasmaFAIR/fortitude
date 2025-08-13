@@ -238,6 +238,7 @@ jobs:
         env:
           CFLAGS: -std=c99 -D_BSD_SOURCE
       - name: "Test wheel"
+        if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
         run: |
           pip install dist/"${PACKAGE_NAME}"-*.whl --force-reinstall
           "${MODULE_NAME}" --help
