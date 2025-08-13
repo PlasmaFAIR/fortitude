@@ -60,7 +60,7 @@ textwrap = { version = "0.16.0" }
 thiserror = { version = "1.0.58" }
 tree-sitter = "~0.25.0"
 tree-sitter-cli = "~0.25.0"
-tree-sitter-fortran = { git = "https://github.com/stadelmanma/tree-sitter-fortran.git", rev = "1b08f4c" }
+tree-sitter-fortran = { git = "https://github.com/stadelmanma/tree-sitter-fortran.git", rev = "8334abc" }
 toml = "0.8.19"
 unicode-width = "0.2.0"
 url = { version = "2.5.0" }
