@@ -213,8 +213,6 @@ jobs:
             arch: ppc64le
             # see https://github.com/astral-sh/ruff/issues/10073
             maturin_docker_options: -e JEMALLOC_SYS_WITH_LG_PAGE=16
-          - target: arm-unknown-linux-musleabihf
-            arch: arm
 
     steps:
       - name: Setup QEMU
