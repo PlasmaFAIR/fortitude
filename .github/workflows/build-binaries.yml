@@ -195,61 +195,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-          - i686-unknown-linux-gnu
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          architecture: x64
-      - name: "Build wheels"
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          manylinux: auto
-          args: --release --locked --out dist
-        env:
-          CFLAGS: -std=c99 -D_BSD_SOURCE
-      - name: "Test wheel"
-        if: ${{ startsWith(matrix.target, 'x86_64') }}
-        run: |
-          pip install dist/"${PACKAGE_NAME}"-*.whl --force-reinstall
-          "${MODULE_NAME}" --help
-          python -m "${MODULE_NAME}" --help
-      - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ matrix.target }}
-          path: dist
-      - name: "Archive binary"
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          TARGET=${{ matrix.target }}
-          ARCHIVE_NAME=fortitude-$TARGET
-          ARCHIVE_FILE=$ARCHIVE_NAME.tar.gz
-
-          mkdir -p $ARCHIVE_NAME
-          cp target/$TARGET/release/fortitude $ARCHIVE_NAME/fortitude
-          tar czvf $ARCHIVE_FILE $ARCHIVE_NAME
-          shasum -a 256 $ARCHIVE_FILE > $ARCHIVE_FILE.sha256
-      - name: "Upload binary"
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifacts-${{ matrix.target }}
-          path: |
-            *.tar.gz
-            *.sha256
-
-  linux-cross:
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-build') }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
         platform:
+          - target: x86_64-unknown-linux-gnu
+            arch: x86_64
+          - target: i686-unknown-linux-gnu
+            arch: i686
           - target: aarch64-unknown-linux-gnu
             arch: aarch64
             # see https://github.com/astral-sh/ruff/issues/3791
@@ -271,6 +221,9 @@ jobs:
             arch: arm
 
     steps:
+      - name: Setup QEMU
+        if: ${{ !startsWith(matrix.platform.target, 'x86_64') }}
+        uses: docker/setup-qemu-action@v3
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -284,6 +237,11 @@ jobs:
           args: --release --locked --out dist
         env:
           CFLAGS: -std=c99 -D_BSD_SOURCE
+      - name: "Test wheel"
+        run: |
+          pip install dist/"${PACKAGE_NAME}"-*.whl --force-reinstall
+          "${MODULE_NAME}" --help
+          python -m "${MODULE_NAME}" --help
       - name: "Upload wheels"
         uses: actions/upload-artifact@v4
         with:
@@ -315,64 +273,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target:
-          - x86_64-unknown-linux-musl
-          - i686-unknown-linux-musl
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          architecture: x64
-      - name: "Build wheels"
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          manylinux: musllinux_1_2
-          args: --release --locked --out dist
-      - name: "Test wheel"
-        if: matrix.target == 'x86_64-unknown-linux-musl'
-        uses: addnab/docker-run-action@v3
-        with:
-          image: alpine:latest
-          options: -v ${{ github.workspace }}:/io -w /io
-          run: |
-            apk add python3
-            python -m venv .venv
-            .venv/bin/pip3 install ${{ env.PACKAGE_NAME }} --no-index --find-links dist/ --force-reinstall
-            .venv/bin/${{ env.MODULE_NAME }} --help
-      - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ matrix.target }}
-          path: dist
-      - name: "Archive binary"
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          TARGET=${{ matrix.target }}
-          ARCHIVE_NAME=fortitude-$TARGET
-          ARCHIVE_FILE=$ARCHIVE_NAME.tar.gz
-
-          mkdir -p $ARCHIVE_NAME
-          cp target/$TARGET/release/fortitude $ARCHIVE_NAME/fortitude
-          tar czvf $ARCHIVE_FILE $ARCHIVE_NAME
-          shasum -a 256 $ARCHIVE_FILE > $ARCHIVE_FILE.sha256
-      - name: "Upload binary"
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifacts-${{ matrix.target }}
-          path: |
-            *.tar.gz
-            *.sha256
-
-  musllinux-cross:
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-build') }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
         platform:
+          - target: x86_64-unknown-linux-musl
+            arch: x86_64
+          - target: i686-unknown-linux-musl
+            arch: i686
           - target: aarch64-unknown-linux-musl
             arch: aarch64
             maturin_docker_options: -e JEMALLOC_SYS_WITH_LG_PAGE=16
