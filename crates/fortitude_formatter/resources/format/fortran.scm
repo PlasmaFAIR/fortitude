@@ -90,6 +90,32 @@
 (end_block_construct_statement "end" @append_space . "block")
 (end_enumeration_type_statement "end" @append_space . "enumeration" @append_space)
 
+("&" @prepend_space . "&")
+
+(parenthesized_expression
+  "(" @append_indent_start
+  ")" @prepend_indent_end
+)
+
+(argument_list
+  "(" @append_indent_start
+  ")" @prepend_indent_end
+)
+
+(parameters
+  "(" @append_indent_start
+  ")" @prepend_indent_end
+)
+
+(included_items
+  "only" ":" @append_indent_start
+) @append_indent_end
+
+(assignment_statement
+    right: (math_expression) @prepend_indent_start
+) @append_indent_end
+
+; TODO: How to do flattened math expresssions?
 
 (enumeration_type_statement "enumeration" @append_space . "type")
 
