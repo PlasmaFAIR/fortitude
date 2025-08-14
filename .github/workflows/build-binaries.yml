@@ -249,9 +249,9 @@ jobs:
           install: |
             apt-get update
             apt-get install -y --no-install-recommends python3 python3-pip
-            pip3 install -U pip
+            pip3 install --break-system-packages -U pip
           run: |
-            pip3 install ${{ env.PACKAGE_NAME }} --no-index --find-links dist/ --force-reinstall
+            pip3 install --break-system-packages ${{ env.PACKAGE_NAME }} --no-index --find-links dist/ --force-reinstall
             fortitude --help
 
       - name: "Upload wheels"
