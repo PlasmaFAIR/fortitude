@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.7.4
+
+### Rule changes
+
+- Add rule `avoidable-escaped-quote` ([#446](https://github.com/PlasmaFAIR/fortitude/pull/446))
+- Add rule `incorrect-space-around-double-colon` ([#457](https://github.com/PlasmaFAIR/fortitude/pull/457))
+- Add rule `incorrect-space-between-brackets` ([#460](https://github.com/PlasmaFAIR/fortitude/pull/460))
+- Add rule `multiple-allocations-with-stat` ([#466](https://github.com/PlasmaFAIR/fortitude/pull/466))
+- Add rule `stat-without-message` ([#468](https://github.com/PlasmaFAIR/fortitude/pull/468))
+- Add rule `unchecked-stat` ([#458](https://github.com/PlasmaFAIR/fortitude/pull/458))
+- Add rules to detect deprecated and discouraged OpenMP and MPI uses ([#478](https://github.com/PlasmaFAIR/fortitude/pull/478))
+- Rename `single-quote-string` to `bad-quote-string`, add option to toggle preference ([#445](https://github.com/PlasmaFAIR/fortitude/pull/445))
+- Preserve existing case for `unnamed-end-statement` ([#442](https://github.com/PlasmaFAIR/fortitude/pull/442))
+- Catch stderr and Cray file units in `non-portable-io-unit` ([#450](https://github.com/PlasmaFAIR/fortitude/pull/450))
+- Fix `non-portable-io-unit` triggering on any magic number ([#447](https://github.com/PlasmaFAIR/fortitude/pull/447))
+
+### Documentation
+
+- Fix typo in setting variable names ([#448](https://github.com/PlasmaFAIR/fortitude/pull/448))
+- Clarify file filtering behaviour ([#476](https://github.com/PlasmaFAIR/fortitude/pull/476))
+- Add search plugin ([#483](https://github.com/PlasmaFAIR/fortitude/pull/483))
+- Add hint to nvim-lint for neovim ([#482](https://github.com/PlasmaFAIR/fortitude/pull/482))
+- Small clarification on technical details of `intent(out)` ([#451](https://github.com/PlasmaFAIR/fortitude/pull/451))
+
+### Other changes
+
+- Bump `tree-sitter-fortran` version ([#462](https://github.com/PlasmaFAIR/fortitude/pull/462))
+
 ## 0.7.3
 
 This release adds 5 new rules along with some minor bug fixes and other improvements.
@@ -288,3 +316,5 @@ The following rules have been stabilised and are no longer in preview:
 ## 0.2.0
 
 <!-- No changes -->
+
+

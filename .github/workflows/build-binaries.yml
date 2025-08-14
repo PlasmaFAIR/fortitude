@@ -210,6 +210,8 @@ jobs:
           target: ${{ matrix.target }}
           manylinux: auto
           args: --release --locked --out dist
+        env:
+          CFLAGS: -std=c99 -D_BSD_SOURCE
       - name: "Test wheel"
         if: ${{ startsWith(matrix.target, 'x86_64') }}
         run: |
@@ -281,7 +283,7 @@ jobs:
           docker-options: ${{ matrix.platform.maturin_docker_options }}
           args: --release --locked --out dist
         env:
-          CFLAGS: -std=c99
+          CFLAGS: -std=c99 -D_BSD_SOURCE
       - name: "Upload wheels"
         uses: actions/upload-artifact@v4
         with:
