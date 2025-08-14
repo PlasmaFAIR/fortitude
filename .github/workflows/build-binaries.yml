@@ -240,11 +240,11 @@ jobs:
           python -m "${MODULE_NAME}" --help
 
       - uses: uraimo/run-on-arch-action@v3
-        if: ${{ !contains(fromJson('["x86_64", "i686", "ppc64le"]'), matrix.platform.arch) }}
+        if: ${{ !contains(fromJson('["x86_64", "i686"]'), matrix.platform.arch) }}
         name: "Test wheel non-x86"
         with:
-          arch: ${{ matrix.platform.arch == 'arm' && 'armv6' || matrix.platform.arch }}
-          distro: ${{ matrix.platform.arch == 'arm' && 'bullseye' || 'ubuntu20.04' }}
+          arch: ${{ matrix.platform.arch }}
+          distro: "ubuntu24.04"
           githubToken: ${{ github.token }}
           install: |
             apt-get update
