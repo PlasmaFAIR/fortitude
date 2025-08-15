@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/format.rs
+source: crates/fortitude_formatter/src/lib.rs
 expression: string
 ---
 pure elemental logical function test(x, y) result(value)
@@ -9,6 +9,7 @@ contains
   real impure function internal_proc result(x)
     real(8) x = 1.0
   end function
+
   subroutine increment(i)
     integer :: i
     i = i + 1

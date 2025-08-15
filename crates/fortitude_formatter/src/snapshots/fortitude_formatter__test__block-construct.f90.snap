@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/format.rs
+source: crates/fortitude_formatter/src/lib.rs
 expression: string
 ---
 program block_demo
@@ -15,5 +15,6 @@ program block_demo
       print *, y
     end block inner
   end block
+
   print *, y
 end program block_demo

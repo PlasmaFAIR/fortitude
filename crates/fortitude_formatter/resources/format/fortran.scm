@@ -2,6 +2,8 @@
 [
  (string_literal)
  (comment)
+ (preproc_function_def)
+ (preproc_def)
 ] @leaf
 
 
@@ -21,15 +23,47 @@
  (private_statement)
  (public_statement)
  (use_statement)
+ (allocate_statement)
+ (deallocate_statement)
+ (pointer_association_statement)
+ (assignment_statement)
  (sequence_statement)
+ (preproc_function_def)
+ (preproc_def)
  ";"
-] @append_hardline
+] @append_hardline @allow_blank_line_before
+
+(preproc_if . ("#if" @append_space . (identifier) @append_hardline))
+
+(
+    do_loop_statement "do" @append_space 
+    (loop_control_expression) @append_hardline @append_indent_start
+    (end_do_loop_statement) @prepend_indent_end .
+)
 
 (if_statement "if" @append_space)
 (elseif_clause "elseif" @append_space)
 (elseif_clause "elseif" @append_space)
 (enumerator_statement "enumerator" @append_space)
 (assignment "assignment" @append_space)
+
+(select_case_statement
+    . "select" @append_space
+    "case" (selector) @append_hardline
+    (end_select_statement . "end" @append_space . "select" @append_hardline) .
+) 
+
+(select_case_statement
+    (case_statement 
+        . "case" . "(" . (_) . ")" @append_hardline @append_indent_start
+        ) @append_indent_end
+) 
+
+(select_case_statement
+    (case_statement
+        . "case" @append_space . (default) @append_hardline @append_indent_start
+        ) @append_indent_end
+) 
 
 
 [
@@ -112,7 +146,7 @@
 ) @append_indent_end
 
 (assignment_statement
-    right: (math_expression) @prepend_indent_start
+    right: [(math_expression) (logical_expression)] @prepend_indent_start
 ) @append_indent_end
 
 ; TODO: How to do flattened math expresssions?
@@ -150,7 +184,6 @@
  (derived_type_statement)
  (block_data_statement)
  (enumeration_type_statement)
- "then"
  "contains"
 ] @append_indent_start
 
@@ -165,10 +198,21 @@
  (end_block_construct_statement)
  (end_submodule_statement)
  (end_enumeration_type_statement)
- (else_clause)
- (elseif_clause)
  "contains"
 ] @prepend_indent_end
+
+(if_statement
+    "if" @append_indent_start
+    (end_if_statement) @prepend_indent_end .
+)
+
+(if_statement
+    [
+        (elseif_clause)
+        (else_clause "else" @append_indent_start @append_hardline)
+    ] @prepend_indent_end
+)
+
 
 [
  (function_result)
@@ -195,6 +239,11 @@
   "*" ;TODO format if not format_identifier or assumed_size
   "/"
 ] @prepend_space @append_space
+
+(logical_expression
+    left: (_) @append_space
+    right: (_) @prepend_space
+)
 
 [
  (format_identifier)
