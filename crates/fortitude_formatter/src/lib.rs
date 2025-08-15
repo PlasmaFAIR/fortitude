@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::Result;
 
-use log::info;
+use log::{info, warn};
 use fortitude_linter::settings::FormatSettings;
 use topiary_core::{formatter, FormatterError, Language, Operation, TopiaryQuery};
 use tree_sitter::{Point, Query, QueryCursor, StreamingIterator, Tree, TreeCursor};
@@ -21,6 +21,8 @@ fn topiary_query() -> &'static str {
 fn wrap_query() -> &'static str {
     include_str!("../resources/format/wrap.scm")
 }
+
+const MAX_TRIES: usize = 10;
 
 /// Create the topiary formatter
 pub fn create_formatter() -> Language {
@@ -54,10 +56,12 @@ pub fn format_file(
 
     let mut lines: Vec<String> = get_uncontinued_lines(&file)?;
 
-    let format_input = lines.join("\n");
+    let mut format_input = lines.join("\n");
     let mut format_output = vec![];
 
-    for _ in 0..10 {
+    for i in 1.. {
+        format_output.clear();
+
         formatter(
             &mut format_input.as_bytes(),
             &mut format_output,
@@ -69,13 +73,18 @@ pub fn format_file(
             },
         )?;
 
-        let format_result = String::from_utf8(format_output.clone()).unwrap();
+        lines = format_output.lines().collect::<Result<Vec<String>, _>>()?;
 
-        lines = format_result.lines().map(|x| x.to_string()).collect();
-
-        if dbg!(&break_lines(&mut lines, settings.line_length, 2)) == &0_usize {
+        if break_lines(&mut lines, settings.line_length, 2) == 0_usize {
             break;
         };
+
+        if i == MAX_TRIES {
+            warn!("Formatter did not converge after {MAX_TRIES} iterations");
+            break;
+        }
+
+        format_input = lines.join("\n");
     }
 
     writeln!(output, "{}", lines.join("\n"))?;
@@ -136,14 +145,22 @@ struct BreakCollection {
 
 // Repeately break lines until no long lines remain
 fn break_lines(lines: &mut Vec<String>, line_length: usize, indent: usize) -> usize {
-    let mut lines_changed = 0;
-    for _ in 1..10 {
-        lines_changed = break_lines_once(lines, line_length, indent);
-        if lines_changed == 0 {
+    let mut num_breaks = 0;
+    for i in 1.. {
+        let n = break_lines_once(lines, line_length, indent);
+
+        num_breaks += n;
+
+        if n == 0 {
             break;
         };
+
+        if i == MAX_TRIES {
+            warn!("Line breaking did not converge after {MAX_TRIES} iterations");
+            break;
+        }
     }
-    lines_changed
+    num_breaks
 }
 
 fn get_indent(line: &str) -> usize {
