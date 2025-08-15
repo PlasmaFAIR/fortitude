@@ -1,3 +1,4 @@
+use core::panic;
 use std::{
     cmp::Ordering,
     collections::HashMap,
@@ -8,6 +9,7 @@ use std::{
 
 use anyhow::Result;
 
+use log::info;
 use fortitude_linter::settings::FormatSettings;
 use topiary_core::{formatter, FormatterError, Language, Operation, TopiaryQuery};
 use tree_sitter::{Point, Query, QueryCursor, StreamingIterator, Tree, TreeCursor};
@@ -48,7 +50,7 @@ pub fn format_file(
     settings: &FormatSettings,
     output: &mut impl Write,
 ) -> Result<(), FormatterError> {
-    println!("formatting {file:?}");
+    info!("formatting {file:?}");
 
     let mut lines: Vec<String> = get_uncontinued_lines(&file)?;
 
