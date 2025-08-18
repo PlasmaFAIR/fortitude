@@ -409,6 +409,7 @@ mod test {
     #[test_case(Path::new("interface-explicit.f90"))]
     #[test_case(Path::new("interface-generic.f90"))]
     #[test_case(Path::new("interface-operator.f90"))]
+    #[test_case(Path::new("long-lines.f90"))]
     #[test_case(Path::new("module-definition-with-internal-module-procedures.f90"))]
     #[test_case(Path::new("procedure-as-argument.f90"))]
     #[test_case(Path::new("program.f90"))]
