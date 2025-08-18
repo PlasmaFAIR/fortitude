@@ -8,14 +8,14 @@ use fortitude_linter::{
 use fortitude_workspace::configuration::{self, resolve_bool_arg};
 use itertools::Itertools;
 
-use crate::cli::FormatArgs;
+use crate::cli::FormatCommand;
 
 use anyhow::Result;
 
 /// Run the formatter over a whole project
 ///
 /// TODO: Proper options like ``check``
-pub fn format(args: FormatArgs) -> Result<ExitCode> {
+pub fn format(args: FormatCommand) -> Result<ExitCode> {
     if !args.i_understand_the_risks.unwrap_or_default() {
         println!(
             "The format command is still in development and may break your code (although it
