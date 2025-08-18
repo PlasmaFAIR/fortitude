@@ -2,7 +2,7 @@ program mod1
   
   use mod, only: abc, def
 
-  use mod, only: abc, def, aaa, bbb, ccc => as, ddd, eee, ffff, gggg, hhh, aaaaa, ccccc, ddddd
+  use mod, only: abc, def, aaa, bbb, ccc => as, ddd, eee, ffff, gggg, hhh, aaaaa, ccccc, ddddd, eeeee, fffff, ggggg
 
 contains
 

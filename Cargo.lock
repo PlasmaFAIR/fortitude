@@ -634,6 +634,7 @@ name = "fortitude_formatter"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "fortitude_linter",
  "insta",
  "lazy_static",
  "test-case",

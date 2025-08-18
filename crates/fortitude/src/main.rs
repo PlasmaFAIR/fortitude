@@ -18,7 +18,7 @@ fn main() -> Result<ExitCode> {
     let status = match args.command {
         SubCommands::Check(check_args) => check(check_args, &args.global_options),
         SubCommands::Explain(args) => explain(args),
-        SubCommands::Format(args) => format(args),
+        SubCommands::Format(format_args) => format(format_args, &args.global_options),
         SubCommands::GenerateShellCompletion { shell } => {
             shell.generate(&mut Cli::command(), &mut stdout());
             return Ok(ExitCode::SUCCESS);

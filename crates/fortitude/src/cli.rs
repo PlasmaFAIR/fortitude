@@ -531,3 +531,28 @@ pub struct FormatCommand {
     #[arg(long, help_heading = "Format configuration")]
     pub line_length: Option<usize>,
 }
+
+pub struct FormatArgs {
+    pub i_understand_the_risks: bool,
+}
+
+impl FormatCommand {
+    /// Partition the CLI into command-line arguments and configuration
+    /// overrides.
+    pub fn partition(self) -> anyhow::Result<(FormatArgs, ConfigArguments)> {
+        let format_args = FormatArgs {
+            i_understand_the_risks: self.i_understand_the_risks.unwrap_or_default(),
+        };
+
+        let per_flag_overrides = ExplicitConfigOverrides {
+            files: self.files,
+            file_extensions: self.file_extensions,
+            line_length: self.line_length,
+            preview: resolve_bool_arg(self.preview, self.no_preview).map(PreviewMode::from),
+            ..ExplicitConfigOverrides::default()
+        };
+
+        let config_args = ConfigArguments { per_flag_overrides };
+        Ok((format_args, config_args))
+    }
+}

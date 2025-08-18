@@ -8,6 +8,7 @@ use std::{
 
 use anyhow::Result;
 
+use fortitude_linter::settings::FormatSettings;
 use topiary_core::{formatter, FormatterError, Language, Operation, TopiaryQuery};
 use tree_sitter::{Point, Query, QueryCursor, StreamingIterator, Tree, TreeCursor};
 
@@ -44,6 +45,7 @@ pub fn create_formatter() -> Language {
 pub fn format_file(
     file: PathBuf,
     language: &Language,
+    settings: &FormatSettings,
     output: &mut impl Write,
 ) -> Result<(), FormatterError> {
     println!("formatting {file:?}");
@@ -69,7 +71,7 @@ pub fn format_file(
 
         lines = format_result.lines().map(|x| x.to_string()).collect();
 
-        if dbg!(&break_lines(&mut lines, 20, 2)) == &0_usize {
+        if dbg!(&break_lines(&mut lines, settings.line_length, 2)) == &0_usize {
             break;
         };
     }
@@ -372,6 +374,7 @@ mod test {
     use std::path::Path;
 
     use anyhow::Result;
+    use fortitude_linter::settings::FormatSettings;
     use insta::assert_snapshot;
     use lazy_static::lazy_static;
     use test_case::test_case;
@@ -423,7 +426,28 @@ mod test {
         let path = Path::new("./resources/test/fixtures/format").join(path);
 
         let mut buf = Vec::new();
-        format_file(path, &TEST_FORMATTER, &mut buf)?;
+        let settings = FormatSettings::default();
+        format_file(path, &TEST_FORMATTER, &settings, &mut buf)?;
+        apply_common_filters!();
+
+        let string = String::from_utf8(buf)?;
+        assert_snapshot!(snapshot, string);
+
+        Ok(())
+    }
+
+    #[test_case(Path::new("long-lines.f90"))]
+    fn format_shorter_lines(path: &Path) -> Result<(), FormatterError> {
+        let snapshot = format!("shorter_{}", path.to_string_lossy());
+
+        let path = Path::new("./resources/test/fixtures/format").join(path);
+
+        let mut buf = Vec::new();
+        let settings = FormatSettings {
+            line_length: 20,
+            ..FormatSettings::default()
+        };
+        format_file(path, &TEST_FORMATTER, &settings, &mut buf)?;
         apply_common_filters!();
 
         let string = String::from_utf8(buf)?;

@@ -4,7 +4,9 @@ expression: string
 snapshot_kind: text
 ---
 program mod1
-  use mod, only : abc, def
+  use mod, only : &
+    abc, &
+    def
   use mod, only : &
     abc, &
     def, &
@@ -23,7 +25,8 @@ program mod1
     fffff, &
     ggggg
 contains
-  subroutine return_val(abc)
+  subroutine return_val( &
+    abc)
     integer, intent(out) :: abc
     abc = 0
     call some_other( &
@@ -32,7 +35,10 @@ contains
       abc, &
       abc, &
       abc, &
-      f(3, 1234, abc), &
+      f( &
+        3, &
+        1234, &
+        abc), &
       abc, &
       abc, &
       abc, &
@@ -44,8 +50,17 @@ contains
       abc, &
       abc, &
       abc)
-    call some_other(abc, 1 + 2 / 2, abc)
-    variable = foo + bar * (thing + (jaff + zang) - yeet) + huff
+    call some_other( &
+      abc, &
+      1 + 2 / 2, &
+      abc)
+    variable = foo &
+      + bar &
+      * (thing &
+        + (jaff &
+          + zang) &
+        - yeet) &
+      + huff
     a = 1 + 2 / 3
     a = 1 / 2 + 3
     return
