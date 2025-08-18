@@ -74,7 +74,7 @@ pub fn format_file(
         };
     }
 
-    println!("{}", lines.join("\n"));
+    writeln!(output, "{}", lines.join("\n"))?;
 
     Ok(())
 }
