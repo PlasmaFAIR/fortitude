@@ -23,9 +23,12 @@ use crate::rules::correctness::exit_labels;
 use crate::rules::portability::{self};
 use crate::rules::style::{keywords, strings};
 
+// TODO(peter): `Settings` should move into `fortitude_workspace`, but
+// the component settings should live in their respective crates
 #[derive(Debug)]
 pub struct Settings {
     pub check: CheckSettings,
+    pub format: FormatSettings,
     pub file_resolver: FileResolverSettings,
 }
 
@@ -34,6 +37,7 @@ impl Default for Settings {
         let project_root = path_dedot::CWD.as_path();
         Self {
             check: CheckSettings::new(project_root),
+            format: FormatSettings::default(),
             file_resolver: FileResolverSettings::new(project_root),
         }
     }
@@ -135,6 +139,38 @@ impl fmt::Display for CheckSettings {
         Ok(())
     }
 }
+
+#[derive(Debug)]
+pub struct FormatSettings {
+    pub line_length: usize,
+    pub preview: PreviewMode,
+}
+
+impl fmt::Display for FormatSettings {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "\n# Format Settings")?;
+        display_settings! {
+            formatter = f,
+            namespace = "format",
+            fields = [
+                self.line_length,
+                self.preview,
+            ]
+        }
+        Ok(())
+    }
+}
+
+impl Default for FormatSettings {
+    fn default() -> Self {
+        // TODO(peter): add `LineWidth` type
+        Self {
+            line_length: 100,
+            preview: PreviewMode::default(),
+        }
+    }
+}
+
 #[derive(Debug, CacheKey)]
 pub struct FileResolverSettings {
     pub excludes: FilePatternSet,
