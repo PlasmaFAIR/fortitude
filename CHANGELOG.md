@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.5
+
+### Bug fixes
+
+- Fix `fmt` argument in IO statements ([#491](https://github.com/PlasmaFAIR/fortitude/pull/491))
+
 ## 0.7.4
 
 ### Rule changes
