@@ -551,7 +551,7 @@ dependencies = [
 
 [[package]]
 name = "fortitude"
-version = "0.7.4"
+version = "0.7.5"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -2081,7 +2081,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-fortran"
 version = "0.5.1"
-source = "git+https://github.com/stadelmanma/tree-sitter-fortran.git?rev=8334abc#8334abca785db3a041292e3b3b818a82a55b238f"
+source = "git+https://github.com/stadelmanma/tree-sitter-fortran.git?rev=a83bbe5#a83bbe5d652ccfad187d722852d3b87d44be1c17"
 dependencies = [
  "cc",
  "tree-sitter-language",
