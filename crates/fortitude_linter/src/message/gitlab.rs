@@ -89,9 +89,15 @@ impl Serialize for SerializedMessages<'_> {
             } else {
                 message.body().to_string()
             };
+            let name = if let Some(rule) = message.rule() {
+                format!("{}", rule.noqa_code())
+            } else {
+                String::from("fortitude")
+            };
 
             let value = json!({
                 "description": description,
+                "check_name": name,
                 "severity": "major",
                 "fingerprint": format!("{:x}", message_fingerprint),
                 "location": {
