@@ -5,6 +5,7 @@ expression: redact_fingerprint(&content)
 [
   {
     "description": "(S201) 'implicit none' set on the enclosing module",
+    "check_name": "S201: superfluous-implicit-none",
     "severity": "major",
     "fingerprint": "<redacted>",
     "location": {
@@ -17,6 +18,7 @@ expression: redact_fingerprint(&content)
   },
   {
     "description": "(S061) end statement should read 'end subroutine foo'",
+    "check_name": "S061: unnamed-end-statement",
     "severity": "major",
     "fingerprint": "<redacted>",
     "location": {
@@ -29,6 +31,7 @@ expression: redact_fingerprint(&content)
   },
   {
     "description": "(PORT021) integer*4 is non-standard, use integer(4)",
+    "check_name": "PORT021: star-kind",
     "severity": "major",
     "fingerprint": "<redacted>",
     "location": {
