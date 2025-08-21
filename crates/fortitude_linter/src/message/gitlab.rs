@@ -84,15 +84,12 @@ impl Serialize for SerializedMessages<'_> {
             }
             fingerprints.insert(message_fingerprint);
 
-            let description = if let Some(rule) = message.rule() {
-                format!("({}) {}", rule.noqa_code(), message.body())
+            let (description, name) = if let Some(rule) = message.rule() {
+                let description = format!("({}) {}", rule.noqa_code(), message.body());
+                let name = format!("{}: {}", rule.noqa_code(), rule.as_ref());
+                (description, name)
             } else {
-                message.body().to_string()
-            };
-            let name = if let Some(rule) = message.rule() {
-                format!("{}", rule.noqa_code())
-            } else {
-                String::from("fortitude")
+                (message.body().to_string(), String::from("fortitude"))
             };
 
             let value = json!({
