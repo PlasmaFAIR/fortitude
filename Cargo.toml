@@ -20,6 +20,7 @@ license = "MIT"
 fortitude = { path = "crates/fortitude" }
 fortitude_linter = { path = "crates/fortitude_linter" }
 fortitude_macros = { path = "crates/fortitude_macros" }
+fortitude_preprocessor = { path = "crates/fortitude_preprocessor" }
 fortitude_workspace = { path = "crates/fortitude_workspace" }
 
 ruff_annotate_snippets = { git = "https://github.com/astral-sh/ruff.git", tag = "0.12.9", version = "0.1.0" }

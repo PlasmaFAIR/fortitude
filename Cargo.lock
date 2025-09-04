@@ -500,6 +500,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "dedent"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8a3dee4e932355439992a45dc631b0979abf9c677958674bd94298bf9002870"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "derive_more"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -793,6 +804,22 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "fortitude_preprocessor"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "dedent",
+ "insta",
+ "itertools 0.12.1",
+ "pretty_assertions",
+ "strum",
+ "strum_macros",
+ "tempfile",
+ "test-case",
 ]
 
 [[package]]
