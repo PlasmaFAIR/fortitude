@@ -19,6 +19,7 @@ license = "MIT"
 fortitude = { path = "crates/fortitude" }
 fortitude_linter = { path = "crates/fortitude_linter" }
 fortitude_macros = { path = "crates/fortitude_macros" }
+fortitude_preprocessor = { path = "crates/fortitude_preprocessor" }
 fortitude_workspace = { path = "crates/fortitude_workspace" }
 
 annotate-snippets = { git = "https://github.com/PlasmaFAIR/annotate-snippets-rs.git", branch = "level-none" }
