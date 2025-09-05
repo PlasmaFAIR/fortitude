@@ -12,6 +12,7 @@ license = { workspace = true }
 
 [dependencies]
 anyhow = { workspace = true }
+chrono = { workspace = true }
 itertools = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
@@ -20,6 +21,7 @@ strum_macros = { workspace = true }
 assert_cmd = "2.0.16"
 dedent = "0.1.1"
 insta = { version = "1.41.1", features = ["filters", "json", "redactions"] }
+lazy-regex = {workspace = true }
 pretty_assertions = "1.4.1"
 tempfile = "3.13.0"
 test-case = "3.3.1"
