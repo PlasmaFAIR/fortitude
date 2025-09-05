@@ -271,7 +271,7 @@ impl<'a> CppTokenIterator<'a> {
         };
         let start = self.pos();
         self.iter.next();
-        while let Some(b) = self.iter.next() {
+        for b in self.iter.by_ref() {
             if b == delimiter {
                 break;
             }
@@ -425,13 +425,11 @@ mod tests {
 
     #[test]
     fn test_identifier_tokenization() {
-        let input_vec = vec![
-            "__IDENT__",
+        let input_vec = ["__IDENT__",
             "$dollar_ident",
             "_ident123",
             "ident_456",
-            "ident$789",
-        ];
+            "ident$789"];
         let input = input_vec.join(" ");
         let tokens = tokenize(input.as_str());
         assert_eq!(tokens.len(), 9);
@@ -468,8 +466,7 @@ mod tests {
             println!("{}", token);
         }
         assert_eq!(tokens.len(), 13);
-        let expected_kinds = vec![
-            CppTokenKind::String,
+        let expected_kinds = [CppTokenKind::String,
             CppTokenKind::Newline,
             CppTokenKind::String,
             CppTokenKind::Newline,
@@ -482,8 +479,7 @@ mod tests {
             CppTokenKind::String,
             CppTokenKind::Newline,
             CppTokenKind::String,
-            CppTokenKind::Newline,
-        ];
+            CppTokenKind::Newline];
         for (token, expected_kind) in tokens.iter().zip(expected_kinds.iter()) {
             assert_eq!(token.kind, *expected_kind);
         }
@@ -501,8 +497,7 @@ mod tests {
         );
         let tokens = tokenize(input);
         assert_eq!(tokens.len(), 10);
-        let expected_kinds = vec![
-            CppTokenKind::Identifier,
+        let expected_kinds = [CppTokenKind::Identifier,
             CppTokenKind::Whitespace,
             CppTokenKind::Comment,
             CppTokenKind::Newline,
@@ -511,8 +506,7 @@ mod tests {
             CppTokenKind::Comment,
             CppTokenKind::Newline,
             CppTokenKind::Identifier,
-            CppTokenKind::Comment,
-        ];
+            CppTokenKind::Comment];
         for (token, expected_kind) in tokens.iter().zip(expected_kinds.iter()) {
             assert_eq!(token.kind, *expected_kind);
         }
@@ -551,13 +545,11 @@ mod tests {
         // Test a single period, which should be a punctuator.
         let input = ".5 5. .";
         let tokens = tokenize(input);
-        let expected_kinds = vec![
-            CppTokenKind::Number,
+        let expected_kinds = [CppTokenKind::Number,
             CppTokenKind::Whitespace,
             CppTokenKind::Number,
             CppTokenKind::Whitespace,
-            CppTokenKind::Punctuator,
-        ];
+            CppTokenKind::Punctuator];
         assert_eq!(tokens.len(), expected_kinds.len());
         for (token, expected_kind) in tokens.iter().zip(expected_kinds.iter()) {
             assert_eq!(token.kind, *expected_kind);
@@ -568,13 +560,11 @@ mod tests {
     fn test_number_with_kind_tokenization() {
         let input = "1_8 1.0e10_8";
         let tokens = tokenize(input);
-        let expected_kinds = vec![
-            CppTokenKind::Number,
+        let expected_kinds = [CppTokenKind::Number,
             CppTokenKind::Identifier,
             CppTokenKind::Whitespace,
             CppTokenKind::Number,
-            CppTokenKind::Identifier,
-        ];
+            CppTokenKind::Identifier];
         for (token, expected_kind) in tokens.iter().zip(expected_kinds.iter()) {
             assert_eq!(token.kind, *expected_kind);
             if expected_kind == &CppTokenKind::Identifier {
