@@ -812,9 +812,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
+ "chrono",
  "dedent",
  "insta",
  "itertools 0.12.1",
+ "lazy-regex",
  "pretty_assertions",
  "strum",
  "strum_macros",

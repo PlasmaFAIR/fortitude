@@ -1,0 +1,9 @@
+---
+source: crates/fortitude_preprocessor/src/cpp.rs
+expression: preprocessor.output
+---
+program p
+  integer :: X
+  X = 12
+  print *, 5, X , "test.f90", 9
+end program p
