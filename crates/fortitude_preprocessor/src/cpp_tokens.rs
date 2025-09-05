@@ -5,7 +5,7 @@ use std::str::{from_utf8, Utf8Error};
 /// All valid 'punctuators' in Fortran.
 /// These are consumed greedily by the tokenizer.
 const PUNCTUATORS: &[&str] = &[
-    "*", "+", "-", "/", "**", // Arithmetic operators
+    "*", "+", "-", "/", "**", "=", // Arithmetic operators
     "==", "/=", "<", ">", "<=", ">=", // Comparison operators
     "(", "[", "(/", ")", "]", "/)", // Brackets
     ",", ".", "&", "%", "//", ";", ":", "::", // Others
@@ -30,6 +30,23 @@ impl fmt::Display for Position {
 
 /// The variant of each token.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, strum_macros::Display)]
+pub enum CppDirectiveKind {
+    Define,
+    Undef,
+    Include,
+    If,
+    Ifdef,
+    Ifndef,
+    Else,
+    Endif,
+    Pragma,
+    Warning,
+    Error,
+    Stringification,
+}
+
+/// The variant of each token.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, strum_macros::Display)]
 pub enum CppTokenKind {
     /// A variable or unexpanded macro token.
     Identifier,
@@ -49,7 +66,7 @@ pub enum CppTokenKind {
     Error,
     /// A preprocessor directive, including the leading `#`. Also captures
     /// stringification within macros.
-    Directive,
+    Directive(CppDirectiveKind),
     /// Token concatenation. Some compilers support `##` for this, but
     /// gfortran uses `/**/`.
     Concatenation, // TODO:
@@ -60,13 +77,13 @@ pub enum CppTokenKind {
 #[derive(Debug, Clone, Copy)]
 pub struct CppToken<'a> {
     /// The text of the token.
-    text: &'a str,
+    pub text: &'a str,
     /// The kind of token.
-    kind: CppTokenKind,
+    pub kind: CppTokenKind,
     /// The beginning of the token in the source file.
-    start: Position,
+    pub start: Position,
     /// The end of the token in the source file.
-    end: Position,
+    pub end: Position,
 }
 
 impl fmt::Display for CppToken<'_> {
@@ -116,6 +133,9 @@ impl Iterator for SourceIterator<'_> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // TODO: handle backslash-newlines.
+        // Should skip the backslash and newline, then
+        // any further backslash-newlines.
         let item = self.iter.next()?;
         match item {
             b'\n' => {
@@ -168,6 +188,11 @@ impl<'a> CppTokenIterator<'a> {
         Self { iter }
     }
 
+    /// Current line number in the file. 1-indexed.
+    pub fn line(&self) -> usize {
+        self.iter.pos.line + 1
+    }
+
     /// Source string.
     fn source(&self) -> &'a str {
         self.iter.source
@@ -200,18 +225,13 @@ impl<'a> CppTokenIterator<'a> {
         })
     }
 
-    /// Consume the rest of the current line up to the newline. This utility
-    /// is used for other 'consume' functions.
-    fn consume_line(&mut self, kind: CppTokenKind) -> CppTokenResult<'a> {
-        let start = self.pos();
-        while self.iter.next().is_some() {
-            if let Some(&b) = self.iter.peek() {
-                if b == b'\n' || b == b'\r' {
-                    break;
-                }
+    /// Skip the rest of the current line up to the newline.
+    pub fn skip_line(&mut self) {
+        for b in self.iter.by_ref() {
+            if b == b'\n' || b == b'\r' {
+                break;
             }
         }
-        self.emit(start, kind)
     }
 
     /// If the next token is a newline, consume it. Includes LF, CR, and CRLF.
@@ -237,7 +257,7 @@ impl<'a> CppTokenIterator<'a> {
 
     /// Consumes any amount of whitespace and combinations of tabs and spaces.
     /// Does not include newlines.
-    fn consume_whitespace(&mut self) -> Option<CppTokenResult<'a>> {
+    pub fn consume_whitespace(&mut self) -> Option<CppTokenResult<'a>> {
         match self.iter.peek() {
             Some(&b' ') | Some(&b'\t') => {
                 let start = self.iter.pos;
@@ -257,7 +277,15 @@ impl<'a> CppTokenIterator<'a> {
     /// Consume a comment until the end of the line.
     fn consume_comment(&mut self) -> Option<CppTokenResult<'a>> {
         if *self.iter.peek()? == b'!' {
-            Some(self.consume_line(CppTokenKind::Comment))
+            let start = self.pos();
+            while self.iter.next().is_some() {
+                if let Some(&b) = self.iter.peek() {
+                    if b == b'\n' || b == b'\r' {
+                        break;
+                    }
+                }
+            }
+            Some(self.emit(start, CppTokenKind::Comment))
         } else {
             None
         }
@@ -302,14 +330,30 @@ impl<'a> CppTokenIterator<'a> {
         let _ = self.consume_whitespace();
         // Consume an identifier for the directive name.
         match self.consume_identifier() {
-            Some(Ok(_)) => Some(self.emit(start, CppTokenKind::Directive)),
+            Some(Ok(directive)) => {
+                let directive_kind = match directive.text {
+                    "define" => CppDirectiveKind::Define,
+                    "undef" => CppDirectiveKind::Undef,
+                    "include" => CppDirectiveKind::Include,
+                    "if" => CppDirectiveKind::If,
+                    "ifdef" => CppDirectiveKind::Ifdef,
+                    "ifndef" => CppDirectiveKind::Ifndef,
+                    "else" => CppDirectiveKind::Else,
+                    "endif" => CppDirectiveKind::Endif,
+                    "pragma" => CppDirectiveKind::Pragma,
+                    "warning" => CppDirectiveKind::Warning,
+                    "error" => CppDirectiveKind::Error,
+                    _ => CppDirectiveKind::Stringification,
+                };
+                Some(self.emit(start, CppTokenKind::Directive(directive_kind)))
+            }
             _ => Some(self.emit(start, CppTokenKind::Error)),
         }
     }
 
     /// Consumes an identifier, such as a variable, function name, or macro
     /// name. These may include '$' characters to handle Fortran extensions.
-    fn consume_identifier(&mut self) -> Option<CppTokenResult<'a>> {
+    pub fn consume_identifier(&mut self) -> Option<CppTokenResult<'a>> {
         let first_char = self.iter.peek()?;
         if !first_char.is_ascii_alphabetic() && *first_char != b'_' && *first_char != b'$' {
             return None;
@@ -630,21 +674,21 @@ mod tests {
         let tokens = tokenize(input);
         assert_eq!(tokens.len(), 32);
         let expected_kinds = [
-            CppTokenKind::Directive, // #define
+            CppTokenKind::Directive(CppDirectiveKind::Define),
             CppTokenKind::Whitespace,
             CppTokenKind::Identifier, // MAX
             CppTokenKind::Whitespace,
             CppTokenKind::Number, // 100
             CppTokenKind::Newline,
-            CppTokenKind::Directive, // #  undef
+            CppTokenKind::Directive(CppDirectiveKind::Undef),
             CppTokenKind::Whitespace,
             CppTokenKind::Identifier, // MIN
             CppTokenKind::Newline,
-            CppTokenKind::Directive, // #include
+            CppTokenKind::Directive(CppDirectiveKind::Include),
             CppTokenKind::Whitespace,
             CppTokenKind::String, // "file.h"
             CppTokenKind::Newline,
-            CppTokenKind::Directive, // #   include
+            CppTokenKind::Directive(CppDirectiveKind::Include),
             CppTokenKind::Whitespace,
             CppTokenKind::Punctuator, // <
             CppTokenKind::Identifier, // file
@@ -652,16 +696,16 @@ mod tests {
             CppTokenKind::Identifier, // h
             CppTokenKind::Punctuator, // >
             CppTokenKind::Newline,
-            CppTokenKind::Directive, // #if
+            CppTokenKind::Directive(CppDirectiveKind::If),
             CppTokenKind::Whitespace,
             CppTokenKind::Identifier, // defined
             CppTokenKind::Punctuator, // (
             CppTokenKind::Identifier, // MAX
             CppTokenKind::Punctuator, // )
             CppTokenKind::Newline,
-            CppTokenKind::Directive, // #else
+            CppTokenKind::Directive(CppDirectiveKind::Else),
             CppTokenKind::Newline,
-            CppTokenKind::Directive, // #endif
+            CppTokenKind::Directive(CppDirectiveKind::Endif),
         ];
         for (token, expected_kind) in tokens.iter().zip(expected_kinds.iter()) {
             assert_eq!(token.kind, *expected_kind);
