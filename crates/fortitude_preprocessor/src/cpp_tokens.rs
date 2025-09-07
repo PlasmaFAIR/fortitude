@@ -38,6 +38,7 @@ pub enum CppDirectiveKind {
     Ifdef,
     Ifndef,
     Else,
+    Elif,
     Endif,
     Pragma,
     Warning,
@@ -235,7 +236,7 @@ impl<'a> CppTokenIterator<'a> {
     }
 
     /// If the next token is a newline, consume it. Includes LF, CR, and CRLF.
-    fn consume_newline(&mut self) -> Option<CppTokenResult<'a>> {
+    pub fn consume_newline(&mut self) -> Option<CppTokenResult<'a>> {
         match self.iter.peek() {
             Some(&b'\n') => {
                 let start = self.pos();
@@ -338,6 +339,7 @@ impl<'a> CppTokenIterator<'a> {
                     "if" => CppDirectiveKind::If,
                     "ifdef" => CppDirectiveKind::Ifdef,
                     "ifndef" => CppDirectiveKind::Ifndef,
+                    "elif" => CppDirectiveKind::Elif,
                     "else" => CppDirectiveKind::Else,
                     "endif" => CppDirectiveKind::Endif,
                     "pragma" => CppDirectiveKind::Pragma,
