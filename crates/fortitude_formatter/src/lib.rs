@@ -9,8 +9,8 @@ use std::{
 
 use anyhow::Result;
 
-use log::{info, warn};
 use fortitude_linter::settings::FormatSettings;
+use log::{info, warn};
 use topiary_core::{formatter, FormatterError, Language, Operation, TopiaryQuery};
 use tree_sitter::{Point, Query, QueryCursor, StreamingIterator, Tree, TreeCursor};
 
