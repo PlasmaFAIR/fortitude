@@ -55,7 +55,7 @@ It can also be installed as a pure Rust project:
 ```bash
 git clone https://github.com/PlasmaFAIR/fortitude
 cd fortitude
-cargo install --path fortitude
+cargo install --path crates/fortitude
 ```
 
 Fortitude can also be installed via [other package managers](https://fortitude.readthedocs.io/en/stable/installation/)
