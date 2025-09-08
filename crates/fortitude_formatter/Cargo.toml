@@ -11,10 +11,14 @@ repository = { workspace = true }
 license = { workspace = true }
 
 [dependencies]
+fortitude_linter = { workspace = true }
+
 anyhow = { workspace = true }
 lazy_static = { workspace = true }
+log.workspace = true
 topiary-core = { workspace = true }
 topiary-tree-sitter-facade = { workspace = true }
+tree-sitter.workspace = true
 tree-sitter-fortran = { workspace = true }
 
 [dev-dependencies]

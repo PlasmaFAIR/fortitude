@@ -1,14 +1,16 @@
 ---
-source: fortitude/src/format.rs
+source: crates/fortitude_formatter/src/lib.rs
 expression: string
 ---
 module unit_test_module
   private
+
   use iso_c_binding
   interface assert_equals
     module procedure assert_equals_int
     module procedure assert_equals_real8
   end interface
+
   real(8), save :: eps = epsilon(1.0d0) / epsilon(1.0)
   logical, save :: all_pass, passing
   character(5) :: nc = achar(27)//'[00m'
@@ -17,6 +19,7 @@ module unit_test_module
   ! green
   character(7) :: rd = achar(27)//'[1;31m'
   ! red
+
   public :: assert_equals
   public :: all_pass
 contains
