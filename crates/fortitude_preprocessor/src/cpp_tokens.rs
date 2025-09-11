@@ -1,6 +1,6 @@
 use std::fmt;
 use std::iter::Peekable;
-use std::str::{from_utf8, Utf8Error};
+use std::str::Utf8Error;
 
 /// All valid 'punctuators' in Fortran.
 /// These are consumed greedily by the tokenizer.
@@ -10,23 +10,6 @@ const PUNCTUATORS: &[&str] = &[
     "(", "[", "(/", ")", "]", "/)", // Brackets
     ",", ".", "&", "%", "//", ";", ":", "::", // Others
 ];
-
-/// A position in a source file.
-#[derive(Debug, Clone, Copy)]
-pub struct Position {
-    /// The line number, 0 indexed.
-    line: usize,
-    /// The column number, 0 indexed.
-    column: usize,
-    /// The byte offset from the start of the file.
-    offset: usize,
-}
-
-impl fmt::Display for Position {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}:{}", self.line, self.column, self.offset)
-    }
-}
 
 /// The variant of each token.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, strum_macros::Display)]
@@ -82,9 +65,9 @@ pub struct CppToken<'a> {
     /// The kind of token.
     pub kind: CppTokenKind,
     /// The beginning of the token in the source file.
-    pub start: Position,
+    pub start: usize,
     /// The end of the token in the source file.
-    pub end: Position,
+    pub end: usize,
 }
 
 impl fmt::Display for CppToken<'_> {
@@ -103,68 +86,14 @@ impl fmt::Display for CppToken<'_> {
     }
 }
 
-/// Iterates over a file and tracks the current position in the file.
-/// Accounts for newlines of different types (LF, CR, CRLF).
-struct SourceIterator<'a> {
-    /// The source string.
-    source: &'a str,
-    /// The current position in the string.
-    pos: Position,
-    /// Internal iterator.
-    iter: Peekable<std::str::Bytes<'a>>,
-}
-
-impl<'a> SourceIterator<'a> {
-    fn new(source: &'a str) -> Self {
-        let pos = Position {
-            line: 0,
-            column: 0,
-            offset: 0,
-        };
-        let iter = source.bytes().peekable();
-        Self { source, pos, iter }
-    }
-
-    fn peek(&mut self) -> Option<&u8> {
-        self.iter.peek()
-    }
-}
-
-impl Iterator for SourceIterator<'_> {
-    type Item = u8;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        // TODO: handle backslash-newlines.
-        // Should skip the backslash and newline, then
-        // any further backslash-newlines.
-        let item = self.iter.next()?;
-        match item {
-            b'\n' => {
-                self.pos.line += 1;
-                self.pos.column = 0;
-            }
-            b'\r' => {
-                // Handle CRLF
-                if let Some(&b'\n') = self.iter.peek() {
-                    self.pos.column += 1;
-                } else {
-                    self.pos.line += 1;
-                    self.pos.column = 0;
-                }
-            }
-            _ => {
-                self.pos.column += 1;
-            }
-        }
-        self.pos.offset += 1;
-        Some(item)
-    }
-}
-
 /// An iterator over `&str` that returns tokens.
 pub struct CppTokenIterator<'a> {
+    /// Reference to the source string.
+    source: &'a str,
     /// Internal iterator.
-    iter: SourceIterator<'a>,
+    iter: Peekable<std::str::Bytes<'a>>,
+    /// Local byte offset counter
+    offset: usize,
 }
 
 type CppTokenResult<'a> = Result<CppToken<'a>, Utf8Error>;
@@ -185,39 +114,25 @@ impl<'a> CppTokenIterator<'a> {
 
     /// Creates a new token iterator.
     pub fn new(source: &'a str) -> Self {
-        let iter = SourceIterator::new(source);
-        Self { iter }
+        let iter = source.bytes().peekable();
+        let offset = 0;
+        Self {
+            source,
+            iter,
+            offset,
+        }
     }
 
-    /// Current line number in the file. 1-indexed.
-    pub fn line(&self) -> usize {
-        self.iter.pos.line + 1
-    }
-
-    /// Source string.
-    fn source(&self) -> &'a str {
-        self.iter.source
-    }
-
-    /// Source bytes.
-    fn bytes(&self) -> &'a [u8] {
-        self.source().as_bytes()
-    }
-
-    /// Current position in the file.
-    fn pos(&self) -> Position {
-        self.iter.pos
-    }
-
-    /// Current bytes offset into file.
-    fn offset(&self) -> usize {
-        self.iter.pos.offset
+    fn step(&mut self) -> Option<u8> {
+        let b = self.iter.next()?;
+        self.offset += 1;
+        Some(b)
     }
 
     /// Generate token from the given position to the current position.
-    fn emit(&self, start: Position, kind: CppTokenKind) -> CppTokenResult<'a> {
-        let end = self.iter.pos;
-        let text = from_utf8(&self.bytes()[start.offset..end.offset])?;
+    fn emit(&self, start: usize, kind: CppTokenKind) -> CppTokenResult<'a> {
+        let end = self.offset;
+        let text = &self.source[start..end];
         Ok(CppToken {
             text,
             kind,
@@ -226,29 +141,26 @@ impl<'a> CppTokenIterator<'a> {
         })
     }
 
-    /// Skip the rest of the current line up to the newline.
-    pub fn skip_line(&mut self) {
-        for b in self.iter.by_ref() {
-            if b == b'\n' || b == b'\r' {
-                break;
-            }
+    /// Skip the rest of the current line excluding the newline.
+    pub fn skip_to_line_end(&mut self) {
+        while !matches!(self.iter.peek(), Some(&b'\n') | Some(&b'\r') | None) {
+            self.step();
         }
     }
 
     /// If the next token is a newline, consume it. Includes LF, CR, and CRLF.
     pub fn consume_newline(&mut self) -> Option<CppTokenResult<'a>> {
+        let start = self.offset;
         match self.iter.peek() {
             Some(&b'\n') => {
-                let start = self.pos();
-                self.iter.next();
+                self.step();
                 Some(self.emit(start, CppTokenKind::Newline))
             }
             Some(&b'\r') => {
-                let start = self.pos();
-                self.iter.next();
+                self.step();
                 // Handle CRLF
-                if let Some(&b'\n') = self.iter.peek() {
-                    self.iter.next();
+                if self.iter.peek() == Some(&b'\n') {
+                    self.step();
                 }
                 Some(self.emit(start, CppTokenKind::Newline))
             }
@@ -259,33 +171,22 @@ impl<'a> CppTokenIterator<'a> {
     /// Consumes any amount of whitespace and combinations of tabs and spaces.
     /// Does not include newlines.
     pub fn consume_whitespace(&mut self) -> Option<CppTokenResult<'a>> {
-        match self.iter.peek() {
-            Some(&b' ') | Some(&b'\t') => {
-                let start = self.iter.pos;
-                while self.iter.next().is_some() {
-                    if let Some(&b) = self.iter.peek() {
-                        if b != b' ' && b != b'\t' {
-                            break;
-                        }
-                    }
-                }
-                Some(self.emit(start, CppTokenKind::Whitespace))
-            }
-            _ => None,
+        let start = self.offset;
+        while matches!(self.iter.peek(), Some(&b' ') | Some(&b'\t')) {
+            self.step();
+        }
+        if self.offset > start {
+            Some(self.emit(start, CppTokenKind::Whitespace))
+        } else {
+            None
         }
     }
 
     /// Consume a comment until the end of the line.
     fn consume_comment(&mut self) -> Option<CppTokenResult<'a>> {
         if *self.iter.peek()? == b'!' {
-            let start = self.pos();
-            while self.iter.next().is_some() {
-                if let Some(&b) = self.iter.peek() {
-                    if b == b'\n' || b == b'\r' {
-                        break;
-                    }
-                }
-            }
+            let start = self.offset;
+            self.skip_to_line_end();
             Some(self.emit(start, CppTokenKind::Comment))
         } else {
             None
@@ -303,28 +204,31 @@ impl<'a> CppTokenIterator<'a> {
             Some(&b'\"') => b'\"',
             _ => return None,
         };
-        let start = self.pos();
-        self.iter.next();
-        for b in self.iter.by_ref() {
-            if b == delimiter {
-                break;
+        let start = self.offset;
+        self.step();
+        while self.iter.peek() != Some(&delimiter) {
+            if self.iter.peek().is_none() {
+                // Unterminated string
+                return Some(self.emit(start, CppTokenKind::Error));
             }
+            self.step();
         }
+        self.step();
         Some(self.emit(start, CppTokenKind::String))
     }
 
     /// Consume a preprocessor directive, including the leading `#`.  Any amount
     /// of whitespace can be between the `#` and the directive name.  Also
     /// captures stringification within macros.
-    fn consume_directive(&mut self) -> Option<CppTokenResult<'a>> {
-        if *self.iter.peek()? != b'#' {
+    pub fn consume_directive(&mut self) -> Option<CppTokenResult<'a>> {
+        if self.iter.peek() != Some(&b'#') {
             return None;
         }
-        let start = self.pos();
-        self.iter.next();
+        let start = self.offset;
+        self.step();
         // If the next character is another '#', it's a concatenation operator.
-        if let Some(&b'#') = self.iter.peek() {
-            self.iter.next();
+        if self.iter.peek() == Some(&b'#') {
+            self.step();
             return Some(self.emit(start, CppTokenKind::Concatenation));
         }
         // Consume any whitespace after the '#'.
@@ -360,11 +264,11 @@ impl<'a> CppTokenIterator<'a> {
         if !first_char.is_ascii_alphabetic() && *first_char != b'_' && *first_char != b'$' {
             return None;
         }
-        let start = self.pos();
-        self.iter.next();
+        let start = self.offset;
+        self.step();
         while let Some(&b) = self.iter.peek() {
             if b.is_ascii_alphanumeric() || b == b'_' || b == b'$' {
-                self.iter.next();
+                self.step();
             } else {
                 break;
             }
@@ -391,8 +295,8 @@ impl<'a> CppTokenIterator<'a> {
         if first_char != b'.' && !first_char.is_ascii_digit() {
             return None;
         }
-        let start = self.pos();
-        self.iter.next();
+        let start = self.offset;
+        self.step();
         // Handle optional leading period.
         // If it isn't followed by a digit, it's not a number.
         if first_char == b'.' && self.iter.peek().filter(|&x| x.is_ascii_digit()).is_none() {
@@ -402,17 +306,17 @@ impl<'a> CppTokenIterator<'a> {
         while let Some(&b) = self.iter.peek() {
             match b {
                 b'e' | b'E' | b'd' | b'D' => {
-                    self.iter.next();
+                    self.step();
                     if let Some(&next) = self.iter.peek() {
                         if next == b'+' || next == b'-' {
-                            self.iter.next();
+                            self.step();
                         }
                     }
                     continue;
                 }
                 _ => {
                     if b.is_ascii_digit() || b == b'.' {
-                        self.iter.next();
+                        self.step();
                         continue;
                     }
                     // End of number.
@@ -427,22 +331,23 @@ impl<'a> CppTokenIterator<'a> {
     fn consume_punctuator(&mut self) -> Option<CppTokenResult<'a>> {
         // From the starting position, find the longest string that
         // matches a punctuator.
-        let start = self.offset();
+        let start = self.offset;
         let mut end = start;
-        while end < self.bytes().len()
-            && PUNCTUATORS
-                .iter()
-                .any(|op| op.as_bytes().starts_with(&self.bytes()[start..end + 1]))
+        while end < self.source.len()
+            && PUNCTUATORS.iter().any(|op| {
+                op.as_bytes()
+                    .starts_with(&self.source.as_bytes()[start..end + 1])
+            })
         {
             end += 1;
         }
         // Check that the string matches a punctuator.
-        let text = &self.bytes()[start..end];
+        let text = &self.source.as_bytes()[start..end];
         if PUNCTUATORS.iter().any(|&op| op.as_bytes() == text) {
-            let start = self.pos();
+            let start = self.offset;
             // Advance the iterator to catch up to the copy and return the token.
             for _ in 0..text.len() {
-                self.iter.next();
+                self.step();
             }
             Some(self.emit(start, CppTokenKind::Punctuator))
         } else {
@@ -461,12 +366,12 @@ impl<'a> Iterator for CppTokenIterator<'a> {
                 return Some(token);
             }
         }
-        if self.offset() == self.bytes().len() {
+        if self.offset == self.source.len() {
             // End of file
             return None;
         }
         // Unhandled token found.
-        let start = self.pos();
+        let start = self.offset;
         for _ in &mut self.iter {
             // Consume the rest of the file.
         }
@@ -541,9 +446,6 @@ mod tests {
         "#
         );
         let tokens = tokenize(input);
-        for token in &tokens {
-            println!("{}", token);
-        }
         assert_eq!(tokens.len(), 13);
         let expected_kinds = [
             CppTokenKind::String,
