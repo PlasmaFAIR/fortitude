@@ -818,6 +818,8 @@ dependencies = [
  "itertools 0.12.1",
  "lazy-regex",
  "pretty_assertions",
+ "ruff_source_file",
+ "ruff_text_size",
  "strum",
  "strum_macros",
  "tempfile",
