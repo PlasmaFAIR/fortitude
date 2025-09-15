@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use std::path::Path;
 use tree_sitter::Node;

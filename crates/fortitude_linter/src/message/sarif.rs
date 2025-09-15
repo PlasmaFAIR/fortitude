@@ -11,11 +11,11 @@ use serde_json::json;
 
 use ruff_source_file::OneIndexed;
 
+use crate::VERSION;
 use crate::fs::normalize_path;
 use crate::message::Emitter;
 use crate::registry::{Category, RuleNamespace};
 use crate::rules::Rule;
-use crate::VERSION;
 
 use super::DiagnosticMessage;
 
@@ -187,8 +187,8 @@ impl Serialize for SarifResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::message::tests::{capture_emitter_output, create_messages};
     use crate::message::SarifEmitter;
+    use crate::message::tests::{capture_emitter_output, create_messages};
 
     fn get_output() -> String {
         let mut emitter = SarifEmitter {};

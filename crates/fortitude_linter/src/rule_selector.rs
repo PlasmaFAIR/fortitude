@@ -224,7 +224,10 @@ impl RuleSelector {
     }
 
     /// Returns rules matching the selector, taking into account rule groups like preview and deprecated.
-    pub fn rules<'a>(&'a self, preview: &PreviewOptions) -> impl Iterator<Item = Rule> + 'a + use<'a> {
+    pub fn rules<'a>(
+        &'a self,
+        preview: &PreviewOptions,
+    ) -> impl Iterator<Item = Rule> + 'a + use<'a> {
         let preview_enabled = preview.mode.is_enabled();
         let preview_require_explicit = preview.require_explicit;
 
@@ -289,7 +292,9 @@ impl RuleSelector {
                     2 => Specificity::Prefix2Chars,
                     3 => Specificity::Prefix3Chars,
                     4 => Specificity::Prefix4Chars,
-                    _ => panic!("RuleSelector::specificity doesn't yet support codes with so many characters"),
+                    _ => panic!(
+                        "RuleSelector::specificity doesn't yet support codes with so many characters"
+                    ),
                 }
             }
             RuleSelector::DeprecatedCategory {
@@ -368,8 +373,8 @@ pub mod clap_completion {
 
     use crate::{
         registry::{Category, RuleNamespace},
-        rule_selector::is_single_rule_selector,
         rule_selector::RuleSelector,
+        rule_selector::is_single_rule_selector,
         rules::RuleCodePrefix,
     };
 

@@ -1,9 +1,9 @@
+use crate::TextRule;
 /// Defines rules that govern line length.
 use crate::settings::Settings;
-use crate::TextRule;
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};

@@ -4,8 +4,8 @@
 
 use std::io::Write;
 
-use crate::message::json::message_to_json_value;
 use crate::message::Emitter;
+use crate::message::json::message_to_json_value;
 
 use super::DiagnosticMessage;
 

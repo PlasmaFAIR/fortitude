@@ -29,7 +29,9 @@ impl Emitter for GithubEmitter {
             write!(
                 writer,
                 "::error title=Fortitude{code},file={file},line={row},col={column},endLine={end_row},endColumn={end_column}::",
-                code = message.rule().map_or_else(String::new, |rule| format!(" ({})", rule.noqa_code())),
+                code = message
+                    .rule()
+                    .map_or_else(String::new, |rule| format!(" ({})", rule.noqa_code())),
                 file = message.filename(),
                 row = source_location.row,
                 column = source_location.column,
@@ -60,8 +62,8 @@ impl Emitter for GithubEmitter {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::tests::{capture_emitter_output, create_messages};
     use crate::message::GithubEmitter;
+    use crate::message::tests::{capture_emitter_output, create_messages};
 
     #[test]
     fn output() {

@@ -2,8 +2,8 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use std::collections::hash_map::DefaultHasher;
 use std::collections::HashSet;
+use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::io::Write;
 
@@ -125,8 +125,8 @@ fn fingerprint(message: &DiagnosticMessage, project_path: &str, salt: u64) -> u6
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::tests::{capture_emitter_output, create_messages};
     use crate::message::GitlabEmitter;
+    use crate::message::tests::{capture_emitter_output, create_messages};
 
     #[test]
     fn output() {

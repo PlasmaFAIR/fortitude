@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -74,7 +74,9 @@ impl Violation for InitialisationInDeclaration {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { name } = self;
-        format!("'{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute")
+        format!(
+            "'{name}' is initialised in its declaration and has no explicit `save` or `parameter` attribute"
+        )
     }
 }
 
@@ -199,7 +201,9 @@ impl Violation for PointerInitialisationInDeclaration {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { name } = self;
-        format!("Pointer '{name}' is initialized in its declaration and has no explicit `save` attribute")
+        format!(
+            "Pointer '{name}' is initialized in its declaration and has no explicit `save` attribute"
+        )
     }
 }
 

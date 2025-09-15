@@ -5,13 +5,13 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use ignore::{types::TypesBuilder, WalkBuilder};
+use ignore::{WalkBuilder, types::TypesBuilder};
 use itertools::Itertools;
 use log::debug;
 use path_absolutize::Absolutize;
 use ruff_cache::{CacheKey, CacheKeyHasher};
 use ruff_macros::CacheKey;
-use serde::{de, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de};
 
 use crate::registry::Rule;
 use crate::rule_selector::CompiledPerFileIgnoreList;

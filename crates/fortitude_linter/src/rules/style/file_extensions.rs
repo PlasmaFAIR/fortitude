@@ -1,9 +1,9 @@
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_text_size::TextRange;
 
-use crate::settings::Settings;
 use crate::PathRule;
+use crate::settings::Settings;
 use std::path::Path;
 
 /// ## What it does

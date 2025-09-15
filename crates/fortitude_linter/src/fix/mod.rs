@@ -149,7 +149,7 @@ mod tests {
     use ruff_diagnostics::{Diagnostic, Edit, Fix, SourceMarker};
     use ruff_text_size::{Ranged, TextSize};
 
-    use crate::fix::{apply_fixes, FixResult};
+    use crate::fix::{FixResult, apply_fixes};
     use crate::locator::Locator;
     use crate::rules::correctness::use_statements::UseAll;
 

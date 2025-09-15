@@ -11,11 +11,11 @@ use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_diagnostics::Applicability;
 use ruff_macros::CacheKey;
-use serde::{de, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de};
 use strum::IntoEnumIterator;
 
 use crate::display_settings;
-use crate::fs::{FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
+use crate::fs::{EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePatternSet};
 use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
@@ -333,11 +333,7 @@ pub enum ExcludeMode {
 
 impl From<bool> for ExcludeMode {
     fn from(b: bool) -> Self {
-        if b {
-            Self::Force
-        } else {
-            Self::NoForce
-        }
+        if b { Self::Force } else { Self::NoForce }
     }
 }
 

@@ -13,7 +13,7 @@ use ruff_source_file::OneIndexed;
 use crate::fs::relativize_path;
 use crate::message::diff::calculate_print_width;
 use crate::message::text::{MessageCodeFrame, RuleCodeAndBody};
-use crate::message::{group_messages_by_filename, Emitter, MessageWithLocation};
+use crate::message::{Emitter, MessageWithLocation, group_messages_by_filename};
 use crate::settings::UnsafeFixes;
 
 use super::DiagnosticMessage;
@@ -183,8 +183,8 @@ impl std::fmt::Write for PadAdapter<'_> {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::tests::{capture_emitter_output, create_messages};
     use crate::message::GroupedEmitter;
+    use crate::message::tests::{capture_emitter_output, create_messages};
     use crate::settings::UnsafeFixes;
 
     #[test]

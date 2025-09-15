@@ -1,10 +1,10 @@
+use crate::AstRule;
 use crate::ast::FortitudeNode;
 /// Defines rules that govern line length.
 use crate::settings::Settings;
-use crate::AstRule;
 use lazy_regex::regex;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use tree_sitter::Node;

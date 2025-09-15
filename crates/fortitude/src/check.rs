@@ -8,15 +8,15 @@ use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, get_files, read_to_string};
 use fortitude_linter::rule_table::RuleTable;
 use fortitude_linter::rules::Rule;
-use fortitude_linter::rules::{error::ioerror::IoError, AstRuleEnum, PathRuleEnum, TextRuleEnum};
+use fortitude_linter::rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum, error::ioerror::IoError};
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use fortitude_linter::{
-    ast_entrypoint_map, check_and_fix_file, check_file, check_only_file, rules_to_path_rules,
-    rules_to_text_rules, FixerResult,
+    FixerResult, ast_entrypoint_map, check_and_fix_file, check_file, check_only_file,
+    rules_to_path_rules, rules_to_text_rules,
 };
 use fortitude_linter::{warn_user_once, warn_user_once_by_message};
 use fortitude_workspace::configuration::{
-    self, parse_config_file, Configuration, ConfigurationTransformer,
+    self, Configuration, ConfigurationTransformer, parse_config_file,
 };
 
 use anyhow::Result;
@@ -427,50 +427,53 @@ fn check_stdin(
             &source_file,
             settings,
             ignore_allow_comments,
-        ) { Ok(FixerResult {
-            result,
-            transformed,
-            fixed,
-        }) => {
-            match fix_mode {
-                FixMode::Apply => {
-                    // Write the contents to stdout, regardless of whether any errors were fixed.
+        ) {
+            Ok(FixerResult {
+                result,
+                transformed,
+                fixed,
+            }) => {
+                match fix_mode {
+                    FixMode::Apply => {
+                        // Write the contents to stdout, regardless of whether any errors were fixed.
+                        let out_file = &mut io::stdout().lock();
+                        out_file.write_all(transformed.source_text().as_bytes())?;
+                    }
+                    // TODO: diff
+                    FixMode::Diff => {
+                        warn_user_once_by_message!("Diff mode is not yet supported for stdin");
+                    }
+                    FixMode::Generate => {}
+                }
+
+                (result, fixed)
+            }
+            _ => {
+                // Failed to fix, so just lint the original source
+                let result = check_only_file(
+                    rules,
+                    path_rules,
+                    text_rules,
+                    ast_entrypoints,
+                    path,
+                    &source_file,
+                    settings,
+                    ignore_allow_comments,
+                )?;
+
+                // Write the input to stdout anyway.
+                // Necessary in case the user is using stdin fix mode to overwrite the current
+                // buffer in their editor of choice, e.g. in vim:
+                // `:%!fortitude check --fix-only --silent --stdin-filename=%`
+                if fix_mode.is_apply() {
                     let out_file = &mut io::stdout().lock();
-                    out_file.write_all(transformed.source_text().as_bytes())?;
+                    out_file.write_all(source_file.source_text().as_bytes())?;
                 }
-                // TODO: diff
-                FixMode::Diff => {
-                    warn_user_once_by_message!("Diff mode is not yet supported for stdin");
-                }
-                FixMode::Generate => {}
+
+                let fixed = FxHashMap::default();
+                (result, fixed)
             }
-
-            (result, fixed)
-        } _ => {
-            // Failed to fix, so just lint the original source
-            let result = check_only_file(
-                rules,
-                path_rules,
-                text_rules,
-                ast_entrypoints,
-                path,
-                &source_file,
-                settings,
-                ignore_allow_comments,
-            )?;
-
-            // Write the input to stdout anyway.
-            // Necessary in case the user is using stdin fix mode to overwrite the current
-            // buffer in their editor of choice, e.g. in vim:
-            // `:%!fortitude check --fix-only --silent --stdin-filename=%`
-            if fix_mode.is_apply() {
-                let out_file = &mut io::stdout().lock();
-                out_file.write_all(source_file.source_text().as_bytes())?;
-            }
-
-            let fixed = FxHashMap::default();
-            (result, fixed)
-        }}
+        }
     } else {
         let result = check_only_file(
             rules,
