@@ -359,11 +359,11 @@ impl Printer {
             .fold(
                 vec![],
                 |mut acc: Vec<(&DiagnosticMessage, usize)>, message| {
-                    if let Some((prev_message, count)) = acc.last_mut() {
-                        if prev_message.rule() == message.rule() {
-                            *count += 1;
-                            return acc;
-                        }
+                    if let Some((prev_message, count)) = acc.last_mut()
+                        && prev_message.rule() == message.rule()
+                    {
+                        *count += 1;
+                        return acc;
                     }
                     acc.push((message, 1));
                     acc

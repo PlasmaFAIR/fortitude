@@ -418,11 +418,7 @@ fn check_stdin(
     let source_file = SourceFileBuilder::new(path.to_str().unwrap_or("-"), stdin.as_str()).finish();
 
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
-        if let Ok(FixerResult {
-            result,
-            transformed,
-            fixed,
-        }) = check_and_fix_file(
+        match check_and_fix_file(
             rules,
             path_rules,
             text_rules,
@@ -431,7 +427,11 @@ fn check_stdin(
             &source_file,
             settings,
             ignore_allow_comments,
-        ) {
+        ) { Ok(FixerResult {
+            result,
+            transformed,
+            fixed,
+        }) => {
             match fix_mode {
                 FixMode::Apply => {
                     // Write the contents to stdout, regardless of whether any errors were fixed.
@@ -446,7 +446,7 @@ fn check_stdin(
             }
 
             (result, fixed)
-        } else {
+        } _ => {
             // Failed to fix, so just lint the original source
             let result = check_only_file(
                 rules,
@@ -470,7 +470,7 @@ fn check_stdin(
 
             let fixed = FxHashMap::default();
             (result, fixed)
-        }
+        }}
     } else {
         let result = check_only_file(
             rules,
