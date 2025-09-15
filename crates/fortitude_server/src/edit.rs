@@ -1,8 +1,9 @@
 //! Types and utilities for working with text, modifying source files, and `Ruff <-> LSP` type conversion.
 
-use lsp_types::PositionEncodingKind;
+use lsp_types::{PositionEncodingKind, Uri};
 pub(crate) use range::RangeExt;
 pub use text_document::TextDocument;
+pub(crate) use text_document::{DocumentVersion, LanguageId};
 
 mod range;
 mod text_document;
@@ -47,3 +48,28 @@ impl TryFrom<&lsp_types::PositionEncodingKind> for PositionEncoding {
         })
     }
 }
+
+/// A unique document ID, derived from a URL passed as part of an LSP request.
+/// This document ID can point to either be a standalone Python file, a full notebook, or a cell within a notebook.
+#[derive(Clone, Debug)]
+pub enum DocumentKey {
+    Text(Uri),
+}
+
+impl DocumentKey {
+    /// Converts the key back into its original URL.
+    pub(crate) fn into_url(self) -> Uri {
+        match self {
+            DocumentKey::Text(uri) => uri,
+        }
+    }
+}
+
+impl std::fmt::Display for DocumentKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Text(uri) => uri.fmt(f),
+        }
+    }
+}
+

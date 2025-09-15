@@ -1,39 +1,47 @@
 //! Scheduling, I/O, and API endpoints.
 
-use lsp_server as lsp;
+use lsp_server::Connection;
 use lsp_types as types;
 use std::num::NonZeroUsize;
 // The new PanicInfoHook name requires MSRV >= 1.82
 #[allow(deprecated)]
 use std::panic::PanicInfo;
+use std::sync::Arc;
 use types::ClientCapabilities;
 use types::DiagnosticOptions;
 use types::WorkDoneProgressOptions;
 
-use self::connection::Connection;
-use self::connection::ConnectionInitializer;
-use self::schedule::event_loop_thread;
+pub(crate) use self::connection::ConnectionInitializer;
+pub use self::connection::ConnectionSender;
+use self::schedule::spawn_main_loop;
+pub use crate::server::main_loop::MainLoopSender;
+pub(crate) use crate::server::main_loop::{Event, MainLoopReceiver};
+use crate::session::Session;
+use crate::Client;
 use crate::PositionEncoding;
+pub(crate) use api::Error;
 
 mod api;
-mod client;
 mod connection;
+mod main_loop;
 mod schedule;
-
-use crate::message::try_show_message;
-pub(crate) use connection::ClientSender;
 
 pub(crate) type Result<T> = std::result::Result<T, api::Error>;
 
 pub struct Server {
     connection: Connection,
+    client_capabilities: ClientCapabilities,
+    main_loop_receiver: MainLoopReceiver,
+    main_loop_sender: MainLoopSender,
     worker_threads: NonZeroUsize,
+    session: Session,
 }
 
 impl Server {
-    pub fn new(worker_threads: NonZeroUsize) -> crate::Result<Self> {
-        let connection = ConnectionInitializer::stdio();
-
+    pub fn new(
+        worker_threads: NonZeroUsize,
+        connection: ConnectionInitializer,
+    ) -> crate::Result<Self> {
         let (id, init_params) = connection.initialize_start()?;
 
         let client_capabilities = init_params.capabilities;
@@ -47,42 +55,27 @@ impl Server {
             crate::version(),
         )?;
 
-        crate::message::init_messenger(connection.make_sender());
+        let (main_loop_sender, main_loop_receiver) = crossbeam::channel::bounded(32);
 
         Ok(Self {
             connection,
             worker_threads,
+            main_loop_sender,
+            main_loop_receiver,
+            session: Session::new(&client_capabilities, position_encoding)?,
+            client_capabilities,
         })
     }
 
-    pub fn run(self) -> crate::Result<()> {
-        let _panic_hook = ServerPanicHookHandler::new();
+    pub fn run(mut self) -> crate::Result<()> {
+        let client = Client::new(
+            self.main_loop_sender.clone(),
+            self.connection.sender.clone(),
+        );
 
-        event_loop_thread(move || {
-            Self::event_loop(&self.connection, self.worker_threads)?;
-            self.connection.close()?;
-            Ok(())
-        })?
-        .join()
-    }
+        let _panic_hook = ServerPanicHookHandler::new(client);
 
-    #[allow(clippy::needless_pass_by_value)] // this is because we aren't using `next_request_id` yet.
-    fn event_loop(connection: &Connection, worker_threads: NonZeroUsize) -> crate::Result<()> {
-        let mut scheduler = schedule::Scheduler::new(worker_threads, connection.make_sender());
-
-        for msg in connection.incoming() {
-            if connection.handle_shutdown(&msg)? {
-                break;
-            }
-            let task = match msg {
-                lsp::Message::Request(_) => continue,
-                lsp::Message::Notification(_) => continue,
-                lsp::Message::Response(response) => scheduler.response(response),
-            };
-            scheduler.dispatch(task);
-        }
-
-        Ok(())
+        spawn_main_loop(move || self.main_loop())?.join()
     }
 
     fn find_best_position_encoding(client_capabilities: &ClientCapabilities) -> PositionEncoding {
@@ -128,11 +121,18 @@ impl Server {
 type PanicHook = Box<dyn Fn(&PanicInfo<'_>) + 'static + Sync + Send>;
 struct ServerPanicHookHandler {
     hook: Option<PanicHook>,
+    // Hold on to the strong reference for as long as the panic hook is set.
+    _client: Arc<Client>,
 }
 
 impl ServerPanicHookHandler {
-    fn new() -> Self {
+    fn new(client: Client) -> Self {
         let hook = std::panic::take_hook();
+        let client = Arc::new(client);
+
+        // Use a weak reference to the client because it must be dropped when exiting or the
+        // io-threads join hangs forever (because client has a reference to the connection sender).
+        let hook_client = Arc::downgrade(&client);
 
         // When we panic, try to notify the client.
         std::panic::set_hook(Box::new(move |panic_info| {
@@ -147,16 +147,20 @@ impl ServerPanicHookHandler {
             let mut stderr = std::io::stderr().lock();
             writeln!(stderr, "{panic_info}\n{backtrace}").ok();
 
-            try_show_message(
+            if let Some(client) = hook_client.upgrade() {
+                client
+                    .show_message(
                 "The Fortitude language server exited with a panic. See the logs for more details."
                     .to_string(),
                 lsp_types::MessageType::ERROR,
             )
-            .ok();
+                    .ok();
+            }
         }));
 
         Self {
             hook: Some(hook),
+            _client: client,
         }
     }
 }

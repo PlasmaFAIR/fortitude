@@ -12,6 +12,7 @@ license = { workspace = true }
 
 [dependencies]
 fortitude_linter = { workspace = true }
+fortitude_workspace = { workspace = true }
 
 anyhow = { workspace = true }
 crossbeam = { workspace = true }
