@@ -54,7 +54,7 @@ impl AstRule for MissingExitOrCycleLabel {
             .trim_end_matches(':');
 
         let violations: Vec<Diagnostic> = node
-            .named_descendants_except(["do_loop_statement"])
+            .named_descendants_except(["do_loop"])
             .filter(|node| node.kind() == "keyword_statement")
             .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
             .filter(|(_, name)| name == "exit" || name == "cycle")
@@ -78,7 +78,7 @@ impl AstRule for MissingExitOrCycleLabel {
     }
 
     fn entrypoints() -> Vec<&'static str> {
-        vec!["do_loop_statement"]
+        vec!["do_loop"]
     }
 }
 
@@ -116,7 +116,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
 
         let parent_loop = node
             .ancestors()
-            .filter(|ancestor| ancestor.kind() == "do_loop_statement")
+            .filter(|ancestor| ancestor.kind() == "do_loop")
             .nth(0)?;
 
         // Immediate parent loop has a label, but we don't want to warn here, because
@@ -133,7 +133,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
         if settings.check.exit_unlabelled_loops.allow_unnested_loops {
             parent_loop
                 .ancestors()
-                .filter(|ancestor| ancestor.kind() == "do_loop_statement")
+                .filter(|ancestor| ancestor.kind() == "do_loop")
                 .nth(0)?;
         }
 
@@ -152,8 +152,8 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
 /// This is a compile error!
 #[derive(ViolationMetadata)]
 pub(crate) struct MissingEndLabel {
-    start_name: String,
-    end_name: String,
+    start_name: &'static str,
+    end_name: &'static str,
     label: String,
 }
 
@@ -174,6 +174,24 @@ impl AlwaysFixableViolation for MissingEndLabel {
     }
 }
 
+/// Map node kinds onto the keywords for start/end names of the block
+fn start_end_names(node_kind: &str) -> (&'static str, &'static str) {
+    match node_kind {
+        "associate_statement" => ("associate", "end associate"),
+        "block_construct" => ("block", "end block"),
+        "coarray_critical_statement" => ("critical", "end critical"),
+        "coarray_team_statement" => ("change team", "end team"),
+        "do_loop" => ("do", "end do"),
+        "forall_statement" => ("forall", "end forall"),
+        "if_statement" => ("if", "end if"),
+        "select_case_statement" => ("select case", "end select"),
+        "select_rank_statement" => ("select rank", "end select"),
+        "select_type_statement" => ("select type", "end select"),
+        "where_statement" => ("where", "end where"),
+        _ => unreachable!("Unhandled node; arms above must match entrypoints!"),
+    }
+}
+
 impl AstRule for MissingEndLabel {
     fn check<'a>(
         _settings: &Settings,
@@ -191,23 +209,23 @@ impl AstRule for MissingEndLabel {
             "select_case_statement" | "select_type_statement" | "select_rank_statement" => {
                 "end_select_statement".to_string()
             }
+            "do_loop" => "end_do_loop_statement".to_string(),
             _ => format!("end_{}", node.kind()),
         };
 
         let violation: Diagnostic = node
             .child_with_name(&end)
             .filter(|node| node.child_with_name("block_label").is_none())
-            .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
-            .map(|(stmt, end_name)| {
+            .map(|stmt| {
                 let label_with_space = format!(" {label}");
                 let edit = Edit::insertion(label_with_space, stmt.end_textsize());
                 let fix = Fix::safe_edit(edit);
 
-                let start_name = node.child(1).unwrap().to_text(src).unwrap().to_lowercase();
+                let (start_name, end_name) = start_end_names(node.kind());
 
                 Diagnostic::from_node(
                     Self {
-                        end_name: end_name.to_string(),
+                        end_name,
                         start_name,
                         label: label.to_string(),
                     },
@@ -225,7 +243,7 @@ impl AstRule for MissingEndLabel {
             "block_construct",
             "coarray_critical_statement",
             "coarray_team_statement",
-            "do_loop_statement",
+            "do_loop",
             "forall_statement",
             "if_statement",
             "select_case_statement",

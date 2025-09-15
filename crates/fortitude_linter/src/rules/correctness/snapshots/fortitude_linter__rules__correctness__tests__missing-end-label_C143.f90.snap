@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
@@ -43,7 +43,7 @@ snapshot_kind: text
 17 17 |   form team(1, parent)
 18 18 |   label4: change team(parent)
 
-./resources/test/fixtures/correctness/C143.f90:19:3: C143 [*] 'end team' statement in named 'change' block missing label
+./resources/test/fixtures/correctness/C143.f90:19:3: C143 [*] 'end team' statement in named 'change team' block missing label
    |
 17 |   form team(1, parent)
 18 |   label4: change team(parent)
@@ -124,7 +124,7 @@ snapshot_kind: text
 30 30 |   label8: select case(i)
 31 31 |   end select
 
-./resources/test/fixtures/correctness/C143.f90:31:3: C143 [*] 'end select' statement in named 'select' block missing label
+./resources/test/fixtures/correctness/C143.f90:31:3: C143 [*] 'end select' statement in named 'select case' block missing label
    |
 30 |   label8: select case(i)
 31 |   end select
@@ -144,7 +144,7 @@ snapshot_kind: text
 33 33 |   label9: select rank(i)
 34 34 |   end select
 
-./resources/test/fixtures/correctness/C143.f90:34:3: C143 [*] 'end select' statement in named 'select' block missing label
+./resources/test/fixtures/correctness/C143.f90:34:3: C143 [*] 'end select' statement in named 'select rank' block missing label
    |
 33 |   label9: select rank(i)
 34 |   end select
@@ -164,7 +164,7 @@ snapshot_kind: text
 36 36 |   label10: select type(i)
 37 37 |   end select
 
-./resources/test/fixtures/correctness/C143.f90:37:3: C143 [*] 'end select' statement in named 'select' block missing label
+./resources/test/fixtures/correctness/C143.f90:37:3: C143 [*] 'end select' statement in named 'select type' block missing label
    |
 36 |   label10: select type(i)
 37 |   end select
