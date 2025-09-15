@@ -56,47 +56,7 @@ impl Server {
     }
 
     pub fn run(self) -> crate::Result<()> {
-        // The new PanicInfoHook name requires MSRV >= 1.82
-        #[allow(deprecated)]
-        type PanicHook = Box<dyn Fn(&PanicInfo<'_>) + 'static + Sync + Send>;
-        struct RestorePanicHook {
-            hook: Option<PanicHook>,
-        }
-
-        impl Drop for RestorePanicHook {
-            fn drop(&mut self) {
-                if let Some(hook) = self.hook.take() {
-                    std::panic::set_hook(hook);
-                }
-            }
-        }
-
-        // unregister any previously registered panic hook
-        // The hook will be restored when this function exits.
-        let _ = RestorePanicHook {
-            hook: Some(std::panic::take_hook()),
-        };
-
-        // When we panic, try to notify the client.
-        std::panic::set_hook(Box::new(move |panic_info| {
-            use std::io::Write;
-
-            let backtrace = std::backtrace::Backtrace::force_capture();
-            tracing::error!("{panic_info}\n{backtrace}");
-
-            // we also need to print to stderr directly for when using `$logTrace` because
-            // the message won't be sent to the client.
-            // But don't use `eprintln` because `eprintln` itself may panic if the pipe is broken.
-            let mut stderr = std::io::stderr().lock();
-            writeln!(stderr, "{panic_info}\n{backtrace}").ok();
-
-            try_show_message(
-                "The Fortitude language server exited with a panic. See the logs for more details."
-                    .to_string(),
-                lsp_types::MessageType::ERROR,
-            )
-            .ok();
-        }));
+        let _panic_hook = ServerPanicHookHandler::new();
 
         event_loop_thread(move || {
             Self::event_loop(&self.connection, self.worker_threads)?;
@@ -159,6 +119,56 @@ impl Server {
             hover_provider: None,
             text_document_sync: None,
             ..Default::default()
+        }
+    }
+}
+
+// The new PanicInfoHook name requires MSRV >= 1.82
+#[allow(deprecated)]
+type PanicHook = Box<dyn Fn(&PanicInfo<'_>) + 'static + Sync + Send>;
+struct ServerPanicHookHandler {
+    hook: Option<PanicHook>,
+}
+
+impl ServerPanicHookHandler {
+    fn new() -> Self {
+        let hook = std::panic::take_hook();
+
+        // When we panic, try to notify the client.
+        std::panic::set_hook(Box::new(move |panic_info| {
+            use std::io::Write;
+
+            let backtrace = std::backtrace::Backtrace::force_capture();
+            tracing::error!("{panic_info}\n{backtrace}");
+
+            // we also need to print to stderr directly for when using `$logTrace` because
+            // the message won't be sent to the client.
+            // But don't use `eprintln` because `eprintln` itself may panic if the pipe is broken.
+            let mut stderr = std::io::stderr().lock();
+            writeln!(stderr, "{panic_info}\n{backtrace}").ok();
+
+            try_show_message(
+                "The Fortitude language server exited with a panic. See the logs for more details."
+                    .to_string(),
+                lsp_types::MessageType::ERROR,
+            )
+            .ok();
+        }));
+
+        Self {
+            hook: Some(hook),
+        }
+    }
+}
+impl Drop for ServerPanicHookHandler {
+    fn drop(&mut self) {
+        if std::thread::panicking() {
+            // Calling `std::panic::set_hook` while panicking results in a panic.
+            return;
+        }
+
+        if let Some(hook) = self.hook.take() {
+            std::panic::set_hook(hook);
         }
     }
 }
