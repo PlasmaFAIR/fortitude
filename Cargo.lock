@@ -839,6 +839,7 @@ dependencies = [
  "anyhow",
  "crossbeam",
  "fortitude_linter",
+ "fortitude_workspace",
  "globset",
  "ignore",
  "insta",

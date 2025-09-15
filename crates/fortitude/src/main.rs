@@ -33,7 +33,8 @@ fn main() -> Result<ExitCode> {
             return Ok(ExitCode::SUCCESS);
         }
         SubCommands::Server => {
-            return Ok(fortitude_server::server()?);
+            fortitude_server::server()?;
+            return Ok(ExitCode::SUCCESS);
         }
     };
     match status {
