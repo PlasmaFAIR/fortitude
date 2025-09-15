@@ -4,18 +4,18 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use std::{num::NonZeroUsize, process::ExitCode};
+use std::num::NonZeroUsize;
 
 use anyhow::Context;
 pub use edit::{PositionEncoding, TextDocument};
+use server::ConnectionInitializer;
 pub use server::Server;
-
-#[macro_use]
-mod message;
+pub use session::{Client, Session};
 
 mod edit;
 mod logging;
 mod server;
+mod session;
 
 pub(crate) const SERVER_NAME: &str = "fortitude";
 pub(crate) const DIAGNOSTIC_NAME: &str = "Fortitude";
@@ -28,7 +28,7 @@ pub(crate) fn version() -> &'static str {
     fortitude_linter::VERSION
 }
 
-pub fn server() -> Result<ExitCode> {
+pub fn server() -> Result<()> {
     let four = NonZeroUsize::new(4).unwrap();
 
     // by default, we set the number of worker threads to `num_cpus`, with a maximum of 4.
@@ -36,7 +36,26 @@ pub fn server() -> Result<ExitCode> {
         .unwrap_or(four)
         .max(four);
 
-    Server::new(worker_threads)
+    let (connection, io_threads) = ConnectionInitializer::stdio();
+
+    let server_result = Server::new(worker_threads, connection)
         .context("Failed to start server")?
-        .run().map(|()| ExitCode::SUCCESS)
+        .run();
+
+    let io_result = io_threads.join();
+
+    let result = match (server_result, io_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(server), Err(io)) => Err(server).context(format!("IO thread error: {io}")),
+        (Err(server), _) => Err(server),
+        (_, Err(io)) => Err(io).context("IO thread error"),
+    };
+
+    if let Err(err) = result.as_ref() {
+        tracing::warn!("Server shut down with an error: {err}");
+    } else {
+        tracing::info!("Server shut down");
+    }
+
+    result
 }
