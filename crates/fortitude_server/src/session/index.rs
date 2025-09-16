@@ -7,8 +7,8 @@ use rustc_hash::FxHashMap;
 
 use crate::edit::LanguageId;
 use crate::{
-    edit::{DocumentKey, DocumentVersion},
     PositionEncoding, TextDocument,
+    edit::{DocumentKey, DocumentVersion},
 };
 
 /// Stores and tracks all open documents in a session, along with their associated settings.
@@ -36,8 +36,7 @@ pub enum DocumentQuery {
 }
 
 impl Index {
-    pub(super) fn new(
-    ) -> crate::Result<Self> {
+    pub(super) fn new() -> crate::Result<Self> {
         Ok(Self {
             documents: FxHashMap::default(),
         })
