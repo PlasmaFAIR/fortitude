@@ -10,7 +10,7 @@ use anyhow::Context;
 pub use edit::{PositionEncoding, TextDocument};
 use server::ConnectionInitializer;
 pub use server::Server;
-pub use session::{Client, Session};
+pub use session::{Client, ClientOptions, Session};
 
 mod edit;
 mod logging;
