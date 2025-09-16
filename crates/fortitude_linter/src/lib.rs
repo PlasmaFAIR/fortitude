@@ -22,18 +22,18 @@ use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
 use diagnostic_message::DiagnosticMessage;
 use diagnostics::{Diagnostics, FixMap};
-use fix::{fix_file, FixResult};
+use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
 use rule_table::RuleTable;
+use rules::Rule;
 use rules::error::syntax_error::SyntaxError;
 #[cfg(any(feature = "test-rules", test))]
-use rules::testing::test_rules::{self, TestRule, TEST_RULES};
-use rules::Rule;
+use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use settings::{FixMode, Settings};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use colored::Colorize;
 use itertools::Itertools;
 use log::warn;

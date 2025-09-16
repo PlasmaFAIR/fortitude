@@ -1,9 +1,9 @@
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-use crate::{ast::FortitudeNode, settings::Settings, AstRule, FromAstNode};
+use crate::{AstRule, FromAstNode, ast::FortitudeNode, settings::Settings};
 
 /// ## What does it do?
 /// Checks for procedures declared with just `external`

@@ -4,7 +4,7 @@
 
 /// Fake rules for testing fortitude's behaviour
 use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_text_size::{TextRange, TextSize};
 
 use crate::rules::Rule;

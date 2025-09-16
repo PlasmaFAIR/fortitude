@@ -1,5 +1,5 @@
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextLen, TextSize};
 use settings::Quote;
@@ -92,14 +92,16 @@ impl AstRule for BadQuoteString {
                 end_byte - TextSize::from(1),
                 end_byte,
             );
-            return some_vec!(Diagnostic::from_node(
-                Self {
-                    preferred_quote,
-                    contains_escaped_quotes: false,
-                },
-                node,
-            )
-            .with_fix(Fix::safe_edits(edit_start, [edit_end])));
+            return some_vec!(
+                Diagnostic::from_node(
+                    Self {
+                        preferred_quote,
+                        contains_escaped_quotes: false,
+                    },
+                    node,
+                )
+                .with_fix(Fix::safe_edits(edit_start, [edit_end]))
+            );
         }
         None
     }

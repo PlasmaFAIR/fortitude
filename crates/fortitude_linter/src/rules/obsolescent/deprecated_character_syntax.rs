@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -76,15 +76,17 @@ impl AstRule for DeprecatedCharacterSyntax {
         let dtype = dtype.to_text(src)?.to_string();
         let replacement = format!("{dtype}(len={length})");
         let fix = Fix::safe_edit(node.edit_replacement(source_file, replacement));
-        some_vec![Diagnostic::from_node(
-            Self {
-                original,
-                dtype,
-                length
-            },
-            node
-        )
-        .with_fix(fix)]
+        some_vec![
+            Diagnostic::from_node(
+                Self {
+                    original,
+                    dtype,
+                    length
+                },
+                node
+            )
+            .with_fix(fix)
+        ]
     }
 
     fn entrypoints() -> Vec<&'static str> {

@@ -1,6 +1,6 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::{SourceFile, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
@@ -142,8 +142,10 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
 
         if !has_space_before {
             if !has_space_after {
-                return some_vec!(Diagnostic::from_node(Self {}, node)
-                    .with_fix(Fix::safe_edits(before_edit, [after_edit])));
+                return some_vec!(
+                    Diagnostic::from_node(Self {}, node)
+                        .with_fix(Fix::safe_edits(before_edit, [after_edit]))
+                );
             }
             return some_vec!(
                 Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(before_edit))
@@ -244,8 +246,10 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
             return None;
         }
 
-        some_vec!(Diagnostic::new(Self { is_open_bracket }, whitespace_range)
-            .with_fix(Fix::safe_edit(Edit::range_deletion(whitespace_range))))
+        some_vec!(
+            Diagnostic::new(Self { is_open_bracket }, whitespace_range)
+                .with_fix(Fix::safe_edit(Edit::range_deletion(whitespace_range)))
+        )
     }
 
     fn entrypoints() -> Vec<&'static str> {

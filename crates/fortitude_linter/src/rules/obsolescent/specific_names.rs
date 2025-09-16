@@ -3,7 +3,7 @@ use crate::rules::utilities;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Fix, Violation};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
@@ -96,14 +96,16 @@ impl AstRule for SpecificName {
         let matched_case = utilities::match_original_case(func, new_func)?;
 
         let fix = Fix::unsafe_edit(name_node.edit_replacement(src, matched_case.clone()));
-        some_vec![Diagnostic::from_node(
-            Self {
-                func: func.to_string(),
-                new_func: matched_case
-            },
-            &name_node
-        )
-        .with_fix(fix)]
+        some_vec![
+            Diagnostic::from_node(
+                Self {
+                    func: func.to_string(),
+                    new_func: matched_case
+                },
+                &name_node
+            )
+            .with_fix(fix)
+        ]
     }
 
     fn entrypoints() -> Vec<&'static str> {

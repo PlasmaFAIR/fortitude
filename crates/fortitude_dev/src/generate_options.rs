@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 //! Generate a Markdown-compatible listing of configuration options for `fpm.toml`.
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use itertools::Itertools;
 use pretty_assertions::StrComparison;
 use std::fmt::Write;
@@ -13,8 +13,8 @@ use std::path::PathBuf;
 use fortitude_workspace::options::Options;
 use fortitude_workspace::options_base::{OptionField, OptionSet, OptionsMetadata, Visit};
 
-use crate::generate_all::{Mode, REGENERATE_ALL_COMMAND};
 use crate::ROOT_DIR;
+use crate::generate_all::{Mode, REGENERATE_ALL_COMMAND};
 
 #[derive(clap::Args)]
 pub(crate) struct Args {

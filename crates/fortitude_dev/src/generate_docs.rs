@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use pretty_assertions::StrComparison;
 use regex::{Captures, Regex};
 use strum::IntoEnumIterator;
@@ -23,8 +23,9 @@ use fortitude_workspace::{
 };
 
 use crate::{
+    ROOT_DIR,
     generate_all::{Mode, REGENERATE_ALL_COMMAND},
-    generate_rules_table, ROOT_DIR,
+    generate_rules_table,
 };
 
 #[derive(clap::Args)]
@@ -107,7 +108,9 @@ pub(crate) fn main(args: &Args) -> Result<()> {
                         println!("up-to-date: docs/rules/{rule_name}.md");
                     } else {
                         let comparison = StrComparison::new(&existing, &output);
-                        bail!("docs/rules/{rule_name}.md changed, please run `{REGENERATE_ALL_COMMAND}`:\n{comparison}");
+                        bail!(
+                            "docs/rules/{rule_name}.md changed, please run `{REGENERATE_ALL_COMMAND}`:\n{comparison}"
+                        );
                     }
                 }
                 Mode::Write => {

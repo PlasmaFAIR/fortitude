@@ -1,7 +1,7 @@
 use crate::options::{
     ExitUnlabelledLoopOptions, KeywordWhitespaceOptions, Options, PortabilityOptions, StringOptions,
 };
-use fortitude_linter::fs::{FilePattern, FilePatternSet, EXCLUDE_BUILTINS, FORTRAN_EXTS};
+use fortitude_linter::fs::{EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet};
 use fortitude_linter::registry::RuleNamespace;
 use fortitude_linter::rule_redirects::get_redirect;
 use fortitude_linter::rule_selector::{
@@ -10,12 +10,12 @@ use fortitude_linter::rule_selector::{
 use fortitude_linter::rule_table::RuleTable;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::settings::{
-    CheckSettings, ExcludeMode, FileResolverSettings, GitignoreMode, OutputFormat, PreviewMode,
-    ProgressBar, Settings, UnsafeFixes, DEFAULT_SELECTORS,
+    CheckSettings, DEFAULT_SELECTORS, ExcludeMode, FileResolverSettings, GitignoreMode,
+    OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes,
 };
 use fortitude_linter::{fs, warn_user_once_by_id, warn_user_once_by_message};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use itertools::Itertools;
 use log::warn;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -500,7 +500,9 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
             [] => (),
             [selection] => {
                 let (prefix, code) = selection.prefix_and_code();
-                return Err(anyhow!("Selection of deprecated rule `{prefix}{code}` is not allowed when preview is enabled."));
+                return Err(anyhow!(
+                    "Selection of deprecated rule `{prefix}{code}` is not allowed when preview is enabled."
+                ));
             }
             [..] => {
                 let mut message = "Selection of deprecated rules is not allowed when preview is enabled. Remove selection of:".to_string();

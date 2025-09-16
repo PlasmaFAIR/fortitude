@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use fortitude_linter::{
     fs::FilePattern,
     logging::LogLevel,
-    rule_selector::{clap_completion::RuleSelectorParser, collect_per_file_ignores, RuleSelector},
+    rule_selector::{RuleSelector, clap_completion::RuleSelectorParser, collect_per_file_ignores},
     settings::{
         IgnoreAllowComments, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar, UnsafeFixes,
     },

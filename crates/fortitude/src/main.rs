@@ -1,4 +1,4 @@
-use std::io::{stdout, Write};
+use std::io::{Write, stdout};
 use std::process::ExitCode;
 
 use anyhow::Result;
@@ -34,10 +34,10 @@ fn main() -> Result<ExitCode> {
                 //
                 // See: https://github.com/BurntSushi/ripgrep/blob/bf63fe8f258afc09bae6caa48f0ae35eaf115005/crates/core/main.rs#L47C1-L61C14
                 for cause in err.chain() {
-                    if let Some(ioerr) = cause.downcast_ref::<std::io::Error>() {
-                        if ioerr.kind() == std::io::ErrorKind::BrokenPipe {
-                            return Ok(ExitCode::from(0));
-                        }
+                    if let Some(ioerr) = cause.downcast_ref::<std::io::Error>()
+                        && ioerr.kind() == std::io::ErrorKind::BrokenPipe
+                    {
+                        return Ok(ExitCode::from(0));
                     }
                 }
 

@@ -4,13 +4,13 @@
 use std::path::PathBuf;
 use std::{fs, str};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::CommandFactory;
 use fortitude::cli;
 use pretty_assertions::StrComparison;
 
-use crate::generate_all::{Mode, REGENERATE_ALL_COMMAND};
 use crate::ROOT_DIR;
+use crate::generate_all::{Mode, REGENERATE_ALL_COMMAND};
 
 const COMMAND_HELP_BEGIN_PRAGMA: &str = "<!-- Begin auto-generated command help. -->\n";
 const COMMAND_HELP_END_PRAGMA: &str = "<!-- End auto-generated command help. -->";

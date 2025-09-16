@@ -5,7 +5,7 @@ use std::io::Write;
 use anyhow::Result;
 use bitflags::bitflags;
 use colored::Colorize;
-use itertools::{iterate, Itertools};
+use itertools::{Itertools, iterate};
 use serde::Serialize;
 
 use crate::check::CheckResults;
@@ -165,7 +165,10 @@ impl Printer {
                 format!("For more information about specific rules, run:\n\n    {explain}\n");
 
             if fixed > 0 {
-                writeln!(writer, "Number of errors: {total_txt} ({fixed_txt} fixed, {remaining_txt} remaining)\n\n{info}")?;
+                writeln!(
+                    writer,
+                    "Number of errors: {total_txt} ({fixed_txt} fixed, {remaining_txt} remaining)\n\n{info}"
+                )?;
             } else if remaining > 0 {
                 writeln!(writer, "Number of errors: {remaining_txt}\n\n{info}")?;
             } else {
@@ -183,10 +186,11 @@ impl Printer {
                         } else {
                             "es"
                         };
-                        writeln!(writer,
-                                    "{fix_prefix} {} fixable with the `--fix` option ({} hidden fix{es} can be enabled with the `--unsafe-fixes` option).",
-                                    fixables.applicable, fixables.inapplicable_unsafe
-                                )?;
+                        writeln!(
+                            writer,
+                            "{fix_prefix} {} fixable with the `--fix` option ({} hidden fix{es} can be enabled with the `--unsafe-fixes` option).",
+                            fixables.applicable, fixables.inapplicable_unsafe
+                        )?;
                     } else if fixables.applicable > 0 {
                         // Only applicable fixes
                         writeln!(
@@ -201,10 +205,11 @@ impl Printer {
                         } else {
                             "es"
                         };
-                        writeln!(writer,
-                                    "No fixes available ({} hidden fix{es} can be enabled with the `--unsafe-fixes` option).",
-                                    fixables.inapplicable_unsafe
-                                )?;
+                        writeln!(
+                            writer,
+                            "No fixes available ({} hidden fix{es} can be enabled with the `--unsafe-fixes` option).",
+                            fixables.inapplicable_unsafe
+                        )?;
                     }
                 } else if fixables.applicable > 0 {
                     writeln!(
@@ -230,9 +235,15 @@ impl Printer {
                 if fixed > 0 {
                     let s = if fixed == 1 { "" } else { "s" };
                     if self.fix_mode.is_apply() {
-                        writeln!(writer, "Fixed {fixed} error{s} ({unapplied} additional fix{es} available with `--unsafe-fixes`).")?;
+                        writeln!(
+                            writer,
+                            "Fixed {fixed} error{s} ({unapplied} additional fix{es} available with `--unsafe-fixes`)."
+                        )?;
                     } else {
-                        writeln!(writer, "Would fix {fixed} error{s} ({unapplied} additional fix{es} available with `--unsafe-fixes`).")?;
+                        writeln!(
+                            writer,
+                            "Would fix {fixed} error{s} ({unapplied} additional fix{es} available with `--unsafe-fixes`)."
+                        )?;
                     }
                 } else if self.fix_mode.is_apply() {
                     writeln!(
@@ -240,7 +251,10 @@ impl Printer {
                         "No errors fixed ({unapplied} fix{es} available with `--unsafe-fixes`)."
                     )?;
                 } else {
-                    writeln!(writer, "No errors would be fixed ({unapplied} fix{es} available with `--unsafe-fixes`).")?;
+                    writeln!(
+                        writer,
+                        "No errors would be fixed ({unapplied} fix{es} available with `--unsafe-fixes`)."
+                    )?;
                 }
             } else if fixed > 0 {
                 let s = if fixed == 1 { "" } else { "s" };
@@ -359,11 +373,11 @@ impl Printer {
             .fold(
                 vec![],
                 |mut acc: Vec<(&DiagnosticMessage, usize)>, message| {
-                    if let Some((prev_message, count)) = acc.last_mut() {
-                        if prev_message.rule() == message.rule() {
-                            *count += 1;
-                            return acc;
-                        }
+                    if let Some((prev_message, count)) = acc.last_mut()
+                        && prev_message.rule() == message.rule()
+                    {
+                        *count += 1;
+                        return acc;
                     }
                     acc.push((message, 1));
                     acc

@@ -2,8 +2,8 @@ use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{derive_message_formats, ViolationMetadata};
-use ruff_source_file::{find_newline, LineEnding, SourceFile};
+use ruff_macros::{ViolationMetadata, derive_message_formats};
+use ruff_source_file::{LineEnding, SourceFile, find_newline};
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
@@ -86,11 +86,10 @@ impl AstRule for MisleadingInlineIfSemicolon {
             let end = TextSize::try_from(end).unwrap();
             let indentation = node.indentation(src);
             let edit = Edit::replacement(format!("\n{indentation}"), start, end);
-            return some_vec!(Diagnostic::from_node(
-                MisleadingInlineIfSemicolon {},
-                &semicolon_node
-            )
-            .with_fix(Fix::safe_edit(edit)));
+            return some_vec!(
+                Diagnostic::from_node(MisleadingInlineIfSemicolon {}, &semicolon_node)
+                    .with_fix(Fix::safe_edit(edit))
+            );
         }
         None
     }

@@ -1,9 +1,9 @@
 use std::{env, path::PathBuf};
 
 use anyhow::Result;
-use tree_sitter::{ffi, Parser};
+use tree_sitter::{Parser, ffi};
 use tree_sitter_cli::{
-    parse::{parse_file_at_path, ParseFileOptions, ParseOutput, ParseStats, ParseTheme},
+    parse::{ParseFileOptions, ParseOutput, ParseStats, ParseTheme, parse_file_at_path},
     util,
 };
 

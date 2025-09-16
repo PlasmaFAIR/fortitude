@@ -2,11 +2,11 @@ use crate::ast::FortitudeNode;
 use crate::registry::AsRule;
 use crate::rule_redirects::get_redirect_target;
 use crate::rule_table::RuleTable;
+use crate::rules::Rule;
 use crate::rules::fortitude::allow_comments::{
     DisabledAllowComment, DuplicatedAllowComment, InvalidRuleCodeOrName, RedirectedAllowComment,
     UnusedAllowComment,
 };
-use crate::rules::Rule;
 
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
