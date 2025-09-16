@@ -1,6 +1,7 @@
-use std::ops::Deref;
+use std::{borrow::Cow, ops::Deref};
+use std::path::{Path, PathBuf};
 
-use lsp_types::{Uri, WorkspaceFoldel};
+use lsp_types::{Url, WorkspaceFolder};
 use thiserror::Error;
 
 use crate::session::{ClientOptions, WorkspaceOptionsMap};
@@ -22,8 +23,8 @@ impl Workspaces {
         let mut client_options_for_url = |url: &Url| {
             workspace_options.remove(url).unwrap_or_else(|| {
                 tracing::info!(
-                    "No workspace options found for {}, using default options",
-                    url.as_str()
+                    "No workspace options found for {:?}, using default options",
+                    url
                 );
                 ClientOptions::default()
             })

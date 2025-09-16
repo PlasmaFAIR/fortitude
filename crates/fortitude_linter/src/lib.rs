@@ -1,4 +1,5 @@
 pub use rule_selector::RuleSelector;
+pub use settings::Settings;
 
 pub mod allow_comments;
 pub mod ast;
@@ -33,7 +34,7 @@ use rules::error::syntax_error::SyntaxError;
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use settings::{FixMode, Settings};
+use settings::FixMode;
 
 use anyhow::{Context, anyhow};
 use colored::Colorize;

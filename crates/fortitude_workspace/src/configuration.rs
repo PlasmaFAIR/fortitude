@@ -320,6 +320,47 @@ impl Configuration {
             },
         })
     }
+
+    #[must_use]
+    pub fn combine(self, config: Self) -> Self {
+        Self {
+            files: self.files.or(config.files),
+            ignore: self.ignore.into_iter().chain(config.ignore).collect(),
+            select: self.select.or(config.select),
+            extend_select: self
+                .extend_select
+                .into_iter()
+                .chain(config.extend_select)
+                .collect(),
+            per_file_ignores: self.per_file_ignores.or(config.per_file_ignores),
+            extend_per_file_ignores: self
+                .extend_per_file_ignores
+                .into_iter()
+                .chain(config.extend_per_file_ignores)
+                .collect(),
+            line_length: self.line_length.or(config.line_length),
+            file_extensions: self.file_extensions.or(config.file_extensions),
+            fix: self.fix.or(config.fix),
+            fix_only: self.fix_only.or(config.fix_only),
+            show_fixes: self.show_fixes.or(config.show_fixes),
+            unsafe_fixes: self.unsafe_fixes.or(config.unsafe_fixes),
+            output_format: self.output_format.or(config.output_format),
+            progress_bar: self.progress_bar.or(config.progress_bar),
+            preview: self.preview.or(config.preview),
+            exclude: self.exclude.or(config.exclude),
+            extend_exclude: self
+                .extend_exclude
+                .into_iter()
+                .chain(config.extend_exclude)
+                .collect(),
+            force_exclude: self.force_exclude.or(config.force_exclude),
+            respect_gitignore: self.respect_gitignore.or(config.respect_gitignore),
+            exit_unlabelled_loops: self.exit_unlabelled_loops.or(config.exit_unlabelled_loops),
+            keyword_whitespace: self.keyword_whitespace.or(config.keyword_whitespace),
+            strings: self.strings.or(config.strings),
+            portability: self.portability.or(config.portability),
+        }
+    }
 }
 
 /// Applies a transformation to a [`Configuration`].

@@ -754,6 +754,7 @@ dependencies = [
  "anyhow",
  "colored",
  "fortitude_linter",
+ "globset",
  "is-macro",
  "itertools 0.12.1",
  "log",
