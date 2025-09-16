@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
 
-use lsp_types::Uri;
+use lsp_types::Url;
 use rustc_hash::FxHashMap;
 
 use crate::edit::LanguageId;
@@ -15,7 +15,7 @@ use crate::{
 #[derive(Default)]
 pub(crate) struct Index {
     /// Maps all document file URLs to the associated document controller
-    documents: FxHashMap<Uri, DocumentController>,
+    documents: FxHashMap<Url, DocumentController>,
 }
 
 /// A mutable handler to an underlying document.
@@ -30,7 +30,7 @@ enum DocumentController {
 #[derive(Clone)]
 pub enum DocumentQuery {
     Text {
-        file_url: Uri,
+        file_url: Url,
         document: Arc<TextDocument>,
     },
 }
@@ -42,7 +42,7 @@ impl Index {
         })
     }
 
-    pub(super) fn text_document_urls(&self) -> impl Iterator<Item = &Uri> + '_ {
+    pub(super) fn text_document_urls(&self) -> impl Iterator<Item = &Url> + '_ {
         self.documents
             .iter()
             .filter(|(_, doc)| doc.as_text().is_some())
@@ -71,11 +71,11 @@ impl Index {
         Ok(())
     }
 
-    pub(super) fn key_from_url(&self, url: Uri) -> DocumentKey {
+    pub(super) fn key_from_url(&self, url: Url) -> DocumentKey {
         DocumentKey::Text(url)
     }
 
-    pub(super) fn close_workspace_folder(&mut self, workspace_url: &Uri) -> crate::Result<()> {
+    pub(super) fn close_workspace_folder(&mut self, workspace_url: &Url) -> crate::Result<()> {
         // O(n) complexity, which isn't ideal... but this is an uncommon operation.
         self.documents
             .retain(|url, _| !url.as_str().starts_with(workspace_url.as_str()));
@@ -90,7 +90,7 @@ impl Index {
         Some(controller.make_ref(url))
     }
 
-    pub(super) fn open_text_document(&mut self, url: Uri, document: TextDocument) {
+    pub(super) fn open_text_document(&mut self, url: Url, document: TextDocument) {
         self.documents
             .insert(url, DocumentController::new_text(document));
     }
@@ -122,7 +122,7 @@ impl Index {
         Ok(controller)
     }
 
-    fn url_for_key<'a>(&'a self, key: &'a DocumentKey) -> Option<&'a Uri> {
+    fn url_for_key<'a>(&'a self, key: &'a DocumentKey) -> Option<&'a Url> {
         match key {
             DocumentKey::Text(path) => Some(path),
         }
@@ -139,7 +139,7 @@ impl DocumentController {
         Self::Text(Arc::new(document))
     }
 
-    fn make_ref(&self, file_url: Uri) -> DocumentQuery {
+    fn make_ref(&self, file_url: Url) -> DocumentQuery {
         match &self {
             Self::Text(document) => DocumentQuery::Text {
                 file_url,
@@ -177,7 +177,7 @@ impl DocumentQuery {
     }
 
     /// Get the URL for the document selected by this query.
-    pub(crate) fn file_url(&self) -> &Uri {
+    pub(crate) fn file_url(&self) -> &Url {
         match self {
             Self::Text { file_url, .. } => file_url,
         }
@@ -190,7 +190,7 @@ impl DocumentQuery {
     /// The path isn't guaranteed to point to a real path on the filesystem. This is the case
     /// for unsaved (untitled) documents.
     pub(crate) fn file_path(&self) -> Option<PathBuf> {
-        PathBuf::try_from(self.file_url().path().as_str()).ok()
+        self.file_url().to_file_path().ok()
     }
 
     /// Get the path for the document selected by this query, ignoring whether the file exists on disk.
@@ -199,7 +199,7 @@ impl DocumentQuery {
     pub(crate) fn virtual_file_path(&self) -> Cow<'_, Path> {
         self.file_path()
             .map(Cow::Owned)
-            .unwrap_or_else(|| Cow::Borrowed(Path::new(self.file_url().path().as_str())))
+            .unwrap_or_else(|| Cow::Borrowed(Path::new(self.file_url().path())))
     }
 
     /// Attempt to access the single inner text document selected by the query.

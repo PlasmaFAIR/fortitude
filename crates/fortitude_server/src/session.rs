@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use lsp_types::{ClientCapabilities, Uri};
+use lsp_types::{ClientCapabilities, Url};
 
 use crate::edit::{DocumentKey, DocumentVersion};
 use crate::session::request_queue::RequestQueue;
@@ -76,12 +76,12 @@ impl Session {
         self.shutdown_requested = requested;
     }
 
-    pub fn key_from_url(&self, url: Uri) -> DocumentKey {
+    pub fn key_from_url(&self, url: Url) -> DocumentKey {
         self.index.key_from_url(url)
     }
 
     /// Creates a document snapshot with the URL referencing the document to snapshot.
-    pub fn take_snapshot(&self, url: Uri) -> Option<DocumentSnapshot> {
+    pub fn take_snapshot(&self, url: Url) -> Option<DocumentSnapshot> {
         let key = self.key_from_url(url);
         Some(DocumentSnapshot {
             resolved_client_capabilities: self.resolved_client_capabilities.clone(),
@@ -91,7 +91,7 @@ impl Session {
     }
 
     /// Iterates over the LSP URLs for all open text documents. These URLs are valid file paths.
-    pub(super) fn text_document_urls(&self) -> impl Iterator<Item = &lsp_types::Uri> + '_ {
+    pub(super) fn text_document_urls(&self) -> impl Iterator<Item = &lsp_types::Url> + '_ {
         self.index.text_document_urls()
     }
 
@@ -112,7 +112,7 @@ impl Session {
 
     /// Registers a text document at the provided `url`.
     /// If a document is already open here, it will be overwritten.
-    pub(crate) fn open_text_document(&mut self, url: Uri, document: TextDocument) {
+    pub(crate) fn open_text_document(&mut self, url: Url, document: TextDocument) {
         self.index.open_text_document(url, document);
     }
 
@@ -124,7 +124,7 @@ impl Session {
     }
 
     /// Close a workspace folder at the given `url`.
-    pub(crate) fn close_workspace_folder(&mut self, url: &Uri) -> crate::Result<()> {
+    pub(crate) fn close_workspace_folder(&mut self, url: &Url) -> crate::Result<()> {
         self.index.close_workspace_folder(url)?;
         Ok(())
     }
