@@ -1,0 +1,13 @@
+{
+  "settings": {
+    "configuration": {
+      "check": {
+        "line-length": 100,
+        "extend-select": ["C032"]
+      }
+    },
+    "check": {
+      "extendSelect": ["S242"]
+    }
+  }
+}
