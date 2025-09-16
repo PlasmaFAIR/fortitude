@@ -1,7 +1,7 @@
 //! Types and utilities for working with text, modifying source files, and `Ruff <-> LSP` type conversion.
 
 use lsp_types::{PositionEncodingKind, Url};
-pub(crate) use range::RangeExt;
+pub(crate) use range::{RangeExt, ToRangeExt};
 pub use text_document::TextDocument;
 pub(crate) use text_document::{DocumentVersion, LanguageId};
 

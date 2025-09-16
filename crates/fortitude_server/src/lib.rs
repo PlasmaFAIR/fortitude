@@ -13,6 +13,7 @@ pub use server::Server;
 pub use session::{Client, ClientOptions, Session};
 
 mod edit;
+mod lint;
 mod logging;
 mod server;
 mod session;
