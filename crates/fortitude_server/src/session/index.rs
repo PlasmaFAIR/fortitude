@@ -434,6 +434,13 @@ impl DocumentQuery {
         }
     }
 
+    /// Get source code for the linter
+    pub(crate) fn make_source_kind(&self) -> String {
+        match self {
+            Self::Text { document, .. } => document.contents().to_string(),
+        }
+    }
+
     /// Retrieve the original key that describes this document query.
     pub(crate) fn make_key(&self) -> DocumentKey {
         match self {

@@ -1,11 +1,17 @@
 use super::PositionEncoding;
+use lsp_types as types;
 use ruff_source_file::LineIndex;
 use ruff_source_file::OneIndexed;
+use ruff_source_file::SourceLocation;
 use ruff_text_size::{TextRange, TextSize};
 
 pub(crate) trait RangeExt {
     fn to_text_range(&self, text: &str, index: &LineIndex, encoding: PositionEncoding)
     -> TextRange;
+}
+
+pub(crate) trait ToRangeExt {
+    fn to_range(&self, text: &str, index: &LineIndex, encoding: PositionEncoding) -> types::Range;
 }
 
 fn u32_index_to_usize(index: u32) -> usize {
@@ -75,6 +81,15 @@ impl RangeExt for lsp_types::Range {
     }
 }
 
+impl ToRangeExt for TextRange {
+    fn to_range(&self, text: &str, index: &LineIndex, encoding: PositionEncoding) -> types::Range {
+        types::Range {
+            start: source_location_to_position(&index.source_location(self.start(), text)),
+            end: source_location_to_position(&index.source_location(self.end(), text)),
+        }
+    }
+}
+
 /// Converts a UTF-16 code unit offset for a given line into a UTF-8 column number.
 fn utf8_column_offset(utf16_code_unit_offset: u32, line: &str) -> TextSize {
     let mut utf8_code_unit_offset = TextSize::new(0);
@@ -95,4 +110,12 @@ fn utf8_column_offset(utf16_code_unit_offset: u32, line: &str) -> TextSize {
     }
 
     utf8_code_unit_offset
+}
+
+fn source_location_to_position(location: &SourceLocation) -> types::Position {
+    types::Position {
+        line: u32::try_from(location.row.to_zero_indexed()).expect("row usize fits in u32"),
+        character: u32::try_from(location.column.to_zero_indexed())
+            .expect("character usize fits in u32"),
+    }
 }

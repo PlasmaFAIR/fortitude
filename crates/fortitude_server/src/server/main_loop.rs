@@ -36,9 +36,48 @@ impl Server {
                         self.connection.sender.clone(),
                     );
 
+                    tracing::debug!("Received message: {msg:?}");
+
                     let task = match msg {
-                        Message::Request(_) => continue,
-                        Message::Notification(_) => continue,
+                        Message::Request(req) => {
+                            self.session
+                                .request_queue_mut()
+                                .incoming_mut()
+                                .register(req.id.clone(), req.method.clone());
+
+                            if self.session.is_shutdown_requested() {
+                                tracing::warn!(
+                                    "Received request after server shutdown was requested, discarding"
+                                );
+                                client.respond_err(
+                                    req.id,
+                                    lsp_server::ResponseError {
+                                        code: lsp_server::ErrorCode::InvalidRequest as i32,
+                                        message: "Shutdown already requested".to_owned(),
+                                        data: None,
+                                    },
+                                )?;
+                                continue;
+                            }
+
+                            api::request(req)
+                        }
+                        Message::Notification(notification) => {
+                            if notification.method == lsp_types::notification::Exit::METHOD {
+                                if !self.session.is_shutdown_requested() {
+                                    return Err(anyhow!(
+                                        "Received exit notification before a shutdown request"
+                                    ));
+                                }
+
+                                tracing::debug!("Received exit notification, exiting");
+                                return Ok(());
+                            }
+
+                            api::notification(notification)
+                        }
+
+                        // Handle the response from the client to a server request
                         Message::Response(response) => {
                             if let Some(handler) = self
                                 .session
