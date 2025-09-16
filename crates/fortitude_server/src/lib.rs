@@ -16,6 +16,7 @@ mod edit;
 mod logging;
 mod server;
 mod session;
+mod workspace;
 
 pub(crate) const SERVER_NAME: &str = "fortitude";
 pub(crate) const DIAGNOSTIC_NAME: &str = "Fortitude";

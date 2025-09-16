@@ -3,12 +3,16 @@
 use std::sync::Arc;
 
 use lsp_types::{ClientCapabilities, Url};
+use settings::GlobalClientSettings;
 
 use crate::edit::{DocumentKey, DocumentVersion};
 use crate::session::request_queue::RequestQueue;
+use crate::workspace::Workspaces;
 use crate::{PositionEncoding, TextDocument};
 
 pub(crate) use self::capabilities::ResolvedClientCapabilities;
+pub use self::index::DocumentQuery;
+pub(crate) use self::options::{AllOptions, WorkspaceOptionsMap};
 pub use client::Client;
 pub use options::ClientOptions;
 
@@ -25,6 +29,8 @@ pub struct Session {
     index: index::Index,
     /// The global position encoding, negotiated during LSP initialization.
     position_encoding: PositionEncoding,
+    /// Global settings provided by the client.
+    global_settings: GlobalClientSettings,
 
     /// Tracks what LSP features the client supports and doesn't support.
     resolved_client_capabilities: Arc<ResolvedClientCapabilities>,
@@ -48,10 +54,14 @@ impl Session {
     pub fn new(
         client_capabilities: &ClientCapabilities,
         position_encoding: PositionEncoding,
+        global: GlobalClientSettings,
+        workspaces: &Workspaces,
+        client: &Client,
     ) -> crate::Result<Self> {
         Ok(Self {
             position_encoding,
-            index: index::Index::new()?,
+            index: index::Index::new(workspaces, &global, client)?,
+            global_settings: global,
             resolved_client_capabilities: Arc::new(ResolvedClientCapabilities::new(
                 client_capabilities,
             )),
@@ -85,7 +95,7 @@ impl Session {
         let key = self.key_from_url(url);
         Some(DocumentSnapshot {
             resolved_client_capabilities: self.resolved_client_capabilities.clone(),
-            document_ref: self.index.make_document_ref(key)?,
+            document_ref: self.index.make_document_ref(key, &self.global_settings)?,
             position_encoding: self.position_encoding,
         })
     }

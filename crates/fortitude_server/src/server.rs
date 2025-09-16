@@ -1,6 +1,7 @@
 //! Scheduling, I/O, and API endpoints.
 
 use lsp_server::Connection;
+use lsp_types::InitializeParams;
 use lsp_types as types;
 use std::num::NonZeroUsize;
 // The new PanicInfoHook name requires MSRV >= 1.82
@@ -14,6 +15,8 @@ use types::WorkDoneProgressOptions;
 pub(crate) use self::connection::ConnectionInitializer;
 pub use self::connection::ConnectionSender;
 use self::schedule::spawn_main_loop;
+use crate::session::AllOptions;
+use crate::workspace::Workspaces;
 use crate::Client;
 use crate::PositionEncoding;
 pub use crate::server::main_loop::MainLoopSender;
@@ -57,12 +60,48 @@ impl Server {
 
         let (main_loop_sender, main_loop_receiver) = crossbeam::channel::bounded(32);
 
+        let InitializeParams {
+            initialization_options,
+            workspace_folders,
+            ..
+        } = init_params;
+
+        let client = Client::new(main_loop_sender.clone(), connection.sender.clone());
+        let all_options = AllOptions::from_value(
+            initialization_options
+                .unwrap_or_else(|| serde_json::Value::Object(serde_json::Map::default())),
+            &client,
+        );
+
+        let AllOptions {
+            global: global_options,
+            workspace: workspace_options,
+        } = all_options;
+
+        // crate::logging::init_logging(
+        //     global_options.tracing.log_level.unwrap_or_default(),
+        //     global_options.tracing.log_file.as_deref(),
+        // );
+
+        let workspaces = Workspaces::from_workspace_folders(
+            workspace_folders,
+            workspace_options.unwrap_or_default(),
+        )?;
+
+        let global = global_options.into_settings(client.clone());
+
         Ok(Self {
             connection,
             worker_threads,
             main_loop_sender,
             main_loop_receiver,
-            session: Session::new(&client_capabilities, position_encoding)?,
+            session: Session::new(
+                &client_capabilities,
+                position_encoding,
+                global,
+                &workspaces,
+                &client,
+            )?,
             client_capabilities,
         })
     }
