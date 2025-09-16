@@ -1,11 +1,11 @@
 use super::PositionEncoding;
-use ruff_source_file::OneIndexed;
 use ruff_source_file::LineIndex;
+use ruff_source_file::OneIndexed;
 use ruff_text_size::{TextRange, TextSize};
 
 pub(crate) trait RangeExt {
     fn to_text_range(&self, text: &str, index: &LineIndex, encoding: PositionEncoding)
-        -> TextRange;
+    -> TextRange;
 }
 
 fn u32_index_to_usize(index: u32) -> usize {
