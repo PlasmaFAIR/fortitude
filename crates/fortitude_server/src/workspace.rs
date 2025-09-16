@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use lsp_types::{Uri, WorkspaceFolder};
+use lsp_types::{Uri, WorkspaceFoldel};
 use thiserror::Error;
 
 use crate::session::{ClientOptions, WorkspaceOptionsMap};
@@ -19,7 +19,7 @@ impl Workspaces {
         workspace_folders: Option<Vec<WorkspaceFolder>>,
         mut workspace_options: WorkspaceOptionsMap,
     ) -> std::result::Result<Workspaces, WorkspacesError> {
-        let mut client_options_for_url = |url: &Uri| {
+        let mut client_options_for_url = |url: &Url| {
             workspace_options.remove(url).unwrap_or_else(|| {
                 tracing::info!(
                     "No workspace options found for {}, using default options",

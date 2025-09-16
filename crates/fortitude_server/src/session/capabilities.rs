@@ -40,7 +40,7 @@ impl ResolvedClientCapabilities {
         let workspace_refresh = client_capabilities
             .workspace
             .as_ref()
-            .and_then(|workspace| workspace.diagnostic.as_ref())
+            .and_then(|workspace| workspace.diagnostics.as_ref())
             .and_then(|diagnostic| diagnostic.refresh_support)
             .unwrap_or_default();
 

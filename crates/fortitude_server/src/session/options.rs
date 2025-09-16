@@ -1,6 +1,6 @@
 use std::{path::PathBuf, str::FromStr as _};
 
-use lsp_types::Uri;
+use lsp_types::Url;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::{Map, Value};
@@ -12,7 +12,7 @@ use crate::session::{
     settings::{ClientSettings, EditorSettings, GlobalClientSettings, ResolvedConfiguration},
 };
 
-pub(crate) type WorkspaceOptionsMap = FxHashMap<Uri, ClientOptions>;
+pub(crate) type WorkspaceOptionsMap = FxHashMap<Url, ClientOptions>;
 
 /// Determines how multiple conflicting configurations should be resolved - in this
 /// case, the configuration from the client settings and configuration from local
@@ -235,7 +235,7 @@ pub(crate) struct TracingOptions {
 struct WorkspaceOptions {
     #[serde(flatten)]
     options: ClientOptions,
-    workspace: Uri,
+    workspace: Url,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -621,28 +621,17 @@ mod tests {
                             true,
                         ),
                     },
-                    workspace: Uri(
-                        Uri {
-                            scheme: Some(
-                                "file",
-                            ),
-                            authority: Some(
-                                Authority {
-                                    userinfo: None,
-                                    host: Host {
-                                        text: "",
-                                        data: RegName(
-                                            "",
-                                        ),
-                                    },
-                                    port: None,
-                                },
-                            ),
-                            path: "/Users/test/projects/pandas",
-                            query: None,
-                            fragment: None,
-                        },
-                    ),
+                    workspace: Url {
+                        scheme: "file",
+                        cannot_be_a_base: false,
+                        username: "",
+                        password: None,
+                        host: None,
+                        port: None,
+                        path: "/Users/test/projects/pandas",
+                        query: None,
+                        fragment: None,
+                    },
                 },
                 WorkspaceOptions {
                     options: ClientOptions {
@@ -691,28 +680,17 @@ mod tests {
                             true,
                         ),
                     },
-                    workspace: Uri(
-                        Uri {
-                            scheme: Some(
-                                "file",
-                            ),
-                            authority: Some(
-                                Authority {
-                                    userinfo: None,
-                                    host: Host {
-                                        text: "",
-                                        data: RegName(
-                                            "",
-                                        ),
-                                    },
-                                    port: None,
-                                },
-                            ),
-                            path: "/Users/test/projects/scipy",
-                            query: None,
-                            fragment: None,
-                        },
-                    ),
+                    workspace: Url {
+                        scheme: "file",
+                        cannot_be_a_base: false,
+                        username: "",
+                        password: None,
+                        host: None,
+                        port: None,
+                        path: "/Users/test/projects/scipy",
+                        query: None,
+                        fragment: None,
+                    },
                 },
             ],
         }
@@ -728,7 +706,7 @@ mod tests {
             workspace: workspace_options,
         } = AllOptions::from_init_options(options);
         let path =
-            Uri::from_str("file:///Users/test/projects/pandas").expect("path should be valid");
+            Url::from_str("file:///Users/test/projects/pandas").expect("path should be valid");
         let all_workspace_options = workspace_options.expect("workspace options should exist");
 
         let workspace_options = all_workspace_options
@@ -765,7 +743,7 @@ mod tests {
             }
         );
         let path =
-            Uri::from_str("file:///Users/test/projects/scipy").expect("path should be valid");
+            Url::from_str("file:///Users/test/projects/scipy").expect("path should be valid");
         let workspace_options = all_workspace_options
             .get(&path)
             .expect("workspace setting should exist")
@@ -964,6 +942,7 @@ mod tests {
                             line_length: Some(100),
                             ..Default::default()
                         }),
+                        ..Default::default()
                     }))),
                     extend_select: Some(vec![RuleSelector::from_str("S242").unwrap()]),
                     ..Default::default()

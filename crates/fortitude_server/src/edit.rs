@@ -1,6 +1,6 @@
 //! Types and utilities for working with text, modifying source files, and `Ruff <-> LSP` type conversion.
 
-use lsp_types::{PositionEncodingKind, Uri};
+use lsp_types::{PositionEncodingKind, Url};
 pub(crate) use range::RangeExt;
 pub use text_document::TextDocument;
 pub(crate) use text_document::{DocumentVersion, LanguageId};
@@ -53,12 +53,12 @@ impl TryFrom<&lsp_types::PositionEncodingKind> for PositionEncoding {
 /// This document ID can point to either be a standalone Python file, a full notebook, or a cell within a notebook.
 #[derive(Clone, Debug)]
 pub enum DocumentKey {
-    Text(Uri),
+    Text(Url),
 }
 
 impl DocumentKey {
     /// Converts the key back into its original URL.
-    pub(crate) fn into_url(self) -> Uri {
+    pub(crate) fn into_url(self) -> Url {
         match self {
             DocumentKey::Text(uri) => uri,
         }
