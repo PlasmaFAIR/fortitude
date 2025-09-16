@@ -1,5 +1,5 @@
-use lsp_types::ClientCapabilities;
 use fortitude_linter::display_settings;
+use lsp_types::ClientCapabilities;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[expect(clippy::struct_excessive_bools)]

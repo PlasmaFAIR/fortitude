@@ -2,14 +2,14 @@ use anyhow::anyhow;
 use crossbeam::select;
 use lsp_server::Message;
 use lsp_types::{
-    self as types, notification::Notification as _, DidChangeWatchedFilesRegistrationOptions,
-    FileSystemWatcher,
+    self as types, DidChangeWatchedFilesRegistrationOptions, FileSystemWatcher,
+    notification::Notification as _,
 };
 
 use crate::{
+    Server,
     server::{api, schedule},
     session::Client,
-    Server,
 };
 
 pub type MainLoopSender = crossbeam::channel::Sender<Event>;
@@ -55,7 +55,7 @@ impl Server {
                             }
 
                             continue;
-                        },
+                        }
                     };
                     scheduler.dispatch(task, &mut self.session, client);
                 }

@@ -14,11 +14,11 @@ use types::WorkDoneProgressOptions;
 pub(crate) use self::connection::ConnectionInitializer;
 pub use self::connection::ConnectionSender;
 use self::schedule::spawn_main_loop;
+use crate::Client;
+use crate::PositionEncoding;
 pub use crate::server::main_loop::MainLoopSender;
 pub(crate) use crate::server::main_loop::{Event, MainLoopReceiver};
 use crate::session::Session;
-use crate::Client;
-use crate::PositionEncoding;
 pub(crate) use api::Error;
 
 mod api;

@@ -1,6 +1,5 @@
 use lsp_server as server;
 
-
 pub(crate) struct Error {
     pub(crate) code: server::ErrorCode,
     pub(crate) error: anyhow::Error,
