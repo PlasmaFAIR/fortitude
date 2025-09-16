@@ -1,8 +1,9 @@
 //! Scheduling, I/O, and API endpoints.
 
 use lsp_server::Connection;
-use lsp_types::InitializeParams;
 use lsp_types as types;
+use lsp_types::InitializeParams;
+use lsp_types::WorkspaceFoldersServerCapabilities;
 use std::num::NonZeroUsize;
 // The new PanicInfoHook name requires MSRV >= 1.82
 #[allow(deprecated)]
@@ -15,13 +16,13 @@ use types::WorkDoneProgressOptions;
 pub(crate) use self::connection::ConnectionInitializer;
 pub use self::connection::ConnectionSender;
 use self::schedule::spawn_main_loop;
-use crate::session::AllOptions;
-use crate::workspace::Workspaces;
 use crate::Client;
 use crate::PositionEncoding;
 pub use crate::server::main_loop::MainLoopSender;
 pub(crate) use crate::server::main_loop::{Event, MainLoopReceiver};
+use crate::session::AllOptions;
 use crate::session::Session;
+use crate::workspace::Workspaces;
 pub(crate) use api::Error;
 
 mod api;
@@ -135,7 +136,13 @@ impl Server {
         types::ServerCapabilities {
             position_encoding: Some(position_encoding.into()),
             code_action_provider: None,
-            workspace: None,
+            workspace: Some(types::WorkspaceServerCapabilities {
+                workspace_folders: Some(WorkspaceFoldersServerCapabilities {
+                    supported: Some(true),
+                    change_notifications: Some(lsp_types::OneOf::Left(true)),
+                }),
+                file_operations: None,
+            }),
             diagnostic_provider: Some(types::DiagnosticServerCapabilities::Options(
                 DiagnosticOptions {
                     identifier: Some(crate::DIAGNOSTIC_NAME.into()),

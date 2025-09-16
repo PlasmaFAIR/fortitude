@@ -100,6 +100,15 @@ impl DiagnosticMessage {
     pub fn source_file(&self) -> &SourceFile {
         &self.file
     }
+
+    /// Returns the URL for the rule documentation
+    pub fn to_fortitude_url(&self) -> String {
+        format!(
+            "{}/en/stable/rules/{}",
+            env!("CARGO_PKG_HOMEPAGE"),
+            self.name()
+        )
+    }
 }
 
 impl Ord for DiagnosticMessage {
