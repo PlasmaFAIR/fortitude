@@ -78,10 +78,10 @@ impl Server {
             workspace: workspace_options,
         } = all_options;
 
-        // crate::logging::init_logging(
-        //     global_options.tracing.log_level.unwrap_or_default(),
-        //     global_options.tracing.log_file.as_deref(),
-        // );
+        crate::logging::init_logging(
+            global_options.tracing.log_level.unwrap_or_default(),
+            global_options.tracing.log_file.as_deref(),
+        );
 
         let workspaces = Workspaces::from_workspace_folders(
             workspace_folders,
