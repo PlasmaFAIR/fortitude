@@ -10,11 +10,14 @@ use crate::{PositionEncoding, TextDocument};
 
 pub(crate) use self::capabilities::ResolvedClientCapabilities;
 pub use client::Client;
+pub use options::ClientOptions;
 
 mod capabilities;
 mod client;
 mod index;
+mod options;
 mod request_queue;
+mod settings;
 
 /// The global state for the LSP
 pub struct Session {
