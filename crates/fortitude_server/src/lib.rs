@@ -6,13 +6,17 @@
 
 use std::num::NonZeroUsize;
 
-use anyhow::Context;
-pub use edit::{PositionEncoding, TextDocument};
-use server::ConnectionInitializer;
-pub use server::Server;
-pub use session::{Client, ClientOptions, Session};
+use anyhow::Context as _;
+pub use edit::{DocumentKey, PositionEncoding, TextDocument};
+use lsp_types::CodeActionKind;
+pub use server::{ConnectionSender, MainLoopSender, Server};
+pub use session::{Client, ClientOptions, DocumentQuery, DocumentSnapshot, GlobalOptions, Session};
+pub use workspace::{Workspace, Workspaces};
+
+use crate::server::ConnectionInitializer;
 
 mod edit;
+mod fix;
 mod lint;
 mod logging;
 mod server;
@@ -21,6 +25,8 @@ mod workspace;
 
 pub(crate) const SERVER_NAME: &str = "fortitude";
 pub(crate) const DIAGNOSTIC_NAME: &str = "Fortitude";
+
+pub const SOURCE_FIX_ALL_FORTITUDE: CodeActionKind = CodeActionKind::new("source.fixAll.fortitude");
 
 /// A common result type used in most cases where a
 /// result type is needed.

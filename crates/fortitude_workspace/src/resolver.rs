@@ -1,10 +1,10 @@
 use std::path::Path;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use globset::{Candidate, GlobSet};
 use path_absolutize::path_dedot;
 
-use crate::configuration::{self, Configuration, ConfigurationTransformer, load_options};
+use crate::configuration::{Configuration, ConfigurationTransformer, load_options};
 use fortitude_linter::settings::Settings;
 
 /// Return `true` if the given file should be ignored based on the exclusion

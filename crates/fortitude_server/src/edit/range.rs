@@ -82,7 +82,7 @@ impl RangeExt for lsp_types::Range {
 }
 
 impl ToRangeExt for TextRange {
-    fn to_range(&self, text: &str, index: &LineIndex, encoding: PositionEncoding) -> types::Range {
+    fn to_range(&self, text: &str, index: &LineIndex, _encoding: PositionEncoding) -> types::Range {
         types::Range {
             start: source_location_to_position(&index.source_location(self.start(), text)),
             end: source_location_to_position(&index.source_location(self.end(), text)),

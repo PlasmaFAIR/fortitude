@@ -1,9 +1,10 @@
 //! Data model, state management, and configuration resolution.
 
+use std::path::Path;
 use std::sync::Arc;
 
 use lsp_types::{ClientCapabilities, FileEvent, Url};
-use settings::GlobalClientSettings;
+use settings::{ClientSettings, GlobalClientSettings};
 
 use crate::edit::{DocumentKey, DocumentVersion};
 use crate::session::request_queue::RequestQueue;
@@ -13,8 +14,8 @@ use crate::{PositionEncoding, TextDocument};
 pub(crate) use self::capabilities::ResolvedClientCapabilities;
 pub use self::index::DocumentQuery;
 pub(crate) use self::options::{AllOptions, WorkspaceOptionsMap};
+pub use self::options::{ClientOptions, GlobalOptions};
 pub use client::Client;
-pub use options::ClientOptions;
 
 mod capabilities;
 mod client;
@@ -46,6 +47,7 @@ pub struct Session {
 /// a specific document.
 pub struct DocumentSnapshot {
     resolved_client_capabilities: Arc<ResolvedClientCapabilities>,
+    client_settings: Arc<settings::ClientSettings>,
     document_ref: index::DocumentQuery,
     position_encoding: PositionEncoding,
 }
@@ -95,6 +97,10 @@ impl Session {
         let key = self.key_from_url(url);
         Some(DocumentSnapshot {
             resolved_client_capabilities: self.resolved_client_capabilities.clone(),
+            client_settings: self
+                .index
+                .client_settings(&key)
+                .unwrap_or_else(|| self.global_settings.to_settings_arc()),
             document_ref: self.index.make_document_ref(key, &self.global_settings)?,
             position_encoding: self.position_encoding,
         })
@@ -158,15 +164,34 @@ impl Session {
         self.position_encoding
     }
 
+    /// Returns an iterator over the paths to the configuration files in the index.
+    pub(crate) fn config_file_paths(&self) -> impl Iterator<Item = &Path> {
+        self.index.config_file_paths()
+    }
+
+    /// Returns the resolved global client settings.
+    pub(crate) fn global_client_settings(&self) -> &ClientSettings {
+        self.global_settings.to_settings()
+    }
+
     /// Returns the number of open documents in the session.
     pub(crate) fn open_documents_len(&self) -> usize {
         self.index.open_documents_len()
+    }
+
+    /// Returns an iterator over the workspace root folders in the session.
+    pub(crate) fn workspace_root_folders(&self) -> impl Iterator<Item = &Path> {
+        self.index.workspace_root_folders()
     }
 }
 
 impl DocumentSnapshot {
     pub(crate) fn resolved_client_capabilities(&self) -> &ResolvedClientCapabilities {
         &self.resolved_client_capabilities
+    }
+
+    pub(crate) fn client_settings(&self) -> &ClientSettings {
+        &self.client_settings
     }
 
     pub fn query(&self) -> &index::DocumentQuery {

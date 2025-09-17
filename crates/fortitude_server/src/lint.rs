@@ -169,7 +169,7 @@ fn to_lsp_diagnostic(
         code,
         code_description: lsp_types::Url::parse(&diagnostic.to_fortitude_url())
             .ok()
-            .and_then(|url| Some(lsp_types::CodeDescription { href: url })),
+            .map(|url| lsp_types::CodeDescription { href: url }),
         source: Some(DIAGNOSTIC_NAME.into()),
         message: body,
         related_information: None,

@@ -31,15 +31,12 @@ pub(crate) fn spawn_main_loop(
 }
 
 pub(crate) struct Scheduler {
-    fmt_pool: thread::Pool,
     background_pool: thread::Pool,
 }
 
 impl Scheduler {
     pub(super) fn new(worker_threads: NonZeroUsize) -> Self {
-        const FMT_THREADS: usize = 1;
         Self {
-            fmt_pool: thread::Pool::new(NonZeroUsize::try_from(FMT_THREADS).unwrap()),
             background_pool: thread::Pool::new(worker_threads),
         }
     }
@@ -64,9 +61,6 @@ impl Scheduler {
                     BackgroundSchedule::LatencySensitive => self
                         .background_pool
                         .spawn(ThreadPriority::LatencySensitive, task),
-                    BackgroundSchedule::Fmt => {
-                        self.fmt_pool.spawn(ThreadPriority::LatencySensitive, task);
-                    }
                 }
             }
         }
