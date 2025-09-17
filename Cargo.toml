@@ -45,6 +45,8 @@ itertools = "0.12.0"
 jod-thread = { version = "0.1.2" }
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"
+libc = { version = "0.2.153" }
+libcst = { version = "1.8.4", default-features = false }
 log = "0.4.22"
 lsp-server = { version = "0.7.8" }
 lsp-types = { git = "https://github.com/astral-sh/lsp-types.git", rev = "3512a9f", features = [

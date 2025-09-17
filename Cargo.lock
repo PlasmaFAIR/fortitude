@@ -836,6 +836,7 @@ dependencies = [
  "insta",
  "jod-thread",
  "lazy-regex",
+ "libc",
  "lsp-server",
  "lsp-types",
  "ruff_diagnostics",
