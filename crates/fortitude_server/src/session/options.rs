@@ -79,18 +79,11 @@ impl GlobalOptions {
 pub struct ClientOptions {
     configuration: Option<ClientConfiguration>,
     fix_all: Option<bool>,
-    organize_imports: Option<bool>,
     check: Option<CheckOptions>,
     code_action: Option<CodeActionOptions>,
     exclude: Option<Vec<String>>,
     line_length: Option<usize>,
     configuration_preference: Option<ConfigurationPreference>,
-
-    /// If `true` or [`None`], show syntax errors as diagnostics.
-    ///
-    /// This is useful when using Fortitude with other language servers, allowing the user to refer
-    /// to syntax errors from only one source.
-    show_syntax_errors: Option<bool>,
 }
 
 impl ClientOptions {
@@ -150,18 +143,11 @@ impl ClientOptions {
         let resolved = ClientSettings {
             editor_settings,
             fix_all: self.fix_all.unwrap_or(true),
-            organize_imports: self.organize_imports.unwrap_or(true),
             check_enable: check.enable.unwrap_or(true),
-            disable_rule_comment_enable: code_action
-                .disable_rule_comment
-                .and_then(|disable| disable.enable)
-                .unwrap_or(true),
             fix_violation_enable: code_action
                 .fix_violation
                 .and_then(|fix| fix.enable)
                 .unwrap_or(true),
-
-            show_syntax_errors: self.show_syntax_errors.unwrap_or(true),
         };
 
         if contains_invalid_settings {
@@ -203,15 +189,12 @@ impl Combine for ClientOptions {
     fn combine_with(&mut self, other: Self) {
         self.configuration.combine_with(other.configuration);
         self.fix_all.combine_with(other.fix_all);
-        self.organize_imports.combine_with(other.organize_imports);
         self.check.combine_with(other.check);
         self.code_action.combine_with(other.code_action);
         self.exclude.combine_with(other.exclude);
         self.line_length.combine_with(other.line_length);
         self.configuration_preference
             .combine_with(other.configuration_preference);
-        self.show_syntax_errors
-            .combine_with(other.show_syntax_errors);
     }
 }
 
@@ -274,14 +257,11 @@ impl Combine for CheckOptions {
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[serde(rename_all = "camelCase")]
 struct CodeActionOptions {
-    disable_rule_comment: Option<CodeActionParameters>,
     fix_violation: Option<CodeActionParameters>,
 }
 
 impl Combine for CodeActionOptions {
     fn combine_with(&mut self, other: Self) {
-        self.disable_rule_comment
-            .combine_with(other.disable_rule_comment);
         self.fix_violation.combine_with(other.fix_violation);
     }
 }
@@ -524,9 +504,6 @@ mod tests {
                     fix_all: Some(
                         false,
                     ),
-                    organize_imports: Some(
-                        true,
-                    ),
                     check: Some(
                         CheckOptions {
                             enable: Some(
@@ -547,13 +524,6 @@ mod tests {
                     ),
                     code_action: Some(
                         CodeActionOptions {
-                            disable_rule_comment: Some(
-                                CodeActionParameters {
-                                    enable: Some(
-                                        false,
-                                    ),
-                                },
-                            ),
                             fix_violation: Some(
                                 CodeActionParameters {
                                     enable: Some(
@@ -566,9 +536,6 @@ mod tests {
                     exclude: None,
                     line_length: None,
                     configuration_preference: None,
-                    show_syntax_errors: Some(
-                        true,
-                    ),
                 },
                 tracing: TracingOptions {
                     log_level: None,
@@ -580,9 +547,6 @@ mod tests {
                     options: ClientOptions {
                         configuration: None,
                         fix_all: Some(
-                            true,
-                        ),
-                        organize_imports: Some(
                             true,
                         ),
                         check: Some(
@@ -598,13 +562,6 @@ mod tests {
                         ),
                         code_action: Some(
                             CodeActionOptions {
-                                disable_rule_comment: Some(
-                                    CodeActionParameters {
-                                        enable: Some(
-                                            false,
-                                        ),
-                                    },
-                                ),
                                 fix_violation: Some(
                                     CodeActionParameters {
                                         enable: Some(
@@ -617,9 +574,6 @@ mod tests {
                         exclude: None,
                         line_length: None,
                         configuration_preference: None,
-                        show_syntax_errors: Some(
-                            true,
-                        ),
                     },
                     workspace: Url {
                         scheme: "file",
@@ -639,9 +593,6 @@ mod tests {
                         fix_all: Some(
                             true,
                         ),
-                        organize_imports: Some(
-                            true,
-                        ),
                         check: Some(
                             CheckOptions {
                                 enable: Some(
@@ -657,13 +608,6 @@ mod tests {
                         ),
                         code_action: Some(
                             CodeActionOptions {
-                                disable_rule_comment: Some(
-                                    CodeActionParameters {
-                                        enable: Some(
-                                            true,
-                                        ),
-                                    },
-                                ),
                                 fix_violation: Some(
                                     CodeActionParameters {
                                         enable: Some(
@@ -676,9 +620,6 @@ mod tests {
                         exclude: None,
                         line_length: None,
                         configuration_preference: None,
-                        show_syntax_errors: Some(
-                            true,
-                        ),
                     },
                     workspace: Url {
                         scheme: "file",
@@ -722,11 +663,8 @@ mod tests {
             workspace_settings,
             ClientSettings {
                 fix_all: true,
-                organize_imports: true,
                 check_enable: true,
-                disable_rule_comment_enable: false,
                 fix_violation_enable: false,
-                show_syntax_errors: true,
                 editor_settings: EditorSettings {
                     configuration: None,
                     check_preview: Some(true),
@@ -758,11 +696,8 @@ mod tests {
             workspace_settings,
             ClientSettings {
                 fix_all: true,
-                organize_imports: true,
                 check_enable: true,
-                disable_rule_comment_enable: true,
                 fix_violation_enable: false,
-                show_syntax_errors: true,
                 editor_settings: EditorSettings {
                     configuration: None,
                     check_preview: Some(false),
@@ -792,7 +727,6 @@ mod tests {
                     fix_all: Some(
                         false,
                     ),
-                    organize_imports: None,
                     check: Some(
                         CheckOptions {
                             enable: None,
@@ -808,13 +742,6 @@ mod tests {
                     ),
                     code_action: Some(
                         CodeActionOptions {
-                            disable_rule_comment: Some(
-                                CodeActionParameters {
-                                    enable: Some(
-                                        false,
-                                    ),
-                                },
-                            ),
                             fix_violation: None,
                         },
                     ),
@@ -827,7 +754,6 @@ mod tests {
                         80,
                     ),
                     configuration_preference: None,
-                    show_syntax_errors: None,
                 },
                 tracing: TracingOptions {
                     log_level: Some(
@@ -854,11 +780,8 @@ mod tests {
             global.to_settings(),
             &ClientSettings {
                 fix_all: false,
-                organize_imports: true,
                 check_enable: true,
-                disable_rule_comment_enable: false,
                 fix_violation_enable: true,
-                show_syntax_errors: true,
                 editor_settings: EditorSettings {
                     configuration: None,
                     check_preview: None,
@@ -930,11 +853,8 @@ mod tests {
             global.to_settings(),
             &ClientSettings {
                 fix_all: true,
-                organize_imports: true,
                 check_enable: true,
-                disable_rule_comment_enable: true,
                 fix_violation_enable: true,
-                show_syntax_errors: true,
                 editor_settings: EditorSettings {
                     configuration: Some(ResolvedConfiguration::Inline(Box::new(Options {
                         check: Some(CheckOptions {
