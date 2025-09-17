@@ -69,6 +69,44 @@ impl Snippet {
     }
 }
 
+/// A collection of snippets.
+pub struct Snippets {
+    // Collected snippets
+    inner: Vec<Snippet>,
+}
+
+impl Default for Snippets {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Snippets {
+    pub fn new() -> Self {
+        Snippets { inner: Vec::new() }
+    }
+
+    pub fn push(&mut self, text: &str, provenance: &Provenance) {
+        let snippet = Snippet {
+            text: text.to_string(),
+            provenance: provenance.clone(),
+        };
+        if let Some(last) = self.inner.last_mut() {
+            if last.extend(&snippet).is_ok() {
+                return;
+            }
+        }
+        self.inner.push(snippet);
+    }
+
+    pub fn collect(&self) -> String {
+        self.inner
+            .iter()
+            .map(|s| s.text.as_str())
+            .collect::<String>()
+    }
+}
+
 /// A logical line of code, which may span multiple physical lines due to
 /// line continuations. Tracks the byte offset of each location of the
 /// logical line.
@@ -216,44 +254,6 @@ impl IfStack {
     /// Check if the stack is clean (i.e., all conditions are true).
     pub fn is_clean(&self) -> bool {
         self.stack.last().copied().unwrap_or(true)
-    }
-}
-
-/// A collection of snippets.
-pub struct Snippets {
-    // Collected snippets
-    inner: Vec<Snippet>,
-}
-
-impl Default for Snippets {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Snippets {
-    pub fn new() -> Self {
-        Snippets { inner: Vec::new() }
-    }
-
-    pub fn push(&mut self, text: &str, provenance: &Provenance) {
-        let snippet = Snippet {
-            text: text.to_string(),
-            provenance: provenance.clone(),
-        };
-        if let Some(last) = self.inner.last_mut() {
-            if last.extend(&snippet).is_ok() {
-                return;
-            }
-        }
-        self.inner.push(snippet);
-    }
-
-    pub fn collect(&self) -> String {
-        self.inner
-            .iter()
-            .map(|s| s.text.as_str())
-            .collect::<String>()
     }
 }
 
@@ -418,7 +418,6 @@ pub struct CPreprocessor {
     snippets: Snippets,
     #[allow(dead_code)]
     defines: Definitions,
-    // TODO: mapping of byte offsets between input and output
 }
 
 impl CPreprocessor {
