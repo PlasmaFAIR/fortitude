@@ -1,13 +1,17 @@
 //! Scheduling, I/O, and API endpoints.
 
 use lsp_server::Connection;
+use lsp_types::CodeActionOptions;
+use lsp_types::TextDocumentSyncCapability;
+use lsp_types::TextDocumentSyncKind;
+use lsp_types::TextDocumentSyncOptions;
 use lsp_types as types;
+use lsp_types::CodeActionKind;
 use lsp_types::InitializeParams;
 use lsp_types::WorkspaceFoldersServerCapabilities;
 use std::num::NonZeroUsize;
-// The new PanicInfoHook name requires MSRV >= 1.82
-#[allow(deprecated)]
-use std::panic::PanicInfo;
+use std::panic::PanicHookInfo;
+use std::str::FromStr;
 use std::sync::Arc;
 use types::ClientCapabilities;
 use types::DiagnosticOptions;
@@ -42,7 +46,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn new(
+    pub(crate) fn new(
         worker_threads: NonZeroUsize,
         connection: ConnectionInitializer,
     ) -> crate::Result<Self> {
@@ -135,7 +139,19 @@ impl Server {
     fn server_capabilities(position_encoding: PositionEncoding) -> types::ServerCapabilities {
         types::ServerCapabilities {
             position_encoding: Some(position_encoding.into()),
-            code_action_provider: None,
+            code_action_provider: Some(types::CodeActionProviderCapability::Options(
+                CodeActionOptions {
+                    code_action_kinds: Some(
+                        SupportedCodeAction::all()
+                            .map(SupportedCodeAction::to_kind)
+                            .collect(),
+                    ),
+                    work_done_progress_options: WorkDoneProgressOptions {
+                        work_done_progress: Some(true),
+                    },
+                    resolve_provider: Some(true),
+                },
+            )),
             workspace: Some(types::WorkspaceServerCapabilities {
                 workspace_folders: Some(WorkspaceFoldersServerCapabilities {
                     supported: Some(true),
@@ -154,17 +170,105 @@ impl Server {
                     },
                 },
             )),
-            execute_command_provider: None,
-            hover_provider: None,
-            text_document_sync: None,
+            execute_command_provider: Some(types::ExecuteCommandOptions {
+                commands: SupportedCommand::all()
+                    .map(|command| command.identifier().to_string())
+                    .to_vec(),
+                work_done_progress_options: WorkDoneProgressOptions {
+                    work_done_progress: Some(false),
+                },
+            }),
+
+            hover_provider: Some(types::HoverProviderCapability::Simple(true)),
+            text_document_sync: Some(TextDocumentSyncCapability::Options(
+                TextDocumentSyncOptions {
+                    open_close: Some(true),
+                    change: Some(TextDocumentSyncKind::INCREMENTAL),
+                    will_save: Some(false),
+                    will_save_wait_until: Some(false),
+                    ..Default::default()
+                },
+            )),
+
             ..Default::default()
         }
     }
 }
 
-// The new PanicInfoHook name requires MSRV >= 1.82
-#[allow(deprecated)]
-type PanicHook = Box<dyn Fn(&PanicInfo<'_>) + 'static + Sync + Send>;
+/// The code actions we support.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub(crate) enum SupportedCodeAction {
+    /// Maps to the `quickfix` code action kind. Quick fix code actions are shown under
+    /// their respective diagnostics. Quick fixes are only created where the fix applicability is
+    /// at least [`fortitude_diagnostics::Applicability::Unsafe`].
+    QuickFix,
+    /// Maps to the `source.fixAll` and `source.fixAll.fortitude` code action kinds.
+    /// This is a source action that applies all safe fixes to the currently open document.
+    SourceFixAll,
+}
+
+impl SupportedCodeAction {
+    /// Returns the LSP code action kind that map to this code action.
+    fn to_kind(self) -> CodeActionKind {
+        match self {
+            Self::QuickFix => CodeActionKind::QUICKFIX,
+            Self::SourceFixAll => crate::SOURCE_FIX_ALL_FORTITUDE,
+        }
+    }
+
+    fn from_kind(kind: CodeActionKind) -> impl Iterator<Item = Self> {
+        Self::all().filter(move |supported_kind| {
+            supported_kind.to_kind().as_str().starts_with(kind.as_str())
+        })
+    }
+
+    /// Returns all code actions kinds that the server currently supports.
+    fn all() -> impl Iterator<Item = Self> {
+        [Self::QuickFix, Self::SourceFixAll].into_iter()
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) enum SupportedCommand {
+    Debug,
+    FixAll,
+}
+
+impl SupportedCommand {
+    const fn label(self) -> &'static str {
+        match self {
+            Self::FixAll => "Fix all auto-fixable problems",
+            Self::Debug => "Print debug information",
+        }
+    }
+
+    /// Returns the identifier of the command.
+    const fn identifier(self) -> &'static str {
+        match self {
+            SupportedCommand::FixAll => "fortitude.applyAutofix",
+            SupportedCommand::Debug => "fortitude.printDebugInformation",
+        }
+    }
+
+    /// Returns all the commands that the server currently supports.
+    const fn all() -> [SupportedCommand; 2] {
+        [SupportedCommand::FixAll, SupportedCommand::Debug]
+    }
+}
+
+impl FromStr for SupportedCommand {
+    type Err = anyhow::Error;
+
+    fn from_str(name: &str) -> anyhow::Result<Self, Self::Err> {
+        Ok(match name {
+            "fortitude.applyAutofix" => Self::FixAll,
+            "fortitude.printDebugInformation" => Self::Debug,
+            _ => return Err(anyhow::anyhow!("Invalid command `{name}`")),
+        })
+    }
+}
+
+type PanicHook = Box<dyn Fn(&PanicHookInfo<'_>) + 'static + Sync + Send>;
 struct ServerPanicHookHandler {
     hook: Option<PanicHook>,
     // Hold on to the strong reference for as long as the panic hook is set.

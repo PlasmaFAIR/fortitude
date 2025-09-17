@@ -51,9 +51,20 @@ pub(super) fn request(req: server::Request) -> Task {
     let id = req.id.clone();
 
     match req.method.as_str() {
+        request::CodeActions::METHOD => {
+            background_request_task::<request::CodeActions>(req, BackgroundSchedule::Worker)
+        }
+        request::CodeActionResolve::METHOD => {
+            background_request_task::<request::CodeActionResolve>(req, BackgroundSchedule::Worker)
+        }
         request::DocumentDiagnostic::METHOD => {
             background_request_task::<request::DocumentDiagnostic>(req, BackgroundSchedule::Worker)
         }
+        request::ExecuteCommand::METHOD => sync_request_task::<request::ExecuteCommand>(req),
+        request::Hover::METHOD => {
+            background_request_task::<request::Hover>(req, BackgroundSchedule::Worker)
+        }
+        lsp_types::request::Shutdown::METHOD => sync_request_task::<requests::ShutdownHandler>(req),
         method => {
             tracing::warn!("Received request {method} which does not have a handler");
             let result: Result<()> = Err(Error::new(
@@ -119,6 +130,18 @@ pub(super) fn notification(notif: server::Notification) -> Task {
             );
         })
     })
+}
+
+fn sync_request_task<R: traits::SyncRequestHandler>(req: server::Request) -> Result<Task>
+where
+    <<R as RequestHandler>::RequestType as Request>::Params: UnwindSafe,
+{
+    let (id, params) = cast_request::<R>(req)?;
+    Ok(Task::sync(move |session, client: &Client| {
+        let _span = tracing::debug_span!("request", %id, method = R::METHOD).entered();
+        let result = R::run(session, client, params);
+        respond::<R>(&id, result, client);
+    }))
 }
 
 fn background_request_task<R: traits::BackgroundDocumentRequestHandler>(

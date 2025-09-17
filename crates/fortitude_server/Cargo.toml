@@ -19,9 +19,9 @@ crossbeam = { workspace = true }
 globset = { workspace = true }
 ignore = { workspace = true }
 jod-thread = { workspace = true }
+lazy-regex = { workspace = true }
 lsp-server = { workspace = true }
 lsp-types = { workspace = true }
-regex = { workspace = true }
 rustc-hash = { workspace = true }
 ruff_diagnostics = { workspace = true }
 ruff_source_file = { workspace = true }

@@ -1,5 +1,4 @@
-use std::path::{Path, PathBuf};
-use std::{borrow::Cow, ops::Deref};
+use std::ops::Deref;
 
 use lsp_types::{Url, WorkspaceFolder};
 use thiserror::Error;
