@@ -167,6 +167,7 @@ Commands:
   explain  Get descriptions, rationales, and solutions for each rule
   version  Display Fortitude's version
   config   List or describe the available configuration options
+  server   Run the language server
   help     Print this message or the help of the given subcommand(s)
 
 Options:
