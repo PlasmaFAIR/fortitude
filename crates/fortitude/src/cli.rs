@@ -136,8 +136,8 @@ pub enum SubCommands {
         #[arg(long, value_enum, default_value = "text")]
         output_format: HelpFormat,
     },
-    /// LSP server
-    Server,
+    /// Run the language server
+    Server(ServerCommand),
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
@@ -584,4 +584,22 @@ pub struct ExplainCommand {
     /// Output format
     #[arg(long, value_enum, default_value = "text")]
     pub output_format: HelpFormat,
+}
+
+#[derive(Copy, Clone, Debug, clap::Parser)]
+pub struct ServerCommand {
+    /// Enable preview mode. Use `--no-preview` to disable.
+    ///
+    /// This enables unstable server features and turns on the preview mode for the linter
+    /// and the formatter.
+    #[arg(long, overrides_with("no_preview"))]
+    preview: bool,
+    #[clap(long, overrides_with("preview"), hide = true)]
+    no_preview: bool,
+}
+
+impl ServerCommand {
+    pub(crate) fn resolve_preview(self) -> Option<bool> {
+        resolve_bool_arg(Some(self.preview), Some(self.no_preview))
+    }
 }

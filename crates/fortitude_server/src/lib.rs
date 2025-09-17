@@ -36,7 +36,7 @@ pub(crate) fn version() -> &'static str {
     fortitude_linter::VERSION
 }
 
-pub fn server() -> Result<()> {
+pub fn server(preview: Option<bool>) -> Result<()> {
     let four = NonZeroUsize::new(4).unwrap();
 
     // by default, we set the number of worker threads to `num_cpus`, with a maximum of 4.
@@ -46,7 +46,7 @@ pub fn server() -> Result<()> {
 
     let (connection, io_threads) = ConnectionInitializer::stdio();
 
-    let server_result = Server::new(worker_threads, connection)
+    let server_result = Server::new(worker_threads, connection, preview)
         .context("Failed to start server")?
         .run();
 
