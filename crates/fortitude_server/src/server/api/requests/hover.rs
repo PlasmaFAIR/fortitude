@@ -1,9 +1,9 @@
 use crate::server::Result;
 use crate::session::{Client, DocumentSnapshot};
-use lsp_types::{self as types, request as req};
-use lazy_regex::regex;
-use ruff_diagnostics::FixAvailability;
 use fortitude_linter::registry::Rule;
+use lazy_regex::regex;
+use lsp_types::{self as types, request as req};
+use ruff_diagnostics::FixAvailability;
 use ruff_source_file::OneIndexed;
 use std::fmt::Write;
 use std::str::FromStr;
@@ -32,9 +32,7 @@ pub(crate) fn hover(
     position: &types::TextDocumentPositionParams,
 ) -> Option<types::Hover> {
     // Hover only operates on text documents or notebook cells
-    let document = snapshot
-        .query()
-        .as_single_document();
+    let document = snapshot.query().as_single_document();
     let line_number: usize = position
         .position
         .line
@@ -48,9 +46,7 @@ pub(crate) fn hover(
     let line = &document.contents()[line_range];
 
     // Get the list of codes.
-    let allow_comment_regex = regex!(
-        r#"! allow\((?P<codes>.*)\)\s*"#
-    );
+    let allow_comment_regex = regex!(r#"! allow\((?P<codes>.*)\)\s*"#);
     let allow_comment_captures = allow_comment_regex.captures(line)?;
     let codes_match = allow_comment_captures.name("codes")?;
     let codes_start = codes_match.start();

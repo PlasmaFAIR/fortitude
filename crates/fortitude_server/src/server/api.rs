@@ -225,8 +225,9 @@ fn sync_notification_task<N: SyncNotificationHandler>(notif: server::Notificatio
         let _span = tracing::debug_span!("notification", method = N::METHOD).entered();
         if let Err(err) = N::run(session, client, params) {
             tracing::error!("An error occurred while running {id}: {err}");
-            client
-                .show_error_message("Fortitude encountered a problem. Check the logs for more details.");
+            client.show_error_message(
+                "Fortitude encountered a problem. Check the logs for more details.",
+            );
         }
     }))
 }
@@ -319,7 +320,9 @@ fn respond<Req>(
 {
     if let Err(err) = &result {
         tracing::error!("An error occurred with request ID {id}: {err}");
-        client.show_error_message("Fortitude encountered a problem. Check the logs for more details.");
+        client.show_error_message(
+            "Fortitude encountered a problem. Check the logs for more details.",
+        );
     }
     if let Err(err) = client.respond(id, result) {
         tracing::error!("Failed to send response: {err}");
