@@ -21,7 +21,7 @@ pub(crate) fn spawn_main_loop(
 ) -> crate::Result<thread::JoinHandle<crate::Result<()>>> {
     // Override OS defaults to avoid stack overflows on platforms with low stack size defaults.
     const MAIN_THREAD_STACK_SIZE: usize = 2 * 1024 * 1024;
-    const MAIN_THREAD_NAME: &str = "ruff:main";
+    const MAIN_THREAD_NAME: &str = "fortitude:main";
     Ok(
         thread::Builder::new(thread::ThreadPriority::LatencySensitive)
             .name(MAIN_THREAD_NAME.into())
