@@ -66,11 +66,9 @@ impl GlobalClientSettings {
 #[expect(clippy::struct_excessive_bools)]
 pub(crate) struct ClientSettings {
     pub(super) fix_all: bool,
-    pub(super) organize_imports: bool,
     pub(super) check_enable: bool,
     pub(super) disable_rule_comment_enable: bool,
     pub(super) fix_violation_enable: bool,
-    pub(super) show_syntax_errors: bool,
     pub(super) editor_settings: EditorSettings,
 }
 
@@ -131,10 +129,6 @@ impl ClientSettings {
         self.fix_all
     }
 
-    pub(crate) fn organize_imports(&self) -> bool {
-        self.organize_imports
-    }
-
     pub(crate) fn check(&self) -> bool {
         self.check_enable
     }
@@ -145,10 +139,6 @@ impl ClientSettings {
 
     pub(crate) fn fix_violation(&self) -> bool {
         self.fix_violation_enable
-    }
-
-    pub(crate) fn show_syntax_errors(&self) -> bool {
-        self.show_syntax_errors
     }
 
     pub(crate) fn editor_settings(&self) -> &EditorSettings {
