@@ -7,19 +7,14 @@ use crate::{
     edit::{Replacement, ToRangeExt},
     session::DocumentQuery,
 };
-use fortitude_linter::{
-    FixerResult, ast_entrypoint_map, rules_to_path_rules, rules_to_text_rules,
-};
+use fortitude_linter::{FixerResult, ast_entrypoint_map, rules_to_path_rules, rules_to_text_rules};
 use ruff_source_file::{LineIndex, SourceFileBuilder};
 
 /// A simultaneous fix made across a single text document or among an arbitrary
 /// number of notebook cells.
 pub(crate) type Fixes = FxHashMap<lsp_types::Url, Vec<lsp_types::TextEdit>>;
 
-pub(crate) fn fix_all(
-    query: &DocumentQuery,
-    encoding: PositionEncoding,
-) -> crate::Result<Fixes> {
+pub(crate) fn fix_all(query: &DocumentQuery, encoding: PositionEncoding) -> crate::Result<Fixes> {
     let source_kind = query.make_source_kind();
     let settings = query.settings();
     let document_path = query.virtual_file_path();
@@ -40,10 +35,7 @@ pub(crate) fn fix_all(
     // If we simply generated the diagnostics with `check_path` and then applied fixes individually,
     // there's a possibility they could overlap or introduce new problems that need to be fixed,
     // which is inconsistent with how `ruff check --fix` works.
-    let FixerResult {
-        transformed,
-        ..
-    } = fortitude_linter::check_and_fix_file(
+    let FixerResult { transformed, .. } = fortitude_linter::check_and_fix_file(
         rules,
         &path_rules,
         &text_rules,
