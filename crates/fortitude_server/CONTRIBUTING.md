@@ -1,6 +1,9 @@
-## Contributing to the Ruff Language Server
+## Contributing to the Fortitude Language Server
 
-This is a mostly free-form guide with resources to help you get started with contributing to `ruff server`.
+This is a mostly free-form guide with resources to help you get started with contributing to `fortitude server`.
+
+Because `fortitude server` is only lightly modified from `ruff
+server`, the description below refers to `ruff server`.
 
 ### Project Architecture
 
