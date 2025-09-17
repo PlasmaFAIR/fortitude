@@ -1,13 +1,13 @@
 //! Scheduling, I/O, and API endpoints.
 
 use lsp_server::Connection;
+use lsp_types as types;
+use lsp_types::CodeActionKind;
 use lsp_types::CodeActionOptions;
+use lsp_types::InitializeParams;
 use lsp_types::TextDocumentSyncCapability;
 use lsp_types::TextDocumentSyncKind;
 use lsp_types::TextDocumentSyncOptions;
-use lsp_types as types;
-use lsp_types::CodeActionKind;
-use lsp_types::InitializeParams;
 use lsp_types::WorkspaceFoldersServerCapabilities;
 use std::num::NonZeroUsize;
 use std::panic::PanicHookInfo;
@@ -49,6 +49,7 @@ impl Server {
     pub(crate) fn new(
         worker_threads: NonZeroUsize,
         connection: ConnectionInitializer,
+        preview: Option<bool>,
     ) -> crate::Result<Self> {
         let (id, init_params) = connection.initialize_start()?;
 
@@ -72,11 +73,15 @@ impl Server {
         } = init_params;
 
         let client = Client::new(main_loop_sender.clone(), connection.sender.clone());
-        let all_options = AllOptions::from_value(
+        let mut all_options = AllOptions::from_value(
             initialization_options
                 .unwrap_or_else(|| serde_json::Value::Object(serde_json::Map::default())),
             &client,
         );
+
+        if let Some(preview) = preview {
+            all_options.set_preview(preview);
+        }
 
         let AllOptions {
             global: global_options,

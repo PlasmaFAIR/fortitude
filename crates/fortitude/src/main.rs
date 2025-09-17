@@ -25,9 +25,8 @@ fn main() -> Result<ExitCode> {
             fortitude::version::version_command(output_format)?;
             return Ok(ExitCode::SUCCESS);
         }
-        SubCommands::Server => {
-            fortitude_server::server()?;
-            return Ok(ExitCode::SUCCESS);
+        SubCommands::Server(args) => {
+            fortitude::server::server_command(args)
         }
     };
     match status {

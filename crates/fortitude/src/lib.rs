@@ -6,3 +6,4 @@ pub mod show_files;
 pub mod show_settings;
 pub mod stdin;
 pub mod version;
+pub mod server;
