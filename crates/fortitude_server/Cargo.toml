@@ -39,3 +39,6 @@ tree-sitter-fortran = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+
+[target.'cfg(target_vendor = "apple")'.dependencies]
+libc = { workspace = true }
