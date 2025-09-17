@@ -489,6 +489,7 @@ impl DocumentQuery {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn text_document_language_id(&self) -> Option<LanguageId> {
         match self {
             DocumentQuery::Text { document, .. } => document.language_id(),

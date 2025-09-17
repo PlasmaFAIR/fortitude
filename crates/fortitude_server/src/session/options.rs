@@ -144,10 +144,6 @@ impl ClientOptions {
             editor_settings,
             fix_all: self.fix_all.unwrap_or(true),
             check_enable: check.enable.unwrap_or(true),
-            disable_rule_comment_enable: code_action
-                .disable_rule_comment
-                .and_then(|disable| disable.enable)
-                .unwrap_or(true),
             fix_violation_enable: code_action
                 .fix_violation
                 .and_then(|fix| fix.enable)

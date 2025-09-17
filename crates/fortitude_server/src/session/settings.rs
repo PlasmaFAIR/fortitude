@@ -67,7 +67,6 @@ impl GlobalClientSettings {
 pub(crate) struct ClientSettings {
     pub(super) fix_all: bool,
     pub(super) check_enable: bool,
-    pub(super) disable_rule_comment_enable: bool,
     pub(super) fix_violation_enable: bool,
     pub(super) editor_settings: EditorSettings,
 }
@@ -131,10 +130,6 @@ impl ClientSettings {
 
     pub(crate) fn check(&self) -> bool {
         self.check_enable
-    }
-
-    pub(crate) fn noqa_comments(&self) -> bool {
-        self.disable_rule_comment_enable
     }
 
     pub(crate) fn fix_violation(&self) -> bool {
