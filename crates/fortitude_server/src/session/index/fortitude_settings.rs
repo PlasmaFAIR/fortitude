@@ -5,7 +5,6 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::Context;
-use fortitude_workspace::configuration::load_options;
 use ignore::{WalkBuilder, WalkState};
 
 use fortitude_linter::Settings;
