@@ -68,7 +68,7 @@ pub(super) fn request(req: server::Request) -> Task {
 
         Task::sync(move |_session, client| {
             client.show_error_message(
-                "Ruff failed to handle a request from the editor. Check the logs for more details.",
+                "Fortitude failed to handle a request from the editor. Check the logs for more details.",
             );
             respond_silent_error(
                 id,
@@ -85,7 +85,27 @@ pub(super) fn request(req: server::Request) -> Task {
 
 pub(super) fn notification(notif: server::Notification) -> Task {
     match notif.method.as_str() {
+        notification::DidChange::METHOD => {
+            sync_notification_task::<notification::DidChange>(notif)
+        }
+        notification::DidChangeConfiguration::METHOD => {
+            sync_notification_task::<notification::DidChangeConfiguration>(notif)
+        }
+        notification::DidChangeWatchedFiles::METHOD => {
+            sync_notification_task::<notification::DidChangeWatchedFiles>(notif)
+        }
+        notification::DidChangeWorkspace::METHOD => {
+            sync_notification_task::<notification::DidChangeWorkspace>(notif)
+        }
+        notification::DidClose::METHOD => sync_notification_task::<notification::DidClose>(notif),
         notification::DidOpen::METHOD => sync_notification_task::<notification::DidOpen>(notif),
+        lsp_types::notification::Cancel::METHOD => {
+            sync_notification_task::<notifications::CancelNotificationHandler>(notif)
+        }
+        lsp_types::notification::SetTrace::METHOD => {
+            tracing::trace!("Ignoring `setTrace` notification");
+            return Task::nothing();
+        }
         method => {
             tracing::warn!("Received notification {method} which does not have a handler.");
             return Task::nothing();
@@ -176,6 +196,68 @@ where
     }
 }
 
+fn sync_notification_task<N: SyncNotificationHandler>(notif: server::Notification) -> Result<Task> {
+    let (id, params) = cast_notification::<N>(notif)?;
+    Ok(Task::sync(move |session, client| {
+        let _span = tracing::debug_span!("notification", method = N::METHOD).entered();
+        if let Err(err) = N::run(session, client, params) {
+            tracing::error!("An error occurred while running {id}: {err}");
+            client
+                .show_error_message("Fortitude encountered a problem. Check the logs for more details.");
+        }
+    }))
+}
+
+#[expect(dead_code)]
+fn background_notification_thread<N>(
+    req: server::Notification,
+    schedule: BackgroundSchedule,
+) -> Result<Task>
+where
+    N: BackgroundDocumentNotificationHandler,
+    <<N as NotificationHandler>::NotificationType as Notification>::Params: UnwindSafe,
+{
+    let (id, params) = cast_notification::<N>(req)?;
+    Ok(Task::background(schedule, move |session: &Session| {
+        let url = N::document_url(&params);
+
+        let Some(snapshot) = session.take_snapshot((*url).clone()) else {
+            tracing::debug!(
+                "Ignoring notification because snapshot for url `{url}` doesn't exist."
+            );
+            return Box::new(|_| {});
+        };
+        Box::new(move |client| {
+            let _span = tracing::debug_span!("notification", method = N::METHOD).entered();
+
+            let result =
+                match std::panic::catch_unwind(|| N::run_with_snapshot(snapshot, client, params)) {
+                    Ok(result) => result,
+                    Err(panic) => {
+                        let message = if let Some(panic_message) = panic_message(&panic) {
+                            format!("notification handler for {id} failed with: {panic_message}")
+                        } else {
+                            format!("notification handler for {id} failed")
+                        };
+
+                        tracing::error!(message);
+                        client.show_error_message(
+                            "Fortitude encountered a panic. Check the logs for more details.",
+                        );
+                        return;
+                    }
+                };
+
+            if let Err(err) = result {
+                tracing::error!("An error occurred while running {id}: {err}");
+                client.show_error_message(
+                    "Fortitude encountered a problem. Check the logs for more details.",
+                );
+            }
+        })
+    }))
+}
+
 /// Tries to cast a serialized request from the server into
 /// a parameter type for a specific request handler.
 /// It is *highly* recommended to not override this function in your
@@ -214,7 +296,7 @@ fn respond<Req>(
 {
     if let Err(err) = &result {
         tracing::error!("An error occurred with request ID {id}: {err}");
-        client.show_error_message("Ruff encountered a problem. Check the logs for more details.");
+        client.show_error_message("Fortitude encountered a problem. Check the logs for more details.");
     }
     if let Err(err) = client.respond(id, result) {
         tracing::error!("Failed to send response: {err}");
@@ -227,19 +309,6 @@ fn respond_silent_error(id: RequestId, client: &Client, error: lsp_server::Respo
     if let Err(err) = client.respond_err(id, error) {
         tracing::error!("Failed to send response: {err}");
     }
-}
-
-fn sync_notification_task<N: SyncNotificationHandler>(notif: server::Notification) -> Result<Task> {
-    let (id, params) = cast_notification::<N>(notif)?;
-    Ok(Task::sync(move |session, client| {
-        let _span = tracing::debug_span!("notification", method = N::METHOD).entered();
-        if let Err(err) = N::run(session, client, params) {
-            tracing::error!("An error occurred while running {id}: {err}");
-            client.show_error_message(
-                "Fortitude encountered a problem. Check the logs for more details.",
-            );
-        }
-    }))
 }
 
 /// Tries to cast a serialized request from the server into

@@ -35,7 +35,7 @@ impl super::SyncNotificationHandler for DidOpen {
             let snapshot = session
                 .take_snapshot(uri.clone())
                 .ok_or_else(|| {
-                    anyhow::anyhow!("Unable to take snapshot for document with URL {uri:?}")
+                    anyhow::anyhow!("Unable to take snapshot for document with URL {uri}")
                 })
                 .with_failure_code(lsp_server::ErrorCode::InternalError)?;
             publish_diagnostics_for_document(&snapshot, client)?;

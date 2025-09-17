@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use lsp_types::{ClientCapabilities, Url};
+use lsp_types::{ClientCapabilities, FileEvent, Url};
 use settings::GlobalClientSettings;
 
 use crate::edit::{DocumentKey, DocumentVersion};
@@ -131,6 +131,17 @@ impl Session {
     pub(crate) fn close_document(&mut self, key: &DocumentKey) -> crate::Result<()> {
         self.index.close_document(key)?;
         Ok(())
+    }
+
+    /// Reloads the settings index based on the provided changes.
+    pub(crate) fn reload_settings(&mut self, changes: &[FileEvent], client: &Client) {
+        self.index.reload_settings(changes, client);
+    }
+
+    /// Open a workspace folder at the given `url`.
+    pub(crate) fn open_workspace_folder(&mut self, url: Url, client: &Client) -> crate::Result<()> {
+        self.index
+            .open_workspace_folder(url, &self.global_settings, client)
     }
 
     /// Close a workspace folder at the given `url`.
