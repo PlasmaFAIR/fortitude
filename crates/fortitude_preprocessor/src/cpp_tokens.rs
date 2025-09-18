@@ -511,7 +511,7 @@ mod tests {
         // Test integers
         let tokens = tokenize(input.as_str());
         assert_eq!(tokens.len(), number_of_tokens * 2 - 1); // Each number + whitespac
-                                                            // Check that all number tokens are correctly identified.
+        // Check that all number tokens are correctly identified.
         for (i, token) in tokens.iter().enumerate() {
             if i % 2 == 0 {
                 assert_eq!(token.kind, CppTokenKind::Number);

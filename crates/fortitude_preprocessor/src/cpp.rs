@@ -1,5 +1,5 @@
 use crate::cpp_tokens::{CppDirectiveKind, CppTokenIterator, CppTokenKind};
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use chrono::prelude::*;
 use lazy_regex::regex_captures;
 use ruff_source_file::{OneIndexed, SourceCode};
