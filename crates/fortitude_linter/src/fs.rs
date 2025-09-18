@@ -205,7 +205,7 @@ impl GlobPath {
     /// Constructs a [`GlobPath`] by escaping any glob metacharacters in `root` and normalizing
     /// `path` to the escaped `root`.
     ///
-    /// See [`fs::normalize_path_to`] for details of the normalization.
+    /// See [`normalize_path_to`] for details of the normalization.
     pub fn normalize(path: impl AsRef<Path>, root: impl AsRef<Path>) -> Self {
         let root = root.as_ref().to_string_lossy();
         let escaped = globset::escape(&root);
