@@ -1,6 +1,6 @@
 use std::fmt;
 use std::iter::Peekable;
-use std::str::Utf8Error;
+use std::str::{FromStr, Utf8Error};
 
 /// All valid 'punctuators' in Fortran.
 /// These are consumed greedily by the tokenizer.
@@ -12,7 +12,8 @@ const PUNCTUATORS: &[&str] = &[
 ];
 
 /// The variant of each token.
-#[derive(Debug, Clone, Copy, Eq, PartialEq, strum_macros::Display)]
+#[derive(Debug, Clone, Eq, PartialEq, strum_macros::Display, strum_macros::EnumString)]
+#[strum(serialize_all = "lowercase")]
 pub enum CppDirectiveKind {
     Define,
     Undef,
@@ -26,11 +27,12 @@ pub enum CppDirectiveKind {
     Pragma,
     Warning,
     Error,
-    Stringification,
+    #[strum(default)]
+    Stringification(String),
 }
 
 /// The variant of each token.
-#[derive(Debug, Clone, Copy, Eq, PartialEq, strum_macros::Display)]
+#[derive(Debug, Clone, Eq, PartialEq, strum_macros::Display)]
 pub enum CppTokenKind {
     /// A variable or unexpanded macro token.
     Identifier,
@@ -58,7 +60,7 @@ pub enum CppTokenKind {
 }
 
 /// A token in a source file.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct CppToken<'a> {
     /// The text of the token.
     pub text: &'a str,
@@ -236,21 +238,8 @@ impl<'a> CppTokenIterator<'a> {
         // Consume an identifier for the directive name.
         match self.consume_identifier() {
             Some(Ok(directive)) => {
-                let directive_kind = match directive.text {
-                    "define" => CppDirectiveKind::Define,
-                    "undef" => CppDirectiveKind::Undef,
-                    "include" => CppDirectiveKind::Include,
-                    "if" => CppDirectiveKind::If,
-                    "ifdef" => CppDirectiveKind::Ifdef,
-                    "ifndef" => CppDirectiveKind::Ifndef,
-                    "elif" => CppDirectiveKind::Elif,
-                    "else" => CppDirectiveKind::Else,
-                    "endif" => CppDirectiveKind::Endif,
-                    "pragma" => CppDirectiveKind::Pragma,
-                    "warning" => CppDirectiveKind::Warning,
-                    "error" => CppDirectiveKind::Error,
-                    _ => CppDirectiveKind::Stringification,
-                };
+                // Can unwrap here, as by default the directive kind will be `Stringification`
+                let directive_kind = CppDirectiveKind::from_str(directive.text).unwrap();
                 Some(self.emit(start, CppTokenKind::Directive(directive_kind)))
             }
             _ => Some(self.emit(start, CppTokenKind::Error)),
