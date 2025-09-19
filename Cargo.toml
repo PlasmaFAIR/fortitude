@@ -60,8 +60,8 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { version = "1.0.113" }
 similar = { version = "2.4.0", features = ["inline"] }
 similar-asserts = "1.6.0"
-strum = { version = "0.27.1", features = ["strum_macros"] }
-strum_macros = { version = "0.27.1" }
+strum = { version = "0.27.2", features = ["strum_macros"] }
+strum_macros = { version = "0.27.2" }
 textwrap = { version = "0.16.0" }
 termimad = { version = "0.31.3" }
 terminal-light = { version = "1.8.0" }
