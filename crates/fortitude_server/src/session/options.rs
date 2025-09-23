@@ -143,7 +143,6 @@ impl ClientOptions {
         let resolved = ClientSettings {
             editor_settings,
             fix_all: self.fix_all.unwrap_or(true),
-            check_enable: check.enable.unwrap_or(true),
             fix_violation_enable: code_action
                 .fix_violation
                 .and_then(|fix| fix.enable)
@@ -225,7 +224,6 @@ struct WorkspaceOptions {
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[serde(rename_all = "camelCase")]
 struct CheckOptions {
-    enable: Option<bool>,
     preview: Option<bool>,
     select: Option<Vec<String>>,
     extend_select: Option<Vec<String>>,
@@ -245,7 +243,6 @@ impl CheckOptions {
 
 impl Combine for CheckOptions {
     fn combine_with(&mut self, other: Self) {
-        self.enable.combine_with(other.enable);
         self.preview.combine_with(other.preview);
         self.select.combine_with(other.select);
         self.extend_select.combine_with(other.extend_select);
@@ -506,9 +503,6 @@ mod tests {
                     ),
                     check: Some(
                         CheckOptions {
-                            enable: Some(
-                                true,
-                            ),
                             preview: Some(
                                 true,
                             ),
@@ -551,9 +545,6 @@ mod tests {
                         ),
                         check: Some(
                             CheckOptions {
-                                enable: Some(
-                                    true,
-                                ),
                                 preview: None,
                                 select: None,
                                 extend_select: None,
@@ -595,9 +586,6 @@ mod tests {
                         ),
                         check: Some(
                             CheckOptions {
-                                enable: Some(
-                                    true,
-                                ),
                                 preview: Some(
                                     false,
                                 ),
@@ -663,7 +651,6 @@ mod tests {
             workspace_settings,
             ClientSettings {
                 fix_all: true,
-                check_enable: true,
                 fix_violation_enable: false,
                 editor_settings: EditorSettings {
                     configuration: None,
@@ -696,7 +683,6 @@ mod tests {
             workspace_settings,
             ClientSettings {
                 fix_all: true,
-                check_enable: true,
                 fix_violation_enable: false,
                 editor_settings: EditorSettings {
                     configuration: None,
@@ -729,7 +715,6 @@ mod tests {
                     ),
                     check: Some(
                         CheckOptions {
-                            enable: None,
                             preview: None,
                             select: None,
                             extend_select: None,
@@ -780,7 +765,6 @@ mod tests {
             global.to_settings(),
             &ClientSettings {
                 fix_all: false,
-                check_enable: true,
                 fix_violation_enable: true,
                 editor_settings: EditorSettings {
                     configuration: None,
@@ -853,7 +837,6 @@ mod tests {
             global.to_settings(),
             &ClientSettings {
                 fix_all: true,
-                check_enable: true,
                 fix_violation_enable: true,
                 editor_settings: EditorSettings {
                     configuration: Some(ResolvedConfiguration::Inline(Box::new(Options {

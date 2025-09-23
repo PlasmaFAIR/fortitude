@@ -6,12 +6,8 @@ use crate::{
 use super::LSPResult;
 
 pub(super) fn generate_diagnostics(snapshot: &DocumentSnapshot) -> DiagnosticsMap {
-    if snapshot.client_settings().check() {
-        let document = snapshot.query();
-        crate::lint::check(document, snapshot.encoding())
-    } else {
-        DiagnosticsMap::default()
-    }
+    let document = snapshot.query();
+    crate::lint::check(document, snapshot.encoding())
 }
 
 pub(super) fn publish_diagnostics_for_document(

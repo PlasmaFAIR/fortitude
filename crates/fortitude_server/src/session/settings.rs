@@ -66,7 +66,6 @@ impl GlobalClientSettings {
 #[expect(clippy::struct_excessive_bools)]
 pub(crate) struct ClientSettings {
     pub(super) fix_all: bool,
-    pub(super) check_enable: bool,
     pub(super) fix_violation_enable: bool,
     pub(super) editor_settings: EditorSettings,
 }
@@ -126,10 +125,6 @@ pub(crate) enum ResolvedConfigurationError {
 impl ClientSettings {
     pub(crate) fn fix_all(&self) -> bool {
         self.fix_all
-    }
-
-    pub(crate) fn check(&self) -> bool {
-        self.check_enable
     }
 
     pub(crate) fn fix_violation(&self) -> bool {
