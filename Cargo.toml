@@ -12,6 +12,7 @@ repository = "https://github.com/PlasmaFAIR/fortitude"
 authors = [
   "Liam Pattinson <liampattinson@gmail.com>",
   "Peter Hill <peter.hill@york.ac.uk>",
+  "Ian McInerney <i.mcinerney17@imperial.ac.uk>",
 ]
 license = "MIT"
 
