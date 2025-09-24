@@ -79,6 +79,11 @@ nav:
   - Tutorial: tutorial.md
   - Installing Fortitude: installation.md
   - The Fortitude Linter: linter.md
+  - Editors:
+    - Editor Integration: editors/index.md
+    - Setup: editors/setup.md
+    - Features: editors/features.md
+    - Settings: editors/settings.md
   - Configuring Fortitude: configuration.md
   - Preview: preview.md
   - Rules: rules.md
