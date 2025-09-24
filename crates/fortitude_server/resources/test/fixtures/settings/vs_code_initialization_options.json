@@ -1,11 +1,9 @@
 {
     "settings": [
         {
-            "nativeServer": "on",
             "cwd": "/Users/test/projects/pandas",
             "workspace": "file:///Users/test/projects/pandas",
             "path": [],
-            "ignoreStandardLibrary": true,
             "interpreter": [
                 "/Users/test/projects/pandas/.venv/bin/python"
             ],
@@ -13,28 +11,15 @@
             "codeAction": {
                 "fixViolation": {
                     "enable": false
-                },
-                "disableRuleComment": {
-                    "enable": false
                 }
             },
-            "check": {
-                "enable": true,
-                "run": "onType",
-                "args": []
-            },
             "enable": true,
-            "organizeImports": true,
-            "fixAll": true,
-            "showNotifications": "off",
-            "showSyntaxErrors": true
+            "fixAll": true
         },
         {
-            "nativeServer": "on",
             "cwd": "/Users/test/projects/scipy",
             "workspace": "file:///Users/test/projects/scipy",
             "path": [],
-            "ignoreStandardLibrary": true,
             "interpreter": [
                 "/Users/test/projects/scipy/.venv/bin/python"
             ],
@@ -42,26 +27,16 @@
             "codeAction": {
                 "fixViolation": {
                     "enable": false
-                },
-                "disableRuleComment": {
-                    "enable": true
                 }
             },
             "check": {
-                "enable": true,
-                "preview": false,
-                "run": "onType",
-                "args": []
+                "preview": false
             },
             "enable": true,
-            "organizeImports": true,
-            "fixAll": true,
-            "showNotifications": "off",
-            "showSyntaxErrors": true
+            "fixAll": true
         }
     ],
     "globalSettings": {
-        "nativeServer": "on",
         "cwd": "/",
         "workspace": "/",
         "path": [],
@@ -71,22 +46,13 @@
         "codeAction": {
             "fixViolation": {
                 "enable": false
-            },
-            "disableRuleComment": {
-                "enable": false
             }
         },
         "check": {
-            "enable": true,
             "preview": true,
-            "select": ["C", "OB"],
-            "run": "onType",
-            "args": []
+            "select": ["C", "OB"]
         },
         "enable": true,
-        "organizeImports": true,
-        "fixAll": false,
-        "showNotifications": "off",
-        "showSyntaxErrors": true
+        "fixAll": false
     }
 }
