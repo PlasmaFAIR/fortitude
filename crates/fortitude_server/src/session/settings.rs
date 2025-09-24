@@ -63,7 +63,6 @@ impl GlobalClientSettings {
 /// sends them.
 #[derive(Clone, Debug)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
-#[expect(clippy::struct_excessive_bools)]
 pub(crate) struct ClientSettings {
     pub(super) fix_all: bool,
     pub(super) fix_violation_enable: bool,
