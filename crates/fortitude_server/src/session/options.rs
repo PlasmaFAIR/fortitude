@@ -543,14 +543,7 @@ mod tests {
                         fix_all: Some(
                             true,
                         ),
-                        check: Some(
-                            CheckOptions {
-                                preview: None,
-                                select: None,
-                                extend_select: None,
-                                ignore: None,
-                            },
-                        ),
+                        check: None,
                         code_action: Some(
                             CodeActionOptions {
                                 fix_violation: Some(
