@@ -106,7 +106,7 @@ impl DiagnosticMessage {
         format!(
             "{}/en/stable/rules/{}",
             env!("CARGO_PKG_HOMEPAGE"),
-            self.name()
+            self.kind.rule()
         )
     }
 }
