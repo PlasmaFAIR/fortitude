@@ -24,4 +24,7 @@ will print garbage.
 
 'implicit none' should be used in all modules and programs, as
 implicit typing reduces the readability of code and increases the
-chances of typing errors.
+chances of typing errors. Because it applies to all children of an
+entity (all procedures in a module, for example), it _isn't_
+required in every procedure, just the parent module or program if
+there is one.

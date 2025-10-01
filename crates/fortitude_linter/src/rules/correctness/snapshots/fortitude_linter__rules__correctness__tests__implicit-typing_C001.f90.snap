@@ -27,7 +27,7 @@ snapshot_kind: text
   | ^^^^^^^^^^^^^^^ C001
 6 |   use, intrinsic :: iso_fortran_env, only: int32
 7 |   integer(int32) :: foo
-8 | end module safe_fix
+8 | contains
   |
   = help: Insert `implicit none`
 
@@ -37,26 +37,45 @@ snapshot_kind: text
 6 6 |   use, intrinsic :: iso_fortran_env, only: int32
   7 |+  implicit none
 7 8 |   integer(int32) :: foo
-8 9 | end module safe_fix
-9 10 | 
+8 9 | contains
+9 10 |   integer function double(x)
 
-./resources/test/fixtures/correctness/C001.f90:10:1: C001 [*] program missing 'implicit none'
+./resources/test/fixtures/correctness/C001.f90:15:1: C001 [*] program missing 'implicit none'
    |
- 8 | end module safe_fix
- 9 |
-10 | program my_program
+13 | end module safe_fix
+14 |
+15 | program my_program
    | ^^^^^^^^^^^^^^^^^^ C001
-11 |   use, intrinsic :: iso_fortran_env, only: int32
-12 |   ! Fix should be applied after next line
-13 |   use safe_fix
+16 |   use, intrinsic :: iso_fortran_env, only: int32
+17 |   ! Fix should be applied after next line
+18 |   use safe_fix
    |
    = help: Insert `implicit none`
 
 ℹ Unsafe fix
-11 11 |   use, intrinsic :: iso_fortran_env, only: int32
-12 12 |   ! Fix should be applied after next line
-13 13 |   use safe_fix
-   14 |+  implicit none
-14 15 |   ! Fix should be applied before this line
-15 16 |   write(*,*) 42
-16 17 | end program my_program
+16 16 |   use, intrinsic :: iso_fortran_env, only: int32
+17 17 |   ! Fix should be applied after next line
+18 18 |   use safe_fix
+   19 |+  implicit none
+19 20 |   ! Fix should be applied before this line
+20 21 |   write(*,*) 42
+21 22 | end program my_program
+
+./resources/test/fixtures/correctness/C001.f90:23:1: C001 [*] subroutine missing 'implicit none'
+   |
+21 | end program my_program
+22 |
+23 | subroutine external_sub(x)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^ C001
+24 |   print*, x
+25 | end subroutine external_sub
+   |
+   = help: Insert `implicit none`
+
+ℹ Unsafe fix
+21 21 | end program my_program
+22 22 | 
+23 23 | subroutine external_sub(x)
+   24 |+implicit none
+24 25 |   print*, x
+25 26 | end subroutine external_sub

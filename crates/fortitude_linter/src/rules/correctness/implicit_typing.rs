@@ -72,7 +72,10 @@ fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Fix> {
 ///
 /// 'implicit none' should be used in all modules and programs, as
 /// implicit typing reduces the readability of code and increases the
-/// chances of typing errors.
+/// chances of typing errors. Because it applies to all children of an
+/// entity (all procedures in a module, for example), it _isn't_
+/// required in every procedure, just the parent module or program if
+/// there is one.
 #[derive(ViolationMetadata)]
 pub(crate) struct ImplicitTyping {
     entity: String,
@@ -93,6 +96,14 @@ impl Violation for ImplicitTyping {
 }
 impl AstRule for ImplicitTyping {
     fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        // If a procedure _isn't_ in a parent entity, then it should
+        // have `implicit none`
+        if matches!(node.kind(), "function" | "subroutine")
+            && node.parent()?.kind() != "translation_unit"
+        {
+            return None;
+        }
+
         if has_implicit_none(node) {
             return None;
         }
@@ -106,7 +117,7 @@ impl AstRule for ImplicitTyping {
     }
 
     fn entrypoints() -> Vec<&'static str> {
-        vec!["module", "submodule", "program"]
+        vec!["module", "submodule", "program", "subroutine", "function"]
     }
 }
 
