@@ -1,8 +1,6 @@
 /// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::FortitudeNode;
-use crate::rules::correctness::implicit_typing::{
-    has_implicit_none, implicit_statement_is_none,
-};
+use crate::rules::correctness::implicit_typing::{has_implicit_none, implicit_statement_is_none};
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
