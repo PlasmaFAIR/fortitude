@@ -1,4 +1,6 @@
 # interface-implicit-typing (C002)
+Fix is sometimes available.
+
 This rule is turned on by default.
 
 ## What it does

@@ -1,7 +1,7 @@
 /// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::FortitudeNode;
 use crate::rules::correctness::implicit_typing::{
-    child_is_implicit_none, implicit_statement_is_none,
+    has_implicit_none, implicit_statement_is_none,
 };
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
@@ -44,7 +44,7 @@ impl AstRule for SuperfluousImplicitNone {
                 let kind = ancestor.kind();
                 match kind {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
-                        if !child_is_implicit_none(&ancestor) {
+                        if !has_implicit_none(&ancestor) {
                             continue;
                         }
                         let entity = kind.to_string();

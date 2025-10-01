@@ -1,4 +1,6 @@
 # implicit-typing (C001)
+Fix is sometimes available.
+
 This rule is turned on by default.
 
 ## What does it do?

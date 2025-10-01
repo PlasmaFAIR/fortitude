@@ -2,7 +2,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
+use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -14,11 +14,41 @@ pub fn implicit_statement_is_none(node: &Node) -> bool {
     false
 }
 
-pub fn child_is_implicit_none(node: &Node) -> bool {
+pub fn has_implicit_none(node: &Node) -> bool {
     if let Some(child) = node.child_with_name("implicit_statement") {
         return implicit_statement_is_none(&child);
     }
     false
+}
+
+fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Fix> {
+    // Find suitable place to insert `implicit none`, the line
+    // after the last `use` statement, if any
+    let last_use_statement_range = node
+        .named_children(&mut node.walk())
+        .filter_map(|child| {
+            if child.kind() == "use_statement" {
+                Some(child.textrange())
+            } else {
+                None
+            }
+        })
+        .last()
+        .or(Some(node.child(0)?.textrange()))?;
+
+    // Get the start and end of the line
+    let source_code = src.to_source_code();
+    let source_location = source_code.source_location(last_use_statement_range.start());
+    let line_start = source_code.line_start(source_location.row);
+    let line_end = source_code.line_end(source_location.row);
+
+    // TODO(peter): determine indentation of file using `Stylist` struct
+    let indent = (last_use_statement_range.start() - line_start).to_usize();
+    let insert = format!("{:indent$}implicit none\n", "");
+
+    let edit = Edit::insertion(insert, line_end);
+
+    Some(Fix::unsafe_edit(edit))
 }
 
 /// ## What does it do?
@@ -49,20 +79,30 @@ pub(crate) struct ImplicitTyping {
 }
 
 impl Violation for ImplicitTyping {
+    const FIX_AVAILABILITY: FixAvailability = FixAvailability::Sometimes;
+
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { entity } = self;
         format!("{entity} missing 'implicit none'")
     }
+
+    fn fix_title(&self) -> Option<String> {
+        Some("Insert `implicit none`".to_string())
+    }
 }
 impl AstRule for ImplicitTyping {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if !child_is_implicit_none(node) {
-            let entity = node.kind().to_string();
-            let block_stmt = node.child(0)?;
-            return some_vec![Diagnostic::from_node(Self { entity }, &block_stmt)];
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        if has_implicit_none(node) {
+            return None;
         }
-        None
+        let entity = node.kind().to_string();
+        let block_stmt = node.child(0)?;
+
+        some_vec![
+            Diagnostic::from_node(Self { entity }, &block_stmt)
+                .with_fix(insert_implicit_none(node, src)?)
+        ]
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -82,20 +122,29 @@ pub(crate) struct InterfaceImplicitTyping {
 }
 
 impl Violation for InterfaceImplicitTyping {
+    const FIX_AVAILABILITY: FixAvailability = FixAvailability::Sometimes;
+
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { name } = self;
         format!("interface '{name}' missing 'implicit none'")
     }
+
+    fn fix_title(&self) -> Option<String> {
+        Some("Insert `implicit none`".to_string())
+    }
 }
 
 impl AstRule for InterfaceImplicitTyping {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let parent = node.parent()?;
-        if parent.kind() == "interface" && !child_is_implicit_none(node) {
+        if parent.kind() == "interface" && !has_implicit_none(node) {
             let name = node.kind().to_string();
             let interface_stmt = node.child(0)?;
-            return some_vec![Diagnostic::from_node(Self { name }, &interface_stmt)];
+            return some_vec![
+                Diagnostic::from_node(Self { name }, &interface_stmt)
+                    .with_fix(insert_implicit_none(node, src)?)
+            ];
         }
         None
     }
