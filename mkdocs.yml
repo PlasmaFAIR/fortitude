@@ -59,6 +59,7 @@ nav:
   - Overview: index.md
   - Tutorial: tutorial.md
   - Installing Fortitude: installation.md
+  - The Fortitude Linter: linter.md
   - Configuring Fortitude: configuration.md
   - Preview: preview.md
   - Rules: rules.md
