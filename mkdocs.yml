@@ -55,6 +55,18 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
+nav:
+  - Overview: index.md
+  - Tutorial: tutorial.md
+  - Installing Fortitude: installation.md
+  - Configuring Fortitude: configuration.md
+  - Preview: preview.md
+  - Rules: rules.md
+  - Settings: settings.md
+  - Integrations: integrations.md
+  - FAQ: faq.md
+  - Changelog: release_notes.md
+
 # Too many rules, don't include them in the left-hand nav bar
 not_in_nav: |
   /rules/*
