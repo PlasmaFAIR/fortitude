@@ -195,6 +195,37 @@ impl FilePatternSet {
     }
 }
 
+/// Represents a path to be passed to [`Glob::new`].
+#[derive(Debug, Clone, CacheKey, PartialEq, PartialOrd, Eq, Ord)]
+pub struct GlobPath {
+    path: PathBuf,
+}
+
+impl GlobPath {
+    /// Constructs a [`GlobPath`] by escaping any glob metacharacters in `root` and normalizing
+    /// `path` to the escaped `root`.
+    ///
+    /// See [`normalize_path_to`] for details of the normalization.
+    pub fn normalize(path: impl AsRef<Path>, root: impl AsRef<Path>) -> Self {
+        let root = root.as_ref().to_string_lossy();
+        let escaped = globset::escape(&root);
+        let absolute = normalize_path_to(path, escaped);
+        Self { path: absolute }
+    }
+
+    pub fn into_inner(self) -> PathBuf {
+        self.path
+    }
+}
+
+impl Deref for GlobPath {
+    type Target = PathBuf;
+
+    fn deref(&self) -> &Self::Target {
+        &self.path
+    }
+}
+
 /// Create a set with codes matching the pattern/code pairs.
 pub fn ignores_from_path(path: &Path, ignore_list: &CompiledPerFileIgnoreList) -> Vec<Rule> {
     let file_name = path.file_name().expect("Unable to parse filename");
