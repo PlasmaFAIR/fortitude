@@ -73,8 +73,9 @@ Setting [`--select`][check_select] on the command line will override
 configuration file above, running `fortitude check --select S001` will select *only*
 `S001` (`line-too-long`).
 
-Running `fortitude check --extend-select obsolescent` will result in Fortitude enforcing
-all rules in the `correctness`, `style`, and `obsolescent` categories, except for `C003`
+Running `fortitude check --extend-select obsolescent` in combination with
+the settings file above will result in Fortitude enforcing all rules in
+the `correctness`, `style`, and `obsolescent` categories, except for `C003`
 and `S001`.
 
 ## Fixes
