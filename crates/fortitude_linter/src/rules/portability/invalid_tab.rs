@@ -44,8 +44,7 @@ pub fn check_invalid_tab(root: &Node, src: &SourceFile) -> Vec<Diagnostic> {
             let start = TextSize::try_from(index).unwrap();
             let end = start + TextSize::new(1);
             let edit = Edit::replacement("    ".to_string(), start, start + TextSize::new(1));
-            Diagnostic::new(InvalidTab, TextRange::new(start, end))
-                .with_fix(Fix::unsafe_edit(edit))
+            Diagnostic::new(InvalidTab, TextRange::new(start, end)).with_fix(Fix::unsafe_edit(edit))
         })
         .collect_vec()
 }
