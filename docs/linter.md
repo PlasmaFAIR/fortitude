@@ -23,7 +23,7 @@ You can see the list of all available options with [`fortitude check
 ## Rule selection
 
 The set of enabled rules is controlled via the [`check.select`][check_select],
-[`check.extend-select`][check_extend-select], and [`check.ignore`][check_ignore] settings.
+[`check.extend-select`][check_extend_select], and [`check.ignore`][check_ignore] settings.
 
 Like Ruff and Flake8, Fortitude gives each rule a short code (for example, `C003`)
 consisting of a one-to-three letter prefix (for the category) followed by three
@@ -73,10 +73,22 @@ Setting [`--select`][check_select] on the command line will override
 configuration file above, running `fortitude check --select S001` will select *only*
 `S001` (`line-too-long`).
 
-Running `fortitude check --extend-select obsolescent` in combination with
-the settings file above will result in Fortitude enforcing all rules in
-the `correctness`, `style`, and `obsolescent` categories, except for `C003`
-and `S001`.
+If instead you want to select additional rules from the command line, use
+[`--extend-select`][check_extend_select]. Running `fortitude check --extend-select
+obsolescent` in combination with the settings file above will result in Fortitude
+enforcing all rules in the `correctness`, `style`, and `obsolescent` categories, except
+for `C003` and `S001`.
+
+### Preview rules
+
+New rules and other features may be in 'preview' mode while they undergo further review
+and testing. To activate them, use the [`--preview`](settings.md#preview) flag:
+
+```bash
+fortitude check --preview
+```
+
+For more details on how preview works, see [_Preview_](preview.md).
 
 ## Fixes
 
@@ -179,6 +191,22 @@ Fortitude can automatically remove unused `allow` comments.
 
 You can also temporarily ignore these suppression comments with `--ignore-allow-comments`
 on the command line.
+
+## Learning more about a rule
+
+The `explain` command can be used to get extra information about any rules. Without any
+arguments, it returns information on all rules; otherwise you can pass it any number of
+rules or categories, following the usual [rule selection](linter.md#rule-selection)
+naming:
+
+```console
+# Print extra information for all rules
+$ fortitude explain
+# Only get information for selected rules, by code or by name
+$ fortitude explain C001 trailing-whitespace
+# Print information on all style rules
+$ fortitude explain style
+```
 
 ## Exit codes
 

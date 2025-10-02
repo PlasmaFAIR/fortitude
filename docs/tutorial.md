@@ -78,6 +78,24 @@ All checks passed!
 
 It's that easy!
 
+We can get more information about Fortitude's rules using `fortitude
+explain`:
+
+```console
+$ fortitude explain MOD021
+# MOD021: deprecated-relational-operator
+
+Fix is always available.
+
+## What does it do?
+Checks for deprecated relational operators
+
+## Why is this bad?
+Fortran 90 introduced the traditional symbols for relational operators: `>`,
+`>=`, `<`, and so on. Prefer these over the deprecated forms `.gt.`, `.le.`, and
+so on.
+```
+
 ## Configuration
 
 We can control Fortitude's behaviour with a configuration file, one of `fpm.toml`,
@@ -160,3 +178,6 @@ $ fortitude check
 fortitude: 1 files scanned.
 All checks passed!
 ```
+
+See [_Error suppression_](linter.md#error-suppression) for more details on how these
+comments work.
