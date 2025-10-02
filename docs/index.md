@@ -18,3 +18,9 @@ Written in Rust :crab: and installable with Python :snake:.
   practices](https://fortran-lang.org/learn/best_practices/).
 - :muscle: Built on a robust [tree-sitter](https://tree-sitter.github.io/tree-sitter/)
   parser.
+
+Fortitude is developed by
+[PlasmaFAIR](https://plasmafair.readthedocs.io), improving the
+sustainability of plasma science research software.
+
+![PlasmaFAIR logo](/assets/plasmafair_logo.svg){ width=300 }
