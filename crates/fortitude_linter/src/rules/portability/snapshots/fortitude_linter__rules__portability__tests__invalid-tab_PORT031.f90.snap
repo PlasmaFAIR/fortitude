@@ -1,0 +1,128 @@
+---
+source: crates/fortitude_linter/src/rules/portability/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/portability/PORT031.f90:4:1: PORT031 [*] Invalid tab character
+  |
+2 | ! the horrible whitespace!
+3 | program invalid_tab
+4 |     implicit none
+  | ^ PORT031
+5 |     print*, "Don't flag this:    "
+6 |     ! Or this:|    |
+  |
+  = help: Replace with spaces
+
+ℹ Unsafe fix
+1 1 | ! If you touch this flie, be careful your editor doesn't auto-correct
+2 2 | ! the horrible whitespace!
+3 3 | program invalid_tab
+4   |-	implicit none
+  4 |+    implicit none
+5 5 |     print*, "Don't flag this:	"
+6 6 |     ! Or this:|	|
+7 7 |     if	(.true.)	then
+
+./resources/test/fixtures/portability/PORT031.f90:7:7: PORT031 [*] Invalid tab character
+  |
+5 |     print*, "Don't flag this:    "
+6 |     ! Or this:|    |
+7 |     if    (.true.)    then
+  |       ^ PORT031
+8 |         print*, "Mixed tab/space"
+9 |     else
+  |
+  = help: Replace with spaces
+
+ℹ Unsafe fix
+4 4 | 	implicit none
+5 5 |     print*, "Don't flag this:	"
+6 6 |     ! Or this:|	|
+7   |-    if	(.true.)	then
+  7 |+    if    (.true.)	then
+8 8 |     	print*, "Mixed tab/space"
+9 9 |     else
+10 10 | 		print*, "Two tabs"
+
+./resources/test/fixtures/portability/PORT031.f90:7:16: PORT031 [*] Invalid tab character
+  |
+5 |     print*, "Don't flag this:    "
+6 |     ! Or this:|    |
+7 |     if    (.true.)    then
+  |               ^ PORT031
+8 |         print*, "Mixed tab/space"
+9 |     else
+  |
+  = help: Replace with spaces
+
+ℹ Unsafe fix
+4 4 | 	implicit none
+5 5 |     print*, "Don't flag this:	"
+6 6 |     ! Or this:|	|
+7   |-    if	(.true.)	then
+  7 |+    if	(.true.)    then
+8 8 |     	print*, "Mixed tab/space"
+9 9 |     else
+10 10 | 		print*, "Two tabs"
+
+./resources/test/fixtures/portability/PORT031.f90:8:5: PORT031 [*] Invalid tab character
+   |
+ 6 |     ! Or this:|    |
+ 7 |     if    (.true.)    then
+ 8 |         print*, "Mixed tab/space"
+   |     ^ PORT031
+ 9 |     else
+10 |         print*, "Two tabs"
+   |
+   = help: Replace with spaces
+
+ℹ Unsafe fix
+5 5 |     print*, "Don't flag this:	"
+6 6 |     ! Or this:|	|
+7 7 |     if	(.true.)	then
+8   |-    	print*, "Mixed tab/space"
+  8 |+        print*, "Mixed tab/space"
+9 9 |     else
+10 10 | 		print*, "Two tabs"
+11 11 |     end if
+
+./resources/test/fixtures/portability/PORT031.f90:10:1: PORT031 [*] Invalid tab character
+   |
+ 8 |         print*, "Mixed tab/space"
+ 9 |     else
+10 |         print*, "Two tabs"
+   | ^ PORT031
+11 |     end if
+12 | end program invalid_tab
+   |
+   = help: Replace with spaces
+
+ℹ Unsafe fix
+7  7  |     if	(.true.)	then
+8  8  |     	print*, "Mixed tab/space"
+9  9  |     else
+10    |-		print*, "Two tabs"
+   10 |+    	print*, "Two tabs"
+11 11 |     end if
+12 12 | end program invalid_tab
+
+./resources/test/fixtures/portability/PORT031.f90:10:2: PORT031 [*] Invalid tab character
+   |
+ 8 |         print*, "Mixed tab/space"
+ 9 |     else
+10 |         print*, "Two tabs"
+   | ^ PORT031
+11 |     end if
+12 | end program invalid_tab
+   |
+   = help: Replace with spaces
+
+ℹ Unsafe fix
+7  7  |     if	(.true.)	then
+8  8  |     	print*, "Mixed tab/space"
+9  9  |     else
+10    |-		print*, "Two tabs"
+   10 |+	    print*, "Two tabs"
+11 11 |     end if
+12 12 | end program invalid_tab

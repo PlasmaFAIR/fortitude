@@ -1,9 +1,9 @@
-use crate::ast::{FortitudeNode, dtype_is_plain_number};
+use crate::ast::{dtype_is_plain_number, FortitudeNode};
 use crate::settings::Settings;
 use crate::{AstRule, FromAstNode};
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use ruff_macros::{derive_message_formats, ViolationMetadata};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
