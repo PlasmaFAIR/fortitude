@@ -3,6 +3,12 @@
 A Fortran linter, inspired by (and built upon) [Ruff](https://github.com/astral-sh/ruff).
 Written in Rust :crab: and installable with Python :snake:.
 
+<figure markdown="span">
+  ![Bar chart with benchmark results](/assets/performance_plot_dark.svg#only-dark)
+  ![Bar chart with benchmark results](/assets/performance_plot_light.svg#only-light)
+  <figcaption>Linting 43 files from the GS2 repo</figcaption>
+</figure>
+
 - :zap: Blazingly fast, up to hundreds of times faster than other open-source Fortran
   linters.
 - :wrench: Automatically fixes linter warnings.
