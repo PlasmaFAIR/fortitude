@@ -28,6 +28,7 @@ extra_css:
 # Include extra JS to setup Read the Docs addons integrations
 extra_javascript:
     - javascript/readthedocs.js
+    - javascript/extra.js
 
 markdown_extensions:
   - admonition
