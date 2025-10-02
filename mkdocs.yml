@@ -20,6 +20,20 @@ theme:
   custom_dir: docs/overrides
   icon:
     logo: material/language-fortran
+  palette:
+  - media: (prefers-color-scheme)
+    toggle:
+      icon: material/brightness-auto
+      name: Switch to light mode
+  - media: '(prefers-color-scheme: light)'
+    toggle:
+      icon: material/brightness-7
+      name: Switch to dark mode
+  - media: '(prefers-color-scheme: dark)'
+    scheme: slate
+    toggle:
+      icon: material/brightness-4
+      name: Switch to system preference
 
 # Include extra CSS to make some style adjustments
 extra_css:
@@ -28,6 +42,7 @@ extra_css:
 # Include extra JS to setup Read the Docs addons integrations
 extra_javascript:
     - javascript/readthedocs.js
+    - javascript/extra.js
 
 markdown_extensions:
   - admonition
@@ -54,6 +69,19 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Overview: index.md
+  - Tutorial: tutorial.md
+  - Installing Fortitude: installation.md
+  - The Fortitude Linter: linter.md
+  - Configuring Fortitude: configuration.md
+  - Preview: preview.md
+  - Rules: rules.md
+  - Settings: settings.md
+  - Integrations: integrations.md
+  - FAQ: faq.md
+  - Changelog: release_notes.md
 
 # Too many rules, don't include them in the left-hand nav bar
 not_in_nav: |

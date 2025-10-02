@@ -27,7 +27,78 @@ in the current directory, or one of its parents. If using
 For complete documentation of the available configuration options, see
 [_Settings_](settings.md).
 
-## Full command-line interface
+## Discovering files
+
+Without any other arguments, `fortitude check` searches the current directory recursively
+for Fortran files. You can also pass an explicit list of files or directories to search,
+or control which files or directories should be excluded from this search. You can also
+configure what extensions Fortitude searches for in directories with
+[`check.file-extensions`](settings.md#file-extensions) or `--file-extensions`:
+
+```console
+$ fortitude check --file-extensions=f90,fpp
+```
+
+Files in your `.gitignore` will be excluded from the file search automatically, though
+this behaviour can be deactivated by passing `--no-respect-gitignore`.  Files in certain
+directories (`build/`, `.git/`, `.venv/`, etc.) will also be excluded by default. An
+additional comma-separated list of excluded files and directories can be set using the
+[`check.exclude`](settings.md#exclude) option. For example, to exclude all files in the
+directories `benchmarks/` and `tests/`:
+
+=== "fpm.toml"
+
+    ```toml
+    [extra.fortitude.check]
+    exclude = ["benchmarks", "tests"]
+    ```
+
+=== "fortitude.toml"
+
+    ```toml
+    [check]
+    exclude = ["benchmarks", "tests"]
+    ```
+
+You can also use pattern matching with a glob (`*`) symbol:
+
+=== "fpm.toml"
+
+    ```toml
+    [extra.fortitude.check]
+    exclude = ["test_*"]
+    ```
+
+=== "fortitude.toml"
+
+    ```toml
+    [check]
+    exclude = ["test_*"]
+    ```
+
+Note that Fortitude will still check excluded files if you pass their paths
+directly, so the following will still check the `benchmarks/` directory:
+
+```console
+$ fortitude check --exclude=benchmarks benchmarks
+```
+
+Setting [`check.force-excludes`](settings.md#force-exclude) to `true` will enforce
+exclusions even in this scenario.
+
+## Command-line interface
+
+Some settings can be given or overidden explicitly on the command line, particularly those
+related to rule selection:
+
+```console
+$ fortitude check --select S001 --select implicit-typing --quiet
+```
+
+Settings on the command line always take precedence over those given in the configuration
+file.
+
+### Full command-line interface
 
 See `fortitude help` for the full list of Fortitude's top-level commands:
 
