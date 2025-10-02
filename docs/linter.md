@@ -229,5 +229,5 @@ This convention mirrors that of tools like ESLint, Prettier, and RuboCop.
     fixing.
 
 [check_select]: settings.md#check_select
-[check_extend_select]: settings.md#check_extend_select
+[check_extend_select]: settings.md#check_extend-select
 [check_ignore]: settings.md#check_ignore

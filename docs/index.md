@@ -4,8 +4,8 @@ A Fortran linter, inspired by (and built upon) [Ruff](https://github.com/astral-
 Written in Rust :crab: and installable with Python :snake:.
 
 <figure markdown="span">
-  ![Bar chart with benchmark results](/assets/performance_plot_dark.svg#only-dark)
-  ![Bar chart with benchmark results](/assets/performance_plot_light.svg#only-light)
+  ![Bar chart with benchmark results](assets/performance_plot_dark.svg#only-dark)
+  ![Bar chart with benchmark results](assets/performance_plot_light.svg#only-light)
   <figcaption>Linting 43 files from the GS2 repo</figcaption>
 </figure>
 
@@ -23,4 +23,4 @@ Fortitude is developed by
 [PlasmaFAIR](https://plasmafair.readthedocs.io), improving the
 sustainability of plasma science research software.
 
-![PlasmaFAIR logo](/assets/plasmafair_logo.svg){ width=300 }
+![PlasmaFAIR logo](assets/plasmafair_logo.svg){ width=300 }
