@@ -39,12 +39,13 @@ pub fn check_invalid_tab(root: &Node, src: &SourceFile) -> Vec<Diagnostic> {
             }
         })
         .map(|(index, _)| {
-            // TODO(peter): This doesn't render particularly well,
-            // might be an issue with annotate-snippets?
             let start = TextSize::try_from(index).unwrap();
-            let end = start + TextSize::new(1);
-            let edit = Edit::replacement("    ".to_string(), start, start + TextSize::new(1));
-            Diagnostic::new(InvalidTab, TextRange::new(start, end)).with_fix(Fix::unsafe_edit(edit))
+            let range = TextRange::new(start, start + TextSize::new(1));
+            // TODO(peter): better control of replacement -- user
+            // option, taken from indent, single space if not
+            // indentation?
+            let edit = Edit::range_replacement("    ".to_string(), range);
+            Diagnostic::new(InvalidTab, range).with_fix(Fix::unsafe_edit(edit))
         })
         .collect_vec()
 }
