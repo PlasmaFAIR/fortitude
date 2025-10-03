@@ -26,11 +26,11 @@ use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
 use rule_table::RuleTable;
-use rules::Rule;
 use rules::error::syntax_error::SyntaxError;
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum};
+use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{FixMode, Settings};
 
 use anyhow::{Context, anyhow};
@@ -265,6 +265,10 @@ pub(crate) fn check_path(
         if let Some(allow_rules) = gather_allow_comments(&node, file) {
             allow_comments.push(allow_rules);
         };
+    }
+
+    if rules.enabled(Rule::InvalidTab) {
+        violations.append(&mut check_invalid_tab(&root, file));
     }
 
     // Raise violations for internal test rules

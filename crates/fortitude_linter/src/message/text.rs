@@ -5,9 +5,9 @@
 use std::fmt::{Display, Formatter};
 use std::io::Write;
 
-use annotate_snippets::{Level, Renderer, Snippet};
 use bitflags::bitflags;
 use colored::Colorize;
+use ruff_annotate_snippets::{Level, Renderer, Snippet};
 
 use ruff_source_file::OneIndexed;
 use ruff_text_size::{Ranged, TextRange};
