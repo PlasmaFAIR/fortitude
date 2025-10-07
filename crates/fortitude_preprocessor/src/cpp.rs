@@ -4,6 +4,7 @@ use chrono::prelude::*;
 use lazy_regex::regex_captures;
 use ruff_source_file::{OneIndexed, SourceCode};
 use ruff_text_size::TextSize;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -21,11 +22,7 @@ pub enum Provenance {
         path: PathBuf,
     },
     /// Plain text from an included file.
-    IncludeText {
-        start: usize,
-        end: usize,
-        path: PathBuf,
-    },
+    IncludeText { path: PathBuf },
     /// Plain text in the source file, not from a macro.
     LocalText { start: usize, end: usize },
 }
@@ -86,10 +83,10 @@ impl Snippets {
         Snippets { inner: Vec::new() }
     }
 
-    pub fn push(&mut self, text: &str, provenance: &Provenance) {
+    pub fn push(&mut self, text: &str, provenance: Provenance) {
         let snippet = Snippet {
             text: text.to_string(),
-            provenance: provenance.clone(),
+            provenance,
         };
         if let Some(last) = self.inner.last_mut() {
             if last.extend(&snippet).is_ok() {
@@ -110,48 +107,64 @@ impl Snippets {
 /// A logical line of code, which may span multiple physical lines due to
 /// line continuations. Tracks the byte offset of each location of the
 /// logical line.
-pub struct LogicalLine {
+pub struct LogicalLine<'a> {
     /// The text of the logical line.
-    text: String,
+    text: Cow<'a, str>,
     /// The byte offsets of each character in the logical line
     /// relative to the start of the source file.
+    /// TODO: Optimise this, only store start and any discontinuities
     byte_offsets: Vec<usize>,
     /// The number of real lines spanned by this logical line.
     span: usize,
 }
 
-impl LogicalLine {
-    pub fn new(src: &SourceCode, start_line: usize) -> Self {
-        let mut text = String::new();
-        let mut byte_offsets = Vec::new();
-        let mut span = 1;
+impl<'a> LogicalLine<'a> {
+    pub fn new(src: &'a SourceCode, start_line: usize) -> LogicalLine<'a> {
+        let line_index = OneIndexed::from_zero_indexed(start_line);
+        let line_text = src.line_text(line_index);
         let line_count = src.line_count();
-        for line_index in start_line..line_count {
-            let line_index = OneIndexed::from_zero_indexed(line_index);
-            let line_text = src.line_text(line_index);
-            let line_offset: usize = src.line_start(line_index).into();
-            let trimmed = line_text.trim_end();
-            if let Some(continued) = trimmed.strip_suffix('\\') {
-                text.push_str(continued);
-                let end_offset = line_offset + continued.len();
-                byte_offsets.extend(line_offset..end_offset);
-                span += 1;
-            } else {
-                text.push_str(line_text);
-                let end_offset = line_offset + line_text.len();
-                byte_offsets.extend(line_offset..end_offset);
-                break;
+        let line_offset: usize = src.line_start(line_index).into();
+        let trimmed = line_text.trim_end();
+        if let Some(continued) = trimmed.strip_suffix('\\') {
+            let mut logical_line = LogicalLine {
+                text: Cow::Borrowed(continued),
+                byte_offsets: (line_offset..line_offset + continued.len()).collect(),
+                span: 1,
+            };
+            if start_line + 1 < line_count {
+                logical_line.extend(src, start_line + 1); // recursive
             }
-        }
-        LogicalLine {
-            text,
-            byte_offsets,
-            span,
+            logical_line
+        } else {
+            LogicalLine {
+                text: Cow::Borrowed(line_text),
+                byte_offsets: (line_offset..line_offset + line_text.len()).collect(),
+                span: 1,
+            }
         }
     }
 
-    pub fn text(&self) -> &str {
-        &self.text
+    fn extend(&mut self, src: &'a SourceCode, line: usize) -> &Self {
+        self.span += 1;
+        let line_index = OneIndexed::from_zero_indexed(line);
+        let line_text = src.line_text(line_index);
+        let line_offset: usize = src.line_start(line_index).into();
+        let trimmed = line_text.trim_end();
+        if let Some(continued) = trimmed.strip_suffix('\\') {
+            self.text.to_mut().push_str(continued);
+            let end_offset = line_offset + continued.len();
+            self.byte_offsets.extend(line_offset..end_offset);
+            if line + 1 < src.line_count() {
+                self.extend(src, line + 1)
+            } else {
+                self
+            }
+        } else {
+            self.text.to_mut().push_str(line_text);
+            let end_offset = line_offset + line_text.len();
+            self.byte_offsets.extend(line_offset..end_offset);
+            self
+        }
     }
 
     pub fn offset(&self, index: usize) -> Option<usize> {
@@ -178,12 +191,12 @@ impl LogicalLine {
     }
 }
 
-pub struct LogicalLines {
-    lines: Vec<LogicalLine>,
+pub struct LogicalLines<'a> {
+    lines: Vec<LogicalLine<'a>>,
 }
 
-impl LogicalLines {
-    pub fn new(src: &SourceCode) -> Self {
+impl<'a> LogicalLines<'a> {
+    pub fn new(src: &'a SourceCode) -> LogicalLines<'a> {
         let mut lines = Vec::new();
         let line_count = src.line_count();
         let mut line_index = 0;
@@ -196,9 +209,9 @@ impl LogicalLines {
     }
 }
 
-impl IntoIterator for LogicalLines {
-    type Item = LogicalLine;
-    type IntoIter = std::vec::IntoIter<LogicalLine>;
+impl<'a> IntoIterator for LogicalLines<'a> {
+    type Item = LogicalLine<'a>;
+    type IntoIter = std::vec::IntoIter<LogicalLine<'a>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.lines.into_iter()
@@ -257,7 +270,9 @@ impl IfStack {
     }
 }
 
-/// An object macro definition. TODO, implement function-like macros.
+/// An object macro definition.
+/// TODO, replacement should be a list of tokens, not a string.
+/// TODO, implement function-like macros.
 pub struct Definition {
     replacement: String,
     provenance: Provenance,
@@ -299,7 +314,7 @@ impl Definitions {
 
     pub fn handle_define(&mut self, line: &LogicalLine, path: &Path) -> anyhow::Result<()> {
         // Expect possible whitespace, then 'define'.
-        let mut iter = CppTokenIterator::new(line.text());
+        let mut iter = CppTokenIterator::new(&line.text);
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
@@ -317,16 +332,16 @@ impl Definitions {
             let token = token?;
             match token.kind {
                 CppTokenKind::Identifier => {
-                    if let Some(definition) = self.get(token.text) {
+                    if let Some(definition) = self.get(&token.text) {
                         value.push_str(&definition.replacement);
                     } else {
-                        value.push_str(token.text);
+                        value.push_str(&token.text);
                     }
                 }
                 CppTokenKind::Newline => {
                     break;
                 }
-                _ => value.push_str(token.text),
+                _ => value.push_str(&token.text),
             }
         }
         let (start, end) = line
@@ -349,7 +364,7 @@ impl Definitions {
 
     pub fn handle_undef(&mut self, line: &LogicalLine) -> anyhow::Result<()> {
         // Expect possible whitespace, then 'undef'.
-        let mut iter = CppTokenIterator::new(line.text());
+        let mut iter = CppTokenIterator::new(&line.text);
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
@@ -365,14 +380,14 @@ impl Definitions {
         let _ = iter
             .consume_newline()
             .context("Malformed undef directive")?;
-        self.remove(key.text)
+        self.remove(&key.text)
             .context(format!("Cannot undef undefined identifier: {}", key.text))?;
         Ok(())
     }
 
     pub fn handle_ifdef(&mut self, line: &LogicalLine) -> anyhow::Result<bool> {
         // Expect possible whitespace, then 'ifdef'.
-        let mut iter = CppTokenIterator::new(line.text());
+        let mut iter = CppTokenIterator::new(&line.text);
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
@@ -386,13 +401,13 @@ impl Definitions {
         // Expect possible whitespace, then newline
         iter.consume_whitespace();
         let _ = iter.consume_newline().context("Malformed ifdef")?;
-        Ok(self.contains_key(key.text))
+        Ok(self.contains_key(&key.text))
     }
 
     pub fn handle_ifndef(&mut self, line: &LogicalLine) -> anyhow::Result<bool> {
         // TODO combine with handle_ifdef, reduce repeat code
         // Expect possible whitespace, then 'ifdef'.
-        let mut iter = CppTokenIterator::new(line.text());
+        let mut iter = CppTokenIterator::new(&line.text);
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
@@ -406,7 +421,7 @@ impl Definitions {
         // Expect possible whitespace, then newline
         iter.consume_whitespace();
         let _ = iter.consume_newline().context("Malformed ifndef")?;
-        Ok(!self.contains_key(key.text))
+        Ok(!self.contains_key(&key.text))
     }
 }
 
@@ -458,9 +473,8 @@ impl CPreprocessor {
         // Preprocess the input.
         let mut snippets = Snippets::new();
         let mut if_stack = IfStack::new();
-
         for line in LogicalLines::new(input) {
-            if let Some((_, directive)) = regex_captures!(r"\s*#\s*([a-z]+)", line.text()) {
+            if let Some((_, directive)) = regex_captures!(r"\s*#\s*([a-z]+)", &line.text) {
                 match directive {
                     "define" => {
                         if if_stack.is_clean() {
@@ -480,7 +494,7 @@ impl CPreprocessor {
                     }
                     "else" => {
                         // Expect possible whitespace, then 'else', possible whitespace, then newline
-                        let mut iter = CppTokenIterator::new(line.text());
+                        let mut iter = CppTokenIterator::new(&line.text);
                         iter.consume_whitespace();
                         let token = iter
                             .consume_directive()
@@ -498,7 +512,7 @@ impl CPreprocessor {
                     }
                     "endif" => {
                         // Expect possible whitespace, then 'endif', possible whitespace, then newline
-                        let mut iter = CppTokenIterator::new(line.text());
+                        let mut iter = CppTokenIterator::new(&line.text);
                         iter.consume_whitespace();
                         let token = iter
                             .consume_directive()
@@ -520,16 +534,17 @@ impl CPreprocessor {
                 }
             } else {
                 // Not a pre-processor directive line
-                for token in CppTokenIterator::new(line.text()) {
+                for token in CppTokenIterator::new(&line.text) {
                     let token = token?;
                     match token.kind {
                         CppTokenKind::Identifier => {
                             if !if_stack.is_clean() {
                                 continue;
                             }
-                            let definition = defines.get(token.text);
+                            let definition = defines.get(&token.text);
                             if let Some(definition) = definition {
-                                snippets.push(&definition.replacement, &definition.provenance);
+                                snippets
+                                    .push(&definition.replacement, definition.provenance.clone());
                                 continue;
                             }
                             if token.text == "__LINE__" {
@@ -539,12 +554,12 @@ impl CPreprocessor {
                                     .offset(token.start)
                                     .context("__LINE__ directive in illegal location")?;
                                 let real_offset = TextSize::from(real_offset as u32);
-                                let real_line: OneIndexed = input.line_index(real_offset);
-                                snippets.push(&real_line.to_string(), &Provenance::SystemDefined);
+                                let real_line = input.line_index(real_offset).to_string();
+                                snippets.push(&real_line, Provenance::SystemDefined);
                             } else if token.text == "__FILE__" {
                                 snippets.push(
                                     &format!("\"{}\"", path.to_string_lossy()),
-                                    &Provenance::SystemDefined,
+                                    Provenance::SystemDefined,
                                 );
                             } else {
                                 let start = line
@@ -553,7 +568,7 @@ impl CPreprocessor {
                                 let end = line
                                     .offset(token.end)
                                     .context("Token in illegal location")?;
-                                snippets.push(token.text, &Provenance::LocalText { start, end });
+                                snippets.push(&token.text, Provenance::LocalText { start, end });
                             }
                         }
                         CppTokenKind::Directive(kind) => {
@@ -573,7 +588,7 @@ impl CPreprocessor {
                             let end = line
                                 .offset(token.end)
                                 .context("Token in illegal location")?;
-                            snippets.push(token.text, &Provenance::LocalText { start, end });
+                            snippets.push(&token.text, Provenance::LocalText { start, end });
                         }
                     }
                 }
