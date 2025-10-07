@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt;
 use std::iter::Peekable;
 use std::str::{FromStr, Utf8Error};
@@ -63,7 +64,7 @@ pub enum CppTokenKind {
 #[derive(Debug, Clone)]
 pub struct CppToken<'a> {
     /// The text of the token.
-    pub text: &'a str,
+    pub text: Cow<'a, str>,
     /// The kind of token.
     pub kind: CppTokenKind,
     /// The beginning of the token in the source file.
@@ -134,7 +135,7 @@ impl<'a> CppTokenIterator<'a> {
     /// Generate token from the given position to the current position.
     fn emit(&self, start: usize, kind: CppTokenKind) -> CppTokenResult<'a> {
         let end = self.offset;
-        let text = &self.source[start..end];
+        let text = Cow::Borrowed(&self.source[start..end]);
         Ok(CppToken {
             text,
             kind,
@@ -239,7 +240,7 @@ impl<'a> CppTokenIterator<'a> {
         match self.consume_identifier() {
             Some(Ok(directive)) => {
                 // Can unwrap here, as by default the directive kind will be `Stringification`
-                let directive_kind = CppDirectiveKind::from_str(directive.text).unwrap();
+                let directive_kind = CppDirectiveKind::from_str(&directive.text).unwrap();
                 Some(self.emit(start, CppTokenKind::Directive(directive_kind)))
             }
             _ => Some(self.emit(start, CppTokenKind::Error)),
