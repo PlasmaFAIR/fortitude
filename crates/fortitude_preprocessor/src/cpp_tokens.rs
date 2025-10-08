@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::borrow::{Borrow, ToOwned};
 use std::fmt;
 use std::iter::Peekable;
 use std::str::{FromStr, Utf8Error};
@@ -60,11 +60,11 @@ pub enum CppTokenKind {
                    // Variadic
 }
 
-/// A token in a source file.
-#[derive(Debug, Clone)]
-pub struct CppToken<'a> {
+/// A token in a source file. References the source string.
+#[derive(Debug)]
+pub struct CppTokenRef<'a> {
     /// The text of the token.
-    pub text: Cow<'a, str>,
+    pub text: &'a str,
     /// The kind of token.
     pub kind: CppTokenKind,
     /// The beginning of the token in the source file.
@@ -73,7 +73,7 @@ pub struct CppToken<'a> {
     pub end: usize,
 }
 
-impl fmt::Display for CppToken<'_> {
+impl fmt::Display for CppTokenRef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self {
             text,
@@ -89,6 +89,42 @@ impl fmt::Display for CppToken<'_> {
     }
 }
 
+/// A token from a source file. Owns its text.
+#[derive(Debug)]
+pub struct CppToken {
+    /// The text of the token.
+    pub text: String,
+    /// The kind of token.
+    pub kind: CppTokenKind,
+    /// The beginning of the token in the source file.
+    #[allow(dead_code)]
+    pub start: usize,
+    /// The end of the token in the source file.
+    #[allow(dead_code)]
+    pub end: usize,
+}
+
+impl<'a> ToOwned for CppTokenRef<'a> {
+    type Owned = CppToken;
+
+    fn to_owned(&self) -> Self::Owned {
+        CppToken {
+            text: self.text.to_string(),
+            kind: self.kind.clone(),
+            start: self.start,
+            end: self.end,
+        }
+    }
+}
+
+impl<'a> Borrow<CppTokenRef<'a>> for CppToken {
+    fn borrow(&self) -> &CppTokenRef<'a> {
+        // This cannot be implemented safely, as it would require
+        // creating a reference to an object that doesn't exist.
+        unimplemented!("Cannot borrow CppToken as CppTokenRef");
+    }
+}
+
 /// An iterator over `&str` that returns tokens.
 pub struct CppTokenIterator<'a> {
     /// Reference to the source string.
@@ -99,7 +135,7 @@ pub struct CppTokenIterator<'a> {
     offset: usize,
 }
 
-type CppTokenResult<'a> = Result<CppToken<'a>, Utf8Error>;
+type CppTokenResult<'a> = Result<CppTokenRef<'a>, Utf8Error>;
 
 impl<'a> CppTokenIterator<'a> {
     /// The list of functions to call to consume tokens.  The order of the
@@ -135,8 +171,8 @@ impl<'a> CppTokenIterator<'a> {
     /// Generate token from the given position to the current position.
     fn emit(&self, start: usize, kind: CppTokenKind) -> CppTokenResult<'a> {
         let end = self.offset;
-        let text = Cow::Borrowed(&self.source[start..end]);
-        Ok(CppToken {
+        let text = &self.source[start..end];
+        Ok(CppTokenRef {
             text,
             kind,
             start,
@@ -240,7 +276,7 @@ impl<'a> CppTokenIterator<'a> {
         match self.consume_identifier() {
             Some(Ok(directive)) => {
                 // Can unwrap here, as by default the directive kind will be `Stringification`
-                let directive_kind = CppDirectiveKind::from_str(&directive.text).unwrap();
+                let directive_kind = CppDirectiveKind::from_str(directive.text).unwrap();
                 Some(self.emit(start, CppTokenKind::Directive(directive_kind)))
             }
             _ => Some(self.emit(start, CppTokenKind::Error)),
@@ -375,7 +411,7 @@ mod tests {
     use super::*;
     use dedent::dedent;
 
-    fn tokenize(input: &str) -> Vec<CppToken<'_>> {
+    fn tokenize(input: &str) -> Vec<CppTokenRef<'_>> {
         CppTokenIterator::new(input)
             .filter_map(|token| token.ok())
             .collect()
