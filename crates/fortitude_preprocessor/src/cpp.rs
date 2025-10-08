@@ -1,4 +1,4 @@
-use crate::cpp_tokens::{CppDirectiveKind, CppTokenIterator, CppTokenKind};
+use crate::cpp_tokens::{CppDirectiveKind, CppToken, CppTokenIterator, CppTokenKind};
 use anyhow::{Context, anyhow};
 use chrono::prelude::*;
 use lazy_regex::regex_captures;
@@ -274,7 +274,7 @@ impl IfStack {
 /// TODO, replacement should be a list of tokens, not a string.
 /// TODO, implement function-like macros.
 pub struct Definition {
-    replacement: String,
+    replacement: Vec<CppToken>,
     provenance: Provenance,
 }
 
@@ -298,6 +298,21 @@ impl Definitions {
 
     pub fn get(&self, key: &str) -> Option<&Definition> {
         self.inner.get(key)
+    }
+
+    pub fn expand(&self, key: &str) -> Option<(&Definition, String)> {
+        let definition = self.inner.get(key)?;
+        let mut result = String::new();
+        for token in &definition.replacement {
+            if token.kind == CppTokenKind::Identifier {
+                if let Some((_, expanded)) = self.expand(&token.text) {
+                    result.push_str(&expanded);
+                    continue;
+                }
+            }
+            result.push_str(&token.text);
+        }
+        Some((definition, result))
     }
 
     pub fn insert(&mut self, key: String, definition: Definition) {
@@ -327,22 +342,13 @@ impl Definitions {
         let key = iter.consume_identifier().context("Expected identifier")??;
         // Optional whitespace
         iter.consume_whitespace();
-        let mut value = String::new();
+        let mut replacement = Vec::new();
         for token in iter.by_ref() {
             let token = token?;
-            match token.kind {
-                CppTokenKind::Identifier => {
-                    if let Some(definition) = self.get(&token.text) {
-                        value.push_str(&definition.replacement);
-                    } else {
-                        value.push_str(&token.text);
-                    }
-                }
-                CppTokenKind::Newline => {
-                    break;
-                }
-                _ => value.push_str(&token.text),
+            if token.kind == CppTokenKind::Newline {
+                break;
             }
+            replacement.push(token.to_owned());
         }
         let (start, end) = line
             .offset_range()
@@ -351,7 +357,7 @@ impl Definitions {
         self.insert(
             key.text.to_string(),
             Definition {
-                replacement: value,
+                replacement,
                 provenance: Provenance::FileDefined {
                     start,
                     end,
@@ -380,7 +386,7 @@ impl Definitions {
         let _ = iter
             .consume_newline()
             .context("Malformed undef directive")?;
-        self.remove(&key.text)
+        self.remove(key.text)
             .context(format!("Cannot undef undefined identifier: {}", key.text))?;
         Ok(())
     }
@@ -401,7 +407,7 @@ impl Definitions {
         // Expect possible whitespace, then newline
         iter.consume_whitespace();
         let _ = iter.consume_newline().context("Malformed ifdef")?;
-        Ok(self.contains_key(&key.text))
+        Ok(self.contains_key(key.text))
     }
 
     pub fn handle_ifndef(&mut self, line: &LogicalLine) -> anyhow::Result<bool> {
@@ -421,7 +427,7 @@ impl Definitions {
         // Expect possible whitespace, then newline
         iter.consume_whitespace();
         let _ = iter.consume_newline().context("Malformed ifndef")?;
-        Ok(!self.contains_key(&key.text))
+        Ok(!self.contains_key(key.text))
     }
 }
 
@@ -444,28 +450,48 @@ impl CPreprocessor {
         let mut defines = Definitions::new();
         let datetime: DateTime<Local> = Local::now();
         // Format date as "Mmm dd yyyy", e.g. "Jan 19 2024". Date number is space-padded.
+        let date_text = format!("\"{}\"", datetime.format("%b %e %Y"));
+        let date_len = date_text.len();
+        let date = CppToken {
+            text: date_text,
+            kind: CppTokenKind::String,
+            start: 0,
+            end: date_len,
+        };
         defines.insert(
             "__DATE__".to_string(),
             Definition {
-                replacement: format!("\"{}\"", datetime.format("%b %e %Y")),
+                replacement: vec![date],
                 provenance: Provenance::SystemDefined,
             },
         );
         // Format time as "hh:mm:ss", e.g. "13:45:30". Time numbers are zero-padded.
+        let time_text = format!("\"{}\"", datetime.format("%H:%M:%S"));
+        let time_len = time_text.len();
+        let time = CppToken {
+            text: time_text,
+            kind: CppTokenKind::String,
+            start: 0,
+            end: time_len,
+        };
         defines.insert(
             "__TIME__".to_string(),
             Definition {
-                replacement: format!("\"{}\"", datetime.format("%H:%M:%S")),
+                replacement: vec![time],
                 provenance: Provenance::SystemDefined,
             },
         );
         // Add user definitions from command line.
         // Must come after __DATE__ and __TIME__ to allow them to be overwritten.
         for (key, value) in user_defines {
+            let replacement = CppTokenIterator::new(value)
+                .map(|x| x.map(|y| y.to_owned()))
+                .collect::<Result<Vec<_>, _>>()
+                .context(format!("Failed to parse user definition: {key} -> {value}"))?;
             defines.insert(
                 key.clone(),
                 Definition {
-                    replacement: value.clone(),
+                    replacement,
                     provenance: Provenance::UserDefined,
                 },
             );
@@ -541,10 +567,8 @@ impl CPreprocessor {
                             if !if_stack.is_clean() {
                                 continue;
                             }
-                            let definition = defines.get(&token.text);
-                            if let Some(definition) = definition {
-                                snippets
-                                    .push(&definition.replacement, definition.provenance.clone());
+                            if let Some((definition, replacement)) = defines.expand(token.text) {
+                                snippets.push(&replacement, definition.provenance.clone());
                                 continue;
                             }
                             if token.text == "__LINE__" {
@@ -568,7 +592,7 @@ impl CPreprocessor {
                                 let end = line
                                     .offset(token.end)
                                     .context("Token in illegal location")?;
-                                snippets.push(&token.text, Provenance::LocalText { start, end });
+                                snippets.push(token.text, Provenance::LocalText { start, end });
                             }
                         }
                         CppTokenKind::Directive(kind) => {
@@ -588,7 +612,7 @@ impl CPreprocessor {
                             let end = line
                                 .offset(token.end)
                                 .context("Token in illegal location")?;
-                            snippets.push(&token.text, Provenance::LocalText { start, end });
+                            snippets.push(token.text, Provenance::LocalText { start, end });
                         }
                     }
                 }
@@ -596,8 +620,8 @@ impl CPreprocessor {
         }
         Ok(Self {
             path,
-            defines,
             snippets,
+            defines,
         })
     }
 
@@ -665,7 +689,7 @@ mod tests {
             #define W 5
             #define X 10
             #define Y
-            #define Z W, X Y
+            #define Z W,Y X
             #undef X
             program p
               integer :: X
@@ -682,7 +706,7 @@ mod tests {
             program p
               integer :: X
               X = 12
-              print *, 5, 10 , "test.f90", 9, 42
+              print *, 5, X, "test.f90", 9, 42
             end program p
         "#
         );
@@ -691,7 +715,7 @@ mod tests {
         assert_eq!(snippets.len(), 9);
         // Z
         if let Provenance::FileDefined { start, end, path } = &snippets[1].provenance {
-            assert_eq!(&code[*start..*end], "#define Z W, X Y\n");
+            assert_eq!(&code[*start..*end], "#define Z W,Y X\n");
             assert_eq!(path, &PathBuf::from("test.f90"));
         } else {
             panic!("Expected FileDefined provenance for Z");
