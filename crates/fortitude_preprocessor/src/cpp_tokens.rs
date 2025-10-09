@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use std::borrow::{Borrow, ToOwned};
 use std::fmt;
 use std::iter::Peekable;
@@ -90,7 +91,7 @@ impl fmt::Display for CppTokenRef<'_> {
 }
 
 /// A token from a source file. Owns its text.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CppToken {
     /// The text of the token.
     pub text: String,
@@ -380,6 +381,104 @@ impl<'a> CppTokenIterator<'a> {
             // Did not find a valid punctuator.
             None
         }
+    }
+
+    /// Consumes a parenthesized, comma-separated list of identifiers.
+    /// Used for function-like macro definitions.
+    /// Returns `Ok(None)` if the next token is not an opening parenthesis.
+    /// Returns `Err` if the argument list is malformed.
+    pub fn consume_arglist_definition(&mut self) -> anyhow::Result<Option<Vec<String>>> {
+        let mut args = Vec::new();
+        // Expect an opening parenthesis.
+        if self.iter.peek() != Some(&b'(') {
+            return Ok(None);
+        }
+        self.step(); // Consume '('
+        if self.iter.peek() == Some(&b')') {
+            self.step(); // Consume ')'
+            return Ok(Some(args)); // Empty argument list
+        }
+        loop {
+            // Optional whitespace.
+            let _ = self.consume_whitespace();
+            // Expect an identifier.
+            let ident = match self.consume_identifier() {
+                Some(Ok(token)) => token.text.to_string(),
+                _ => return Err(anyhow!("Expected identifier i")),
+            };
+            args.push(ident);
+            // Optional whitespace.
+            let _ = self.consume_whitespace();
+            match self.iter.peek() {
+                Some(&b',') => {
+                    self.step(); // Consume ','
+                }
+                Some(&b')') => {
+                    self.step(); // Consume ')'
+                    break;
+                }
+                _ => return Err(anyhow!("Malformed argument list")), // Invalid character
+            }
+        }
+        Ok(Some(args))
+    }
+
+    /// Consumes a parenthesized, comma-separated list-of-lists of tokens.
+    /// Each argument can consist of multiple tokens.
+    /// Used for function-like macro calls.
+    /// Returns `Ok(None)` if the next token is not an opening parenthesis. It is valid
+    /// to use a function macro identifier without an argument list, but it is treated
+    /// as a normal identifier in that case.
+    /// Returns `Err` if the argument list is malformed.
+    pub fn consume_arglist_invocation(&mut self) -> anyhow::Result<Option<Vec<Vec<CppToken>>>> {
+        let mut args = Vec::new();
+        // Expect an opening parenthesis.
+        if self.iter.peek() != Some(&b'(') {
+            return Ok(None);
+        }
+        self.step(); // Consume '('
+        // Empty argument list
+        if self.iter.peek() == Some(&b')') {
+            self.step(); // Consume ')'
+            return Ok(Some(args));
+        }
+        args.push(Vec::new());
+        let mut bracket_nesting = 1;
+        loop {
+            match self.next() {
+                Some(Ok(token)) => {
+                    if token.kind == CppTokenKind::Punctuator {
+                        match token.text {
+                            "," if bracket_nesting == 1 => {
+                                // Start a new argument.
+                                args.push(Vec::new());
+                                continue;
+                            }
+                            "(" => {
+                                bracket_nesting += 1;
+                            }
+                            ")" => {
+                                bracket_nesting -= 1;
+                                if bracket_nesting == 0 {
+                                    // End of argument list.
+                                    break;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    // Add token to the current argument.
+                    if let Some(current_arg) = args.last_mut() {
+                        current_arg.push(token.to_owned());
+                    } else {
+                        return Err(anyhow!("Internal error: no current argument"));
+                    }
+                }
+                Some(Err(e)) => return Err(anyhow!("Error tokenizing argument list: {}", e)),
+                None => return Err(anyhow!("Unexpected end of input in argument list")),
+            }
+        }
+        Ok(Some(args))
     }
 }
 

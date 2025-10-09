@@ -275,7 +275,16 @@ impl IfStack {
 /// TODO, implement function-like macros.
 pub struct Definition {
     replacement: Vec<CppToken>,
+    args: Option<Vec<String>>,
     provenance: Provenance,
+}
+
+/// Enum used to identify macro types.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum MacroKind {
+    Object,
+    Function,
+    None,
 }
 
 /// A mapping of macro names to their definitions.
@@ -300,19 +309,117 @@ impl Definitions {
         self.inner.get(key)
     }
 
-    pub fn expand(&self, key: &str) -> Option<(&Definition, String)> {
-        let definition = self.inner.get(key)?;
+    fn expand_macro_tokens(&self, tokens: &[CppToken]) -> anyhow::Result<String> {
         let mut result = String::new();
-        for token in &definition.replacement {
+        let mut iter = tokens.iter().peekable();
+        while let Some(token) = iter.next() {
             if token.kind == CppTokenKind::Identifier {
-                if let Some((_, expanded)) = self.expand(&token.text) {
-                    result.push_str(&expanded);
-                    continue;
+                match self.macro_kind(&token.text) {
+                    MacroKind::Function => {
+                        if let Some(next) = iter.peek() {
+                            if next.kind == CppTokenKind::Punctuator && next.text == "(" {
+                                // Found argument list
+                                let mut arglist = Vec::new();
+                                iter.next(); // Consume '('
+                                // Check for empty argument list
+                                if let Some(next) = iter.peek() {
+                                    if next.kind == CppTokenKind::Punctuator && next.text == ")" {
+                                        iter.next(); // Consume ')'
+                                        // Empty argument list
+                                        let (_, replacement) =
+                                            self.expand_function_macro(&token.text, &arglist)?;
+                                        result.push_str(&replacement);
+                                        continue;
+                                    }
+                                }
+                                arglist.push(Vec::new());
+                                let mut bracket_nesting = 1;
+                                for token in iter.by_ref() {
+                                    if token.kind == CppTokenKind::Punctuator {
+                                        match token.text.as_str() {
+                                            "," if bracket_nesting == 1 => {
+                                                arglist.push(Vec::new());
+                                                continue;
+                                            }
+                                            "(" => {
+                                                bracket_nesting += 1;
+                                            }
+                                            ")" => {
+                                                bracket_nesting -= 1;
+                                                if bracket_nesting == 0 {
+                                                    break;
+                                                }
+                                            }
+                                            _ => {
+                                                // fallthrough to push token below
+                                            }
+                                        }
+                                    }
+                                    arglist.last_mut().unwrap().push(token.clone());
+                                }
+                                let (_, replacement) =
+                                    self.expand_function_macro(&token.text, &arglist)?;
+                                result.push_str(&replacement);
+                                continue;
+                            }
+                        } else {
+                            // No argument list, treat as normal identifier below
+                        }
+                    }
+                    MacroKind::Object => {
+                        let (_, replacement) = self.expand_object_macro(&token.text)?;
+                        result.push_str(&replacement);
+                        continue;
+                    }
+                    MacroKind::None => {
+                        // Not a macro, handle as plain token below
+                    }
                 }
             }
             result.push_str(&token.text);
         }
-        Some((definition, result))
+        Ok(result)
+    }
+
+    pub fn expand_object_macro(&self, key: &str) -> anyhow::Result<(&Definition, String)> {
+        let definition = self.inner.get(key).context("Internal: Macro not defined")?;
+        let result = self.expand_macro_tokens(&definition.replacement)?;
+        Ok((definition, result))
+    }
+
+    pub fn expand_function_macro(
+        &self,
+        key: &str,
+        args: &[Vec<CppToken>],
+    ) -> anyhow::Result<(&Definition, String)> {
+        let definition = self
+            .inner
+            .get(key)
+            .context("Internal: Function macro not found")?;
+        let def_args = definition
+            .args
+            .as_ref()
+            .context("Internal: Expected function macro argument list")?;
+        if def_args.len() != args.len() {
+            return Err(anyhow!(
+                "Function macro argument count mismatch, {key}, {def_args:?}, {args:?}"
+            ));
+        }
+        // Perform substitutions on first pass
+        let mut substituted = Vec::new();
+        for token in &definition.replacement {
+            if token.kind == CppTokenKind::Identifier {
+                if let Some(pos) = def_args.iter().position(|arg| arg == &token.text) {
+                    // Replace with corresponding argument
+                    substituted.extend(args[pos].iter().cloned());
+                    continue;
+                }
+            }
+            substituted.push(token.clone());
+        }
+        // Expand as usual
+        let result = self.expand_macro_tokens(&substituted)?;
+        Ok((definition, result))
     }
 
     pub fn insert(&mut self, key: String, definition: Definition) {
@@ -325,6 +432,18 @@ impl Definitions {
 
     pub fn contains_key(&self, key: &str) -> bool {
         self.inner.contains_key(key)
+    }
+
+    pub fn macro_kind(&self, key: &str) -> MacroKind {
+        if let Some(definition) = self.inner.get(key) {
+            if definition.args.is_some() {
+                MacroKind::Function
+            } else {
+                MacroKind::Object
+            }
+        } else {
+            MacroKind::None
+        }
     }
 
     pub fn handle_define(&mut self, line: &LogicalLine, path: &Path) -> anyhow::Result<()> {
@@ -340,8 +459,11 @@ impl Definitions {
         // Expect whitespace, then an identifier
         let _ = iter.consume_whitespace().context("Expected whitespace")?;
         let key = iter.consume_identifier().context("Expected identifier")??;
+        // Get optional argument list
+        let args = iter.consume_arglist_definition()?;
         // Optional whitespace
         iter.consume_whitespace();
+        // Get token list of replacement text
         let mut replacement = Vec::new();
         for token in iter.by_ref() {
             let token = token?;
@@ -358,6 +480,7 @@ impl Definitions {
             key.text.to_string(),
             Definition {
                 replacement,
+                args,
                 provenance: Provenance::FileDefined {
                     start,
                     end,
@@ -462,6 +585,7 @@ impl CPreprocessor {
             "__DATE__".to_string(),
             Definition {
                 replacement: vec![date],
+                args: None,
                 provenance: Provenance::SystemDefined,
             },
         );
@@ -478,6 +602,7 @@ impl CPreprocessor {
             "__TIME__".to_string(),
             Definition {
                 replacement: vec![time],
+                args: None,
                 provenance: Provenance::SystemDefined,
             },
         );
@@ -492,6 +617,7 @@ impl CPreprocessor {
                 key.clone(),
                 Definition {
                     replacement,
+                    args: None,
                     provenance: Provenance::UserDefined,
                 },
             );
@@ -560,16 +686,35 @@ impl CPreprocessor {
                 }
             } else {
                 // Not a pre-processor directive line
-                for token in CppTokenIterator::new(&line.text) {
+                let mut iter = CppTokenIterator::new(&line.text);
+                while let Some(token) = iter.next() {
                     let token = token?;
                     match token.kind {
                         CppTokenKind::Identifier => {
                             if !if_stack.is_clean() {
                                 continue;
                             }
-                            if let Some((definition, replacement)) = defines.expand(token.text) {
-                                snippets.push(&replacement, definition.provenance.clone());
-                                continue;
+                            match defines.macro_kind(token.text) {
+                                MacroKind::Function => {
+                                    // Try to parse argument list
+                                    if let Some(arglist) = iter.consume_arglist_invocation()? {
+                                        let (definition, replacement) =
+                                            defines.expand_function_macro(token.text, &arglist)?;
+                                        snippets.push(&replacement, definition.provenance.clone());
+                                        continue;
+                                    } else {
+                                        // No argument list, treat as normal identifier
+                                    }
+                                }
+                                MacroKind::Object => {
+                                    let (definition, replacement) =
+                                        defines.expand_object_macro(token.text)?;
+                                    snippets.push(&replacement, definition.provenance.clone());
+                                    continue;
+                                }
+                                MacroKind::None => {
+                                    // Not a macro, handle special cases and plain identifiers below
+                                }
                             }
                             if token.text == "__LINE__" {
                                 // Get the line number of the start of this token, accounting
@@ -683,7 +828,7 @@ mod tests {
     }
 
     #[test]
-    fn test_defines() -> anyhow::Result<()> {
+    fn test_object_macros() -> anyhow::Result<()> {
         let code = dedent!(
             r#"
             #define W 5
@@ -699,8 +844,6 @@ mod tests {
         "#
         );
         let (output, snippets) = preprocess(code)?;
-        // FIXME: As X is undefined before use in the expansion of Z, it should
-        // not expand to 10.  This is a bug in the current implementation.
         let expected = dedent!(
             r#"
             program p
@@ -750,6 +893,81 @@ mod tests {
         } else {
             panic!("Expected LocalText provenance for rest of code");
         }
+        Ok(())
+    }
+
+    #[test]
+    fn test_function_macros() -> anyhow::Result<()> {
+        let code = dedent!(
+            r#"
+            #define W 5
+            #define foo( x ) (x + W)
+            #define bar(x, y) x//y
+            #define baz() 10
+            program p
+              implicit none
+              integer, parameter :: foo = 1
+              integer, parameter :: baz = 3
+              print *, foo, foo(5), foo(foo + 2), foo(foo(7) + W)
+              print *, bar("hello, ","world!")
+              print *, baz, baz(), foo(baz())
+            end program p
+        "#
+        );
+        let (output, snippets) = preprocess(code)?;
+        let expected = dedent!(
+            r#"
+            program p
+              implicit none
+              integer, parameter :: foo = 1
+              integer, parameter :: baz = 3
+              print *, foo, (5 + 5), (foo + 2 + 5), ((7 + 5) + 5 + 5)
+              print *, "hello, "//"world!"
+              print *, baz, 10, (10 + 5)
+            end program p
+        "#
+        );
+        assert_eq!(output, expected);
+        // Check that snippets have correct provenance
+        assert_eq!(snippets.len(), 13);
+        // foo
+        for i in [1, 3, 5, 11] {
+            if let Provenance::FileDefined { start, end, path } = &snippets[i].provenance {
+                assert_eq!(&code[*start..*end], "#define foo( x ) (x + W)\n");
+                assert_eq!(path, &PathBuf::from("test.f90"));
+            } else {
+                panic!("Expected FileDefined provenance for foo");
+            }
+        }
+        if let Provenance::FileDefined { start, end, path } = &snippets[7].provenance {
+            assert_eq!(&code[*start..*end], "#define bar(x, y) x//y\n");
+            assert_eq!(path, &PathBuf::from("test.f90"));
+        } else {
+            panic!("Expected FileDefined provenance for bar");
+        }
+        if let Provenance::FileDefined { start, end, path } = &snippets[9].provenance {
+            assert_eq!(&code[*start..*end], "#define baz() 10\n");
+            assert_eq!(path, &PathBuf::from("test.f90"));
+        } else {
+            panic!("Expected FileDefined provenance for baz");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_nested_function_macros() -> anyhow::Result<()> {
+        // change foo(7) to foo(7) + W
+        // Add foo(baz())
+        let code = dedent!(
+            r#"
+            #define foo(x, y) (x + y)
+            #define bar(x) foo(x, y)
+            foo(bar(2), 10)
+        "#
+        );
+        let (output, _) = preprocess(code)?;
+        let expected = "((2 +  y) +  10)";
+        assert_eq!(output, expected);
         Ok(())
     }
 
