@@ -186,6 +186,7 @@ end program
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
+      = help: Insert `implicit none`
 
     [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
       |
@@ -221,7 +222,7 @@ end program
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+    [*] 1 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -257,6 +258,7 @@ end program
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
+      = help: Insert `implicit none`
 
     [TEMP_FILE] S061 [*] end statement should be named.
       |
@@ -274,7 +276,7 @@ end program
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option.
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -319,6 +321,7 @@ select = ["C001", "style"]
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
+      = help: Insert `implicit none`
 
     [TEMP_FILE] S061 [*] end statement should be named.
       |
@@ -336,7 +339,7 @@ select = ["C001", "style"]
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option.
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -383,6 +386,7 @@ select = ["C001"]
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
+      = help: Insert `implicit none`
 
     [TEMP_FILE] S061 [*] end statement should be named.
       |
@@ -400,7 +404,7 @@ select = ["C001"]
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option.
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -445,6 +449,7 @@ select = ["C001", "style"]
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
+      = help: Insert `implicit none`
 
     [TEMP_FILE] S061 [*] end statement should be named.
       |
@@ -462,7 +467,7 @@ select = ["C001", "style"]
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option.
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1049,6 +1054,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     baz0.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1058,6 +1064,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     foo0.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1067,6 +1074,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     nested/bar1.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1076,6 +1084,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     nested/baz1.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1085,6 +1094,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     nested/foo1.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1094,6 +1104,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     fortitude: 9 files scanned.
     Number of errors: 6
@@ -1102,6 +1113,7 @@ end module {file}{idx}
 
         fortitude explain X001,Y002,...
 
+    No fixes available (6 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1162,6 +1174,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     foo0.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1171,6 +1184,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     nested/baz1.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1180,6 +1194,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     nested/foo1.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1189,6 +1204,7 @@ end module {file}{idx}
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     fortitude: 9 files scanned.
     Number of errors: 4
@@ -1197,6 +1213,7 @@ end module {file}{idx}
 
         fortitude explain X001,Y002,...
 
+    No fixes available (4 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1263,6 +1280,7 @@ fn check_exclude() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     foo/foo.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1272,6 +1290,7 @@ fn check_exclude() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     fortitude: 2 files scanned.
     Number of errors: 2
@@ -1280,6 +1299,7 @@ fn check_exclude() -> anyhow::Result<()> {
 
         fortitude explain X001,Y002,...
 
+    No fixes available (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1310,6 +1330,7 @@ fn check_extend_exclude() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     fortitude: 1 files scanned.
     Number of errors: 1
@@ -1318,6 +1339,7 @@ fn check_extend_exclude() -> anyhow::Result<()> {
 
         fortitude explain X001,Y002,...
 
+    No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1348,6 +1370,7 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     fortitude: 1 files scanned.
     Number of errors: 1
@@ -1356,6 +1379,7 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
 
         fortitude explain X001,Y002,...
 
+    No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1412,6 +1436,7 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     fortitude: 1 files scanned.
     Number of errors: 1
@@ -1420,6 +1445,7 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
 
         fortitude explain X001,Y002,...
 
+    No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1538,6 +1564,7 @@ end program
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
       |
+      = help: Insert `implicit none`
 
     [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
       |
@@ -1607,7 +1634,7 @@ end program
 
         fortitude explain X001,Y002,...
 
-    [*] 2 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
+    [*] 2 fixable with the `--fix` option (3 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1707,6 +1734,7 @@ end program myprogram
       | ^^^^^^^^^^^^^^^^^ C001
     3 | end program myprogram
       |
+      = help: Insert `implicit none`
 
     myfile.ff:2:11: S001 line length of 17, exceeds maximum 10
       |
@@ -1729,6 +1757,7 @@ end program myprogram
 
         fortitude explain X001,Y002,...
 
+    No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1794,6 +1823,7 @@ fn check_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     include/include.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1803,6 +1833,7 @@ fn check_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     fortitude: 2 files scanned.
     Number of errors: 2
@@ -1811,6 +1842,7 @@ fn check_gitignore() -> anyhow::Result<()> {
 
         fortitude explain X001,Y002,...
 
+    No fixes available (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -1839,6 +1871,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     exclude/exclude.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1848,6 +1881,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     exclude/include.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1857,6 +1891,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     include.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1866,6 +1901,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     include/exclude.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1875,6 +1911,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     include/exclude/exclude.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1884,6 +1921,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     include/exclude/include.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1893,6 +1931,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     include/include.f90:2:1: C001 module missing 'implicit none'
       |
@@ -1902,6 +1941,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     4 | contains
     5 |   integer function f()
       |
+      = help: Insert `implicit none`
 
     fortitude: 8 files scanned.
     Number of errors: 8
@@ -1910,6 +1950,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
 
         fortitude explain X001,Y002,...
 
+    No fixes available (8 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -2001,7 +2042,7 @@ end program test
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
+    [*] 1 fixable with the `--fix` option (3 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
@@ -2036,7 +2077,7 @@ end program test
     ----- stdout -----
     2	PORT011	[ ] literal-kind
     2	PORT021	[*] star-kind
-    1	C001   	[ ] implicit-typing
+    1	C001   	[*] implicit-typing
     1	S101   	[*] trailing-whitespace
     fortitude: 1 files scanned.
     Number of errors: 6
@@ -2045,7 +2086,7 @@ end program test
 
         fortitude explain X001,Y002,...
 
-    [*] 3 fixable with the `--fix` option.
+    [*] 4 fixable with the `--fix` option.
 
     ----- stderr -----
     ");

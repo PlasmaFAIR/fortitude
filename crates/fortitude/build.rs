@@ -11,7 +11,9 @@ use std::{
 fn main() {
     // The workspace root directory is not available without walking up the tree
     // https://github.com/rust-lang/cargo/issues/3946
-    let workspace_root = Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("..");
+    let workspace_root = Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap())
+        .join("..")
+        .join("..");
 
     commit_info(&workspace_root);
 

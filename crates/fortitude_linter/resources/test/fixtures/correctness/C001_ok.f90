@@ -9,6 +9,12 @@ end module my_module
 
 program my_program
   implicit none
-  integer, paramter :: x = 2
+  integer, parameter :: x = 2
   write(*,*) x
 end program my_program
+
+subroutine external_sub(x)
+  implicit none
+  integer, intent(in) :: x
+  print*, x
+end subroutine external_sub

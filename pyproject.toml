@@ -10,6 +10,7 @@ readme = "README.md"
 authors = [
     {name = "Liam Pattinson", email = "liampattinson@gmail.com"},
     {name = "Peter Hill", email = "peter.hill@york.ac.uk"},
+    {name = "Ian McInerney", email = "i.mcinerney17@imperial.ac.uk"},
 ]
 licence = {file = "LICENSE"}
 keywords = ["Fortran", "linter"]
