@@ -247,22 +247,22 @@ impl FortitudeSettingsIndex {
                 }
 
                 match settings_toml(&directory) {
-                    Ok(Some(pyproject)) => {
+                    Ok(Some(config_file)) => {
                         match fortitude_workspace::resolver::resolve_root_settings(
-                            &pyproject,
+                            &config_file,
                             &EditorConfigurationTransformer(editor_settings, root),
                             fortitude_workspace::resolver::ConfigurationOrigin::Ancestor,
                         ) {
                             Ok(settings) => {
                                 tracing::debug!(
                                     "Loaded settings from: `{}` for `{}`",
-                                    pyproject.display(),
+                                    config_file.display(),
                                     directory.display()
                                 );
                                 index.write().unwrap().insert(
                                     directory,
                                     Arc::new(FortitudeSettings {
-                                        path: Some(pyproject),
+                                        path: Some(config_file),
                                         settings,
                                     }),
                                 );
@@ -274,7 +274,7 @@ impl FortitudeSettingsIndex {
                                         .with_context(|| {
                                             format!(
                                                 "Failed to resolve settings for {}",
-                                                pyproject.display()
+                                                config_file.display()
                                             )
                                         })
                                         .unwrap_err()
