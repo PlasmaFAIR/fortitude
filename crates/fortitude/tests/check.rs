@@ -13,6 +13,9 @@ macro_rules! apply_common_filters {
         settings.add_filter(r"/var/folders/\S+?/T/\S+", "[TEMP_FILE]");
         // Linux Temp Folder
         settings.add_filter(r"/tmp/\.tmp\S+", "[TEMP_FILE]");
+        // Nix build Temp Folder
+        settings.add_filter(r"/build/\.tmp\S+", "[TEMP_FILE]");
+        settings.add_filter(r"/tmp/nix-shell\S+\.tmp\S+", "[TEMP_FILE]");
         // Windows Temp folder
         settings.add_filter(r"\b[A-Z]:\\.*\\Local\\Temp\\\S+", "[TEMP_FILE]");
         // Convert windows paths to Unix Paths.
