@@ -1,5 +1,6 @@
 use crate::options::{
-    ExitUnlabelledLoopOptions, KeywordWhitespaceOptions, Options, PortabilityOptions, StringOptions,
+    ExitUnlabelledLoopOptions, InvalidTabOptions, KeywordWhitespaceOptions, Options,
+    PortabilityOptions, StringOptions,
 };
 use fortitude_linter::fs::{EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet};
 use fortitude_linter::registry::RuleNamespace;
@@ -171,6 +172,7 @@ pub struct Configuration {
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
     pub strings: Option<StringOptions>,
     pub portability: Option<PortabilityOptions>,
+    pub invalid_tab: Option<InvalidTabOptions>,
 }
 
 impl Configuration {
@@ -230,6 +232,7 @@ impl Configuration {
             keyword_whitespace: check.keyword_whitespace,
             strings: check.strings,
             portability: check.portability,
+            invalid_tab: check.invalid_tab,
         }
     }
 
@@ -292,6 +295,10 @@ impl Configuration {
                 portability: self
                     .portability
                     .map(PortabilityOptions::into_settings)
+                    .unwrap_or_default(),
+                invalid_tab: self
+                    .invalid_tab
+                    .map(InvalidTabOptions::into_settings)
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {

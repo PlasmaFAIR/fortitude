@@ -4,6 +4,7 @@ pub mod diagnostic_message;
 pub mod diagnostics;
 pub mod fix;
 pub mod fs;
+pub mod line_width;
 pub mod locator;
 #[macro_use]
 pub mod logging;
@@ -268,7 +269,7 @@ pub(crate) fn check_path(
     }
 
     if rules.enabled(Rule::InvalidTab) {
-        violations.append(&mut check_invalid_tab(&root, file));
+        violations.append(&mut check_invalid_tab(&root, file, settings));
     }
 
     // Raise violations for internal test rules

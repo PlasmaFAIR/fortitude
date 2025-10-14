@@ -20,7 +20,7 @@ use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
 use crate::rules::correctness::exit_labels;
-use crate::rules::portability::{self};
+use crate::rules::portability::{self, invalid_tab};
 use crate::rules::style::{keywords, strings};
 
 #[derive(Debug)]
@@ -75,6 +75,7 @@ pub struct CheckSettings {
     pub keyword_whitespace: keywords::settings::Settings,
     pub strings: strings::settings::Settings,
     pub portability: portability::settings::Settings,
+    pub invalid_tab: invalid_tab::settings::Settings,
 }
 
 impl CheckSettings {
@@ -98,6 +99,7 @@ impl CheckSettings {
             keyword_whitespace: keywords::settings::Settings::default(),
             strings: strings::settings::Settings::default(),
             portability: portability::settings::Settings::default(),
+            invalid_tab: invalid_tab::settings::Settings::default(),
         }
     }
 }
@@ -130,6 +132,7 @@ impl fmt::Display for CheckSettings {
                 self.keyword_whitespace | nested,
                 self.strings | nested,
                 self.portability | nested,
+                self.invalid_tab | nested,
             ]
         }
         Ok(())

@@ -609,6 +609,36 @@ end do
 
 ---
 
+### `check.invalid-tab`
+
+Options for `invalid-tab` rule
+
+#### [`indent-width`](#check_invalid-tab_indent-width) {: #check_invalid-tab_indent-width }
+<span id="indent-width"></span>
+
+The number of spaces to replace tabs with.
+
+**Default value**: `4`
+
+**Type**: `int`
+
+**Example usage**:
+
+=== "fpm.toml"
+
+    ```toml
+    [extra.fortitude.check.invalid-tab]
+    indent-width = 2
+    ```
+=== "fortitude.toml"
+
+    ```toml
+    [check.invalid-tab]
+    indent-width = 2
+    ```
+
+---
+
 ### `check.keyword-whitespace`
 
 Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
