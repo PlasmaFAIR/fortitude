@@ -1,4 +1,4 @@
-pub mod invalid_tab;
+pub mod invalid_characters;
 pub(crate) mod literal_kinds;
 pub(crate) mod non_portable_io_unit;
 pub(crate) mod star_kinds;

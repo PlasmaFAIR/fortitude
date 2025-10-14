@@ -31,7 +31,7 @@ use rules::error::syntax_error::SyntaxError;
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum};
-use rules::{Rule, portability::invalid_tab::check_invalid_tab};
+use rules::{Rule, portability::invalid_characters::check_invalid_tab};
 use settings::{FixMode, Settings};
 
 use anyhow::{Context, anyhow};

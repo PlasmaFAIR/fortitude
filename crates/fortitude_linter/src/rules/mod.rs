@@ -124,7 +124,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Portability, "011") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKind),
         (Portability, "012") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKindSuffix),
         (Portability, "021") => (RuleGroup::Stable, Ast, Default, portability::star_kinds::StarKind),
-        (Portability, "031") => (RuleGroup::Preview, None, Optional, portability::invalid_tab::InvalidTab),
+        (Portability, "031") => (RuleGroup::Preview, None, Optional, portability::invalid_characters::InvalidTab),
 
         // style
         (Style, "001") => (RuleGroup::Stable, Text, Default, style::line_length::LineTooLong),

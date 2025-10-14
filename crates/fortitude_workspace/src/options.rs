@@ -9,14 +9,17 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use fortitude_linter::{
-    line_width::IndentWidth, rule_selector::RuleSelector, rules::{
+    line_width::IndentWidth,
+    rule_selector::RuleSelector,
+    rules::{
         correctness::exit_labels,
-        portability::{self, invalid_tab},
+        portability::{self, invalid_characters},
         style::{
             keywords,
             strings::{self, settings::Quote},
         },
-    }, settings::{OutputFormat, ProgressBar}
+    },
+    settings::{OutputFormat, ProgressBar},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, Serialize, Deserialize)]
@@ -428,17 +431,13 @@ impl PortabilityOptions {
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct InvalidTabOptions {
     /// The number of spaces to replace tabs with.
-    #[option(
-        default = "4",
-        value_type = "int",
-        example = "indent-width = 2"
-    )]
+    #[option(default = "4", value_type = "int", example = "indent-width = 2")]
     pub indent_width: Option<IndentWidth>,
 }
 
 impl InvalidTabOptions {
-    pub fn into_settings(self) -> invalid_tab::settings::Settings {
-        invalid_tab::settings::Settings {
+    pub fn into_settings(self) -> invalid_characters::settings::Settings {
+        invalid_characters::settings::Settings {
             indent_width: self.indent_width.unwrap_or_default(),
         }
     }
