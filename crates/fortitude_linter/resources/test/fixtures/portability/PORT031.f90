@@ -1,4 +1,4 @@
-! If you touch this flie, be careful your editor doesn't auto-correct
+! If you touch this file, be careful your editor doesn't auto-correct
 ! the horrible whitespace!
 program invalid_tab
 	implicit none

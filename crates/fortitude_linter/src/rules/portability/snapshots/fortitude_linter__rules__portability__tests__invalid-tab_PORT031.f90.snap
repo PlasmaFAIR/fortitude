@@ -15,7 +15,7 @@ snapshot_kind: text
   = help: Replace with spaces
 
 ℹ Unsafe fix
-1 1 | ! If you touch this flie, be careful your editor doesn't auto-correct
+1 1 | ! If you touch this file, be careful your editor doesn't auto-correct
 2 2 | ! the horrible whitespace!
 3 3 | program invalid_tab
 4   |-	implicit none

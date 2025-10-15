@@ -28,6 +28,7 @@ use locator::Locator;
 use registry::AsRule;
 use rule_table::RuleTable;
 use rules::error::syntax_error::SyntaxError;
+use rules::portability::invalid_characters::check_invalid_character;
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum};
@@ -270,6 +271,10 @@ pub(crate) fn check_path(
 
     if rules.enabled(Rule::InvalidTab) {
         violations.append(&mut check_invalid_tab(&root, file, settings));
+    }
+
+    if rules.enabled(Rule::InvalidCharacter) {
+        violations.append(&mut check_invalid_character(&root, file));
     }
 
     // Raise violations for internal test rules
