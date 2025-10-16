@@ -13,7 +13,7 @@ use fortitude_linter::{
     rule_selector::RuleSelector,
     rules::{
         correctness::exit_labels,
-        portability::{self, invalid_characters},
+        portability::{self, invalid_tab},
         style::{
             keywords,
             strings::{self, settings::Quote},
@@ -436,8 +436,8 @@ pub struct InvalidTabOptions {
 }
 
 impl InvalidTabOptions {
-    pub fn into_settings(self) -> invalid_characters::settings::Settings {
-        invalid_characters::settings::Settings {
+    pub fn into_settings(self) -> invalid_tab::settings::Settings {
+        invalid_tab::settings::Settings {
             indent_width: self.indent_width.unwrap_or_default(),
         }
     }

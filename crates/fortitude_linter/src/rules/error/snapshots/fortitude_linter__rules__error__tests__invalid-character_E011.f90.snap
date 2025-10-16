@@ -1,14 +1,14 @@
 ---
-source: crates/fortitude_linter/src/rules/portability/mod.rs
+source: crates/fortitude_linter/src/rules/error/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/portability/PORT032.f90:3:18: PORT032 Invalid character 'ç'
+./resources/test/fixtures/error/E011.f90:3:18: E011 Invalid character 'ç'
   |
 1 | program invalid_tab
 2 |   implicit none
 3 |   logical :: français = .true.
-  |                  ^ PORT032
+  |                  ^ E011
 4 |   print*, "Don't flag this: é"
 5 |   ! Or this:|é|
   |

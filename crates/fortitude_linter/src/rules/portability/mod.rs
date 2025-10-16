@@ -1,4 +1,4 @@
-pub mod invalid_characters;
+pub mod invalid_tab;
 pub(crate) mod literal_kinds;
 pub(crate) mod non_portable_io_unit;
 pub(crate) mod star_kinds;
@@ -23,7 +23,6 @@ mod tests {
     #[test_case(Rule::LiteralKindSuffix, Path::new("PORT012.f90"))]
     #[test_case(Rule::StarKind, Path::new("PORT021.f90"))]
     #[test_case(Rule::InvalidTab, Path::new("PORT031.f90"))]
-    #[test_case(Rule::InvalidCharacter, Path::new("PORT032.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

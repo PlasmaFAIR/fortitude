@@ -76,6 +76,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         // error
         (Error, "000") => (RuleGroup::Stable, None, Default, error::ioerror::IoError),
         (Error, "001") => (RuleGroup::Stable, Ast, Default, error::syntax_error::SyntaxError),
+        (Error, "011") => (RuleGroup::Preview, None, Default, error::invalid_character::InvalidCharacter),
 
         // correctness
         (Correctness, "001") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitTyping),
@@ -124,8 +125,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Portability, "011") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKind),
         (Portability, "012") => (RuleGroup::Stable, Ast, Default, portability::literal_kinds::LiteralKindSuffix),
         (Portability, "021") => (RuleGroup::Stable, Ast, Default, portability::star_kinds::StarKind),
-        (Portability, "031") => (RuleGroup::Preview, None, Optional, portability::invalid_characters::InvalidTab),
-        (Portability, "032") => (RuleGroup::Preview, None, Optional, portability::invalid_characters::InvalidCharacter),
+        (Portability, "031") => (RuleGroup::Preview, None, Default, portability::invalid_tab::InvalidTab),
 
         // style
         (Style, "001") => (RuleGroup::Stable, Text, Default, style::line_length::LineTooLong),

@@ -1,3 +1,4 @@
+pub(crate) mod invalid_character;
 pub mod ioerror;
 pub(crate) mod syntax_error;
 
@@ -16,6 +17,7 @@ mod tests {
     use crate::test::test_path;
 
     #[test_case(Rule::SyntaxError, Path::new("E001.f90"))]
+    #[test_case(Rule::InvalidCharacter, Path::new("E011.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
