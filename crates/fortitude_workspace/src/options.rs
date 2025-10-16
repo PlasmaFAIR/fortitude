@@ -9,10 +9,11 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use fortitude_linter::{
+    line_width::IndentWidth,
     rule_selector::RuleSelector,
     rules::{
         correctness::exit_labels,
-        portability::{self},
+        portability::{self, invalid_tab},
         style::{
             keywords,
             strings::{self, settings::Quote},
@@ -303,6 +304,10 @@ pub struct CheckOptions {
     /// Options for the `portability` set of rules
     #[option_group]
     pub portability: Option<PortabilityOptions>,
+
+    /// Options for the `invalid-tab` rule
+    #[option_group]
+    pub invalid_tab: Option<InvalidTabOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -415,6 +420,25 @@ impl PortabilityOptions {
     pub fn into_settings(self) -> portability::settings::Settings {
         portability::settings::Settings {
             allow_cray_file_units: self.allow_cray_file_units.unwrap_or_default(),
+        }
+    }
+}
+
+/// Options for `invalid-tab` rule
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct InvalidTabOptions {
+    /// The number of spaces to replace tabs with.
+    #[option(default = "4", value_type = "int", example = "indent-width = 2")]
+    pub indent_width: Option<IndentWidth>,
+}
+
+impl InvalidTabOptions {
+    pub fn into_settings(self) -> invalid_tab::settings::Settings {
+        invalid_tab::settings::Settings {
+            indent_width: self.indent_width.unwrap_or_default(),
         }
     }
 }

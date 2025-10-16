@@ -13,7 +13,7 @@ license = { workspace = true }
 [dependencies]
 fortitude_macros = { workspace = true }
 
-annotate-snippets = { workspace = true }
+ruff_annotate_snippets = { workspace = true }
 anyhow = { workspace = true }
 bitflags = { workspace = true }
 chrono = { workspace = true, default-features = false, features = ["clock"] }

@@ -22,7 +22,7 @@ fortitude_linter = { path = "crates/fortitude_linter" }
 fortitude_macros = { path = "crates/fortitude_macros" }
 fortitude_workspace = { path = "crates/fortitude_workspace" }
 
-annotate-snippets = { git = "https://github.com/PlasmaFAIR/annotate-snippets-rs.git", branch = "level-none" }
+ruff_annotate_snippets = { git = "https://github.com/astral-sh/ruff.git", tag = "0.12.9", version = "0.1.0" }
 anyhow = "1.0.79"
 bitflags = "2.6.0"
 chrono = { version = "0.4.35", default-features = false, features = ["clock"] }
