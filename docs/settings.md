@@ -133,13 +133,13 @@ A list of file extensions to check
 
     ```toml
     [extra.fortitude.check]
-    ["f90", "fpp"]
+    file-extensions = ["f90", "fpp"]
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
-    ["f90", "fpp"]
+    file-extensions = ["f90", "fpp"]
     ```
 
 ---
