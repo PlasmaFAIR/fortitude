@@ -2,12 +2,12 @@
 
 Fortitude will look for either a `fortitude.toml` or `fpm.toml` file
 in the current directory, or one of its parents. If using
-`fortitude.toml`, settings should be under the command name, while for
+`fortitude.toml` or `.fortitude.toml`, settings should be under the command name, while for
 `fpm.toml` files, this has to be additionally nested under the
 `extra.fortitude` table:
 
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -15,7 +15,7 @@ in the current directory, or one of its parents. If using
     ignore = ["S001", "S051"]
     line-length = 132
     ```
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
@@ -46,14 +46,14 @@ additional comma-separated list of excluded files and directories can be set usi
 [`check.exclude`](settings.md#exclude) option. For example, to exclude all files in the
 directories `benchmarks/` and `tests/`:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     exclude = ["benchmarks", "tests"]
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -62,14 +62,14 @@ directories `benchmarks/` and `tests/`:
 
 You can also use pattern matching with a glob (`*`) symbol:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     exclude = ["test_*"]
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]

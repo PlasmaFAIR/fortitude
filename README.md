@@ -204,8 +204,9 @@ Run `fortitude explain` to see which rules are in preview mode.
 
 ## Configuration
 
-Fortitude will look for either a `fortitude.toml` or `fpm.toml` file in the
-current directory, or one of its parents. If using `fortitude.toml`, settings
+Fortitude will look for either a `fortitude.toml`, `.fortitude.toml` or `fpm.toml`
+file in the current directory, or one of its parents.
+If using `fortitude.toml` or `.fortitude.toml`, settings
 should be under the command name:
 
 ```toml

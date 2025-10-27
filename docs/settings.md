@@ -33,13 +33,13 @@ Note that you'll typically want to use
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     exclude = [".venv"]
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -72,14 +72,14 @@ For more information on the glob syntax, refer to the [`globset` documentation](
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     # In addition to the standard set of exclusions, omit all tests, plus a specific file.
     extend-exclude = ["tests", "src/bad.f90"]
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -101,14 +101,14 @@ specified by [`select`](#check_select).
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
     extend-select = ["T031", "R"]
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -129,13 +129,13 @@ A list of file extensions to check
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     ["f90", "fpp"]
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -160,13 +160,13 @@ For more information on the glob syntax, refer to the [`globset` documentation](
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     files = ["foo.f90"]
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -188,13 +188,13 @@ Only includes automatic fixes unless `--unsafe-fixes` is provided.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     fix = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -214,13 +214,13 @@ Like [`fix`](#fix), but disables reporting on leftover violation. Implies [`fix`
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     fix-only = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -248,13 +248,13 @@ own settings.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     force-exclude = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -280,13 +280,13 @@ specific prefixes.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     ignore = ["superfluous-implicit-none"]
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -309,14 +309,14 @@ For these lines, the [unicode width](https://unicode.org/reports/tr11/) of each 
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     # Allow lines to be as long as 120.
     line-length = 120
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -341,14 +341,14 @@ Actions annotations), `"gitlab"` (GitLab CI code quality report),
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     # Group violations by containing file.
     output-format = "grouped"
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -371,7 +371,7 @@ the file pattern.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check.per-file-ignores]
@@ -381,7 +381,7 @@ the file pattern.
     # Ignore `P` rules everywhere except for the `src/` directory.
     "!src/**.f90" = ["P"]
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.per-file-ignores]
@@ -406,14 +406,14 @@ use unstable rules, fixes, and formatting.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     # Enable preview features.
     preview = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -435,14 +435,14 @@ Options are "off" (default), "ascii", and "fancy"
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check.progress-bar]
     # Enable unicode progress bar
     progress-bar = "fancy"
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.progress-bar]
@@ -465,13 +465,13 @@ Enabled by default.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     respect-gitignore = false
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -497,14 +497,14 @@ specific prefixes.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     # Only check errors and obsolescent features
     select = ["E", "OB"]
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -526,14 +526,14 @@ Whether to show an enumeration of all fixed lint violations
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     # Enumerate all fixed violations.
     show-fixes = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -556,13 +556,13 @@ If set to false, the hint will be hidden.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     unsafe-fixes = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -594,13 +594,13 @@ end do
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check.exit-unlabelled-loops]
     allow-unnested-loops = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.exit-unlabelled-loops]
@@ -624,13 +624,13 @@ The number of spaces to replace tabs with.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check.invalid-tab]
     indent-width = 2
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.invalid-tab]
@@ -654,13 +654,13 @@ Whether to enforce the use of `go to` instead of `goto`.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check.keyword-whitespace]
     goto-with-space = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.keyword-whitespace]
@@ -680,13 +680,13 @@ Whether to enforce the use of `in out` instead of `inout`.
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check.keyword-whitespace]
     inout-with-space = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.keyword-whitespace]
@@ -715,13 +715,13 @@ wish to switch this to `true` -- but see also
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check.portability]
     allow-cray-file-units = true
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.portability]
@@ -745,13 +745,13 @@ Quote style to prefer for string literals (either "single" or "double").
 
 **Example usage**:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check.strings]
     quotes = "single"
     ```
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.strings]
