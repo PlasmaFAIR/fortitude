@@ -182,12 +182,12 @@ fn emit_field(output: &mut String, name: &str, field: &OptionField, parents: &[S
     output.push('\n');
     output.push_str("**Example usage**:\n\n");
     output.push_str(&format_tab(
-        "fpm.toml",
+        "`fpm.toml`",
         &format_header(field.scope, parents, ConfigurationFile::FpmToml),
         field.example,
     ));
     output.push_str(&format_tab(
-        "fortitude.toml",
+        "`fortitude.toml` or `.fortitude.toml`",
         &format_header(field.scope, parents, ConfigurationFile::FortitudeToml),
         field.example,
     ));
