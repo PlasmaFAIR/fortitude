@@ -173,7 +173,9 @@ pub struct CheckOptions {
     #[option(
         default = r#"["f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23"]"#,
         value_type = "list[str]",
-        example = r#"["f90", "fpp"]"#
+        example = r#"
+          file-extensions = ["f90", "fpp"]
+        "#
     )]
     pub file_extensions: Option<Vec<String>>,
 
