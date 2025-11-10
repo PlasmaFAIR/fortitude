@@ -31,6 +31,8 @@ pub struct Options {
     /// `*.f90`, to include any file with the `.f90` extension.
     ///
     /// For more information on the glob syntax, refer to the [`globset` documentation](https://docs.rs/globset/latest/globset/#syntax).
+    ///
+    /// !!! info "_Introduced in 0.7.6_"
     #[option(
         default = r#"["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23"]"#,
         value_type = "list[str]",
@@ -64,6 +66,7 @@ pub struct CheckOptions {
         "#
     )]
     #[deprecated(
+        since = "0.7.6",
         note = "The `files` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead."
     )]
     pub files: Option<Vec<PathBuf>>,
@@ -196,6 +199,7 @@ pub struct CheckOptions {
         "#
     )]
     #[deprecated(
+        since = "0.7.6",
         note = "The `file_extensions` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead."
     )]
     pub file_extensions: Option<Vec<String>>,

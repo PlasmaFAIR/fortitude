@@ -10,6 +10,8 @@ Inclusion are based on globs, and should be single-path patterns, like
 
 For more information on the glob syntax, refer to the [`globset` documentation](https://docs.rs/globset/latest/globset/#syntax).
 
+!!! info "_Introduced in 0.7.6_"
+
 **Default value**: `["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23"]`
 
 **Type**: `list[str]`
@@ -152,7 +154,7 @@ specified by [`select`](#check_select).
 <span id="file-extensions"></span>
 
 !!! warning "Deprecated"
-    This option has been deprecated. The `file_extensions` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead.
+    This option has been deprecated in 0.7.6. The `file_extensions` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead.
 
 A list of file extensions to check
 
@@ -181,7 +183,7 @@ A list of file extensions to check
 <span id="files"></span>
 
 !!! warning "Deprecated"
-    This option has been deprecated. The `files` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead.
+    This option has been deprecated in 0.7.6. The `files` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead.
 
 A list of file patterns to include when linting.
 
