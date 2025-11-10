@@ -4,8 +4,8 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
 use anyhow::bail;
+use anyhow::{Context, Result};
 use itertools::Itertools;
 use path_absolutize::path_dedot;
 

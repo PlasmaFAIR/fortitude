@@ -39,14 +39,15 @@ pub struct GlobalConfigArgs {
     log_level_args: LogLevelArgs,
 
     /// Path to a TOML configuration file
-    #[arg(
-        long,
-        global = true,
-        help_heading = "Global options",
-    )]
+    #[arg(long, global = true, help_heading = "Global options")]
     pub config_file: Option<PathBuf>,
     /// Ignore all configuration files.
-    #[arg(long, help_heading = "Global options", global = true, conflicts_with = "config_file")]
+    #[arg(
+        long,
+        help_heading = "Global options",
+        global = true,
+        conflicts_with = "config_file"
+    )]
     pub isolated: bool,
 }
 

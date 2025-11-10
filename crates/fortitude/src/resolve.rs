@@ -8,7 +8,7 @@ use anyhow::{Result, bail};
 use log::debug;
 
 use fortitude_workspace::configuration::{
-    Configuration, ConfigurationTransformer, find_settings_toml,
+    Configuration, ConfigurationTransformer, find_settings_toml, find_user_settings_toml,
 };
 use fortitude_workspace::resolver::{
     ConfigurationOrigin, FortconfigDiscoveryStrategy, FortitudeConfig, resolve_root_settings,
@@ -73,6 +73,27 @@ pub fn resolve(
             FortconfigDiscoveryStrategy::Hierarchical,
             settings,
             Some(fortconfig),
+        ));
+    }
+
+    // Fourth priority: find a user-specific `fortitude.toml`, but resolve all paths
+    // relative the current working directory. (With `Strategy::Hierarchical`, we'll
+    // end up the "closest" `fortitude.toml` file for every Fortran file later on, so
+    // these act as the "default" settings.)
+    if let Some(pyproject) = find_user_settings_toml() {
+        debug!(
+            "Using configuration file (via cwd) at: {}",
+            pyproject.display()
+        );
+        let settings = resolve_root_settings(
+            &pyproject,
+            config_arguments,
+            ConfigurationOrigin::UserSettings,
+        )?;
+        return Ok(FortitudeConfig::new(
+            FortconfigDiscoveryStrategy::Hierarchical,
+            settings,
+            Some(pyproject),
         ));
     }
 

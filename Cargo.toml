@@ -29,6 +29,7 @@ chrono = { version = "0.4.35", default-features = false, features = ["clock"] }
 clap = { version = "4.4.16", features = ["derive", "string", "env"] }
 clap_complete_command = { version = "0.6.0" }
 colored = { version = "2.1.0" }
+etcetera = { version = "0.10.0" }
 fern = "0.7.1"
 globset = "0.4.15"
 ignore = "0.4.23"

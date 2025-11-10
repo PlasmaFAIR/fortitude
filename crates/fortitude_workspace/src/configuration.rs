@@ -93,6 +93,26 @@ pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
+/// Find the path to the user-specific `fpm.toml` or `fortitude.toml`, if it
+/// exists.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn find_user_settings_toml() -> Option<PathBuf> {
+    use etcetera::BaseStrategy;
+
+    let strategy = etcetera::base_strategy::choose_base_strategy().ok()?;
+    let config_dir = strategy.config_dir().join("fortitude");
+
+    // Search for a user-specific `.fortitude.toml`, then a `fortitude.toml`, then a `fpm.toml`.
+    for filename in [".fortitude.toml", "fortitude.toml", "fpm.toml"] {
+        let path = config_dir.join(filename);
+        if path.is_file() {
+            return Some(path);
+        }
+    }
+
+    None
+}
+
 /// Find the path to the project root, which contains the `fpm.toml` or `fortitude.toml` file.
 /// If no such file exists, return the current working directory.
 pub fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
