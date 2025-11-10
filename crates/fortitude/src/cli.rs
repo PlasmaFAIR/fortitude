@@ -39,8 +39,15 @@ pub struct GlobalConfigArgs {
     log_level_args: LogLevelArgs,
 
     /// Path to a TOML configuration file
-    #[arg(long)]
+    #[arg(
+        long,
+        global = true,
+        help_heading = "Global options",
+    )]
     pub config_file: Option<PathBuf>,
+    /// Ignore all configuration files.
+    #[arg(long, help_heading = "Global options", global = true, conflicts_with = "config_file")]
+    pub isolated: bool,
 }
 
 impl GlobalConfigArgs {
@@ -340,6 +347,8 @@ pub struct CheckArguments {
 #[derive(Default)]
 pub struct ConfigArguments {
     // TODO: add other ruff bits like `isolated` and `overrides`
+    /// Whether the user specified --isolated on the command line
+    pub(crate) isolated: bool,
     /// The logging level to be used, derived from command-line arguments passed
     pub(crate) log_level: LogLevel,
     /// Path to a pyproject.toml or ruff.toml configuration file (etc.).
@@ -354,6 +363,21 @@ pub struct ConfigArguments {
 impl ConfigArguments {
     pub fn config_file(&self) -> Option<&Path> {
         self.config_file.as_deref()
+    }
+
+    fn from_cli_arguments(
+        global_options: GlobalConfigArgs,
+        per_flag_overrides: ExplicitConfigOverrides,
+    ) -> anyhow::Result<Self> {
+        let log_level = global_options.log_level();
+        let config_file = global_options.config_file;
+        let isolated = global_options.isolated;
+        Ok(Self {
+            isolated,
+            log_level,
+            config_file,
+            per_flag_overrides,
+        })
     }
 }
 
@@ -404,13 +428,7 @@ impl CheckCommand {
             progress_bar: self.progress_bar,
         };
 
-        let log_level = global_options.log_level();
-        let config_file = global_options.config_file;
-        let config_args = ConfigArguments {
-            log_level,
-            config_file,
-            per_flag_overrides,
-        };
+        let config_args = ConfigArguments::from_cli_arguments(global_options, per_flag_overrides)?;
         Ok((check_arguments, config_args))
     }
 }

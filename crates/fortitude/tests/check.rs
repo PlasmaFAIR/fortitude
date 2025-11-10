@@ -2252,3 +2252,29 @@ end program foo
 
     Ok(())
 }
+
+#[test]
+fn isolated_mode() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let config_file = tempdir.path().join("fpm.toml");
+    fs::write(
+        &config_file,
+        r#"
+[extra.fortitude.check]
+ignore = ["missing-intent"]
+"#,
+    )?;
+
+    let result = Command::cargo_bin(BIN_NAME)?
+        .current_dir(&tempdir)
+        .arg("--isolated")
+        .arg("check")
+        .arg("--show-settings")
+        .output()?
+        ;
+    let result_string = format!("{result:?}");
+
+    assert!(result_string.contains("missing-intent"));
+
+    Ok(())
+}

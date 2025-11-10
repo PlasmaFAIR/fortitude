@@ -26,6 +26,17 @@ pub fn resolve(
         bail!("Working directory does not exist")
     };
 
+    // First priority: if we're running in isolated mode, use the default settings.
+    if config_arguments.isolated {
+        let config = config_arguments.transform(Configuration::default());
+        let settings = config.into_settings(&cwd)?;
+        debug!("Isolated mode, not reading any pyproject.toml");
+        return Ok(FortitudeConfig::new(
+            FortconfigDiscoveryStrategy::Fixed,
+            settings,
+            None,
+        ));
+    }
     // Second priority: the user specified a `fortitude.toml` file. Use that
     // `fortitude.toml` for _all_ configuration, and resolve paths relative to the
     // current working directory. (This matches ESLint's behavior.)

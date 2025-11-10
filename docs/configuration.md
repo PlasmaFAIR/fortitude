@@ -139,14 +139,17 @@ Commands:
   help     Print this message or the help of the given subcommand(s)
 
 Options:
-      --config-file <CONFIG_FILE>  Path to a TOML configuration file
-  -h, --help                       Print help
-  -V, --version                    Print version
+  -h, --help     Print help
+  -V, --version  Print version
 
 Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+Global options:
+      --config-file <CONFIG_FILE>  Path to a TOML configuration file
+      --isolated                   Ignore all configuration files
 
 For help with a specific command, see: `fortitude help <command>`.
 ```
@@ -232,6 +235,10 @@ Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+Global options:
+      --config-file <CONFIG_FILE>  Path to a TOML configuration file
+      --isolated                   Ignore all configuration files
 ```
 
 <!-- End auto-generated check help. -->
