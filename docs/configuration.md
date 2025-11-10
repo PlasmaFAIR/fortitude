@@ -29,35 +29,37 @@ For complete documentation of the available configuration options, see
 
 ## Discovering files
 
-Without any other arguments, `fortitude check` searches the current directory recursively
-for Fortran files. You can also pass an explicit list of files or directories to search,
-or control which files or directories should be excluded from this search. You can also
-configure what extensions Fortitude searches for in directories with
-[`check.file-extensions`](settings.md#file-extensions) or `--file-extensions`:
+Without any other arguments, `fortitude check` searches the current directory
+recursively for Fortran files. You can also pass an explicit list of files or
+directories to search, or control which files or directories should be excluded
+from this search (see [`check.exclude`](settings.md#exclude) and
+[`check.extend-exclude`](settings.md#extend-exclude)):
 
 ```console
-$ fortitude check --file-extensions=f90,fpp
+$ fortitude check --exclude=tests/*.f90 src/*.{f90,fpp} extra/file.f90
 ```
 
-Files in your `.gitignore` will be excluded from the file search automatically, though
-this behaviour can be deactivated by passing `--no-respect-gitignore`.  Files in certain
-directories (`build/`, `.git/`, `.venv/`, etc.) will also be excluded by default. An
-additional comma-separated list of excluded files and directories can be set using the
-[`check.exclude`](settings.md#exclude) option. For example, to exclude all files in the
-directories `benchmarks/` and `tests/`:
+Files in your `.gitignore` will be excluded from the file search automatically,
+though this behaviour can be deactivated (see
+[`check.respect-gitignore`](settings.md#respect-gitignore)). Files in certain
+directories (`build/`, `.git/`, `.venv/`, etc.) will also be excluded by
+default. An additional comma-separated list of excluded files and directories
+can be set using the [`check.extend-exclude`](settings.md#extend-exclude) option. For example,
+to exclude all files in the directories `benchmarks/` and `tests/` in addition
+to the default excluded files:
 
 === "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
-    exclude = ["benchmarks", "tests"]
+    extend-exclude = ["benchmarks", "tests"]
     ```
 
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
-    exclude = ["benchmarks", "tests"]
+    extend-exclude = ["benchmarks", "tests"]
     ```
 
 You can also use pattern matching with a glob (`*`) symbol:
@@ -66,14 +68,14 @@ You can also use pattern matching with a glob (`*`) symbol:
 
     ```toml
     [extra.fortitude.check]
-    exclude = ["test_*"]
+    extend-exclude = ["test_*"]
     ```
 
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
-    exclude = ["test_*"]
+    extend-exclude = ["test_*"]
     ```
 
 Note that Fortitude will still check excluded files if you pass their paths
