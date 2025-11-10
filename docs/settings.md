@@ -1,6 +1,36 @@
 # Settings
 
 ## Top-level
+#### [`include`](#include) {: #include }
+
+A list of file patterns to include when linting.
+
+Inclusion are based on globs, and should be single-path patterns, like
+`*.f90`, to include any file with the `.f90` extension.
+
+For more information on the glob syntax, refer to the [`globset` documentation](https://docs.rs/globset/latest/globset/#syntax).
+
+**Default value**: `["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23"]`
+
+**Type**: `list[str]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude]
+    include = ["*.f90", "*.F90"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    
+    include = ["*.f90", "*.F90"]
+    ```
+
+---
+
 ### `check`
 
 Configures how Fortitude checks your code.
@@ -121,6 +151,9 @@ specified by [`select`](#check_select).
 #### [`file-extensions`](#check_file-extensions) {: #check_file-extensions }
 <span id="file-extensions"></span>
 
+!!! warning "Deprecated"
+    This option has been deprecated. The `file_extensions` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead.
+
 A list of file extensions to check
 
 **Default value**: `["f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23"]`
@@ -146,6 +179,9 @@ A list of file extensions to check
 
 #### [`files`](#check_files) {: #check_files }
 <span id="files"></span>
+
+!!! warning "Deprecated"
+    This option has been deprecated. The `files` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead.
 
 A list of file patterns to include when linting.
 

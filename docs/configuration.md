@@ -140,7 +140,7 @@ Perform static analysis on files and report issues
 Usage: fortitude check [OPTIONS] [FILES]...
 
 Arguments:
-  [FILES]...  List of files or directories to check. Directories are searched recursively for Fortran files. The `--file-extensions` option can be used to control which files are included in the search [default: .]
+  [FILES]...  List of files or directories to check [default: .]
 
 Options:
       --fix

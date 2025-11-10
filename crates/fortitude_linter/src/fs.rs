@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use ignore::{WalkBuilder, types::TypesBuilder};
+use ignore::WalkBuilder;
 use itertools::Itertools;
 use log::debug;
 use path_absolutize::Absolutize;
@@ -267,7 +267,7 @@ pub const FORTRAN_EXTS: &[&str] = &[
     "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
 ];
 
-// Default paths to exclude when searching paths
+/// Default paths to exclude when searching paths
 pub static EXCLUDE_BUILTINS: &[FilePattern] = &[
     FilePattern::Builtin(".git"),
     FilePattern::Builtin(".git-rewrite"),
@@ -286,25 +286,29 @@ pub static EXCLUDE_BUILTINS: &[FilePattern] = &[
     FilePattern::Builtin("_dist"),
 ];
 
-/// Returns the default set of files if none are provided, otherwise
-/// returns a list with just the current working directory.
-fn resolve_default_files(files: &[PathBuf], is_stdin: bool) -> Vec<PathBuf> {
-    if files.is_empty() {
-        if is_stdin {
-            vec![Path::new("-").to_path_buf()]
-        } else {
-            vec![Path::new(".").to_path_buf()]
-        }
-    } else {
-        files.to_vec()
-    }
-}
+/// Default paths to include
+pub const INCLUDE: &[FilePattern] = &[
+    FilePattern::Builtin("*.f90"),
+    FilePattern::Builtin("*.F90"),
+    FilePattern::Builtin("*.f95"),
+    FilePattern::Builtin("*.F95"),
+    FilePattern::Builtin("*.f03"),
+    FilePattern::Builtin("*.F03"),
+    FilePattern::Builtin("*.f08"),
+    FilePattern::Builtin("*.F08"),
+    FilePattern::Builtin("*.f18"),
+    FilePattern::Builtin("*.F18"),
+    FilePattern::Builtin("*.f23"),
+    FilePattern::Builtin("*.F23"),
+];
 
 /// Expand the input list of files to include all Fortran files.
-pub fn get_files(resolver: &FileResolverSettings, is_stdin: bool) -> anyhow::Result<Vec<PathBuf>> {
+pub fn get_files(
+    paths: &[PathBuf],
+    resolver: &FileResolverSettings,
+) -> anyhow::Result<Vec<PathBuf>> {
     debug!("Gathering files");
     debug!("Project root: {:?}", resolver.project_root);
-    let paths = resolve_default_files(&resolver.files, is_stdin);
 
     // Normalise all paths and remove duplicates.
     // If exclude_mode is set to Force, remove paths that match the exclude patterns.
@@ -341,21 +345,13 @@ pub fn get_files(resolver: &FileResolverSettings, is_stdin: bool) -> anyhow::Res
         builder.hidden(false);
         builder.filter_entry(move |e| !excludes.matches(e.path()));
 
-        // Add file type filter for provided file extensions
-        // Directories will be skipped
-        let mut file_types = TypesBuilder::new();
-        for ext in &resolver.file_extensions {
-            file_types.add(ext.as_ref(), format!("*.{ext}").as_str())?;
-        }
-        file_types.select("all");
-        builder.types(file_types.build()?);
-
         // Collect all valid files from directories
         builder
             .build()
             .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
             .map(|p| p.into_path())
             .filter(|p| !p.is_dir())
+            .filter(|p| resolver.include.matches(p))
             .collect()
     } else {
         // No dirs remain after removing excludes and splitting into dirs and files

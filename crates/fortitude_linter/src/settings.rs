@@ -15,7 +15,7 @@ use serde::{Deserialize, Deserializer, Serialize, de};
 use strum::IntoEnumIterator;
 
 use crate::display_settings;
-use crate::fs::{EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePatternSet};
+use crate::fs::{EXCLUDE_BUILTINS, FilePatternSet, INCLUDE};
 use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
@@ -142,8 +142,7 @@ impl fmt::Display for CheckSettings {
 pub struct FileResolverSettings {
     pub excludes: FilePatternSet,
     pub force_exclude: bool,
-    pub files: Vec<PathBuf>,
-    pub file_extensions: Vec<String>,
+    pub include: FilePatternSet,
     pub respect_gitignore: bool,
     pub project_root: PathBuf,
 }
@@ -157,8 +156,7 @@ impl fmt::Display for FileResolverSettings {
             fields = [
                 self.excludes,
                 self.force_exclude,
-                self.files | paths,
-                self.file_extensions | array,
+                self.include,
                 self.respect_gitignore,
                 self.project_root | path,
             ]
@@ -174,8 +172,7 @@ impl FileResolverSettings {
             excludes: FilePatternSet::try_from_iter(EXCLUDE_BUILTINS.iter().cloned()).unwrap(),
             force_exclude: false,
             respect_gitignore: true,
-            files: Vec::default(),
-            file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
+            include: FilePatternSet::try_from_iter(INCLUDE.iter().cloned()).unwrap(),
         }
     }
 }

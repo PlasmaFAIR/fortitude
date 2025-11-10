@@ -1,5 +1,7 @@
 use clap::{ArgAction::SetTrue, Parser, Subcommand};
-use fortitude_workspace::configuration::resolve_bool_arg;
+use fortitude_workspace::configuration::{
+    convert_file_and_extensions_to_include, resolve_bool_arg,
+};
 use serde::Deserialize;
 use std::path::PathBuf;
 
@@ -123,8 +125,8 @@ pub struct CheckCommand {
     /// List of files or directories to check. Directories are searched recursively for
     /// Fortran files. The `--file-extensions` option can be used to control which files
     /// are included in the search.
-    #[arg(default_value = ".")]
-    pub files: Option<Vec<PathBuf>>,
+    #[clap(help = "List of files or directories to check [default: .]")]
+    pub files: Vec<PathBuf>,
 
     /// Apply fixes to resolve lint violations.
     /// Use `--no-fix` to disable or `--unsafe-fixes` to include unsafe fixes.
@@ -325,6 +327,7 @@ pub struct CheckCommand {
 pub struct CheckArguments {
     pub exit_non_zero_on_fix: bool,
     pub exit_zero: bool,
+    pub files: Vec<PathBuf>,
     pub ignore_allow_comments: IgnoreAllowComments,
     pub output_file: Option<PathBuf>,
     pub show_files: bool,
@@ -350,6 +353,7 @@ impl CheckCommand {
         let check_arguments = CheckArguments {
             exit_non_zero_on_fix: self.exit_non_zero_on_fix,
             exit_zero: self.exit_zero,
+            files: self.files,
             ignore_allow_comments: self.ignore_allow_comments.into(),
             output_file: self.output_file,
             show_files: self.show_files,
@@ -359,7 +363,6 @@ impl CheckCommand {
         };
 
         let per_flag_overrides = ExplicitConfigOverrides {
-            files: self.files,
             file_extensions: self.file_extensions,
             exclude: self.exclude,
             extend_exclude: self.extend_exclude,
@@ -390,7 +393,6 @@ impl CheckCommand {
 /// `--line-length`, `--respect-gitignore`, etc.
 #[derive(Clone, Default)]
 struct ExplicitConfigOverrides {
-    files: Option<Vec<PathBuf>>,
     file_extensions: Option<Vec<String>>,
     exclude: Option<Vec<FilePattern>>,
     extend_exclude: Option<Vec<FilePattern>>,
@@ -413,11 +415,8 @@ struct ExplicitConfigOverrides {
 
 impl ConfigurationTransformer for ExplicitConfigOverrides {
     fn transform(&self, mut config: Configuration) -> Configuration {
-        if let Some(files) = &self.files {
-            config.files = Some(files.clone());
-        }
-        if let Some(file_extensions) = &self.file_extensions {
-            config.file_extensions = Some(file_extensions.clone());
+        if self.file_extensions.is_some() {
+            config.include = convert_file_and_extensions_to_include(&None, &self.file_extensions);
         }
         if let Some(exclude) = &self.exclude {
             config.exclude = Some(exclude.clone());

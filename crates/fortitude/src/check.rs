@@ -56,6 +56,19 @@ fn is_stdin(files: &[PathBuf], stdin_filename: Option<&Path>) -> bool {
     file == Path::new("-")
 }
 
+/// Returns the default set of files if none are provided, otherwise returns provided files.
+fn resolve_default_files(files: Vec<PathBuf>, is_stdin: bool) -> Vec<PathBuf> {
+    if files.is_empty() {
+        if is_stdin {
+            vec![Path::new("-").to_path_buf()]
+        } else {
+            vec![Path::new(".").to_path_buf()]
+        }
+    } else {
+        files
+    }
+}
+
 /// Helper object to store the results of all checks
 pub(crate) struct CheckResults {
     /// All diagnostics found in all files
@@ -154,7 +167,8 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     };
     let stderr_writer = Box::new(BufWriter::new(io::stderr()));
 
-    let is_stdin = is_stdin(&settings.file_resolver.files, stdin_filename.as_deref());
+    let is_stdin = is_stdin(&cli.files, stdin_filename.as_deref());
+    let files = resolve_default_files(cli.files, is_stdin);
 
     if cli.show_settings {
         show_settings(&settings, &mut writer)?;
@@ -162,7 +176,7 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     }
 
     if cli.show_files {
-        show_files(&settings.file_resolver, is_stdin, &mut writer)?;
+        show_files(&settings.file_resolver, &files, &mut writer)?;
         return Ok(ExitCode::SUCCESS);
     }
 
@@ -196,11 +210,6 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     let path_rules = rules_to_path_rules(rules);
     let text_rules = rules_to_text_rules(rules);
     let ast_entrypoints = ast_entrypoint_map(rules);
-
-    let start = Instant::now();
-
-    let files = get_files(&settings.file_resolver, is_stdin)?;
-    debug!("Identified files to lint in: {:?}", start.elapsed());
 
     let results = if is_stdin {
         check_stdin(
@@ -292,7 +301,11 @@ fn check_files(
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Result<CheckResults> {
-    let file_digits = files.len().to_string().len();
+    let start = Instant::now();
+    let paths = get_files(files, &settings.file_resolver)?;
+    debug!("Identified files to lint in: {:?}", start.elapsed());
+
+    let file_digits = paths.len().to_string().len();
     let progress_bar_style = match settings.check.progress_bar {
         ProgressBar::Fancy => {
             // Make progress bar with 60 char width, bright cyan colour (51)
@@ -318,7 +331,7 @@ fn check_files(
     };
 
     let start = Instant::now();
-    let mut results = files
+    let mut results = paths
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
