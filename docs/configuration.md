@@ -1,10 +1,19 @@
 # Configuration
 
-Fortitude will look for either a `fortitude.toml` or `fpm.toml` file
-in the current directory, or one of its parents. If using
-`fortitude.toml` or `.fortitude.toml`, settings should be under the command name, while for
-`fpm.toml` files, this has to be additionally nested under the
-`extra.fortitude` table:
+Fortitude will look for either a `fortitude.toml`, `.fortitude.toml`, or
+`fpm.toml` file in the current directory, or one of its parents.
+
+If there is no configuration file in the current directory or its parents,
+Fortitude will look in `${config_dir}/fortitude/` for a user-specific file (see
+[`etcetera`'s base
+strategy](https://docs.rs/etcetera/latest/etcetera/#native-strategy) for how
+`${config_dir}` is determined).
+
+If no configuration file is found, Fortitude will fallback to a default configuration.
+
+If using `fortitude.toml` or `.fortitude.toml`, settings should be under the
+command name, while for `fpm.toml` files, this has to be additionally nested
+under the `extra.fortitude` table:
 
 
 === "`fortitude.toml` or `.fortitude.toml`"
