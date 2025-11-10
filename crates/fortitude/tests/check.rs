@@ -1,10 +1,72 @@
-use assert_cmd::prelude::*;
-use insta_cmd::assert_cmd_snapshot;
+use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
 use std::path::{Path, PathBuf};
 use std::{fs, process::Command};
 use tempfile::TempDir;
 
 const BIN_NAME: &str = "fortitude";
+
+fn fortitude_cmd() -> Command {
+    Command::new(get_cargo_bin(BIN_NAME))
+}
+
+/// Builder for `fortitude check` commands
+#[derive(Debug, Default)]
+struct FortitudeCheck<'a> {
+    config: Option<&'a Path>,
+    /// If not set, defaults to '-', stdin
+    filename: Option<&'a str>,
+    args: Vec<&'a str>,
+}
+
+impl<'a> FortitudeCheck<'a> {
+    /// Set the `--config` option.
+    #[must_use]
+    fn config(mut self, config: &'a Path) -> Self {
+        self.config = Some(config);
+        self
+    }
+
+    /// Set the input file to pass to `fortitude check`.
+    #[must_use]
+    fn filename(mut self, filename: &'a str) -> Self {
+        self.filename = Some(filename);
+        self
+    }
+
+    /// Set the input file to pass to `fortitude check`.
+    #[must_use]
+    fn file(mut self, filename: &'a Path) -> Self {
+        self.filename = filename.to_str();
+        self
+    }
+
+    /// Set the list of positional arguments.
+    #[must_use]
+    fn args(mut self, args: impl IntoIterator<Item = &'a str>) -> Self {
+        self.args = args.into_iter().collect();
+        self
+    }
+
+    /// Generate a [`Command`] for the `fortitude check` command.
+    fn build(self) -> Command {
+        let mut cmd = fortitude_cmd();
+        cmd.arg("check");
+
+        if let Some(path) = self.config {
+            cmd.arg("--config-file");
+            cmd.arg(path);
+        } else {
+            cmd.arg("--isolated");
+        }
+        if let Some(filename) = self.filename {
+            cmd.arg(filename);
+        } else {
+            cmd.arg("-");
+        }
+        cmd.args(self.args);
+        cmd
+    }
+}
 
 macro_rules! apply_common_filters {
     {} => {
@@ -29,9 +91,8 @@ macro_rules! apply_common_filters {
 #[test]
 fn check_file_doesnt_exist() -> anyhow::Result<()> {
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("test/file/doesnt/exist.f90"),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .filename("test/file/doesnt/exist.f90").build(),
                          @r"
     success: false
     exit_code: 1
@@ -69,11 +130,10 @@ end program test
         "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=bugprone")
-                         .arg("--preview")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=bugprone", "--preview"])
+                         .file(&test_file)
+                         .build(),
                          @r#"
     success: false
     exit_code: 1
@@ -137,10 +197,10 @@ unknown-key = 1
     );
     let _bound = settings.bind_to_scope();
 
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
-                         .arg("check")
-                         .arg("no-file.f90"),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .config(&config_file)
+                         .filename("no-file.f90")
+                         .build(),
                          @r"
     success: false
     exit_code: 1
@@ -175,10 +235,10 @@ end program
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=S061,C001,PORT011,PORT021")
-                         .arg(test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=S061,C001,PORT011,PORT021"])
+                         .file(&test_file)
+                         .build(),
                          @r"
     success: false
     exit_code: 1
@@ -247,10 +307,9 @@ end program
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg(test_file)
-                         .arg("--select=C001,style"),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args(["--select=C001,style"]).build(),
                          @r"
     success: false
     exit_code: 1
@@ -310,10 +369,9 @@ select = ["C001", "style"]
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
-                         .arg("check")
-                         .arg(test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .config(&config_file)
+                         .file(&test_file).build(),
                          @r"
     success: false
     exit_code: 1
@@ -373,12 +431,10 @@ select = ["C001"]
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
-                         .arg("check")
-                         .arg(test_file)
-                         .arg("--extend-select")
-                         .arg("style"),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .config(&config_file)
+                         .file(&test_file)
+                         .args(["--extend-select", "style"]).build(),
                          @r"
     success: false
     exit_code: 1
@@ -438,10 +494,9 @@ select = ["C001", "style"]
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .args(["--config-file", config_file.as_os_str().to_string_lossy().as_ref()])
-                         .arg("check")
-                         .arg(test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .config(&config_file)
+                         .file(&test_file).build(),
                          @r"
     success: false
     exit_code: 1
@@ -497,12 +552,10 @@ end program foo
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=S071,C022,S201,C003")
-                         .arg("--preview")
-                         .arg("--fix")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=S071,C022,S201,C003", "--preview", "--fix"])
+                         .file(&test_file)
+                         .build(),
                          @r"
     success: false
     exit_code: 1
@@ -576,13 +629,9 @@ end program foo
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=S071,C022,S201,C003")
-                         .arg("--preview")
-                         .arg("--fix")
-                         .arg("--unsafe-fixes")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=S071,C022,S201,C003", "--preview", "--fix", "--unsafe-fixes"])
+                         .file(&test_file).build(),
                          @r"
     success: false
     exit_code: 1
@@ -650,12 +699,9 @@ end program foo
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=syntax-error,superfluous-semicolon,line-too-long")
-                         .arg("--line-length=50")
-                         .arg("--preview")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=syntax-error,superfluous-semicolon,line-too-long", "--line-length=50", "--preview"])
+                         .file(&test_file).build(),
                          @r"
     success: false
     exit_code: 1
@@ -724,11 +770,9 @@ end program foo
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=superfluous-semicolon")
-                         .arg("--preview")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=superfluous-semicolon", "--preview"])
+                         .file(&test_file).build(),
                          @r"
     success: false
     exit_code: 1
@@ -788,11 +832,9 @@ end program foo
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=syntax-error,superfluous-semicolon")
-                         .arg("--preview")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=syntax-error,superfluous-semicolon", "--preview"])
+                         .file(&test_file).build(),
                          @r"
     success: false
     exit_code: 1
@@ -852,12 +894,9 @@ end program foo
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=superfluous-semicolon")
-                         .arg("--preview")
-                         .arg("--fix")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=superfluous-semicolon", "--preview", "--fix"])
+                         .file(&test_file).build(),
                          @r"
     success: false
     exit_code: 1
@@ -910,11 +949,9 @@ end program test
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=trailing-whitespace,line-too-long")
-                         .arg("--line-length=60")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=trailing-whitespace,line-too-long", "--line-length=60"])
+                         .file(&test_file).build(),
                          @r#"
     success: false
     exit_code: 1
@@ -1041,7 +1078,7 @@ end module {file}{idx}
     // - Override per-file-ignores in the config file
     // - Files of foo, bar, and baz
     // - No files with index 2
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+    assert_cmd_snapshot!(fortitude_cmd()
                          .arg("check")
                          .arg("--select=implicit-typing")
                          .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
@@ -1161,7 +1198,7 @@ end module {file}{idx}
     // - Don't overwrite config file
     // - File types of foo and baz but no bar
     // - No files with index 2
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+    assert_cmd_snapshot!(fortitude_cmd()
                          .arg("check")
                          .arg("--select=implicit-typing")
                          .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
@@ -1267,10 +1304,10 @@ fn check_exclude() -> anyhow::Result<()> {
     // Expect:
     // - Override 'foo.f90' in config file, see 'base.f90' and 'foo.f90' but not 'bar.f90'
     // - Don't see anything in venv
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=implicit-typing")
-                         .arg("--exclude=bar")
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=implicit-typing", "--exclude=bar"])
+                         .filename(".")
+                         .build()
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: false
@@ -1317,7 +1354,7 @@ fn check_extend_exclude() -> anyhow::Result<()> {
     // Expect:
     // - Don't overwrite 'foo.f90' in config file, see only base.f90
     // - Don't see anything in venv
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+    assert_cmd_snapshot!(fortitude_cmd()
                          .arg("check")
                          .arg("--select=implicit-typing")
                          .arg("--extend-exclude=bar")
@@ -1357,10 +1394,10 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
     apply_common_filters!();
     // Expect:
     // - See error in foo.f90 despite it being in the exclude list
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=implicit-typing")
-                         .arg("foo/foo.f90")
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=implicit-typing"])
+                         .filename("foo/foo.f90")
+                         .build()
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: false
@@ -1397,12 +1434,10 @@ fn check_force_exclude() -> anyhow::Result<()> {
     // Expect:
     // - Don't see error in foo.f90 despite it being asked for
     // - Also shouldn't see numpy.f90
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=implicit-typing")
-                         .arg("--force-exclude")
-                         .arg("foo/foo.f90")
-                         .arg(".venv/lib/site-packages/numpy/numpy.f90")
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=implicit-typing", "--force-exclude"])
+                         .filename("foo/foo.f90 .venv/lib/site-packages/numpy/numpy.f90")
+                         .build()
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: true
@@ -1423,10 +1458,10 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
     apply_common_filters!();
     // Expect:
     // - See error in venv despite it being excluded by default
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=implicit-typing")
-                         .arg(".venv/lib/site-packages/")
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=implicit-typing"])
+                         .filename(".venv/lib/site-packages/")
+                         .build()
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: false
@@ -1462,11 +1497,10 @@ fn check_force_exclude_builtin() -> anyhow::Result<()> {
     apply_common_filters!();
     // Expect:
     // - Don't see error in venv even though it was asked for
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=implicit-typing")
-                         .arg("--force-exclude")
-                         .arg(".venv/lib/site-packages/")
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=implicit-typing", "--force-exclude"])
+                         .filename(".venv/lib/site-packages/")
+                         .build()
                          .current_dir(exclude_test_path(tempdir.path())),
                          @r"
     success: true
@@ -1499,10 +1533,9 @@ end program
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg(test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101"]),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args(["--select=C001,S061,PORT011,PORT021,S101"]).build(),
                          @r"
     success: false
     exit_code: 1
@@ -1550,11 +1583,9 @@ end program
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg(test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101"])
-                         .arg("--ignore-allow-comments"),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--ignore-allow-comments"]).build(),
                          @r"
     success: false
     exit_code: 1
@@ -1666,11 +1697,9 @@ end program foo
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=superfluous-implicit-none")
-                         .arg("--fix")
-                         .arg(&test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=superfluous-implicit-none", "--fix"])
+                         .file(&test_file).build(),
                          @r"
     success: true
     exit_code: 0
@@ -1723,16 +1752,17 @@ end program myprogram
 "#,
     )?;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=S001,S091,C001")
-                         .current_dir(tempdir.path()),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=S001,S091,C001"])
+                         .config(&config_file)
+                         .file(&fortran_file)
+                         .build(),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    myfile.ff:1:1: S091 file extension should be '.f90' or '.F90'
-    myfile.ff:2:1: C001 program missing 'implicit none'
+    [TEMP_FILE] S091 file extension should be '.f90' or '.F90'
+    [TEMP_FILE] C001 program missing 'implicit none'
       |
     2 | program myprogram
       | ^^^^^^^^^^^^^^^^^ C001
@@ -1740,14 +1770,14 @@ end program myprogram
       |
       = help: Insert `implicit none`
 
-    myfile.ff:2:11: S001 line length of 17, exceeds maximum 10
+    [TEMP_FILE] S001 line length of 17, exceeds maximum 10
       |
     2 | program myprogram
       |           ^^^^^^^ S001
     3 | end program myprogram
       |
 
-    myfile.ff:3:11: S001 line length of 21, exceeds maximum 10
+    [TEMP_FILE] S001 line length of 21, exceeds maximum 10
       |
     2 | program myprogram
     3 | end program myprogram
@@ -1811,9 +1841,10 @@ fn check_gitignore() -> anyhow::Result<()> {
     // Expect:
     // - See file include.f90 in the base path and include/include.f90
     // - Don't see file exclude.f90 in the base path or files in exclude directories
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=implicit-typing")
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=implicit-typing"])
+                         .filename(".")
+                         .build()
                          .current_dir(gitignore_test_path(tempdir.path())),
                          @r"
     success: false
@@ -1858,7 +1889,8 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     apply_common_filters!();
     // Expect to see all 8 files, even though exclude.f90 and exclude/ are in the .gitignore
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("--isolated")
                          .arg("check")
                          .arg("--select=implicit-typing")
                          .arg("--no-respect-gitignore")
@@ -1964,10 +1996,10 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
 #[test]
 fn preview_enabled_prefix() -> anyhow::Result<()> {
     // All the FORT99XX test rules should be triggered
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
+    assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=FORT99", "--output-format=concise", "--preview"])
-                         .arg("-"), @r"
+                         .build()
+                         , @r"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1994,10 +2026,9 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
 #[test]
 fn preview_disabled_direct() -> anyhow::Result<()> {
     // All the FORT99XX test rules should be triggered
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
+    assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=FORT9911", "--output-format=concise"])
-                         .arg("-"), @r"
+                         .build(), @r"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -2026,11 +2057,9 @@ end program test
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg(test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101"])
-                         .arg("--statistics"),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics"]).build(),
                          @r"
     success: false
     exit_code: 1
@@ -2069,12 +2098,9 @@ end program test
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg(test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101"])
-                         .arg("--statistics")
-                         .arg("--unsafe-fixes"),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics", "--unsafe-fixes"]).build(),
                          @r"
     success: false
     exit_code: 1
@@ -2113,12 +2139,9 @@ end program test
     )?;
 
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg(test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101"])
-                         .arg("--statistics")
-                         .arg("--output-format=json"),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics", "--output-format=json"]).build(),
                          @r#"
     success: false
     exit_code: 1
@@ -2165,13 +2188,8 @@ program test
 end program test
 "#;
     apply_common_filters!();
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=C003")
-                         .arg("--fix-only")
-                         .arg("--unsafe-fixes")
-                         .arg("--quiet")
-                         .arg("--stdin-filename=test.f90")
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=C003", "--fix-only", "--unsafe-fixes", "--quiet", "--stdin-filename=test.f90"]).build()
                          .pass_stdin(input_file),
                          @r"
     success: true
@@ -2196,13 +2214,15 @@ program test
   implicit none (type, external)
 end program test
 "#;
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=C003")
-                         .arg("--fix-only")
-                         .arg("--unsafe-fixes")
-                         .arg("--quiet")
-                         .arg("--stdin-filename=test.f90")
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args([
+                             "--select=C003",
+                             "--fix-only",
+                             "--unsafe-fixes",
+                             "--quiet",
+                             "--stdin-filename=test.f90"
+                         ])
+                         .build()
                          .pass_stdin(input_file),
                          @r"
     success: true
@@ -2234,11 +2254,10 @@ end program foo
 "#,
     )?;
 
-    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
-                         .arg("check")
-                         .arg("--select=C003")
-                         .arg("--ignore=E001")
-                         .arg(test_file),
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=C003", "--ignore=E001"])
+                         .file(&test_file)
+                         .build(),
                          @r"
     success: true
     exit_code: 0
@@ -2265,16 +2284,27 @@ ignore = ["missing-intent"]
 "#,
     )?;
 
-    let result = Command::cargo_bin(BIN_NAME)?
+    let cmd = fortitude_cmd()
+        .args(["--isolated", "check", "--show-settings"])
         .current_dir(&tempdir)
-        .arg("--isolated")
-        .arg("check")
-        .arg("--show-settings")
-        .output()?
-        ;
-    let result_string = format!("{result:?}");
+        .output()?;
 
-    assert!(result_string.contains("missing-intent"));
+    let result = format!("{:?}", cmd);
+    assert!(
+        result.contains("missing-intent"),
+        "'missing-intent' in {result}"
+    );
+
+    let cmd = fortitude_cmd()
+        .args(["check", "--show-settings"])
+        .current_dir(&tempdir)
+        .output()?;
+
+    let result = format!("{:?}", cmd);
+    assert!(
+        !result.contains("missing-intent"),
+        "no 'missing-intent' in {result}"
+    );
 
     Ok(())
 }
