@@ -226,17 +226,13 @@ pub mod settings {
 
     #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, CacheKey)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
+    #[derive(Default)]
     pub enum Quote {
         /// Use double quotes.
+        #[default]
         Double,
         /// Use single quotes.
         Single,
-    }
-
-    impl Default for Quote {
-        fn default() -> Self {
-            Self::Double
-        }
     }
 
     impl TryFrom<char> for Quote {
