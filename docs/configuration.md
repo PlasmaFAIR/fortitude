@@ -86,6 +86,27 @@ $ fortitude check --exclude=benchmarks benchmarks
 Setting [`check.force-excludes`](settings.md#force-exclude) to `true` will enforce
 exclusions even in this scenario.
 
+### Default inclusions
+
+By default, Fortitude will discover Fortran files with many common extensions,
+including `.f90`, `.F90`, `.f95`. You can change the default selection using the
+[`include`](settings.md#include) setting:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude]
+    include = ["*.f90", "*.fpp"]
+    ```
+
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    include = ["*.f90", "*.fpp"]
+    ```
+
+!!! info "Introduced in Fortitude 0.7.6"
+
 ## Command-line interface
 
 Some settings can be given or overidden explicitly on the command line, particularly those
