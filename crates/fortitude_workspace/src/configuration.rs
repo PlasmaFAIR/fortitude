@@ -106,7 +106,7 @@ pub fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
 
 /// Read either the "extra.fortitude" table from "fpm.toml", or the
 /// whole "fortitude.toml" file
-fn load_options<P: AsRef<Path>>(path: P) -> Result<Options> {
+pub fn load_options<P: AsRef<Path>>(path: P) -> Result<Options> {
     if path.as_ref().ends_with("fpm.toml") {
         let config = parse_fpm_toml(&path)?;
         // Unwrap should be ok here because we've already checked this
@@ -127,22 +127,6 @@ pub fn resolve_bool_arg(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
         (false, false) => None,
         (..) => unreachable!("Clap should make this impossible"),
     }
-}
-
-/// Read either fpm.toml or fortitude.toml into our "known good" file
-/// settings struct
-pub fn parse_config_file(config_file: &Option<PathBuf>) -> Result<Options> {
-    let filename = match config_file {
-        Some(filename) => filename.clone(),
-        None => match find_settings_toml(path_absolutize::path_dedot::CWD.as_path())? {
-            Some(filename) => filename,
-            None => {
-                return Ok(Options::default());
-            }
-        },
-    };
-
-    load_options(filename)
 }
 
 /// Convert the deprecated `files` and `file_extensions` settings to the new `include`

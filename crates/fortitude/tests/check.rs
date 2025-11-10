@@ -148,14 +148,15 @@ unknown-key = 1
 
     ----- stderr -----
     fortitude failed
-    Error: Failed to parse [TEMP_FILE]
+    Error: Failed to load configuration `[TEMP_FILE]
 
     Caused by:
-        TOML parse error at line 3, column 1
-          |
-        3 | unknown-key = 1
-          | ^^^^^^^^^^^
-        unknown field `unknown-key`, expected one of [OPTIONS]
+        0: Failed to parse [TEMP_FILE]
+        1: TOML parse error at line 3, column 1
+             |
+           3 | unknown-key = 1
+             | ^^^^^^^^^^^
+           unknown field `unknown-key`, expected one of [OPTIONS]
     ");
     Ok(())
 }

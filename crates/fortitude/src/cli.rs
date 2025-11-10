@@ -3,7 +3,7 @@ use fortitude_workspace::configuration::{
     convert_file_and_extensions_to_include, resolve_bool_arg,
 };
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use fortitude_linter::{
     fs::FilePattern,
@@ -340,16 +340,36 @@ pub struct CheckArguments {
 #[derive(Default)]
 pub struct ConfigArguments {
     // TODO: add other ruff bits like `isolated` and `overrides`
+    /// The logging level to be used, derived from command-line arguments passed
+    pub(crate) log_level: LogLevel,
+    /// Path to a pyproject.toml or ruff.toml configuration file (etc.).
+    /// Either 0 or 1 configuration file paths may be provided on the command line.
+    config_file: Option<PathBuf>,
     /// Overrides provided via dedicated flags such as `--line-length` etc.
     /// These overrides take precedence over all configuration files,
     /// and also over all overrides specified using any `--config "KEY=VALUE"` flags.
     per_flag_overrides: ExplicitConfigOverrides,
 }
 
+impl ConfigArguments {
+    pub fn config_file(&self) -> Option<&Path> {
+        self.config_file.as_deref()
+    }
+}
+
+impl ConfigurationTransformer for ConfigArguments {
+    fn transform(&self, config: Configuration) -> Configuration {
+        self.per_flag_overrides.transform(config)
+    }
+}
+
 impl CheckCommand {
     /// Partition the CLI into command-line arguments and configuration
     /// overrides.
-    pub fn partition(self) -> anyhow::Result<(CheckArguments, ConfigArguments)> {
+    pub fn partition(
+        self,
+        global_options: GlobalConfigArgs,
+    ) -> anyhow::Result<(CheckArguments, ConfigArguments)> {
         let check_arguments = CheckArguments {
             exit_non_zero_on_fix: self.exit_non_zero_on_fix,
             exit_zero: self.exit_zero,
@@ -384,7 +404,13 @@ impl CheckCommand {
             progress_bar: self.progress_bar,
         };
 
-        let config_args = ConfigArguments { per_flag_overrides };
+        let log_level = global_options.log_level();
+        let config_file = global_options.config_file;
+        let config_args = ConfigArguments {
+            log_level,
+            config_file,
+            per_flag_overrides,
+        };
         Ok((check_arguments, config_args))
     }
 }
@@ -473,12 +499,6 @@ impl ConfigurationTransformer for ExplicitConfigOverrides {
         }
 
         config
-    }
-}
-
-impl ConfigurationTransformer for ConfigArguments {
-    fn transform(&self, config: Configuration) -> Configuration {
-        self.per_flag_overrides.transform(config)
     }
 }
 
