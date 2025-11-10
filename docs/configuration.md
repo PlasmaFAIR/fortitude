@@ -16,18 +16,19 @@ command name, while for `fpm.toml` files, this has to be additionally nested
 under the `extra.fortitude` table:
 
 
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check]
-    select = ["S", "T"]
-    ignore = ["S001", "S051"]
-    line-length = 132
-    ```
 === "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
+    select = ["S", "T"]
+    ignore = ["S001", "S051"]
+    line-length = 132
+    ```
+
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
     select = ["S", "T"]
     ignore = ["S001", "S051"]
     line-length = 132
