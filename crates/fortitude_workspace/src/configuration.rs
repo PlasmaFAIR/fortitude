@@ -2,7 +2,7 @@ use crate::options::{
     ExitUnlabelledLoopOptions, InvalidTabOptions, KeywordWhitespaceOptions, Options,
     PortabilityOptions, StringOptions,
 };
-use fortitude_linter::fs::{EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet};
+use fortitude_linter::fs::{EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, INCLUDE};
 use fortitude_linter::registry::RuleNamespace;
 use fortitude_linter::rule_redirects::get_redirect;
 use fortitude_linter::rule_selector::{
@@ -23,6 +23,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use strum::IntoEnumIterator;
 
 // These are just helper structs to let us quickly work out if there's
@@ -144,18 +145,55 @@ pub fn parse_config_file(config_file: &Option<PathBuf>) -> Result<Options> {
     load_options(filename)
 }
 
+/// Convert the deprecated `files` and `file_extensions` settings to the new `include`
+pub fn convert_file_and_extensions_to_include(
+    paths: &Option<Vec<PathBuf>>,
+    extensions: &Option<Vec<String>>,
+) -> Vec<FilePattern> {
+    let extensions = extensions
+        .clone()
+        .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect())
+        .join(",");
+
+    match paths {
+        Some(paths) => {
+            let (dirs, files): (Vec<_>, Vec<_>) = paths
+                .iter()
+                .map(fs::normalize_path)
+                .unique()
+                .partition(|p| p.is_dir());
+
+            let mut include = dirs
+                .iter()
+                .map(|path| path.to_string_lossy())
+                .map(|path| {
+                    FilePattern::from_str(format!("{path}/*.{{{extensions}}}").as_str()).unwrap()
+                })
+                .collect_vec();
+
+            include.extend(
+                files
+                    .iter()
+                    .map(|path| FilePattern::from_str(path.to_string_lossy().as_ref()).unwrap()),
+            );
+            include
+        }
+        None => {
+            vec![FilePattern::from_str(format!("*.{{{extensions}}}").as_str()).unwrap()]
+        }
+    }
+}
+
 // This is our "known good" intermediate settings struct after we've
 // read the config file, but before we've overridden it from the CLI
 #[derive(Clone, Debug, Default)]
 pub struct Configuration {
-    pub files: Option<Vec<PathBuf>>,
     pub ignore: Vec<RuleSelector>,
     pub select: Option<Vec<RuleSelector>>,
     pub extend_select: Vec<RuleSelector>,
     pub per_file_ignores: Option<Vec<PerFileIgnore>>,
     pub extend_per_file_ignores: Vec<PerFileIgnore>,
     pub line_length: Option<usize>,
-    pub file_extensions: Option<Vec<String>>,
     pub fix: Option<bool>,
     pub fix_only: Option<bool>,
     pub show_fixes: Option<bool>,
@@ -163,10 +201,14 @@ pub struct Configuration {
     pub output_format: Option<OutputFormat>,
     pub progress_bar: Option<ProgressBar>,
     pub preview: Option<PreviewMode>,
+
+    // File resolver options
+    pub include: Vec<FilePattern>,
     pub exclude: Option<Vec<FilePattern>>,
     pub extend_exclude: Vec<FilePattern>,
     pub force_exclude: Option<bool>,
     pub respect_gitignore: Option<bool>,
+
     // Individual rules
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
@@ -177,11 +219,14 @@ pub struct Configuration {
 
 impl Configuration {
     /// Convert from config file options struct into our "known good" struct
+    #[allow(deprecated)]
     pub fn from_options(options: Options, project_root: &Path) -> Self {
         let check = options.check.unwrap_or_default();
 
+        let include = convert_file_and_extensions_to_include(&check.files, &check.file_extensions);
+
         Self {
-            files: check.files,
+            include,
             ignore: check.ignore.into_iter().flatten().collect(),
             select: check.select,
             extend_select: check.extend_select.unwrap_or_default(),
@@ -195,7 +240,6 @@ impl Configuration {
             }),
             extend_per_file_ignores: vec![],
             line_length: check.line_length,
-            file_extensions: check.file_extensions,
             fix: check.fix,
             fix_only: check.fix_only,
             show_fixes: check.show_fixes,
@@ -310,10 +354,9 @@ impl Configuration {
                         .chain(self.exclude.unwrap_or_default().into_iter())
                         .chain(self.extend_exclude.into_iter()),
                 )?,
-                files: self.files.unwrap_or_default(),
-                file_extensions: self
-                    .file_extensions
-                    .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect()),
+                include: FilePatternSet::try_from_iter(
+                    INCLUDE.iter().cloned().chain(self.include),
+                )?,
                 respect_gitignore: self
                     .respect_gitignore
                     .map(GitignoreMode::from)
@@ -617,6 +660,7 @@ impl<T: CombinePluginOptions> CombinePluginOptions for Option<T> {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::{File, create_dir};
     use std::str::FromStr;
 
     use fortitude_linter::{
@@ -792,6 +836,52 @@ mod tests {
         let fpm = find_settings_toml(tempdir.path())?.context("Failed to find fpm.toml")?;
         let enabled = fortitude_enabled(fpm)?;
         assert!(enabled);
+
+        Ok(())
+    }
+
+    #[test]
+    fn convert_deprecated_file_and_extension() -> Result<()> {
+        // Initialize the filesystem:
+        //   root
+        //   ├── file1.f90
+        //   ├── dir1.f90
+        //   │   └── file2.f90
+        //   └── dir2.f90
+        let tmp_dir = TempDir::new()?;
+        let root = tmp_dir.path();
+        let file1 = root.join("file1.f90");
+        let dir1 = root.join("dir1.f90");
+        let file2 = dir1.join("file2.f90");
+        let dir2 = root.join("dir2.f90");
+        File::create(&file1)?;
+        create_dir(&dir1)?;
+        File::create(&file2)?;
+        create_dir(&dir2)?;
+
+        let paths = vec![file1.to_path_buf(), dir1.to_path_buf(), dir2.to_path_buf()];
+        let extensions = vec!["f90".to_string(), "F90".to_string()];
+        let include = convert_file_and_extensions_to_include(&Some(paths), &Some(extensions));
+
+        let expected = vec![
+            FilePattern::from_str(format!("{}/*.{{f90,F90}}", dir1.to_string_lossy()).as_str())
+                .unwrap(),
+            FilePattern::from_str(format!("{}/*.{{f90,F90}}", dir2.to_string_lossy()).as_str())
+                .unwrap(),
+            FilePattern::from_str(&file1.to_string_lossy()).unwrap(),
+        ];
+        assert_eq!(include, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn convert_deprecated_default_file_and_extension() -> Result<()> {
+        let extensions = vec!["f90".to_string(), "F90".to_string()];
+        let include = convert_file_and_extensions_to_include(&None, &Some(extensions));
+
+        let expected = vec![FilePattern::from_str("*.{f90,F90}").unwrap()];
+        assert_eq!(include, expected);
 
         Ok(())
     }
