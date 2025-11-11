@@ -42,7 +42,7 @@ impl FortitudeConfig {
 
 /// The strategy used to discover the relevant `fortitude.toml` file for each
 /// Python file.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy, is_macro::Is)]
 pub enum FortconfigDiscoveryStrategy {
     /// Use a fixed `fortitude.toml` file for all Python files (i.e., one
     /// provided on the command-line).
@@ -50,18 +50,6 @@ pub enum FortconfigDiscoveryStrategy {
     /// Use the closest `fortitude.toml` file in the filesystem hierarchy, or
     /// the default settings.
     Hierarchical,
-}
-
-impl FortconfigDiscoveryStrategy {
-    #[inline]
-    pub const fn is_fixed(self) -> bool {
-        matches!(self, FortconfigDiscoveryStrategy::Fixed)
-    }
-
-    #[inline]
-    pub const fn is_hierarchical(self) -> bool {
-        matches!(self, FortconfigDiscoveryStrategy::Hierarchical)
-    }
 }
 
 /// The strategy for resolving file paths in a `fortitude.toml`.
