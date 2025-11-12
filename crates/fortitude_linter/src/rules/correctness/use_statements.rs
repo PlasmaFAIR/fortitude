@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -38,7 +38,7 @@ impl Violation for UseAll {
 }
 
 impl AstRule for UseAll {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.child_with_name("included_items").is_none() {
             return some_vec![Diagnostic::from_node(UseAll {}, node)];
         }
@@ -93,7 +93,7 @@ impl Violation for MissingIntrinsic {
 }
 
 impl AstRule for MissingIntrinsic {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let module_name = node
             .child_with_name("module_name")?
             .to_text(_src.source_text())?

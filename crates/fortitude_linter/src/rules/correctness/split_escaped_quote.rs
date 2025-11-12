@@ -1,5 +1,3 @@
-use crate::TextRule;
-use crate::settings::Settings;
 use lazy_regex::regex;
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -49,8 +47,8 @@ impl AlwaysFixableViolation for SplitEscapedQuote {
 // part of the string literal (it should do!), so we have to do a regex over the whole
 // text. We're looking for something that spans two lines, so it has to search the whole
 // text at once too.
-impl TextRule for SplitEscapedQuote {
-    fn check(_settings: &Settings, src: &SourceFile) -> Vec<Diagnostic> {
+impl SplitEscapedQuote {
+    pub fn check(src: &SourceFile) -> Vec<Diagnostic> {
         let text = src.source_text();
         let split_quote_re = regex!(r#"(?m)(['\"])(& *\r?\n *&?)(['\"])"#);
 

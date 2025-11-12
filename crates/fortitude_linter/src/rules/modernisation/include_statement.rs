@@ -1,5 +1,5 @@
 use crate::AstRule;
-use crate::{ast::FortitudeNode, settings::Settings};
+use crate::{ast::FortitudeNode, settings::CheckSettings};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
@@ -33,7 +33,7 @@ impl Violation for IncludeStatement {
 }
 
 impl AstRule for IncludeStatement {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // tree-sitter-fortran 0.5.1 includes the end newline as part
         // of the node, so we discard that here
         let start = node.child(0)?.start_textsize();
