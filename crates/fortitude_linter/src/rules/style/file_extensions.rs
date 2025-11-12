@@ -2,8 +2,6 @@ use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_text_size::TextRange;
 
-use crate::PathRule;
-use crate::settings::Settings;
 use std::path::Path;
 
 /// ## What it does
@@ -23,8 +21,8 @@ impl Violation for NonStandardFileExtension {
     }
 }
 
-impl PathRule for NonStandardFileExtension {
-    fn check(_settings: &Settings, path: &Path) -> Option<Diagnostic> {
+impl NonStandardFileExtension {
+    pub fn check(path: &Path) -> Option<Diagnostic> {
         match path.extension() {
             Some(ext) => {
                 // Must check like this as ext is an OsStr
@@ -47,7 +45,7 @@ mod tests {
     fn test_bad_file_extension() {
         let path = Path::new("my/dir/to/file.f95");
         assert_eq!(
-            NonStandardFileExtension::check(&Settings::default(), path),
+            NonStandardFileExtension::check(path),
             Some(Diagnostic::new(
                 NonStandardFileExtension {},
                 TextRange::default()
@@ -59,7 +57,7 @@ mod tests {
     fn test_missing_file_extension() {
         let path = Path::new("my/dir/to/file");
         assert_eq!(
-            NonStandardFileExtension::check(&Settings::default(), path),
+            NonStandardFileExtension::check(path),
             Some(Diagnostic::new(
                 NonStandardFileExtension {},
                 TextRange::default()
@@ -72,11 +70,11 @@ mod tests {
         let path1 = Path::new("my/dir/to/file.f90");
         let path2 = Path::new("my/dir/to/file.F90");
         assert_eq!(
-            NonStandardFileExtension::check(&Settings::default(), path1),
+            NonStandardFileExtension::check(path1),
             None
         );
         assert_eq!(
-            NonStandardFileExtension::check(&Settings::default(), path2),
+            NonStandardFileExtension::check(path2),
             None
         );
     }

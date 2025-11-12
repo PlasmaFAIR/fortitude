@@ -7,7 +7,7 @@ use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
 use crate::settings::Settings;
-use crate::{AstRule, FromAstNode, TextRule};
+use crate::{AstRule, FromAstNode};
 
 /// ## What does it do?
 /// Checks for tailing whitespace
@@ -30,8 +30,8 @@ impl AlwaysFixableViolation for TrailingWhitespace {
     }
 }
 
-impl TextRule for TrailingWhitespace {
-    fn check(_settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
+impl TrailingWhitespace {
+    pub fn check(source_file: &SourceFile) -> Vec<Diagnostic> {
         let source = source_file.to_source_code();
         let mut violations = Vec::new();
         for line in source.text().universal_newlines() {

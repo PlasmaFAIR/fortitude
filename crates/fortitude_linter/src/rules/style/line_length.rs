@@ -1,4 +1,3 @@
-use crate::TextRule;
 /// Defines rules that govern line length.
 use crate::settings::Settings;
 use lazy_regex::regex_is_match;
@@ -47,8 +46,8 @@ impl Violation for LineTooLong {
     }
 }
 
-impl TextRule for LineTooLong {
-    fn check(settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
+impl LineTooLong {
+    pub fn check(settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
         let source = source_file.to_source_code();
         let max_length = settings.check.line_length;
         let mut violations = Vec::new();

@@ -72,16 +72,6 @@ impl FromAstNode for Diagnostic {
 // Rule trait
 // ----------
 
-/// Implemented by rules that act directly on the file path.
-pub trait PathRule {
-    fn check(settings: &Settings, path: &Path) -> Option<Diagnostic>;
-}
-
-/// Implemented by rules that analyse lines of code directly, using regex or otherwise.
-pub trait TextRule {
-    fn check(settings: &Settings, source: &SourceFile) -> Vec<Diagnostic>;
-}
-
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait AstRule {
     fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>>;
@@ -228,20 +218,20 @@ pub(crate) fn check_path(
 
     // Check file paths directly
     if rules.enabled(Rule::NonStandardFileExtension) {
-        if let Some(violation) = NonStandardFileExtension::check(settings, path) {
+        if let Some(violation) = NonStandardFileExtension::check(path) {
             violations.push(violation);
         }
     }
 
     // Perform plain text analysis
     if rules.enabled(Rule::SplitEscapedQuote) {
-        violations.extend(SplitEscapedQuote::check(settings, file));
+        violations.extend(SplitEscapedQuote::check(file));
     }
     if rules.enabled(Rule::LineTooLong) {
         violations.extend(LineTooLong::check(settings, file));
     }
     if rules.enabled(Rule::TrailingWhitespace) {
-        violations.extend(TrailingWhitespace::check(settings, file));
+        violations.extend(TrailingWhitespace::check(file));
     }
 
     // Perform AST analysis
