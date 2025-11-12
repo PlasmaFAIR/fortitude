@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -81,7 +81,7 @@ impl Violation for FunctionMissingResult {
 
 impl AstRule for FunctionMissingResult {
     fn check<'a>(
-        _settings: &Settings,
+        _settings: &CheckSettings,
         node: &'a Node,
         _src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {

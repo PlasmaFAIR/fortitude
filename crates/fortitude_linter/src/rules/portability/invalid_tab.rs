@@ -5,7 +5,7 @@ use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use tree_sitter::Node;
 
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 
 /// ## What it does
 /// Checks for the use of tab characters as whitespace
@@ -32,7 +32,11 @@ impl Violation for InvalidTab {
     }
 }
 
-pub fn check_invalid_tab(root: &Node, src: &SourceFile, settings: &Settings) -> Vec<Diagnostic> {
+pub fn check_invalid_tab(
+    root: &Node,
+    src: &SourceFile,
+    settings: &CheckSettings,
+) -> Vec<Diagnostic> {
     src.source_text()
         .char_indices()
         .filter(|(_, c)| *c == '\t')
@@ -46,7 +50,7 @@ pub fn check_invalid_tab(root: &Node, src: &SourceFile, settings: &Settings) -> 
         .map(|(index, _)| {
             let start = TextSize::try_from(index).unwrap();
             let range = TextRange::new(start, start + TextSize::new(1));
-            let width = settings.check.invalid_tab.indent_width.as_usize();
+            let width = settings.invalid_tab.indent_width.as_usize();
             let indent = format!("{:width$}", " ");
             let edit = Edit::range_replacement(indent, range);
             Diagnostic::new(InvalidTab, range).with_fix(Fix::unsafe_edit(edit))

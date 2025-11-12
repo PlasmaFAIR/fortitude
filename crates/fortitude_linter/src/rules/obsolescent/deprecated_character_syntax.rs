@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -35,7 +35,7 @@ impl AlwaysFixableViolation for DeprecatedCharacterSyntax {
 
 impl AstRule for DeprecatedCharacterSyntax {
     fn check(
-        _settings: &Settings,
+        _settings: &CheckSettings,
         node: &Node,
         source_file: &SourceFile,
     ) -> Option<Vec<Diagnostic>> {
