@@ -7,11 +7,9 @@ use fortitude_linter::diagnostic_message::DiagnosticMessage;
 use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, get_files, read_to_string};
 use fortitude_linter::rules::Rule;
-use fortitude_linter::rules::{AstRuleEnum, error::ioerror::IoError};
+use fortitude_linter::rules::error::ioerror::IoError;
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
-use fortitude_linter::{
-    FixerResult, ast_entrypoint_map, check_and_fix_file, check_file, check_only_file,
-};
+use fortitude_linter::{FixerResult, check_and_fix_file, check_file, check_only_file};
 use fortitude_linter::{warn_user_once, warn_user_once_by_message};
 use fortitude_workspace::configuration::{
     self, Configuration, ConfigurationTransformer, parse_config_file,
@@ -26,7 +24,6 @@ use ruff_diagnostics::Diagnostic;
 use ruff_source_file::SourceFileBuilder;
 use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
-use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Write;
 use std::io::{self, BufWriter};
@@ -181,7 +178,7 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     let CheckSettings {
         fix,
         fix_only,
-        ref rules,
+
         unsafe_fixes,
         show_fixes,
         output_format,
@@ -205,24 +202,15 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
-    let ast_entrypoints = ast_entrypoint_map(rules);
-
     let results = if is_stdin {
         check_stdin(
             stdin_filename.map(fs::normalize_path).as_deref(),
-            &ast_entrypoints,
             &settings,
             fix_mode,
             cli.ignore_allow_comments,
         )?
     } else {
-        check_files(
-            &files,
-            &ast_entrypoints,
-            &settings,
-            fix_mode,
-            cli.ignore_allow_comments,
-        )?
+        check_files(&files, &settings, fix_mode, cli.ignore_allow_comments)?
     };
 
     // Always try to print violations (though the printer itself may suppress output)
@@ -282,7 +270,6 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
 
 fn check_files(
     files: &[PathBuf],
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
@@ -349,7 +336,6 @@ fn check_files(
             let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
             match check_file(
-                ast_entrypoints,
                 path,
                 &file,
                 &settings.check,
@@ -399,7 +385,6 @@ fn check_files(
 
 fn check_stdin(
     filename: Option<&Path>,
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
@@ -410,13 +395,7 @@ fn check_stdin(
     let source_file = SourceFileBuilder::new(path.to_str().unwrap_or("-"), stdin.as_str()).finish();
 
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
-        match check_and_fix_file(
-            ast_entrypoints,
-            path,
-            &source_file,
-            &settings.check,
-            ignore_allow_comments,
-        ) {
+        match check_and_fix_file(path, &source_file, &settings.check, ignore_allow_comments) {
             Ok(FixerResult {
                 result,
                 transformed,
@@ -439,13 +418,8 @@ fn check_stdin(
             }
             _ => {
                 // Failed to fix, so just lint the original source
-                let result = check_only_file(
-                    ast_entrypoints,
-                    path,
-                    &source_file,
-                    &settings.check,
-                    ignore_allow_comments,
-                )?;
+                let result =
+                    check_only_file(path, &source_file, &settings.check, ignore_allow_comments)?;
 
                 // Write the input to stdout anyway.
                 // Necessary in case the user is using stdin fix mode to overwrite the current
@@ -461,13 +435,7 @@ fn check_stdin(
             }
         }
     } else {
-        let result = check_only_file(
-            ast_entrypoints,
-            path,
-            &source_file,
-            &settings.check,
-            ignore_allow_comments,
-        )?;
+        let result = check_only_file(path, &source_file, &settings.check, ignore_allow_comments)?;
         let fixed = FxHashMap::default();
         (result, fixed)
     };

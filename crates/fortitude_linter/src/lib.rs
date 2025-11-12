@@ -27,6 +27,7 @@ use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
 use rule_table::RuleTable;
+use rules::AstRuleEnum;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
@@ -35,7 +36,6 @@ use rules::style::line_length::LineTooLong;
 use rules::style::whitespace::TrailingWhitespace;
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
-use rules::AstRuleEnum;
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 
@@ -46,12 +46,11 @@ use log::warn;
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::SourceFile;
 use rustc_hash::FxHashMap;
-use std::borrow::Cow;
-use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Write;
 use std::iter::once;
 use std::path::Path;
+use std::{borrow::Cow, collections::BTreeMap};
 use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -84,7 +83,6 @@ pub trait AstRule {
 /// Parse a file, check it for issues, and return the report.
 #[allow(clippy::too_many_arguments)]
 pub fn check_file(
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
     settings: &CheckSettings,
@@ -96,13 +94,8 @@ pub fn check_file(
             result,
             transformed,
             fixed,
-        }) = check_and_fix_file(
-            ast_entrypoints,
-            path,
-            file,
-            settings,
-            ignore_allow_comments,
-        ) {
+        }) = check_and_fix_file(path, file, settings, ignore_allow_comments)
+        {
             if !fixed.is_empty() {
                 match fix_mode {
                     FixMode::Apply => {
@@ -118,24 +111,12 @@ pub fn check_file(
             (result, fixed)
         } else {
             // Failed to fix, so just lint the original source
-            let result = check_only_file(
-                ast_entrypoints,
-                path,
-                file,
-                settings,
-                ignore_allow_comments,
-            )?;
+            let result = check_only_file(path, file, settings, ignore_allow_comments)?;
             let fixed = FxHashMap::default();
             (result, fixed)
         }
     } else {
-        let result = check_only_file(
-            ast_entrypoints,
-            path,
-            file,
-            settings,
-            ignore_allow_comments,
-        )?;
+        let result = check_only_file(path, file, settings, ignore_allow_comments)?;
         let fixed = FxHashMap::default();
         (result, fixed)
     };
@@ -166,7 +147,6 @@ pub fn check_file(
 
 /// Parse a file, check it for issues, and return the report.
 pub fn check_only_file(
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
     settings: &CheckSettings,
@@ -180,14 +160,7 @@ pub fn check_only_file(
         .parse(file.source_text(), None)
         .context("Failed to parse")?;
 
-    let violations = check_path(
-        ast_entrypoints,
-        path,
-        file,
-        settings,
-        &tree,
-        ignore_allow_comments,
-    );
+    let violations = check_path(path, file, settings, &tree, ignore_allow_comments);
 
     Ok(violations
         .into_iter()
@@ -199,7 +172,6 @@ pub fn check_only_file(
 /// `check_only_file`/`check_and_fix_file` wrap this
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn check_path(
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
     settings: &CheckSettings,
@@ -236,7 +208,7 @@ pub(crate) fn check_path(
             violations.push(Diagnostic::from_node(SyntaxError {}, &node));
         }
 
-        if let Some(rules) = ast_entrypoints.get(node.kind()) {
+        if let Some(rules) = settings.ast_entrypoints.get(node.kind()) {
             for rule in rules {
                 if let Some(violation) = rule.check(settings, &node, file) {
                     for v in violation {
@@ -354,7 +326,6 @@ pub struct FixerResult<'a> {
 
 #[allow(clippy::too_many_arguments)]
 pub fn check_and_fix_file<'a>(
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &'a SourceFile,
     settings: &CheckSettings,
@@ -385,14 +356,7 @@ pub fn check_and_fix_file<'a>(
         // Map row and column locations to byte slices (lazily).
         let locator = Locator::new(transformed.source_text());
 
-        let violations = check_path(
-            ast_entrypoints,
-            path,
-            &transformed,
-            settings,
-            &tree,
-            ignore_allow_comments,
-        );
+        let violations = check_path(path, &transformed, settings, &tree, ignore_allow_comments);
 
         if iterations == 0 {
             is_valid_syntax = !tree.root_node().has_error();

@@ -2,6 +2,7 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
+use std::collections::BTreeMap;
 /// A collection of user-modifiable settings. Should be expanded as new features are added.
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -14,14 +15,15 @@ use ruff_macros::CacheKey;
 use serde::{Deserialize, Deserializer, Serialize, de};
 use strum::IntoEnumIterator;
 
-use crate::display_settings;
 use crate::fs::{EXCLUDE_BUILTINS, FilePatternSet, INCLUDE};
 use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
+use crate::rules::AstRuleEnum;
 use crate::rules::correctness::exit_labels;
 use crate::rules::portability::{self, invalid_tab};
 use crate::rules::style::{keywords, strings};
+use crate::{ast_entrypoint_map, display_settings};
 
 #[derive(Debug)]
 pub struct Settings {
@@ -59,6 +61,7 @@ pub struct CheckSettings {
 
     pub rules: RuleTable,
     pub per_file_ignores: CompiledPerFileIgnoreList,
+    pub ast_entrypoints: BTreeMap<&'static str, Vec<AstRuleEnum>>,
 
     pub line_length: usize,
 
@@ -92,6 +95,7 @@ impl CheckSettings {
                 .iter()
                 .flat_map(|selector| selector.rules(&PreviewOptions::default()))
                 .collect(),
+            ast_entrypoints: BTreeMap::new(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
             fix: false,
@@ -114,8 +118,12 @@ impl CheckSettings {
     }
 
     pub fn for_rules(rules: impl IntoIterator<Item = Rule>) -> Self {
+        let rules = RuleTable::from_iter(rules);
+        let ast_entrypoints = ast_entrypoint_map(&rules);
+
         Self {
-            rules: RuleTable::from_iter(rules),
+            rules,
+            ast_entrypoints,
             ..Self::default()
         }
     }

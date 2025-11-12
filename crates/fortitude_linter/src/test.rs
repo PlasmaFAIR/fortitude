@@ -4,7 +4,7 @@ use anyhow::Result;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 
 use crate::{
-    ast_entrypoint_map, check_file,
+    check_file,
     fs::read_to_string,
     message::{Emitter, TextEmitter},
     settings::{self, CheckSettings, FixMode, UnsafeFixes},
@@ -25,10 +25,7 @@ pub(crate) fn test_resource_path(path: impl AsRef<Path>) -> std::path::PathBuf {
 }
 
 /// Run [`check_path`] on a Fortran file in the `resources/test/fixtures` directory.
-pub(crate) fn test_path(
-    path: impl AsRef<Path>,
-    settings: &CheckSettings,
-) -> Result<String> {
+pub(crate) fn test_path(path: impl AsRef<Path>, settings: &CheckSettings) -> Result<String> {
     let path = test_resource_path("fixtures").join(path);
     let source = read_to_string(&path)?;
     let filename = path.to_string_lossy();
@@ -36,15 +33,8 @@ pub(crate) fn test_path(
     Ok(test_contents(&path, &file, settings))
 }
 
-pub(crate) fn test_contents(
-    path: &Path,
-    file: &SourceFile,
-    settings: &CheckSettings,
-) -> String {
-    let ast_entrypoints = ast_entrypoint_map(&settings.rules);
-
+pub(crate) fn test_contents(path: &Path, file: &SourceFile, settings: &CheckSettings) -> String {
     match check_file(
-        &ast_entrypoints,
         path,
         file,
         settings,
