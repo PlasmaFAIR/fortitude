@@ -2,11 +2,12 @@ use clap::{ArgAction::SetTrue, Parser, Subcommand};
 use fortitude_workspace::configuration::{
     convert_file_and_extensions_to_include, resolve_bool_arg,
 };
+use path_absolutize::path_dedot;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 use fortitude_linter::{
-    fs::FilePattern,
+    fs::{FilePattern, GlobPath},
     logging::LogLevel,
     rule_selector::{RuleSelector, clap_completion::RuleSelectorParser, collect_per_file_ignores},
     settings::{
@@ -461,7 +462,16 @@ struct ExplicitConfigOverrides {
 impl ConfigurationTransformer for ExplicitConfigOverrides {
     fn transform(&self, mut config: Configuration) -> Configuration {
         if self.file_extensions.is_some() {
-            config.include = convert_file_and_extensions_to_include(&None, &self.file_extensions);
+            config.include = convert_file_and_extensions_to_include(&None, &self.file_extensions)
+                .map(|paths| {
+                    paths
+                        .into_iter()
+                        .map(|pattern| {
+                            let absolute = GlobPath::normalize(&pattern, path_dedot::CWD.as_path());
+                            FilePattern::User(pattern, absolute)
+                        })
+                        .collect()
+                })
         }
         if let Some(exclude) = &self.exclude {
             config.exclude = Some(exclude.clone());
