@@ -9,7 +9,6 @@ use crate::{
     message::{Emitter, TextEmitter},
     rule_table::RuleTable,
     rules::Rule,
-    rules_to_path_rules, rules_to_text_rules,
     settings::{self, FixMode, Settings, UnsafeFixes},
 };
 
@@ -47,14 +46,10 @@ pub(crate) fn test_contents(
     settings: &Settings,
 ) -> String {
     let rule_table = RuleTable::from_iter(rules.iter().cloned());
-    let path_rules = rules_to_path_rules(&rule_table);
-    let text_rules = rules_to_text_rules(&rule_table);
     let ast_entrypoints = ast_entrypoint_map(&rule_table);
 
     match check_file(
         &rule_table,
-        &path_rules,
-        &text_rules,
         &ast_entrypoints,
         path,
         file,

@@ -27,11 +27,15 @@ use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
 use rule_table::RuleTable;
+use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
+use rules::style::file_extensions::NonStandardFileExtension;
+use rules::style::line_length::LineTooLong;
+use rules::style::whitespace::TrailingWhitespace;
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
-use rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum};
+use rules::AstRuleEnum;
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{FixMode, Settings};
 
@@ -90,8 +94,6 @@ pub trait AstRule {
 #[allow(clippy::too_many_arguments)]
 pub fn check_file(
     rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
@@ -106,8 +108,6 @@ pub fn check_file(
             fixed,
         }) = check_and_fix_file(
             rules,
-            path_rules,
-            text_rules,
             ast_entrypoints,
             path,
             file,
@@ -131,8 +131,6 @@ pub fn check_file(
             // Failed to fix, so just lint the original source
             let result = check_only_file(
                 rules,
-                path_rules,
-                text_rules,
                 ast_entrypoints,
                 path,
                 file,
@@ -145,8 +143,6 @@ pub fn check_file(
     } else {
         let result = check_only_file(
             rules,
-            path_rules,
-            text_rules,
             ast_entrypoints,
             path,
             file,
@@ -185,8 +181,6 @@ pub fn check_file(
 #[allow(clippy::too_many_arguments)]
 pub fn check_only_file(
     rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
@@ -203,8 +197,6 @@ pub fn check_only_file(
 
     let violations = check_path(
         rules,
-        path_rules,
-        text_rules,
         ast_entrypoints,
         path,
         file,
@@ -224,8 +216,6 @@ pub fn check_only_file(
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn check_path(
     rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
@@ -237,15 +227,21 @@ pub(crate) fn check_path(
     let mut allow_comments = Vec::new();
 
     // Check file paths directly
-    for rule in path_rules {
-        if let Some(violation) = rule.check(settings, path) {
+    if rules.enabled(Rule::NonStandardFileExtension) {
+        if let Some(violation) = NonStandardFileExtension::check(settings, path) {
             violations.push(violation);
         }
     }
 
     // Perform plain text analysis
-    for rule in text_rules {
-        violations.extend(rule.check(settings, file));
+    if rules.enabled(Rule::SplitEscapedQuote) {
+        violations.extend(SplitEscapedQuote::check(settings, file));
+    }
+    if rules.enabled(Rule::LineTooLong) {
+        violations.extend(LineTooLong::check(settings, file));
+    }
+    if rules.enabled(Rule::TrailingWhitespace) {
+        violations.extend(TrailingWhitespace::check(settings, file));
     }
 
     // Perform AST analysis
@@ -374,8 +370,6 @@ pub struct FixerResult<'a> {
 #[allow(clippy::too_many_arguments)]
 pub fn check_and_fix_file<'a>(
     rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &'a SourceFile,
@@ -409,8 +403,6 @@ pub fn check_and_fix_file<'a>(
 
         let violations = check_path(
             rules,
-            path_rules,
-            text_rules,
             ast_entrypoints,
             path,
             &transformed,
@@ -544,20 +536,6 @@ This indicates a bug in Fortitude. If you could open an issue at:
             codes,
         );
     }
-}
-
-pub fn rules_to_path_rules(rules: &RuleTable) -> Vec<PathRuleEnum> {
-    rules
-        .iter_enabled()
-        .filter_map(|rule| TryFrom::try_from(rule).ok())
-        .collect_vec()
-}
-
-pub fn rules_to_text_rules(rules: &RuleTable) -> Vec<TextRuleEnum> {
-    rules
-        .iter_enabled()
-        .filter_map(|rule| TryFrom::try_from(rule).ok())
-        .collect_vec()
 }
 
 /// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.

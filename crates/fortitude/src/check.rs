@@ -8,11 +8,10 @@ use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, get_files, read_to_string};
 use fortitude_linter::rule_table::RuleTable;
 use fortitude_linter::rules::Rule;
-use fortitude_linter::rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum, error::ioerror::IoError};
+use fortitude_linter::rules::{AstRuleEnum, error::ioerror::IoError};
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use fortitude_linter::{
     FixerResult, ast_entrypoint_map, check_and_fix_file, check_file, check_only_file,
-    rules_to_path_rules, rules_to_text_rules,
 };
 use fortitude_linter::{warn_user_once, warn_user_once_by_message};
 use fortitude_workspace::configuration::{
@@ -207,16 +206,12 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
 
-    let path_rules = rules_to_path_rules(rules);
-    let text_rules = rules_to_text_rules(rules);
     let ast_entrypoints = ast_entrypoint_map(rules);
 
     let results = if is_stdin {
         check_stdin(
             stdin_filename.map(fs::normalize_path).as_deref(),
             rules,
-            &path_rules,
-            &text_rules,
             &ast_entrypoints,
             &settings,
             fix_mode,
@@ -226,8 +221,6 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
         check_files(
             &files,
             rules,
-            &path_rules,
-            &text_rules,
             &ast_entrypoints,
             &settings,
             fix_mode,
@@ -294,8 +287,6 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
 fn check_files(
     files: &[PathBuf],
     rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
@@ -364,8 +355,6 @@ fn check_files(
 
             match check_file(
                 rules,
-                path_rules,
-                text_rules,
                 ast_entrypoints,
                 path,
                 &file,
@@ -418,8 +407,6 @@ fn check_files(
 fn check_stdin(
     filename: Option<&Path>,
     rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
@@ -433,8 +420,6 @@ fn check_stdin(
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         match check_and_fix_file(
             rules,
-            path_rules,
-            text_rules,
             ast_entrypoints,
             path,
             &source_file,
@@ -465,8 +450,6 @@ fn check_stdin(
                 // Failed to fix, so just lint the original source
                 let result = check_only_file(
                     rules,
-                    path_rules,
-                    text_rules,
                     ast_entrypoints,
                     path,
                     &source_file,
@@ -490,8 +473,6 @@ fn check_stdin(
     } else {
         let result = check_only_file(
             rules,
-            path_rules,
-            text_rules,
             ast_entrypoints,
             path,
             &source_file,
