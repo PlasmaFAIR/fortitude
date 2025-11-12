@@ -165,7 +165,8 @@ impl fmt::Display for CheckSettings {
 }
 #[derive(Debug, CacheKey)]
 pub struct FileResolverSettings {
-    pub excludes: FilePatternSet,
+    pub exclude: FilePatternSet,
+    pub extend_exclude: FilePatternSet,
     pub force_exclude: bool,
     pub include: FilePatternSet,
     pub respect_gitignore: bool,
@@ -179,7 +180,8 @@ impl fmt::Display for FileResolverSettings {
             formatter = f,
             namespace = "file_resolver",
             fields = [
-                self.excludes,
+                self.exclude,
+                self.extend_exclude,
                 self.force_exclude,
                 self.include,
                 self.respect_gitignore,
@@ -194,7 +196,8 @@ impl FileResolverSettings {
     fn new(project_root: &Path) -> Self {
         Self {
             project_root: project_root.to_path_buf(),
-            excludes: FilePatternSet::try_from_iter(EXCLUDE_BUILTINS.iter().cloned()).unwrap(),
+            exclude: FilePatternSet::try_from_iter(EXCLUDE_BUILTINS.iter().cloned()).unwrap(),
+            extend_exclude: FilePatternSet::default(),
             force_exclude: false,
             respect_gitignore: true,
             include: FilePatternSet::try_from_iter(INCLUDE.iter().cloned()).unwrap(),

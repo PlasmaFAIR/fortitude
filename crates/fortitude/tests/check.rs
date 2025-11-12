@@ -2327,6 +2327,8 @@ end program foo
 #[test]
 fn isolated_mode() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(&test_file, "")?;
     let config_file = tempdir.path().join("fpm.toml");
     fs::write(
         &config_file,
