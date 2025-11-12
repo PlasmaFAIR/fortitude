@@ -16,14 +16,18 @@ fortitude_linter = { workspace = true }
 anyhow = { workspace = true }
 colored = { workspace = true }
 etcetera = { workspace = true }
+globset = { workspace = true }
+ignore = { workspace = true }
 indexmap = { workspace = true }
 is-macro = { workspace = true }
 itertools = { workspace = true }
 log = { workspace = true }
+matchit = { workspace = true }
 path-absolutize = { workspace = true, features = [
     "once_cell_cache",
     "use_unix_paths_on_wasm",
 ]}
+path-slash = { workspace = true }
 ruff_macros = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

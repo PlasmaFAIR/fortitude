@@ -40,11 +40,13 @@ itertools = "0.12.0"
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"
 log = "0.4.22"
+matchit = { version = "0.8.1" }
 pathdiff = { version = "0.2.1" }
 path-absolutize = { version = "3.1.1", features = [
     "once_cell_cache",
     "use_unix_paths_on_wasm",
 ]}
+path-slash = { version = "0.2.1" }
 ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }
 ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }
