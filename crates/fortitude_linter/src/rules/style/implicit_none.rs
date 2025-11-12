@@ -1,7 +1,7 @@
 /// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::FortitudeNode;
 use crate::rules::correctness::implicit_typing::{has_implicit_none, implicit_statement_is_none};
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -32,7 +32,7 @@ impl AlwaysFixableViolation for SuperfluousImplicitNone {
 }
 
 impl AstRule for SuperfluousImplicitNone {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !implicit_statement_is_none(node) {
             return None;
         }

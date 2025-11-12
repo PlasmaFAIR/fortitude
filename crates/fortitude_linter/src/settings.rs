@@ -78,6 +78,12 @@ pub struct CheckSettings {
     pub invalid_tab: invalid_tab::settings::Settings,
 }
 
+impl Default for CheckSettings {
+    fn default() -> Self {
+        Self::new(path_absolutize::path_dedot::CWD.as_path())
+    }
+}
+
 impl CheckSettings {
     fn new(project_root: &Path) -> Self {
         Self {
@@ -100,6 +106,17 @@ impl CheckSettings {
             strings: strings::settings::Settings::default(),
             portability: portability::settings::Settings::default(),
             invalid_tab: invalid_tab::settings::Settings::default(),
+        }
+    }
+
+    pub fn for_rule(rule_code: Rule) -> Self {
+        Self::for_rules([rule_code])
+    }
+
+    pub fn for_rules(rules: impl IntoIterator<Item = Rule>) -> Self {
+        Self {
+            rules: RuleTable::from_iter(rules),
+            ..Self::default()
         }
     }
 }

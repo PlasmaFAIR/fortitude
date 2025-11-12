@@ -1,4 +1,4 @@
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -30,7 +30,7 @@ impl Violation for MissingDefaultCase {
 }
 
 impl AstRule for MissingDefaultCase {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let has_default = node
             .named_children(&mut node.walk())
             .filter(|child| child.kind() == "case_statement")

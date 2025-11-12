@@ -488,7 +488,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         use ruff_source_file::SourceFile;
         use tree_sitter::Node;
         use crate::AstRule;
-        use crate::settings::Settings;
+        use crate::settings::CheckSettings;
 
 
         #[derive(
@@ -576,7 +576,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         }
 
         impl AstRuleEnum {
-            pub fn check(&self, settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+            pub fn check(&self, settings: &CheckSettings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
                 match self {
                     #ast_rule_check_match_arms
                 }

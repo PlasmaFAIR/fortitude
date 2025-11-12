@@ -69,13 +69,7 @@ mod tests {
     fn test_correct_file_extensions() {
         let path1 = Path::new("my/dir/to/file.f90");
         let path2 = Path::new("my/dir/to/file.F90");
-        assert_eq!(
-            NonStandardFileExtension::check(path1),
-            None
-        );
-        assert_eq!(
-            NonStandardFileExtension::check(path2),
-            None
-        );
+        assert_eq!(NonStandardFileExtension::check(path1), None);
+        assert_eq!(NonStandardFileExtension::check(path2), None);
     }
 }

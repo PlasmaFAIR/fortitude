@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::rules::utilities;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -88,7 +88,7 @@ impl Violation for SpecificName {
 }
 
 impl AstRule for SpecificName {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.to_text(src.source_text())?;
 

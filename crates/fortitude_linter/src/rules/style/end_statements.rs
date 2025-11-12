@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -69,7 +69,7 @@ fn map_declaration(kind: &str) -> (&'static str, &'static str) {
 
 impl AstRule for UnnamedEndStatement {
     fn check<'a>(
-        _settings: &Settings,
+        _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {

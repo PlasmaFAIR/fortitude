@@ -6,7 +6,6 @@ use crate::stdin::read_from_stdin;
 use fortitude_linter::diagnostic_message::DiagnosticMessage;
 use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, get_files, read_to_string};
-use fortitude_linter::rule_table::RuleTable;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::rules::{AstRuleEnum, error::ioerror::IoError};
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
@@ -211,7 +210,6 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     let results = if is_stdin {
         check_stdin(
             stdin_filename.map(fs::normalize_path).as_deref(),
-            rules,
             &ast_entrypoints,
             &settings,
             fix_mode,
@@ -220,7 +218,6 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     } else {
         check_files(
             &files,
-            rules,
             &ast_entrypoints,
             &settings,
             fix_mode,
@@ -283,10 +280,8 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     Ok(ExitCode::SUCCESS)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn check_files(
     files: &[PathBuf],
-    rules: &RuleTable,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
@@ -332,7 +327,7 @@ fn check_files(
             let source = match read_to_string(path) {
                 Ok(source) => source,
                 Err(error) => {
-                    if rules.enabled(Rule::IoError) {
+                    if settings.check.rules.enabled(Rule::IoError) {
                         let message = format!("Error opening file: {error}");
                         let diagnostics = vec![DiagnosticMessage::from_error(
                             filename,
@@ -354,11 +349,10 @@ fn check_files(
             let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
 
             match check_file(
-                rules,
                 ast_entrypoints,
                 path,
                 &file,
-                settings,
+                &settings.check,
                 fix_mode,
                 ignore_allow_comments,
             ) {
@@ -370,7 +364,7 @@ fn check_files(
                     }
                 }
                 Err(msg) => {
-                    if rules.enabled(Rule::IoError) {
+                    if settings.check.rules.enabled(Rule::IoError) {
                         let message = format!("Failed to process: {msg}");
                         let diagnostics = vec![DiagnosticMessage::from_error(
                             filename,
@@ -403,10 +397,8 @@ fn check_files(
     Ok(results)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn check_stdin(
     filename: Option<&Path>,
-    rules: &RuleTable,
     ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
@@ -419,11 +411,10 @@ fn check_stdin(
 
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         match check_and_fix_file(
-            rules,
             ast_entrypoints,
             path,
             &source_file,
-            settings,
+            &settings.check,
             ignore_allow_comments,
         ) {
             Ok(FixerResult {
@@ -449,11 +440,10 @@ fn check_stdin(
             _ => {
                 // Failed to fix, so just lint the original source
                 let result = check_only_file(
-                    rules,
                     ast_entrypoints,
                     path,
                     &source_file,
-                    settings,
+                    &settings.check,
                     ignore_allow_comments,
                 )?;
 
@@ -472,11 +462,10 @@ fn check_stdin(
         }
     } else {
         let result = check_only_file(
-            rules,
             ast_entrypoints,
             path,
             &source_file,
-            settings,
+            &settings.check,
             ignore_allow_comments,
         )?;
         let fixed = FxHashMap::default();

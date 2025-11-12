@@ -78,7 +78,7 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
         fp.write(
             f"""\
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{{AstRule, FromAstNode}};
 use ruff_diagnostics::{{Diagnostic, Edit, Fix, FixAvailability, Violation}};
 use ruff_macros::{{derive_message_formats, ViolationMetadata}};
@@ -109,7 +109,7 @@ impl Violation for {name} {{
 
 impl AstRule for {name} {{
     fn check<'a>(
-        _settings: &Settings,
+        _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {{

@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -70,7 +70,7 @@ impl Violation for NoRealSuffix {
 }
 
 impl AstRule for NoRealSuffix {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with the

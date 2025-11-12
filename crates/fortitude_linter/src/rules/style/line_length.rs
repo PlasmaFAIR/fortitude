@@ -1,5 +1,5 @@
 /// Defines rules that govern line length.
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -47,9 +47,9 @@ impl Violation for LineTooLong {
 }
 
 impl LineTooLong {
-    pub fn check(settings: &Settings, source_file: &SourceFile) -> Vec<Diagnostic> {
+    pub fn check(settings: &CheckSettings, source_file: &SourceFile) -> Vec<Diagnostic> {
         let source = source_file.to_source_code();
-        let max_length = settings.check.line_length;
+        let max_length = settings.line_length;
         let mut violations = Vec::new();
         for line in source.text().universal_newlines() {
             // Note: Can't use string.len(), as that gives byte length, not char length
