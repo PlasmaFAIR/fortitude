@@ -3,7 +3,10 @@
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::{DIAGNOSTIC_NAME, PositionEncoding, edit::ToRangeExt, session::DocumentQuery};
+use crate::{
+    DIAGNOSTIC_NAME, PositionEncoding, edit::ToRangeExt, resolve::is_document_excluded_for_linting,
+    session::DocumentQuery,
+};
 use fortitude_linter::{check_only_file, diagnostic_message::DiagnosticMessage, locator::Locator};
 use ruff_diagnostics::{Applicability, Fix};
 use ruff_source_file::{LineIndex, SourceFileBuilder};
@@ -44,7 +47,14 @@ pub(crate) fn check(query: &DocumentQuery, encoding: PositionEncoding) -> Diagno
     let settings = query.settings();
     let document_path = query.virtual_file_path();
 
-    // TODO(peter): If the document is excluded, return an empty list of diagnostics.
+    if is_document_excluded_for_linting(
+        &document_path,
+        &settings.file_resolver,
+        &settings.check,
+        query.text_document_language_id(),
+    ) {
+        return DiagnosticsMap::default();
+    }
 
     let file = SourceFileBuilder::new(document_path.to_string_lossy(), source.as_str()).finish();
 
