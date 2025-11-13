@@ -102,7 +102,7 @@ We can control Fortitude's behaviour with a configuration file, one of `fpm.toml
 `fortitude.toml`, or `.fortitude.toml`. Let's add a new file:
 
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
@@ -110,7 +110,7 @@ We can control Fortitude's behaviour with a configuration file, one of `fpm.toml
     extend-select = ["implicit-real-kind"]
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]

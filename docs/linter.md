@@ -41,7 +41,7 @@ accept any combination of the following:
 
 For example, in the following configuration file:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
@@ -49,7 +49,7 @@ For example, in the following configuration file:
     ignore = ["implict-external-procedures", "S001"]
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -138,8 +138,8 @@ Fortitude has several ways of suppressing lint errors, whether they're false pos
 permissible in context.
 
 To globally ignore a rule, add it to the [`check.ignore`][check_ignore] list, either on
-the command line for a one-off check, or in your `fpm.toml` or `fortitude.toml` file for a
-more permanent suppression for a project.
+the command line for a one-off check, or in your `fpm.toml`, `fortitude.toml` or `.fortitude.toml`
+file for a more permanent suppression for a project.
 
 For slightly more fine-grained control, rules can be ignored for individual files through
 the [`check.per-file-ignores`](settings.md#check_per-file-ignores) setting in your

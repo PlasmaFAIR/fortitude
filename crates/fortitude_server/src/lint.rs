@@ -4,10 +4,7 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{DIAGNOSTIC_NAME, PositionEncoding, edit::ToRangeExt, session::DocumentQuery};
-use fortitude_linter::{
-    ast_entrypoint_map, check_only_file, diagnostic_message::DiagnosticMessage, locator::Locator,
-    rules_to_path_rules, rules_to_text_rules,
-};
+use fortitude_linter::{check_only_file, diagnostic_message::DiagnosticMessage, locator::Locator};
 use ruff_diagnostics::{Applicability, Fix};
 use ruff_source_file::{LineIndex, SourceFileBuilder};
 use ruff_text_size::{Ranged, TextRange};
@@ -51,19 +48,10 @@ pub(crate) fn check(query: &DocumentQuery, encoding: PositionEncoding) -> Diagno
 
     let file = SourceFileBuilder::new(document_path.to_string_lossy(), source.as_str()).finish();
 
-    let rules = &settings.check.rules;
-    let path_rules = rules_to_path_rules(rules);
-    let text_rules = rules_to_text_rules(rules);
-    let ast_entrypoints = ast_entrypoint_map(rules);
-
     let diagnostics = check_only_file(
-        rules,
-        &path_rules,
-        &text_rules,
-        &ast_entrypoints,
         &document_path,
         &file,
-        settings,
+        &settings.check,
         fortitude_linter::settings::IgnoreAllowComments::Disabled,
     )
     .unwrap_or_default();

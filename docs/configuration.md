@@ -1,79 +1,111 @@
 # Configuration
 
-Fortitude will look for either a `fortitude.toml` or `fpm.toml` file
-in the current directory, or one of its parents. If using
-`fortitude.toml`, settings should be under the command name, while for
-`fpm.toml` files, this has to be additionally nested under the
-`extra.fortitude` table:
-
-
-=== "fortitude.toml"
-
-    ```toml
-    [check]
-    select = ["S", "T"]
-    ignore = ["S001", "S051"]
-    line-length = 132
-    ```
-=== "fpm.toml"
-
-    ```toml
-    [extra.fortitude.check]
-    select = ["S", "T"]
-    ignore = ["S001", "S051"]
-    line-length = 132
-    ```
+Fortitude will look for either a `fortitude.toml`, `.fortitude.toml`, or
+`fpm.toml` file in the current directory, or one of its parents.
 
 For complete documentation of the available configuration options, see
 [_Settings_](settings.md).
 
-## Discovering files
+If using `fortitude.toml` or `.fortitude.toml`, settings should be under the
+command name, while for `fpm.toml` files, this has to be additionally nested
+under the `extra.fortitude` table:
 
-Without any other arguments, `fortitude check` searches the current directory recursively
-for Fortran files. You can also pass an explicit list of files or directories to search,
-or control which files or directories should be excluded from this search. You can also
-configure what extensions Fortitude searches for in directories with
-[`check.file-extensions`](settings.md#file-extensions) or `--file-extensions`:
 
-```console
-$ fortitude check --file-extensions=f90,fpp
-```
-
-Files in your `.gitignore` will be excluded from the file search automatically, though
-this behaviour can be deactivated by passing `--no-respect-gitignore`.  Files in certain
-directories (`build/`, `.git/`, `.venv/`, etc.) will also be excluded by default. An
-additional comma-separated list of excluded files and directories can be set using the
-[`check.exclude`](settings.md#exclude) option. For example, to exclude all files in the
-directories `benchmarks/` and `tests/`:
-
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
-    exclude = ["benchmarks", "tests"]
+    select = ["S", "T"]
+    ignore = ["S001", "S051"]
+    line-length = 132
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
-    exclude = ["benchmarks", "tests"]
+    select = ["S", "T"]
+    ignore = ["S001", "S051"]
+    line-length = 132
+    ```
+
+## Configuration file discovery
+
+Fortitude uses [Ruff's hierarchical config file discovery
+strategy](https://docs.astral.sh/ruff/configuration/#config-file-discovery),
+where we use the "closest" config file in the directory hierarchy for
+each individual source file being checked, with all paths in the
+config file (such as `exclude`) relative to the directory containing
+that config file.
+
+If a config file is passed on the command line using `--config-file`,
+those settings are used for _all_ files, and any relative paths in
+that config file are resolved relative to the directory where
+`fortitude` is run.
+
+Similarly, any other options set on the command line (for example,
+`--select`) override those in all found config files.
+
+If there is no configuration file in the current directory or its parents,
+Fortitude will look in `${config_dir}/fortitude/` for a user-specific file (see
+[`etcetera`'s base
+strategy](https://docs.rs/etcetera/latest/etcetera/#native-strategy) for how
+`${config_dir}` is determined).
+
+If no config file is found, Fortitude will fallback to a default configuration.
+
+If multiple config files are found, `.fortitude.toml` takes precedence
+over `fortitude.toml`, which takes precedence over `fpm.toml`.
+
+## Discovering files
+
+Without any other arguments, `fortitude check` searches the current directory
+recursively for Fortran files. You can also pass an explicit list of files or
+directories to search, or control which files or directories should be excluded
+from this search (see [`check.exclude`](settings.md#exclude) and
+[`check.extend-exclude`](settings.md#extend-exclude)):
+
+```console
+$ fortitude check --extend-exclude=tests/*.f90 src/*.{f90,fpp} extra/file.f90
+```
+
+Files in your `.gitignore` will be excluded from the file search automatically,
+though this behaviour can be deactivated (see
+[`check.respect-gitignore`](settings.md#respect-gitignore)). Files in certain
+directories (`build/`, `.git/`, `.venv/`, etc.) will also be excluded by
+default. An additional comma-separated list of excluded files and directories
+can be set using the [`check.extend-exclude`](settings.md#extend-exclude) option. For example,
+to exclude all files in the directories `benchmarks/` and `tests/` in addition
+to the default excluded files:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    extend-exclude = ["benchmarks", "tests"]
+    ```
+
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    extend-exclude = ["benchmarks", "tests"]
     ```
 
 You can also use pattern matching with a glob (`*`) symbol:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
-    exclude = ["test_*"]
+    extend-exclude = ["test_*"]
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
-    exclude = ["test_*"]
+    extend-exclude = ["test_*"]
     ```
 
 Note that Fortitude will still check excluded files if you pass their paths
@@ -83,8 +115,29 @@ directly, so the following will still check the `benchmarks/` directory:
 $ fortitude check --exclude=benchmarks benchmarks
 ```
 
-Setting [`check.force-excludes`](settings.md#force-exclude) to `true` will enforce
+Setting [`check.force-exclude`](settings.md#force-exclude) to `true` will enforce
 exclusions even in this scenario.
+
+### Default inclusions
+
+By default, Fortitude will discover Fortran files with many common extensions,
+including `.f90`, `.F90`, `.f95`. You can change the default selection using the
+[`include`](settings.md#include) setting:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude]
+    include = ["*.f90", "*.fpp"]
+    ```
+
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    include = ["*.f90", "*.fpp"]
+    ```
+
+!!! info "Introduced in Fortitude 0.7.6"
 
 ## Command-line interface
 
@@ -117,14 +170,17 @@ Commands:
   help     Print this message or the help of the given subcommand(s)
 
 Options:
-      --config-file <CONFIG_FILE>  Path to a TOML configuration file
-  -h, --help                       Print help
-  -V, --version                    Print version
+  -h, --help     Print help
+  -V, --version  Print version
 
 Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+Global options:
+      --config-file <CONFIG_FILE>  Path to a TOML configuration file
+      --isolated                   Ignore all configuration files
 
 For help with a specific command, see: `fortitude help <command>`.
 ```
@@ -141,7 +197,7 @@ Perform static analysis on files and report issues
 Usage: fortitude check [OPTIONS] [FILES]...
 
 Arguments:
-  [FILES]...  List of files or directories to check. Directories are searched recursively for Fortran files. The `--file-extensions` option can be used to control which files are included in the search [default: .]
+  [FILES]...  List of files or directories to check [default: .]
 
 Options:
       --fix
@@ -210,6 +266,10 @@ Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+Global options:
+      --config-file <CONFIG_FILE>  Path to a TOML configuration file
+      --isolated                   Ignore all configuration files
 ```
 
 <!-- End auto-generated check help. -->

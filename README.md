@@ -99,11 +99,11 @@ fortitude check --file-extensions=f90,fpp
 
 Be default, Fortitude will ignore files and directories in your `.gitignore`.
 This can be disabled by setting `--no-respect-gitignore`. Additional excludes
-can be set using `--excludes`:
+can be set using `--extend-exclude`:
 
 ```bash
 # Don't check in the `benchmarks/` and `tests/` directories.
-fortitude check --exclude=benchmarks,tests
+fortitude check --extend-exclude=benchmarks,tests
 ```
 
 You can select or ignore individual rules or whole groups with
@@ -204,8 +204,9 @@ Run `fortitude explain` to see which rules are in preview mode.
 
 ## Configuration
 
-Fortitude will look for either a `fortitude.toml` or `fpm.toml` file in the
-current directory, or one of its parents. If using `fortitude.toml`, settings
+Fortitude will look for either a `fortitude.toml`, `.fortitude.toml` or `fpm.toml`
+file in the current directory, or one of its parents.
+If using `fortitude.toml` or `.fortitude.toml`, settings
 should be under the command name:
 
 ```toml

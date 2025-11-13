@@ -7,7 +7,7 @@ use crate::{
     edit::{Replacement, ToRangeExt},
     session::DocumentQuery,
 };
-use fortitude_linter::{FixerResult, ast_entrypoint_map, rules_to_path_rules, rules_to_text_rules};
+use fortitude_linter::FixerResult;
 use ruff_source_file::{LineIndex, SourceFileBuilder};
 
 /// A simultaneous fix made across a single text document or among an arbitrary
@@ -24,11 +24,6 @@ pub(crate) fn fix_all(query: &DocumentQuery, encoding: PositionEncoding) -> crat
     let file =
         SourceFileBuilder::new(document_path.to_string_lossy(), source_kind.as_str()).finish();
 
-    let rules = &settings.check.rules;
-    let path_rules = rules_to_path_rules(rules);
-    let text_rules = rules_to_text_rules(rules);
-    let ast_entrypoints = ast_entrypoint_map(rules);
-
     // We need to iteratively apply all safe fixes onto a single file and then
     // create a diff between the modified file and the original source to use as a single workspace
     // edit.
@@ -36,13 +31,9 @@ pub(crate) fn fix_all(query: &DocumentQuery, encoding: PositionEncoding) -> crat
     // there's a possibility they could overlap or introduce new problems that need to be fixed,
     // which is inconsistent with how `ruff check --fix` works.
     let FixerResult { transformed, .. } = fortitude_linter::check_and_fix_file(
-        rules,
-        &path_rules,
-        &text_rules,
-        &ast_entrypoints,
         &document_path,
         &file,
-        settings,
+        &settings.check,
         fortitude_linter::settings::IgnoreAllowComments::Disabled,
     )?;
 

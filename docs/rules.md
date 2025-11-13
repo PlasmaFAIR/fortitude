@@ -8,6 +8,7 @@
 | ---- | ---- | ------- | ------: |
 | E000 | [io-error](rules/io-error.md) | {message\} | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | E001 | [syntax-error](rules/syntax-error.md) | Syntax error | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| E011 | [invalid-character](rules/invalid-character.md) | Invalid character '{character}' | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 
 ### Correctness (C)
 
@@ -102,6 +103,7 @@
 | PORT011 | [literal-kind](rules/literal-kind.md) | {dtype} kind set with number literal '{literal}' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | PORT012 | [literal-kind-suffix](rules/literal-kind-suffix.md) | '{literal}' has literal kind suffix '{suffix}' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | PORT021 | [star-kind](rules/star-kind.md) | '{dtype}{size}' uses non-standard syntax | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| PORT031 | [invalid-tab](rules/invalid-tab.md) | Invalid tab character | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 
 ### Fortitude (FORT)
 

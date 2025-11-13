@@ -2,6 +2,7 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
+use std::collections::BTreeMap;
 /// A collection of user-modifiable settings. Should be expanded as new features are added.
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -14,14 +15,15 @@ use ruff_macros::CacheKey;
 use serde::{Deserialize, Deserializer, Serialize, de};
 use strum::IntoEnumIterator;
 
-use crate::display_settings;
-use crate::fs::{EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePatternSet};
+use crate::fs::{EXCLUDE_BUILTINS, FilePatternSet, INCLUDE};
 use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
+use crate::rules::AstRuleEnum;
 use crate::rules::correctness::exit_labels;
-use crate::rules::portability::{self};
+use crate::rules::portability::{self, invalid_tab};
 use crate::rules::style::{keywords, strings};
+use crate::{ast_entrypoint_map, display_settings};
 
 #[derive(Debug)]
 pub struct Settings {
@@ -59,6 +61,7 @@ pub struct CheckSettings {
 
     pub rules: RuleTable,
     pub per_file_ignores: CompiledPerFileIgnoreList,
+    pub ast_entrypoints: BTreeMap<&'static str, Vec<AstRuleEnum>>,
 
     pub line_length: usize,
 
@@ -75,6 +78,13 @@ pub struct CheckSettings {
     pub keyword_whitespace: keywords::settings::Settings,
     pub strings: strings::settings::Settings,
     pub portability: portability::settings::Settings,
+    pub invalid_tab: invalid_tab::settings::Settings,
+}
+
+impl Default for CheckSettings {
+    fn default() -> Self {
+        Self::new(path_absolutize::path_dedot::CWD.as_path())
+    }
 }
 
 impl CheckSettings {
@@ -85,6 +95,7 @@ impl CheckSettings {
                 .iter()
                 .flat_map(|selector| selector.rules(&PreviewOptions::default()))
                 .collect(),
+            ast_entrypoints: BTreeMap::new(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
             fix: false,
@@ -98,6 +109,22 @@ impl CheckSettings {
             keyword_whitespace: keywords::settings::Settings::default(),
             strings: strings::settings::Settings::default(),
             portability: portability::settings::Settings::default(),
+            invalid_tab: invalid_tab::settings::Settings::default(),
+        }
+    }
+
+    pub fn for_rule(rule_code: Rule) -> Self {
+        Self::for_rules([rule_code])
+    }
+
+    pub fn for_rules(rules: impl IntoIterator<Item = Rule>) -> Self {
+        let rules = RuleTable::from_iter(rules);
+        let ast_entrypoints = ast_entrypoint_map(&rules);
+
+        Self {
+            rules,
+            ast_entrypoints,
+            ..Self::default()
         }
     }
 }
@@ -130,6 +157,7 @@ impl fmt::Display for CheckSettings {
                 self.keyword_whitespace | nested,
                 self.strings | nested,
                 self.portability | nested,
+                self.invalid_tab | nested,
             ]
         }
         Ok(())
@@ -137,10 +165,10 @@ impl fmt::Display for CheckSettings {
 }
 #[derive(Debug, CacheKey)]
 pub struct FileResolverSettings {
-    pub excludes: FilePatternSet,
+    pub exclude: FilePatternSet,
+    pub extend_exclude: FilePatternSet,
     pub force_exclude: bool,
-    pub files: Vec<PathBuf>,
-    pub file_extensions: Vec<String>,
+    pub include: FilePatternSet,
     pub respect_gitignore: bool,
     pub project_root: PathBuf,
 }
@@ -152,10 +180,10 @@ impl fmt::Display for FileResolverSettings {
             formatter = f,
             namespace = "file_resolver",
             fields = [
-                self.excludes,
+                self.exclude,
+                self.extend_exclude,
                 self.force_exclude,
-                self.files | paths,
-                self.file_extensions | array,
+                self.include,
                 self.respect_gitignore,
                 self.project_root | path,
             ]
@@ -168,11 +196,11 @@ impl FileResolverSettings {
     fn new(project_root: &Path) -> Self {
         Self {
             project_root: project_root.to_path_buf(),
-            excludes: FilePatternSet::try_from_iter(EXCLUDE_BUILTINS.iter().cloned()).unwrap(),
+            exclude: FilePatternSet::try_from_iter(EXCLUDE_BUILTINS.iter().cloned()).unwrap(),
+            extend_exclude: FilePatternSet::default(),
             force_exclude: false,
             respect_gitignore: true,
-            files: Vec::default(),
-            file_extensions: FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect(),
+            include: FilePatternSet::try_from_iter(INCLUDE.iter().cloned()).unwrap(),
         }
     }
 }

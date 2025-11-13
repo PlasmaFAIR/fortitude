@@ -838,6 +838,7 @@ mod tests {
                             line_length: Some(100),
                             ..Default::default()
                         }),
+                        ..Default::default()
                     }))),
                     extend_select: Some(vec![RuleSelector::from_str("S242").unwrap()]),
                     ..Default::default()

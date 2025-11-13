@@ -6,7 +6,7 @@ use settings::Quote;
 use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 
 /// ## What does it do?
@@ -59,8 +59,8 @@ impl Violation for BadQuoteString {
 }
 
 impl AstRule for BadQuoteString {
-    fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        let preferred_quote = settings.check.strings.quotes;
+    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        let preferred_quote = settings.strings.quotes;
         let bad_quote = preferred_quote.opposite();
 
         let text = node.to_text(src.source_text())?;
@@ -144,7 +144,7 @@ impl AlwaysFixableViolation for AvoidableEscapedQuote {
 
 impl AstRule for AvoidableEscapedQuote {
     fn check<'a>(
-        _settings: &Settings,
+        _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {
@@ -226,17 +226,13 @@ pub mod settings {
 
     #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, CacheKey)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
+    #[derive(Default)]
     pub enum Quote {
         /// Use double quotes.
+        #[default]
         Double,
         /// Use single quotes.
         Single,
-    }
-
-    impl Default for Quote {
-        fn default() -> Self {
-            Self::Double
-        }
     }
 
     impl TryFrom<char> for Quote {

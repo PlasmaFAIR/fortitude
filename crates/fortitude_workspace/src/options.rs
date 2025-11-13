@@ -9,10 +9,11 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use fortitude_linter::{
+    line_width::IndentWidth,
     rule_selector::RuleSelector,
     rules::{
         correctness::exit_labels,
-        portability::{self},
+        portability::{self, invalid_tab},
         style::{
             keywords,
             strings::{self, settings::Quote},
@@ -24,6 +25,23 @@ use fortitude_linter::{
 #[derive(Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Options {
+    /// A list of file patterns to include when linting.
+    ///
+    /// Inclusion are based on globs, and should be single-path patterns, like
+    /// `*.f90`, to include any file with the `.f90` extension.
+    ///
+    /// For more information on the glob syntax, refer to the [`globset` documentation](https://docs.rs/globset/latest/globset/#syntax).
+    ///
+    /// !!! info "_Introduced in 0.7.6_"
+    #[option(
+        default = r#"["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23"]"#,
+        value_type = "list[str]",
+        example = r#"
+            include = ["*.f90", "*.F90"]
+        "#
+    )]
+    pub include: Option<Vec<String>>,
+
     #[option_group]
     pub check: Option<CheckOptions>,
 }
@@ -46,6 +64,10 @@ pub struct CheckOptions {
         example = r#"
             files = ["foo.f90"]
         "#
+    )]
+    #[deprecated(
+        since = "0.7.6",
+        note = "The `files` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead."
     )]
     pub files: Option<Vec<PathBuf>>,
 
@@ -172,7 +194,13 @@ pub struct CheckOptions {
     #[option(
         default = r#"["f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23"]"#,
         value_type = "list[str]",
-        example = r#"["f90", "fpp"]"#
+        example = r#"
+          file-extensions = ["f90", "fpp"]
+        "#
+    )]
+    #[deprecated(
+        since = "0.7.6",
+        note = "The `file_extensions` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead."
     )]
     pub file_extensions: Option<Vec<String>>,
 
@@ -303,6 +331,10 @@ pub struct CheckOptions {
     /// Options for the `portability` set of rules
     #[option_group]
     pub portability: Option<PortabilityOptions>,
+
+    /// Options for the `invalid-tab` rule
+    #[option_group]
+    pub invalid_tab: Option<InvalidTabOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -415,6 +447,25 @@ impl PortabilityOptions {
     pub fn into_settings(self) -> portability::settings::Settings {
         portability::settings::Settings {
             allow_cray_file_units: self.allow_cray_file_units.unwrap_or_default(),
+        }
+    }
+}
+
+/// Options for `invalid-tab` rule
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct InvalidTabOptions {
+    /// The number of spaces to replace tabs with.
+    #[option(default = "4", value_type = "int", example = "indent-width = 2")]
+    pub indent_width: Option<IndentWidth>,
+}
+
+impl InvalidTabOptions {
+    pub fn into_settings(self) -> invalid_tab::settings::Settings {
+        invalid_tab::settings::Settings {
+            indent_width: self.indent_width.unwrap_or_default(),
         }
     }
 }

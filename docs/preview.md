@@ -14,14 +14,14 @@ turn into errors when using preview mode.
 Preview mode can be enabled with the `--preview` flag on the CLI or by setting
 `preview = true` in your Fortitude configuration file.
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     preview = true
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -41,14 +41,14 @@ If a rule is marked as preview, it can only be selected if preview mode is
 enabled. For example, consider a hypothetical rule, `HYP001`. If `HYP001` were
 in preview, it would _not_ be enabled by adding it to the selected rule set.
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     extend-select = ["HYP001"]
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -64,14 +64,14 @@ in preview, it would _not_ be enabled by adding it to the selected rule set.
 
 It also would _not_ be enabled by selecting the `HYP` category, like so:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     extend-select = ["HYP"]
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -87,14 +87,14 @@ It also would _not_ be enabled by selecting the `HYP` category, like so:
 
 Similarly, it would _not_ be enabled via the `ALL` selector:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
     select = ["ALL"]
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
@@ -109,7 +109,7 @@ Similarly, it would _not_ be enabled via the `ALL` selector:
 
 However, it _would_ be enabled in any of the above cases if you enabled preview mode:
 
-=== "fpm.toml"
+=== "`fpm.toml`"
 
     ```toml
     [extra.fortitude.check]
@@ -117,7 +117,7 @@ However, it _would_ be enabled in any of the above cases if you enabled preview 
     preview = true
     ```
 
-=== "fortitude.toml"
+=== "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]

@@ -1,26 +1,22 @@
-use crate::cli::{CheckCommand, GlobalConfigArgs};
+use crate::cli::{CheckCommand, ConfigArguments, GlobalConfigArgs};
 use crate::printer::{Flags as PrinterFlags, Printer};
+use crate::resolve;
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
 use fortitude_linter::diagnostic_message::DiagnosticMessage;
 use fortitude_linter::diagnostics::{Diagnostics, FixMap};
-use fortitude_linter::fs::{self, get_files, read_to_string};
-use fortitude_linter::rule_table::RuleTable;
+use fortitude_linter::fs::{self, read_to_string};
 use fortitude_linter::rules::Rule;
-use fortitude_linter::rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum, error::ioerror::IoError};
+use fortitude_linter::rules::error::ioerror::IoError;
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
-use fortitude_linter::{
-    FixerResult, ast_entrypoint_map, check_and_fix_file, check_file, check_only_file,
-    rules_to_path_rules, rules_to_text_rules,
-};
+use fortitude_linter::{FixerResult, check_and_fix_file, check_file, check_only_file};
 use fortitude_linter::{warn_user_once, warn_user_once_by_message};
-use fortitude_workspace::configuration::{
-    self, Configuration, ConfigurationTransformer, parse_config_file,
-};
 
 use anyhow::Result;
 use colored::Colorize;
+use fortitude_workspace::resolver::{FortitudeConfig, fortran_files_in_path};
+use ignore::Error;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use log::{debug, warn};
 use rayon::prelude::*;
@@ -28,9 +24,9 @@ use ruff_diagnostics::Diagnostic;
 use ruff_source_file::SourceFileBuilder;
 use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
-use std::collections::BTreeMap;
+use std::fmt::Write;
 use std::fs::File;
-use std::io::Write;
+use std::io::Write as IoWrite;
 use std::io::{self, BufWriter};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -54,6 +50,19 @@ fn is_stdin(files: &[PathBuf], stdin_filename: Option<&Path>) -> bool {
     };
     // If the user provided exactly `-`, read from standard input.
     file == Path::new("-")
+}
+
+/// Returns the default set of files if none are provided, otherwise returns provided files.
+fn resolve_default_files(files: Vec<PathBuf>, is_stdin: bool) -> Vec<PathBuf> {
+    if files.is_empty() {
+        if is_stdin {
+            vec![Path::new("-").to_path_buf()]
+        } else {
+            vec![Path::new(".").to_path_buf()]
+        }
+    } else {
+        files
+    }
 }
 
 /// Helper object to store the results of all checks
@@ -124,24 +133,16 @@ enum CheckStatus {
 }
 
 /// Check all files, report issues found, and return error code.
-pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
-    let (cli, config_arguments) = args.partition()?;
+pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<ExitCode> {
+    let (cli, config_arguments) = args.partition(global_options)?;
 
-    // First we need to find and read any config file
-    let project_root = configuration::project_root(path_absolutize::path_dedot::CWD.as_path())?;
-    let file_configuration = Configuration::from_options(
-        parse_config_file(&global_options.config_file)?,
-        &project_root,
-    );
-
-    // Now, we can override settings from the config file with options
-    // from the CLI
-    let config = config_arguments.transform(file_configuration);
-    let settings = config.into_settings(&project_root)?;
+    // Construct the "default" settings. These are used when no `fortitude.toml`
+    // files are present, or files are injected from outside of the hierarchy.
+    let file_configuration = resolve::resolve(&config_arguments, cli.stdin_filename.as_deref())?;
 
     let stdin_filename = cli.stdin_filename;
 
-    let mut writer: Box<dyn Write> = match cli.output_file {
+    let mut writer: Box<dyn IoWrite> = match cli.output_file {
         Some(path) => {
             colored::control::set_override(false);
             if let Some(parent) = path.parent() {
@@ -154,27 +155,27 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     };
     let stderr_writer = Box::new(BufWriter::new(io::stderr()));
 
-    let is_stdin = is_stdin(&settings.file_resolver.files, stdin_filename.as_deref());
+    let is_stdin = is_stdin(&cli.files, stdin_filename.as_deref());
+    let files = resolve_default_files(cli.files, is_stdin);
 
     if cli.show_settings {
-        show_settings(&settings, &mut writer)?;
+        show_settings(&files, &file_configuration, &config_arguments, &mut writer)?;
         return Ok(ExitCode::SUCCESS);
     }
 
     if cli.show_files {
-        show_files(&settings.file_resolver, is_stdin, &mut writer)?;
+        show_files(&files, &file_configuration, &config_arguments, &mut writer)?;
         return Ok(ExitCode::SUCCESS);
     }
 
     let CheckSettings {
         fix,
         fix_only,
-        ref rules,
         unsafe_fixes,
         show_fixes,
         output_format,
         ..
-    } = settings.check;
+    } = file_configuration.settings.check;
 
     // Fix rules are as follows:
     // - By default, generate all fixes, but don't apply them to the filesystem.
@@ -192,35 +193,18 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
 
     // At this point, we've assembled all our settings, and we're
     // ready to check the project
-
-    let path_rules = rules_to_path_rules(rules);
-    let text_rules = rules_to_text_rules(rules);
-    let ast_entrypoints = ast_entrypoint_map(rules);
-
-    let start = Instant::now();
-
-    let files = get_files(&settings.file_resolver, is_stdin)?;
-    debug!("Identified files to lint in: {:?}", start.elapsed());
-
     let results = if is_stdin {
         check_stdin(
             stdin_filename.map(fs::normalize_path).as_deref(),
-            rules,
-            &path_rules,
-            &text_rules,
-            &ast_entrypoints,
-            &settings,
+            &file_configuration.settings,
             fix_mode,
             cli.ignore_allow_comments,
         )?
     } else {
         check_files(
             &files,
-            rules,
-            &path_rules,
-            &text_rules,
-            &ast_entrypoints,
-            &settings,
+            &file_configuration,
+            &config_arguments,
             fix_mode,
             cli.ignore_allow_comments,
         )?
@@ -245,7 +229,7 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
 
     let printer = Printer::new(
         output_format,
-        global_options.log_level(),
+        config_arguments.log_level,
         printer_flags,
         fix_mode,
         unsafe_fixes,
@@ -281,19 +265,19 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
     Ok(ExitCode::SUCCESS)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn check_files(
     files: &[PathBuf],
-    rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
-    settings: &Settings,
+    fortitude_config: &FortitudeConfig,
+    config_arguments: &ConfigArguments,
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Result<CheckResults> {
-    let file_digits = files.len().to_string().len();
-    let progress_bar_style = match settings.check.progress_bar {
+    let start = Instant::now();
+    let (paths, resolver) = fortran_files_in_path(files, fortitude_config, config_arguments)?;
+    debug!("Identified files to lint in: {:?}", start.elapsed());
+
+    let file_digits = paths.len().to_string().len();
+    let progress_bar_style = match fortitude_config.settings.check.progress_bar {
         ProgressBar::Fancy => {
             // Make progress bar with 60 char width, bright cyan colour (51)
             // Colours use some 8-bit representation
@@ -318,48 +302,70 @@ fn check_files(
     };
 
     let start = Instant::now();
-    let mut results = files
+    let mut results = paths
         .par_iter()
         .progress_with_style(progress_bar_style)
         .with_prefix("Checking file:")
-        .map(|path| {
-            let filename = path.to_string_lossy();
+        .map(|resolved_file| {
+            let result = match resolved_file {
+                Ok(resolved_file) => {
+                    let path = resolved_file.path();
+                    let settings = resolver.resolve(path);
 
-            let source = match read_to_string(path) {
-                Ok(source) => source,
-                Err(error) => {
-                    if rules.enabled(Rule::IoError) {
-                        let message = format!("Error opening file: {error}");
-                        let diagnostics = vec![DiagnosticMessage::from_error(
-                            filename,
-                            Diagnostic::new(IoError { message }, TextRange::default()),
-                        )];
-                        return CheckStatus::Skipped(Diagnostics::new(diagnostics));
-                    } else {
-                        warn!(
-                            "{}{}{} {error}",
-                            "Error opening file ".bold(),
-                            fs::relativize_path(path).bold(),
-                            ":".bold()
-                        );
-                        return CheckStatus::SkippedNoDiagnostic;
-                    }
+                    let source = match read_to_string(path) {
+                        Ok(source) => source,
+                        Err(error) => {
+                            if settings.check.rules.enabled(Rule::IoError) {
+                                let message = format!("Error opening file: {error}");
+                                let diagnostics = vec![DiagnosticMessage::from_error(
+                                    resolved_file.file_name().to_string_lossy(),
+                                    Diagnostic::new(IoError { message }, TextRange::default()),
+                                )];
+                                return CheckStatus::Skipped(Diagnostics::new(diagnostics));
+                            } else {
+                                warn!(
+                                    "{}{}{} {error}",
+                                    "Error opening file ".bold(),
+                                    fs::relativize_path(path).bold(),
+                                    ":".bold()
+                                );
+                                return CheckStatus::SkippedNoDiagnostic;
+                            }
+                        }
+                    };
+
+                    let file =
+                        SourceFileBuilder::new(path.to_string_lossy(), source.as_str()).finish();
+
+                    check_file(
+                        path,
+                        &file,
+                        &settings.check,
+                        fix_mode,
+                        ignore_allow_comments,
+                    )
+                    .map_err(|e| {
+                        (Some(path.to_path_buf()), {
+                            let mut error = e.to_string();
+                            for cause in e.chain() {
+                                write!(&mut error, "\n  Cause: {cause}").unwrap();
+                            }
+                            error
+                        })
+                    })
                 }
+                Err(e) => Err((
+                    if let Error::WithPath { path, .. } = e {
+                        Some(path.clone())
+                    } else {
+                        None
+                    },
+                    e.io_error()
+                        .map_or_else(|| e.to_string(), io::Error::to_string),
+                )),
             };
 
-            let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
-
-            match check_file(
-                rules,
-                path_rules,
-                text_rules,
-                ast_entrypoints,
-                path,
-                &file,
-                settings,
-                fix_mode,
-                ignore_allow_comments,
-            ) {
+            match result {
                 Ok(violations) => {
                     if violations.is_empty() {
                         CheckStatus::Ok
@@ -367,22 +373,28 @@ fn check_files(
                         CheckStatus::Violations(violations)
                     }
                 }
-                Err(msg) => {
-                    if rules.enabled(Rule::IoError) {
-                        let message = format!("Failed to process: {msg}");
-                        let diagnostics = vec![DiagnosticMessage::from_error(
-                            filename,
-                            Diagnostic::new(IoError { message }, TextRange::default()),
-                        )];
-                        CheckStatus::Skipped(Diagnostics::new(diagnostics))
+                Err((path, message)) => {
+                    if let Some(path) = &path {
+                        let settings = resolver.resolve(path);
+                        if settings.check.rules.enabled(Rule::IoError) {
+                            let message = format!("Error opening file: {message}");
+                            let diagnostics = vec![DiagnosticMessage::from_error(
+                                path.to_string_lossy(),
+                                Diagnostic::new(IoError { message }, TextRange::default()),
+                            )];
+                            CheckStatus::Skipped(Diagnostics::new(diagnostics))
+                        } else {
+                            warn!(
+                                "{}{}{} {message}",
+                                "Error opening file ".bold(),
+                                fs::relativize_path(path).bold(),
+                                ":".bold()
+                            );
+                            CheckStatus::SkippedNoDiagnostic
+                        }
                     } else {
-                        warn!(
-                            "{}{}{} {msg}",
-                            "Failed to process ".bold(),
-                            fs::relativize_path(path).bold(),
-                            ":".bold()
-                        );
-                        CheckStatus::SkippedNoDiagnostic
+                        warn!("{} {message}", "Encountered error:".bold());
+                        CheckStatus::Skipped(Diagnostics::default())
                     }
                 }
             }
@@ -401,13 +413,8 @@ fn check_files(
     Ok(results)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn check_stdin(
     filename: Option<&Path>,
-    rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     settings: &Settings,
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
@@ -418,16 +425,7 @@ fn check_stdin(
     let source_file = SourceFileBuilder::new(path.to_str().unwrap_or("-"), stdin.as_str()).finish();
 
     let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
-        match check_and_fix_file(
-            rules,
-            path_rules,
-            text_rules,
-            ast_entrypoints,
-            path,
-            &source_file,
-            settings,
-            ignore_allow_comments,
-        ) {
+        match check_and_fix_file(path, &source_file, &settings.check, ignore_allow_comments) {
             Ok(FixerResult {
                 result,
                 transformed,
@@ -450,16 +448,8 @@ fn check_stdin(
             }
             _ => {
                 // Failed to fix, so just lint the original source
-                let result = check_only_file(
-                    rules,
-                    path_rules,
-                    text_rules,
-                    ast_entrypoints,
-                    path,
-                    &source_file,
-                    settings,
-                    ignore_allow_comments,
-                )?;
+                let result =
+                    check_only_file(path, &source_file, &settings.check, ignore_allow_comments)?;
 
                 // Write the input to stdout anyway.
                 // Necessary in case the user is using stdin fix mode to overwrite the current
@@ -475,16 +465,7 @@ fn check_stdin(
             }
         }
     } else {
-        let result = check_only_file(
-            rules,
-            path_rules,
-            text_rules,
-            ast_entrypoints,
-            path,
-            &source_file,
-            settings,
-            ignore_allow_comments,
-        )?;
+        let result = check_only_file(path, &source_file, &settings.check, ignore_allow_comments)?;
         let fixed = FxHashMap::default();
         (result, fixed)
     };

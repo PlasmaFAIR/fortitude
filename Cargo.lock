@@ -27,15 +27,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "annotate-snippets"
-version = "0.11.4"
-source = "git+https://github.com/PlasmaFAIR/annotate-snippets-rs.git?branch=level-none#3e1ae5fadf250c5183653dc5d9db2ca79ecffd7d"
-dependencies = [
- "anstyle",
- "unicode-width",
-]
-
-[[package]]
 name = "ansi_colours"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -557,6 +548,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "etcetera"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26c7b13d0780cb82722fd59f6f57f925e143427e4a75313a6c77243bf5326ae6"
+dependencies = [
+ "cfg-if",
+ "home",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -620,6 +622,7 @@ dependencies = [
  "fortitude_linter",
  "fortitude_server",
  "fortitude_workspace",
+ "ignore",
  "indicatif",
  "insta",
  "insta-cmd",
@@ -662,7 +665,6 @@ dependencies = [
 name = "fortitude_linter"
 version = "0.1.0"
 dependencies = [
- "annotate-snippets",
  "anyhow",
  "assert_cmd",
  "bitflags 2.9.1",
@@ -685,6 +687,7 @@ dependencies = [
  "pretty_assertions",
  "quick-junit",
  "rayon",
+ "ruff_annotate_snippets",
  "ruff_cache",
  "ruff_diagnostics",
  "ruff_macros",
@@ -754,12 +757,17 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "colored",
+ "etcetera 0.10.0",
  "fortitude_linter",
  "globset",
+ "ignore",
+ "indexmap",
  "is-macro",
  "itertools 0.12.1",
  "log",
+ "matchit",
  "path-absolutize",
+ "path-slash",
  "ruff_macros",
  "rustc-hash",
  "serde",
@@ -1280,6 +1288,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "matchit"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f926ade0c4e170215ae43342bf13b9310a437609c81f29f86c5df6657582ef9"
+
+[[package]]
 name = "memchr"
 version = "2.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1681,6 +1695,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57397d16646700483b67d2dd6511d79318f9d057fdbd21a4066aeac8b41d310a"
 dependencies = [
  "bytemuck",
+]
+
+[[package]]
+name = "ruff_annotate_snippets"
+version = "0.1.0"
+source = "git+https://github.com/astral-sh/ruff.git?tag=0.12.9#ef422460de726c5b896c09c364d02a4db24bcaf0"
+dependencies = [
+ "anstyle",
+ "memchr",
+ "unicode-width",
 ]
 
 [[package]]
@@ -2316,7 +2340,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "beef0844c0ea7e041227fccf31cc48efa57bb3bec1ab774e58800a4909a770f0"
 dependencies = [
  "anyhow",
- "etcetera",
+ "etcetera 0.8.0",
  "serde",
  "serde_json",
 ]
@@ -2379,7 +2403,7 @@ checksum = "af1129366d31d54e600dd9e874f0a0c828dd46a373f80c5e8b9e52dfe9560add"
 dependencies = [
  "anyhow",
  "cc",
- "etcetera",
+ "etcetera 0.8.0",
  "fs4",
  "indoc",
  "libloading",

@@ -23,7 +23,7 @@ fortitude_macros = { path = "crates/fortitude_macros" }
 fortitude_server = { path = "crates/fortitude_server" }
 fortitude_workspace = { path = "crates/fortitude_workspace" }
 
-annotate-snippets = { git = "https://github.com/PlasmaFAIR/annotate-snippets-rs.git", branch = "level-none" }
+ruff_annotate_snippets = { git = "https://github.com/astral-sh/ruff.git", tag = "0.12.9", version = "0.1.0" }
 anyhow = "1.0.79"
 assert_cmd = "2.0.16"
 bitflags = "2.6.0"
@@ -32,12 +32,14 @@ clap = { version = "4.4.16", features = ["derive", "string", "env"] }
 clap_complete_command = { version = "0.6.0" }
 colored = { version = "2.1.0" }
 crossbeam = { version = "0.8.4" }
+etcetera = { version = "0.10.0" }
 fern = "0.7.1"
 globset = "0.4.15"
 ignore = "0.4.23"
 indicatif = { version = "0.17.9", features = ["rayon", "improved_unicode"] }
 insta = { version = "1.41.1", features = ["filters", "json", "redactions"] }
 insta-cmd = "0.6.0"
+indexmap = { version = "2.6.0" }
 is-macro = "0.3.7"
 itertools = "0.12.0"
 jod-thread = { version = "0.1.2" }
@@ -50,6 +52,7 @@ lsp-server = { version = "0.7.8" }
 lsp-types = { git = "https://github.com/astral-sh/lsp-types.git", rev = "3512a9f", features = [
     "proposed",
 ] }
+matchit = { version = "0.8.1" }
 pathdiff = { version = "0.2.1" }
 path-absolutize = { version = "3.1.1", features = [
     "once_cell_cache",
@@ -58,6 +61,7 @@ path-absolutize = { version = "3.1.1", features = [
 predicates = "3.1.2"
 pretty_assertions = "1.4.1"
 regex = { version = "1.10.2" }
+path-slash = { version = "0.2.1" }
 ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }
 ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }

@@ -240,7 +240,7 @@ impl FortitudeSettingsIndex {
                         .map(|(_, settings)| settings.clone())
                         .unwrap_or_else(|| fallback.clone());
 
-                    if match_exclusion(&directory, file_name, &settings.file_resolver.excludes) {
+                    if match_exclusion(&directory, file_name, &settings.file_resolver.exclude) {
                         tracing::debug!("Ignored path via `exclude`: {}", directory.display());
                         return WalkState::Skip;
                     }
@@ -355,7 +355,7 @@ impl ConfigurationTransformer for EditorConfigurationTransformer<'_> {
                     .into_iter()
                     .map(|pattern| {
                         let absolute = GlobPath::normalize(&pattern, project_root);
-                        FilePattern::User(pattern, absolute.into_inner())
+                        FilePattern::User(pattern, absolute)
                     })
                     .collect()
             }),
@@ -438,6 +438,7 @@ mod tests {
                     line_length: Some(120),
                     ..Default::default()
                 }),
+                ..Default::default()
             }))),
             ..Default::default()
         };
@@ -458,6 +459,7 @@ mod tests {
                     line_length: Some(120),
                     ..Default::default()
                 }),
+                ..Default::default()
             }))),
             line_length: Some(100),
             ..Default::default()
