@@ -19,6 +19,7 @@ mod edit;
 mod fix;
 mod lint;
 mod logging;
+mod resolve;
 mod server;
 mod session;
 mod workspace;
