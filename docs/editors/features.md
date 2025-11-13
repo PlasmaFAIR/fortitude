@@ -59,8 +59,7 @@ apply unsafe fixes. However, unsafe fixes can be applied manually with the "Quic
 Application of unsafe fixes when using "Fix all" can be enabled by setting `unsafe-fixes = true` in
 your Fortitude configuration file.
 
-<!-- TODO(peter): link to our own docs when we have this section -->
-See the [Ruff fix documentation](https://docs.astral.sh/fortitude/linter/#fix-safety) for more details on
+See the [fix documentation](../linter.md#fix-safety) for more details on
 how fix safety works.
 
 ## Hover
