@@ -3,13 +3,8 @@
 Fortitude will look for either a `fortitude.toml`, `.fortitude.toml`, or
 `fpm.toml` file in the current directory, or one of its parents.
 
-If there is no configuration file in the current directory or its parents,
-Fortitude will look in `${config_dir}/fortitude/` for a user-specific file (see
-[`etcetera`'s base
-strategy](https://docs.rs/etcetera/latest/etcetera/#native-strategy) for how
-`${config_dir}` is determined).
-
-If no configuration file is found, Fortitude will fall back to a default configuration.
+For complete documentation of the available configuration options, see
+[_Settings_](settings.md).
 
 If using `fortitude.toml` or `.fortitude.toml`, settings should be under the
 command name, while for `fpm.toml` files, this has to be additionally nested
@@ -34,8 +29,33 @@ under the `extra.fortitude` table:
     line-length = 132
     ```
 
-For complete documentation of the available configuration options, see
-[_Settings_](settings.md).
+## Configuration file discovery
+
+Fortitude uses [Ruff's hierarchical config file discovery
+strategy](https://docs.astral.sh/ruff/configuration/#config-file-discovery),
+where we use the "closest" config file in the directory hierarchy for
+each individual source file being checked, with all paths in the
+config file (such as `exclude`) relative to the directory containing
+that config file.
+
+If a config file is passed on the command line using `--config-file`,
+those settings are used for _all_ files, and any relative paths in
+that config file are resolved relative to the directory where
+`fortitude` is run.
+
+Similarly, any other options set on the command line (for example,
+`--select`) override those in all found config files.
+
+If there is no configuration file in the current directory or its parents,
+Fortitude will look in `${config_dir}/fortitude/` for a user-specific file (see
+[`etcetera`'s base
+strategy](https://docs.rs/etcetera/latest/etcetera/#native-strategy) for how
+`${config_dir}` is determined).
+
+If no config file is found, Fortitude will fall back to a default configuration.
+
+If multiple config files are found, `.fortitude.toml` takes precedence
+over `fortitude.toml`, which takes precedence over `fpm.toml`.
 
 ## Discovering files
 
