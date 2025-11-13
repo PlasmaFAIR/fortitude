@@ -1,5 +1,7 @@
 # Editor Integrations
 
+!!! info "_Introduced in 0.8.0_"
+
 Fortitude can be integrated with various editors and IDEs to provide a seamless development experience.
 This section provides instructions on [how to set up Fortitude with your editor](./setup.md) and [configure it to your
 liking](./settings.md).
