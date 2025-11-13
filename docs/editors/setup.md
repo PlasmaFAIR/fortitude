@@ -103,22 +103,6 @@ vim.lsp.set_log_level('debug')
 ```
 
 <details>
-<summary>With the <a href="https://github.com/stevearc/conform.nvim"><code>conform.nvim</code></a> plugin for Neovim.</summary>
-
-```lua
-require("conform").setup({
-    formatters_by_ft = {
-        fortran = {
-          -- To fix auto-fixable lint errors.
-          "fortitude_fix",
-        },
-    },
-})
-```
-
-</details>
-
-<details>
 <summary>With the <a href="https://github.com/mfussenegger/nvim-lint"><code>nvim-lint</code></a> plugin for Neovim.</summary>
 
 ```lua
@@ -137,8 +121,6 @@ require("lint").linters_by_ft = {
 ```lua
 -- Linters
 vim.g.ale_linters = { fortran = { "fortitude" } }
--- Fixers
-vim.g.ale_fixers = { fortran = { "fortitude" } }
 ```
 
 <i>Vim (using Vimscript):</i>
@@ -146,12 +128,7 @@ vim.g.ale_fixers = { fortran = { "fortitude" } }
 ```vim
 " Linters
 let g:ale_linters = { "fortran": ["fortitude"] }
-" Fixers
-let g:ale_fixers = { "fortran": ["fortitude"] }
 ```
-
-For the fixers, <code>fortitude</code> will run <code>fortitude check --fix</code> (to fix all auto-fixable
-problems).
 
 </details>
 
