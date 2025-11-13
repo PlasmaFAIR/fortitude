@@ -45,10 +45,3 @@ Note that the Fortitude pre-commit hook will run with the option
 [`--force-exclude`](settings.md#force-exclude) switched on by default.  This
 will prevent Fortitude from checking files that have been explicitly added to
 your exclude list in `fpm.toml`, `fortitude.toml` or `.fortitude.toml`.
-
-## access from editors
-
-After the installation of fortitude, its functionality can be accessed
-by the linter plugin [nvim-lint][nvim-lint] of Neovim.
-
-[nvim-lint]: https://github.com/mfussenegger/nvim-lint
