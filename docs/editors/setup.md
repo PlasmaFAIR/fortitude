@@ -136,7 +136,7 @@ require("lint").linters_by_ft = {
 -- Linters
 vim.g.ale_linters = { fortran = { "fortitude" } }
 -- Fixers
-vim.g.ale_fixers = { fortran = { "fortitude", "fortitude_format" } }
+vim.g.ale_fixers = { fortran = { "fortitude" } }
 ```
 
 <i>Vim (using Vimscript):</i>
@@ -145,11 +145,11 @@ vim.g.ale_fixers = { fortran = { "fortitude", "fortitude_format" } }
 " Linters
 let g:ale_linters = { "fortran": ["fortitude"] }
 " Fixers
-let g:ale_fixers = { "fortran": ["fortitude", "fortitude_format"] }
+let g:ale_fixers = { "fortran": ["fortitude"] }
 ```
 
 For the fixers, <code>fortitude</code> will run <code>fortitude check --fix</code> (to fix all auto-fixable
-problems) whereas <code>fortitude_format</code> will run <code>fortitude format</code>.
+problems).
 
 </details>
 
@@ -191,7 +191,7 @@ endfunction
 <details>
 <summary>Fortitude can also be integrated via <a href="https://github.com/mattn/efm-langserver">efm language server</a> in just a few lines.</summary>
 
-Following is an example config for efm to use Fortitude for linting and formatting Fortran files:
+Following is an example config for efm to use Fortitude for linting Fortran files:
 
 ```yaml
 tools:
@@ -200,8 +200,6 @@ tools:
     lint-stdin: true
     lint-formats:
       - "%f:%l:%c: %m"
-    format-command: "fortitude format --stdin-filename ${INPUT} --quiet -"
-    format-stdin: true
 ```
 
 </details>
@@ -251,9 +249,6 @@ lineLength = 80
 [language-server.fortitude.config.settings.check]
 select = ["correctness", "S001"]
 preview = false
-
-[language-server.fortitude.config.settings.format]
-preview = true
 ```
 
 By default, the log level for Fortitude is set to `info`. To change the log level, you can set the

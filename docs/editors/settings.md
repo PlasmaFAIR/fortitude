@@ -1,7 +1,7 @@
 # Settings
 
 The Fortitude Language Server provides a set of configuration options to customise its behaviour along
-with the ability to use an existing `pyproject.toml` or `fortitude.toml` file to configure the
+with the ability to use an existing `fpm.toml` or `fortitude.toml` file to configure the
 linter. This is done by providing these settings while initialising the server.  VS Code provides a
 UI to configure these settings, while other editors may require manual configuration. The
 [setup](./setup.md) section provides instructions on where to place these settings as per the editor.
@@ -13,12 +13,12 @@ UI to configure these settings, while other editors may require manual configura
 The `configuration` setting allows you to configure editor-specific Fortitude behavior. This can be done
 in one of the following ways:
 
-1. **Configuration file path:** Specify the path to a `fortitude.toml` or `pyproject.toml` file that
+1. **Configuration file path:** Specify the path to a `fortitude.toml` or `fpm.toml` file that
     contains the configuration. User home directory and environment variables will be expanded.
 1. **Inline JSON configuration:** Directly provide the configuration as a JSON object.
 
 The default behavior, if `configuration` is unset, is to load the settings from the project's
-configuration (a `fortitude.toml` or `pyproject.toml` in the project's directory), consistent with when
+configuration (a `fortitude.toml` or `fpm.toml` in the project's directory), consistent with when
 running Fortitude on the command-line.
 
 The [`configurationPreference`](#configurationpreference) setting controls the precedence if both an
@@ -34,7 +34,7 @@ lowest):
 1. [**`fortitude.configuration`**](#configuration): Settings provided via the
     [`configuration`](#configuration) field (either a path to a configuration file or an inline
     configuration object)
-1. **Configuration file:** Settings defined in a `fortitude.toml` or `pyproject.toml` file in the
+1. **Configuration file:** Settings defined in a `fortitude.toml` or `fpm.toml` file in the
     project's directory (if present)
 
 For example, if the line length is specified in all three sources, Fortitude will use the value from the
@@ -105,7 +105,7 @@ _Using inline configuration:_
 ### `configurationPreference`
 
 The strategy to use when resolving settings across VS Code and the filesystem. By default, editor
-configuration is prioritized over `fortitude.toml` and `pyproject.toml` files.
+configuration is prioritized over `fortitude.toml` and `fpm.toml` files.
 
 - `"editorFirst"`: Editor settings take priority over configuration files present in the workspace.
 - `"filesystemFirst"`: Configuration files present in the workspace takes priority over editor
@@ -367,7 +367,7 @@ Whether to enable Fortitude's preview mode when linting.
 
 ### `select`
 
-Rules to enable by default. See [the documentation](https://docs.astral.sh/fortitude/settings/#check_select).
+Rules to enable by default. See [the documentation](../settings.md#check_select).
 
 **Default value**: `null`
 
@@ -379,7 +379,7 @@ Rules to enable by default. See [the documentation](https://docs.astral.sh/forti
 
     ```json
     {
-        "fortitude.check.select": ["E", "F"]
+        "fortitude.check.select": ["error", "correctness"]
     }
     ```
 
@@ -390,7 +390,7 @@ Rules to enable by default. See [the documentation](https://docs.astral.sh/forti
       init_options = {
         settings = {
           check = {
-            select = {"E", "F"}
+            select = {"error", "correctness"}
           }
         }
       }
@@ -431,7 +431,7 @@ Rules to enable in addition to those in [`check.select`](#select).
 
 ### `ignore`
 
-Rules to disable by default. See [the documentation](https://docs.astral.sh/fortitude/settings/#check_ignore).
+Rules to disable by default. See [the documentation](../settings.md#check_ignore).
 
 **Default value**: `null`
 
@@ -506,11 +506,8 @@ Strategy for loading the `fortitude` executable.
 A list of paths to Python interpreters. Even though this is a list, only the first interpreter is
 used.
 
-This setting depends on the [`fortitude.nativeServer`](#nativeserver) setting:
-
-- If using the native server, the interpreter is used to find the `fortitude` executable when
-    [`fortitude.importStrategy`](#importstrategy) is set to `fromEnvironment`.
-- Otherwise, the interpreter is used to run the `fortitude-lsp` server.
+The interpreter is used to find the `fortitude` executable when
+[`fortitude.importStrategy`](#importstrategy) is set to `fromEnvironment`.
 
 **Default value**: `[]`
 

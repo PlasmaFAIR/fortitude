@@ -54,7 +54,7 @@ impl std::fmt::Display for FortitudeSettings {
 
 impl FortitudeSettings {
     /// Constructs [`FortitudeSettings`] by attempting to resolve settings from a user-provided
-    /// configuration file, such as `pyproject.toml` or `fortitude.toml`, within the
+    /// configuration file, such as `fpm.toml` or `fortitude.toml`, within the
     /// user's workspace.
     ///
     /// In the absence of a valid configuration file, it gracefully falls back to
@@ -132,20 +132,20 @@ impl FortitudeSettingsIndex {
         // this is *not* the default workspace.
         for directory in root.ancestors().skip(should_skip_workspace) {
             match settings_toml(directory) {
-                Ok(Some(pyproject)) => {
+                Ok(Some(config_file)) => {
                     match fortitude_workspace::resolver::resolve_root_settings(
-                        &pyproject,
+                        &config_file,
                         &EditorConfigurationTransformer(editor_settings, root),
                         fortitude_workspace::resolver::ConfigurationOrigin::Ancestor,
                     ) {
                         Ok(settings) => {
-                            tracing::debug!("Loaded settings from: `{}`", pyproject.display());
+                            tracing::debug!("Loaded settings from: `{}`", config_file.display());
                             respect_gitignore = Some(settings.file_resolver.respect_gitignore);
 
                             index.insert(
                                 directory.to_path_buf(),
                                 Arc::new(FortitudeSettings {
-                                    path: Some(pyproject),
+                                    path: Some(config_file),
                                     settings,
                                 }),
                             );
@@ -158,7 +158,7 @@ impl FortitudeSettingsIndex {
                                     .with_context(|| {
                                         format!(
                                             "Failed to resolve settings for {}",
-                                            pyproject.display()
+                                            config_file.display()
                                         )
                                     })
                                     .unwrap_err()
@@ -185,7 +185,7 @@ impl FortitudeSettingsIndex {
         // to the current working directory and skip walking the workspace directory tree for any
         // settings.
         //
-        // Refer to https://github.com/astral-sh/fortitude/pull/13770 to understand what this behavior
+        // Refer to https://github.com/astral-sh/ruff/pull/13770 to understand what this behavior
         // means for different editors.
         if is_default_workspace {
             if has_error {
