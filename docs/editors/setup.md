@@ -47,6 +47,8 @@ following to your `init.lua`:
 
     ```lua
     vim.lsp.config('fortitude', {
+      cmd = { "fortitude", "server" },
+      filetypes = { "fortran" },
       init_options = {
         settings = {
           -- Fortitude language server settings go here
