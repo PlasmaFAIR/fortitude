@@ -19,7 +19,7 @@ standalone installers:
 curl -LsSf https://github.com/PlasmaFAIR/fortitude/releases/latest/download/fortitude-installer.sh | sh
 
 # On Windows:
-powershell -c "irm https://github.com/PlasmaFAIR/fortitude/releases/latest/download/fortitude-installer.psi | iex"
+powershell -c "irm https://github.com/PlasmaFAIR/fortitude/releases/latest/download/fortitude-installer.ps1 | iex"
 ```
 
 For **Arch Linux** and **AUR** users, Fortitude is available as [`fortitude-bin`](https://aur.archlinux.org/packages/fortitude-bin)
