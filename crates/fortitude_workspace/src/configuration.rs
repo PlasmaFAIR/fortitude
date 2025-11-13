@@ -359,18 +359,9 @@ impl Configuration {
             file_resolver: FileResolverSettings {
                 project_root: project_root.to_path_buf(),
                 exclude: FilePatternSet::try_from_iter(
-                    EXCLUDE_BUILTINS
-                        .iter()
-                        .cloned()
-                        .chain(self.exclude.unwrap_or_default().into_iter())
-                        .chain(self.extend_exclude.into_iter()),
+                    self.exclude.unwrap_or_else(|| EXCLUDE_BUILTINS.to_vec()),
                 )?,
-                extend_exclude: FilePatternSet::default(),
-                // TODO: correct behaviour:
-                // FilePatternSet::try_from_iter(
-                //     self.exclude.unwrap_or_else(|| EXCLUDE_BUILTINS.to_vec())
-                // )?,
-                // extend_exclude: FilePatternSet::try_from_iter(self.extend_exclude)?,
+                extend_exclude: FilePatternSet::try_from_iter(self.extend_exclude)?,
                 include: FilePatternSet::try_from_iter(
                     self.include.unwrap_or_else(|| INCLUDE.to_vec()),
                 )?,

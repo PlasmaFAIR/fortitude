@@ -46,7 +46,7 @@ from this search (see [`check.exclude`](settings.md#exclude) and
 [`check.extend-exclude`](settings.md#extend-exclude)):
 
 ```console
-$ fortitude check --exclude=tests/*.f90 src/*.{f90,fpp} extra/file.f90
+$ fortitude check --extend-exclude=tests/*.f90 src/*.{f90,fpp} extra/file.f90
 ```
 
 Files in your `.gitignore` will be excluded from the file search automatically,
