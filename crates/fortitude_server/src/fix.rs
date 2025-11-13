@@ -5,6 +5,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     PositionEncoding,
     edit::{Replacement, ToRangeExt},
+    resolve::is_document_excluded_for_linting,
     session::DocumentQuery,
 };
 use fortitude_linter::FixerResult;
@@ -19,7 +20,14 @@ pub(crate) fn fix_all(query: &DocumentQuery, encoding: PositionEncoding) -> crat
     let settings = query.settings();
     let document_path = query.virtual_file_path();
 
-    // TODO(peter): If the document is excluded, return an empty list of diagnostics.
+    if is_document_excluded_for_linting(
+        &document_path,
+        &settings.file_resolver,
+        &settings.check,
+        query.text_document_language_id(),
+    ) {
+        return Ok(Fixes::default());
+    }
 
     let file =
         SourceFileBuilder::new(document_path.to_string_lossy(), source_kind.as_str()).finish();
