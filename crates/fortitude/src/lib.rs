@@ -1,5 +1,6 @@
 pub mod check;
 pub mod cli;
+pub mod commands;
 pub mod explain;
 pub mod printer;
 pub mod show_files;
