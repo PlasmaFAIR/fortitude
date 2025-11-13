@@ -1341,7 +1341,7 @@ end module {name}
     let config_file = base_path.join(".fortitude.toml");
     let config = r#"
 [check]
-exclude = [
+extend-exclude = [
     "foo.f90",
 ]
 "#;
@@ -1355,7 +1355,7 @@ fn check_exclude() -> anyhow::Result<()> {
     apply_common_filters!();
     // Expect:
     // - Override 'foo.f90' in config file, see 'base.f90' and 'foo.f90' but not 'bar.f90'
-    // - Don't see anything in venv
+    // - Override builtins, including .venv
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=implicit-typing", "--exclude=bar"])
                          .filename(".")
@@ -1365,6 +1365,16 @@ fn check_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
+    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module missing 'implicit none'
+      |
+    2 | module numpy
+      | ^^^^^^^^^^^^ C001
+    3 | ! missing implicit none
+    4 | contains
+    5 |   integer function f()
+      |
+      = help: Insert `implicit none`
+
     base.f90:2:1: C001 module missing 'implicit none'
       |
     2 | module base
@@ -1385,14 +1395,14 @@ fn check_exclude() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    fortitude: 2 files scanned.
-    Number of errors: 2
+    fortitude: 3 files scanned.
+    Number of errors: 3
 
     For more information about specific rules, run:
 
         fortitude explain X001,Y002,...
 
-    No fixes available (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
+    No fixes available (3 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
     ");
