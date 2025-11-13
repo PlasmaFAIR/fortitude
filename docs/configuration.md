@@ -95,7 +95,7 @@ directly, so the following will still check the `benchmarks/` directory:
 $ fortitude check --exclude=benchmarks benchmarks
 ```
 
-Setting [`check.force-excludes`](settings.md#force-exclude) to `true` will enforce
+Setting [`check.force-exclude`](settings.md#force-exclude) to `true` will enforce
 exclusions even in this scenario.
 
 ### Default inclusions

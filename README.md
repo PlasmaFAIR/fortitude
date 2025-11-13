@@ -99,7 +99,7 @@ fortitude check --file-extensions=f90,fpp
 
 Be default, Fortitude will ignore files and directories in your `.gitignore`.
 This can be disabled by setting `--no-respect-gitignore`. Additional excludes
-can be set using `--excludes`:
+can be set using `--exclude`:
 
 ```bash
 # Don't check in the `benchmarks/` and `tests/` directories.
