@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -54,7 +54,7 @@ impl Violation for AssumedSize {
     }
 }
 impl AstRule for AssumedSize {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -161,7 +161,7 @@ impl Violation for AssumedSizeCharacterIntent {
     }
 }
 impl AstRule for AssumedSizeCharacterIntent {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?

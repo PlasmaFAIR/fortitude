@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -69,7 +69,7 @@ impl Violation for MissingDefaultPointerInitalisation {
 }
 
 impl AstRule for MissingDefaultPointerInitalisation {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // Only operate on derived types
         if node.parent()?.kind() != "derived_type_definition" {
             return None;
