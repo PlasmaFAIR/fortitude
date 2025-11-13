@@ -105,8 +105,7 @@ pub(crate) fn fixes_for_diagnostics(
         .collect()
 }
 
-/// Generates an LSP diagnostic with an associated cell index for the diagnostic to go in.
-/// If the source kind is a text document, the cell index will always be `0`.
+/// Generates an LSP diagnostic
 fn to_lsp_diagnostic(
     diagnostic: &DiagnosticMessage,
     source: &str,
@@ -174,21 +173,21 @@ fn diagnostic_edit_range(
     range.to_range(source, index, encoding)
 }
 
+/// Map from rule code to LSP severity
 fn severity(code: &str) -> lsp_types::DiagnosticSeverity {
     match code {
-        // F821: undefined name <name>
-        // E902: IOError
-        "F821" | "E902" => lsp_types::DiagnosticSeverity::ERROR,
+        // E000: io-error
+        // E001: syntax-error
+        // E011: invalid-character
+        "E000" | "E001" | "E011" => lsp_types::DiagnosticSeverity::ERROR,
         _ => lsp_types::DiagnosticSeverity::WARNING,
     }
 }
 
+/// Map from rule code to LSP "unnecessary" or "deprecated"
 fn tags(code: &str) -> Option<Vec<lsp_types::DiagnosticTag>> {
+    #[allow(clippy::match_single_binding)]
     match code {
-        // F401: <module> imported but unused
-        // F841: local variable <name> is assigned to but never used
-        // RUF059: Unused unpacked variable
-        "F401" | "F841" | "RUF059" => Some(vec![lsp_types::DiagnosticTag::UNNECESSARY]),
         _ => None,
     }
 }
