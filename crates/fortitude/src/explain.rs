@@ -1,17 +1,74 @@
 use std::collections::BTreeSet;
+use std::io::{self, BufWriter};
 use std::process::ExitCode;
 
 use anyhow::Result;
 use colored::{Color, Colorize};
+use fortitude_linter::registry::{Category, RuleNamespace};
 use fortitude_linter::rule_selector::PreviewOptions;
 use fortitude_linter::rules::{Rule, RuleGroup};
 use fortitude_linter::settings::DEFAULT_SELECTORS;
 use itertools::Itertools;
 use ruff_diagnostics::FixAvailability;
-use strum::IntoEnumIterator;
+use serde::ser::SerializeSeq;
+use serde::{Serialize, Serializer};
 use textwrap::dedent;
 
-use crate::cli::ExplainCommand;
+use crate::cli::{ExplainCommand, HelpFormat};
+
+#[derive(Serialize)]
+struct Explanation<'a> {
+    name: &'a str,
+    code: String,
+    category: &'a str,
+    summary: &'a str,
+    message_formats: &'a [&'a str],
+    fix: String,
+    #[expect(clippy::struct_field_names)]
+    explanation: Option<&'a str>,
+    preview: bool,
+}
+
+impl<'a> Explanation<'a> {
+    fn from_rule(rule: &'a Rule) -> Self {
+        let code = rule.noqa_code().to_string();
+        let (category, _) = Category::parse_code(&code).unwrap();
+        let fix = rule.fixable().to_string();
+        Self {
+            name: rule.as_ref(),
+            code,
+            category: category.name(),
+            summary: rule.message_formats()[0],
+            message_formats: rule.message_formats(),
+            fix,
+            explanation: rule.explanation(),
+            preview: rule.is_preview(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct ShortExplanation<'a> {
+    name: &'a str,
+    code: String,
+    summary: &'a str,
+    fix: String,
+    preview: bool,
+}
+
+impl<'a> ShortExplanation<'a> {
+    fn from_rule(rule: &'a Rule) -> Self {
+        let code = rule.noqa_code().to_string();
+        let fix = rule.fixable().to_string();
+        Self {
+            name: rule.as_ref(),
+            code,
+            summary: rule.message_formats()[0],
+            fix,
+            preview: rule.is_preview(),
+        }
+    }
+}
 
 /// Get the list of active rules for this session.
 fn ruleset(args: &ExplainCommand) -> anyhow::Result<Vec<Rule>> {
@@ -49,8 +106,8 @@ fn darkmode() -> bool {
     }
 }
 
-/// Format list of all rules
-fn format_rule_list() -> String {
+/// Print shorter summary of rules
+fn print_rule_list(rules: &[Rule]) {
     let mut output = String::new();
 
     let name_colour = if darkmode() {
@@ -59,41 +116,28 @@ fn format_rule_list() -> String {
         Color::Black
     };
 
-    output.push_str(&"All rules:".green());
-    output.push('\n');
-    for rule in Rule::iter() {
+    for rule in rules {
         let name = rule.as_ref().color(name_colour).bold();
         let code = rule.noqa_code().to_string().bright_red().bold();
+        let summary = rule.message_formats()[0];
         let status = match rule.group() {
-            RuleGroup::Removed => "rule has been removed".red(),
-            RuleGroup::Deprecated => "rule has been deprecated".red(),
-            RuleGroup::Preview => "rule is in preview".blue(),
-            RuleGroup::Stable => "rule is stable".green(),
+            RuleGroup::Removed => "Rule has been removed".red(),
+            RuleGroup::Deprecated => "Rule has been deprecated".red(),
+            RuleGroup::Preview => "Rule is in preview".blue(),
+            RuleGroup::Stable => "Rule is stable".green(),
         };
-        let fixable = if matches!(
-            rule.fixable(),
-            FixAvailability::Always | FixAvailability::Sometimes
-        ) {
-            "fix available".green()
-        } else {
-            "fix not available".normal()
+        let fixable_str = rule.fixable().to_string();
+        let fixable = match rule.fixable() {
+            FixAvailability::Always => fixable_str.green(),
+            FixAvailability::Sometimes => fixable_str.green(),
+            FixAvailability::None => fixable_str.normal(),
         };
-        output.push_str(&format!("{code}\t{name}: {status}, {fixable}\n"));
+        output.push_str(&format!("{code}\t{name}: {summary}. {status}. {fixable}\n"));
     }
-    output.push('\n');
-    output
+    println!("{}", output);
 }
 
-/// Show rule names and explanations
-pub fn explain(args: ExplainCommand) -> Result<ExitCode> {
-    // Just show the list of rules and exit
-    if args.list {
-        print!("{}", format_rule_list());
-        return Ok(ExitCode::SUCCESS);
-    }
-
-    let rules = ruleset(&args)?;
-
+fn print_rule_explanation(rules: &[Rule]) {
     let mut outputs = Vec::new();
     for rule in rules {
         let mut body = String::new();
@@ -136,5 +180,36 @@ pub fn explain(args: ExplainCommand) -> Result<ExitCode> {
     for (code, desc) in outputs {
         println!("{code}\n{desc}");
     }
+}
+
+/// Show rule names and explanations
+pub fn explain(args: ExplainCommand) -> Result<ExitCode> {
+    let rules = ruleset(&args)?;
+
+    match args.output_format {
+        HelpFormat::Text => {
+            if args.summary {
+                print_rule_list(&rules);
+            } else {
+                print_rule_explanation(&rules);
+            }
+        }
+        HelpFormat::Json => {
+            let stdout = BufWriter::new(io::stdout().lock());
+            let mut serialiser = serde_json::Serializer::pretty(stdout);
+            let mut seq = serialiser.serialize_seq(None)?;
+            if args.summary {
+                for rule in rules {
+                    seq.serialize_element(&ShortExplanation::from_rule(&rule))?;
+                }
+            } else {
+                for rule in rules {
+                    seq.serialize_element(&Explanation::from_rule(&rule))?;
+                }
+            }
+            seq.end()?;
+        }
+    }
+
     Ok(ExitCode::SUCCESS)
 }

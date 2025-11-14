@@ -103,7 +103,7 @@ fn explain_mixed_multiple() -> anyhow::Result<()> {
 #[test]
 fn explain_list_rules() {
     Command::new(get_cargo_bin(BIN_NAME))
-        .args(["explain", "--list"])
+        .args(["explain", "--summary"])
         .assert()
         .success()
         .stdout(predicate::str::contains("C001"))

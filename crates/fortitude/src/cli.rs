@@ -483,7 +483,7 @@ impl ConfigurationTransformer for ConfigArguments {
 }
 
 /// Get descriptions, rationales, and solutions for each rule.
-#[derive(Debug, clap::Parser, Clone, PartialEq)]
+#[derive(Debug, clap::Parser, Clone)]
 pub struct ExplainCommand {
     /// List of rules to explain. If omitted, explains all rules.
     #[arg(
@@ -494,7 +494,12 @@ pub struct ExplainCommand {
         hide_possible_values = true
     )]
     pub rules: Vec<RuleSelector>,
-    /// Show the list of rule names and their short codes
-    #[arg(long, conflicts_with = "rules")]
-    pub list: bool,
+
+    /// Show short summary of rule explanation
+    #[arg(long)]
+    pub summary: bool,
+
+    /// Output format
+    #[arg(long, value_enum, default_value = "text")]
+    pub output_format: HelpFormat,
 }
