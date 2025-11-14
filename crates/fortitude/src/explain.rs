@@ -2,12 +2,13 @@ use std::collections::BTreeSet;
 use std::process::ExitCode;
 
 use anyhow::Result;
-use colored::Colorize;
+use colored::{Color, Colorize};
 use fortitude_linter::rule_selector::PreviewOptions;
-use fortitude_linter::rules::Rule;
+use fortitude_linter::rules::{Rule, RuleGroup};
 use fortitude_linter::settings::DEFAULT_SELECTORS;
 use itertools::Itertools;
 use ruff_diagnostics::FixAvailability;
+use strum::IntoEnumIterator;
 use textwrap::dedent;
 
 use crate::cli::ExplainCommand;
@@ -40,8 +41,57 @@ fn ruleset(args: &ExplainCommand) -> anyhow::Result<Vec<Rule>> {
     Ok(rules)
 }
 
-/// Check all files, report issues found, and return error code.
+fn darkmode() -> bool {
+    if cfg!(test) || !colored::control::SHOULD_COLORIZE.should_colorize() {
+        false
+    } else {
+        terminal_light::luma().unwrap_or(1.0) < 0.6
+    }
+}
+
+/// Format list of all rules
+fn format_rule_list() -> String {
+    let mut output = String::new();
+
+    let name_colour = if darkmode() {
+        Color::White
+    } else {
+        Color::Black
+    };
+
+    output.push_str(&"All rules:".green());
+    output.push('\n');
+    for rule in Rule::iter() {
+        let name = rule.as_ref().color(name_colour).bold();
+        let code = rule.noqa_code().to_string().bright_red().bold();
+        let status = match rule.group() {
+            RuleGroup::Removed => "rule has been removed".red(),
+            RuleGroup::Deprecated => "rule has been deprecated".red(),
+            RuleGroup::Preview => "rule is in preview".blue(),
+            RuleGroup::Stable => "rule is stable".green(),
+        };
+        let fixable = if matches!(
+            rule.fixable(),
+            FixAvailability::Always | FixAvailability::Sometimes
+        ) {
+            "fix available".green()
+        } else {
+            "fix not available".normal()
+        };
+        output.push_str(&format!("{code}\t{name}: {status}, {fixable}\n"));
+    }
+    output.push('\n');
+    output
+}
+
+/// Show rule names and explanations
 pub fn explain(args: ExplainCommand) -> Result<ExitCode> {
+    // Just show the list of rules and exit
+    if args.list {
+        print!("{}", format_rule_list());
+        return Ok(ExitCode::SUCCESS);
+    }
+
     let rules = ruleset(&args)?;
 
     let mut outputs = Vec::new();

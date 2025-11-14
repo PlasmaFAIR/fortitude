@@ -1,4 +1,5 @@
 use assert_cmd::prelude::*;
+use insta_cmd::get_cargo_bin;
 use predicates::prelude::*;
 use std::process::Command;
 
@@ -97,4 +98,14 @@ fn explain_mixed_multiple() -> anyhow::Result<()> {
         .stdout(predicate::str::contains("S061").count(0));
 
     Ok(())
+}
+
+#[test]
+fn explain_list_rules() {
+    Command::new(get_cargo_bin(BIN_NAME))
+        .args(["explain", "--list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("C001"))
+        .stdout(predicate::str::contains("implicit-typing"));
 }

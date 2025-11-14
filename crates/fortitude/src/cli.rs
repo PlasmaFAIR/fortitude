@@ -494,4 +494,7 @@ pub struct ExplainCommand {
         hide_possible_values = true
     )]
     pub rules: Vec<RuleSelector>,
+    /// Show the list of rule names and their short codes
+    #[arg(long, conflicts_with = "rules")]
+    pub list: bool,
 }
