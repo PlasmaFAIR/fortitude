@@ -3,30 +3,91 @@
 Adapted from the ``ruff`` launcher script.
 """
 
-import subprocess
+from __future__ import annotations
+
+import os
 import sys
 import sysconfig
-from pathlib import Path
 
 
-def find_exe() -> Path:
-    """Return the compiled ``fortitude`` executable path."""
+def find_fortitude_bin() -> str:
+    """Return the fortitude binary path."""
 
-    exe_name = "fortitude" + sysconfig.get_config_var("EXE")
+    fortitude_exe = "fortitude" + sysconfig.get_config_var("EXE")
 
-    scripts_path = Path(sysconfig.get_path("scripts"))
-    if (exe := scripts_path / exe_name).is_file():
-        return exe
+    scripts_path = os.path.join(sysconfig.get_path("scripts"), fortitude_exe)
+    if os.path.isfile(scripts_path):
+        return scripts_path
 
-    user_scheme = sysconfig.get_preferred_scheme("user")
-    user_path = Path(sysconfig.get_path("scripts", scheme=user_scheme))
-    if (exe := user_path / exe_name).is_file():
-        return exe
+    if sys.version_info >= (3, 10):
+        user_scheme = sysconfig.get_preferred_scheme("user")
+    elif os.name == "nt":
+        user_scheme = "nt_user"
+    elif sys.platform == "darwin" and sys._framework:
+        user_scheme = "osx_framework_user"
+    else:
+        user_scheme = "posix_user"
 
-    msg = "Could not locate compiled fortitude executable"
-    raise RuntimeError(msg)
+    user_path = os.path.join(
+        sysconfig.get_path("scripts", scheme=user_scheme), fortitude_exe
+    )
+    if os.path.isfile(user_path):
+        return user_path
+
+    # Search in `bin` adjacent to package root (as created by `pip install --target`).
+    pkg_root = os.path.dirname(os.path.dirname(__file__))
+    target_path = os.path.join(pkg_root, "bin", fortitude_exe)
+    if os.path.isfile(target_path):
+        return target_path
+
+    # Search for pip-specific build environments.
+    #
+    # Expect to find fortitude in <prefix>/pip-build-env-<rand>/overlay/bin/fortitude
+    # Expect to find a "normal" folder at <prefix>/pip-build-env-<rand>/normal
+    #
+    # See: https://github.com/pypa/pip/blob/102d8187a1f5a4cd5de7a549fd8a9af34e89a54f/src/pip/_internal/build_env.py#L87
+    paths = os.environ.get("PATH", "").split(os.pathsep)
+    if len(paths) >= 2:
+
+        def get_last_three_path_parts(path: str) -> list[str]:
+            """Return a list of up to the last three parts of a path."""
+            parts = []
+
+            while len(parts) < 3:
+                head, tail = os.path.split(path)
+                if tail or head != path:
+                    parts.append(tail)
+                    path = head
+                else:
+                    parts.append(path)
+                    break
+
+            return parts
+
+        maybe_overlay = get_last_three_path_parts(paths[0])
+        maybe_normal = get_last_three_path_parts(paths[1])
+        if (
+            len(maybe_normal) >= 3
+            and maybe_normal[-1].startswith("pip-build-env-")
+            and maybe_normal[-2] == "normal"
+            and len(maybe_overlay) >= 3
+            and maybe_overlay[-1].startswith("pip-build-env-")
+            and maybe_overlay[-2] == "overlay"
+        ):
+            # The overlay must contain the fortitude binary.
+            candidate = os.path.join(paths[0], fortitude_exe)
+            if os.path.isfile(candidate):
+                return candidate
+
+    raise FileNotFoundError(scripts_path)
 
 
 if __name__ == "__main__":
-    completed_process = subprocess.run([str(find_exe()), *sys.argv[1:]])
-    sys.exit(completed_process.returncode)
+    fortitude = find_fortitude_bin()
+    if sys.platform == "win32":
+        import subprocess
+
+        completed_process = subprocess.run([fortitude, *sys.argv[1:]])
+        sys.exit(completed_process.returncode)
+    else:
+        os.execvp(fortitude, [fortitude, *sys.argv[1:]])
