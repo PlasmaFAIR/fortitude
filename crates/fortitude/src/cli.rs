@@ -15,6 +15,8 @@ use fortitude_linter::{
 };
 use fortitude_workspace::configuration::{Configuration, ConfigurationTransformer};
 
+use crate::commands::completions::config::{OptionString, OptionStringParser};
+
 #[derive(Debug, Parser)]
 #[command(
     author,
@@ -107,6 +109,18 @@ pub enum SubCommands {
     },
     /// Display Fortitude's version
     Version {
+        #[arg(long, value_enum, default_value = "text")]
+        output_format: HelpFormat,
+    },
+    /// List or describe the available configuration options.
+    Config {
+        /// Config key to show
+        #[arg(
+            value_parser = OptionStringParser,
+            hide_possible_values = true
+        )]
+        option: Option<OptionString>,
+        /// Output format
         #[arg(long, value_enum, default_value = "text")]
         output_format: HelpFormat,
     },
