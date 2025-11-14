@@ -625,6 +625,53 @@ end program foo
     Ok(())
 }
 
+#[test]
+fn apply_all_fixes() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none
+endprogram
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(Command::cargo_bin(BIN_NAME)?
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg(&test_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 1 files scanned.
+    Number of errors: 2 (2 fixed, 0 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    let expected = r#"
+program foo
+  implicit none (type, external)
+end program foo
+"#
+    .to_string();
+
+    let transformed = fs::read_to_string(&test_file)?;
+    assert_eq!(transformed, expected);
+
+    Ok(())
+}
+
 /// When checking a file with syntax errors, any AST violations after the syntax
 /// error are discarded.  This is to prevent the linter from raising false
 /// positives due to an inaccurate AST. In this case, the syntax error should
