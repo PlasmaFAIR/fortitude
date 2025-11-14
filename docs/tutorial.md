@@ -154,6 +154,59 @@ others, or are more suitable for libraries rather than applications, and so on.
 The default set of rules is limited to those that we think are the most useful to the
 majority of projects, and are a mixture of the different categories.
 
+#### Understanding and Discovering Rules and Categories
+
+As well as the [online documentation](rules.md), you can also get an explanation
+of a particular rule on the command line with the `explain` subcommand:
+
+```console
+$ fortitude explain implicit-typing
+# C001: implicit-typing
+
+Fix is sometimes available.
+
+## What does it do?
+Checks for missing `implicit none`.
+...
+```
+
+`fortitude explain` takes the same arguments as [`select`](settings.md#select):
+a rule name or short code, a category name or short code, or `ALL`.
+
+You can get a quick list of all the available rules, along with their short
+codes and a brief summary by running `fortitude explain --summary`:
+
+```console
+$ fortitude explain --summary
+C001    implicit-typing: {entity} missing 'implicit none'. Rule is stable. Fix is sometimes available.
+C002    interface-implicit-typing: interface '{name}' missing 'implicit none'. Rule is stable. Fix is sometimes available.
+C003    implicit-external-procedures: 'implicit none' missing 'external'. Rule is stable. Fix is not available.
+C011    missing-default-case: Missing default case may not handle all values. Rule is in preview. Fix is not available.
+...
+```
+
+For a quick summary of all the rules in a given category:
+```console
+$ fortitude explain --summary style
+S001    line-too-long: line length of {actual_length}, exceeds maximum {max_length}. Rule is stable. Fix is not available.
+S061    unnamed-end-statement: end statement should be named.. Rule is stable. Fix is always available.
+S071    missing-double-colon: variable declaration missing '::'. Rule is stable. Fix is always available.
+...
+```
+
+And, lastly, to see all the categories use `--list-categories`:
+
+```console
+$ fortitude explain --list-categories
+E       error: Failure to parse a file.
+C       correctness: Detect code that is bug-prone or likely to be incorrect.
+OB      obsolescent: Obsolescent language features, as determined by the Fortran standard.
+MOD     modernisation: Update to modern Fortran features. Used for less severe issues than `Obsolescent`, and goes beyond recommendations in the Fortran standard.
+S       style: Violation of style conventions.
+PORT    portability: Avoid platform/compiler-specific features.
+FORT    fortitude: Fortitude specific rules.
+```
+
 ### Ignore Errors
 
 Any rule can be ignored by adding a `! allow(<rule-name>)` comment before the statement in
