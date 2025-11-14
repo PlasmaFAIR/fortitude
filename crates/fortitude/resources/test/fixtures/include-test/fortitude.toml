@@ -1,0 +1,1 @@
+include = ["a.f90", "subdirectory/c.f90"]

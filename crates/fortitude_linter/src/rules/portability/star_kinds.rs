@@ -1,5 +1,5 @@
 use crate::ast::{FortitudeNode, dtype_is_plain_number, strip_line_breaks};
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -47,7 +47,7 @@ impl Violation for StarKind {
 }
 
 impl AstRule for StarKind {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let text = src.source_text();
         let dtype = node.child(0)?.to_text(text)?.to_lowercase();
         // TODO: Handle characters

@@ -1,20 +1,16 @@
 # Configuration
 
-Fortitude will look for either a `fortitude.toml` or `fpm.toml` file
-in the current directory, or one of its parents. If using
-`fortitude.toml` or `.fortitude.toml`, settings should be under the command name, while for
-`fpm.toml` files, this has to be additionally nested under the
-`extra.fortitude` table:
+Fortitude will look for either a `fortitude.toml`, `.fortitude.toml`, or
+`fpm.toml` file in the current directory, or one of its parents.
+
+For complete documentation of the available configuration options, see
+[_Settings_](settings.md).
+
+If using `fortitude.toml` or `.fortitude.toml`, settings should be under the
+command name, while for `fpm.toml` files, this has to be additionally nested
+under the `extra.fortitude` table:
 
 
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check]
-    select = ["S", "T"]
-    ignore = ["S001", "S051"]
-    line-length = 132
-    ```
 === "`fpm.toml`"
 
     ```toml
@@ -24,8 +20,42 @@ in the current directory, or one of its parents. If using
     line-length = 132
     ```
 
-For complete documentation of the available configuration options, see
-[_Settings_](settings.md).
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    select = ["S", "T"]
+    ignore = ["S001", "S051"]
+    line-length = 132
+    ```
+
+## Configuration file discovery
+
+Fortitude uses [Ruff's hierarchical config file discovery
+strategy](https://docs.astral.sh/ruff/configuration/#config-file-discovery),
+where we use the "closest" config file in the directory hierarchy for
+each individual source file being checked, with all paths in the
+config file (such as `exclude`) relative to the directory containing
+that config file.
+
+If a config file is passed on the command line using `--config-file`,
+those settings are used for _all_ files, and any relative paths in
+that config file are resolved relative to the directory where
+`fortitude` is run.
+
+Similarly, any other options set on the command line (for example,
+`--select`) override those in all found config files.
+
+If there is no configuration file in the current directory or its parents,
+Fortitude will look in `${config_dir}/fortitude/` for a user-specific file (see
+[`etcetera`'s base
+strategy](https://docs.rs/etcetera/latest/etcetera/#native-strategy) for how
+`${config_dir}` is determined).
+
+If no config file is found, Fortitude will fallback to a default configuration.
+
+If multiple config files are found, `.fortitude.toml` takes precedence
+over `fortitude.toml`, which takes precedence over `fpm.toml`.
 
 ## Discovering files
 
@@ -36,7 +66,7 @@ from this search (see [`check.exclude`](settings.md#exclude) and
 [`check.extend-exclude`](settings.md#extend-exclude)):
 
 ```console
-$ fortitude check --exclude=tests/*.f90 src/*.{f90,fpp} extra/file.f90
+$ fortitude check --extend-exclude=tests/*.f90 src/*.{f90,fpp} extra/file.f90
 ```
 
 Files in your `.gitignore` will be excluded from the file search automatically,
@@ -85,7 +115,7 @@ directly, so the following will still check the `benchmarks/` directory:
 $ fortitude check --exclude=benchmarks benchmarks
 ```
 
-Setting [`check.force-excludes`](settings.md#force-exclude) to `true` will enforce
+Setting [`check.force-exclude`](settings.md#force-exclude) to `true` will enforce
 exclusions even in this scenario.
 
 ### Default inclusions
@@ -139,14 +169,17 @@ Commands:
   help     Print this message or the help of the given subcommand(s)
 
 Options:
-      --config-file <CONFIG_FILE>  Path to a TOML configuration file
-  -h, --help                       Print help
-  -V, --version                    Print version
+  -h, --help     Print help
+  -V, --version  Print version
 
 Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+Global options:
+      --config-file <CONFIG_FILE>  Path to a TOML configuration file
+      --isolated                   Ignore all configuration files
 
 For help with a specific command, see: `fortitude help <command>`.
 ```
@@ -232,6 +265,10 @@ Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+Global options:
+      --config-file <CONFIG_FILE>  Path to a TOML configuration file
+      --isolated                   Ignore all configuration files
 ```
 
 <!-- End auto-generated check help. -->
