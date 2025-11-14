@@ -12,6 +12,7 @@ use itertools::Itertools;
 use ruff_diagnostics::FixAvailability;
 use serde::ser::SerializeSeq;
 use serde::{Serialize, Serializer};
+use strum::IntoEnumIterator;
 use textwrap::dedent;
 
 use crate::cli::{ExplainCommand, HelpFormat};
@@ -66,6 +67,23 @@ impl<'a> ShortExplanation<'a> {
             summary: rule.message_formats()[0],
             fix,
             preview: rule.is_preview(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct CategorySummary<'a> {
+    name: &'a str,
+    code: &'a str,
+    description: &'a str,
+}
+
+impl<'a> CategorySummary<'a> {
+    fn from_category(category: &'a Category) -> Self {
+        Self {
+            name: category.as_ref(),
+            code: category.common_prefix(),
+            description: category.description(),
         }
     }
 }
@@ -182,13 +200,32 @@ fn print_rule_explanation(rules: &[Rule]) {
     }
 }
 
+fn print_categories() {
+    let name_colour = if darkmode() {
+        Color::White
+    } else {
+        Color::Black
+    };
+
+    for category in Category::iter() {
+        println!(
+            "{}\t{}: {}",
+            category.common_prefix().bright_red().bold(),
+            category.as_ref().color(name_colour).bold(),
+            category.description()
+        );
+    }
+}
+
 /// Show rule names and explanations
 pub fn explain(args: ExplainCommand) -> Result<ExitCode> {
     let rules = ruleset(&args)?;
 
     match args.output_format {
         HelpFormat::Text => {
-            if args.summary {
+            if args.list_categories {
+                print_categories();
+            } else if args.summary {
                 print_rule_list(&rules);
             } else {
                 print_rule_explanation(&rules);
@@ -198,7 +235,11 @@ pub fn explain(args: ExplainCommand) -> Result<ExitCode> {
             let stdout = BufWriter::new(io::stdout().lock());
             let mut serialiser = serde_json::Serializer::pretty(stdout);
             let mut seq = serialiser.serialize_seq(None)?;
-            if args.summary {
+            if args.list_categories {
+                for category in Category::iter() {
+                    seq.serialize_element(&CategorySummary::from_category(&category))?;
+                }
+            } else if args.summary {
                 for rule in rules {
                     seq.serialize_element(&ShortExplanation::from_rule(&rule))?;
                 }

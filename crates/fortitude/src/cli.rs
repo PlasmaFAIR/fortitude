@@ -499,6 +499,10 @@ pub struct ExplainCommand {
     #[arg(long)]
     pub summary: bool,
 
+    /// Show available category names
+    #[arg(long, conflicts_with = "rules", conflicts_with = "summary")]
+    pub list_categories: bool,
+
     /// Output format
     #[arg(long, value_enum, default_value = "text")]
     pub output_format: HelpFormat,
