@@ -13,6 +13,7 @@ use ruff_diagnostics::FixAvailability;
 use serde::ser::SerializeSeq;
 use serde::{Serialize, Serializer};
 use strum::IntoEnumIterator;
+use termimad::{Alignment, MadSkin};
 use textwrap::dedent;
 
 use crate::cli::{ExplainCommand, HelpFormat};
@@ -189,14 +190,28 @@ fn print_rule_explanation(rules: &[Rule]) {
         let code = rule.noqa_code().to_string();
         let name = rule.as_ref();
         let title = format!("# {code}: {name}\n");
-        outputs.push((title.bright_red(), dedent(body.as_str())));
+        outputs.push((title, dedent(body.as_str())));
     }
     outputs.sort_by(|a, b| {
         let ((a_code, _), (b_code, _)) = (a, b);
         a_code.cmp(b_code)
     });
+
+    let skin = if colored::control::SHOULD_COLORIZE.should_colorize() {
+        let mut skin = MadSkin::default();
+        skin.headers[0].align = Alignment::Left;
+        Some(skin)
+    } else {
+        None
+    };
+
     for (code, desc) in outputs {
-        println!("{code}\n{desc}");
+        let string = format!("{code}\n{desc}");
+        if let Some(skin) = &skin {
+            skin.print_text(&string);
+        } else {
+            println!("{}", string);
+        }
     }
 }
 
