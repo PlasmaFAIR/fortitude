@@ -1,6 +1,6 @@
 /// Defines rules that govern the use of keywords.
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -111,7 +111,7 @@ impl AlwaysFixableViolation for KeywordsMissingSpace {
 }
 
 impl AstRule for KeywordsMissingSpace {
-    fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let first_child = if node.kind() == "inout" {
             *node
         } else {
@@ -121,14 +121,11 @@ impl AstRule for KeywordsMissingSpace {
         let keywords = DoubleKeyword::from_str(text).ok()?;
 
         // Exit early if the keyword is permitted
-        if matches!(keywords, DoubleKeyword::InOut)
-            && !settings.check.keyword_whitespace.inout_with_space
+        if matches!(keywords, DoubleKeyword::InOut) && !settings.keyword_whitespace.inout_with_space
         {
             return None;
         }
-        if matches!(keywords, DoubleKeyword::GoTo)
-            && !settings.check.keyword_whitespace.goto_with_space
-        {
+        if matches!(keywords, DoubleKeyword::GoTo) && !settings.keyword_whitespace.goto_with_space {
             return None;
         }
 
@@ -200,11 +197,11 @@ impl Violation for KeywordHasWhitespace {
 }
 
 impl AstRule for KeywordHasWhitespace {
-    fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if node.kind() == "in" && settings.check.keyword_whitespace.inout_with_space {
+    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        if node.kind() == "in" && settings.keyword_whitespace.inout_with_space {
             return None;
         }
-        if node.kind() == "keyword_statement" && settings.check.keyword_whitespace.goto_with_space {
+        if node.kind() == "keyword_statement" && settings.keyword_whitespace.goto_with_space {
             return None;
         }
         let (first, second, first_child, violation) = if node.kind() == "in" {

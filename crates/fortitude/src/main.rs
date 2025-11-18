@@ -15,7 +15,7 @@ fn main() -> Result<ExitCode> {
     set_up_logging(args.global_options.log_level())?;
 
     let status = match args.command {
-        SubCommands::Check(check_args) => check(check_args, &args.global_options),
+        SubCommands::Check(check_args) => check(check_args, args.global_options),
         SubCommands::Explain(args) => explain(args),
         SubCommands::GenerateShellCompletion { shell } => {
             shell.generate(&mut Cli::command(), &mut stdout());
@@ -25,6 +25,7 @@ fn main() -> Result<ExitCode> {
             fortitude::version::version_command(output_format)?;
             return Ok(ExitCode::SUCCESS);
         }
+        SubCommands::Server(args) => fortitude::server::server_command(args),
     };
     match status {
         Ok(code) => Ok(code),

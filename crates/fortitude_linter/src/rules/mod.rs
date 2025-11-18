@@ -107,7 +107,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "151") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::MisleadingInlineIfSemicolon),
         (Correctness, "152") => (RuleGroup::Preview, Ast, Default, correctness::conditionals::MisleadingInlineIfContinuation),
         (Correctness, "161") => (RuleGroup::Preview, Ast, Default, correctness::nonportable_shortcircuit_inquiry::NonportableShortcircuitInquiry),
-        (Correctness, "171") => (RuleGroup::Preview, Text, Optional, correctness::split_escaped_quote::SplitEscapedQuote),
+        (Correctness, "171") => (RuleGroup::Preview, None, Optional, correctness::split_escaped_quote::SplitEscapedQuote),
         (Correctness, "181") => (RuleGroup::Preview, Ast, Default, correctness::error_handling::UncheckedStat),
         (Correctness, "182") => (RuleGroup::Preview, Ast, Default, correctness::error_handling::MultipleAllocationsWithStat),
         (Correctness, "183") => (RuleGroup::Preview, Ast, Optional, correctness::error_handling::StatWithoutMessage),
@@ -128,14 +128,14 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Portability, "031") => (RuleGroup::Preview, None, Default, portability::invalid_tab::InvalidTab),
 
         // style
-        (Style, "001") => (RuleGroup::Stable, Text, Default, style::line_length::LineTooLong),
+        (Style, "001") => (RuleGroup::Stable, None, Default, style::line_length::LineTooLong),
         (Style, "061") => (RuleGroup::Stable, Ast, Default, style::end_statements::UnnamedEndStatement),
         (Style, "071") => (RuleGroup::Stable, Ast, Default, style::double_colon_in_decl::MissingDoubleColon),
         (Style, "081") => (RuleGroup::Preview, Ast, Default, style::semicolons::SuperfluousSemicolon),
         (Style, "082") => (RuleGroup::Preview, Ast, Optional, style::semicolons::MultipleStatementsPerLine),
-        (Style, "091") => (RuleGroup::Stable, Path, Default, style::file_extensions::NonStandardFileExtension),
+        (Style, "091") => (RuleGroup::Stable, None, Default, style::file_extensions::NonStandardFileExtension),
         // There are likely to be many whitespace rules at some point, reserve S1xx for them
-        (Style, "101") => (RuleGroup::Stable, Text, Default, style::whitespace::TrailingWhitespace),
+        (Style, "101") => (RuleGroup::Stable, None, Default, style::whitespace::TrailingWhitespace),
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
         (Style, "103") => (RuleGroup::Preview, Ast, Optional, style::whitespace::IncorrectSpaceAroundDoubleColon),
         (Style, "104") => (RuleGroup::Preview, Ast, Optional, style::whitespace::IncorrectSpaceBetweenBrackets),
