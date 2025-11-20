@@ -114,7 +114,9 @@ pub enum SubCommands {
     },
     /// List or describe the available configuration options.
     Config {
-        /// Config key to show
+        /// Config key to show. Running the command with no key will
+        /// show the top-level options. Nested options should be
+        /// separated with '.', such as 'check.fix'.
         #[arg(
             value_parser = OptionStringParser,
             hide_possible_values = true
