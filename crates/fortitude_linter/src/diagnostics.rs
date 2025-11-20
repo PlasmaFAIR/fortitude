@@ -24,7 +24,7 @@ impl Diagnostics {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.messages.is_empty()
+        self.messages.is_empty() && self.fixed.is_empty()
     }
 }
 
