@@ -25,6 +25,13 @@ fn main() -> Result<ExitCode> {
             fortitude::version::version_command(output_format)?;
             return Ok(ExitCode::SUCCESS);
         }
+        SubCommands::Config {
+            option,
+            output_format,
+        } => {
+            fortitude::commands::config::config(option.as_deref(), output_format)?;
+            return Ok(ExitCode::SUCCESS);
+        }
     };
     match status {
         Ok(code) => Ok(code),
