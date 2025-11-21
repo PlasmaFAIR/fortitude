@@ -15,10 +15,10 @@ use crate::configuration::{Configuration, ConfigurationTransformer, load_options
 
 /// The configuration information from a `fortitude.toml` file.
 #[derive(Debug)]
-pub struct FortitudeConfig {
+pub struct ConfigFile {
     /// The strategy used to discover the relevant `fortitude.toml` file for
     /// each Python file.
-    pub strategy: FortconfigDiscoveryStrategy,
+    pub strategy: ConfigFileDiscoveryStrategy,
     /// All settings from the `fortitude.toml` file.
     pub settings: Settings,
     /// Absolute path to the `fortitude.toml` file. This would be `None` when
@@ -26,9 +26,9 @@ pub struct FortitudeConfig {
     pub path: Option<PathBuf>,
 }
 
-impl FortitudeConfig {
+impl ConfigFile {
     pub fn new(
-        strategy: FortconfigDiscoveryStrategy,
+        strategy: ConfigFileDiscoveryStrategy,
         settings: Settings,
         path: Option<PathBuf>,
     ) -> Self {
@@ -43,7 +43,7 @@ impl FortitudeConfig {
 /// The strategy used to discover the relevant `fortitude.toml` file for each
 /// Python file.
 #[derive(Debug, Clone, Copy, is_macro::Is)]
-pub enum FortconfigDiscoveryStrategy {
+pub enum ConfigFileDiscoveryStrategy {
     /// Use a fixed `fortitude.toml` file for all Python files (i.e., one
     /// provided on the command-line).
     Fixed,

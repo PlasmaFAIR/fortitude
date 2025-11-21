@@ -11,7 +11,7 @@ use fortitude_workspace::configuration::{
     Configuration, ConfigurationTransformer, find_settings_toml, find_user_settings_toml,
 };
 use fortitude_workspace::resolver::{
-    ConfigurationOrigin, FortconfigDiscoveryStrategy, FortitudeConfig, resolve_root_settings,
+    ConfigFile, ConfigFileDiscoveryStrategy, ConfigurationOrigin, resolve_root_settings,
 };
 
 use crate::cli::ConfigArguments;
@@ -21,7 +21,7 @@ use crate::cli::ConfigArguments;
 pub fn resolve(
     config_arguments: &ConfigArguments,
     stdin_filename: Option<&Path>,
-) -> Result<FortitudeConfig> {
+) -> Result<ConfigFile> {
     let Ok(cwd) = std::env::current_dir() else {
         bail!("Working directory does not exist")
     };
@@ -31,8 +31,8 @@ pub fn resolve(
         let config = config_arguments.transform(Configuration::default());
         let settings = config.into_settings(&cwd)?;
         debug!("Isolated mode, not reading any pyproject.toml");
-        return Ok(FortitudeConfig::new(
-            FortconfigDiscoveryStrategy::Fixed,
+        return Ok(ConfigFile::new(
+            ConfigFileDiscoveryStrategy::Fixed,
             settings,
             None,
         ));
@@ -50,8 +50,8 @@ pub fn resolve(
             "Using user-specified configuration file at: {}",
             fortconfig.display()
         );
-        return Ok(FortitudeConfig::new(
-            FortconfigDiscoveryStrategy::Fixed,
+        return Ok(ConfigFile::new(
+            ConfigFileDiscoveryStrategy::Fixed,
             settings,
             Some(fortconfig.to_path_buf()),
         ));
@@ -69,8 +69,8 @@ pub fn resolve(
         );
         let settings =
             resolve_root_settings(&fortconfig, config_arguments, ConfigurationOrigin::Ancestor)?;
-        return Ok(FortitudeConfig::new(
-            FortconfigDiscoveryStrategy::Hierarchical,
+        return Ok(ConfigFile::new(
+            ConfigFileDiscoveryStrategy::Hierarchical,
             settings,
             Some(fortconfig),
         ));
@@ -90,8 +90,8 @@ pub fn resolve(
             config_arguments,
             ConfigurationOrigin::UserSettings,
         )?;
-        return Ok(FortitudeConfig::new(
-            FortconfigDiscoveryStrategy::Hierarchical,
+        return Ok(ConfigFile::new(
+            ConfigFileDiscoveryStrategy::Hierarchical,
             settings,
             Some(pyproject),
         ));
@@ -104,8 +104,8 @@ pub fn resolve(
     debug!("Using Fortitude default settings");
     let config = config_arguments.transform(Configuration::default());
     let settings = config.into_settings(&cwd)?;
-    Ok(FortitudeConfig::new(
-        FortconfigDiscoveryStrategy::Hierarchical,
+    Ok(ConfigFile::new(
+        ConfigFileDiscoveryStrategy::Hierarchical,
         settings,
         None,
     ))
