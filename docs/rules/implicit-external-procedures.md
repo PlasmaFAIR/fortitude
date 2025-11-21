@@ -12,3 +12,5 @@ compiler to check the number and type of arguments and return values.
 
 `implicit none` is equivalent to `implicit none (type)`, so the full
 statement should be `implicit none (type, external)`.
+
+This rule is only active when targeting Fortran 2018 or later.

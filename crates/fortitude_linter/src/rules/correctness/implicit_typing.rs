@@ -1,6 +1,6 @@
 /// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::{FortranStandard, Settings};
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -176,6 +176,8 @@ impl AstRule for InterfaceImplicitTyping {
 ///
 /// `implicit none` is equivalent to `implicit none (type)`, so the full
 /// statement should be `implicit none (type, external)`.
+///
+/// This rule is only active when targeting Fortran 2018 or later.
 #[derive(ViolationMetadata)]
 pub(crate) struct ImplicitExternalProcedures {}
 
@@ -191,8 +193,12 @@ impl Violation for ImplicitExternalProcedures {
 }
 
 impl AstRule for ImplicitExternalProcedures {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if !implicit_statement_is_none(node) {
+            return None;
+        }
+
+        if settings.check.target_std < FortranStandard::F2018 {
             return None;
         }
 
