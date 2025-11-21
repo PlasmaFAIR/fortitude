@@ -187,6 +187,12 @@ fn print_rule_explanation(rules: &[Rule]) {
             }
         }
 
+        // Replace links to the docs
+        body = body.replace(
+            "../settings.md",
+            "https://fortitude.readthedocs.io/en/stable/settings",
+        );
+
         let code = rule.noqa_code().to_string();
         let name = rule.as_ref();
         let title = format!("# {code}: {name}\n");
