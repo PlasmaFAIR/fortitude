@@ -151,34 +151,34 @@ There are several steps required to add a new rule to Fortitude:
 1. Decide on a name and category following our [naming
    rules](#naming-and-categorising-rules).
 2. Create a new file
-   `crates/fortitude_linter/src/rules/category/rule_name.rs`, where `category` is your chosen rule
-   category and `rule_name` is its name.  If there is already a file for a
+   `crates/fortitude_linter/src/rules/<category>/<rule_name>.rs`, where `<category>` is your chosen rule
+   category and `<rule_name>` is its name.  If there is already a file for a
    similar rule, you may also choose to add your rule there.
 3. In that file, define a `Violation` struct. This defines the diagnostic
    messages raised when your rule is violated.
 4. Implement one of `TextRule`, `AstRule` or `PathRule` for your `Violation`. These
    are, respectively, rules that check a file line-by-line, rules that analyse the
    AST, and rules that analyse the path to a Fortran file directly.
-   - Most rules are `AstRules`, which use [`tree_sitter`](https://docs.rs/tree-sitter/latest/tree_sitter/)
-     to analyse the code. If you want to see how `tree_sitter` parses a given file,
-     we recommended installing `tree_sitter`, cloning
-     [`tree_sitter_fortran`](https://github.com/stadelmanma/tree-sitter-fortran),
-     and then running the following from the `tree_sitter_fortran` root directory:
+    - Most rules are `AstRules`, which use [`tree_sitter`](https://docs.rs/tree-sitter/latest/tree_sitter/)
+      to analyse the code. If you want to see how `tree_sitter` parses a given file,
+      we recommended installing `tree_sitter`, cloning
+      [`tree_sitter_fortran`](https://github.com/stadelmanma/tree-sitter-fortran),
+      and then running the following from the `tree_sitter_fortran` root directory:
 ```bash
 tree-sitter build
 tree-sitter parse /path/to/fortran/file.f90
 ```
 5. Map the `Violation` struct to a rule code in `fortitude/src/rules/mod.rs`.
-   - `code_to_rule` is never called directly, but the match statement within is
-     analysed by the macro `fortitude_macros::map_codes` to define a `Rule` enum
-     and many associated utilities.
-   - The first two digits for a rule code normally define a subcategory, while the
-     last digit denotes the specific rule within that subcategory. The last digit
-     should not be zero. For example, `T04x` defines rules related to the use of
-     assumed-size arrays and character strings.  This isn't stringently
-     enforced, but you may be asked to renumber the rule if other developers
-     think it would better fit somewhere else.
-   - New rules should be in `RuleGroup::Preview`.
+    - `code_to_rule` is never called directly, but the match statement within is
+      analysed by the macro `fortitude_macros::map_codes` to define a `Rule` enum
+      and many associated utilities.
+    - The first two digits for a rule code normally define a subcategory, while the
+      last digit denotes the specific rule within that subcategory. The last digit
+      should not be zero. For example, `C07x` defines rules related to the use of
+      assumed-size arrays and character strings.  This isn't stringently
+      enforced, but you may be asked to renumber the rule if other developers
+      think it would better fit somewhere else.
+    - New rules should be in `RuleGroup::Preview`.
 6. Add a [test](contributing.md#rule-testing-fixtures-and-snapshots) for your rule. Try to
    consider edge cases and any scenarios where false positives could occur.
 7. Update the generated documentation using `cargo dev generate-all`.
@@ -223,11 +223,13 @@ request to ask for assistance from other developers.
 ### Naming and Categorising Rules
 
 Similarly to
-[Ruff](https://docs.astral.sh/ruff/contributing/#rule-naming-convention), the name
-of a rule should describe the pattern the rule is intended to fix. Words such as
-'forbid' should be omitted. For example, the name for the rule that warns of
-overly long lines is `LineTooLong`, and not something like `AvoidLineTooLong` or
-`KeepLinesShort`.
+[Ruff](https://docs.astral.sh/ruff/contributing/#rule-naming-convention), the
+name of a rule should describe the pattern the rule is intended to fix. Words
+such as 'forbid' should be omitted. For example, the name for the rule that
+warns of overly long lines is `LineTooLong`, and not something like
+`AvoidLineTooLong` or `KeepLinesShort` (note: the rule struct should be named in
+`PascalCase`/`UpperCamelCase` -- Fortitude will automatically convert this to
+`kebab-case` for the user facing names)
 
 Rules should also be categorised appropriately. For example, if a rule is
 intended to discourage the use of outdated features, it may go under
@@ -329,7 +331,7 @@ To make a new release, the following steps must be completed in order:
 
 1. Update the tag on `main`
 
-1. Run the [release workflow](https://github.com/astral-sh/ruff/actions/workflows/release.yml) with:
+1. Run the [release workflow](https://github.com/PlasmaFAIR/fortitude/actions/workflows/release.yml) with:
 
     - The new version number
 
