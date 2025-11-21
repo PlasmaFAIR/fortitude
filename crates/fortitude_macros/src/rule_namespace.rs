@@ -7,7 +7,9 @@ use std::collections::HashSet;
 
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{Data, DataEnum, DeriveInput, Error, ExprLit, Lit, Meta, MetaNameValue};
+use syn::{
+    Attribute, Data, DataEnum, DeriveInput, Error, ExprLit, Lit, LitStr, Meta, MetaNameValue,
+};
 
 pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     let DeriveInput {
@@ -63,17 +65,11 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
             ));
         }
 
-        let Some(doc_attr) = variant
-            .attrs
-            .iter()
-            .find(|attr| attr.path().is_ident("doc"))
-        else {
-            return Err(Error::new(variant.span(), "expected a doc comment"));
-        };
-
+        let docs = get_docs(&variant.attrs)?.replace("\n", " ");
+        let docs = docs.trim();
         let variant_ident = variant.ident;
 
-        description_match_arms.extend(quote! { Self::#variant_ident => stringify!(#doc_attr),});
+        description_match_arms.extend(quote! { Self::#variant_ident => #docs,});
         name_match_arms.extend(quote! {Self::#variant_ident => stringify!(#variant_ident),});
 
         for lit in &prefixes {
@@ -143,4 +139,46 @@ pub(crate) fn derive_impl(input: DeriveInput) -> syn::Result<proc_macro2::TokenS
             }
         }
     })
+}
+
+/// Collect all doc comment attributes into a string
+fn get_docs(attrs: &[Attribute]) -> syn::Result<String> {
+    let mut explanation = String::new();
+    for attr in attrs {
+        if attr.path().is_ident("doc") {
+            if let Some(lit) = parse_attr(["doc"], attr) {
+                let value = lit.value();
+                // `/// ` adds
+                let line = value.strip_prefix(' ').unwrap_or(&value);
+                explanation.push_str(line);
+                explanation.push('\n');
+            } else {
+                return Err(Error::new_spanned(attr, "unimplemented doc comment style"));
+            }
+        }
+    }
+    Ok(explanation)
+}
+
+fn parse_attr<'a, const LEN: usize>(
+    path: [&'static str; LEN],
+    attr: &'a Attribute,
+) -> Option<&'a LitStr> {
+    if let Meta::NameValue(name_value) = &attr.meta {
+        let path_idents = name_value
+            .path
+            .segments
+            .iter()
+            .map(|segment| &segment.ident);
+
+        if itertools::equal(path_idents, path)
+            && let syn::Expr::Lit(syn::ExprLit {
+                lit: Lit::Str(lit), ..
+            }) = &name_value.value
+        {
+            return Some(lit);
+        }
+    }
+
+    None
 }

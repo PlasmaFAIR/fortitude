@@ -60,6 +60,8 @@ similar-asserts = "1.6.0"
 strum = { version = "0.27.1", features = ["strum_macros"] }
 strum_macros = { version = "0.27.1" }
 textwrap = { version = "0.16.0" }
+termimad = { version = "0.31.3" }
+terminal-light = { version = "1.8.0" }
 thiserror = { version = "1.0.58" }
 tree-sitter = "~0.25.0"
 tree-sitter-cli = "~0.25.0"

@@ -58,6 +58,10 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.inlinehilite:
   - pymdownx.superfences:
+      custom_fences:
+      - name: mermaid
+        class: mermaid
+        format: !!python/name:pymdownx.superfences.fence_code_format
   - markdown.extensions.attr_list:
   - pymdownx.keys:
   - pymdownx.tasklist:
@@ -82,6 +86,7 @@ nav:
   - Integrations: integrations.md
   - FAQ: faq.md
   - Changelog: release_notes.md
+  - Contributing: contributing.md
 
 # Too many rules, don't include them in the left-hand nav bar
 not_in_nav: |
