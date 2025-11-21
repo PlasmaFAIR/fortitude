@@ -29,7 +29,7 @@ participating, you are expected to uphold this code.
 
 ### Prerequisites
 
-Ruff is written in Rust. You'll need to install the
+Fortitude is written in Rust. You'll need to install the
 [Rust toolchain](https://www.rust-lang.org/tools/install) for development.
 
 You'll also need [Insta](https://insta.rs/docs/) to update snapshot tests:
@@ -41,7 +41,7 @@ cargo install cargo-insta
 You'll need [uv](https://docs.astral.sh/uv/getting-started/installation/) (or `pipx` and `pip`) to
 run Python utility commands.
 
-We recommend [nextest](https://nexte.st/) to run Ruff's test suite (via `cargo nextest run`),
+We recommend [nextest](https://nexte.st/) to run Fortitude's test suite (via `cargo nextest run`),
 though it's not strictly necessary:
 
 ```shell
@@ -151,7 +151,7 @@ There are several steps required to add a new rule to Fortitude:
 1. Decide on a name and category following our [naming
    rules](#naming-and-categorising-rules).
 2. Create a new file
-   `fortitude/src/rules/category/rule_name.rs`, where `category` is your chosen rule
+   `crates/fortitude_linter/src/rules/category/rule_name.rs`, where `category` is your chosen rule
    category and `rule_name` is its name.  If there is already a file for a
    similar rule, you may also choose to add your rule there.
 3. In that file, define a `Violation` struct. This defines the diagnostic
@@ -231,8 +231,9 @@ overly long lines is `LineTooLong`, and not something like `AvoidLineTooLong` or
 
 Rules should also be categorised appropriately. For example, if a rule is
 intended to discourage the use of outdated features, it may go under
-`Obsolescent`, or perhaps a more specific category such as `Modules` or
-`Typing`. If the rule only affects code readability, it should go under `Style`.
+`Obsolescent`. If it discourages bug-prone coding patterns, it should go
+under `Correctness`. If the rule only affects code readability, it should go
+under `Style`.
 
 The boundaries between categories are not always clear, so the exact name and
 category of a rule is often determined following a discussion after a pull
