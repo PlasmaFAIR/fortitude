@@ -27,13 +27,17 @@ use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
 use rule_table::RuleTable;
+use rules::AstRuleEnum;
+use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
+use rules::style::file_extensions::NonStandardFileExtension;
+use rules::style::line_length::LineTooLong;
+use rules::style::whitespace::TrailingWhitespace;
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
-use rules::{AstRuleEnum, PathRuleEnum, TextRuleEnum};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
-use settings::{FixMode, Settings};
+use settings::{CheckSettings, FixMode};
 
 use anyhow::{Context, anyhow};
 use colored::Colorize;
@@ -42,12 +46,11 @@ use log::warn;
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::SourceFile;
 use rustc_hash::FxHashMap;
-use std::borrow::Cow;
-use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Write;
 use std::iter::once;
 use std::path::Path;
+use std::{borrow::Cow, collections::BTreeMap};
 use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -68,19 +71,10 @@ impl FromAstNode for Diagnostic {
 // Rule trait
 // ----------
 
-/// Implemented by rules that act directly on the file path.
-pub trait PathRule {
-    fn check(settings: &Settings, path: &Path) -> Option<Diagnostic>;
-}
-
-/// Implemented by rules that analyse lines of code directly, using regex or otherwise.
-pub trait TextRule {
-    fn check(settings: &Settings, source: &SourceFile) -> Vec<Diagnostic>;
-}
-
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait AstRule {
-    fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>>;
+    fn check(settings: &CheckSettings, node: &Node, source: &SourceFile)
+    -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints() -> Vec<&'static str>;
@@ -89,13 +83,9 @@ pub trait AstRule {
 /// Parse a file, check it for issues, and return the report.
 #[allow(clippy::too_many_arguments)]
 pub fn check_file(
-    rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
-    settings: &Settings,
+    settings: &CheckSettings,
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Diagnostics> {
@@ -104,16 +94,8 @@ pub fn check_file(
             result,
             transformed,
             fixed,
-        }) = check_and_fix_file(
-            rules,
-            path_rules,
-            text_rules,
-            ast_entrypoints,
-            path,
-            file,
-            settings,
-            ignore_allow_comments,
-        ) {
+        }) = check_and_fix_file(path, file, settings, ignore_allow_comments)
+        {
             if !fixed.is_empty() {
                 match fix_mode {
                     FixMode::Apply => {
@@ -129,37 +111,19 @@ pub fn check_file(
             (result, fixed)
         } else {
             // Failed to fix, so just lint the original source
-            let result = check_only_file(
-                rules,
-                path_rules,
-                text_rules,
-                ast_entrypoints,
-                path,
-                file,
-                settings,
-                ignore_allow_comments,
-            )?;
+            let result = check_only_file(path, file, settings, ignore_allow_comments)?;
             let fixed = FxHashMap::default();
             (result, fixed)
         }
     } else {
-        let result = check_only_file(
-            rules,
-            path_rules,
-            text_rules,
-            ast_entrypoints,
-            path,
-            file,
-            settings,
-            ignore_allow_comments,
-        )?;
+        let result = check_only_file(path, file, settings, ignore_allow_comments)?;
         let fixed = FxHashMap::default();
         (result, fixed)
     };
 
     // Ignore based on per-file-ignores.
     // If the DiagnosticMessage is discarded, its fix will also be ignored.
-    let per_file_ignores = &settings.check.per_file_ignores;
+    let per_file_ignores = &settings.per_file_ignores;
     let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {
         fs::ignores_from_path(path, per_file_ignores)
     } else {
@@ -182,15 +146,10 @@ pub fn check_file(
 }
 
 /// Parse a file, check it for issues, and return the report.
-#[allow(clippy::too_many_arguments)]
 pub fn check_only_file(
-    rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
-    settings: &Settings,
+    settings: &CheckSettings,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Vec<DiagnosticMessage>> {
     let mut parser = Parser::new();
@@ -201,17 +160,7 @@ pub fn check_only_file(
         .parse(file.source_text(), None)
         .context("Failed to parse")?;
 
-    let violations = check_path(
-        rules,
-        path_rules,
-        text_rules,
-        ast_entrypoints,
-        path,
-        file,
-        settings,
-        &tree,
-        ignore_allow_comments,
-    );
+    let violations = check_path(path, file, settings, &tree, ignore_allow_comments);
 
     Ok(violations
         .into_iter()
@@ -223,29 +172,33 @@ pub fn check_only_file(
 /// `check_only_file`/`check_and_fix_file` wrap this
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn check_path(
-    rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &SourceFile,
-    settings: &Settings,
+    settings: &CheckSettings,
     tree: &Tree,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
 
+    let rules = &settings.rules;
+
     // Check file paths directly
-    for rule in path_rules {
-        if let Some(violation) = rule.check(settings, path) {
+    if rules.enabled(Rule::NonStandardFileExtension) {
+        if let Some(violation) = NonStandardFileExtension::check(path) {
             violations.push(violation);
         }
     }
 
     // Perform plain text analysis
-    for rule in text_rules {
-        violations.extend(rule.check(settings, file));
+    if rules.enabled(Rule::SplitEscapedQuote) {
+        violations.extend(SplitEscapedQuote::check(file));
+    }
+    if rules.enabled(Rule::LineTooLong) {
+        violations.extend(LineTooLong::check(settings, file));
+    }
+    if rules.enabled(Rule::TrailingWhitespace) {
+        violations.extend(TrailingWhitespace::check(file));
     }
 
     // Perform AST analysis
@@ -255,7 +208,7 @@ pub(crate) fn check_path(
             violations.push(Diagnostic::from_node(SyntaxError {}, &node));
         }
 
-        if let Some(rules) = ast_entrypoints.get(node.kind()) {
+        if let Some(rules) = settings.ast_entrypoints.get(node.kind()) {
             for rule in rules {
                 if let Some(violation) = rule.check(settings, &node, file) {
                     for v in violation {
@@ -373,13 +326,9 @@ pub struct FixerResult<'a> {
 
 #[allow(clippy::too_many_arguments)]
 pub fn check_and_fix_file<'a>(
-    rules: &RuleTable,
-    path_rules: &Vec<PathRuleEnum>,
-    text_rules: &Vec<TextRuleEnum>,
-    ast_entrypoints: &BTreeMap<&str, Vec<AstRuleEnum>>,
     path: &Path,
     file: &'a SourceFile,
-    settings: &Settings,
+    settings: &CheckSettings,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<FixerResult<'a>> {
     let mut transformed = Cow::Borrowed(file);
@@ -407,17 +356,7 @@ pub fn check_and_fix_file<'a>(
         // Map row and column locations to byte slices (lazily).
         let locator = Locator::new(transformed.source_text());
 
-        let violations = check_path(
-            rules,
-            path_rules,
-            text_rules,
-            ast_entrypoints,
-            path,
-            &transformed,
-            settings,
-            &tree,
-            ignore_allow_comments,
-        );
+        let violations = check_path(path, &transformed, settings, &tree, ignore_allow_comments);
 
         if iterations == 0 {
             is_valid_syntax = !tree.root_node().has_error();
@@ -443,7 +382,7 @@ pub fn check_and_fix_file<'a>(
         }) = fix_file(
             &violations,
             &locator,
-            settings.check.unsafe_fixes,
+            settings.unsafe_fixes,
             path.to_string_lossy().as_ref(),
         ) {
             if iterations < MAX_ITERATIONS {
@@ -546,28 +485,14 @@ This indicates a bug in Fortitude. If you could open an issue at:
     }
 }
 
-pub fn rules_to_path_rules(rules: &RuleTable) -> Vec<PathRuleEnum> {
-    rules
-        .iter_enabled()
-        .filter_map(|rule| TryFrom::try_from(rule).ok())
-        .collect_vec()
-}
-
-pub fn rules_to_text_rules(rules: &RuleTable) -> Vec<TextRuleEnum> {
-    rules
-        .iter_enabled()
-        .filter_map(|rule| TryFrom::try_from(rule).ok())
-        .collect_vec()
-}
-
 /// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
-pub fn ast_entrypoint_map<'a>(rules: &RuleTable) -> BTreeMap<&'a str, Vec<AstRuleEnum>> {
+pub fn ast_entrypoint_map(rules: &RuleTable) -> BTreeMap<&'static str, Vec<AstRuleEnum>> {
     let ast_rules: Vec<AstRuleEnum> = rules
         .iter_enabled()
         .filter_map(|rule| TryFrom::try_from(rule).ok())
         .collect();
 
-    let mut map: BTreeMap<&'a str, Vec<_>> = BTreeMap::new();
+    let mut map: BTreeMap<&'static str, Vec<_>> = BTreeMap::new();
     for rule in ast_rules {
         for entrypoint in rule.entrypoints() {
             match map.get_mut(entrypoint) {
