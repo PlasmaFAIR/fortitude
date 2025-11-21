@@ -205,13 +205,15 @@ fn print_rule_explanation(rules: &[Rule]) {
         None
     };
 
-    for (code, desc) in outputs {
-        let string = format!("{code}\n{desc}");
-        if let Some(skin) = &skin {
-            skin.print_text(&string);
-        } else {
-            println!("{}", string);
-        }
+    let out_strings = outputs
+        .iter()
+        .map(|(code, desc)| format!("{code}\n{desc}"))
+        .collect_vec();
+
+    if let Some(skin) = &skin {
+        skin.print_text(&out_strings.join("\n---\n"));
+    } else {
+        println!("{}", out_strings.join("\n"));
     }
 }
 
