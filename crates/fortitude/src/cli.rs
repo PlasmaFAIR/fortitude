@@ -15,6 +15,8 @@ use fortitude_linter::{
 };
 use fortitude_workspace::configuration::{Configuration, ConfigurationTransformer};
 
+use crate::commands::completions::config::{OptionString, OptionStringParser};
+
 #[derive(Debug, Parser)]
 #[command(
     author,
@@ -107,6 +109,20 @@ pub enum SubCommands {
     },
     /// Display Fortitude's version
     Version {
+        #[arg(long, value_enum, default_value = "text")]
+        output_format: HelpFormat,
+    },
+    /// List or describe the available configuration options.
+    Config {
+        /// Config key to show. Running the command with no key will
+        /// show the top-level options. Nested options should be
+        /// separated with '.', such as 'check.fix'.
+        #[arg(
+            value_parser = OptionStringParser,
+            hide_possible_values = true
+        )]
+        option: Option<OptionString>,
+        /// Output format
         #[arg(long, value_enum, default_value = "text")]
         output_format: HelpFormat,
     },
@@ -483,7 +499,7 @@ impl ConfigurationTransformer for ConfigArguments {
 }
 
 /// Get descriptions, rationales, and solutions for each rule.
-#[derive(Debug, clap::Parser, Clone, PartialEq)]
+#[derive(Debug, clap::Parser, Clone)]
 pub struct ExplainCommand {
     /// List of rules to explain. If omitted, explains all rules.
     #[arg(
@@ -494,4 +510,16 @@ pub struct ExplainCommand {
         hide_possible_values = true
     )]
     pub rules: Vec<RuleSelector>,
+
+    /// Show short summary of rule explanation
+    #[arg(long)]
+    pub summary: bool,
+
+    /// Show available category names
+    #[arg(long, conflicts_with = "rules", conflicts_with = "summary")]
+    pub list_categories: bool,
+
+    /// Output format
+    #[arg(long, value_enum, default_value = "text")]
+    pub output_format: HelpFormat,
 }
