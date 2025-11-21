@@ -581,6 +581,35 @@ Whether to show an enumeration of all fixed lint violations
 
 ---
 
+#### [`target-std`](#check_target-std) {: #check_target-std }
+<span id="target-std"></span>
+
+Minimum Fortran standard to check files against.
+Options are "f2018" (default), "f2008", "f2003", and "f95".
+
+**Default value**: `f2018`
+
+**Type**: `"f2018" | "f2008" | "f2003" | "f95"`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Set standard to Fortran 2008
+    target-std = "f2008"
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Set standard to Fortran 2008
+    target-std = "f2008"
+    ```
+
+---
+
 #### [`unsafe-fixes`](#check_unsafe-fixes) {: #check_unsafe-fixes }
 <span id="unsafe-fixes"></span>
 
