@@ -277,6 +277,54 @@ Once you've completed the code for the rule itself, you can define tests with th
 
 1. Run `cargo test --workspace` again to ensure that your test passes.
 
+## Adding Options
+
+Fortitude has a complicated system for determining a user's configuration, as it must
+take into account:
+
+- Default settings
+- Configuration file settings from various sources:
+  - Project level, such as `/path/to/project/fortitude.toml`
+  - User level, such as `$HOME/.config/fortitude/fortitude.toml`
+  - Passed directly: `fortitude --config-file=myconfig.toml check`
+- Command line settings (which may override config file settings)
+
+Config files within a project can also be hierarchical, so those nested deeper in
+the directory structure modify the settings set at the top level.
+
+To handle this, options are determined and transformed via the following structs:
+
+```mermaid
+flowchart TD
+  B{CLI} --> CheckCommand
+  CheckCommand --> |partition| CheckArguments
+  CheckCommand --> |partition| ExplicitConfigOverrides
+  ExplicitConfigOverrides --> |transform| Configuration
+  A{Config file} --> Options
+  Options --> |from_options| Configuration
+  Configuration --> |into_settings| Settings
+```
+
+- `CheckCommand::partition` takes care of merging things like `--fix` and
+  `--no-fix`, and splits options into two structs: `CheckArguments` which is
+  CLI-specific stuff, and `ExplicitConfigOverrides` which are explicit CLI
+  arguments that override config file options.
+- `Configuration::from_options` makes a new instance from the config file
+  `Options`.
+- `transform` makes sure `ExplicitConfigOverrides` takes priority over the base
+  `Configuration`, whether that's the default or from file
+- Lastly, `Configuration::into_settings` gives us a `Settings` where everything
+  has been concretised (that is, nothing is an `Option<T>` so we don't have to
+  handle anything being `None` after this).
+
+When adding a new option to Fortitude, it's important to ensure that it is added
+at all relevant stages of the flowchart above. It's also worth considering
+whether the option makes sense as a command line option, a configuration file
+option, or both.
+
+If you are unsure about how to add a new option, please feel free to raise an
+[issue](https://github.com/PlasmaFAIR/fortitude/issues), and we will be happy to
+assist!
 
 ## Building Docs
 
