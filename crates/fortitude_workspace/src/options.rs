@@ -19,7 +19,7 @@ use fortitude_linter::{
             strings::{self, settings::Quote},
         },
     },
-    settings::{OutputFormat, ProgressBar},
+    settings::{FortranStandard, OutputFormat, ProgressBar},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, Serialize, Deserialize)]
@@ -129,6 +129,18 @@ pub struct CheckOptions {
         "#
     )]
     pub preview: Option<bool>,
+
+    /// Minimum Fortran standard to check files against.
+    /// Options are "f2018" (default), "f2008", "f2003", and "f95".
+    #[option(
+        default = "f2018",
+        value_type = r#""f2018" | "f2008" | "f2003" | "f95""#,
+        example = r#"
+          # Set standard to Fortran 2008
+          target-std = "f2008"
+       "#
+    )]
+    pub target_std: Option<FortranStandard>,
 
     /// Progress bar settings.
     /// Options are "off" (default), "ascii", and "fancy"

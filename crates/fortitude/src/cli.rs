@@ -11,7 +11,8 @@ use fortitude_linter::{
     logging::LogLevel,
     rule_selector::{RuleSelector, clap_completion::RuleSelectorParser, collect_per_file_ignores},
     settings::{
-        IgnoreAllowComments, OutputFormat, PatternPrefixPair, PreviewMode, ProgressBar, UnsafeFixes,
+        FortranStandard, IgnoreAllowComments, OutputFormat, PatternPrefixPair, PreviewMode,
+        ProgressBar, UnsafeFixes,
     },
 };
 use fortitude_workspace::configuration::{Configuration, ConfigurationTransformer};
@@ -200,6 +201,11 @@ pub struct CheckCommand {
     pub preview: Option<bool>,
     #[clap(long, overrides_with("preview"), hide = true, action = SetTrue)]
     pub no_preview: Option<bool>,
+
+    /// Set minimum Fortran standard to check files against.
+    /// Options are "f2018" (default), "f2008", "f2003", "f95"
+    #[arg(long, value_enum)]
+    pub target_std: Option<FortranStandard>,
 
     /// Progress bar settings.
     /// Options are "off" (default), "ascii", and "fancy"
@@ -443,6 +449,7 @@ impl CheckCommand {
             select: self.select,
             ignore: self.ignore,
             extend_select: self.extend_select,
+            target_std: self.target_std,
             progress_bar: self.progress_bar,
         };
 
@@ -472,6 +479,7 @@ struct ExplicitConfigOverrides {
     select: Option<Vec<RuleSelector>>,
     extend_select: Option<Vec<RuleSelector>>,
     ignore: Option<Vec<RuleSelector>>,
+    target_std: Option<FortranStandard>,
     progress_bar: Option<ProgressBar>,
 }
 
@@ -538,6 +546,9 @@ impl ConfigurationTransformer for ExplicitConfigOverrides {
         }
         if let Some(ignore) = &self.ignore {
             config.ignore.extend(ignore.clone());
+        }
+        if self.target_std.is_some() {
+            config.target_std = self.target_std;
         }
         if self.progress_bar.is_some() {
             config.progress_bar = self.progress_bar;
