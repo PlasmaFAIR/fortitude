@@ -286,7 +286,7 @@ take into account:
 - Configuration file settings from various sources:
   - Project level, such as `/path/to/project/fortitude.toml`
   - User level, such as `$HOME/.config/fortitude/fortitude.toml`
-  - Passed directly: `fortitude --config=myconfig.toml check`
+  - Passed directly: `fortitude --config-file=myconfig.toml check`
 - Command line settings (which may override config file settings)
 
 Config files within a project can also be hierarchical, so those nested deeper in
@@ -309,7 +309,6 @@ flowchart TD
   `--no-fix`, and splits options into two structs: `CheckArguments` which is
   CLI-specific stuff, and `ExplicitConfigOverrides` which are explicit CLI
   arguments that override config file options.
-  - This is also where we'd handle other overrides provided through `--config`
 - `Configuration::from_options` makes a new instance from the config file
   `Options`.
 - `transform` makes sure `ExplicitConfigOverrides` takes priority over the base
