@@ -2,7 +2,9 @@ use crate::options::{
     ExitUnlabelledLoopOptions, InvalidTabOptions, KeywordWhitespaceOptions, Options,
     PortabilityOptions, StringOptions,
 };
-use fortitude_linter::fs::{EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, INCLUDE};
+use fortitude_linter::fs::{
+    EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
+};
 use fortitude_linter::registry::RuleNamespace;
 use fortitude_linter::rule_redirects::get_redirect;
 use fortitude_linter::rule_selector::{
@@ -23,7 +25,6 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use strum::IntoEnumIterator;
 
 // These are just helper structs to let us quickly work out if there's
@@ -93,6 +94,26 @@ pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
+/// Find the path to the user-specific `fpm.toml` or `fortitude.toml`, if it
+/// exists.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn find_user_settings_toml() -> Option<PathBuf> {
+    use etcetera::BaseStrategy;
+
+    let strategy = etcetera::base_strategy::choose_base_strategy().ok()?;
+    let config_dir = strategy.config_dir().join("fortitude");
+
+    // Search for a user-specific `.fortitude.toml`, then a `fortitude.toml`, then a `fpm.toml`.
+    for filename in [".fortitude.toml", "fortitude.toml", "fpm.toml"] {
+        let path = config_dir.join(filename);
+        if path.is_file() {
+            return Some(path);
+        }
+    }
+
+    None
+}
+
 /// Find the path to the project root, which contains the `fpm.toml` or `fortitude.toml` file.
 /// If no such file exists, return the current working directory.
 pub fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
@@ -106,7 +127,7 @@ pub fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
 
 /// Read either the "extra.fortitude" table from "fpm.toml", or the
 /// whole "fortitude.toml" file
-fn load_options<P: AsRef<Path>>(path: P) -> Result<Options> {
+pub fn load_options<P: AsRef<Path>>(path: P) -> Result<Options> {
     if path.as_ref().ends_with("fpm.toml") {
         let config = parse_fpm_toml(&path)?;
         // Unwrap should be ok here because we've already checked this
@@ -129,27 +150,15 @@ pub fn resolve_bool_arg(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
     }
 }
 
-/// Read either fpm.toml or fortitude.toml into our "known good" file
-/// settings struct
-pub fn parse_config_file(config_file: &Option<PathBuf>) -> Result<Options> {
-    let filename = match config_file {
-        Some(filename) => filename.clone(),
-        None => match find_settings_toml(path_absolutize::path_dedot::CWD.as_path())? {
-            Some(filename) => filename,
-            None => {
-                return Ok(Options::default());
-            }
-        },
-    };
-
-    load_options(filename)
-}
-
 /// Convert the deprecated `files` and `file_extensions` settings to the new `include`
 pub fn convert_file_and_extensions_to_include(
     paths: &Option<Vec<PathBuf>>,
     extensions: &Option<Vec<String>>,
-) -> Vec<FilePattern> {
+) -> Option<Vec<String>> {
+    if paths.is_none() && extensions.is_none() {
+        return None;
+    }
+
     let extensions = extensions
         .clone()
         .unwrap_or(FORTRAN_EXTS.iter().map(|ext| ext.to_string()).collect())
@@ -166,21 +175,13 @@ pub fn convert_file_and_extensions_to_include(
             let mut include = dirs
                 .iter()
                 .map(|path| path.to_string_lossy())
-                .map(|path| {
-                    FilePattern::from_str(format!("{path}/*.{{{extensions}}}").as_str()).unwrap()
-                })
+                .map(|path| format!("{path}/*.{{{extensions}}}"))
                 .collect_vec();
 
-            include.extend(
-                files
-                    .iter()
-                    .map(|path| FilePattern::from_str(path.to_string_lossy().as_ref()).unwrap()),
-            );
-            include
+            include.extend(files.iter().map(|path| path.to_string_lossy().into_owned()));
+            Some(include)
         }
-        None => {
-            vec![FilePattern::from_str(format!("*.{{{extensions}}}").as_str()).unwrap()]
-        }
+        None => Some(vec![format!("*.{{{extensions}}}")]),
     }
 }
 
@@ -203,7 +204,7 @@ pub struct Configuration {
     pub preview: Option<PreviewMode>,
 
     // File resolver options
-    pub include: Vec<FilePattern>,
+    pub include: Option<Vec<FilePattern>>,
     pub exclude: Option<Vec<FilePattern>>,
     pub extend_exclude: Vec<FilePattern>,
     pub force_exclude: Option<bool>,
@@ -226,7 +227,6 @@ impl Configuration {
         let include = convert_file_and_extensions_to_include(&check.files, &check.file_extensions);
 
         Self {
-            include,
             ignore: check.ignore.into_iter().flatten().collect(),
             select: check.select,
             extend_select: check.extend_select.unwrap_or_default(),
@@ -247,11 +247,20 @@ impl Configuration {
             output_format: check.output_format,
             progress_bar: check.progress_bar,
             preview: check.preview.map(PreviewMode::from),
+            include: options.include.or(include).map(|paths| {
+                paths
+                    .into_iter()
+                    .map(|pattern| {
+                        let absolute = GlobPath::normalize(&pattern, project_root);
+                        FilePattern::User(pattern, absolute)
+                    })
+                    .collect()
+            }),
             exclude: check.exclude.map(|paths| {
                 paths
                     .into_iter()
                     .map(|pattern| {
-                        let absolute = fs::normalize_path_to(&pattern, project_root);
+                        let absolute = GlobPath::normalize(&pattern, project_root);
                         FilePattern::User(pattern, absolute)
                     })
                     .collect()
@@ -262,7 +271,7 @@ impl Configuration {
                     paths
                         .into_iter()
                         .map(|pattern| {
-                            let absolute = fs::normalize_path_to(&pattern, project_root);
+                            let absolute = GlobPath::normalize(&pattern, project_root);
                             FilePattern::User(pattern, absolute)
                         })
                         .collect()
@@ -355,7 +364,7 @@ impl Configuration {
                         .chain(self.extend_exclude.into_iter()),
                 )?,
                 include: FilePatternSet::try_from_iter(
-                    INCLUDE.iter().cloned().chain(self.include),
+                    self.include.unwrap_or_else(|| INCLUDE.to_vec()),
                 )?,
                 respect_gitignore: self
                     .respect_gitignore
@@ -667,6 +676,8 @@ mod tests {
         registry::RuleSet, rule_selector::RuleSelector, settings::DEFAULT_SELECTORS,
     };
 
+    use crate::options::CheckOptions;
+
     use super::*;
 
     fn resolve_rules(args: RuleSelection, preview: &PreviewMode) -> Result<RuleSet> {
@@ -863,13 +874,11 @@ mod tests {
         let extensions = vec!["f90".to_string(), "F90".to_string()];
         let include = convert_file_and_extensions_to_include(&Some(paths), &Some(extensions));
 
-        let expected = vec![
-            FilePattern::from_str(format!("{}/*.{{f90,F90}}", dir1.to_string_lossy()).as_str())
-                .unwrap(),
-            FilePattern::from_str(format!("{}/*.{{f90,F90}}", dir2.to_string_lossy()).as_str())
-                .unwrap(),
-            FilePattern::from_str(&file1.to_string_lossy()).unwrap(),
-        ];
+        let expected = Some(vec![
+            format!("{}/*.{{f90,F90}}", dir1.to_string_lossy()),
+            format!("{}/*.{{f90,F90}}", dir2.to_string_lossy()),
+            file1.to_string_lossy().into_owned(),
+        ]);
         assert_eq!(include, expected);
 
         Ok(())
@@ -880,9 +889,52 @@ mod tests {
         let extensions = vec!["f90".to_string(), "F90".to_string()];
         let include = convert_file_and_extensions_to_include(&None, &Some(extensions));
 
-        let expected = vec![FilePattern::from_str("*.{f90,F90}").unwrap()];
+        let expected = Some(vec![("*.{f90,F90}").to_string()]);
         assert_eq!(include, expected);
 
         Ok(())
+    }
+
+    #[test]
+    #[allow(deprecated)]
+    fn set_include_from_file_and_extension() {
+        let options = Options {
+            check: Some(CheckOptions {
+                file_extensions: Some(vec!["f90".to_string(), "F90".to_string()]),
+                ..CheckOptions::default()
+            }),
+            ..Options::default()
+        };
+
+        let root = Path::new("/some/abs/path/");
+        let config = Configuration::from_options(options, root);
+
+        let glob = "*.{f90,F90}";
+        let expected = vec![FilePattern::User(
+            glob.to_string(),
+            GlobPath::normalize(glob, root),
+        )];
+        assert_eq!(config.include, Some(expected));
+    }
+
+    #[test]
+    #[allow(deprecated)]
+    fn dont_clobber_include_from_file_and_extension() {
+        let options = Options {
+            include: Some(vec!["*.f90".to_string(), "*.fpp".to_string()]),
+            check: Some(CheckOptions {
+                file_extensions: Some(vec!["f90".to_string(), "F90".to_string()]),
+                ..CheckOptions::default()
+            }),
+        };
+
+        let root = Path::new("/some/abs/path/");
+        let config = Configuration::from_options(options, root);
+
+        let expected = vec![
+            FilePattern::User("*.f90".to_string(), GlobPath::normalize("*.f90", root)),
+            FilePattern::User("*.fpp".to_string(), GlobPath::normalize("*.fpp", root)),
+        ];
+        assert_eq!(config.include, Some(expected));
     }
 }

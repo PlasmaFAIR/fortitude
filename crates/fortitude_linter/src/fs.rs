@@ -11,7 +11,7 @@ use log::debug;
 use path_absolutize::Absolutize;
 use ruff_cache::{CacheKey, CacheKeyHasher};
 use ruff_macros::CacheKey;
-use serde::{Deserialize, Deserializer, Serialize, de};
+use serde::{Deserialize, Deserializer, de};
 
 use crate::registry::Rule;
 use crate::rule_selector::CompiledPerFileIgnoreList;
@@ -37,10 +37,41 @@ pub fn read_to_string(path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Serialize, CacheKey)]
+/// Represents a path to be passed to [`Glob::new`].
+#[derive(Debug, Clone, CacheKey, PartialEq, PartialOrd, Eq, Ord)]
+pub struct GlobPath {
+    path: PathBuf,
+}
+
+impl GlobPath {
+    /// Constructs a [`GlobPath`] by escaping any glob metacharacters in `root` and normalizing
+    /// `path` to the escaped `root`.
+    ///
+    /// See [`normalize_path_to`] for details of the normalization.
+    pub fn normalize(path: impl AsRef<Path>, root: impl AsRef<Path>) -> Self {
+        let root = root.as_ref().to_string_lossy();
+        let escaped = globset::escape(&root);
+        let absolute = normalize_path_to(path, escaped);
+        Self { path: absolute }
+    }
+
+    pub fn into_inner(self) -> PathBuf {
+        self.path
+    }
+}
+
+impl Deref for GlobPath {
+    type Target = PathBuf;
+
+    fn deref(&self) -> &Self::Target {
+        &self.path
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, CacheKey)]
 pub enum FilePattern {
     Builtin(&'static str),
-    User(String, PathBuf),
+    User(String, GlobPath),
 }
 
 impl FilePattern {
@@ -69,9 +100,10 @@ impl FromStr for FilePattern {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let pattern = s.to_string();
-        let absolute = normalize_path(&pattern);
-        Ok(Self::User(pattern, absolute))
+        Ok(Self::User(
+            s.to_string(),
+            GlobPath::normalize(s, path_absolutize::path_dedot::CWD.as_path()),
+        ))
     }
 }
 

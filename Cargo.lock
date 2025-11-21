@@ -622,6 +622,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "etcetera"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26c7b13d0780cb82722fd59f6f57f925e143427e4a75313a6c77243bf5326ae6"
+dependencies = [
+ "cfg-if",
+ "home",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -789,7 +800,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "colored",
+ "etcetera 0.10.0",
  "fortitude_linter",
+ "indexmap",
  "is-macro",
  "itertools 0.12.1",
  "log",
@@ -2350,7 +2363,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "beef0844c0ea7e041227fccf31cc48efa57bb3bec1ab774e58800a4909a770f0"
 dependencies = [
  "anyhow",
- "etcetera",
+ "etcetera 0.8.0",
  "serde",
  "serde_json",
 ]
@@ -2413,7 +2426,7 @@ checksum = "af1129366d31d54e600dd9e874f0a0c828dd46a373f80c5e8b9e52dfe9560add"
 dependencies = [
  "anyhow",
  "cc",
- "etcetera",
+ "etcetera 0.8.0",
  "fs4",
  "indoc",
  "libloading",
