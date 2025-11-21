@@ -3,7 +3,7 @@ use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-use crate::{AstRule, FromAstNode, ast::FortitudeNode, settings::Settings};
+use crate::{AstRule, FromAstNode, ast::FortitudeNode, settings::CheckSettings};
 
 /// ## What does it do?
 /// Checks for procedures declared with just `external`
@@ -32,7 +32,11 @@ impl Violation for ExternalProcedure {
 }
 
 impl AstRule for ExternalProcedure {
-    fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        source: &SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         if node
             .child_with_name("type_qualifier")?
             .to_text(source.source_text())?
@@ -76,7 +80,7 @@ impl Violation for ProcedureNotInModule {
 }
 
 impl AstRule for ProcedureNotInModule {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         if node.parent()?.kind() == "translation_unit" {
             let procedure_stmt = node.child(0)?;
             let procedure = node.kind().to_string();

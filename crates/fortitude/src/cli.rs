@@ -2,11 +2,12 @@ use clap::{ArgAction::SetTrue, Parser, Subcommand};
 use fortitude_workspace::configuration::{
     convert_file_and_extensions_to_include, resolve_bool_arg,
 };
+use path_absolutize::path_dedot;
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use fortitude_linter::{
-    fs::FilePattern,
+    fs::{FilePattern, GlobPath},
     logging::LogLevel,
     rule_selector::{RuleSelector, clap_completion::RuleSelectorParser, collect_per_file_ignores},
     settings::{
@@ -41,8 +42,16 @@ pub struct GlobalConfigArgs {
     log_level_args: LogLevelArgs,
 
     /// Path to a TOML configuration file
-    #[arg(long)]
+    #[arg(long, global = true, help_heading = "Global options")]
     pub config_file: Option<PathBuf>,
+    /// Ignore all configuration files.
+    #[arg(
+        long,
+        help_heading = "Global options",
+        global = true,
+        conflicts_with = "config_file"
+    )]
+    pub isolated: bool,
 }
 
 impl GlobalConfigArgs {
@@ -356,16 +365,53 @@ pub struct CheckArguments {
 #[derive(Default)]
 pub struct ConfigArguments {
     // TODO: add other ruff bits like `isolated` and `overrides`
+    /// Whether the user specified --isolated on the command line
+    pub(crate) isolated: bool,
+    /// The logging level to be used, derived from command-line arguments passed
+    pub(crate) log_level: LogLevel,
+    /// Path to a pyproject.toml or ruff.toml configuration file (etc.).
+    /// Either 0 or 1 configuration file paths may be provided on the command line.
+    config_file: Option<PathBuf>,
     /// Overrides provided via dedicated flags such as `--line-length` etc.
     /// These overrides take precedence over all configuration files,
     /// and also over all overrides specified using any `--config "KEY=VALUE"` flags.
     per_flag_overrides: ExplicitConfigOverrides,
 }
 
+impl ConfigArguments {
+    pub fn config_file(&self) -> Option<&Path> {
+        self.config_file.as_deref()
+    }
+
+    fn from_cli_arguments(
+        global_options: GlobalConfigArgs,
+        per_flag_overrides: ExplicitConfigOverrides,
+    ) -> anyhow::Result<Self> {
+        let log_level = global_options.log_level();
+        let config_file = global_options.config_file;
+        let isolated = global_options.isolated;
+        Ok(Self {
+            isolated,
+            log_level,
+            config_file,
+            per_flag_overrides,
+        })
+    }
+}
+
+impl ConfigurationTransformer for ConfigArguments {
+    fn transform(&self, config: Configuration) -> Configuration {
+        self.per_flag_overrides.transform(config)
+    }
+}
+
 impl CheckCommand {
     /// Partition the CLI into command-line arguments and configuration
     /// overrides.
-    pub fn partition(self) -> anyhow::Result<(CheckArguments, ConfigArguments)> {
+    pub fn partition(
+        self,
+        global_options: GlobalConfigArgs,
+    ) -> anyhow::Result<(CheckArguments, ConfigArguments)> {
         let check_arguments = CheckArguments {
             exit_non_zero_on_fix: self.exit_non_zero_on_fix,
             exit_zero: self.exit_zero,
@@ -400,7 +446,7 @@ impl CheckCommand {
             progress_bar: self.progress_bar,
         };
 
-        let config_args = ConfigArguments { per_flag_overrides };
+        let config_args = ConfigArguments::from_cli_arguments(global_options, per_flag_overrides)?;
         Ok((check_arguments, config_args))
     }
 }
@@ -432,7 +478,16 @@ struct ExplicitConfigOverrides {
 impl ConfigurationTransformer for ExplicitConfigOverrides {
     fn transform(&self, mut config: Configuration) -> Configuration {
         if self.file_extensions.is_some() {
-            config.include = convert_file_and_extensions_to_include(&None, &self.file_extensions);
+            config.include = convert_file_and_extensions_to_include(&None, &self.file_extensions)
+                .map(|paths| {
+                    paths
+                        .into_iter()
+                        .map(|pattern| {
+                            let absolute = GlobPath::normalize(&pattern, path_dedot::CWD.as_path());
+                            FilePattern::User(pattern, absolute)
+                        })
+                        .collect()
+                })
         }
         if let Some(exclude) = &self.exclude {
             config.exclude = Some(exclude.clone());
@@ -489,12 +544,6 @@ impl ConfigurationTransformer for ExplicitConfigOverrides {
         }
 
         config
-    }
-}
-
-impl ConfigurationTransformer for ConfigArguments {
-    fn transform(&self, config: Configuration) -> Configuration {
-        self.per_flag_overrides.transform(config)
     }
 }
 

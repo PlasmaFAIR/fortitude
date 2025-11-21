@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::rules::utilities::literal_as_io_unit;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -47,7 +47,11 @@ impl Violation for MagicNumberInArraySize {
 const DEFAULT_ALLOWED_LITERALS: &[i32] = &[0, 1, 2, 3, 4];
 
 impl AstRule for MagicNumberInArraySize {
-    fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        source: &SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         // We're either looking for `type, dimension(X) :: variable` or `type :: variable(X)`
         let size = if node.kind() == "type_qualifier" {
             if node.child(0)?.to_text(source.source_text())?.to_lowercase() != "dimension" {
@@ -138,7 +142,7 @@ impl Violation for MagicIoUnit {
 }
 
 impl AstRule for MagicIoUnit {
-    fn check(_settings: &Settings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let unit = literal_as_io_unit(node, src)?;
 
         let value = unit

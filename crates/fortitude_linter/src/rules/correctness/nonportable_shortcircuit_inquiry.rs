@@ -1,5 +1,5 @@
 use crate::AstRule;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{FromAstNode, ast::FortitudeNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -120,7 +120,7 @@ fn present_call(expr: &Node, src: &str, function: &str) -> Option<PresentCall> {
 
 impl AstRule for NonportableShortcircuitInquiry {
     fn check<'a>(
-        _settings: &Settings,
+        _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {
