@@ -45,7 +45,7 @@ mod tests {
     #[test_case(Rule::CommonBlock, Path::new("OB011.f90"), FortranStandard::F2008)]
     #[test_case(Rule::EntryStatement, Path::new("OB021.f90"), FortranStandard::F2003)]
     #[test_case(Rule::SpecificName, Path::new("OB031.f90"), FortranStandard::F2008)]
-    fn rules_pass_for_standards_up_to(
+    fn rules_pass_for_standards_up_to_and_including(
         rule_code: Rule,
         path: &Path,
         std: FortranStandard,

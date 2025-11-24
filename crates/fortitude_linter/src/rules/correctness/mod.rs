@@ -100,12 +100,17 @@ mod tests {
         FortranStandard::F2008
     )]
     #[test_case(
+        Rule::AssumedSizeCharacterIntent,
+        Path::new("C072.f90"),
+        FortranStandard::F95
+    )]
+    #[test_case(
         Rule::MissingDefaultPointerInitalisation,
         Path::new("C101.f90"),
         FortranStandard::F95
     )]
     #[test_case(Rule::MissingIntrinsic, Path::new("C122.f90"), FortranStandard::F95)]
-    fn rules_pass_for_standards_up_to(
+    fn rules_pass_for_standards_up_to_and_including(
         rule_code: Rule,
         path: &Path,
         std: FortranStandard,
