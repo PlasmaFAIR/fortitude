@@ -94,14 +94,26 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn c003_pass_for_standards_less_than_f2018() -> Result<()> {
-        let path = Path::new("C003.f90");
-        let mut settings = CheckSettings::for_rule(Rule::ImplicitExternalProcedures);
-        settings.target_std = FortranStandard::F2008;
+    #[test_case(
+        Rule::ImplicitExternalProcedures,
+        Path::new("C003.f90"),
+        FortranStandard::F2008
+    )]
+    #[test_case(
+        Rule::MissingDefaultPointerInitalisation,
+        Path::new("C101.f90"),
+        FortranStandard::F95
+    )]
+    fn rules_pass_for_standards_up_to(
+        rule_code: Rule,
+        path: &Path,
+        std: FortranStandard,
+    ) -> Result<()> {
+        let mut settings = CheckSettings::for_rule(rule_code);
+        settings.target_std = std;
         let diagnostics = test_path(
             Path::new("correctness").join(path).as_path(),
-            &settings
+            &settings,
         )?;
         assert!(
             diagnostics.is_empty(),
