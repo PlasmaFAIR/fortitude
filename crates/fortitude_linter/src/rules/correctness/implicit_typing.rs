@@ -194,11 +194,11 @@ impl Violation for ImplicitExternalProcedures {
 
 impl AstRule for ImplicitExternalProcedures {
     fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if !implicit_statement_is_none(node) {
+        if settings.target_std < FortranStandard::F2018 {
             return None;
         }
 
-        if settings.target_std < FortranStandard::F2018 {
+        if !implicit_statement_is_none(node) {
             return None;
         }
 
