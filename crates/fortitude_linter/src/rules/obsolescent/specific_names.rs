@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::rules::utilities;
-use crate::settings::CheckSettings;
+use crate::settings::{CheckSettings, FortranStandard};
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -57,12 +57,27 @@ fn map_specific_intrinsic_functions(name: &str) -> Option<&'static str> {
 }
 
 /// ## What does it do?
-/// Checks for uses of the deprecated specific names of intrinsic functions.
+/// Checks for uses of the deprecated specific names of intrinsic functions, such
+/// as `ALOG` and `CLOG` for the natural logarithm of a real or complex argument
+/// respectively.
 ///
 /// ## Why is this bad?
 /// Specific names of intrinsic functions can be obscure and hinder readability of
 /// the code. Fortran 90 made these specific names redundant and recommends the use
 /// of the generic names for calling intrinsic functions.
+///
+/// ## Examples
+/// ```f90
+/// ! Not recommended
+/// result = ALOG(x)
+///
+/// ! Better
+/// result = LOG(x)
+/// ```
+///
+/// ## Notes
+/// Specific names were officially declared obsolescent in Fortran 2018, so
+/// this rule only triggers if the target standard is Fortran 2018 or later.
 ///
 /// ## References
 /// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
@@ -88,7 +103,10 @@ impl Violation for SpecificName {
 }
 
 impl AstRule for SpecificName {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        if settings.target_std < FortranStandard::F2018 {
+            return None;
+        }
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.to_text(src.source_text())?;
 

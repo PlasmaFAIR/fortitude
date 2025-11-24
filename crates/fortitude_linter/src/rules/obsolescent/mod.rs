@@ -19,7 +19,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::settings::CheckSettings;
+    use crate::settings::{CheckSettings, FortranStandard};
     use crate::test::test_path;
 
     #[test_case(Rule::CommonBlock, Path::new("OB011.f90"))]
@@ -39,6 +39,27 @@ mod tests {
         )?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Rule::CommonBlock, Path::new("OB011.f90"), FortranStandard::F2008)]
+    #[test_case(Rule::EntryStatement, Path::new("OB021.f90"), FortranStandard::F2003)]
+    #[test_case(Rule::SpecificName, Path::new("OB031.f90"), FortranStandard::F2008)]
+    fn rules_pass_for_standards_up_to(
+        rule_code: Rule,
+        path: &Path,
+        std: FortranStandard,
+    ) -> Result<()> {
+        let mut settings = CheckSettings::for_rule(rule_code);
+        settings.target_std = std;
+        let diagnostics = test_path(
+            Path::new("obsolescent").join(path).as_path(),
+            &settings,
+        )?;
+        assert!(
+            diagnostics.is_empty(),
+            "Test source has no warnings, but some were raised:\n{diagnostics}"
+        );
         Ok(())
     }
 }

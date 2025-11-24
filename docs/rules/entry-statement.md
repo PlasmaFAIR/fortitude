@@ -13,6 +13,10 @@ to bugs.
 Multiple entry procedures can be replaced with modules to share data, and
 private module procedures to reuse code.
 
+## Notes
+Entry statements were officially declared obsolescent in Fortran 2008, so
+this rule only triggers if the target standard is Fortran 2008 or later.
+
 ## References
 - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
   Incorporating Fortran 2018, Oxford University Press, Appendix B
