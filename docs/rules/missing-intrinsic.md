@@ -23,3 +23,5 @@ use, intrinsic :: iso_fortran_env, only: int32, real64
 
 This ensures the compiler will use the built-in module instead of a different
 module with the same name.
+
+This feature is only available in Fortran 2003 and later.

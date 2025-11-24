@@ -104,6 +104,7 @@ mod tests {
         Path::new("C101.f90"),
         FortranStandard::F95
     )]
+    #[test_case(Rule::MissingIntrinsic, Path::new("C122.f90"), FortranStandard::F95)]
     fn rules_pass_for_standards_up_to(
         rule_code: Rule,
         path: &Path,
