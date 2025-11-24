@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::CheckSettings;
+use crate::settings::{CheckSettings, FortranStandard};
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -29,7 +29,10 @@ use tree_sitter::Node;
 /// if passing literals or expressions that can't be modified.
 ///
 /// This rule will permit the absence of `intent` for dummy arguments
-/// that include the `value` attribute.
+/// that include the `value` attribute. It will also permit `pointer`
+/// dummy arguments that lack an `intent` attribute in standards prior
+/// to Fortran 2003, in which `pointer` dummy arguments were not
+/// allowed to have `intent`.
 #[derive(ViolationMetadata)]
 pub(crate) struct MissingIntent {
     entity: String,
@@ -45,7 +48,7 @@ impl Violation for MissingIntent {
 }
 
 impl AstRule for MissingIntent {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Names of all the dummy arguments
         let parameters: Vec<&str> = node
@@ -60,9 +63,10 @@ impl AstRule for MissingIntent {
         // Logic here is:
         // 1. find variable declarations
         // 2. ignore `procedure` arguments
-        // 3. filter to the declarations that don't have an `intent` or `value` attribute
-        // 4. filter to the ones that contain any of the dummy arguments
-        // 5. collect into a vec of violations
+        // 3. ignore `pointer` arguments for pre-Fortran 2003
+        // 4. filter to the declarations that don't have an `intent` or `value` attribute
+        // 5. filter to the ones that contain any of the dummy arguments
+        // 6. collect into a vec of violations
         //
         // We filter by missing intent first, so we only have to
         // filter by the dummy args once -- otherwise we either catch
@@ -76,6 +80,18 @@ impl AstRule for MissingIntent {
                     type_.kind() != "procedure"
                 } else {
                     false
+                }
+            })
+            .filter(|decl| {
+                if settings.target_std < FortranStandard::F2003 {
+                    // Pre-Fortran 2003, `pointer` dummy arguments
+                    // can't have `intent`, so skip those
+                    !decl
+                        .children_by_field_name("attribute", &mut decl.walk())
+                        .filter_map(|attr| attr.to_text(src))
+                        .any(|attr_name| attr_name.to_lowercase() == "pointer")
+                } else {
+                    true
                 }
             })
             .filter(|decl| {

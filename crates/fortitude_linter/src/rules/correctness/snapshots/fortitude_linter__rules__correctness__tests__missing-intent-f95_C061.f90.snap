@@ -1,0 +1,33 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/correctness/C061.f90:11:16: C061 function argument 'a' missing 'intent' attribute
+   |
+ 9 |   integer function foo(a, b, c, p)
+10 |     use mod
+11 |     integer :: a, c(2), f
+   |                ^ C061
+12 |     integer, dimension(:), intent(in) :: b
+13 |     procedure(sub) :: p         ! must not have `intent`
+   |
+
+./resources/test/fixtures/correctness/C061.f90:11:19: C061 function argument 'c' missing 'intent' attribute
+   |
+ 9 |   integer function foo(a, b, c, p)
+10 |     use mod
+11 |     integer :: a, c(2), f
+   |                   ^^^^ C061
+12 |     integer, dimension(:), intent(in) :: b
+13 |     procedure(sub) :: p         ! must not have `intent`
+   |
+
+./resources/test/fixtures/correctness/C061.f90:18:29: C061 subroutine argument 'e' missing 'intent' attribute
+   |
+16 |   subroutine bar(d, e, f)
+17 |     integer, pointer :: d
+18 |     integer, allocatable :: e(:, :)
+   |                             ^^^^^^^ C061
+19 |     type(integer(kind=int64)), intent(inout) :: f
+20 |     integer :: g
+   |

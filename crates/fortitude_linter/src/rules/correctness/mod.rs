@@ -98,7 +98,7 @@ mod tests {
     fn c003_pass_for_standards_less_than_f2018() -> Result<()> {
         let path = Path::new("C003.f90");
         let mut settings = CheckSettings::for_rule(Rule::ImplicitExternalProcedures);
-        settings.check.target_std = FortranStandard::F2008;
+        settings.target_std = FortranStandard::F2008;
         let diagnostics = test_path(
             Path::new("correctness").join(path).as_path(),
             &settings
@@ -107,6 +107,22 @@ mod tests {
             diagnostics.is_empty(),
             "Test source has no warnings, but some were raised:\n{diagnostics}"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn c061_fortran95() -> Result<()> {
+        // Should exclude the pointer without intent warning
+        let path = Path::new("C061.f90");
+        let snapshot = format!("missing-intent-f95_{}", path.to_string_lossy());
+        let mut settings = CheckSettings::for_rule(Rule::MissingIntent);
+        settings.target_std = FortranStandard::F95;
+        let diagnostics = test_path(
+            Path::new("correctness").join(path).as_path(),
+            &settings
+        )?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
         Ok(())
     }
 

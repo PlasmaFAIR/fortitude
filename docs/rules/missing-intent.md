@@ -24,4 +24,7 @@ to essentially `intent(inout)` -- however, this can be dangerous
 if passing literals or expressions that can't be modified.
 
 This rule will permit the absence of `intent` for dummy arguments
-that include the `value` attribute.
+that include the `value` attribute. It will also permit `pointer`
+dummy arguments that lack an `intent` attribute in standards prior
+to Fortran 2003, in which `pointer` dummy arguments were not
+allowed to have `intent`.
