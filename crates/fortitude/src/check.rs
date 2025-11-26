@@ -1,5 +1,6 @@
 use crate::cli::{CheckCommand, GlobalConfigArgs};
 use crate::printer::{Flags as PrinterFlags, Printer};
+use crate::resolve;
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
@@ -15,9 +16,6 @@ use fortitude_linter::{
     rules_to_path_rules, rules_to_text_rules,
 };
 use fortitude_linter::{warn_user_once, warn_user_once_by_message};
-use fortitude_workspace::configuration::{
-    self, Configuration, ConfigurationTransformer, parse_config_file,
-};
 
 use anyhow::Result;
 use colored::Colorize;
@@ -137,20 +135,13 @@ enum CheckStatus {
 }
 
 /// Check all files, report issues found, and return error code.
-pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<ExitCode> {
-    let (cli, config_arguments) = args.partition()?;
+pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<ExitCode> {
+    let (cli, config_arguments) = args.partition(global_options)?;
 
-    // First we need to find and read any config file
-    let project_root = configuration::project_root(path_absolutize::path_dedot::CWD.as_path())?;
-    let file_configuration = Configuration::from_options(
-        parse_config_file(&global_options.config_file)?,
-        &project_root,
-    );
-
-    // Now, we can override settings from the config file with options
-    // from the CLI
-    let config = config_arguments.transform(file_configuration);
-    let settings = config.into_settings(&project_root)?;
+    // Construct the "default" settings. These are used when no `fortitude.toml`
+    // files are present, or files are injected from outside of the hierarchy.
+    let file_configuration = resolve::resolve(&config_arguments, cli.stdin_filename.as_deref())?;
+    let settings = file_configuration.settings;
 
     let stdin_filename = cli.stdin_filename;
 
@@ -254,7 +245,7 @@ pub fn check(args: CheckCommand, global_options: &GlobalConfigArgs) -> Result<Ex
 
     let printer = Printer::new(
         output_format,
-        global_options.log_level(),
+        config_arguments.log_level,
         printer_flags,
         fix_mode,
         unsafe_fixes,

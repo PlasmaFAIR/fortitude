@@ -1,24 +1,34 @@
 # Configuration
 
-Fortitude will look for either a `fortitude.toml` or `fpm.toml` file
-in the current directory, or one of its parents. If using
-`fortitude.toml` or `.fortitude.toml`, settings should be under the command name, while for
-`fpm.toml` files, this has to be additionally nested under the
-`extra.fortitude` table:
+Fortitude will look for either a `fortitude.toml`, `.fortitude.toml`, or
+`fpm.toml` file in the current directory, or one of its parents.
 
+If there is no configuration file in the current directory or its parents,
+Fortitude will look in `${config_dir}/fortitude/` for a user-specific file (see
+[`etcetera`'s base
+strategy](https://docs.rs/etcetera/latest/etcetera/#native-strategy) for how
+`${config_dir}` is determined).
+
+If no configuration file is found, Fortitude will fall back to a default configuration.
+
+If using `fortitude.toml` or `.fortitude.toml`, settings should be under the
+command name, while for `fpm.toml` files, this has to be additionally nested
+under the `extra.fortitude` table:
+
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    select = ["S", "T"]
+    ignore = ["S001", "S051"]
+    line-length = 132
+    ```
 
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
-    select = ["S", "T"]
-    ignore = ["S001", "S051"]
-    line-length = 132
-    ```
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check]
     select = ["S", "T"]
     ignore = ["S001", "S051"]
     line-length = 132
@@ -140,14 +150,17 @@ Commands:
   help     Print this message or the help of the given subcommand(s)
 
 Options:
-      --config-file <CONFIG_FILE>  Path to a TOML configuration file
-  -h, --help                       Print help
-  -V, --version                    Print version
+  -h, --help     Print help
+  -V, --version  Print version
 
 Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+Global options:
+      --config-file <CONFIG_FILE>  Path to a TOML configuration file
+      --isolated                   Ignore all configuration files
 
 For help with a specific command, see: `fortitude help <command>`.
 ```
@@ -233,6 +246,10 @@ Log levels:
   -v, --verbose  Enable verbose logging
   -q, --quiet    Print diagnostics, but nothing else
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
+
+Global options:
+      --config-file <CONFIG_FILE>  Path to a TOML configuration file
+      --isolated                   Ignore all configuration files
 ```
 
 <!-- End auto-generated check help. -->

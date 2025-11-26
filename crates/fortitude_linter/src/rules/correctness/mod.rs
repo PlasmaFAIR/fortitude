@@ -140,6 +140,7 @@ mod tests {
         fs::write(&path, code)?;
         Command::cargo_bin("fortitude")?
             .arg("check")
+            .arg("--isolated")
             .arg("--fix")
             .arg("--preview")
             .arg("--select=C151")
