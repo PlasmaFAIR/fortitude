@@ -117,10 +117,7 @@ mod tests {
     ) -> Result<()> {
         let mut settings = CheckSettings::for_rule(rule_code);
         settings.target_std = std;
-        let diagnostics = test_path(
-            Path::new("correctness").join(path).as_path(),
-            &settings,
-        )?;
+        let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
         assert!(
             diagnostics.is_empty(),
             "Test source has no warnings, but some were raised:\n{diagnostics}"
@@ -135,10 +132,7 @@ mod tests {
         let snapshot = format!("missing-intent-f95_{}", path.to_string_lossy());
         let mut settings = CheckSettings::for_rule(Rule::MissingIntent);
         settings.target_std = FortranStandard::F95;
-        let diagnostics = test_path(
-            Path::new("correctness").join(path).as_path(),
-            &settings
-        )?;
+        let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())

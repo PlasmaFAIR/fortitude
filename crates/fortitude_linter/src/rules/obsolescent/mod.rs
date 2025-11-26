@@ -52,10 +52,7 @@ mod tests {
     ) -> Result<()> {
         let mut settings = CheckSettings::for_rule(rule_code);
         settings.target_std = std;
-        let diagnostics = test_path(
-            Path::new("obsolescent").join(path).as_path(),
-            &settings,
-        )?;
+        let diagnostics = test_path(Path::new("obsolescent").join(path).as_path(), &settings)?;
         assert!(
             diagnostics.is_empty(),
             "Test source has no warnings, but some were raised:\n{diagnostics}"
