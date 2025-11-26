@@ -1,7 +1,7 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
-use ruff_source_file::{OneIndexed, SourceFile, UniversalNewlines};
+use ruff_source_file::{SourceFile, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
 
@@ -76,23 +76,25 @@ impl AlwaysFixableViolation for MissingNewlineAtEndOfFile {
 impl MissingNewlineAtEndOfFile {
     pub fn check(source_file: &SourceFile) -> Option<Diagnostic> {
         let source = source_file.to_source_code();
-        // Ignore empty file
-        if source.text().is_empty() {
+        let text = source.text();
+
+        // Ignore empty and BOM only files.
+        if text.is_empty() || text == "\u{feff}" {
             return None;
         }
+
         // Check that the last character is a newline
-        if !source.text().ends_with('\n') {
+        if !text.ends_with(['\r', '\n']) {
             // Determine if the file is using Windows-style line endings
-            let newline = if source.text().contains("\r\n") {
+            let newline = if text.contains("\r\n") {
                 "\r\n"
+            } else if text.contains('\r') {
+                "\r"
             } else {
                 "\n"
             };
-            let last_line_index = OneIndexed::new(source.line_count())?;
-            let last_line_start = source.line_start(last_line_index);
-            let last_line_end = source.line_end(last_line_index);
-            let range = TextRange::new(last_line_start, last_line_end);
-            let edit = Edit::insertion(newline.to_string(), last_line_end);
+            let range = TextRange::empty(text.text_len());
+            let edit = Edit::insertion(newline.to_string(), range.start());
             let diagnostic = Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit));
             Some(diagnostic)
         } else {
