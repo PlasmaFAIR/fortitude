@@ -9,7 +9,7 @@ Fortitude will look in `${config_dir}/fortitude/` for a user-specific file (see
 strategy](https://docs.rs/etcetera/latest/etcetera/#native-strategy) for how
 `${config_dir}` is determined).
 
-If no configuration file is found, Fortitude will fallback to a default configuration.
+If no configuration file is found, Fortitude will fall back to a default configuration.
 
 If using `fortitude.toml` or `.fortitude.toml`, settings should be under the
 command name, while for `fpm.toml` files, this has to be additionally nested

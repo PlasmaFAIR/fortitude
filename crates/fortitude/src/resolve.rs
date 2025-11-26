@@ -30,7 +30,7 @@ pub fn resolve(
     if config_arguments.isolated {
         let config = config_arguments.transform(Configuration::default());
         let settings = config.into_settings(&cwd)?;
-        debug!("Isolated mode, not reading any pyproject.toml");
+        debug!("Isolated mode, not reading any TOML file");
         return Ok(ConfigFile::new(
             ConfigFileDiscoveryStrategy::Fixed,
             settings,
@@ -80,20 +80,20 @@ pub fn resolve(
     // relative the current working directory. (With `Strategy::Hierarchical`, we'll
     // end up the "closest" `fortitude.toml` file for every Fortran file later on, so
     // these act as the "default" settings.)
-    if let Some(pyproject) = find_user_settings_toml() {
+    if let Some(user_config) = find_user_settings_toml() {
         debug!(
             "Using configuration file (via cwd) at: {}",
-            pyproject.display()
+            user_config.display()
         );
         let settings = resolve_root_settings(
-            &pyproject,
+            &user_config,
             config_arguments,
             ConfigurationOrigin::UserSettings,
         )?;
         return Ok(ConfigFile::new(
             ConfigFileDiscoveryStrategy::Hierarchical,
             settings,
-            Some(pyproject),
+            Some(user_config),
         ));
     }
 

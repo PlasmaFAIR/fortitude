@@ -41,10 +41,10 @@ impl ConfigFile {
 }
 
 /// The strategy used to discover the relevant `fortitude.toml` file for each
-/// Python file.
+/// Fortran file.
 #[derive(Debug, Clone, Copy, is_macro::Is)]
 pub enum ConfigFileDiscoveryStrategy {
-    /// Use a fixed `fortitude.toml` file for all Python files (i.e., one
+    /// Use a fixed `fortitude.toml` file for all Fortran files (i.e., one
     /// provided on the command-line).
     Fixed,
     /// Use the closest `fortitude.toml` file in the filesystem hierarchy, or
