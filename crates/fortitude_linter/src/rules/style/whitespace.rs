@@ -93,16 +93,13 @@ impl MissingNewlineAtEndOfFile {
             let last_line_end = source.line_end(last_line_index);
             let range = TextRange::new(last_line_start, last_line_end);
             let edit = Edit::insertion(newline.to_string(), last_line_end);
-            let diagnostic = Diagnostic::new(Self {}, range)
-                .with_fix(Fix::safe_edit(edit));
+            let diagnostic = Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit));
             Some(diagnostic)
         } else {
             None
         }
     }
 }
-
-
 
 /// ## What does it do?
 /// Checks for inline comments that aren't preceded by at least two spaces.
