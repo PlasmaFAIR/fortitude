@@ -10,6 +10,11 @@ fn fortitude_cmd() -> Command {
 }
 
 /// Builder for `fortitude check` commands
+///
+/// This is used to ensure we always set either:
+///   a) `--isolated`, or
+///   b) `--config-file`
+/// to make sure we don't get any interference from user-specific config files
 #[derive(Debug, Default)]
 struct FortitudeCheck<'a> {
     config: Option<&'a Path>,
