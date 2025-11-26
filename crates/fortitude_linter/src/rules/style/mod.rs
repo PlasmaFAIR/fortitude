@@ -22,7 +22,7 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::style::{keywords, strings};
-    use crate::settings::{CheckSettings, Settings};
+    use crate::settings::CheckSettings;
     use crate::test::test_path;
 
     use super::strings::settings::Quote;
@@ -48,8 +48,7 @@ mod tests {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),
-            &[rule_code],
-            &Settings::default(),
+            &CheckSettings::for_rule(rule_code),
         )?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
@@ -60,8 +59,7 @@ mod tests {
     fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),
-            &[rule_code],
-            &Settings::default(),
+            &CheckSettings::for_rule(rule_code),
         )?;
         assert!(
             diagnostics.is_empty(),
@@ -74,20 +72,11 @@ mod tests {
     fn line_too_long_line_length_20(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
 
-        let default = Settings::default();
-        #[allow(clippy::needless_update)]
-        let settings = Settings {
-            check: CheckSettings {
-                line_length: 20,
-                ..default.check
-            },
-            ..default
+        let settings = CheckSettings {
+            line_length: 20,
+            ..CheckSettings::for_rule(rule_code)
         };
-        let diagnostics = test_path(
-            Path::new("style").join(path).as_path(),
-            &[rule_code],
-            &settings,
-        )?;
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
@@ -102,23 +91,15 @@ mod tests {
             path.to_string_lossy()
         );
 
-        let default = Settings::default();
         #[allow(clippy::needless_update)]
-        let settings = Settings {
-            check: CheckSettings {
-                keyword_whitespace: keywords::settings::Settings {
-                    inout_with_space: true,
-                    goto_with_space: true,
-                },
-                ..default.check
+        let settings = CheckSettings {
+            keyword_whitespace: keywords::settings::Settings {
+                inout_with_space: true,
+                goto_with_space: true,
             },
-            ..default
+            ..CheckSettings::for_rule(rule_code)
         };
-        let diagnostics = test_path(
-            Path::new("style").join(path).as_path(),
-            &[rule_code],
-            &settings,
-        )?;
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
@@ -132,21 +113,13 @@ mod tests {
             path.to_string_lossy()
         );
 
-        let default = Settings::default();
-        let settings = Settings {
-            check: CheckSettings {
-                strings: strings::settings::Settings {
-                    quotes: Quote::Single,
-                },
-                ..default.check
+        let settings = CheckSettings {
+            strings: strings::settings::Settings {
+                quotes: Quote::Single,
             },
-            ..default
+            ..CheckSettings::for_rule(rule_code)
         };
-        let diagnostics = test_path(
-            Path::new("style").join(path).as_path(),
-            &[rule_code],
-            &settings,
-        )?;
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())

@@ -15,7 +15,7 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::portability;
-    use crate::settings::{CheckSettings, Settings};
+    use crate::settings::CheckSettings;
     use crate::test::test_path;
 
     #[test_case(Rule::NonPortableIoUnit, Path::new("PORT001.f90"))]
@@ -27,8 +27,7 @@ mod tests {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
             Path::new("portability").join(path).as_path(),
-            &[rule_code],
-            &Settings::default(),
+            &CheckSettings::for_rule(rule_code),
         )?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
@@ -44,22 +43,14 @@ mod tests {
             rule_code.as_ref(),
             path.to_string_lossy()
         );
-        let default = Settings::default();
-        #[allow(clippy::needless_update)]
-        let settings = Settings {
-            check: CheckSettings {
-                portability: portability::settings::Settings {
-                    allow_cray_file_units: true,
-                },
-                ..default.check
+
+        let settings = CheckSettings {
+            portability: portability::settings::Settings {
+                allow_cray_file_units: true,
             },
-            ..default
+            ..CheckSettings::for_rule(rule_code)
         };
-        let diagnostics = test_path(
-            Path::new("portability").join(path).as_path(),
-            &[rule_code],
-            &settings,
-        )?;
+        let diagnostics = test_path(Path::new("portability").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())

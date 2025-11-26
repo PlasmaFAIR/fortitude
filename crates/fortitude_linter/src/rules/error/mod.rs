@@ -13,7 +13,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::settings::Settings;
+    use crate::settings::CheckSettings;
     use crate::test::test_path;
 
     #[test_case(Rule::SyntaxError, Path::new("E001.f90"))]
@@ -22,8 +22,7 @@ mod tests {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
             Path::new("error").join(path).as_path(),
-            &[rule_code],
-            &Settings::default(),
+            &CheckSettings::for_rule(rule_code),
         )?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);

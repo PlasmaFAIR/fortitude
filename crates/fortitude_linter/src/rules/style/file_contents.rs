@@ -1,4 +1,4 @@
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -23,7 +23,7 @@ impl Violation for MultipleModules {
 }
 
 impl AstRule for MultipleModules {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         let violations: Vec<Diagnostic> = node
             .children(&mut node.walk())
             .filter(|node| node.kind() == "module")
@@ -60,7 +60,7 @@ impl Violation for ProgramWithModule {
 }
 
 impl AstRule for ProgramWithModule {
-    fn check(_settings: &Settings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
         // There must be a program statement to trigger this rule
         if !node
             .children(&mut node.walk())

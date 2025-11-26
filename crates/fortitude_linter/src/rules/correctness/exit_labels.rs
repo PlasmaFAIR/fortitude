@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -42,7 +42,7 @@ impl Violation for MissingExitOrCycleLabel {
 }
 impl AstRule for MissingExitOrCycleLabel {
     fn check<'a>(
-        _settings: &Settings,
+        _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {
@@ -106,7 +106,11 @@ impl Violation for ExitOrCycleInUnlabelledLoop {
 }
 
 impl AstRule for ExitOrCycleInUnlabelledLoop {
-    fn check(settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        source: &SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
         let name = node.to_text(src)?.to_lowercase();
         // This filters to the keywords we want that _also_ don't have a label
@@ -130,7 +134,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
 
         // If we're only supposed to check on nested loops, check that there is at least
         // one more level of nesting
-        if settings.check.exit_unlabelled_loops.allow_unnested_loops {
+        if settings.exit_unlabelled_loops.allow_unnested_loops {
             parent_loop
                 .ancestors()
                 .filter(|ancestor| ancestor.kind() == "do_loop")
@@ -194,7 +198,7 @@ fn start_end_names(node_kind: &str) -> (&'static str, &'static str) {
 
 impl AstRule for MissingEndLabel {
     fn check<'a>(
-        _settings: &Settings,
+        _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
     ) -> Option<Vec<Diagnostic>> {

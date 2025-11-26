@@ -1,7 +1,7 @@
 use std::iter::once;
 
 use crate::ast::FortitudeNode;
-use crate::settings::Settings;
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use anyhow::{Context, Result, anyhow};
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -116,7 +116,11 @@ impl Violation for UncheckedStat {
 }
 
 impl AstRule for UncheckedStat {
-    fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        source: &SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
 
         // Check this is an error checking statement, and get the stat type
@@ -349,7 +353,11 @@ impl Violation for MultipleAllocationsWithStat {
 }
 
 impl AstRule for MultipleAllocationsWithStat {
-    fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        source: &SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
 
         // Check this has a stat parameter
@@ -422,7 +430,11 @@ impl Violation for StatWithoutMessage {
 }
 
 impl AstRule for StatWithoutMessage {
-    fn check(_settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        source: &SourceFile,
+    ) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
 
         let stat_type = StatType::from_node(node, src).ok()?;

@@ -156,9 +156,7 @@ There are several steps required to add a new rule to Fortitude:
    similar rule, you may also choose to add your rule there.
 3. In that file, define a `Violation` struct. This defines the diagnostic
    messages raised when your rule is violated.
-4. Implement one of `TextRule`, `AstRule` or `PathRule` for your `Violation`. These
-   are, respectively, rules that check a file line-by-line, rules that analyse the
-   AST, and rules that analyse the path to a Fortran file directly.
+4. Implement `AstRule` for your `Violation`, or add a checker function.
     - Most rules are `AstRules`, which use [`tree_sitter`](https://docs.rs/tree-sitter/latest/tree_sitter/)
       to analyse the code. If you want to see how `tree_sitter` parses a given file,
       we recommended installing `tree_sitter`, cloning
@@ -168,6 +166,20 @@ There are several steps required to add a new rule to Fortitude:
 tree-sitter build
 tree-sitter parse /path/to/fortran/file.f90
 ```
+    - If it doesn't need the AST for whatever reason (for example, it's
+      checking the filename), then you just need to implement some
+      function that returns a `Diagnostic` containing your new
+      `Violation`.
+5. For non-AST rules, you'll have to also specifically call the
+   checker function in `fortitude_linter::check_path` inside a check
+   that the rule is enabled:
+   ```rust
+   if rules.enabled(Rule::MyNewRule) {
+       if let Some(violation) = check_my_new_rule(path) {
+           violations.push(violation);
+       }
+   }
+   ```
 5. Map the `Violation` struct to a rule code in `fortitude/src/rules/mod.rs`.
     - `code_to_rule` is never called directly, but the match statement within is
       analysed by the macro `fortitude_macros::map_codes` to define a `Rule` enum
@@ -179,9 +191,9 @@ tree-sitter parse /path/to/fortran/file.f90
       enforced, but you may be asked to renumber the rule if other developers
       think it would better fit somewhere else.
     - New rules should be in `RuleGroup::Preview`.
-6. Add a [test](contributing.md#rule-testing-fixtures-and-snapshots) for your rule. Try to
+7. Add a [test](contributing.md#rule-testing-fixtures-and-snapshots) for your rule. Try to
    consider edge cases and any scenarios where false positives could occur.
-7. Update the generated documentation using `cargo dev generate-all`.
+8. Update the generated documentation using `cargo dev generate-all`.
 
 You can automatically add a lot of this boilerplate by running
 [scripts/add_rule.py](https://github.com/PlasmaFAIR/fortitude/scripts/add_rule.py):

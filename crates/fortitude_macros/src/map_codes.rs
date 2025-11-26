@@ -24,7 +24,7 @@ struct RuleMeta {
     category: Ident,
     /// The code associated with the rule, e.g., `"E112"`.
     code: LitStr,
-    /// The kind of checker, e.g. `Text`
+    /// The kind of checker, e.g. `Ast`
     kind: Path,
     /// The rule group identifier, e.g., `RuleGroup::Preview`.
     group: Path,
@@ -261,8 +261,6 @@ fn generate_rule_to_code(
 
     let mut rule_noqa_code_match_arms = quote!();
     let mut rule_group_match_arms = quote!();
-    let mut rule_is_path_rule_match_arms = quote!();
-    let mut rule_is_text_rule_match_arms = quote!();
     let mut rule_is_ast_rule_match_arms = quote!();
     let mut rule_defaultness_arms = quote!();
 
@@ -297,16 +295,8 @@ fn generate_rule_to_code(
             #(#attrs)* Rule::#rule_name => #group,
         });
 
-        let is_path = kind.is_ident("Path");
-        let is_text = kind.is_ident("Text");
         let is_ast = kind.is_ident("Ast");
 
-        rule_is_path_rule_match_arms.extend(quote! {
-            #(#attrs)* Rule::#rule_name => #is_path,
-        });
-        rule_is_text_rule_match_arms.extend(quote! {
-            #(#attrs)* Rule::#rule_name => #is_text,
-        });
         rule_is_ast_rule_match_arms.extend(quote! {
             #(#attrs)* Rule::#rule_name => #is_ast,
         });
@@ -350,18 +340,6 @@ fn generate_rule_to_code(
 
             pub fn is_removed(&self) -> bool {
                 matches!(self.group(), RuleGroup::Removed)
-            }
-
-            pub fn is_path_rule(&self) -> bool {
-                match self {
-                    #rule_is_path_rule_match_arms
-                }
-            }
-
-            pub fn is_text_rule(&self) -> bool {
-                match self {
-                    #rule_is_text_rule_match_arms
-                }
             }
 
             pub fn is_ast_rule(&self) -> bool {
@@ -452,14 +430,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
     let mut from_impls_for_diagnostic_kind = quote!();
 
-    let mut path_rule_variants = quote!();
-    let mut path_rule_from_match_arms = quote!();
-    let mut path_rule_check_match_arms = quote!();
-
-    let mut text_rule_variants = quote!();
-    let mut text_rule_from_match_arms = quote!();
-    let mut text_rule_check_match_arms = quote!();
-
     let mut ast_rule_variants = quote!();
     let mut ast_rule_from_match_arms = quote!();
     let mut ast_rule_check_match_arms = quote!();
@@ -490,44 +460,8 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         from_impls_for_diagnostic_kind
             .extend(quote! {#(#attrs)* stringify!(#name) => Rule::#name,});
 
-        // Next parts are for creating two enums for the different
-        // rule `check` signatures. This basically allows us to a)
-        // partition a list of rules into the different check kinds
-        // (path, text, ast), and b) call `rule.check(...)`. An
-        // alternative might be to have different named check
-        // functions (`check_text`, etc), and then partition based on
-        // `rule.is_text()` or similar, but this way gives us some
-        // type safety
-        if kind.is_ident("Path") {
-            path_rule_variants.extend(quote! {
-                #(#attrs)*
-                #name,
-            });
-
-            path_rule_from_match_arms.extend(quote! {
-                #(#attrs)* Rule::#name => Ok(Self::#name),
-            });
-
-            path_rule_check_match_arms.extend(quote! {
-                #(#attrs)* Self::#name => #path::check(settings, path),
-            });
-        }
-
-        if kind.is_ident("Text") {
-            text_rule_variants.extend(quote! {
-                #(#attrs)*
-                #name,
-            });
-
-            text_rule_from_match_arms.extend(quote! {
-                #(#attrs)* Rule::#name => Ok(Self::#name),
-            });
-
-            text_rule_check_match_arms.extend(quote! {
-                #(#attrs)* Self::#name => #path::check(settings, source),
-            });
-        }
-
+        // Next parts are for an enum for Ast-based rules, so that we
+        // can have a consistent interface and some type safety
         if kind.is_ident("Ast") {
             ast_rule_variants.extend(quote! {
                 #(#attrs)*
@@ -553,8 +487,8 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         use ruff_diagnostics::{Diagnostic, Violation};
         use ruff_source_file::SourceFile;
         use tree_sitter::Node;
-        use crate::{AstRule, PathRule, TextRule};
-        use crate::settings::Settings;
+        use crate::AstRule;
+        use crate::settings::CheckSettings;
 
 
         #[derive(
@@ -628,84 +562,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         )]
         #[repr(u16)]
         #[strum(serialize_all = "kebab-case")]
-        pub enum PathRuleEnum { #path_rule_variants }
-
-        impl TryFrom<Rule> for PathRuleEnum {
-            type Error = &'static str;
-
-            fn try_from(rule: Rule) -> Result<Self, Self::Error> {
-                match rule {
-                    #path_rule_from_match_arms
-                    _ => Err("not a PathRule")
-                }
-            }
-        }
-
-        impl PathRuleEnum {
-            pub fn check(&self, settings: &Settings, path: &Path) -> Option<Diagnostic> {
-                match self {
-                    #path_rule_check_match_arms
-                }
-            }
-        }
-
-        #[derive(
-            Debug,
-            PartialEq,
-            Eq,
-            Copy,
-            Clone,
-            Hash,
-            PartialOrd,
-            Ord,
-            ::ruff_macros::CacheKey,
-            ::strum_macros::AsRefStr,
-            ::strum_macros::Display,
-            ::strum_macros::EnumIter,
-            ::strum_macros::EnumString,
-            ::strum_macros::IntoStaticStr,
-        )]
-        #[repr(u16)]
-        #[strum(serialize_all = "kebab-case")]
-        pub enum TextRuleEnum { #text_rule_variants }
-
-        impl TryFrom<Rule> for TextRuleEnum {
-            type Error = &'static str;
-
-            fn try_from(rule: Rule) -> Result<Self, Self::Error> {
-                match rule {
-                    #text_rule_from_match_arms
-                    _ => Err("not a TextRule")
-                }
-            }
-        }
-
-        impl TextRuleEnum {
-            pub fn check(&self, settings: &Settings, source: &SourceFile) -> Vec<Diagnostic> {
-                match self {
-                    #text_rule_check_match_arms
-                }
-            }
-        }
-
-        #[derive(
-            Debug,
-            PartialEq,
-            Eq,
-            Copy,
-            Clone,
-            Hash,
-            PartialOrd,
-            Ord,
-            ::ruff_macros::CacheKey,
-            ::strum_macros::AsRefStr,
-            ::strum_macros::Display,
-            ::strum_macros::EnumIter,
-            ::strum_macros::EnumString,
-            ::strum_macros::IntoStaticStr,
-        )]
-        #[repr(u16)]
-        #[strum(serialize_all = "kebab-case")]
         pub enum AstRuleEnum { #ast_rule_variants }
 
         impl TryFrom<Rule> for AstRuleEnum {
@@ -720,7 +576,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         }
 
         impl AstRuleEnum {
-            pub fn check(&self, settings: &Settings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
+            pub fn check(&self, settings: &CheckSettings, node: &Node, source: &SourceFile) -> Option<Vec<Diagnostic>> {
                 match self {
                     #ast_rule_check_match_arms
                 }
@@ -751,18 +607,13 @@ impl Parse for RuleMeta {
         let _: Token!(,) = pat_tuple.parse()?;
         let kind: Path = pat_tuple.parse()?;
 
-        let kind_is_valid = kind.is_ident("Path")
-            || kind.is_ident("Text")
-            || kind.is_ident("Ast")
-            || kind.is_ident("None");
+        let kind_is_valid = kind.is_ident("Ast") || kind.is_ident("None");
         if !kind_is_valid {
             // We better have an ident here, because I don't know what else to do
             let kind = kind.get_ident().unwrap();
             return Err(syn::Error::new(
                 pat_tuple.span(),
-                format!(
-                    "Invalid checker kind '{kind}', expected one of 'Path', 'Text', 'Ast', 'None'"
-                ),
+                format!("Invalid checker kind '{kind}', expected either 'Ast' or 'None'"),
             ));
         }
 

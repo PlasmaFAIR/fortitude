@@ -34,7 +34,7 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::correctness::exit_labels;
-    use crate::settings::{CheckSettings, Settings};
+    use crate::settings::CheckSettings;
     use crate::test::test_path;
 
     #[test_case(Rule::ImplicitTyping, Path::new("C001.f90"))]
@@ -73,8 +73,7 @@ mod tests {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
             Path::new("correctness").join(path).as_path(),
-            &[rule_code],
-            &Settings::default(),
+            &CheckSettings::for_rule(rule_code),
         )?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
@@ -86,8 +85,7 @@ mod tests {
     fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
         let diagnostics = test_path(
             Path::new("correctness").join(path).as_path(),
-            &[rule_code],
-            &Settings::default(),
+            &CheckSettings::for_rule(rule_code),
         )?;
         assert!(
             diagnostics.is_empty(),
@@ -105,22 +103,13 @@ mod tests {
             rule_code.as_ref(),
             path.to_string_lossy()
         );
-        let default = Settings::default();
-        #[allow(clippy::needless_update)]
-        let settings = Settings {
-            check: CheckSettings {
-                exit_unlabelled_loops: exit_labels::settings::Settings {
-                    allow_unnested_loops: true,
-                },
-                ..default.check
+        let settings = CheckSettings {
+            exit_unlabelled_loops: exit_labels::settings::Settings {
+                allow_unnested_loops: true,
             },
-            ..default
+            ..CheckSettings::for_rule(rule_code)
         };
-        let diagnostics = test_path(
-            Path::new("correctness").join(path).as_path(),
-            &[rule_code],
-            &settings,
-        )?;
+        let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
