@@ -1,7 +1,7 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
-use ruff_source_file::{SourceFile, UniversalNewlines};
+use ruff_source_file::{OneIndexed, SourceFile, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
 
@@ -10,7 +10,7 @@ use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 
 /// ## What does it do?
-/// Checks for tailing whitespace
+/// Checks for trailing whitespace.
 ///
 /// ## Why is this bad?
 /// Trailing whitespace is difficult to spot, and as some editors will remove it
@@ -50,6 +50,59 @@ impl TrailingWhitespace {
         violations
     }
 }
+
+/// ## What does it do?
+/// Checks for the absence of a new line at the end of the file.
+///
+/// ## Why is this bad?
+/// POSIX standards state that a line is a sequence of characters
+/// ending with a newline character. Some tools may not handle files
+/// that do not end with a newline correctly, leading to potential issues
+/// in file processing, version control diffs, and concatenation of files.
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingNewlineAtEndOfFile {}
+
+impl AlwaysFixableViolation for MissingNewlineAtEndOfFile {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "missing newline at end of file".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "Add newline at end of file".to_string()
+    }
+}
+
+impl MissingNewlineAtEndOfFile {
+    pub fn check(source_file: &SourceFile) -> Option<Diagnostic> {
+        let source = source_file.to_source_code();
+        // Ignore empty file
+        if source.text().is_empty() {
+            return None;
+        }
+        // Check that the last character is a newline
+        if !source.text().ends_with('\n') {
+            // Determine if the file is using Windows-style line endings
+            let newline = if source.text().contains("\r\n") {
+                "\r\n"
+            } else {
+                "\n"
+            };
+            let last_line_index = OneIndexed::new(source.line_count())?;
+            let last_line_start = source.line_start(last_line_index);
+            let last_line_end = source.line_end(last_line_index);
+            let range = TextRange::new(last_line_start, last_line_end);
+            let edit = Edit::insertion(newline.to_string(), last_line_end);
+            let diagnostic = Diagnostic::new(Self {}, range)
+                .with_fix(Fix::safe_edit(edit));
+            Some(diagnostic)
+        } else {
+            None
+        }
+    }
+}
+
+
 
 /// ## What does it do?
 /// Checks for inline comments that aren't preceded by at least two spaces.
