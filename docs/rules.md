@@ -77,6 +77,7 @@
 | Code | Name | Message | |
 | ---- | ---- | ------- | ------: |
 | S001 | [line-too-long](rules/line-too-long.md) | line length of {actual_length}, exceeds maximum {max_length\} | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| S002 | [missing-newline-at-end-of-file](rules/missing-newline-at-end-of-file.md) | missing newline at end of file | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S061 | [unnamed-end-statement](rules/unnamed-end-statement.md) | end statement should be named. | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S071 | [missing-double-colon](rules/missing-double-colon.md) | variable declaration missing '::' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S081 | [superfluous-semicolon](rules/superfluous-semicolon.md) | unnecessary semicolon | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |

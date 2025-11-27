@@ -1,0 +1,16 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/style/S002.f90:2:75: S002 [*] missing newline at end of file
+  |
+1 | program p
+2 | end program p ! Missing newline, be careful with tools that might add one!
+  |                                                                           ^ S002
+  |
+  = help: Add newline at end of file
+
+ℹ Safe fix
+1 1 | program p
+2   |-end program p ! Missing newline, be careful with tools that might add one!
+  2 |+end program p ! Missing newline, be careful with tools that might add one!

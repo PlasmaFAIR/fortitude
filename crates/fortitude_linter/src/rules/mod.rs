@@ -129,6 +129,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
 
         // style
         (Style, "001") => (RuleGroup::Stable, None, Default, style::line_length::LineTooLong),
+        (Style, "002") => (RuleGroup::Preview, None, Default, style::whitespace::MissingNewlineAtEndOfFile),
         (Style, "061") => (RuleGroup::Stable, Ast, Default, style::end_statements::UnnamedEndStatement),
         (Style, "071") => (RuleGroup::Stable, Ast, Default, style::double_colon_in_decl::MissingDoubleColon),
         (Style, "081") => (RuleGroup::Preview, Ast, Default, style::semicolons::SuperfluousSemicolon),

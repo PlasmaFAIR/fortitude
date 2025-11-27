@@ -4,7 +4,7 @@ Fix is always available.
 This rule is turned on by default.
 
 ## What does it do?
-Checks for tailing whitespace
+Checks for trailing whitespace.
 
 ## Why is this bad?
 Trailing whitespace is difficult to spot, and as some editors will remove it

@@ -33,7 +33,7 @@ use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
 use rules::style::file_extensions::NonStandardFileExtension;
 use rules::style::line_length::LineTooLong;
-use rules::style::whitespace::TrailingWhitespace;
+use rules::style::whitespace::{MissingNewlineAtEndOfFile, TrailingWhitespace};
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
@@ -199,6 +199,11 @@ pub(crate) fn check_path(
     }
     if rules.enabled(Rule::TrailingWhitespace) {
         violations.extend(TrailingWhitespace::check(file));
+    }
+    if rules.enabled(Rule::MissingNewlineAtEndOfFile)
+        && let Some(violation) = MissingNewlineAtEndOfFile::check(file)
+    {
+        violations.push(violation);
     }
 
     // Perform AST analysis

@@ -28,6 +28,7 @@ mod tests {
     use super::strings::settings::Quote;
 
     #[test_case(Rule::LineTooLong, Path::new("S001.f90"))]
+    #[test_case(Rule::MissingNewlineAtEndOfFile, Path::new("S002.f90"))]
     #[test_case(Rule::UnnamedEndStatement, Path::new("S061.f90"))]
     #[test_case(Rule::MissingDoubleColon, Path::new("S071.f90"))]
     #[test_case(Rule::SuperfluousSemicolon, Path::new("S081.f90"))]
