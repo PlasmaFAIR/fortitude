@@ -28,8 +28,10 @@ type mytype
     integer, pointer :: pI2 => null(), pI3
 end mytype
 ```
+
 will have the pointers `pReal1`, `pI1`, and `pI3` uninitialised
 whenever it is created. Instead, they should be initialised like:
+
 ```f90
 type mytype
     real :: val1
@@ -42,6 +44,8 @@ type mytype
     integer, pointer :: pI2 => null(), pI3  => null()
 end mytype
 ```
+
+This feature is only available in Fortran 2003 and later.
 
 ## References
 - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:

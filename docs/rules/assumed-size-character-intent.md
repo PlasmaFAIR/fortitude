@@ -37,3 +37,17 @@ contains
   end subroutine set_text
 end program
 ```
+
+Allocatable dummy arguments were not introduced until Fortran 2003, so this
+rule is deactivated when targeting earlier standards. When doing so, it is
+recommended to always verify that the `character` dummy arguments have the
+correct size to avoid data loss:
+
+```f90
+  ! Fortran 95 example
+  subroutine set_text(text)
+    character(len=*), intent(out) :: text
+    if (len(text) < 12) stop 1
+    text = "hello world!"
+  end subroutine set_text
+```

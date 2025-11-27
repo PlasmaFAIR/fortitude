@@ -70,6 +70,7 @@ pub struct CheckSettings {
     pub show_fixes: bool,
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
+    pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
 
@@ -103,6 +104,7 @@ impl CheckSettings {
             show_fixes: false,
             unsafe_fixes: UnsafeFixes::default(),
             output_format: OutputFormat::default(),
+            target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
             exit_unlabelled_loops: exit_labels::settings::Settings::default(),
@@ -144,6 +146,7 @@ impl fmt::Display for CheckSettings {
                 self.fix_only,
                 self.show_fixes,
                 self.output_format,
+                self.target_std,
                 self.progress_bar,
                 self.preview,
             ]
@@ -387,6 +390,33 @@ impl From<GitignoreMode> for bool {
             GitignoreMode::NoRespectGitignore => false,
         }
     }
+}
+
+/// Minimum Fortran standard to check files against.
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Debug,
+    Hash,
+    Default,
+    strum_macros::Display,
+    clap::ValueEnum,
+)]
+#[serde(rename_all = "lowercase")]
+#[strum(serialize_all = "lowercase")]
+pub enum FortranStandard {
+    F95,
+    F2003,
+    F2008,
+    #[default]
+    F2018,
+    F2023,
 }
 
 /// Toggle for progress bar

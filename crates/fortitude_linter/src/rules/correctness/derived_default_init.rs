@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::CheckSettings;
+use crate::settings::{CheckSettings, FortranStandard};
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -31,8 +31,10 @@ use tree_sitter::Node;
 ///     integer, pointer :: pI2 => null(), pI3
 /// end mytype
 /// ```
+///
 /// will have the pointers `pReal1`, `pI1`, and `pI3` uninitialised
 /// whenever it is created. Instead, they should be initialised like:
+///
 /// ```f90
 /// type mytype
 ///     real :: val1
@@ -45,6 +47,8 @@ use tree_sitter::Node;
 ///     integer, pointer :: pI2 => null(), pI3  => null()
 /// end mytype
 /// ```
+///
+/// This feature is only available in Fortran 2003 and later.
 ///
 /// ## References
 /// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
@@ -69,7 +73,11 @@ impl Violation for MissingDefaultPointerInitalisation {
 }
 
 impl AstRule for MissingDefaultPointerInitalisation {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        // Feature only available in Fortran 2003 and later
+        if settings.target_std < FortranStandard::F2003 {
+            return None;
+        }
         // Only operate on derived types
         if node.parent()?.kind() != "derived_type_definition" {
             return None;

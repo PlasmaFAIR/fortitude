@@ -13,8 +13,8 @@ use fortitude_linter::rule_selector::{
 use fortitude_linter::rule_table::RuleTable;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::settings::{
-    CheckSettings, DEFAULT_SELECTORS, ExcludeMode, FileResolverSettings, GitignoreMode,
-    OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes,
+    CheckSettings, DEFAULT_SELECTORS, ExcludeMode, FileResolverSettings, FortranStandard,
+    GitignoreMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes,
 };
 use fortitude_linter::{ast_entrypoint_map, fs, warn_user_once_by_id, warn_user_once_by_message};
 
@@ -200,6 +200,7 @@ pub struct Configuration {
     pub show_fixes: Option<bool>,
     pub unsafe_fixes: Option<UnsafeFixes>,
     pub output_format: Option<OutputFormat>,
+    pub target_std: Option<FortranStandard>,
     pub progress_bar: Option<ProgressBar>,
     pub preview: Option<PreviewMode>,
 
@@ -245,6 +246,7 @@ impl Configuration {
             show_fixes: check.show_fixes,
             unsafe_fixes: check.unsafe_fixes.map(UnsafeFixes::from),
             output_format: check.output_format,
+            target_std: check.target_std,
             progress_bar: check.progress_bar,
             preview: check.preview.map(PreviewMode::from),
             include: options.include.or(include).map(|paths| {
@@ -323,6 +325,7 @@ impl Configuration {
                     .unwrap_or(Settings::default().check.line_length),
                 unsafe_fixes: self.unsafe_fixes.unwrap_or_default(),
                 preview,
+                target_std: self.target_std.unwrap_or_default(),
                 progress_bar,
                 output_format: self.output_format.unwrap_or_default(),
                 show_fixes: self.show_fixes.unwrap_or_default(),

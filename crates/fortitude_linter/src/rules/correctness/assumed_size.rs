@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::CheckSettings;
+use crate::settings::{CheckSettings, FortranStandard};
 use crate::{AstRule, FromAstNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -148,6 +148,20 @@ impl AstRule for AssumedSize {
 ///   end subroutine set_text
 /// end program
 /// ```
+///
+/// Allocatable dummy arguments were not introduced until Fortran 2003, so this
+/// rule is deactivated when targeting earlier standards. When doing so, it is
+/// recommended to always verify that the `character` dummy arguments have the
+/// correct size to avoid data loss:
+///
+/// ```f90
+///   ! Fortran 95 example
+///   subroutine set_text(text)
+///     character(len=*), intent(out) :: text
+///     if (len(text) < 12) stop 1
+///     text = "hello world!"
+///   end subroutine set_text
+/// ```
 #[derive(ViolationMetadata)]
 pub(crate) struct AssumedSizeCharacterIntent {
     name: String,
@@ -161,7 +175,12 @@ impl Violation for AssumedSizeCharacterIntent {
     }
 }
 impl AstRule for AssumedSizeCharacterIntent {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        // The recommended fix to this is only possible in Fortran 2003 and later.
+        // Those still writing Fortran 95 code are on their own!
+        if settings.target_std < FortranStandard::F2003 {
+            return None;
+        }
         let src = src.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?

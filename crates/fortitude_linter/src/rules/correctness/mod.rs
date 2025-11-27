@@ -34,7 +34,7 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::correctness::exit_labels;
-    use crate::settings::CheckSettings;
+    use crate::settings::{CheckSettings, FortranStandard};
     use crate::test::test_path;
 
     #[test_case(Rule::ImplicitTyping, Path::new("C001.f90"))]
@@ -91,6 +91,50 @@ mod tests {
             diagnostics.is_empty(),
             "Test source has no warnings, but some were raised:\n{diagnostics}"
         );
+        Ok(())
+    }
+
+    #[test_case(
+        Rule::ImplicitExternalProcedures,
+        Path::new("C003.f90"),
+        FortranStandard::F2008
+    )]
+    #[test_case(
+        Rule::AssumedSizeCharacterIntent,
+        Path::new("C072.f90"),
+        FortranStandard::F95
+    )]
+    #[test_case(
+        Rule::MissingDefaultPointerInitalisation,
+        Path::new("C101.f90"),
+        FortranStandard::F95
+    )]
+    #[test_case(Rule::MissingIntrinsic, Path::new("C122.f90"), FortranStandard::F95)]
+    fn rules_pass_for_standards_up_to_and_including(
+        rule_code: Rule,
+        path: &Path,
+        std: FortranStandard,
+    ) -> Result<()> {
+        let mut settings = CheckSettings::for_rule(rule_code);
+        settings.target_std = std;
+        let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
+        assert!(
+            diagnostics.is_empty(),
+            "Test source has no warnings, but some were raised:\n{diagnostics}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn c061_fortran95() -> Result<()> {
+        // Should exclude the pointer without intent warning
+        let path = Path::new("C061.f90");
+        let snapshot = format!("missing-intent-f95_{}", path.to_string_lossy());
+        let mut settings = CheckSettings::for_rule(Rule::MissingIntent);
+        settings.target_std = FortranStandard::F95;
+        let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
         Ok(())
     }
 

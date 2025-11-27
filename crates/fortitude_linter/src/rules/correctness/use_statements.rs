@@ -1,5 +1,5 @@
 use crate::ast::FortitudeNode;
-use crate::settings::CheckSettings;
+use crate::settings::{CheckSettings, FortranStandard};
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -70,6 +70,8 @@ impl AstRule for UseAll {
 ///
 /// This ensures the compiler will use the built-in module instead of a different
 /// module with the same name.
+///
+/// This feature is only available in Fortran 2003 and later.
 #[derive(ViolationMetadata)]
 pub(crate) struct MissingIntrinsic {}
 
@@ -93,7 +95,11 @@ impl Violation for MissingIntrinsic {
 }
 
 impl AstRule for MissingIntrinsic {
-    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        // Feature only available in Fortran 2003 and later
+        if settings.target_std < FortranStandard::F2003 {
+            return None;
+        }
         let module_name = node
             .child_with_name("module_name")?
             .to_text(_src.source_text())?
