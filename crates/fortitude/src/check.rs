@@ -137,7 +137,8 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     let (cli, config_arguments) = args.partition(global_options)?;
 
     // Construct the "default" settings. These are used when no `fortitude.toml`
-    // files are present, or files are injected from outside of the hierarchy.
+    // files are present alongside source files, or files are injected from
+    // outside of the hierarchy.
     let file_configuration = resolve::resolve(&config_arguments, cli.stdin_filename.as_deref())?;
 
     let stdin_filename = cli.stdin_filename;

@@ -58,10 +58,10 @@ pub fn resolve(
     }
 
     // Third priority: find a `fortitude.toml` file in either an ancestor of
-    // `stdin_filename` (if set) or the current working path all paths relative to
-    // that directory. (With `Strategy::Hierarchical`, we'll end up finding
-    // the "closest" `fortitude.toml` file for every Fortran file later on,
-    // so these act as the "default" settings.)
+    // `stdin_filename` (if set) or the current working path, with all paths
+    // resolved relative to that directory. (With `Strategy::Hierarchical`,
+    // we'll end up finding the "closest" `fortitude.toml` file for every
+    // Fortran file later on, so these act as the "default" settings.)
     if let Some(fortconfig) = find_settings_toml(stdin_filename.unwrap_or(&cwd))? {
         debug!(
             "Using configuration file (via parent) at: {}",
