@@ -47,6 +47,10 @@ mod tests {
     #[test_case(Rule::BadQuoteString, Path::new("S241.f90"))]
     #[test_case(Rule::AvoidableEscapedQuote, Path::new("S242.f90"))]
     #[test_case(Rule::UselessReturn, Path::new("S251.f90"))]
+    #[test_case(Rule::SuperfluousElseReturn, Path::new("S252.f90"))]
+    #[test_case(Rule::SuperfluousElseCycle, Path::new("S253.f90"))]
+    #[test_case(Rule::SuperfluousElseExit, Path::new("S254.f90"))]
+    #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

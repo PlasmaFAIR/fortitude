@@ -33,6 +33,7 @@ use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
 use rules::style::file_extensions::NonStandardFileExtension;
 use rules::style::line_length::LineTooLong;
+use rules::style::useless_return::check_superfluous_returns;
 use rules::style::whitespace::{MissingNewlineAtEndOfFile, TrailingWhitespace};
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
@@ -60,11 +61,31 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub trait FromAstNode {
     fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self;
+
+    fn from_node_if_rule_enabled<T: Into<DiagnosticKind>>(
+        settings: &CheckSettings,
+        rule: Rule,
+        violation: T,
+        node: &Node,
+    ) -> Option<Diagnostic>;
 }
 
 impl FromAstNode for Diagnostic {
     fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
         Self::new(violation, node.textrange())
+    }
+
+    fn from_node_if_rule_enabled<T: Into<DiagnosticKind>>(
+        settings: &CheckSettings,
+        rule: Rule,
+        violation: T,
+        node: &Node,
+    ) -> Option<Self> {
+        if settings.rules.enabled(rule) {
+            Some(Diagnostic::from_node(violation, node))
+        } else {
+            None
+        }
     }
 }
 
@@ -211,6 +232,18 @@ pub(crate) fn check_path(
     for node in once(root).chain(root.descendants()) {
         if rules.enabled(Rule::SyntaxError) && node.is_missing() {
             violations.push(Diagnostic::from_node(SyntaxError {}, &node));
+        }
+
+        if rules.any_enabled(&[
+            Rule::SuperfluousElseReturn,
+            Rule::SuperfluousElseCycle,
+            Rule::SuperfluousElseExit,
+            Rule::SuperfluousElseStop,
+        ]) && matches!(node.kind(), "keyword_statement" | "stop_statement")
+        {
+            if let Some(violation) = check_superfluous_returns(settings, &node, file) {
+                violations.push(violation);
+            }
         }
 
         if let Some(rules) = settings.ast_entrypoints.get(node.kind()) {

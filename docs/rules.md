@@ -96,6 +96,10 @@
 | S241 | [bad-quote-string](rules/bad-quote-string.md) | String uses single quotes but double quotes preferred | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S242 | [avoidable-escaped-quote](rules/avoidable-escaped-quote.md) | Avoidable escaped quotes | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S251 | [useless-return](rules/useless-return.md) | useless `return` statement` | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S252 | [superfluous-else-return](rules/superfluous-else-return.md) | Unecessary {branch} after `return` statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S253 | [superfluous-else-cycle](rules/superfluous-else-cycle.md) | Unecessary {branch} after `cycle` statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S254 | [superfluous-else-exit](rules/superfluous-else-exit.md) | Unecessary {branch} after `exit` statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S255 | [superfluous-else-stop](rules/superfluous-else-stop.md) | Unecessary {branch} after `{stop}` statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Portability (PORT)
 
