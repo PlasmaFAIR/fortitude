@@ -203,7 +203,7 @@ pub struct CheckCommand {
     pub no_preview: Option<bool>,
 
     /// Set minimum Fortran standard to check files against.
-    /// Options are "f2018" (default), "f2008", "f2003", "f95"
+    /// Options are "f2023", "f2018" (default), "f2008", "f2003", "f95"
     #[arg(long, value_enum)]
     pub target_std: Option<FortranStandard>,
 

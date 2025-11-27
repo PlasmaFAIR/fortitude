@@ -405,30 +405,18 @@ impl From<GitignoreMode> for bool {
     Debug,
     Hash,
     Default,
+    strum_macros::Display,
     clap::ValueEnum,
 )]
 #[serde(rename_all = "lowercase")]
+#[strum(serialize_all = "lowercase")]
 pub enum FortranStandard {
     F95,
     F2003,
     F2008,
     #[default]
     F2018,
-}
-
-impl fmt::Display for FortranStandard {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::F2018 => "f2018",
-                Self::F2008 => "f2008",
-                Self::F2003 => "f2003",
-                Self::F95 => "f95",
-            }
-        )
-    }
+    F2023,
 }
 
 /// Toggle for progress bar

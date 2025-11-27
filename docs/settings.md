@@ -585,11 +585,11 @@ Whether to show an enumeration of all fixed lint violations
 <span id="target-std"></span>
 
 Minimum Fortran standard to check files against.
-Options are "f2018" (default), "f2008", "f2003", and "f95".
+Options are "f2023", "f2018" (default), "f2008", "f2003", and "f95".
 
 **Default value**: `f2018`
 
-**Type**: `"f2018" | "f2008" | "f2003" | "f95"`
+**Type**: `"f2023" | "f2018" | "f2008" | "f2003" | "f95"`
 
 **Example usage**:
 

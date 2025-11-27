@@ -197,7 +197,7 @@ Options:
       --preview
           Enable preview mode; checks will include unstable rules and fixes. Use `--no-preview` to disable
       --target-std <TARGET_STD>
-          Set minimum Fortran standard to check files against. Options are "f2018" (default), "f2008", "f2003", "f95" [possible values: f95, f2003, f2008, f2018]
+          Set minimum Fortran standard to check files against. Options are "f2023", "f2018" (default), "f2008", "f2003", "f95" [possible values: f95, f2003, f2008, f2018, f2023]
       --progress-bar <PROGRESS_BAR>
           Progress bar settings. Options are "off" (default), "ascii", and "fancy" [possible values: off, fancy, ascii]
       --show-settings
