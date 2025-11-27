@@ -1,4 +1,4 @@
-use crate::settings::{CheckSettings, FortranStandard};
+use crate::settings::CheckSettings;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -60,9 +60,6 @@ use tree_sitter::Node;
 /// end subroutine s
 /// ```
 ///
-/// Common blocks were officially declared obsolescent in Fortran 2018,
-/// so this rule only triggers if the target standard is Fortran 2018 or later.
-///
 /// ## References
 /// - Metcalf, M., Reid, J. and Cohen, M., 2018, _Modern Fortran Explained:
 ///   Incorporating Fortran 2018_, Oxford University Press, Appendix B
@@ -78,12 +75,8 @@ impl Violation for CommonBlock {
 }
 
 impl AstRule for CommonBlock {
-    fn check(settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        if settings.target_std < FortranStandard::F2018 {
-            None
-        } else {
-            some_vec![Diagnostic::from_node(CommonBlock {}, node)]
-        }
+    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+        some_vec![Diagnostic::from_node(CommonBlock {}, node)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
