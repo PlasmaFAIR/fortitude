@@ -5,9 +5,6 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use ignore::WalkBuilder;
-use itertools::Itertools;
-use log::debug;
 use path_absolutize::Absolutize;
 use ruff_cache::{CacheKey, CacheKeyHasher};
 use ruff_macros::CacheKey;
@@ -15,7 +12,6 @@ use serde::{Deserialize, Deserializer, de};
 
 use crate::registry::Rule;
 use crate::rule_selector::CompiledPerFileIgnoreList;
-use crate::settings::FileResolverSettings;
 
 /// Wrapper around `std::fs::read_to_string` with some extra error
 /// checking.
@@ -333,63 +329,3 @@ pub const INCLUDE: &[FilePattern] = &[
     FilePattern::Builtin("*.f23"),
     FilePattern::Builtin("*.F23"),
 ];
-
-/// Expand the input list of files to include all Fortran files.
-pub fn get_files(
-    paths: &[PathBuf],
-    resolver: &FileResolverSettings,
-) -> anyhow::Result<Vec<PathBuf>> {
-    debug!("Gathering files");
-    debug!("Project root: {:?}", resolver.project_root);
-
-    // Normalise all paths and remove duplicates.
-    // If exclude_mode is set to Force, remove paths that match the exclude patterns.
-    let paths: Vec<_> = if resolver.force_exclude {
-        let (excluded, paths): (Vec<_>, Vec<_>) =
-            paths.iter().map(normalize_path).unique().partition(|p| {
-                resolver
-                    .excludes
-                    .ancestor_matches(p, &resolver.project_root)
-            });
-        if !excluded.is_empty() {
-            debug!("Force excluded paths: {excluded:?}");
-        }
-        paths
-    } else {
-        paths.iter().map(normalize_path).unique().collect()
-    };
-    debug!("Paths provided: {paths:?}");
-
-    // The remaining non-directory paths are always included; split into directories and files.
-    // Note that this includes paths that do not exist, as these should be reported to the user.
-    let (dirs, files): (Vec<_>, Vec<_>) = paths.into_iter().partition(|p| p.is_dir());
-
-    let excludes = resolver.excludes.clone();
-
-    // Collect all files from directories
-    let dir_contents = if let Some((first_dir, rest)) = dirs.split_first() {
-        // Create a directory walker that follows exclude patterns
-        let mut builder = WalkBuilder::new(first_dir);
-        for path in rest {
-            builder.add(path);
-        }
-        builder.standard_filters(resolver.respect_gitignore);
-        builder.hidden(false);
-        builder.filter_entry(move |e| !excludes.matches(e.path()));
-
-        // Collect all valid files from directories
-        builder
-            .build()
-            .filter_map(|p| p.ok()) // skip dirs if user doesn't have permission
-            .map(|p| p.into_path())
-            .filter(|p| !p.is_dir())
-            .filter(|p| resolver.include.matches(p))
-            .collect()
-    } else {
-        // No dirs remain after removing excludes and splitting into dirs and files
-        vec![]
-    };
-
-    // Return all files found
-    Ok(files.into_iter().chain(dir_contents).collect())
-}

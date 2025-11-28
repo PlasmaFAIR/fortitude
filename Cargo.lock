@@ -695,6 +695,7 @@ dependencies = [
  "colored",
  "fortitude_linter",
  "fortitude_workspace",
+ "ignore",
  "indicatif",
  "insta",
  "insta-cmd",
@@ -802,11 +803,15 @@ dependencies = [
  "colored",
  "etcetera 0.10.0",
  "fortitude_linter",
+ "globset",
+ "ignore",
  "indexmap",
  "is-macro",
  "itertools 0.12.1",
  "log",
+ "matchit",
  "path-absolutize",
+ "path-slash",
  "ruff_macros",
  "rustc-hash",
  "serde",
@@ -1300,6 +1305,12 @@ name = "log"
 version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
+
+[[package]]
+name = "matchit"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f926ade0c4e170215ae43342bf13b9310a437609c81f29f86c5df6657582ef9"
 
 [[package]]
 name = "memchr"

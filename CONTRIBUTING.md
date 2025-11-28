@@ -180,7 +180,7 @@ tree-sitter parse /path/to/fortran/file.f90
        }
    }
    ```
-5. Map the `Violation` struct to a rule code in `fortitude/src/rules/mod.rs`.
+6. Map the `Violation` struct to a rule code in `fortitude/src/rules/mod.rs`.
     - `code_to_rule` is never called directly, but the match statement within is
       analysed by the macro `fortitude_macros::map_codes` to define a `Rule` enum
       and many associated utilities.
