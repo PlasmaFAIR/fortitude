@@ -1,0 +1,34 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S253.f90:22:9: S253 Unecessary else-if after `cycle` statement
+   |
+20 |     do i = 1, a
+21 |       if ((i - b) < 0) then
+22 |         cycle
+   |         ^^^^^ S253
+23 |       else if ((i - b) > 10) then
+24 |         cycle
+   |
+
+./resources/test/fixtures/style/S253.f90:24:9: S253 Unecessary else after `cycle` statement
+   |
+22 |         cycle
+23 |       else if ((i - b) > 10) then
+24 |         cycle
+   |         ^^^^^ S253
+25 |       else
+26 |         capped_sub = capped_sub - b
+   |
+
+./resources/test/fixtures/style/S253.f90:38:9: S253 Unecessary else after `cycle` statement
+   |
+36 |     label: do i = 1, a
+37 |       if ((a * b) > 100) then
+38 |         cycle label
+   |         ^^^^^^^^^^^ S253
+39 |       else
+40 |         capped_mult = capped_mult * b
+   |

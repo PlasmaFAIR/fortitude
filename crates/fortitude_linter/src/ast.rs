@@ -132,7 +132,7 @@ pub trait FortitudeNode<'tree> {
     fn textrange(&self) -> TextRange;
 }
 
-impl FortitudeNode<'_> for Node<'_> {
+impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     fn descendants(&self) -> impl Iterator<Item = Node<'_>> {
         DepthFirstIterator {
             cursor: self.walk(),

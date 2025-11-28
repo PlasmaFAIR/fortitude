@@ -148,6 +148,11 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "232") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordHasWhitespace),
         (Style, "241") => (RuleGroup::Preview, Ast, Default, style::strings::BadQuoteString),
         (Style, "242") => (RuleGroup::Preview, Ast, Optional, style::strings::AvoidableEscapedQuote),
+        (Style, "251") => (RuleGroup::Preview, Ast, Optional, style::useless_return::UselessReturn),
+        (Style, "252") => (RuleGroup::Preview, None, Optional, style::useless_return::SuperfluousElseReturn),
+        (Style, "253") => (RuleGroup::Preview, None, Optional, style::useless_return::SuperfluousElseCycle),
+        (Style, "254") => (RuleGroup::Preview, None, Optional, style::useless_return::SuperfluousElseExit),
+        (Style, "255") => (RuleGroup::Preview, None, Optional, style::useless_return::SuperfluousElseStop),
 
         // obsolescent
         (Obsolescent, "001") => (RuleGroup::Removed, Ast, Default, obsolescent::statement_functions::StatementFunction),
