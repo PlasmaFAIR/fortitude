@@ -376,6 +376,9 @@ impl Definitions {
                     }
                 }
             }
+            if token.kind == CppTokenKind::Comment {
+                continue;
+            }
             result.push_str(&token.text);
         }
         Ok(result)
