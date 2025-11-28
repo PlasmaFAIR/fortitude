@@ -1,3 +1,6 @@
+pub use rule_selector::RuleSelector;
+pub use settings::Settings;
+
 pub mod allow_comments;
 pub mod ast;
 pub mod diagnostic_message;
