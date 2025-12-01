@@ -455,13 +455,13 @@ impl Definitions {
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
-            .context("Expected define directive")??;
+            .context("Expected define directive")?;
         if directive.kind != CppTokenKind::Directive(CppDirectiveKind::Define) {
             return Err(anyhow!("Expected define directive"));
         }
         // Expect whitespace, then an identifier
         let _ = iter.consume_whitespace().context("Expected whitespace")?;
-        let key = iter.consume_identifier().context("Expected identifier")??;
+        let key = iter.consume_identifier().context("Expected identifier")?;
         // Get optional argument list
         let args = iter.consume_arglist_definition()?;
         // Optional whitespace
@@ -469,7 +469,6 @@ impl Definitions {
         // Get token list of replacement text
         let mut replacement = Vec::new();
         for token in iter.by_ref() {
-            let token = token?;
             if token.kind == CppTokenKind::Newline {
                 break;
             }
@@ -500,13 +499,13 @@ impl Definitions {
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
-            .context("Expected undef directive")??;
+            .context("Expected undef directive")?;
         if directive.kind != CppTokenKind::Directive(CppDirectiveKind::Undef) {
             return Err(anyhow!("Expected undef directive"));
         }
         // Expect whitespace, then an identifier
         let _ = iter.consume_whitespace().context("Expected whitespace")?;
-        let key = iter.consume_identifier().context("Expected identifier")??;
+        let key = iter.consume_identifier().context("Expected identifier")?;
         // Expect nothing else on line
         iter.consume_whitespace();
         let _ = iter
@@ -523,13 +522,13 @@ impl Definitions {
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
-            .context("Expected ifdef directive")??;
+            .context("Expected ifdef directive")?;
         if directive.kind != CppTokenKind::Directive(CppDirectiveKind::Ifdef) {
             return Err(anyhow!("Expected ifdef directive"));
         }
         // Expect whitespace, then an identifier
         let _ = iter.consume_whitespace().context("Expected whitespace")?;
-        let key = iter.consume_identifier().context("Expected identifier")??;
+        let key = iter.consume_identifier().context("Expected identifier")?;
         // Expect possible whitespace, then newline
         iter.consume_whitespace();
         let _ = iter.consume_newline().context("Malformed ifdef")?;
@@ -543,13 +542,13 @@ impl Definitions {
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
-            .context("Expected ifndef directive")??;
+            .context("Expected ifndef directive")?;
         if directive.kind != CppTokenKind::Directive(CppDirectiveKind::Ifndef) {
             return Err(anyhow!("Expected ifndef directive"));
         }
         // Expect whitespace, then an identifier
         let _ = iter.consume_whitespace().context("Expected whitespace")?;
-        let key = iter.consume_identifier().context("Expected identifier")??;
+        let key = iter.consume_identifier().context("Expected identifier")?;
         // Expect possible whitespace, then newline
         iter.consume_whitespace();
         let _ = iter.consume_newline().context("Malformed ifndef")?;
@@ -576,13 +575,9 @@ impl CPreprocessor {
         let mut defines = Definitions::new();
         let datetime: DateTime<Local> = Local::now();
         // Format date as "Mmm dd yyyy", e.g. "Jan 19 2024". Date number is space-padded.
-        let date_text = format!("\"{}\"", datetime.format("%b %e %Y"));
-        let date_len = date_text.len();
         let date = CppToken {
-            text: date_text,
+            text: format!("\"{}\"", datetime.format("%b %e %Y")),
             kind: CppTokenKind::String,
-            start: 0,
-            end: date_len,
         };
         defines.insert(
             "__DATE__".to_string(),
@@ -593,13 +588,9 @@ impl CPreprocessor {
             },
         );
         // Format time as "hh:mm:ss", e.g. "13:45:30". Time numbers are zero-padded.
-        let time_text = format!("\"{}\"", datetime.format("%H:%M:%S"));
-        let time_len = time_text.len();
         let time = CppToken {
-            text: time_text,
+            text: format!("\"{}\"", datetime.format("%H:%M:%S")),
             kind: CppTokenKind::String,
-            start: 0,
-            end: time_len,
         };
         defines.insert(
             "__TIME__".to_string(),
@@ -613,9 +604,8 @@ impl CPreprocessor {
         // Must come after __DATE__ and __TIME__ to allow them to be overwritten.
         for (key, value) in user_defines {
             let replacement = CppTokenIterator::new(value)
-                .map(|x| x.map(|y| y.to_owned()))
-                .collect::<Result<Vec<_>, _>>()
-                .context(format!("Failed to parse user definition: {key} -> {value}"))?;
+                .map(|x| x.to_owned())
+                .collect::<Vec<_>>();
             defines.insert(
                 key.clone(),
                 Definition {
@@ -653,7 +643,7 @@ impl CPreprocessor {
                         iter.consume_whitespace();
                         let token = iter
                             .consume_directive()
-                            .context("Expected else directive")??;
+                            .context("Expected else directive")?;
                         if token.kind != CppTokenKind::Directive(CppDirectiveKind::Else) {
                             return Err(anyhow!("Expected else directive"));
                         }
@@ -671,7 +661,7 @@ impl CPreprocessor {
                         iter.consume_whitespace();
                         let token = iter
                             .consume_directive()
-                            .context("Expected endif directive")??;
+                            .context("Expected endif directive")?;
                         if token.kind != CppTokenKind::Directive(CppDirectiveKind::Endif) {
                             return Err(anyhow!("Expected endif directive"));
                         }
@@ -691,7 +681,6 @@ impl CPreprocessor {
                 // Not a pre-processor directive line
                 let mut iter = CppTokenIterator::new(&line.text);
                 while let Some(token) = iter.next() {
-                    let token = token?;
                     match token.kind {
                         CppTokenKind::Identifier => {
                             if !if_stack.is_clean() {
@@ -976,6 +965,7 @@ mod tests {
 
     #[test]
     fn test_if() -> anyhow::Result<()> {
+        // Note: definitions are expanded even in Fortran comments!
         let code = dedent!(
             r#"
             #ifdef X
@@ -1004,7 +994,7 @@ mod tests {
         let (output, _) = preprocess(&["#define X", code].join("\n"))?;
         let expected = dedent!(
             r#"
-            ! X !Y
+            !  !Y
             program p
               print *, 10
             end program p
@@ -1015,7 +1005,7 @@ mod tests {
         let (output, _) = preprocess(&["#define X", "#define Y", code].join("\n"))?;
         let expected = dedent!(
             r#"
-            ! X Y
+            !  
             program p
               print *, 20
             end program p
@@ -1026,7 +1016,7 @@ mod tests {
         let (output, _) = preprocess(&["#define Y", code].join("\n"))?;
         let expected = dedent!(
             r#"
-            ! !X Y
+            ! !X 
             program p
               print *, 30
             end program p
