@@ -1,18 +1,15 @@
 use anyhow::anyhow;
 use std::borrow::{Borrow, ToOwned};
+use std::fmt;
 use std::iter::Peekable;
 use std::str::FromStr;
-use std::fmt;
 
 /// All valid 'punctuators'. Includes all ASCII punctuation except for single
 /// and double quotes.  Multichar operators like '==' and '/=' are handled here
 /// as sequences of single-character punctuators. As the preprocessor doesn't
 /// understand Fortran comments, the exclamation mark '!' is included as a valid
 /// punctuator.
-const PUNCTUATORS: &[u8] = &[
-    b'*', b'+', b'-', b'/', b'*', b'=', b'<', b'>', b'(', b'[', b')', b']', b'{', b'}', b',', b'.',
-    b'&', b'|', b'%', b';', b':', b'!', b'?', b'~', b'^', b'|', b'\\', b'`', b'@', b'#', b'$',
-];
+const PUNCTUATORS: &[u8] = b"*+-/*=<>([)]{},.&|%;:!?~^|\\`@#$";
 
 /// The variant of each token.
 #[derive(Debug, Clone, Eq, PartialEq, strum_macros::Display, strum_macros::EnumString)]
@@ -49,8 +46,7 @@ pub enum CppTokenKind {
     Newline,
     /// A preprocessor block comment, starting with `/*` and ending with `*/`.
     Comment,
-    /// A preprocessor directive, including the leading `#`. Also captures
-    /// stringification within macros.
+    /// A preprocessor directive, including the leading `#`.
     Directive(CppDirectiveKind),
     /// A preprocessor token concatenation operator `##`. Currently unused.
     Concatenation,
@@ -166,13 +162,6 @@ impl<'a> CppTokenIterator<'a> {
             kind,
             start,
             end,
-        }
-    }
-
-    /// Skip the rest of the current line excluding the newline.
-    pub fn skip_to_line_end(&mut self) {
-        while !matches!(self.iter.peek(), Some(&b'\n') | Some(&b'\r') | None) {
-            self.step();
         }
     }
 

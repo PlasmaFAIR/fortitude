@@ -1,2 +1,2 @@
-// pub mod cpp; // Temporarily disabled while the tokenizer is being reworked
+pub mod cpp;
 mod cpp_tokens;
