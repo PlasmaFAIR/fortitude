@@ -1,10 +1,10 @@
-use crate::cpp_tokens::{CppDirectiveKind, CppToken, CppTokenIterator, CppTokenKind};
+use crate::logical_lines::{LogicalLine, LogicalLines};
+use crate::tokens::{CppDirectiveKind, CppToken, CppTokenIterator, CppTokenKind};
 use anyhow::{Context, anyhow};
 use chrono::prelude::*;
 use lazy_regex::regex_captures;
-use ruff_source_file::{OneIndexed, SourceCode};
+use ruff_source_file::SourceCode;
 use ruff_text_size::TextSize;
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -17,14 +17,14 @@ pub enum Provenance {
     UserDefined,
     /// A macro defined in the source file.
     FileDefined {
-        start: usize,
-        end: usize,
+        start: TextSize,
+        end: TextSize,
         path: PathBuf,
     },
     /// Plain text from an included file.
     IncludeText { path: PathBuf },
     /// Plain text in the source file, not from a macro.
-    LocalText { start: usize, end: usize },
+    LocalText { start: TextSize, end: TextSize },
 }
 
 /// A snippet of text with provenance information.
@@ -101,120 +101,6 @@ impl Snippets {
             .iter()
             .map(|s| s.text.as_str())
             .collect::<String>()
-    }
-}
-
-/// A logical line of code, which may span multiple physical lines due to
-/// line continuations. Tracks the byte offset of each location of the
-/// logical line.
-pub struct LogicalLine<'a> {
-    /// The text of the logical line.
-    text: Cow<'a, str>,
-    /// The byte offsets of each character in the logical line
-    /// relative to the start of the source file.
-    /// TODO: Optimise this, only store start and any discontinuities
-    byte_offsets: Vec<usize>,
-    /// The number of real lines spanned by this logical line.
-    span: usize,
-}
-
-impl<'a> LogicalLine<'a> {
-    pub fn new(src: &'a SourceCode, start_line: usize) -> LogicalLine<'a> {
-        let line_index = OneIndexed::from_zero_indexed(start_line);
-        let line_text = src.line_text(line_index);
-        let line_count = src.line_count();
-        let line_offset: usize = src.line_start(line_index).into();
-        let trimmed = line_text.trim_end();
-        if let Some(continued) = trimmed.strip_suffix('\\') {
-            let mut logical_line = LogicalLine {
-                text: Cow::Borrowed(continued),
-                byte_offsets: (line_offset..line_offset + continued.len()).collect(),
-                span: 1,
-            };
-            if start_line + 1 < line_count {
-                logical_line.extend(src, start_line + 1); // recursive
-            }
-            logical_line
-        } else {
-            LogicalLine {
-                text: Cow::Borrowed(line_text),
-                byte_offsets: (line_offset..line_offset + line_text.len()).collect(),
-                span: 1,
-            }
-        }
-    }
-
-    fn extend(&mut self, src: &'a SourceCode, line: usize) -> &Self {
-        self.span += 1;
-        let line_index = OneIndexed::from_zero_indexed(line);
-        let line_text = src.line_text(line_index);
-        let line_offset: usize = src.line_start(line_index).into();
-        let trimmed = line_text.trim_end();
-        if let Some(continued) = trimmed.strip_suffix('\\') {
-            self.text.to_mut().push_str(continued);
-            let end_offset = line_offset + continued.len();
-            self.byte_offsets.extend(line_offset..end_offset);
-            if line + 1 < src.line_count() {
-                self.extend(src, line + 1)
-            } else {
-                self
-            }
-        } else {
-            self.text.to_mut().push_str(line_text);
-            let end_offset = line_offset + line_text.len();
-            self.byte_offsets.extend(line_offset..end_offset);
-            self
-        }
-    }
-
-    pub fn offset(&self, index: usize) -> Option<usize> {
-        // handle the case where index is at the end of the text
-        if index == self.text.len() {
-            return self.byte_offsets.last().copied().map(|v| v + 1);
-        }
-        self.byte_offsets.get(index).copied()
-    }
-
-    pub fn offset_range(&self) -> Option<(usize, usize)> {
-        if self.byte_offsets.is_empty() {
-            None
-        } else {
-            Some((
-                *self.byte_offsets.first().unwrap(),
-                self.byte_offsets.last().unwrap() + 1,
-            ))
-        }
-    }
-
-    pub fn span(&self) -> usize {
-        self.span
-    }
-}
-
-pub struct LogicalLines<'a> {
-    lines: Vec<LogicalLine<'a>>,
-}
-
-impl<'a> LogicalLines<'a> {
-    pub fn new(src: &'a SourceCode) -> LogicalLines<'a> {
-        let mut lines = Vec::new();
-        let line_count = src.line_count();
-        let mut line_index = 0;
-        while line_index < line_count {
-            let line = LogicalLine::new(src, line_index);
-            line_index += line.span();
-            lines.push(line);
-        }
-        LogicalLines { lines }
-    }
-}
-
-impl<'a> IntoIterator for LogicalLines<'a> {
-    type Item = LogicalLine<'a>;
-    type IntoIter = std::vec::IntoIter<LogicalLine<'a>>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.lines.into_iter()
     }
 }
 
@@ -451,7 +337,7 @@ impl Definitions {
 
     pub fn handle_define(&mut self, line: &LogicalLine, path: &Path) -> anyhow::Result<()> {
         // Expect possible whitespace, then 'define'.
-        let mut iter = CppTokenIterator::new(&line.text);
+        let mut iter = CppTokenIterator::new(line.text());
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
@@ -474,9 +360,7 @@ impl Definitions {
             }
             replacement.push(token.to_owned());
         }
-        let (start, end) = line
-            .offset_range()
-            .context("Define directive in illegal location")?;
+        let (start, end) = line.offset_range();
         // TODO: handle redefines properly
         self.insert(
             key.text.to_string(),
@@ -495,7 +379,7 @@ impl Definitions {
 
     pub fn handle_undef(&mut self, line: &LogicalLine) -> anyhow::Result<()> {
         // Expect possible whitespace, then 'undef'.
-        let mut iter = CppTokenIterator::new(&line.text);
+        let mut iter = CppTokenIterator::new(line.text());
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
@@ -518,7 +402,7 @@ impl Definitions {
 
     pub fn handle_ifdef(&mut self, line: &LogicalLine) -> anyhow::Result<bool> {
         // Expect possible whitespace, then 'ifdef'.
-        let mut iter = CppTokenIterator::new(&line.text);
+        let mut iter = CppTokenIterator::new(line.text());
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
@@ -538,7 +422,7 @@ impl Definitions {
     pub fn handle_ifndef(&mut self, line: &LogicalLine) -> anyhow::Result<bool> {
         // TODO combine with handle_ifdef, reduce repeat code
         // Expect possible whitespace, then 'ifdef'.
-        let mut iter = CppTokenIterator::new(&line.text);
+        let mut iter = CppTokenIterator::new(line.text());
         iter.consume_whitespace();
         let directive = iter
             .consume_directive()
@@ -618,8 +502,8 @@ impl CPreprocessor {
         // Preprocess the input.
         let mut snippets = Snippets::new();
         let mut if_stack = IfStack::new();
-        for line in LogicalLines::new(input) {
-            if let Some((_, directive)) = regex_captures!(r"\s*#\s*([a-z]+)", &line.text) {
+        for line in LogicalLines::from_source_code(input) {
+            if let Some((_, directive)) = regex_captures!(r"\s*#\s*([a-z]+)", line.text()) {
                 match directive {
                     "define" => {
                         if if_stack.is_clean() {
@@ -639,7 +523,7 @@ impl CPreprocessor {
                     }
                     "else" => {
                         // Expect possible whitespace, then 'else', possible whitespace, then newline
-                        let mut iter = CppTokenIterator::new(&line.text);
+                        let mut iter = CppTokenIterator::new(line.text());
                         iter.consume_whitespace();
                         let token = iter
                             .consume_directive()
@@ -657,7 +541,7 @@ impl CPreprocessor {
                     }
                     "endif" => {
                         // Expect possible whitespace, then 'endif', possible whitespace, then newline
-                        let mut iter = CppTokenIterator::new(&line.text);
+                        let mut iter = CppTokenIterator::new(line.text());
                         iter.consume_whitespace();
                         let token = iter
                             .consume_directive()
@@ -679,7 +563,7 @@ impl CPreprocessor {
                 }
             } else {
                 // Not a pre-processor directive line
-                let mut iter = CppTokenIterator::new(&line.text);
+                let mut iter = CppTokenIterator::new(line.text());
                 while let Some(token) = iter.next() {
                     match token.kind {
                         CppTokenKind::Identifier => {
@@ -711,10 +595,7 @@ impl CPreprocessor {
                             if token.text == "__LINE__" {
                                 // Get the line number of the start of this token, accounting
                                 // for line continuations.
-                                let real_offset = line
-                                    .offset(token.start)
-                                    .context("__LINE__ directive in illegal location")?;
-                                let real_offset = TextSize::from(real_offset as u32);
+                                let real_offset = line.offset(token.start);
                                 let real_line = input.line_index(real_offset).to_string();
                                 snippets.push(&real_line, Provenance::SystemDefined);
                             } else if token.text == "__FILE__" {
@@ -723,12 +604,8 @@ impl CPreprocessor {
                                     Provenance::SystemDefined,
                                 );
                             } else {
-                                let start = line
-                                    .offset(token.start)
-                                    .context("Token in illegal location")?;
-                                let end = line
-                                    .offset(token.end)
-                                    .context("Token in illegal location")?;
+                                let start = line.offset(token.start);
+                                let end = line.offset(token.end);
                                 snippets.push(token.text, Provenance::LocalText { start, end });
                             }
                         }
@@ -743,12 +620,8 @@ impl CPreprocessor {
                             if !if_stack.is_clean() {
                                 continue;
                             }
-                            let start = line
-                                .offset(token.start)
-                                .context("Token in illegal location")?;
-                            let end = line
-                                .offset(token.end)
-                                .context("Token in illegal location")?;
+                            let start = line.offset(token.start);
+                            let end = line.offset(token.end);
                             snippets.push(token.text, Provenance::LocalText { start, end });
                         }
                     }
@@ -807,14 +680,20 @@ mod tests {
         // \n
         assert_eq!(
             snippets[1].provenance,
-            Provenance::LocalText { start: 8, end: 9 }
+            Provenance::LocalText {
+                start: TextSize::from(8),
+                end: TextSize::from(9)
+            }
         );
         // __TIME__
         assert_eq!(snippets[2].provenance, Provenance::SystemDefined);
         // " UTC"
         assert_eq!(
             snippets[3].provenance,
-            Provenance::LocalText { start: 17, end: 21 }
+            Provenance::LocalText {
+                start: TextSize::from(17),
+                end: TextSize::from(21)
+            }
         );
         Ok(())
     }
@@ -850,14 +729,14 @@ mod tests {
         assert_eq!(snippets.len(), 9);
         // Z
         if let Provenance::FileDefined { start, end, path } = &snippets[1].provenance {
-            assert_eq!(&code[*start..*end], "#define Z W,Y X\n");
+            assert_eq!(&code[start.to_usize()..end.to_usize()], "#define Z W,Y X\n");
             assert_eq!(path, &PathBuf::from("test.f90"));
         } else {
             panic!("Expected FileDefined provenance for Z");
         }
         // ", " following Z
         if let Provenance::LocalText { start, end } = &snippets[2].provenance {
-            assert_eq!(&code[*start..*end], ", ");
+            assert_eq!(&code[start.to_usize()..end.to_usize()], ", ");
         } else {
             panic!("Expected LocalText provenance for ', ' following Z");
         }
@@ -865,7 +744,7 @@ mod tests {
         assert_eq!(snippets[3].provenance, Provenance::SystemDefined);
         // ", " following __FILE__
         if let Provenance::LocalText { start, end } = &snippets[4].provenance {
-            assert_eq!(&code[*start..*end], ", ");
+            assert_eq!(&code[start.to_usize()..end.to_usize()], ", ");
         } else {
             panic!("Expected LocalText provenance for ', ' following __FILE__");
         }
@@ -873,7 +752,7 @@ mod tests {
         assert_eq!(snippets[5].provenance, Provenance::SystemDefined);
         // ", " following __LINE__
         if let Provenance::LocalText { start, end } = &snippets[6].provenance {
-            assert_eq!(&code[*start..*end], ", ");
+            assert_eq!(&code[start.to_usize()..end.to_usize()], ", ");
         } else {
             panic!("Expected LocalText provenance for ', ' following __LINE__");
         }
@@ -881,7 +760,7 @@ mod tests {
         assert_eq!(snippets[7].provenance, Provenance::UserDefined);
         // Rest of code
         if let Provenance::LocalText { start, end } = &snippets[8].provenance {
-            assert_eq!(&code[*start..*end], "\nend program p");
+            assert_eq!(&code[start.to_usize()..end.to_usize()], "\nend program p");
         } else {
             panic!("Expected LocalText provenance for rest of code");
         }
@@ -925,20 +804,29 @@ mod tests {
         // foo
         for i in [1, 3, 5, 11] {
             if let Provenance::FileDefined { start, end, path } = &snippets[i].provenance {
-                assert_eq!(&code[*start..*end], "#define foo( x ) (x + W)\n");
+                assert_eq!(
+                    &code[start.to_usize()..end.to_usize()],
+                    "#define foo( x ) (x + W)\n"
+                );
                 assert_eq!(path, &PathBuf::from("test.f90"));
             } else {
                 panic!("Expected FileDefined provenance for foo");
             }
         }
         if let Provenance::FileDefined { start, end, path } = &snippets[7].provenance {
-            assert_eq!(&code[*start..*end], "#define bar(x, y) x//y\n");
+            assert_eq!(
+                &code[start.to_usize()..end.to_usize()],
+                "#define bar(x, y) x//y\n"
+            );
             assert_eq!(path, &PathBuf::from("test.f90"));
         } else {
             panic!("Expected FileDefined provenance for bar");
         }
         if let Provenance::FileDefined { start, end, path } = &snippets[9].provenance {
-            assert_eq!(&code[*start..*end], "#define baz() 10\n");
+            assert_eq!(
+                &code[start.to_usize()..end.to_usize()],
+                "#define baz() 10\n"
+            );
             assert_eq!(path, &PathBuf::from("test.f90"));
         } else {
             panic!("Expected FileDefined provenance for baz");
@@ -1078,20 +966,23 @@ mod tests {
         assert_eq!(snippets.len(), 4);
         // "print *, ""
         if let Provenance::LocalText { start, end } = &snippets[0].provenance {
-            assert_eq!(&code[*start..*end], "print\\\n *, ");
+            assert_eq!(&code[start.to_usize()..end.to_usize()], "print\\\n *, ");
         } else {
             panic!("Expected LocalText provenance for 'print *, '");
         }
         // X
         if let Provenance::FileDefined { start, end, path } = &snippets[1].provenance {
-            assert_eq!(&code[*start..*end], "#def\\\nine X \\\n(1 + \\\n2)\n");
+            assert_eq!(
+                &code[start.to_usize()..end.to_usize()],
+                "#def\\\nine X \\\n(1 + \\\n2)\n"
+            );
             assert_eq!(path, &PathBuf::from("test.f90"));
         } else {
             panic!("Expected FileDefined provenance for X");
         }
         // ", "
         if let Provenance::LocalText { start, end } = &snippets[2].provenance {
-            assert_eq!(&code[*start..*end], ", ");
+            assert_eq!(&code[start.to_usize()..end.to_usize()], ", ");
         } else {
             panic!("Expected LocalText provenance for ', '");
         }

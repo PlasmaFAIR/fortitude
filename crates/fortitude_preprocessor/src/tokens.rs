@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use ruff_text_size::TextSize;
 use std::borrow::{Borrow, ToOwned};
 use std::fmt;
 use std::iter::Peekable;
@@ -62,9 +63,9 @@ pub struct CppTokenRef<'a> {
     /// The kind of token.
     pub kind: CppTokenKind,
     /// The beginning of the token in the source file.
-    pub start: usize,
+    pub start: TextSize,
     /// The end of the token in the source file.
-    pub end: usize,
+    pub end: TextSize,
 }
 
 impl fmt::Display for CppTokenRef<'_> {
@@ -75,6 +76,8 @@ impl fmt::Display for CppTokenRef<'_> {
             start,
             end,
         } = self;
+        let start = start.to_u32();
+        let end = end.to_u32();
         let text = text
             .replace('\n', "\\n")
             .replace('\r', "\\r")
@@ -160,8 +163,8 @@ impl<'a> CppTokenIterator<'a> {
         CppTokenRef {
             text,
             kind,
-            start,
-            end,
+            start: TextSize::from(start as u32),
+            end: TextSize::from(end as u32),
         }
     }
 
