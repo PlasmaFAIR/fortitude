@@ -1,4 +1,4 @@
-[![Fortitude](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/PlasmaFAIR/fortitude/main/assets/badge/v0.json)](https://github.com/PlasmaFAIR/fortitude)
+[![Fortitude](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/PlasmaFAIR/fortitude/main/docs/assets/badge/v0.json)](https://github.com/PlasmaFAIR/fortitude)
 [![PyPI](https://img.shields.io/pypi/v/fortitude-lint.svg)](https://pypi.org/project/fortitude-lint)
 [![License](https://img.shields.io/pypi/l/fortitude-lint.svg)](https://github.com/PlasmaFAIR/fortitude/blob/main/LICENSE)
 ![Tests](https://github.com/PlasmaFAIR/fortitude/actions/workflows/test.yml/badge.svg)
