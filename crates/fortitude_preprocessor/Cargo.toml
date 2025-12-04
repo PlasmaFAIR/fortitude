@@ -17,6 +17,8 @@ itertools = { workspace = true }
 lazy-regex = { workspace = true }
 ruff_source_file = { workspace = true }
 ruff_text_size = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
 

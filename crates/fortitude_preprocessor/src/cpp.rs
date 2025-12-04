@@ -5,11 +5,12 @@ use chrono::prelude::*;
 use lazy_regex::regex_captures;
 use ruff_source_file::SourceCode;
 use ruff_text_size::TextSize;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// Enum describing where a snippet came from.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub enum Provenance {
     /// A system-defined macro, e.g. __DATE__ or __TIME__.
     SystemDefined,
@@ -28,6 +29,7 @@ pub enum Provenance {
 }
 
 /// A snippet of text with provenance information.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Snippet {
     text: String,
     provenance: Provenance,
@@ -457,7 +459,7 @@ pub struct CPreprocessor {
 impl CPreprocessor {
     pub fn new(
         input: &SourceCode,
-        path: PathBuf,
+        path: &Path,
         user_defines: &HashMap<String, String>,
     ) -> anyhow::Result<Self> {
         let mut defines = Definitions::new();
@@ -511,7 +513,7 @@ impl CPreprocessor {
                 match directive {
                     "define" => {
                         if if_stack.is_clean() {
-                            defines.handle_define(&line, &path)?;
+                            defines.handle_define(&line, path)?;
                         }
                     }
                     "undef" => {
@@ -636,7 +638,7 @@ impl CPreprocessor {
             }
         }
         Ok(Self {
-            path,
+            path: path.to_path_buf(),
             snippets,
             defines,
         })
@@ -644,6 +646,15 @@ impl CPreprocessor {
 
     pub fn output(&self) -> String {
         self.snippets.collect()
+    }
+}
+
+impl IntoIterator for CPreprocessor {
+    type Item = Snippet;
+    type IntoIter = std::vec::IntoIter<Snippet>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.snippets.inner.into_iter()
     }
 }
 
@@ -661,7 +672,7 @@ mod tests {
         let mut user_defines = HashMap::new();
         user_defines.insert("__GNU__".to_string(), "".to_string());
         user_defines.insert("TEST".to_string(), 42.to_string());
-        let preprocessor = CPreprocessor::new(&code, PathBuf::from("test.f90"), &user_defines)?;
+        let preprocessor = CPreprocessor::new(&code, &PathBuf::from("test.f90"), &user_defines)?;
         Ok((preprocessor.output(), preprocessor.snippets.inner))
     }
 
