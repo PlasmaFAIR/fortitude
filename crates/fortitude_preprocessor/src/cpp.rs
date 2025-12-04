@@ -1001,14 +1001,17 @@ mod tests {
     #[test]
     fn test_comments() -> anyhow::Result<()> {
         // WARNING: This test replicates behaviour that deviates from gfortran.
+        //
         // gcc/gfortran (second line differs from this test):
         // x y z
         // xmerge(y,z)
         // xyz
+        //
         // pcpp (all comments replaced by spaces):
         // x y z
         // x y z
         // x y z
+        //
         // lfortran (agrees with this test):
         // x y z
         // xyz
@@ -1038,16 +1041,18 @@ mod tests {
     fn test_comments_and_escaped_newlines() -> anyhow::Result<()> {
         // Similar to test_comments, but with the addition of escaped newlines
         // lfortran begins to disagree, giving:
-        //  x   y z
-        //  x  yz
-        //  xy\
-        //  z
+        // x   y z
+        // x  yz
+        // xy\
+        // z
+        //
         // gfortran and pcpp remain the same as in test_comments.
         let code = dedent!(
             r#"
             #define merge(x, y) \
               x/**/y
-            merge(x, merge(y, z))
+            merge(x, merge(y, \
+            z))
             merge(x,merge(y,z))
             x/* comment */y/* 
                             *another comment */\
