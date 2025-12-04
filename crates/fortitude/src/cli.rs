@@ -112,6 +112,7 @@ impl From<&LogLevelArgs> for LogLevel {
 pub enum SubCommands {
     Check(CheckCommand),
     Explain(ExplainCommand),
+    Preprocess(PreprocessCommand),
     /// Generate shell completion.
     #[clap(hide = true)]
     GenerateShellCompletion {
@@ -582,4 +583,21 @@ pub struct ExplainCommand {
     /// Output format
     #[arg(long, value_enum, default_value = "text")]
     pub output_format: HelpFormat,
+}
+
+/// Preprocess Fortran files and output the results
+#[derive(Debug, clap::Parser, Clone)]
+pub struct PreprocessCommand {
+    /// The file to preprocess.
+    pub input_file: PathBuf,
+
+    /// Output serialization format. Choices are "text" and "json",
+    /// with the latter including additional provenance information.
+    #[arg(long, value_enum, default_value = "text")]
+    pub output_format: HelpFormat,
+
+    /// User definitions to pass to the preprocessor. These should be in the
+    /// form `MACRO=VALUE` or simply `MACRO` to define a macro with no value.
+    #[arg(long, short='D', value_name = "MACRO=VALUE", action = clap::ArgAction::Append)]
+    pub define: Vec<String>,
 }
