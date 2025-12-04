@@ -196,6 +196,8 @@ impl Definitions {
     }
 
     fn expand_macro_tokens(&self, tokens: &[CppToken]) -> anyhow::Result<String> {
+        // Due to the removal of comments in replacement text, it is possible
+        // to encounter
         let mut result = String::new();
         let mut iter = tokens.iter().peekable();
         while let Some(token) = iter.next() {
@@ -262,6 +264,8 @@ impl Definitions {
                     }
                 }
             }
+            // Skip any comments in the replacement text.
+            // Necessary to handle concatenation properly.
             if token.kind == CppTokenKind::Comment {
                 continue;
             }
@@ -615,6 +619,9 @@ impl CPreprocessor {
                                 "Unexpected directive token {:?} in non-directive line",
                                 kind
                             ));
+                        }
+                        CppTokenKind::Comment => {
+                            // C-style comments are skipped in replacement text.
                         }
                         _ => {
                             if !if_stack.is_clean() {
@@ -988,6 +995,74 @@ mod tests {
         }
         // __LINE__
         assert_eq!(snippets[3].provenance, Provenance::SystemDefined);
+        Ok(())
+    }
+
+    #[test]
+    fn test_comments() -> anyhow::Result<()> {
+        // WARNING: This test replicates behaviour that deviates from gfortran.
+        // gcc/gfortran (second line differs from this test):
+        // x y z
+        // xmerge(y,z)
+        // xyz
+        // pcpp (all comments replaced by spaces):
+        // x y z
+        // x y z
+        // x y z
+        // lfortran (agrees with this test):
+        // x y z
+        // xyz
+        // xyz
+        let code = dedent!(
+            r#"
+            #define merge(x, y) x/**/y
+            merge(x, merge(y, z))
+            merge(x,merge(y,z))
+            x/* comment */y/* 
+                            *another comment */z
+            "#
+        );
+        let (output, _) = preprocess(code)?;
+        let expected = dedent!(
+            r#"
+            x y z
+            xyz
+            xyz
+        "#
+        );
+        assert_eq!(output, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_comments_and_escaped_newlines() -> anyhow::Result<()> {
+        // Similar to test_comments, but with the addition of escaped newlines
+        // lfortran begins to disagree, giving:
+        //  x   y z
+        //  x  yz
+        //  xy\
+        //  z
+        // gfortran and pcpp remain the same as in test_comments.
+        let code = dedent!(
+            r#"
+            #define merge(x, y) \
+              x/**/y
+            merge(x, merge(y, z))
+            merge(x,merge(y,z))
+            x/* comment */y/* 
+                            *another comment */\
+            z
+            "#
+        );
+        let (output, _) = preprocess(code)?;
+        let expected = dedent!(
+            r#"
+            x y z
+            xyz
+            xyz
+        "#
+        );
+        assert_eq!(output, expected);
         Ok(())
     }
 }
