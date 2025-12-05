@@ -15,6 +15,7 @@ build = "build.rs"
 
 [dependencies]
 fortitude_linter = { workspace = true }
+fortitude_preprocessor = { workspace = true }
 fortitude_workspace = { workspace = true }
 
 anyhow = { workspace = true }

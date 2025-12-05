@@ -163,11 +163,12 @@ A Fortran linter, written in Rust and installable with Python
 Usage: fortitude [OPTIONS] <COMMAND>
 
 Commands:
-  check    Perform static analysis on files and report issues
-  explain  Get descriptions, rationales, and solutions for each rule
-  version  Display Fortitude's version
-  config   List or describe the available configuration options
-  help     Print this message or the help of the given subcommand(s)
+  check       Perform static analysis on files and report issues
+  explain     Get descriptions, rationales, and solutions for each rule
+  preprocess  Preprocess Fortran files and output the results
+  version     Display Fortitude's version
+  config      List or describe the available configuration options
+  help        Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
