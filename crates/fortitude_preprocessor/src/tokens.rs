@@ -49,8 +49,6 @@ pub enum CppTokenKind {
     Comment,
     /// A preprocessor directive, including the leading `#`.
     Directive(CppDirectiveKind),
-    /// A preprocessor token concatenation operator `##`. Currently unused.
-    Concatenation,
     /// Something that isn't recognised.
     Other,
 }

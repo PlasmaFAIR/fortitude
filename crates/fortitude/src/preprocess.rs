@@ -9,7 +9,7 @@ use serde::ser::SerializeSeq;
 
 use crate::cli::{HelpFormat, PreprocessCommand};
 use fortitude_linter::fs::read_to_string;
-use fortitude_preprocessor::cpp::CPreprocessor;
+use fortitude_preprocessor::CPreprocessor;
 
 pub fn preprocess(args: PreprocessCommand) -> Result<ExitCode> {
     // Get the source code from the input file
