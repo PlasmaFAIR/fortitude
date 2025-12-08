@@ -65,8 +65,6 @@ impl Definitions {
     }
 
     fn expand_macro_tokens(&self, tokens: &[CppToken]) -> anyhow::Result<String> {
-        // Due to the removal of comments in replacement text, it is possible
-        // to encounter
         let mut result = String::new();
         let mut iter = tokens.iter().peekable();
         while let Some(token) = iter.next() {
