@@ -166,10 +166,8 @@ impl IfStack {
 /// a C preprocessor implementation that preserves provenance information
 /// when expanding macros and includes.
 pub struct CPreprocessor {
-    #[allow(dead_code)]
     path: PathBuf,
     snippets: Snippets,
-    #[allow(dead_code)]
     defines: Definitions,
 }
 
@@ -352,6 +350,14 @@ impl CPreprocessor {
 
     pub fn output(&self) -> String {
         self.snippets.collect()
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    pub fn defines(&self) -> &Definitions {
+        &self.defines
     }
 }
 
