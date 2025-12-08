@@ -25,6 +25,34 @@ pub const END_SCOPE_NODES: &[&str] = &[
     "end_block_construct_statement",
 ];
 
+#[derive(Clone, Debug)]
+pub struct ParameterStatement<'a> {
+    pub name: String,
+    #[allow(dead_code)]
+    pub expression: String,
+    pub node: Node<'a>,
+}
+
+impl<'a> ParameterStatement<'a> {
+    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
+        Ok(Self {
+            name: node
+                .child_with_name("identifier")
+                .context("expected identifier in 'parameter_statement'")?
+                .to_text(src)
+                .context("expected text")?
+                .to_string(),
+            expression: node
+                .child(2)
+                .context("expected expression in 'parameter_statement'")?
+                .to_text(src)
+                .context("expected text")?
+                .to_string(),
+            node,
+        })
+    }
+}
+
 /// A declaration of a single variable
 #[derive(Clone, Debug)]
 pub struct NameDecl<'a> {
