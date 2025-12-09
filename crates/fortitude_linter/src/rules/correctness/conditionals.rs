@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -50,7 +51,12 @@ impl AlwaysFixableViolation for MisleadingInlineIfSemicolon {
     }
 }
 impl AstRule for MisleadingInlineIfSemicolon {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         // If this is an `if (...) then` construct, exit early
         if !inline_if_statement(node) {
             return None;
@@ -143,7 +149,12 @@ impl AlwaysFixableViolation for MisleadingInlineIfContinuation {
     }
 }
 impl AstRule for MisleadingInlineIfContinuation {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         // If this is an `if (...) then` construct, exit early
         if !inline_if_statement(node) {
             return None;

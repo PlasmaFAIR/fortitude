@@ -1,5 +1,6 @@
 use crate::AstRule;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{FromAstNode, ast::FortitudeNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -123,6 +124,7 @@ impl AstRule for NonportableShortcircuitInquiry {
         _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let expr = node.child(1)?;
         let text = src.source_text();

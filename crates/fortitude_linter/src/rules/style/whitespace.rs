@@ -7,6 +7,7 @@ use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 
 /// ## What does it do?
@@ -128,7 +129,12 @@ impl AlwaysFixableViolation for IncorrectSpaceBeforeComment {
     }
 }
 impl AstRule for IncorrectSpaceBeforeComment {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let source = src.to_source_code();
         let comment_start = node.start_textsize();
         // Get the line up to the start of the comment
@@ -180,7 +186,12 @@ impl AlwaysFixableViolation for IncorrectSpaceAroundDoubleColon {
     }
 }
 impl AstRule for IncorrectSpaceAroundDoubleColon {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let double_colon_start = node.start_byte();
         let double_colon_end = node.end_byte();
 
@@ -242,7 +253,12 @@ impl AlwaysFixableViolation for IncorrectSpaceBetweenBrackets {
     }
 }
 impl AstRule for IncorrectSpaceBetweenBrackets {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let node_as_str = node.to_text(src.source_text())?;
 
         let source = src.to_source_code();

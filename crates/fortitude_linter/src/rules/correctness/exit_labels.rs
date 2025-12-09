@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -45,6 +46,7 @@ impl AstRule for MissingExitOrCycleLabel {
         _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Skip unlabelled loops
@@ -110,6 +112,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
         settings: &CheckSettings,
         node: &Node,
         source: &SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
         let name = node.to_text(src)?.to_lowercase();
@@ -201,6 +204,7 @@ impl AstRule for MissingEndLabel {
         _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Skip unlabelled loops

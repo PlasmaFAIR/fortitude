@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::{CheckSettings, FortranStandard};
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -54,7 +55,12 @@ impl Violation for AssumedSize {
     }
 }
 impl AstRule for AssumedSize {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let declaration = node
             .ancestors()
@@ -175,7 +181,12 @@ impl Violation for AssumedSizeCharacterIntent {
     }
 }
 impl AstRule for AssumedSizeCharacterIntent {
-    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         // The recommended fix to this is only possible in Fortran 2003 and later.
         // Those still writing Fortran 95 code are on their own!
         if settings.target_std < FortranStandard::F2003 {

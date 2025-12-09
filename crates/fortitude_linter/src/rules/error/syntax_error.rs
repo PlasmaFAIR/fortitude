@@ -1,4 +1,5 @@
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode, some_vec};
 
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -27,7 +28,12 @@ impl Violation for SyntaxError {
 }
 
 impl AstRule for SyntaxError {
-    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        _src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         some_vec![Diagnostic::from_node(Self {}, node)]
     }
 

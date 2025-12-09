@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -84,6 +85,7 @@ impl AstRule for FunctionMissingResult {
         _settings: &CheckSettings,
         node: &'a Node,
         _src: &'a SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         // Just need to check for the presence of the function_result node
         if node.child_with_name("function_result").is_some() {

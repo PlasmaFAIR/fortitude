@@ -1,7 +1,7 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 /// Defines rules that govern line length.
 use crate::settings::CheckSettings;
+use crate::{AstRule, symbol_table::SymbolTables};
 use lazy_regex::regex;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -53,7 +53,12 @@ impl Violation for TrailingBackslash {
 }
 
 impl AstRule for TrailingBackslash {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         // Preprocessor might ignore trailing whitespace
         let trailing_backslash_re = regex!(r#".*(\\)\s*$"#);
 

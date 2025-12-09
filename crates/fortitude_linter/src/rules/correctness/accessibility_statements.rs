@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -37,7 +38,12 @@ impl Violation for MissingAccessibilityStatement {
 }
 
 impl AstRule for MissingAccessibilityStatement {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let module = node.parent()?;
 
         let bare_private_statement = match module.child_with_name("private_statement") {
@@ -89,7 +95,12 @@ impl Violation for DefaultPublicAccessibility {
 }
 
 impl AstRule for DefaultPublicAccessibility {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         // Bare `public` statement`
         if node.named_child(0).is_none() {
             let module = node.parent()?;

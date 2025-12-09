@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::rules::utilities::literal_as_io_unit;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -45,7 +46,12 @@ impl Violation for NonPortableIoUnit {
 }
 
 impl AstRule for NonPortableIoUnit {
-    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let unit = literal_as_io_unit(node, src)?;
 
         let value = unit

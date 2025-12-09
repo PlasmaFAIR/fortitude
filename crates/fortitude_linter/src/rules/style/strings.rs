@@ -7,6 +7,7 @@ use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 
 /// ## What does it do?
@@ -59,7 +60,12 @@ impl Violation for BadQuoteString {
 }
 
 impl AstRule for BadQuoteString {
-    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let preferred_quote = settings.strings.quotes;
         let bad_quote = preferred_quote.opposite();
 
@@ -147,7 +153,9 @@ impl AstRule for AvoidableEscapedQuote {
         _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
+        let _ = _symbol_table;
         let text = node.to_text(src.source_text())?;
         if text.len() <= 2 {
             return None;

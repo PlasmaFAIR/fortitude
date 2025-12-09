@@ -1,6 +1,7 @@
 /// Defines rules that govern the use of keywords.
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -111,7 +112,12 @@ impl AlwaysFixableViolation for KeywordsMissingSpace {
 }
 
 impl AstRule for KeywordsMissingSpace {
-    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let first_child = if node.kind() == "inout" {
             *node
         } else {
@@ -197,7 +203,12 @@ impl Violation for KeywordHasWhitespace {
 }
 
 impl AstRule for KeywordHasWhitespace {
-    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         if node.kind() == "in" && settings.keyword_whitespace.inout_with_space {
             return None;
         }

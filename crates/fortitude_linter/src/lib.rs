@@ -96,8 +96,12 @@ impl FromAstNode for Diagnostic {
 
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait AstRule {
-    fn check(settings: &CheckSettings, node: &Node, source: &SourceFile)
-    -> Option<Vec<Diagnostic>>;
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        source: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints() -> Vec<&'static str>;
@@ -255,10 +259,8 @@ pub(crate) fn check_path(
 
         if let Some(rules) = settings.ast_entrypoints.get(node.kind()) {
             for rule in rules {
-                if let Some(violation) = rule.check(settings, &node, file) {
-                    for v in violation {
-                        violations.push(v);
-                    }
+                if let Some(violation) = rule.check(settings, &node, file, &symbol_table) {
+                    violations.extend(violation);
                 }
             }
         }

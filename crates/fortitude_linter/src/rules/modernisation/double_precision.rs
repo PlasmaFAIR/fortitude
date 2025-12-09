@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use lazy_regex::regex_captures;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -66,7 +67,12 @@ impl Violation for DoublePrecision {
 }
 
 impl AstRule for DoublePrecision {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let txt = node.to_text(src.source_text())?.to_lowercase();
         some_vec![Diagnostic::from_node(DoublePrecision::try_new(txt)?, node)]
     }
@@ -123,7 +129,12 @@ impl Violation for DoublePrecisionLiteral {
 }
 
 impl AstRule for DoublePrecisionLiteral {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let txt = node.to_text(src.source_text())?;
         if let Some((original, mantissa, exponent)) =
             regex_captures!(r"^(\d*\.*\d*)[dD](-?\d+)$", txt)
