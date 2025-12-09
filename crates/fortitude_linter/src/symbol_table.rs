@@ -105,10 +105,41 @@ impl Attribute {
     }
 }
 
+#[derive(Clone, Debug, EnumIs)]
+pub enum Type {
+    Intrinsic(String),
+    Derived(String),
+    Procedure(String),
+    Declared(String),
+}
+
+impl Type {
+    pub fn from_node(node: &Node, src: &str) -> Option<Self> {
+        let kind = node.kind();
+        let name = node.to_text(src)?.to_string();
+        match kind {
+            "intrinsic_type" => Some(Type::Intrinsic(name)),
+            "derived_type" => Some(Type::Derived(name)),
+            "procedure" => Some(Type::Procedure(name)),
+            "declared_type" => Some(Type::Declared(name)),
+            _ => unreachable!("unexpected 'type' kind '{kind}'"),
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Intrinsic(name) => name.as_str(),
+            Self::Derived(name) => name.as_str(),
+            Self::Procedure(name) => name.as_str(),
+            Self::Declared(name) => name.as_str(),
+        }
+    }
+}
+
 /// A variable declaration line
 #[derive(Clone, Debug)]
 pub struct VariableDeclaration<'a> {
-    type_: String,
+    type_: Type,
     attributes: Vec<Attribute>,
     names: Vec<NameDecl<'a>>,
     node: Node<'a>,
@@ -116,7 +147,7 @@ pub struct VariableDeclaration<'a> {
 
 impl<'a> VariableDeclaration<'a> {
     pub fn from_node(node: &Node<'a>, src: &str) -> Option<Self> {
-        let type_ = node.child_by_field_name("type")?.to_text(src)?.to_string();
+        let type_ = Type::from_node(&node.child_by_field_name("type")?, src)?;
 
         let attributes = node
             .children_by_field_name("attribute", &mut node.walk())
@@ -136,7 +167,7 @@ impl<'a> VariableDeclaration<'a> {
         })
     }
 
-    pub fn type_(&self) -> &str {
+    pub fn type_(&self) -> &Type {
         &self.type_
     }
 
@@ -200,8 +231,8 @@ impl<'a> Variable<'a> {
         self.node.textrange()
     }
 
-    pub fn type_(&self) -> &str {
-        self.decl.type_.as_str()
+    pub fn type_(&self) -> &Type {
+        self.decl.type_()
     }
 
     pub fn attributes(&self) -> &Vec<Attribute> {
@@ -341,7 +372,7 @@ end program foo
             TextRange::new(TextSize::new(26), TextSize::new(27))
         );
         assert_eq!(x.name, "x");
-        assert_eq!(x.type_(), "integer");
+        assert_eq!(x.type_().as_str(), "integer");
         assert_eq!(x.decl.textrange(), first_decl_range);
 
         assert!(y.is_some());
@@ -369,7 +400,7 @@ end program foo
             TextRange::new(TextSize::new(60), TextSize::new(71))
         );
         assert_eq!(a.name, "a");
-        assert_eq!(a.type_(), "real");
+        assert_eq!(a.type_().as_str(), "real");
         let a_attrs: Vec<&'static str> = a
             .attributes()
             .iter()
