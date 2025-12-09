@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use anyhow::{Context, Result};
 use itertools::Itertools;
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
+use strum_macros::{EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
@@ -47,16 +48,59 @@ impl<'a> NameDecl<'a> {
     }
 }
 
+#[derive(Clone, Copy, Debug, EnumIs, EnumString, IntoStaticStr, PartialEq)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
+pub enum AttributeKind {
+    Abstract,
+    Allocatable,
+    Asynchronous,
+    Automatic,
+    Codimension,
+    Dimension,
+    Constant,
+    Continguous,
+    Device,
+    External,
+    Intent,
+    Intrinsic,
+    Managed,
+    Optional,
+    Parameter,
+    Pinned,
+    Pointer,
+    Private,
+    Protected,
+    Public,
+    Rank,
+    Save,
+    Sequence,
+    Shared,
+    Static,
+    Target,
+    Texture,
+    Value,
+    Volatile,
+    Unknown,
+}
+
+impl AttributeKind {
+    pub fn from_node(value: &Node, src: &str) -> Self {
+        let first_child = value.child(0).unwrap().to_text(src).unwrap_or("<unknown>");
+        // TODO: handle intent, dimension, codimension properly
+        AttributeKind::from_str(first_child).unwrap_or(AttributeKind::Unknown)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Attribute {
-    name: String,
+    kind: AttributeKind,
     location: TextRange,
 }
 
 impl Attribute {
     fn from_node(value: Node, src: &str) -> Self {
         Self {
-            name: value.to_text(src).unwrap_or("<unknown>").to_string(),
+            kind: AttributeKind::from_node(&value, src),
             location: value.textrange(),
         }
     }
@@ -105,6 +149,14 @@ impl<'a> VariableDeclaration<'a> {
     }
     pub fn textrange(&self) -> TextRange {
         self.node.textrange()
+    }
+
+    pub fn has_attribute(&self, attr: AttributeKind) -> bool {
+        self.has_any_attributes(&[attr])
+    }
+
+    pub fn has_any_attributes(&self, attrs: &[AttributeKind]) -> bool {
+        self.attributes.iter().any(|attr| attrs.contains(&attr.kind))
     }
 }
 
@@ -155,6 +207,14 @@ impl<'a> Variable<'a> {
 
     pub fn attributes(&self) -> &Vec<Attribute> {
         self.decl.attributes()
+    }
+
+    pub fn has_attribute(&self, attr: AttributeKind) -> bool {
+        self.decl.has_attribute(attr)
+    }
+
+    pub fn has_any_attributes(&self, attrs: &[AttributeKind]) -> bool {
+        self.decl.has_any_attributes(attrs)
     }
 }
 
@@ -313,12 +373,12 @@ end program foo
         );
         assert_eq!(a.name, "a");
         assert_eq!(a.type_(), "real");
-        let a_attrs = a
+        let a_attrs: Vec<&'static str> = a
             .attributes()
             .iter()
-            .map(|attr| attr.name.to_string())
+            .map(|attr| attr.kind.into())
             .collect_vec();
-        assert_eq!(a_attrs, ["pointer".to_string()]);
+        assert_eq!(a_attrs, ["pointer"]);
         assert_eq!(a.decl.textrange(), second_decl_range);
 
         Ok(())
@@ -419,6 +479,34 @@ end program foo
 
         symbol_table.pop_table();
         assert!(symbol_table.get("a").is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn attribute_intent() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+subroutine foo(x, y)
+  integer, dimension(:, :), intent(in) :: x
+  integer, dimension(:, :), intent(  in  out) :: y
+end subroutine foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
+
+        let x = symbol_table.get("x");
+        assert!(x.is_some());
+        let x = x.unwrap();
+        assert!(x.has_attribute(AttributeKind::Dimension));
+        assert!(x.has_attribute(AttributeKind::Intent));
 
         Ok(())
     }
