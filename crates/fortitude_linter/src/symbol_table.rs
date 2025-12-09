@@ -236,6 +236,10 @@ impl<'a> Variable<'a> {
         self.name.as_str()
     }
 
+    pub fn node(&self) -> Node<'_> {
+        self.node
+    }
+
     pub fn textrange(&self) -> TextRange {
         self.node.textrange()
     }
