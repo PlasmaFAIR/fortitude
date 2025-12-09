@@ -295,8 +295,10 @@ impl<'a> SymbolTable<'a> {
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
         let index = self.decl_lines.len();
         for name in decl.names.iter() {
-            self.inner
-                .insert(name.name.clone(), Symbol::Variable(name.node, index));
+            self.inner.insert(
+                name.name.to_ascii_lowercase(),
+                Symbol::Variable(name.node, index),
+            );
         }
         self.decl_lines.push(decl);
     }
@@ -304,11 +306,12 @@ impl<'a> SymbolTable<'a> {
     /// Return the symbol with the given name if it exists
     pub fn get(&self, name: &str) -> Option<Variable<'_>> {
         // TODO(peter): avoid calling to_ascii_lowercase every time. Strong type?
-        match self.inner.get(&name.to_ascii_lowercase()) {
+        let name = name.to_ascii_lowercase();
+        match self.inner.get(&name) {
             Some(Symbol::Variable(node, index)) => {
                 let decl: &VariableDeclaration = &self.decl_lines[*index];
                 Some(Variable {
-                    name: name.to_string(),
+                    name,
                     node: *node,
                     decl,
                 })
@@ -364,7 +367,7 @@ mod tests {
 
         let code = r#"
 program foo
-  integer :: x, y(4), z = 5
+  integer :: x, Y(4), z = 5
   real, pointer :: a => null()
 end program foo
 "#;
@@ -378,7 +381,7 @@ end program foo
 
         let x = symbol_table.get("x");
         let y = symbol_table.get("y");
-        let z = symbol_table.get("z");
+        let z = symbol_table.get("Z");
         let a = symbol_table.get("a");
         assert!(x.is_some());
         let x = x.unwrap();
