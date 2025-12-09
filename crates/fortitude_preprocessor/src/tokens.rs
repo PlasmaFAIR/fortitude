@@ -433,7 +433,7 @@ impl<'a> CppTokenIterator<'a> {
     /// as a normal identifier in that case.
     /// Returns `Err` if the argument list is malformed.
     pub fn consume_arglist_invocation(&mut self) -> anyhow::Result<Option<Vec<Vec<CppToken>>>> {
-        let mut args = Vec::new();
+        let mut args = vec![Vec::new()];
         // Expect an opening parenthesis.
         if self.iter.peek() != Some(&b'(') {
             return Ok(None);
@@ -444,7 +444,6 @@ impl<'a> CppTokenIterator<'a> {
             self.step(); // Consume ')'
             return Ok(Some(args));
         }
-        args.push(Vec::new());
         let mut bracket_nesting = 1;
         loop {
             match self.next() {

@@ -74,20 +74,9 @@ impl Definitions {
                         if let Some(next) = iter.peek() {
                             if next.kind == CppTokenKind::Punctuator && next.text == "(" {
                                 // Found argument list
-                                let mut arglist = Vec::new();
                                 iter.next(); // Consume '('
-                                // Check for empty argument list
-                                if let Some(next) = iter.peek() {
-                                    if next.kind == CppTokenKind::Punctuator && next.text == ")" {
-                                        iter.next(); // Consume ')'
-                                        // Empty argument list
-                                        let (_, replacement) =
-                                            self.expand_function_macro(&token.text, &arglist)?;
-                                        result.push_str(&replacement);
-                                        continue;
-                                    }
-                                }
-                                arglist.push(Vec::new());
+                                // Always at least one argument (possibly empty)
+                                let mut arglist = vec![Vec::new()];
                                 let mut bracket_nesting = 1;
                                 for token in iter.by_ref() {
                                     if token.kind == CppTokenKind::Punctuator {
@@ -142,7 +131,9 @@ impl Definitions {
     }
 
     pub fn expand_object_macro(&self, key: &str) -> anyhow::Result<(&Definition, String)> {
-        let definition = self.get(key).context("Internal: Macro not defined")?;
+        let definition = self
+            .get(key)
+            .context("Internal: Object macro not defined")?;
         let result = self.expand_macro_tokens(definition.replacement())?;
         Ok((definition, result))
     }
@@ -153,17 +144,29 @@ impl Definitions {
         args: &[Vec<CppToken>],
     ) -> anyhow::Result<(&Definition, String)> {
         let definition = self
-            .inner
             .get(key)
             .context("Internal: Function macro not found")?;
+
         let def_args = definition
             .args()
             .context("Internal: Expected function macro argument list")?;
+
+        // Expect to see one empty argument when calling a zero-arg function macro
+        if def_args.is_empty() && args.len() == 1 && args[0].is_empty() {
+            // Expand as if it's a normal object-like macro
+            let result = self.expand_macro_tokens(definition.replacement())?;
+            return Ok((definition, result));
+        }
+
+        // Otherwise, argument count must match
         if def_args.len() != args.len() {
             return Err(anyhow!(
-                "Function macro argument count mismatch, {key}, {def_args:?}, {args:?}"
+                "Function macro argument count mismatch, {key} expects {} but {} were given",
+                def_args.len(),
+                args.len()
             ));
         }
+
         // Perform substitutions on first pass
         let mut substituted = Vec::new();
         for token in definition.replacement() {
