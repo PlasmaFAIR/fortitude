@@ -2,7 +2,6 @@ use std::{collections::HashMap, str::FromStr};
 
 use anyhow::{Context, Result};
 use itertools::Itertools;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
 use strum_macros::{EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
@@ -40,7 +39,7 @@ impl<'a> NameDecl<'a> {
                 .to_text(src)
                 .unwrap_or("<unknown>")
                 .to_string(),
-            node: node.clone(),
+            node: *node,
         }
     }
     pub fn textrange(&self) -> TextRange {
@@ -133,7 +132,7 @@ impl<'a> VariableDeclaration<'a> {
             type_,
             attributes,
             names,
-            node: node.clone(),
+            node: *node,
         })
     }
 
@@ -144,7 +143,7 @@ impl<'a> VariableDeclaration<'a> {
     pub fn attributes(&self) -> &Vec<Attribute> {
         &self.attributes
     }
-    pub fn names(&self) -> &Vec<NameDecl> {
+    pub fn names(&'_ self) -> &'_ Vec<NameDecl<'_>> {
         &self.names
     }
     pub fn textrange(&self) -> TextRange {
@@ -252,10 +251,8 @@ impl<'a> SymbolTable<'a> {
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
         let index = self.decl_lines.len();
         for name in decl.names.iter() {
-            self.inner.insert(
-                name.name.clone(),
-                Symbol::Variable(name.node.clone(), index),
-            );
+            self.inner
+                .insert(name.name.clone(), Symbol::Variable(name.node, index));
         }
         self.decl_lines.push(decl);
     }
@@ -267,7 +264,7 @@ impl<'a> SymbolTable<'a> {
                 let decl: &VariableDeclaration = &self.decl_lines[*index];
                 Some(Variable {
                     name: name.to_string(),
-                    node: node.clone(),
+                    node: *node,
                     decl,
                 })
             }
