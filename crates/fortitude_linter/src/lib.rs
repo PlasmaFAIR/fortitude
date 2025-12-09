@@ -15,6 +15,7 @@ pub mod rule_selector;
 pub mod rule_table;
 pub mod rules;
 pub mod settings;
+mod symbol_table;
 #[cfg(test)]
 mod test;
 pub mod text_helpers;
@@ -52,6 +53,7 @@ use std::io::Write;
 use std::iter::once;
 use std::path::Path;
 use std::{borrow::Cow, collections::BTreeMap};
+use symbol_table::{BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -229,9 +231,14 @@ pub(crate) fn check_path(
 
     // Perform AST analysis
     let root = tree.root_node();
+    let mut symbol_table = SymbolTables::default();
     for node in once(root).chain(root.descendants()) {
         if rules.enabled(Rule::SyntaxError) && node.is_missing() {
             violations.push(Diagnostic::from_node(SyntaxError {}, &node));
+        }
+
+        if BEGIN_SCOPE_NODES.contains(&node.kind()) {
+            symbol_table.push_table(SymbolTable::new(&node, file.source_text()));
         }
 
         if rules.any_enabled(&[
@@ -258,6 +265,10 @@ pub(crate) fn check_path(
         if let Some(allow_rules) = gather_allow_comments(&node, file) {
             allow_comments.push(allow_rules);
         };
+
+        if END_SCOPE_NODES.contains(&node.kind()) {
+            symbol_table.pop_table();
+        }
     }
 
     if rules.enabled(Rule::InvalidTab) {
