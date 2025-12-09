@@ -565,6 +565,26 @@ mod tests {
     }
 
     #[test]
+    fn test_function_macro_no_args() -> anyhow::Result<()> {
+        let code = dedent!(
+            r#"
+            #define foo() 42
+            #define bar(x) x
+            #define baz(x,y) (x + y)
+            print *, foo(), bar(), baz(,)
+        "#
+        );
+        let (output, _) = preprocess(code)?;
+        let expected = dedent!(
+            r#"
+            print *, 42, , ( + )
+        "#
+        );
+        assert_eq!(output, expected);
+        Ok(())
+    }
+
+    #[test]
     fn test_nested_function_macros() -> anyhow::Result<()> {
         // change foo(7) to foo(7) + W
         // Add foo(baz())
