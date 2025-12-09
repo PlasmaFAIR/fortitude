@@ -1,6 +1,5 @@
 use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{Context, Result};
 use itertools::Itertools;
 use ruff_text_size::TextRange;
 use strum_macros::{EnumIs, EnumString, IntoStaticStr};
@@ -90,9 +89,11 @@ impl AttributeKind {
     }
 }
 
+/// A variable attribute and where it is
 #[derive(Clone, Debug)]
 pub struct Attribute {
     kind: AttributeKind,
+    #[allow(dead_code)]
     location: TextRange,
 }
 
@@ -174,9 +175,11 @@ impl<'a> VariableDeclaration<'a> {
     pub fn attributes(&self) -> &Vec<Attribute> {
         &self.attributes
     }
+
     pub fn names(&'_ self) -> &'_ Vec<NameDecl<'_>> {
         &self.names
     }
+
     pub fn textrange(&self) -> TextRange {
         self.node.textrange()
     }
@@ -186,10 +189,14 @@ impl<'a> VariableDeclaration<'a> {
     }
 
     pub fn has_any_attributes(&self, attrs: &[AttributeKind]) -> bool {
-        self.attributes.iter().any(|attr| attrs.contains(&attr.kind))
+        self.attributes
+            .iter()
+            .any(|attr| attrs.contains(&attr.kind))
     }
 }
 
+/// Returns the tree-sitter node corresponding to the actual name of a
+/// declarator node, and not, say, the initialiser
 pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
     match node.kind() {
         "identifier" | "method_name" => *node,
@@ -215,10 +222,12 @@ pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
     }
 }
 
+/// A single Fortran variable
 #[derive(Clone, Debug)]
 pub struct Variable<'a> {
     name: String,
     node: Node<'a>,
+    /// Reference to the statement in which the variable is declared
     decl: &'a VariableDeclaration<'a>,
 }
 
@@ -248,6 +257,7 @@ impl<'a> Variable<'a> {
     }
 }
 
+/// A named symbol
 #[derive(Clone, Debug)]
 pub enum Symbol<'a> {
     Variable(Node<'a>, usize),
@@ -267,6 +277,8 @@ pub struct SymbolTable<'a> {
 }
 
 impl<'a> SymbolTable<'a> {
+    /// Create a new [`SymbolTable`] for a node which is a scope (that is,
+    /// contains variable declarations)
     pub fn new(scope: &Node<'a>, src: &str) -> Self {
         let mut new_table = Self::default();
 
@@ -279,6 +291,7 @@ impl<'a> SymbolTable<'a> {
         new_table
     }
 
+    /// Insert all symbols found in a single variable declaration statement
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
         let index = self.decl_lines.len();
         for name in decl.names.iter() {
@@ -288,6 +301,7 @@ impl<'a> SymbolTable<'a> {
         self.decl_lines.push(decl);
     }
 
+    /// Return the symbol with the given name if it exists
     pub fn get(&self, name: &str) -> Option<Variable<'_>> {
         // TODO(peter): avoid calling to_ascii_lowercase every time. Strong type?
         match self.inner.get(&name.to_ascii_lowercase()) {
@@ -322,6 +336,7 @@ impl<'a> SymbolTables<'a> {
         self.inner.pop();
     }
 
+    /// Return the symbol with the given name if it exists
     pub fn get(&'_ self, name: &str) -> Option<Variable<'_>> {
         // Check the most recently inserted table first
         for table in self.inner.iter().rev() {
