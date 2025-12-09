@@ -54,7 +54,7 @@ impl AstRule for MissingIntent {
         settings: &CheckSettings,
         node: &Node,
         src: &SourceFile,
-        _symbol_table: &SymbolTables,
+        symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let entity = node.parent()?.kind().to_string();
         Some(
@@ -62,7 +62,7 @@ impl AstRule for MissingIntent {
                 .named_children(&mut node.walk())
                 .filter_map(|param| {
                     // Get variable declaration
-                    _symbol_table.get(param.to_text(src.source_text())?)
+                    symbol_table.get(param.to_text(src.source_text())?)
                 })
                 .filter(|param| {
                     // Not allowed intent

@@ -86,7 +86,7 @@ impl AstRule for InitialisationInDeclaration {
         _settings: &CheckSettings,
         node: &Node,
         src: &SourceFile,
-        _symbol_table: &SymbolTables,
+        symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Only check in procedures
@@ -95,7 +95,7 @@ impl AstRule for InitialisationInDeclaration {
         })?;
 
         let name = get_name_node_of_declarator(node).to_text(src)?.to_string();
-        let decl = _symbol_table.get(name.as_str())?;
+        let decl = symbol_table.get(name.as_str())?;
         if decl.has_any_attributes(&[AttributeKind::Save, AttributeKind::Parameter]) {
             return None;
         }
@@ -210,7 +210,7 @@ impl AstRule for PointerInitialisationInDeclaration {
         _settings: &CheckSettings,
         node: &Node,
         src: &SourceFile,
-        _symbol_table: &SymbolTables,
+        symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Only check in procedures
@@ -220,7 +220,7 @@ impl AstRule for PointerInitialisationInDeclaration {
 
         let var = get_name_node_of_declarator(node);
         let name = var.to_text(src)?.to_string();
-        let decl = _symbol_table.get(name.as_str())?;
+        let decl = symbol_table.get(name.as_str())?;
         if decl.has_attribute(AttributeKind::Save) {
             return None;
         }

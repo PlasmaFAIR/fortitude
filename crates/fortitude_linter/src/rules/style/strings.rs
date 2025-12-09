@@ -155,7 +155,6 @@ impl AstRule for AvoidableEscapedQuote {
         src: &'a SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        let _ = _symbol_table;
         let text = node.to_text(src.source_text())?;
         if text.len() <= 2 {
             return None;
