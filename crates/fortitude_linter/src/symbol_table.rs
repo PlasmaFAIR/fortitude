@@ -41,6 +41,15 @@ impl<'a> NameDecl<'a> {
             node: *node,
         }
     }
+
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    pub fn node(&self) -> Node<'_> {
+        self.node
+    }
+
     pub fn textrange(&self) -> TextRange {
         self.node.textrange()
     }
@@ -180,6 +189,10 @@ impl<'a> VariableDeclaration<'a> {
         &self.names
     }
 
+    pub fn node(&self) -> Node<'_> {
+        self.node
+    }
+
     pub fn textrange(&self) -> TextRange {
         self.node.textrange()
     }
@@ -238,6 +251,10 @@ impl<'a> Variable<'a> {
 
     pub fn node(&self) -> Node<'_> {
         self.node
+    }
+
+    pub fn decl_statement(&'a self) -> &'a VariableDeclaration<'a> {
+        self.decl
     }
 
     pub fn textrange(&self) -> TextRange {
