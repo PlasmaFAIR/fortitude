@@ -1,6 +1,6 @@
 use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use itertools::Itertools;
 use ruff_text_size::TextRange;
 use strum_macros::{EnumIs, EnumString, IntoStaticStr};
@@ -214,9 +214,11 @@ impl<'a> AttributeKind<'a> {
 
         match attr {
             AttributeKind::Intent(_) => Ok(AttributeKind::Intent(Intent::from_node(value))),
-            AttributeKind::Dimension(_) => {
-                Ok(AttributeKind::Dimension(Dimension::try_from_node(value.child(1).context("expected more than one child for 'dimension'")?)?))
-            }
+            AttributeKind::Dimension(_) => Ok(AttributeKind::Dimension(Dimension::try_from_node(
+                value
+                    .child(1)
+                    .context("expected more than one child for 'dimension'")?,
+            )?)),
             _ => Ok(attr),
         }
     }
@@ -289,7 +291,10 @@ impl<'a> VariableDeclaration<'a> {
             return Err(anyhow!("wrong node type"));
         }
 
-        let type_ = Type::try_from_node(&node.child_by_field_name("type").context("expected type")?, src)?;
+        let type_ = Type::try_from_node(
+            &node.child_by_field_name("type").context("expected type")?,
+            src,
+        )?;
 
         let attributes: Result<Vec<_>> = node
             .children_by_field_name("attribute", &mut node.walk())
