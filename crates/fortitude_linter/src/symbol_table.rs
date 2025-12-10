@@ -1,5 +1,6 @@
 use std::{collections::HashMap, str::FromStr};
 
+use anyhow::{Result, anyhow};
 use itertools::Itertools;
 use ruff_text_size::TextRange;
 use strum_macros::{EnumIs, EnumString, IntoStaticStr};
@@ -55,6 +56,98 @@ impl<'a> NameDecl<'a> {
     }
 }
 
+#[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
+pub enum ExtentSize<'a> {
+    Expression(Node<'a>),
+    AssumedSize,
+}
+
+impl<'a> ExtentSize<'a> {
+    pub fn from_node(node: Node<'a>) -> Self {
+        if node.kind() == "assumed_size" {
+            Self::AssumedSize
+        } else {
+            Self::Expression(node)
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Extent<'a> {
+    start: Option<Node<'a>>,
+    stop: Option<ExtentSize<'a>>,
+    stride: Option<Node<'a>>,
+}
+
+impl<'a> Extent<'a> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
+        if node.kind() != "extent_specifier" {
+            return Err(anyhow!(
+                "expected 'extent_specifier', got '{}'",
+                node.kind()
+            ));
+        }
+
+        let cursor = &mut node.walk();
+        let mut iter = node.named_children(cursor);
+
+        Ok(Self {
+            start: iter.next(),
+            stop: iter.next().map(ExtentSize::from_node),
+            stride: iter.next(),
+        })
+    }
+}
+
+/// One rank of a dimension's array-spec
+#[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
+pub enum DimensionArraySpec<'a> {
+    Expression(Node<'a>),
+    Extent(Extent<'a>),
+    AssumedSize,
+    AssumedRank,
+    MultipleSubscript(Node<'a>),
+    MultipleSubscriptTriplet(Extent<'a>),
+}
+
+impl<'a> DimensionArraySpec<'a> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
+        match node.kind() {
+            "extent_specifier" => Ok(Self::Extent(Extent::try_from_node(node)?)),
+            "assumed_size" => Ok(Self::AssumedSize),
+            "assumed_rank" => Ok(Self::AssumedRank),
+            "multiple_subscript" => Ok(Self::MultipleSubscript(node)),
+            "multiple_subscript_triplet" => {
+                Ok(Self::MultipleSubscriptTriplet(Extent::try_from_node(node)?))
+            }
+            _ => Ok(Self::Expression(node)),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Dimension<'a> {
+    pub ranks: Vec<DimensionArraySpec<'a>>,
+}
+
+impl<'a> Dimension<'a> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
+        if !matches!(node.kind(), "argument_list" | "size") {
+            return Err(anyhow!(
+                "Dimension::try_from_node called with wrong node kind (expected 'argument_list/size', got '{}'",
+                node.kind()
+            ));
+        }
+
+        let ranks: Result<Vec<_>> = node
+            .named_children(&mut node.walk())
+            .map(DimensionArraySpec::try_from_node)
+            .collect();
+
+        Ok(Self { ranks: ranks? })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, EnumIs, IntoStaticStr, PartialEq)]
 pub enum Intent {
     In,
@@ -65,7 +158,8 @@ pub enum Intent {
 
 impl Intent {
     pub fn from_node(node: &Node) -> Self {
-        let children = node.children(&mut node.walk())
+        let children = node
+            .children(&mut node.walk())
             .map(|child| child.kind())
             .collect_vec();
         if children.contains(&"inout") || (children.contains(&"in") && children.contains(&"out")) {
@@ -78,15 +172,15 @@ impl Intent {
     }
 }
 
-#[derive(Clone, Copy, Debug, EnumIs, EnumString, IntoStaticStr, PartialEq)]
+#[derive(Clone, Debug, EnumIs, EnumString, IntoStaticStr, PartialEq)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
-pub enum AttributeKind {
+pub enum AttributeKind<'a> {
     Abstract,
     Allocatable,
     Asynchronous,
     Automatic,
     Codimension,
-    Dimension,
+    Dimension(Dimension<'a>),
     Constant,
     Continguous,
     Device,
@@ -114,36 +208,39 @@ pub enum AttributeKind {
     Unknown,
 }
 
-impl AttributeKind {
-    pub fn from_node(value: &Node) -> Self {
+impl<'a> AttributeKind<'a> {
+    pub fn from_node(value: &Node<'a>) -> Self {
         let first_child = value.child(0).unwrap().kind();
-        // TODO: handle dimension, codimension properly
+        // TODO: handle codimension properly
         let attr = AttributeKind::from_str(first_child).unwrap_or(AttributeKind::Unknown);
 
         match attr {
             AttributeKind::Intent(_) => AttributeKind::Intent(Intent::from_node(value)),
-            _ => attr
+            AttributeKind::Dimension(_) => {
+                AttributeKind::Dimension(Dimension::try_from_node(value.child(1).unwrap()).unwrap())
+            }
+            _ => attr,
         }
     }
 }
 
 /// A variable attribute and where it is
 #[derive(Clone, Debug)]
-pub struct Attribute {
-    kind: AttributeKind,
+pub struct Attribute<'a> {
+    kind: AttributeKind<'a>,
     #[allow(dead_code)]
     location: TextRange,
 }
 
-impl Attribute {
-    pub fn from_node(value: Node) -> Self {
+impl<'a> Attribute<'a> {
+    pub fn from_node(value: Node<'a>) -> Self {
         Self {
             kind: AttributeKind::from_node(&value),
             location: value.textrange(),
         }
     }
 
-    pub fn kind(&self) -> &AttributeKind {
+    pub fn kind(&'_ self) -> &'_ AttributeKind<'_> {
         &self.kind
     }
 }
@@ -183,7 +280,7 @@ impl Type {
 #[derive(Clone, Debug)]
 pub struct VariableDeclaration<'a> {
     type_: Type,
-    attributes: Vec<Attribute>,
+    attributes: Vec<Attribute<'a>>,
     names: Vec<NameDecl<'a>>,
     node: Node<'a>,
 }
@@ -194,7 +291,7 @@ impl<'a> VariableDeclaration<'a> {
 
         let attributes = node
             .children_by_field_name("attribute", &mut node.walk())
-            .map(|attr| Attribute::from_node(attr))
+            .map(Attribute::from_node)
             .collect_vec();
 
         let names = node
@@ -214,7 +311,7 @@ impl<'a> VariableDeclaration<'a> {
         &self.type_
     }
 
-    pub fn attributes(&self) -> &Vec<Attribute> {
+    pub fn attributes(&self) -> &Vec<Attribute<'_>> {
         &self.attributes
     }
 
@@ -298,7 +395,7 @@ impl<'a> Variable<'a> {
         self.decl.type_()
     }
 
-    pub fn attributes(&self) -> &Vec<Attribute> {
+    pub fn attributes(&self) -> &Vec<Attribute<'_>> {
         self.decl.attributes()
     }
 
@@ -593,7 +690,7 @@ end program foo
         let code = r#"
 subroutine foo(x, y)
   integer, dimension(:, :), intent(in) :: x
-  integer, dimension(:, :), intent(  in  out) :: y
+  integer, dimension(0:, *), intent(  in  out) :: y
 end subroutine foo
 "#;
         let tree = parser.parse(code, None).context("Failed to parse")?;
@@ -605,13 +702,22 @@ end subroutine foo
         let x = symbol_table.get("x");
         assert!(x.is_some());
         let x = x.unwrap();
-        assert!(x.has_attribute(AttributeKind::Dimension));
+        assert!(x.attributes().iter().any(|attr| attr.kind().is_dimension()));
         assert!(x.has_attribute(AttributeKind::Intent(Intent::In)));
 
         let y = symbol_table.get("y");
         assert!(y.is_some());
         let y = y.unwrap();
-        assert!(y.has_attribute(AttributeKind::Dimension));
+        let y_dim = y
+            .attributes()
+            .iter()
+            .find(|attr| attr.kind().is_dimension());
+        assert!(y_dim.is_some());
+        if let AttributeKind::Dimension(dim) = y_dim.unwrap().kind() {
+            assert_eq!(dim.ranks.len(), 2);
+            assert!(dim.ranks[0].is_extent());
+            assert!(dim.ranks[1].is_assumed_size());
+        }
         assert!(y.has_attribute(AttributeKind::Intent(Intent::InOut)));
 
         Ok(())
