@@ -55,6 +55,29 @@ impl<'a> NameDecl<'a> {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, EnumIs, IntoStaticStr, PartialEq)]
+pub enum Intent {
+    In,
+    Out,
+    #[default]
+    InOut,
+}
+
+impl Intent {
+    pub fn from_node(node: &Node) -> Self {
+        let children = node.children(&mut node.walk())
+            .map(|child| child.kind())
+            .collect_vec();
+        if children.contains(&"inout") || (children.contains(&"in") && children.contains(&"out")) {
+            Self::InOut
+        } else if children.contains(&"in") {
+            Self::In
+        } else {
+            Self::Out
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, EnumIs, EnumString, IntoStaticStr, PartialEq)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum AttributeKind {
@@ -68,7 +91,7 @@ pub enum AttributeKind {
     Continguous,
     Device,
     External,
-    Intent,
+    Intent(Intent),
     Intrinsic,
     Managed,
     Optional,
@@ -87,14 +110,20 @@ pub enum AttributeKind {
     Texture,
     Value,
     Volatile,
+    // We shouldn't actually need this, it indicates there was a syntax error
     Unknown,
 }
 
 impl AttributeKind {
-    pub fn from_node(value: &Node, src: &str) -> Self {
-        let first_child = value.child(0).unwrap().to_text(src).unwrap_or("<unknown>");
-        // TODO: handle intent, dimension, codimension properly
-        AttributeKind::from_str(first_child).unwrap_or(AttributeKind::Unknown)
+    pub fn from_node(value: &Node) -> Self {
+        let first_child = value.child(0).unwrap().kind();
+        // TODO: handle dimension, codimension properly
+        let attr = AttributeKind::from_str(first_child).unwrap_or(AttributeKind::Unknown);
+
+        match attr {
+            AttributeKind::Intent(_) => AttributeKind::Intent(Intent::from_node(value)),
+            _ => attr
+        }
     }
 }
 
@@ -107,11 +136,15 @@ pub struct Attribute {
 }
 
 impl Attribute {
-    fn from_node(value: Node, src: &str) -> Self {
+    pub fn from_node(value: Node) -> Self {
         Self {
-            kind: AttributeKind::from_node(&value, src),
+            kind: AttributeKind::from_node(&value),
             location: value.textrange(),
         }
+    }
+
+    pub fn kind(&self) -> &AttributeKind {
+        &self.kind
     }
 }
 
@@ -161,7 +194,7 @@ impl<'a> VariableDeclaration<'a> {
 
         let attributes = node
             .children_by_field_name("attribute", &mut node.walk())
-            .map(|attr| Attribute::from_node(attr, src))
+            .map(|attr| Attribute::from_node(attr))
             .collect_vec();
 
         let names = node
@@ -443,7 +476,7 @@ end program foo
         let a_attrs: Vec<&'static str> = a
             .attributes()
             .iter()
-            .map(|attr| attr.kind.into())
+            .map(|attr| attr.kind().into())
             .collect_vec();
         assert_eq!(a_attrs, ["pointer"]);
         assert_eq!(a.decl.textrange(), second_decl_range);
@@ -573,7 +606,13 @@ end subroutine foo
         assert!(x.is_some());
         let x = x.unwrap();
         assert!(x.has_attribute(AttributeKind::Dimension));
-        assert!(x.has_attribute(AttributeKind::Intent));
+        assert!(x.has_attribute(AttributeKind::Intent(Intent::In)));
+
+        let y = symbol_table.get("y");
+        assert!(y.is_some());
+        let y = y.unwrap();
+        assert!(y.has_attribute(AttributeKind::Dimension));
+        assert!(y.has_attribute(AttributeKind::Intent(Intent::InOut)));
 
         Ok(())
     }

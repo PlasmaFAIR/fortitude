@@ -75,8 +75,10 @@ impl AstRule for MissingIntent {
                 })
                 .filter(|param| {
                     // Already has intent!
-                    !param.has_attribute(AttributeKind::Intent)
-                        && !param.has_attribute(AttributeKind::Value)
+                    !param
+                        .attributes()
+                        .iter()
+                        .any(|attr| attr.kind().is_intent() || attr.kind().is_value())
                 })
                 .map(|param| {
                     Diagnostic::new(
