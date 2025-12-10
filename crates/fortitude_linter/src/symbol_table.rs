@@ -1,6 +1,6 @@
 use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Context, Result};
 use itertools::Itertools;
 use ruff_text_size::TextRange;
 use strum_macros::{EnumIs, EnumString, IntoStaticStr};
@@ -204,22 +204,20 @@ pub enum AttributeKind<'a> {
     Texture,
     Value,
     Volatile,
-    // We shouldn't actually need this, it indicates there was a syntax error
-    Unknown,
 }
 
 impl<'a> AttributeKind<'a> {
-    pub fn from_node(value: &Node<'a>) -> Self {
+    pub fn try_from_node(value: &Node<'a>) -> Result<Self> {
         let first_child = value.child(0).unwrap().kind();
         // TODO: handle codimension properly
-        let attr = AttributeKind::from_str(first_child).unwrap_or(AttributeKind::Unknown);
+        let attr = AttributeKind::from_str(first_child)?;
 
         match attr {
-            AttributeKind::Intent(_) => AttributeKind::Intent(Intent::from_node(value)),
+            AttributeKind::Intent(_) => Ok(AttributeKind::Intent(Intent::from_node(value))),
             AttributeKind::Dimension(_) => {
-                AttributeKind::Dimension(Dimension::try_from_node(value.child(1).unwrap()).unwrap())
+                Ok(AttributeKind::Dimension(Dimension::try_from_node(value.child(1).context("expected more than one child for 'dimension'")?)?))
             }
-            _ => attr,
+            _ => Ok(attr),
         }
     }
 }
@@ -233,11 +231,11 @@ pub struct Attribute<'a> {
 }
 
 impl<'a> Attribute<'a> {
-    pub fn from_node(value: Node<'a>) -> Self {
-        Self {
-            kind: AttributeKind::from_node(&value),
+    pub fn try_from_node(value: Node<'a>) -> Result<Self> {
+        Ok(Self {
+            kind: AttributeKind::try_from_node(&value)?,
             location: value.textrange(),
-        }
+        })
     }
 
     pub fn kind(&'_ self) -> &'_ AttributeKind<'_> {
@@ -254,15 +252,15 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn from_node(node: &Node, src: &str) -> Option<Self> {
+    pub fn try_from_node(node: &Node, src: &str) -> Result<Self> {
         let kind = node.kind();
-        let name = node.to_text(src)?.to_string();
+        let name = node.to_text(src).context("expected text")?.to_string();
         match kind {
-            "intrinsic_type" => Some(Type::Intrinsic(name)),
-            "derived_type" => Some(Type::Derived(name)),
-            "procedure" => Some(Type::Procedure(name)),
-            "declared_type" => Some(Type::Declared(name)),
-            _ => unreachable!("unexpected 'type' kind '{kind}'"),
+            "intrinsic_type" => Ok(Type::Intrinsic(name)),
+            "derived_type" => Ok(Type::Derived(name)),
+            "procedure" => Ok(Type::Procedure(name)),
+            "declared_type" => Ok(Type::Declared(name)),
+            _ => Err(anyhow!("unexpected 'type' kind '{kind}'")),
         }
     }
 
@@ -286,22 +284,26 @@ pub struct VariableDeclaration<'a> {
 }
 
 impl<'a> VariableDeclaration<'a> {
-    pub fn from_node(node: &Node<'a>, src: &str) -> Option<Self> {
-        let type_ = Type::from_node(&node.child_by_field_name("type")?, src)?;
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if node.kind() != "variable_declaration" {
+            return Err(anyhow!("wrong node type"));
+        }
 
-        let attributes = node
+        let type_ = Type::try_from_node(&node.child_by_field_name("type").context("expected type")?, src)?;
+
+        let attributes: Result<Vec<_>> = node
             .children_by_field_name("attribute", &mut node.walk())
-            .map(Attribute::from_node)
-            .collect_vec();
+            .map(Attribute::try_from_node)
+            .collect();
 
         let names = node
             .children_by_field_name("declarator", &mut node.walk())
             .map(|decl| NameDecl::from_node(&decl, src))
             .collect_vec();
 
-        Some(Self {
+        Ok(Self {
             type_,
-            attributes,
+            attributes: attributes?,
             names,
             node: *node,
         })
@@ -436,7 +438,7 @@ impl<'a> SymbolTable<'a> {
         scope
             .named_children(&mut scope.walk())
             .filter(|child| child.kind() == "variable_declaration")
-            .filter_map(|decl| VariableDeclaration::from_node(&decl, src))
+            .filter_map(|decl| VariableDeclaration::try_from_node(&decl, src).ok())
             .for_each(|line| new_table.insert_from_decl_line(line));
 
         new_table
