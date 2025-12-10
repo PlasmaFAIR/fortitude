@@ -227,14 +227,14 @@ impl<'a> AttributeKind<'a> {
 pub struct Attribute<'a> {
     kind: AttributeKind<'a>,
     #[allow(dead_code)]
-    location: TextRange,
+    node: Node<'a>,
 }
 
 impl<'a> Attribute<'a> {
-    pub fn try_from_node(value: Node<'a>) -> Result<Self> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
         Ok(Self {
-            kind: AttributeKind::try_from_node(&value)?,
-            location: value.textrange(),
+            kind: AttributeKind::try_from_node(&node)?,
+            node,
         })
     }
 
