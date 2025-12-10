@@ -1,10 +1,10 @@
 //! Interface for generating fix edits from higher-level actions (e.g., "remove an argument").
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use itertools::Itertools;
 use ruff_diagnostics::Edit;
 use ruff_source_file::SourceFile;
-use ruff_text_size::{Ranged};
+use ruff_text_size::Ranged;
 use tree_sitter::Node;
 
 use crate::{
@@ -67,6 +67,17 @@ pub(crate) fn remove_from_comma_sep_stmt(
         // Case 3: variable is the only declaration
         Ok(stmt.edit_delete(src))
     }
+}
+
+pub(crate) fn add_attribute_to_var_decl(decl: &VariableDeclaration, attribute: &str) -> Edit {
+    let start = decl
+        .attributes()
+        .last()
+        .map(|attr| attr.node().end_textsize())
+        .unwrap_or(decl.type_().node().end_textsize());
+
+    let colon = if decl.has_colon() { "" } else { " ::" };
+    Edit::insertion(format!(", {attribute}{colon}"), start)
 }
 
 #[cfg(test)]
@@ -135,6 +146,50 @@ end program foo
         assert_eq!(
             remove_e,
             Edit::deletion(TextSize::new(95), TextSize::new(105))
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_attr() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+program foo
+  integer x
+  integer :: y
+  integer, save, allocatable, value :: z
+end program foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let symbol_table = SymbolTable::new(&root, code);
+
+        let x = symbol_table.get("x").unwrap();
+        let y = symbol_table.get("y").unwrap();
+        let z = symbol_table.get("z").unwrap();
+
+        let add_x = add_attribute_to_var_decl(x.decl_statement(), "parameter");
+        assert_eq!(
+            add_x,
+            Edit::insertion(", parameter ::".to_string(), TextSize::new(22))
+        );
+
+        let add_y = add_attribute_to_var_decl(y.decl_statement(), "parameter");
+        assert_eq!(
+            add_y,
+            Edit::insertion(", parameter".to_string(), TextSize::new(34))
+        );
+
+        let add_z = add_attribute_to_var_decl(z.decl_statement(), "parameter");
+        assert_eq!(
+            add_z,
+            Edit::insertion(", parameter".to_string(), TextSize::new(75))
         );
 
         Ok(())
