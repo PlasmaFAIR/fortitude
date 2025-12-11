@@ -2,6 +2,7 @@
 use crate::ast::FortitudeNode;
 use crate::rules::correctness::implicit_typing::{has_implicit_none, implicit_statement_is_none};
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -32,7 +33,12 @@ impl AlwaysFixableViolation for SuperfluousImplicitNone {
 }
 
 impl AstRule for SuperfluousImplicitNone {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         if !implicit_statement_is_none(node) {
             return None;
         }

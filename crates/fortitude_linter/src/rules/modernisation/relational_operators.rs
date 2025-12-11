@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -44,7 +45,12 @@ impl AlwaysFixableViolation for DeprecatedRelationalOperator {
     }
 }
 impl AstRule for DeprecatedRelationalOperator {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
         let symbol = relation
             .to_text(src.source_text())?

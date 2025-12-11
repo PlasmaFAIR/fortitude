@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -106,7 +107,12 @@ impl Violation for DeprecatedMPIInclude {
 }
 
 impl AstRule for DeprecatedMPIInclude {
-    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        _src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let include_file = node
             .child_with_name("filename")?
             .to_text(_src.source_text())?

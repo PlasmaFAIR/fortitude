@@ -2,6 +2,7 @@ use std::iter::once;
 
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use anyhow::{Context, Result, anyhow};
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -120,6 +121,7 @@ impl AstRule for UncheckedStat {
         _settings: &CheckSettings,
         node: &Node,
         source: &SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
 
@@ -357,6 +359,7 @@ impl AstRule for MultipleAllocationsWithStat {
         _settings: &CheckSettings,
         node: &Node,
         source: &SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
 
@@ -434,6 +437,7 @@ impl AstRule for StatWithoutMessage {
         _settings: &CheckSettings,
         node: &Node,
         source: &SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let src = source.source_text();
 

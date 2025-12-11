@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::{AttributeKind, SymbolTables, get_name_node_of_declarator};
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -81,27 +82,24 @@ impl Violation for InitialisationInDeclaration {
 }
 
 impl AstRule for InitialisationInDeclaration {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
             ["function", "subroutine", "module_procedure"].contains(&parent.kind())
         })?;
 
-        let declaration = node
-            .ancestors()
-            .find(|parent| parent.kind() == "variable_declaration")?;
-
-        // Init in declaration ok for save and parameter
-        if declaration
-            .children_by_field_name("attribute", &mut declaration.walk())
-            .filter_map(|attr| attr.to_text(src))
-            .any(|attr_name| ["save", "parameter"].contains(&attr_name.to_lowercase().as_str()))
-        {
+        let name = get_name_node_of_declarator(node).to_text(src)?.to_string();
+        let decl = symbol_table.get(name.as_str())?;
+        if decl.has_any_attributes(&[AttributeKind::Save, AttributeKind::Parameter]) {
             return None;
         }
 
-        let name = node.child_by_field_name("left")?.to_text(src)?.to_string();
         some_vec![Diagnostic::from_node(Self { name }, node)]
     }
 
@@ -208,27 +206,24 @@ impl Violation for PointerInitialisationInDeclaration {
 }
 
 impl AstRule for PointerInitialisationInDeclaration {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
             ["function", "subroutine", "module_procedure"].contains(&parent.kind())
         })?;
 
-        let declaration = node
-            .ancestors()
-            .find(|parent| parent.kind() == "variable_declaration")?;
-
-        // Init in declaration ok for save (in this rule)
-        if declaration
-            .children_by_field_name("attribute", &mut declaration.walk())
-            .filter_map(|attr| attr.to_text(src))
-            .any(|attr_name| ["save"].contains(&attr_name.to_lowercase().as_str()))
-        {
+        let var = get_name_node_of_declarator(node);
+        let name = var.to_text(src)?.to_string();
+        let decl = symbol_table.get(name.as_str())?;
+        if decl.has_attribute(AttributeKind::Save) {
             return None;
         }
-
-        let var = node.child_by_field_name("left")?;
 
         // Array syntax on the variable name
         if let Some(arr) = var.child_with_name("identifier") {
@@ -236,7 +231,6 @@ impl AstRule for PointerInitialisationInDeclaration {
             return some_vec![Diagnostic::from_node(Self { name }, node)];
         }
 
-        let name = var.to_text(src)?.to_string();
         some_vec![Diagnostic::from_node(Self { name }, node)]
     }
 

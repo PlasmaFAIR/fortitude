@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -72,6 +73,7 @@ impl AstRule for UnnamedEndStatement {
         _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         // If end node is named, move on.
         // Not catching incorrect end statement name here, as the compiler should

@@ -1,6 +1,8 @@
+use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::settings::{CheckSettings, FortranStandard};
-use crate::{AstRule, FromAstNode};
+use crate::symbol_table::{AttributeKind, SymbolTables};
+use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
@@ -48,93 +50,47 @@ impl Violation for MissingIntent {
 }
 
 impl AstRule for MissingIntent {
-    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
-        let src = src.source_text();
-        // Names of all the dummy arguments
-        let parameters: Vec<&str> = node
-            .child_by_field_name("parameters")?
-            .named_children(&mut node.walk())
-            .filter_map(|param| param.to_text(src))
-            .collect();
-
-        let parent = node.parent()?;
-        let entity = parent.kind().to_string();
-
-        // Logic here is:
-        // 1. find variable declarations
-        // 2. ignore `procedure` arguments
-        // 3. ignore `pointer` arguments for pre-Fortran 2003
-        // 4. filter to the declarations that don't have an `intent` or `value` attribute
-        // 5. filter to the ones that contain any of the dummy arguments
-        // 6. collect into a vec of violations
-        //
-        // We filter by missing intent first, so we only have to
-        // filter by the dummy args once -- otherwise we either catch
-        // local var decls on the same line, or need to iterate over
-        // the decl names twice
-        let violations = parent
-            .named_children(&mut parent.walk())
-            .filter(|child| child.kind() == "variable_declaration")
-            .filter(|decl| {
-                if let Some(type_) = decl.child_by_field_name("type") {
-                    type_.kind() != "procedure"
-                } else {
-                    false
-                }
-            })
-            .filter(|decl| {
-                if settings.target_std < FortranStandard::F2003 {
-                    // Pre-Fortran 2003, `pointer` dummy arguments
-                    // can't have `intent`, so skip those
-                    !decl
-                        .children_by_field_name("attribute", &mut decl.walk())
-                        .filter_map(|attr| attr.to_text(src))
-                        .any(|attr_name| attr_name.to_lowercase() == "pointer")
-                } else {
-                    true
-                }
-            })
-            .filter(|decl| {
-                !decl
-                    .children_by_field_name("attribute", &mut decl.walk())
-                    .any(|attr| {
-                        let attr = attr.to_text(src).unwrap_or("").to_lowercase();
-                        attr.starts_with("intent") || attr.starts_with("value")
-                    })
-            })
-            .flat_map(|decl| {
-                decl.children_by_field_name("declarator", &mut decl.walk())
-                    .filter_map(|declarator| {
-                        let identifier = match declarator.kind() {
-                            "identifier" => Some(declarator),
-                            "sized_declarator" => declarator.child_with_name("identifier"),
-                            // Although tree-sitter-fortran grammar allows
-                            // `init_declarator` and `pointer_init_declarator`
-                            // here, dummy arguments aren't actually allow
-                            // initialisers. _Could_ still catch them here, and
-                            // flag as syntax error elsewhere?
-                            _ => None,
-                        }?;
-                        let name = identifier.to_text(src)?;
-                        if parameters.contains(&name) {
-                            return Some((declarator, name));
-                        }
-                        None
-                    })
-                    .map(|(dummy, name)| {
-                        Diagnostic::from_node(
-                            Self {
-                                entity: entity.to_string(),
-                                name: name.to_string(),
-                            },
-                            &dummy,
-                        )
-                    })
-                    .collect::<Vec<Diagnostic>>()
-            })
-            .collect();
-
-        Some(violations)
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
+        let entity = node.parent()?.kind().to_string();
+        Some(
+            node.child_by_field_name("parameters")?
+                .named_children(&mut node.walk())
+                .filter_map(|param| {
+                    // Get variable declaration
+                    symbol_table.get(param.to_text(src.source_text())?)
+                })
+                .filter(|param| {
+                    // Not allowed intent
+                    !param.type_().is_procedure()
+                })
+                .filter(|param| {
+                    // Intent only allowed on pointers after F2003
+                    !(settings.target_std < FortranStandard::F2003
+                        && param.has_attribute(AttributeKind::Pointer))
+                })
+                .filter(|param| {
+                    // Already has intent!
+                    !param
+                        .attributes()
+                        .iter()
+                        .any(|attr| attr.kind().is_intent() || attr.kind().is_value())
+                })
+                .map(|param| {
+                    Diagnostic::new(
+                        Self {
+                            entity: entity.clone(),
+                            name: param.name().to_string(),
+                        },
+                        param.textrange(),
+                    )
+                })
+                .collect_vec(),
+        )
     }
 
     fn entrypoints() -> Vec<&'static str> {

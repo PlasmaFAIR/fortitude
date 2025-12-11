@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -28,7 +29,12 @@ impl AlwaysFixableViolation for OldStyleArrayLiteral {
 }
 
 impl AstRule for OldStyleArrayLiteral {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let open_bracket = node.child(0)?;
 
         if open_bracket.to_text(src.source_text())?.starts_with("(/") {

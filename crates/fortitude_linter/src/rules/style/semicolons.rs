@@ -6,6 +6,7 @@ use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 
 fn semicolon_is_superfluous(node: &Node) -> bool {
@@ -74,7 +75,12 @@ impl AlwaysFixableViolation for SuperfluousSemicolon {
 }
 
 impl AstRule for SuperfluousSemicolon {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         if semicolon_is_superfluous(node) {
             let edit = node.edit_delete(src);
             return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
@@ -107,7 +113,12 @@ impl AlwaysFixableViolation for MultipleStatementsPerLine {
 }
 
 impl AstRule for MultipleStatementsPerLine {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         if semicolon_is_superfluous(node) {
             return None;
         }

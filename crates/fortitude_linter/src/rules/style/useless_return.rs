@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode, Rule};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -84,6 +85,7 @@ impl AstRule for UselessReturn {
         _settings: &CheckSettings,
         node: &'a Node,
         src: &'a SourceFile,
+        _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         if !node
             .to_text(src.source_text())?

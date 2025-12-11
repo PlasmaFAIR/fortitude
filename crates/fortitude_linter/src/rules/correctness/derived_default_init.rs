@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::settings::{CheckSettings, FortranStandard};
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -73,7 +74,12 @@ impl Violation for MissingDefaultPointerInitalisation {
 }
 
 impl AstRule for MissingDefaultPointerInitalisation {
-    fn check(settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         // Feature only available in Fortran 2003 and later
         if settings.target_std < FortranStandard::F2003 {
             return None;

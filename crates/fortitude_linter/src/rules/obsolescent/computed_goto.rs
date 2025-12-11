@@ -1,4 +1,5 @@
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
@@ -80,7 +81,12 @@ impl Violation for ComputedGoTo {
 }
 
 impl AstRule for ComputedGoTo {
-    fn check(_settings: &CheckSettings, node: &Node, _src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        _src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         if matches!(node.child(0)?.kind(), "goto" | "go")
             && node
                 .children(&mut node.walk())

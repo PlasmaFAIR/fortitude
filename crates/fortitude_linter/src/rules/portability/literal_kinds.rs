@@ -1,5 +1,6 @@
 use crate::ast::{FortitudeNode, dtype_is_plain_number};
 use crate::settings::CheckSettings;
+use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
 use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -104,7 +105,12 @@ impl Violation for LiteralKind {
 }
 
 impl AstRule for LiteralKind {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Deal with characters
@@ -191,7 +197,12 @@ impl Violation for LiteralKindSuffix {
 }
 
 impl AstRule for LiteralKindSuffix {
-    fn check(_settings: &CheckSettings, node: &Node, src: &SourceFile) -> Option<Vec<Diagnostic>> {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
         let src = src.source_text();
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
