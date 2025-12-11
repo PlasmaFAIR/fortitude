@@ -1,16 +1,15 @@
-use crate::FromAstNode;
 use crate::ast::FortitudeNode;
 use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,
 };
-use crate::locator::Locator;
 use crate::symbol_table::{
     ParameterStatement, SymbolTables, Variable, get_name_node_of_declarator,
 };
+use crate::{AstRule, FromAstNode};
 
 use anyhow::{Context, Result};
 use itertools::Itertools;
-use ruff_diagnostics::{Diagnostic, Edit, Fix, Violation};
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::TextRange;
@@ -48,7 +47,7 @@ pub(crate) struct OutOfLineAttribute {
     line: OneIndexed,
 }
 
-impl Violation for OutOfLineAttribute {
+impl AlwaysFixableViolation for OutOfLineAttribute {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self {
@@ -59,16 +58,14 @@ impl Violation for OutOfLineAttribute {
         format!("Out of line '{attribute}' attribute for variable '{variable}'")
     }
 
-    fn fix_title(&self) -> Option<String> {
+    fn fix_title(&self) -> String {
         let Self {
             variable,
             attribute,
             line,
             ..
         } = self;
-        Some(format!(
-            "Add '{attribute}' to '{variable}' declaration on line {line}"
-        ))
+        format!("Add '{attribute}' to '{variable}' declaration on line {line}")
     }
 }
 
@@ -95,14 +92,12 @@ fn fix_out_of_line_parameter(
     var: &Variable,
     src: &SourceFile,
 ) -> Result<Vec<Edit>> {
-    let mut edits = Vec::new();
-
     // Remove from variable_modification
-    edits.push(remove_from_parameter_stmt(
+    let mut edits = vec![remove_from_parameter_stmt(
         &var_in_attr.node,
         attr_node,
         src,
-    )?);
+    )?];
 
     let extra = format!(" = {}", var_in_attr.expression);
 
@@ -116,10 +111,8 @@ fn fix_out_of_line_attribute(
     var: &Variable,
     src: &SourceFile,
 ) -> Result<Vec<Edit>> {
-    let mut edits = Vec::new();
-
     // Remove from variable_modification
-    edits.push(remove_from_attribute_stmt(var_in_attr, attr_node, src)?);
+    let mut edits = vec![remove_from_attribute_stmt(var_in_attr, attr_node, src)?];
 
     let attr = attr_node
         .child(0)
@@ -127,6 +120,10 @@ fn fix_out_of_line_attribute(
         .to_text(src.source_text())
         .context("missing text")?;
 
+    // `dimension` and `allocatable` both need the size node, but they'll put
+    // them in different places:
+    // - `dimension(size) :: var
+    // - `allocatable :: var(size)`
     let size = if let Some(size) = var_in_attr.child_with_name("size") {
         Some(size.to_text(src.source_text()).context("missing text")?)
     } else {
@@ -153,13 +150,17 @@ fn fix_out_of_line_attribute(
     Ok(edits)
 }
 
+/// Move a variable attribute from a standalone statement to the variable
+/// declaration, removing any empty statements, and making sure we only apply
+/// the attribute to one variable, and not any others declared in the same
+/// statement
 fn make_fix(var: &Variable, new_attr: &str, extra: String, src: &SourceFile) -> Result<Vec<Edit>> {
     let mut edits = Vec::new();
 
-    // If only variable in decl statement:
-    //   -> add attribute to decl statement
     let decl = var.decl_statement();
     if decl.names().len() == 1 {
+        // If only variable in decl statement:
+        //   -> add attribute to decl statement
         edits.push(add_attribute_to_var_decl(decl, new_attr));
         if !extra.is_empty() {
             edits.push(Edit::insertion(extra, var.node().end_textsize()));
@@ -188,82 +189,90 @@ fn make_fix(var: &Variable, new_attr: &str, extra: String, src: &SourceFile) -> 
     Ok(edits)
 }
 
-pub fn check_out_of_line_attribute(
-    node: &Node,
-    src: &SourceFile,
-    symbol_table: &SymbolTables,
-    locator: &Locator,
-) -> Option<Vec<Diagnostic>> {
-    let line_index = locator.to_index();
+impl AstRule for OutOfLineAttribute {
+    fn check(
+        _settings: &crate::settings::CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
+        let code = src.to_source_code();
 
-    if node.kind() == "parameter_statement" {
-        let diagnostics = node
-            .named_children(&mut node.walk())
-            .filter_map(|parameter| {
-                ParameterStatement::try_from_node(parameter, src.source_text()).ok()
-            })
-            .filter_map(|parameter| match symbol_table.get(&parameter.name) {
-                Some(var) => {
-                    let mut edit = fix_out_of_line_parameter(node, &parameter, &var, src).unwrap();
-                    Some(
-                        Diagnostic::from_node(
-                            OutOfLineAttribute {
-                                variable: parameter.name,
-                                attribute: "parameter".to_string(),
-                                decl_location: var.textrange(),
-                                line: line_index.line_index(var.node().start_textsize()),
-                            },
-                            &parameter.node,
-                        )
-                        .with_fix(Fix::unsafe_edits(edit.remove(0), edit)),
-                    )
-                }
-                None => None,
-            })
-            .collect_vec();
-        return Some(diagnostics);
-    }
-
-    let attribute_str = node
-        .child_with_name("type_qualifier")?
-        .to_text(src.source_text())?;
-
-    if matches!(
-        attribute_str.to_ascii_lowercase().as_ref(),
-        "external" | "intrinsic"
-    ) {
-        return None;
-    }
-
-    Some(
-        node.children_by_field_name("declarator", &mut node.walk())
-            .map(|decl| {
-                (
-                    decl,
-                    get_name_node_of_declarator(&decl)
-                        .to_text(src.source_text())
-                        .unwrap_or_default()
-                        .to_string(),
-                )
-            })
-            .filter_map(|(decl, name)| {
-                symbol_table.get(&name).map(|var| {
-                    let mut edit = fix_out_of_line_attribute(node, &decl, &var, src).unwrap();
-
-                    Diagnostic::new(
-                        OutOfLineAttribute {
-                            variable: name,
-                            attribute: attribute_str.to_string(),
-                            decl_location: decl.textrange(),
-                            line: line_index.line_index(var.node().start_textsize()),
-                        },
-                        decl.textrange(),
-                    )
-                    .with_fix(Fix::unsafe_edits(edit.remove(0), edit))
+        if node.kind() == "parameter_statement" {
+            // Parameter statements have slightly different syntax, and have
+            // different nodes in the AST, so handle separat
+            let diagnostics = node
+                .named_children(&mut node.walk())
+                .filter_map(|parameter| {
+                    ParameterStatement::try_from_node(parameter, src.source_text()).ok()
                 })
-            })
-            .collect_vec(),
-    )
+                .filter_map(|parameter| match symbol_table.get(&parameter.name) {
+                    Some(var) => {
+                        let mut edit =
+                            fix_out_of_line_parameter(node, &parameter, &var, src).unwrap();
+                        Some(
+                            Diagnostic::from_node(
+                                OutOfLineAttribute {
+                                    variable: parameter.name,
+                                    attribute: "parameter".to_string(),
+                                    decl_location: var.textrange(),
+                                    line: code.line_index(var.node().start_textsize()),
+                                },
+                                &parameter.node,
+                            )
+                            .with_fix(Fix::unsafe_edits(edit.remove(0), edit)),
+                        )
+                    }
+                    None => None,
+                })
+                .collect_vec();
+            return Some(diagnostics);
+        }
+
+        let attribute_str = node
+            .child_with_name("type_qualifier")?
+            .to_text(src.source_text())?;
+
+        if attribute_str.eq_ignore_ascii_case("external")
+            || attribute_str.eq_ignore_ascii_case("intrinsic")
+        {
+            // These don't have variable declarations to apply to?
+            return None;
+        }
+
+        Some(
+            node.children_by_field_name("declarator", &mut node.walk())
+                .map(|decl| {
+                    (
+                        decl,
+                        get_name_node_of_declarator(&decl)
+                            .to_text(src.source_text())
+                            .unwrap_or_default()
+                            .to_string(),
+                    )
+                })
+                .filter_map(|(decl, name)| {
+                    symbol_table.get(&name).map(|var| {
+                        let mut edit = fix_out_of_line_attribute(node, &decl, &var, src).unwrap();
+
+                        Diagnostic::new(
+                            OutOfLineAttribute {
+                                variable: name,
+                                attribute: attribute_str.to_string(),
+                                decl_location: decl.textrange(),
+                                line: code.line_index(var.node().start_textsize()),
+                            },
+                            decl.textrange(),
+                        )
+                        .with_fix(Fix::unsafe_edits(edit.remove(0), edit))
+                    })
+                })
+                .collect_vec(),
+        )
+    }
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["parameter_statement", "variable_modification"]
+    }
 }
 
 #[cfg(test)]

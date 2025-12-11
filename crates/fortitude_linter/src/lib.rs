@@ -32,7 +32,6 @@ use rules::AstRuleEnum;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
-use rules::modernisation::out_of_line_attribute::check_out_of_line_attribute;
 use rules::style::file_extensions::NonStandardFileExtension;
 use rules::style::line_length::LineTooLong;
 use rules::style::useless_return::check_superfluous_returns;
@@ -208,8 +207,6 @@ pub(crate) fn check_path(
 ) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
-    // Map row and column locations to byte slices (lazily).
-    let locator = Locator::new(file.source_text());
 
     let rules = &settings.rules;
 
@@ -257,16 +254,6 @@ pub(crate) fn check_path(
         {
             if let Some(violation) = check_superfluous_returns(settings, &node, file) {
                 violations.push(violation);
-            }
-        }
-
-        if rules.enabled(Rule::OutOfLineAttribute)
-            && matches!(node.kind(), "variable_modification" | "parameter_statement")
-        {
-            if let Some(violation) =
-                check_out_of_line_attribute(&node, file, &symbol_table, &locator)
-            {
-                violations.extend(violation);
             }
         }
 
