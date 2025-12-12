@@ -28,12 +28,12 @@ use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
 use rule_table::RuleTable;
-use rules::style::inconsistent_dimension::check_inconsistent_dimension;
 use rules::AstRuleEnum;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
 use rules::style::file_extensions::NonStandardFileExtension;
+use rules::style::inconsistent_dimension::check_inconsistent_dimension_rules;
 use rules::style::line_length::LineTooLong;
 use rules::style::useless_return::check_superfluous_returns;
 use rules::style::whitespace::{MissingNewlineAtEndOfFile, TrailingWhitespace};
@@ -245,11 +245,14 @@ pub(crate) fn check_path(
 
         if BEGIN_SCOPE_NODES.contains(&node.kind()) {
             let new_table = SymbolTable::new(&node, file.source_text());
-            if rules.enabled(Rule::InconsistentArrayDeclaration) {
+            if rules.any_enabled(&[
+                Rule::InconsistentArrayDeclaration,
+                Rule::MixedScalarArrayDeclaration,
+            ]) {
                 for decl_line in new_table.iter_decl_lines() {
-                    if let Some(violation) = check_inconsistent_dimension(decl_line, file) {
-                        violations.extend(violation);
-                    }
+                    violations.extend(check_inconsistent_dimension_rules(
+                        rules, decl_line, file,
+                    ))
                 }
             }
             symbol_table.push_table(new_table);

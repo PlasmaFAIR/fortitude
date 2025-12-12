@@ -53,6 +53,7 @@ mod tests {
     #[test_case(Rule::SuperfluousElseExit, Path::new("S254.f90"))]
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
     #[test_case(Rule::InconsistentArrayDeclaration, Path::new("S261.f90"))]
+    #[test_case(Rule::MixedScalarArrayDeclaration, Path::new("S262.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
