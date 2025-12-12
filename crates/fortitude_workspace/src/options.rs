@@ -15,7 +15,7 @@ use fortitude_linter::{
         correctness::exit_labels,
         portability::{self, invalid_tab},
         style::{
-            keywords,
+            inconsistent_dimension, keywords,
             strings::{self, settings::Quote},
         },
     },
@@ -347,6 +347,10 @@ pub struct CheckOptions {
     /// Options for the `invalid-tab` rule
     #[option_group]
     pub invalid_tab: Option<InvalidTabOptions>,
+
+    /// Options for the `inconsistent-dimensions` set of rules
+    #[option_group]
+    pub inconsistent_dimensions: Option<InconsistentDimensionOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -478,6 +482,30 @@ impl InvalidTabOptions {
     pub fn into_settings(self) -> invalid_tab::settings::Settings {
         invalid_tab::settings::Settings {
             indent_width: self.indent_width.unwrap_or_default(),
+        }
+    }
+}
+
+/// Options for `inconsistent-dimension` set of rules
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct InconsistentDimensionOptions {
+    /// Prefer declaring arrays using the `dimension` attribute rather than an
+    /// inline shape, `foo(N, M)`
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "prefer-attribute = true"
+    )]
+    pub prefer_attribute: Option<bool>,
+}
+
+impl InconsistentDimensionOptions {
+    pub fn into_settings(self) -> inconsistent_dimension::settings::Settings {
+        inconsistent_dimension::settings::Settings {
+            prefer_attribute: self.prefer_attribute.unwrap_or_default(),
         }
     }
 }

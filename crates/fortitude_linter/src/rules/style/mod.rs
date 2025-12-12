@@ -23,7 +23,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::rules::style::{keywords, strings};
+    use crate::rules::style::{inconsistent_dimension, keywords, strings};
     use crate::settings::CheckSettings;
     use crate::test::test_path;
 
@@ -127,6 +127,30 @@ mod tests {
             strings: strings::settings::Settings {
                 quotes: Quote::Single,
             },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    // #[test_case(Rule::InconsistentArrayDeclaration, Path::new("S261.f90"), true)]
+    // #[test_case(Rule::InconsistentArrayDeclaration, Path::new("S261.f90"), false)]
+    // #[test_case(Rule::MixedScalarArrayDeclaration, Path::new("S262.f90"), true)]
+    // #[test_case(Rule::MixedScalarArrayDeclaration, Path::new("S262.f90"), false)]
+    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), true)]
+    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), false)]
+    fn inconsistent_dimensions(rule_code: Rule, path: &Path, prefer_attribute: bool) -> Result<()> {
+        let snapshot = format!(
+            "{}_{}_{}",
+            rule_code.as_ref(),
+            path.to_string_lossy(),
+            prefer_attribute
+        );
+
+        let settings = CheckSettings {
+            inconsistent_dimension: inconsistent_dimension::settings::Settings { prefer_attribute },
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;

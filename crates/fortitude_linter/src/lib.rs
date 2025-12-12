@@ -245,16 +245,21 @@ pub(crate) fn check_path(
 
         if BEGIN_SCOPE_NODES.contains(&node.kind()) {
             let new_table = SymbolTable::new(&node, file.source_text());
+
+            // Run rules over variable declarations without needing to reparse
+            // them into types
             if rules.any_enabled(&[
                 Rule::InconsistentArrayDeclaration,
                 Rule::MixedScalarArrayDeclaration,
+                Rule::BadArrayDeclaration,
             ]) {
                 for decl_line in new_table.iter_decl_lines() {
                     violations.extend(check_inconsistent_dimension_rules(
-                        rules, decl_line, file,
+                        settings, decl_line, file,
                     ))
                 }
             }
+
             symbol_table.push_table(new_table);
         }
 

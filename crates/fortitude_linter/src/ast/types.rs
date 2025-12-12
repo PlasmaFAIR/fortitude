@@ -54,12 +54,19 @@ impl<'a> NameDecl<'a> {
         }
     }
 
+    /// Variable name
     pub fn name(&self) -> &str {
         self.name.as_str()
     }
 
+    /// Get size node, if there is one
     pub fn size(&'a self) -> Option<Node<'a>> {
         get_size_node_of_declarator(&self.node)
+    }
+
+    /// Get initialiser node, if there is one
+    pub fn init(&'a self) -> Option<Node<'a>> {
+        get_init_node_of_declarator(&self.node)
     }
 }
 
@@ -419,6 +426,12 @@ pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
 pub fn get_size_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
     node.named_descendants()
         .find(|child| child.kind() == "size")
+}
+
+/// Returns the tree-sitter node corresponding to the initialiser of the
+/// declarator node, if there is one
+pub fn get_init_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
+    node.child_by_field_name("right")
 }
 
 /// A single Fortran variable

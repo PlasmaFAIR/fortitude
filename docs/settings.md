@@ -676,6 +676,37 @@ end do
 
 ---
 
+### `check.inconsistent-dimensions`
+
+Options for `inconsistent-dimension` set of rules
+
+#### [`prefer-attribute`](#check_inconsistent-dimensions_prefer-attribute) {: #check_inconsistent-dimensions_prefer-attribute }
+<span id="prefer-attribute"></span>
+
+Prefer declaring arrays using the `dimension` attribute rather than an
+inline shape, `foo(N, M)`
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.inconsistent-dimensions]
+    prefer-attribute = true
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.inconsistent-dimensions]
+    prefer-attribute = true
+    ```
+
+---
+
 ### `check.invalid-tab`
 
 Options for `invalid-tab` rule

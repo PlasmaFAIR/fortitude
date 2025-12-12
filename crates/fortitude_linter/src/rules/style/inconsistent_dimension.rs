@@ -1,9 +1,10 @@
 use crate::FromAstNode;
 use crate::Rule;
 use crate::ast::FortitudeNode;
+use crate::ast::types::NameDecl;
 use crate::ast::types::VariableDeclaration;
 use crate::fix::edits::remove_variable_decl;
-use crate::rule_table::RuleTable;
+use crate::settings::CheckSettings;
 use crate::traits::{HasNode, TextRanged};
 use anyhow::{Context, Result};
 use itertools::Itertools;
@@ -173,12 +174,179 @@ fn check_mixed_scalar_array(
     )
 }
 
+/// ## What it does
+/// Checks for variable array declarations that either do or do not use the
+/// `dimension` attribute.
+///
+/// ## Why is this bad?
+/// Array variables in Fortran can be declared using either the `dimension`
+/// attribute, or with an "array-spec" (shape) in parentheses:
+///
+/// ```f90
+/// ! With an attribute
+/// integer, dimension(2) :: x
+/// ! With a shape in brackets
+/// integer :: x(2)
+/// ```
+///
+/// The two forms are exactly equivalent, but some projects prefer to only use
+/// form over the other for consistency.
+///
+/// ## Options
+/// - `check.inconsistent-dimensions.prefer-attribute`
+#[derive(ViolationMetadata)]
+pub(crate) struct BadArrayDeclaration {
+    prefer_attribute: bool,
+}
+
+impl AlwaysFixableViolation for BadArrayDeclaration {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Bad declaration of array".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        if self.prefer_attribute {
+            "Add `dimension` attribute to declaration".to_string()
+        } else {
+            "Remove `dimension` attribute from declaration".to_string()
+        }
+    }
+}
+
+fn fix_bad_array_decl(
+    var: &NameDecl,
+    decl: &VariableDeclaration,
+    src: &SourceFile,
+    add_attribute: bool,
+) -> Result<Vec<Edit>> {
+    let mut edits = vec![remove_variable_decl(var.node(), decl, src)?];
+
+    let (new_attr, var_str) = if add_attribute {
+        // Adding dimension attribute, removing decl size
+        let size = var
+            .size()
+            .context("expected size")?
+            .to_text(src.source_text())
+            .context("expected text")?;
+        (format!(", dimension{size}"), var.name().to_string())
+    } else {
+        // Removing dimension attribute, adding decl size
+        let dim = decl
+            .attributes()
+            .iter()
+            .find(|attr| attr.kind().is_dimension())
+            .context("expected dimension attribute")?;
+        let size = dim
+            .node()
+            .child_with_name("argument_list")
+            .context("expected argument_list child")?
+            .to_text(src.source_text())
+            .context("expected text")?;
+        ("".to_string(), format!("{}{size}", var.name()))
+    };
+
+    let type_ = decl.type_().as_str();
+    let attrs = decl
+        .attributes()
+        .iter()
+        .filter(|attr| !attr.kind().is_dimension())
+        .filter_map(|attr| attr.node().to_text(src.source_text()))
+        .join(", ");
+    let first = if attrs.is_empty() {
+        type_.to_string()
+    } else {
+        format!("{type_}, {attrs}")
+    };
+    let init = if let Some(init) = var.init() {
+        let init_value = init.to_text(src.source_text()).context("expected text")?;
+        format!(" = {init_value}")
+    } else {
+        "".to_string()
+    };
+    let indent = decl.node().indentation(src);
+    let line = format!("{indent}{first}{new_attr} :: {var_str}{init}\n");
+
+    let source_code = src.to_source_code();
+    let line_index = source_code.line_index(decl.node().end_textsize());
+    let line_end = src.to_source_code().line_end(line_index);
+    edits.push(Edit::insertion(line, line_end));
+
+    Ok(edits)
+}
+
+fn check_bad_array_decl_prefer_attribute(
+    decl_line: &VariableDeclaration,
+    src: &SourceFile,
+) -> Option<Vec<Diagnostic>> {
+    // Don't complain if there's already a dimension attribute
+    if decl_line
+        .attributes()
+        .iter()
+        .any(|attr| attr.kind().is_dimension())
+    {
+        return None;
+    }
+
+    Some(
+        decl_line
+            .names()
+            .iter()
+            .filter(|name| name.size().is_some())
+            .map(|node| {
+                let mut edits = fix_bad_array_decl(node, decl_line, src, true).ok().unwrap();
+                Diagnostic::from_node(
+                    BadArrayDeclaration {
+                        prefer_attribute: true,
+                    },
+                    node.node(),
+                )
+                .with_fix(Fix::unsafe_edits(edits.remove(0), edits))
+            })
+            .collect_vec(),
+    )
+}
+
+fn check_bad_array_decl_prefer_no_attribute(
+    decl_line: &VariableDeclaration,
+    src: &SourceFile,
+) -> Option<Vec<Diagnostic>> {
+    // If there's no `dimension` attribute, there's nothing to do
+    decl_line
+        .attributes()
+        .iter()
+        .find(|attr| attr.kind().is_dimension())?;
+
+    Some(
+        decl_line
+            .names()
+            .iter()
+            .filter(|name| name.size().is_none())
+            .map(|node| {
+                let mut edits = fix_bad_array_decl(node, decl_line, src, false)
+                    .ok()
+                    .unwrap();
+                Diagnostic::from_node(
+                    BadArrayDeclaration {
+                        prefer_attribute: false,
+                    },
+                    node.node(),
+                )
+                .with_fix(Fix::unsafe_edits(edits.remove(0), edits))
+            })
+            .collect_vec(),
+    )
+}
+
 pub fn check_inconsistent_dimension_rules(
-    rules: &RuleTable,
+    settings: &CheckSettings,
     decl_line: &VariableDeclaration,
     src: &SourceFile,
 ) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
+
+    let rules = &settings.rules;
+    let prefer_attribute = settings.inconsistent_dimension.prefer_attribute;
 
     if rules.enabled(Rule::InconsistentArrayDeclaration) {
         if let Some(violation) = check_inconsistent_dimension(decl_line, src) {
@@ -190,6 +358,36 @@ pub fn check_inconsistent_dimension_rules(
             violations.extend(violation);
         }
     }
-
+    if rules.enabled(Rule::BadArrayDeclaration) {
+        if prefer_attribute {
+            if let Some(violation) = check_bad_array_decl_prefer_attribute(decl_line, src) {
+                violations.extend(violation);
+            }
+        } else if let Some(violation) = check_bad_array_decl_prefer_no_attribute(decl_line, src) {
+            violations.extend(violation);
+        }
+    }
     violations
+}
+
+pub mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::Display;
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub prefer_attribute: bool,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.inconsistent_dimension",
+                fields = [self.prefer_attribute]
+            }
+            Ok(())
+        }
+    }
 }
