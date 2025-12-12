@@ -103,6 +103,7 @@
 | S254 | [superfluous-else-exit](rules/superfluous-else-exit.md) | Unecessary {branch} after `exit` statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S255 | [superfluous-else-stop](rules/superfluous-else-stop.md) | Unecessary {branch} after `{stop}` statement | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S261 | [inconsistent-dimension-declaration](rules/inconsistent-dimension-declaration.md) | Inconsistent specification of dimension | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S262 | [mixed-scalar-array-declaration](rules/mixed-scalar-array-declaration.md) | Inconsistent specification of dimension | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Portability (PORT)
 

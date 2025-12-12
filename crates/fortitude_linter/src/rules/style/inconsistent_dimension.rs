@@ -1,7 +1,9 @@
 use crate::FromAstNode;
+use crate::Rule;
 use crate::ast::FortitudeNode;
 use crate::ast::types::VariableDeclaration;
 use crate::fix::edits::remove_variable_decl;
+use crate::rule_table::RuleTable;
 use crate::traits::{HasNode, TextRanged};
 use anyhow::{Context, Result};
 use itertools::Itertools;
@@ -76,7 +78,7 @@ fn fix_inconsistent_dimension(
     Ok(edits)
 }
 
-pub fn check_inconsistent_dimension(
+fn check_inconsistent_dimension(
     decl_line: &VariableDeclaration,
     src: &SourceFile,
 ) -> Option<Vec<Diagnostic>> {
@@ -106,4 +108,100 @@ pub fn check_inconsistent_dimension(
             })
             .collect_vec(),
     )
+}
+
+/// ## What it does
+/// Checks for variable declarations that mix declarations of both scalars and
+/// arrays.
+///
+/// ## Why is this bad?
+/// Mixing declarations of scalars and arrays in one statement may mislead the
+/// reader into thinking all variables are scalar. Prefer to declare arrays in
+/// separate statements to scalars.
+///
+/// ## Example
+/// ```f90
+/// ! only y is an array here
+/// real :: x, y(2), z
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// real :: x, z
+/// real :: y(2)
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct MixedScalarArrayDeclaration;
+
+impl AlwaysFixableViolation for MixedScalarArrayDeclaration {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Mixed declaration of scalar(s) and array".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "Move variable declaration to separate statement".to_string()
+    }
+}
+
+fn check_mixed_scalar_array(
+    decl_line: &VariableDeclaration,
+    src: &SourceFile,
+) -> Option<Vec<Diagnostic>> {
+    if decl_line
+        .attributes()
+        .iter()
+        .any(|attr| attr.kind().is_dimension())
+    {
+        return None;
+    }
+
+    // Don't complain if there aren't any scalars
+    if decl_line.names().iter().all(|name| {
+        name.node().kind() == "sized_declarator"
+            || (name.node().kind() == "init_declarator"
+                && name.node().child(0).unwrap().kind() == "sized_declarator")
+    }) {
+        return None;
+    }
+
+    Some(
+        decl_line
+            .names()
+            .iter()
+            .filter(|name| {
+                name.node().kind() == "sized_declarator"
+                    || (name.node().kind() == "init_declarator"
+                        && name.node().child(0).unwrap().kind() == "sized_declarator")
+            })
+            .filter_map(|node| {
+                let mut edits = fix_inconsistent_dimension(node.node(), decl_line, src).ok()?;
+                Some(
+                    Diagnostic::from_node(MixedScalarArrayDeclaration, node.node())
+                        .with_fix(Fix::unsafe_edits(edits.remove(0), edits)),
+                )
+            })
+            .collect_vec(),
+    )
+}
+
+pub fn check_inconsistent_dimension_rules(
+    rules: &RuleTable,
+    decl_line: &VariableDeclaration,
+    src: &SourceFile,
+) -> Vec<Diagnostic> {
+    let mut violations = Vec::new();
+
+    if rules.enabled(Rule::InconsistentArrayDeclaration) {
+        if let Some(violation) = check_inconsistent_dimension(decl_line, src) {
+            violations.extend(violation);
+        }
+    }
+    if rules.enabled(Rule::MixedScalarArrayDeclaration) {
+        if let Some(violation) = check_mixed_scalar_array(decl_line, src) {
+            violations.extend(violation);
+        }
+    }
+
+    violations
 }
