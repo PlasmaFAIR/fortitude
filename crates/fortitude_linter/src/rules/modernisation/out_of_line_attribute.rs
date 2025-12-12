@@ -200,7 +200,7 @@ impl AstRule for OutOfLineAttribute {
 
         if node.kind() == "parameter_statement" {
             // Parameter statements have slightly different syntax, and have
-            // different nodes in the AST, so handle separat
+            // different nodes in the AST, so handle separately
             let diagnostics = node
                 .named_children(&mut node.walk())
                 .filter_map(|parameter| {
