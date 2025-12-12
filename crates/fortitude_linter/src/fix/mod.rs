@@ -15,6 +15,7 @@ use crate::locator::Locator;
 use crate::registry::{AsRule, Rule};
 use crate::settings::UnsafeFixes;
 
+pub(crate) mod edits;
 pub(crate) mod snippet;
 
 pub type FixTable = FxHashMap<Rule, usize>;

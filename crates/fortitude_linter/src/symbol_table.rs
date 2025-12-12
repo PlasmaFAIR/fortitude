@@ -25,6 +25,33 @@ pub const END_SCOPE_NODES: &[&str] = &[
     "end_block_construct_statement",
 ];
 
+#[derive(Clone, Debug)]
+pub struct ParameterStatement<'a> {
+    pub name: String,
+    pub expression: String,
+    pub node: Node<'a>,
+}
+
+impl<'a> ParameterStatement<'a> {
+    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
+        Ok(Self {
+            name: node
+                .child_with_name("identifier")
+                .context("expected identifier in 'parameter_statement'")?
+                .to_text(src)
+                .context("expected text")?
+                .to_string(),
+            expression: node
+                .child(2)
+                .context("expected expression in 'parameter_statement'")?
+                .to_text(src)
+                .context("expected text")?
+                .to_string(),
+            node,
+        })
+    }
+}
+
 /// A declaration of a single variable
 #[derive(Clone, Debug)]
 pub struct NameDecl<'a> {
@@ -228,7 +255,6 @@ impl<'a> AttributeKind<'a> {
 #[derive(Clone, Debug)]
 pub struct Attribute<'a> {
     kind: AttributeKind<'a>,
-    #[allow(dead_code)]
     node: Node<'a>,
 }
 
@@ -243,35 +269,54 @@ impl<'a> Attribute<'a> {
     pub fn kind(&'_ self) -> &'_ AttributeKind<'_> {
         &self.kind
     }
+
+    pub fn node(&self) -> Node<'_> {
+        self.node
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TypeInner<'a> {
+    node: Node<'a>,
+    name: String,
 }
 
 #[derive(Clone, Debug, EnumIs)]
-pub enum Type {
-    Intrinsic(String),
-    Derived(String),
-    Procedure(String),
-    Declared(String),
+pub enum Type<'a> {
+    Intrinsic(TypeInner<'a>),
+    Derived(TypeInner<'a>),
+    Procedure(TypeInner<'a>),
+    Declared(TypeInner<'a>),
 }
 
-impl Type {
-    pub fn try_from_node(node: &Node, src: &str) -> Result<Self> {
+impl<'a> Type<'a> {
+    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
         let kind = node.kind();
         let name = node.to_text(src).context("expected text")?.to_string();
         match kind {
-            "intrinsic_type" => Ok(Type::Intrinsic(name)),
-            "derived_type" => Ok(Type::Derived(name)),
-            "procedure" => Ok(Type::Procedure(name)),
-            "declared_type" => Ok(Type::Declared(name)),
+            "intrinsic_type" => Ok(Type::Intrinsic(TypeInner { node, name })),
+            "derived_type" => Ok(Type::Derived(TypeInner { node, name })),
+            "procedure" => Ok(Type::Procedure(TypeInner { node, name })),
+            "declared_type" => Ok(Type::Declared(TypeInner { node, name })),
             _ => Err(anyhow!("unexpected 'type' kind '{kind}'")),
         }
     }
 
     pub fn as_str(&self) -> &str {
         match self {
-            Self::Intrinsic(name) => name.as_str(),
-            Self::Derived(name) => name.as_str(),
-            Self::Procedure(name) => name.as_str(),
-            Self::Declared(name) => name.as_str(),
+            Self::Intrinsic(TypeInner { name, .. }) => name.as_str(),
+            Self::Derived(TypeInner { name, .. }) => name.as_str(),
+            Self::Procedure(TypeInner { name, .. }) => name.as_str(),
+            Self::Declared(TypeInner { name, .. }) => name.as_str(),
+        }
+    }
+
+    pub fn node(&self) -> Node<'_> {
+        match self {
+            Self::Intrinsic(TypeInner { node, .. }) => *node,
+            Self::Derived(TypeInner { node, .. }) => *node,
+            Self::Procedure(TypeInner { node, .. }) => *node,
+            Self::Declared(TypeInner { node, .. }) => *node,
         }
     }
 }
@@ -279,10 +324,11 @@ impl Type {
 /// A variable declaration line
 #[derive(Clone, Debug)]
 pub struct VariableDeclaration<'a> {
-    type_: Type,
+    type_: Type<'a>,
     attributes: Vec<Attribute<'a>>,
     names: Vec<NameDecl<'a>>,
     node: Node<'a>,
+    has_colon: bool,
 }
 
 impl<'a> VariableDeclaration<'a> {
@@ -292,7 +338,7 @@ impl<'a> VariableDeclaration<'a> {
         }
 
         let type_ = Type::try_from_node(
-            &node.child_by_field_name("type").context("expected type")?,
+            node.child_by_field_name("type").context("expected type")?,
             src,
         )?;
 
@@ -306,15 +352,21 @@ impl<'a> VariableDeclaration<'a> {
             .map(|decl| NameDecl::from_node(&decl, src))
             .collect_vec();
 
+        let has_colon = node
+            .children(&mut node.walk())
+            .filter_map(|child| child.to_text(src))
+            .any(|child| child == "::");
+
         Ok(Self {
             type_,
             attributes: attributes?,
             names,
             node: *node,
+            has_colon,
         })
     }
 
-    pub fn type_(&self) -> &Type {
+    pub fn type_(&self) -> &Type<'_> {
         &self.type_
     }
 
@@ -342,6 +394,10 @@ impl<'a> VariableDeclaration<'a> {
         self.attributes
             .iter()
             .any(|attr| attrs.contains(&attr.kind))
+    }
+
+    pub fn has_colon(&self) -> bool {
+        self.has_colon
     }
 }
 
@@ -398,7 +454,7 @@ impl<'a> Variable<'a> {
         self.node.textrange()
     }
 
-    pub fn type_(&self) -> &Type {
+    pub fn type_(&self) -> &Type<'_> {
         self.decl.type_()
     }
 

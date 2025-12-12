@@ -1,0 +1,230 @@
+---
+source: crates/fortitude_linter/src/rules/modernisation/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/modernisation/MOD041.f90:5:13: MOD041 [*] Out of line 'dimension' attribute for variable 'y'
+  |
+3 |   integer :: X
+4 |   real :: y
+5 |   dimension y(2)
+  |             ^^^^ MOD041
+6 |   parameter(x = 1, Y=[2, 3])
+  |
+  = help: Add 'dimension' to 'y' declaration on line 4
+
+ℹ Unsafe fix
+1 1 | program test
+2 2 |   implicit none
+3 3 |   integer :: X
+4   |-  real :: y
+5   |-  dimension y(2)
+  4 |+  real, dimension(2) :: y
+6 5 |   parameter(x = 1, Y=[2, 3])
+7 6 | 
+8 7 |   block
+
+./resources/test/fixtures/modernisation/MOD041.f90:6:13: MOD041 [*] Out of line 'parameter' attribute for variable 'x'
+  |
+4 |   real :: y
+5 |   dimension y(2)
+6 |   parameter(x = 1, Y=[2, 3])
+  |             ^^^^^ MOD041
+7 |
+8 |   block
+  |
+  = help: Add 'parameter' to 'x' declaration on line 3
+
+ℹ Unsafe fix
+1 1 | program test
+2 2 |   implicit none
+3   |-  integer :: X
+  3 |+  integer, parameter :: X = 1
+4 4 |   real :: y
+5 5 |   dimension y(2)
+6   |-  parameter(x = 1, Y=[2, 3])
+  6 |+  parameter( Y=[2, 3])
+7 7 | 
+8 8 |   block
+9 9 |     integer :: x, y
+
+./resources/test/fixtures/modernisation/MOD041.f90:6:20: MOD041 [*] Out of line 'parameter' attribute for variable 'Y'
+  |
+4 |   real :: y
+5 |   dimension y(2)
+6 |   parameter(x = 1, Y=[2, 3])
+  |                    ^^^^^^^^ MOD041
+7 |
+8 |   block
+  |
+  = help: Add 'parameter' to 'Y' declaration on line 4
+
+ℹ Unsafe fix
+1 1 | program test
+2 2 |   implicit none
+3 3 |   integer :: X
+4   |-  real :: y
+  4 |+  real, parameter :: y = [2, 3]
+5 5 |   dimension y(2)
+6   |-  parameter(x = 1, Y=[2, 3])
+  6 |+  parameter(x = 1)
+7 7 | 
+8 8 |   block
+9 9 |     integer :: x, y
+
+./resources/test/fixtures/modernisation/MOD041.f90:10:17: MOD041 [*] Out of line 'allocatable' attribute for variable 'x'
+   |
+ 8 |   block
+ 9 |     integer :: x, y
+10 |     allocatable x
+   |                 ^ MOD041
+11 |     allocatable y(:)
+12 |   end block
+   |
+   = help: Add 'allocatable' to 'x' declaration on line 9
+
+ℹ Unsafe fix
+6  6  |   parameter(x = 1, Y=[2, 3])
+7  7  | 
+8  8  |   block
+9     |-    integer :: x, y
+10    |-    allocatable x
+   9  |+    integer ::  y
+   10 |+    integer, allocatable :: x
+11 11 |     allocatable y(:)
+12 12 |   end block
+13 13 | 
+
+./resources/test/fixtures/modernisation/MOD041.f90:11:17: MOD041 [*] Out of line 'allocatable' attribute for variable 'y'
+   |
+ 9 |     integer :: x, y
+10 |     allocatable x
+11 |     allocatable y(:)
+   |                 ^^^^ MOD041
+12 |   end block
+   |
+   = help: Add 'allocatable' to 'y' declaration on line 9
+
+ℹ Unsafe fix
+6  6  |   parameter(x = 1, Y=[2, 3])
+7  7  | 
+8  8  |   block
+9     |-    integer :: x, y
+   9  |+    integer :: x
+   10 |+    integer, allocatable :: y(:)
+10 11 |     allocatable x
+11    |-    allocatable y(:)
+12 12 |   end block
+13 13 | 
+14 14 |   block
+
+./resources/test/fixtures/modernisation/MOD041.f90:16:15: MOD041 [*] Out of line 'parameter' attribute for variable 'a'
+   |
+14 |   block
+15 |     integer :: a, b, c
+16 |     parameter(a=1, b=2)
+   |               ^^^ MOD041
+17 |   end block
+   |
+   = help: Add 'parameter' to 'a' declaration on line 15
+
+ℹ Unsafe fix
+12 12 |   end block
+13 13 | 
+14 14 |   block
+15    |-    integer :: a, b, c
+16    |-    parameter(a=1, b=2)
+   15 |+    integer ::  b, c
+   16 |+    integer, parameter :: a = 1
+   17 |+    parameter( b=2)
+17 18 |   end block
+18 19 | 
+19 20 |   block
+
+./resources/test/fixtures/modernisation/MOD041.f90:16:20: MOD041 [*] Out of line 'parameter' attribute for variable 'b'
+   |
+14 |   block
+15 |     integer :: a, b, c
+16 |     parameter(a=1, b=2)
+   |                    ^^^ MOD041
+17 |   end block
+   |
+   = help: Add 'parameter' to 'b' declaration on line 15
+
+ℹ Unsafe fix
+12 12 |   end block
+13 13 | 
+14 14 |   block
+15    |-    integer :: a, b, c
+16    |-    parameter(a=1, b=2)
+   15 |+    integer :: a,  c
+   16 |+    integer, parameter :: b = 2
+   17 |+    parameter(a=1)
+17 18 |   end block
+18 19 | 
+19 20 |   block
+
+./resources/test/fixtures/modernisation/MOD041.f90:21:17: MOD041 [*] Out of line 'allocatable' attribute for variable 'x'
+   |
+19 |   block
+20 |     integer :: x
+21 |     allocatable x (:, :)
+   |                 ^^^^^^^^ MOD041
+22 |   end block
+   |
+   = help: Add 'allocatable' to 'x' declaration on line 20
+
+ℹ Unsafe fix
+17 17 |   end block
+18 18 | 
+19 19 |   block
+20    |-    integer :: x
+21    |-    allocatable x (:, :)
+   20 |+    integer, allocatable :: x(:, :)
+22 21 |   end block
+23 22 | 
+24 23 |   block
+
+./resources/test/fixtures/modernisation/MOD041.f90:26:17: MOD041 [*] Out of line 'allocatable' attribute for variable 'x'
+   |
+24 |   block
+25 |     integer :: x
+26 |     allocatable x
+   |                 ^ MOD041
+27 |     dimension x(:, :)
+28 |   end block
+   |
+   = help: Add 'allocatable' to 'x' declaration on line 25
+
+ℹ Unsafe fix
+22 22 |   end block
+23 23 | 
+24 24 |   block
+25    |-    integer :: x
+26    |-    allocatable x
+   25 |+    integer, allocatable :: x
+27 26 |     dimension x(:, :)
+28 27 |   end block
+29 28 | end program test
+
+./resources/test/fixtures/modernisation/MOD041.f90:27:15: MOD041 [*] Out of line 'dimension' attribute for variable 'x'
+   |
+25 |     integer :: x
+26 |     allocatable x
+27 |     dimension x(:, :)
+   |               ^^^^^^^ MOD041
+28 |   end block
+29 | end program test
+   |
+   = help: Add 'dimension' to 'x' declaration on line 25
+
+ℹ Unsafe fix
+22 22 |   end block
+23 23 | 
+24 24 |   block
+25    |-    integer :: x
+   25 |+    integer, dimension(:, :) :: x
+26 26 |     allocatable x
+27    |-    dimension x(:, :)
+28 27 |   end block
+29 28 | end program test
