@@ -8,6 +8,7 @@ use tree_sitter::Node;
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
+use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
 
 /// ## What does it do?

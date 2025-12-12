@@ -15,10 +15,10 @@ pub mod rule_selector;
 pub mod rule_table;
 pub mod rules;
 pub mod settings;
-mod symbol_table;
 #[cfg(test)]
 mod test;
 pub mod text_helpers;
+pub mod traits;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
@@ -33,6 +33,7 @@ use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
 use rules::style::file_extensions::NonStandardFileExtension;
+use rules::style::inconsistent_dimension::check_inconsistent_dimension_rules;
 use rules::style::line_length::LineTooLong;
 use rules::style::useless_return::check_superfluous_returns;
 use rules::style::whitespace::{MissingNewlineAtEndOfFile, TrailingWhitespace};
@@ -42,6 +43,7 @@ use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 
 use anyhow::{Context, anyhow};
+use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
 use itertools::Itertools;
 use log::warn;
@@ -53,7 +55,7 @@ use std::io::Write;
 use std::iter::once;
 use std::path::Path;
 use std::{borrow::Cow, collections::BTreeMap};
-use symbol_table::{BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
+use traits::TextRanged;
 use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -242,7 +244,19 @@ pub(crate) fn check_path(
         }
 
         if BEGIN_SCOPE_NODES.contains(&node.kind()) {
-            symbol_table.push_table(SymbolTable::new(&node, file.source_text()));
+            let new_table = SymbolTable::new(&node, file.source_text());
+            if rules.any_enabled(&[
+                Rule::InconsistentArrayDeclaration,
+                Rule::MixedScalarArrayDeclaration,
+                Rule::BadArrayDeclaration,
+            ]) {
+                for decl_line in new_table.iter_decl_lines() {
+                    violations.extend(check_inconsistent_dimension_rules(
+                        settings, decl_line, file,
+                    ))
+                }
+            }
+            symbol_table.push_table(new_table);
         }
 
         if rules.any_enabled(&[
