@@ -79,8 +79,7 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
             f"""\
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
-use crate::{{AstRule, FromAstNode}};
+use crate::{{AstRule, FromAstNode, SymbolTables}};
 use ruff_diagnostics::{{Diagnostic, Edit, Fix, FixAvailability, Violation}};
 use ruff_macros::{{derive_message_formats, ViolationMetadata}};
 use ruff_source_file::SourceFile;

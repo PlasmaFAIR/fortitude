@@ -9,7 +9,7 @@ use tree_sitter::Node;
 
 use crate::{
     ast::FortitudeNode,
-    symbol_table::VariableDeclaration,
+    ast::types::VariableDeclaration,
     traits::{HasNode, TextRanged},
 };
 

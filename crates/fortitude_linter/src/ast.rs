@@ -1,3 +1,6 @@
+pub mod symbol_table;
+pub mod types;
+
 use ruff_diagnostics::Edit;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};

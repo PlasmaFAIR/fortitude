@@ -15,7 +15,6 @@ pub mod rule_selector;
 pub mod rule_table;
 pub mod rules;
 pub mod settings;
-mod symbol_table;
 #[cfg(test)]
 mod test;
 pub mod text_helpers;
@@ -43,6 +42,7 @@ use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 
 use anyhow::{Context, anyhow};
+use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
 use itertools::Itertools;
 use log::warn;
@@ -54,7 +54,6 @@ use std::io::Write;
 use std::iter::once;
 use std::path::Path;
 use std::{borrow::Cow, collections::BTreeMap};
-use symbol_table::{BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use traits::TextRanged;
 use tree_sitter::{Node, Parser, Tree};
 
