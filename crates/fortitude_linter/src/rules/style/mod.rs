@@ -4,6 +4,7 @@ pub(crate) mod file_contents;
 pub(crate) mod file_extensions;
 pub(crate) mod functions;
 pub(crate) mod implicit_none;
+pub mod inconsistent_dimension;
 pub mod keywords;
 pub(crate) mod line_length;
 pub(crate) mod semicolons;
@@ -51,6 +52,7 @@ mod tests {
     #[test_case(Rule::SuperfluousElseCycle, Path::new("S253.f90"))]
     #[test_case(Rule::SuperfluousElseExit, Path::new("S254.f90"))]
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
+    #[test_case(Rule::InconsistentArrayDeclaration, Path::new("S261.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
