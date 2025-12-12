@@ -2,11 +2,10 @@ use std::{collections::HashMap, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use itertools::Itertools;
-use ruff_text_size::TextRange;
 use strum_macros::{EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
 
-use crate::ast::FortitudeNode;
+use crate::{ast::FortitudeNode, impl_has_node, traits::HasNode};
 
 pub const BEGIN_SCOPE_NODES: &[&str] = &[
     "program",
@@ -73,28 +72,31 @@ impl<'a> NameDecl<'a> {
     pub fn name(&self) -> &str {
         self.name.as_str()
     }
-
-    pub fn node(&self) -> &Node<'a> {
-        &self.node
-    }
-
-    pub fn textrange(&self) -> TextRange {
-        self.node.textrange()
-    }
 }
+
+impl_has_node!(NameDecl<'a>);
 
 #[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
 pub enum ExtentSize<'a> {
     Expression(Node<'a>),
-    AssumedSize,
+    AssumedSize(Node<'a>),
 }
 
 impl<'a> ExtentSize<'a> {
     pub fn from_node(node: Node<'a>) -> Self {
         if node.kind() == "assumed_size" {
-            Self::AssumedSize
+            Self::AssumedSize(node)
         } else {
             Self::Expression(node)
+        }
+    }
+}
+
+impl<'a> HasNode<'a> for ExtentSize<'a> {
+    fn node(&self) -> &Node<'a> {
+        match self {
+            Self::Expression(node) => node,
+            Self::AssumedSize(node) => node,
         }
     }
 }
@@ -104,6 +106,7 @@ pub struct Extent<'a> {
     start: Option<Node<'a>>,
     stop: Option<ExtentSize<'a>>,
     stride: Option<Node<'a>>,
+    node: Node<'a>,
 }
 
 impl<'a> Extent<'a> {
@@ -122,9 +125,12 @@ impl<'a> Extent<'a> {
             start: iter.next(),
             stop: iter.next().map(ExtentSize::from_node),
             stride: iter.next(),
+            node,
         })
     }
 }
+
+impl_has_node!(Extent<'a>);
 
 /// One rank of a dimension's array-spec
 #[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
@@ -269,11 +275,9 @@ impl<'a> Attribute<'a> {
     pub fn kind(&'_ self) -> &'_ AttributeKind<'_> {
         &self.kind
     }
-
-    pub fn node(&self) -> &Node<'a> {
-        &self.node
-    }
 }
+
+impl_has_node!(Attribute<'a>);
 
 #[derive(Clone, Debug)]
 pub struct TypeInner<'a> {
@@ -310,8 +314,10 @@ impl<'a> Type<'a> {
             Self::Declared(TypeInner { name, .. }) => name.as_str(),
         }
     }
+}
 
-    pub fn node(&self) -> &Node<'a> {
+impl<'a> HasNode<'a> for Type<'a> {
+    fn node(&self) -> &Node<'a> {
         match self {
             Self::Intrinsic(TypeInner { node, .. }) => node,
             Self::Derived(TypeInner { node, .. }) => node,
@@ -378,14 +384,6 @@ impl<'a> VariableDeclaration<'a> {
         &self.names
     }
 
-    pub fn node(&self) -> &Node<'a> {
-        &self.node
-    }
-
-    pub fn textrange(&self) -> TextRange {
-        self.node.textrange()
-    }
-
     pub fn has_attribute(&self, attr: AttributeKind) -> bool {
         self.has_any_attributes(&[attr])
     }
@@ -400,6 +398,8 @@ impl<'a> VariableDeclaration<'a> {
         self.has_colon
     }
 }
+
+impl_has_node!(VariableDeclaration<'a>);
 
 /// Returns the tree-sitter node corresponding to the actual name of a
 /// declarator node, and not, say, the initialiser
@@ -442,16 +442,8 @@ impl<'a> Variable<'a> {
         self.name.as_str()
     }
 
-    pub fn node(&self) -> &Node<'a> {
-        &self.node
-    }
-
     pub fn decl_statement(&'a self) -> &'a VariableDeclaration<'a> {
         self.decl
-    }
-
-    pub fn textrange(&self) -> TextRange {
-        self.node.textrange()
     }
 
     pub fn type_(&self) -> &Type<'_> {
@@ -470,6 +462,8 @@ impl<'a> Variable<'a> {
         self.decl.has_any_attributes(attrs)
     }
 }
+
+impl_has_node!(Variable<'a>);
 
 /// A named symbol
 #[derive(Clone, Debug)]
@@ -568,8 +562,9 @@ impl<'a> SymbolTables<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::traits::TextRanged;
     use anyhow::{Context, Result};
-    use ruff_text_size::TextSize;
+    use ruff_text_size::{TextRange, TextSize};
     use tree_sitter::Parser;
 
     #[test]

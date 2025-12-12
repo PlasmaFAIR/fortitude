@@ -5,6 +5,7 @@ use crate::fix::edits::{
 use crate::symbol_table::{
     ParameterStatement, SymbolTables, Variable, get_name_node_of_declarator,
 };
+use crate::traits::{HasNode, TextRanged};
 use crate::{AstRule, FromAstNode};
 
 use anyhow::{Context, Result};

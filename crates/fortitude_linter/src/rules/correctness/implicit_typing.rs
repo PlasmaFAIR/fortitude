@@ -2,6 +2,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::{CheckSettings, FortranStandard};
 use crate::symbol_table::SymbolTables;
+use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};

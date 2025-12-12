@@ -19,6 +19,7 @@ mod symbol_table;
 #[cfg(test)]
 mod test;
 pub mod text_helpers;
+pub mod traits;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
@@ -54,6 +55,7 @@ use std::iter::once;
 use std::path::Path;
 use std::{borrow::Cow, collections::BTreeMap};
 use symbol_table::{BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
+use traits::TextRanged;
 use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

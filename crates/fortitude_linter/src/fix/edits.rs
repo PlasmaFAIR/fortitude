@@ -7,7 +7,11 @@ use ruff_source_file::SourceFile;
 use ruff_text_size::Ranged;
 use tree_sitter::Node;
 
-use crate::{ast::FortitudeNode, symbol_table::VariableDeclaration};
+use crate::{
+    ast::FortitudeNode,
+    symbol_table::VariableDeclaration,
+    traits::{HasNode, TextRanged},
+};
 
 /// Return the [`Edit`] to delete the declaration of a variable
 ///
@@ -42,7 +46,7 @@ fn next_comma<'a>(item: Node<'a>) -> Result<Node<'a>> {
 pub(crate) fn remove_from_comma_sep_stmt(
     item: &Node,
     stmt: &Node,
-    children: &[Node],
+    children: &[impl TextRanged],
     src: &SourceFile,
 ) -> Result<Edit> {
     let (before, after): (Vec<_>, Vec<_>) = children

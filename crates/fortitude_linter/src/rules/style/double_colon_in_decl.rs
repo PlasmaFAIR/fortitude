@@ -1,6 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
+use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};

@@ -5,6 +5,8 @@ use ruff_text_size::{TextRange, TextSize};
 /// navigation of a Tree.
 use tree_sitter::{Node, TreeCursor};
 
+use crate::traits::TextRanged;
+
 pub struct DepthFirstIterator<'a> {
     cursor: TreeCursor<'a>,
 }
@@ -121,15 +123,6 @@ pub trait FortitudeNode<'tree> {
 
     /// Creates an edit that inserts `content`, replacing the whole node
     fn edit_replacement(&self, original: &SourceFile, content: String) -> Edit;
-
-    /// Get the [`TextSize`] offset where this node starts
-    fn start_textsize(&self) -> TextSize;
-
-    /// Get the [`TextSize`] offset where this node ends
-    fn end_textsize(&self) -> TextSize;
-
-    /// Get the [`TextRange`] of this node
-    fn textrange(&self) -> TextRange;
 }
 
 impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
@@ -243,18 +236,6 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         let end = start + TextSize::try_from(len).unwrap();
 
         Edit::replacement(content, start, end)
-    }
-
-    fn start_textsize(&self) -> TextSize {
-        TextSize::try_from(self.start_byte()).unwrap()
-    }
-
-    fn end_textsize(&self) -> TextSize {
-        TextSize::try_from(self.end_byte()).unwrap()
-    }
-
-    fn textrange(&self) -> TextRange {
-        TextRange::new(self.start_textsize(), self.end_textsize())
     }
 }
 
