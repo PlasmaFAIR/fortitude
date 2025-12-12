@@ -28,6 +28,7 @@ use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
 use rule_table::RuleTable;
+use rules::style::inconsistent_dimension::check_inconsistent_dimension;
 use rules::AstRuleEnum;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
@@ -243,7 +244,15 @@ pub(crate) fn check_path(
         }
 
         if BEGIN_SCOPE_NODES.contains(&node.kind()) {
-            symbol_table.push_table(SymbolTable::new(&node, file.source_text()));
+            let new_table = SymbolTable::new(&node, file.source_text());
+            if rules.enabled(Rule::InconsistentArrayDeclaration) {
+                for decl_line in new_table.iter_decl_lines() {
+                    if let Some(violation) = check_inconsistent_dimension(decl_line, file) {
+                        violations.extend(violation);
+                    }
+                }
+            }
+            symbol_table.push_table(new_table);
         }
 
         if rules.any_enabled(&[
