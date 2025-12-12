@@ -168,7 +168,7 @@ fn make_fix(var: &Variable, new_attr: &str, extra: String, src: &SourceFile) -> 
     } else {
         // Otherwise:
         //   -> remove variable from decl statement
-        edits.push(remove_variable_decl(&var.node(), decl, src)?);
+        edits.push(remove_variable_decl(var.node(), decl, src)?);
         //   -> add new decl statement with attribute
         let type_ = decl.type_().as_str();
         let attrs = decl

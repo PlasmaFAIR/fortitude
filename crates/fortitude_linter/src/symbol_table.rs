@@ -74,8 +74,8 @@ impl<'a> NameDecl<'a> {
         self.name.as_str()
     }
 
-    pub fn node(&self) -> Node<'_> {
-        self.node
+    pub fn node(&self) -> &Node<'a> {
+        &self.node
     }
 
     pub fn textrange(&self) -> TextRange {
@@ -270,8 +270,8 @@ impl<'a> Attribute<'a> {
         &self.kind
     }
 
-    pub fn node(&self) -> Node<'_> {
-        self.node
+    pub fn node(&self) -> &Node<'a> {
+        &self.node
     }
 }
 
@@ -311,12 +311,12 @@ impl<'a> Type<'a> {
         }
     }
 
-    pub fn node(&self) -> Node<'_> {
+    pub fn node(&self) -> &Node<'a> {
         match self {
-            Self::Intrinsic(TypeInner { node, .. }) => *node,
-            Self::Derived(TypeInner { node, .. }) => *node,
-            Self::Procedure(TypeInner { node, .. }) => *node,
-            Self::Declared(TypeInner { node, .. }) => *node,
+            Self::Intrinsic(TypeInner { node, .. }) => node,
+            Self::Derived(TypeInner { node, .. }) => node,
+            Self::Procedure(TypeInner { node, .. }) => node,
+            Self::Declared(TypeInner { node, .. }) => node,
         }
     }
 }
@@ -374,12 +374,12 @@ impl<'a> VariableDeclaration<'a> {
         &self.attributes
     }
 
-    pub fn names(&'_ self) -> &'_ Vec<NameDecl<'_>> {
+    pub fn names(&self) -> &Vec<NameDecl<'a>> {
         &self.names
     }
 
-    pub fn node(&self) -> Node<'_> {
-        self.node
+    pub fn node(&self) -> &Node<'a> {
+        &self.node
     }
 
     pub fn textrange(&self) -> TextRange {
@@ -442,8 +442,8 @@ impl<'a> Variable<'a> {
         self.name.as_str()
     }
 
-    pub fn node(&self) -> Node<'_> {
-        self.node
+    pub fn node(&self) -> &Node<'a> {
+        &self.node
     }
 
     pub fn decl_statement(&'a self) -> &'a VariableDeclaration<'a> {
@@ -508,10 +508,10 @@ impl<'a> SymbolTable<'a> {
     /// Insert all symbols found in a single variable declaration statement
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
         let index = self.decl_lines.len();
-        for name in decl.names.iter() {
+        for name in decl.names().iter() {
             self.inner.insert(
-                name.name.to_ascii_lowercase(),
-                Symbol::Variable(name.node, index),
+                name.name().to_ascii_lowercase(),
+                Symbol::Variable(*name.node(), index),
             );
         }
         self.decl_lines.push(decl);
