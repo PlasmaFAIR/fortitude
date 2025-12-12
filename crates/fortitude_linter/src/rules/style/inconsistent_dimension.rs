@@ -94,11 +94,7 @@ fn check_inconsistent_dimension(
         decl_line
             .names()
             .iter()
-            .filter(|name| {
-                name.node().kind() == "sized_declarator"
-                    || (name.node().kind() == "init_declarator"
-                        && name.node().child(0).unwrap().kind() == "sized_declarator")
-            })
+            .filter(|name| name.size().is_some())
             .filter_map(|node| {
                 let mut edits = fix_inconsistent_dimension(node.node(), decl_line, src).ok()?;
                 Some(
@@ -157,11 +153,7 @@ fn check_mixed_scalar_array(
     }
 
     // Don't complain if there aren't any scalars
-    if decl_line.names().iter().all(|name| {
-        name.node().kind() == "sized_declarator"
-            || (name.node().kind() == "init_declarator"
-                && name.node().child(0).unwrap().kind() == "sized_declarator")
-    }) {
+    if decl_line.names().iter().all(|name| name.size().is_some()) {
         return None;
     }
 
@@ -169,11 +161,7 @@ fn check_mixed_scalar_array(
         decl_line
             .names()
             .iter()
-            .filter(|name| {
-                name.node().kind() == "sized_declarator"
-                    || (name.node().kind() == "init_declarator"
-                        && name.node().child(0).unwrap().kind() == "sized_declarator")
-            })
+            .filter(|name| name.size().is_some())
             .filter_map(|node| {
                 let mut edits = fix_inconsistent_dimension(node.node(), decl_line, src).ok()?;
                 Some(
