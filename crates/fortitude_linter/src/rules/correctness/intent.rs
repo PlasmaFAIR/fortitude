@@ -1,7 +1,9 @@
 use crate::AstRule;
 use crate::ast::FortitudeNode;
+use crate::ast::types::AttributeKind;
 use crate::settings::{CheckSettings, FortranStandard};
-use crate::symbol_table::{AttributeKind, SymbolTables};
+use crate::symbol_table::SymbolTables;
+use crate::traits::TextRanged;
 use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};

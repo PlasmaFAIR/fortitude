@@ -9,7 +9,8 @@ use tree_sitter::Node;
 
 use crate::{
     ast::FortitudeNode,
-    symbol_table::{NameDecl, VariableDeclaration},
+    ast::types::VariableDeclaration,
+    traits::{HasNode, TextRanged},
 };
 
 /// Return the [`Edit`] to delete the declaration of a variable
@@ -25,8 +26,8 @@ pub(crate) fn remove_variable_decl(
 ) -> Result<Edit> {
     remove_from_comma_sep_stmt(
         var,
-        &decl.node(),
-        &decl.names().iter().map(NameDecl::node).collect_vec(),
+        decl.node(),
+        &decl.names().iter().map(|name| *name.node()).collect_vec(),
         src,
     )
 }
@@ -45,7 +46,7 @@ fn next_comma<'a>(item: Node<'a>) -> Result<Node<'a>> {
 pub(crate) fn remove_from_comma_sep_stmt(
     item: &Node,
     stmt: &Node,
-    children: &[Node],
+    children: &[impl TextRanged],
     src: &SourceFile,
 ) -> Result<Edit> {
     let (before, after): (Vec<_>, Vec<_>) = children
@@ -118,31 +119,31 @@ end program foo
         let a = symbol_table.get("a").unwrap();
         let e = symbol_table.get("e").unwrap();
 
-        let remove_x = remove_variable_decl(&x.node(), x.decl_statement(), &test_source)?;
+        let remove_x = remove_variable_decl(x.node(), x.decl_statement(), &test_source)?;
         assert_eq!(
             remove_x,
             Edit::deletion(TextSize::new(26), TextSize::new(28))
         );
 
-        let remove_y = remove_variable_decl(&y.node(), y.decl_statement(), &test_source)?;
+        let remove_y = remove_variable_decl(y.node(), y.decl_statement(), &test_source)?;
         assert_eq!(
             remove_y,
             Edit::deletion(TextSize::new(29), TextSize::new(34))
         );
 
-        let remove_z = remove_variable_decl(&z.node(), z.decl_statement(), &test_source)?;
+        let remove_z = remove_variable_decl(z.node(), z.decl_statement(), &test_source)?;
         assert_eq!(
             remove_z,
             Edit::deletion(TextSize::new(33), TextSize::new(40))
         );
 
-        let remove_a = remove_variable_decl(&a.node(), a.decl_statement(), &test_source)?;
+        let remove_a = remove_variable_decl(a.node(), a.decl_statement(), &test_source)?;
         assert_eq!(
             remove_a,
             Edit::deletion(TextSize::new(41), TextSize::new(72))
         );
 
-        let remove_e = remove_variable_decl(&e.node(), e.decl_statement(), &test_source)?;
+        let remove_e = remove_variable_decl(e.node(), e.decl_statement(), &test_source)?;
         assert_eq!(
             remove_e,
             Edit::deletion(TextSize::new(95), TextSize::new(105))

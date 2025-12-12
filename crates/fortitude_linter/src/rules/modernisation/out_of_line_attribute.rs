@@ -1,11 +1,10 @@
 use crate::ast::FortitudeNode;
+use crate::ast::types::{ParameterStatement, Variable, get_name_node_of_declarator};
 use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,
 };
-use crate::symbol_table::{
-    ParameterStatement, SymbolTables, Variable, get_name_node_of_declarator,
-};
-use crate::{AstRule, FromAstNode};
+use crate::traits::{HasNode, TextRanged};
+use crate::{AstRule, FromAstNode, SymbolTables};
 
 use anyhow::{Context, Result};
 use itertools::Itertools;
@@ -168,7 +167,7 @@ fn make_fix(var: &Variable, new_attr: &str, extra: String, src: &SourceFile) -> 
     } else {
         // Otherwise:
         //   -> remove variable from decl statement
-        edits.push(remove_variable_decl(&var.node(), decl, src)?);
+        edits.push(remove_variable_decl(var.node(), decl, src)?);
         //   -> add new decl statement with attribute
         let type_ = decl.type_().as_str();
         let attrs = decl

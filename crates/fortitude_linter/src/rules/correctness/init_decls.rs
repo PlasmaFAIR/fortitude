@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
+use crate::ast::types::{AttributeKind, get_name_node_of_declarator};
 use crate::settings::CheckSettings;
-use crate::symbol_table::{AttributeKind, SymbolTables, get_name_node_of_declarator};
-use crate::{AstRule, FromAstNode};
+use crate::{AstRule, FromAstNode, SymbolTables};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
