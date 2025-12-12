@@ -248,10 +248,11 @@ pub(crate) fn check_path(
             if rules.any_enabled(&[
                 Rule::InconsistentArrayDeclaration,
                 Rule::MixedScalarArrayDeclaration,
+                Rule::BadArrayDeclaration,
             ]) {
                 for decl_line in new_table.iter_decl_lines() {
                     violations.extend(check_inconsistent_dimension_rules(
-                        rules, decl_line, file,
+                        settings, decl_line, file,
                     ))
                 }
             }
