@@ -1,0 +1,52 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/correctness/C191.f90:10:5: C191 code following `return` is unreachable
+   |
+ 8 |     integer :: i
+ 9 |
+10 |     return  ! Error
+   |     ^^^^^^ C191
+11 |     ! Ignore this comment
+   |
+
+./resources/test/fixtures/correctness/C191.f90:16:9: C191 code following `cycle` is unreachable
+   |
+14 |     do i=1,10
+15 |       if (i == 5) then
+16 |         cycle  ! Error
+   |         ^^^^^ C191
+17 |         ! Ignore this comment
+18 |         call some_routine()
+   |
+
+./resources/test/fixtures/correctness/C191.f90:19:9: C191 code following `stop` is unreachable
+   |
+17 |         ! Ignore this comment
+18 |         call some_routine()
+19 |         stop  ! Error
+   |         ^^^^ C191
+20 |         print *, "hello world"
+21 |         return  ! Okay
+   |
+
+./resources/test/fixtures/correctness/C191.f90:23:9: C191 code following `error` is unreachable
+   |
+21 |         return  ! Okay
+22 |       else if (i == 7) then
+23 |         error stop  ! Error
+   |         ^^^^^^^^^^ C191
+24 |         if (i == 7) then
+25 |           write (*, *) "foo bar"
+   |
+
+./resources/test/fixtures/correctness/C191.f90:27:9: C191 code following `exit` is unreachable
+   |
+25 |           write (*, *) "foo bar"
+26 |         end if 
+27 |         exit  ! Error
+   |         ^^^^ C191
+28 |         x = 5
+29 |         exit  ! Okay
+   |

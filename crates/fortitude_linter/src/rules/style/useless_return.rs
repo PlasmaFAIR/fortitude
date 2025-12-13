@@ -8,7 +8,7 @@ use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// Get the next sibling that isn't a comment
-fn next_non_comment_sibling<'a>(node: &Node<'a>) -> Option<Node<'a>> {
+pub(crate) fn next_non_comment_sibling<'a>(node: &Node<'a>) -> Option<Node<'a>> {
     let mut sibling = node.next_named_sibling();
     while let Some(next_sibling) = sibling {
         if next_sibling.kind() != "comment" {
@@ -96,7 +96,7 @@ impl AstRule for UselessReturn {
         let sibling = next_non_comment_sibling(node);
         if !matches!(
             sibling?.kind(),
-            "end_function_statement" | "end_subroutine_statement"
+            "end_function_statement" | "end_subroutine_statement" | "internal_procedures"
         ) {
             return None;
         }
@@ -302,9 +302,9 @@ impl Violation for SuperfluousElseStop {
     }
 }
 
-#[derive(strum_macros::EnumString)]
+#[derive(strum_macros::EnumString, strum_macros::Display)]
 #[strum(ascii_case_insensitive)]
-enum BlockExit {
+pub(crate) enum BlockExit {
     Return,
     Cycle,
     Exit,
