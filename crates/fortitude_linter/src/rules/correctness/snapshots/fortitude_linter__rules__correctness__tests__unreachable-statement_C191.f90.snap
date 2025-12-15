@@ -2,51 +2,54 @@
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 ---
-./resources/test/fixtures/correctness/C191.f90:10:5: C191 code following `return` is unreachable
+./resources/test/fixtures/correctness/C191.f90:13:5: C191 code following `return` is unreachable
    |
- 8 |     integer :: i
- 9 |
-10 |     return  ! Error
-   |     ^^^^^^ C191
 11 |     ! Ignore this comment
-   |
-
-./resources/test/fixtures/correctness/C191.f90:16:9: C191 code following `cycle` is unreachable
-   |
+12 |
+13 |     x = 2
+   |     ^^^^^ C191
 14 |     do i=1,10
 15 |       if (i == 5) then
-16 |         cycle  ! Error
-   |         ^^^^^ C191
-17 |         ! Ignore this comment
-18 |         call some_routine()
    |
 
-./resources/test/fixtures/correctness/C191.f90:19:9: C191 code following `stop` is unreachable
+./resources/test/fixtures/correctness/C191.f90:18:9: C191 code following `cycle` is unreachable
    |
+16 |         cycle  ! Error
 17 |         ! Ignore this comment
+18 |         call some_routine()
+   |         ^^^^^^^^^^^^^^^^^^^ C191
+19 |         stop  ! Error
+20 |         print *, "hello world"
+   |
+
+./resources/test/fixtures/correctness/C191.f90:20:9: C191 code following `stop` is unreachable
+   |
 18 |         call some_routine()
 19 |         stop  ! Error
-   |         ^^^^ C191
 20 |         print *, "hello world"
-21 |         return  ! Okay
-   |
-
-./resources/test/fixtures/correctness/C191.f90:23:9: C191 code following `error` is unreachable
-   |
+   |         ^^^^^^^^^^^^^^^^^^^^^^ C191
 21 |         return  ! Okay
 22 |       else if (i == 7) then
-23 |         error stop  ! Error
-   |         ^^^^^^^^^^ C191
-24 |         if (i == 7) then
-25 |           write (*, *) "foo bar"
    |
 
-./resources/test/fixtures/correctness/C191.f90:27:9: C191 code following `exit` is unreachable
+./resources/test/fixtures/correctness/C191.f90:24:9: C191 code following `error` is unreachable
    |
-25 |           write (*, *) "foo bar"
+22 |         else if (i == 7) then
+23 |           error stop  ! Error
+24 | /         if (i == 7) then
+25 | |           write (*, *) "foo bar"
+26 | |         end if 
+   | |______________^ C191
+27 |           exit  ! Error
+28 |           x = 5
+   |
+
+./resources/test/fixtures/correctness/C191.f90:28:9: C191 code following `exit` is unreachable
+   |
 26 |         end if 
 27 |         exit  ! Error
-   |         ^^^^ C191
 28 |         x = 5
+   |         ^^^^^ C191
 29 |         exit  ! Okay
+30 |       end if
    |

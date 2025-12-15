@@ -83,7 +83,7 @@ impl AstRule for UnreachableStatement {
                 UnreachableStatement {
                     kind: text.to_string(),
                 },
-                node,
+                &sibling,
             ))
         } else {
             None
