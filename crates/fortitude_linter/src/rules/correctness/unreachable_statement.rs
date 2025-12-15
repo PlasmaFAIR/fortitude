@@ -53,10 +53,7 @@ pub const EXECUTABLE_STATEMENTS: &[&str] = &[
     "forall_statement",
     "block_construct",
     "associate_statement",
-    // Maybe?
     "nullify_statement",
-    "rank_statement",
-    "entry_statement",
 ];
 
 impl AstRule for UnreachableStatement {
