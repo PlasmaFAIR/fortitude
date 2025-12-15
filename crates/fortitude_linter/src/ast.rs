@@ -126,6 +126,13 @@ pub trait FortitudeNode<'tree> {
 
     /// Creates an edit that inserts `content`, replacing the whole node
     fn edit_replacement(&self, original: &SourceFile, content: String) -> Edit;
+
+    /// Get the next sibling that isn't a comment
+    fn next_non_comment_sibling(&self) -> Option<Node<'tree>>;
+
+    /// Get the next statement (either the next sibling, or the next sibling of
+    /// the parent) which isn't a comment
+    fn next_non_comment_statement(&self) -> Option<Node<'tree>>;
 }
 
 impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
@@ -239,6 +246,31 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         let end = start + TextSize::try_from(len).unwrap();
 
         Edit::replacement(content, start, end)
+    }
+
+    fn next_non_comment_sibling(&self) -> Option<Node<'tree1>> {
+        let mut sibling = self.next_named_sibling();
+        while let Some(next_sibling) = sibling {
+            if next_sibling.kind() != "comment" {
+                return Some(next_sibling);
+            }
+            sibling = next_sibling.next_named_sibling();
+        }
+        None
+    }
+
+    fn next_non_comment_statement(&self) -> Option<Node<'tree1>> {
+        if let Some(next) = self.next_non_comment_sibling() {
+            return Some(next);
+        }
+        let mut current = *self;
+        while let Some(parent) = current.parent() {
+            if let Some(sibling) = parent.next_non_comment_sibling() {
+                return Some(sibling);
+            }
+            current = parent;
+        }
+        None
     }
 }
 

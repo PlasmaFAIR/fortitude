@@ -1,5 +1,4 @@
-use crate::ast::FortitudeNode;
-use crate::rules::style::useless_return::{BlockExit, next_non_comment_sibling};
+use crate::ast::{FortitudeNode, types::BlockExit};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
@@ -77,7 +76,7 @@ impl AstRule for UnreachableStatement {
         // This will require going up the tree before finding the next statement.
         let text = node.child(0)?.to_text(src.source_text())?;
         let _ = BlockExit::try_from(text).ok()?;
-        let sibling = next_non_comment_sibling(node)?;
+        let sibling = node.next_non_comment_sibling()?;
         if EXECUTABLE_STATEMENTS.contains(&sibling.kind()) {
             some_vec!(Diagnostic::from_node(
                 UnreachableStatement {
