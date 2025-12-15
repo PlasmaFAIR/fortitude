@@ -7,6 +7,7 @@ use crate::rules::fortitude::allow_comments::{
     DisabledAllowComment, DuplicatedAllowComment, InvalidRuleCodeOrName, RedirectedAllowComment,
     UnusedAllowComment,
 };
+use crate::traits::TextRanged;
 
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
