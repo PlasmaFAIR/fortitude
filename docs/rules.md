@@ -46,6 +46,7 @@
 | C181 | [unchecked-stat](rules/unchecked-stat.md) | {stat} argument '{name}' is {check_status} in this scope. | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C182 | [multiple-allocations-with-stat](rules/multiple-allocations-with-stat.md) | 'stat' parameter used with multiple {allocations}. | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C183 | [stat-without-message](rules/stat-without-message.md) | '{stat}' used without '{errmsg}'. | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| C191 | [unreachable-statement](rules/unreachable-statement.md) | code following `{}` is unreachable | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 
 ### Obsolescent (OB)
 

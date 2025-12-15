@@ -1,4 +1,4 @@
-use crate::ast::FortitudeNode;
+use crate::ast::{FortitudeNode, types::BlockExit};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode, Rule};
@@ -6,32 +6,6 @@ use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
-
-/// Get the next sibling that isn't a comment
-fn next_non_comment_sibling<'a>(node: &Node<'a>) -> Option<Node<'a>> {
-    let mut sibling = node.next_named_sibling();
-    while let Some(next_sibling) = sibling {
-        if next_sibling.kind() != "comment" {
-            return Some(next_sibling);
-        }
-        sibling = next_sibling.next_named_sibling();
-    }
-    None
-}
-
-/// Get the next statement (either the next sibling, or the next sibling of
-/// the parent) which isn't a comment
-fn next_non_comment_statement<'a>(node: &'a Node) -> Option<Node<'a>> {
-    if let Some(next) = next_non_comment_sibling(node) {
-        return Some(next);
-    }
-    for node in node.ancestors() {
-        if let Some(next) = next_non_comment_sibling(&node) {
-            return Some(next);
-        }
-    }
-    None
-}
 
 /// ## What it does
 /// Checks for unnecessary `return` statements
@@ -93,10 +67,10 @@ impl AstRule for UselessReturn {
         {
             return None;
         }
-        let sibling = next_non_comment_sibling(node);
+        let sibling = node.next_non_comment_sibling();
         if !matches!(
             sibling?.kind(),
-            "end_function_statement" | "end_subroutine_statement"
+            "end_function_statement" | "end_subroutine_statement" | "internal_procedures"
         ) {
             return None;
         }
@@ -302,16 +276,6 @@ impl Violation for SuperfluousElseStop {
     }
 }
 
-#[derive(strum_macros::EnumString)]
-#[strum(ascii_case_insensitive)]
-enum BlockExit {
-    Return,
-    Cycle,
-    Exit,
-    Stop,
-    Error,
-}
-
 pub(crate) fn check_superfluous_returns<'a>(
     settings: &CheckSettings,
     node: &'a Node,
@@ -320,7 +284,7 @@ pub(crate) fn check_superfluous_returns<'a>(
     let text = node.child(0)?.to_text(src.source_text())?;
     let kind = BlockExit::try_from(text).ok()?;
 
-    let sibling = next_non_comment_statement(node);
+    let sibling = node.next_non_comment_statement();
     let branch = match sibling?.kind() {
         "else_clause" => "else",
         "elseif_clause" => "else-if",
@@ -388,8 +352,9 @@ end subroutine foo
 "#;
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let root = tree.root_node().child(0).context("Missing child")?;
-        let next =
-            next_non_comment_sibling(&root).context("Failed to find next non-comment sibling")?;
+        let next = root
+            .next_non_comment_sibling()
+            .context("Failed to find next non-comment sibling")?;
         assert_eq!(next.kind(), "subroutine");
 
         Ok(())
@@ -415,7 +380,8 @@ end subroutine bar
         assert_eq!(first_end_sub.kind(), "end_subroutine_statement");
         println!("{first_end_sub:?} {}", first_end_sub.to_text(code).unwrap());
 
-        let next = next_non_comment_statement(&first_end_sub)
+        let next = first_end_sub
+            .next_non_comment_statement()
             .context("Failed to find next non-comment statement")?;
         assert_eq!(next.kind(), "subroutine");
         let text = next

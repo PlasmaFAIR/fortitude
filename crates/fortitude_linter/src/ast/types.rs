@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use anyhow::{Context, Result, anyhow};
 use itertools::Itertools;
-use strum_macros::{EnumIs, EnumString, IntoStaticStr};
+use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
 
 use crate::{ast::FortitudeNode, impl_has_node, traits::HasNode};
@@ -453,3 +453,13 @@ impl<'a> Variable<'a> {
 }
 
 impl_has_node!(Variable<'a>);
+
+#[derive(EnumString, Display)]
+#[strum(ascii_case_insensitive)]
+pub(crate) enum BlockExit {
+    Return,
+    Cycle,
+    Exit,
+    Stop,
+    Error,
+}
