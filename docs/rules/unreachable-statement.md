@@ -9,3 +9,13 @@ unreachable code.
 
 ## Why is this bad?
 Unreachable code can never be executed, and is almost certainly a mistake.
+
+## Example
+```f90
+subroutine example(x)
+  integer, intent(inout) :: x
+  x = x + 1
+  return
+  print *, x  ! This statement is unreachable
+end subroutine example
+```
