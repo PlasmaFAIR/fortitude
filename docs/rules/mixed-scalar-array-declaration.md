@@ -12,6 +12,13 @@ Mixing declarations of scalars and arrays in one statement may mislead the
 reader into thinking all variables are scalar. Prefer to declare arrays in
 separate statements to scalars.
 
+## Automatic Fix
+The automatic fix for this moves the variable declaration to a new
+statement, and is unsafe as it may clobber comments.
+
+You can use `check.inconsistent-dimension.prefer-attribute` to control
+whether to put a `dimension` attribute on the new declaration or not.
+
 ## Example
 ```f90
 ! only y is an array here
@@ -23,3 +30,10 @@ Use instead:
 real :: x, z
 real :: y(2)
 ```
+
+## Options
+- [`check.inconsistent-dimensions.prefer-attribute`][check.inconsistent-dimensions.prefer-attribute]
+
+
+[check.inconsistent-dimensions.prefer-attribute]: ../settings.md#check_inconsistent-dimensions_prefer-attribute
+

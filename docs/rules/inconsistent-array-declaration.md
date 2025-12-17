@@ -14,6 +14,13 @@ same shape as given by the `dimension` attribute. Prefer to declare
 variables with different shapes to the `dimension` attribute on different
 lines.
 
+## Automatic Fix
+The automatic fix for this moves the variable declaration to a new
+statement, and is unsafe as it may clobber comments.
+
+You can use `check.inconsistent-dimension.prefer-attribute` to control
+whether to put a `dimension` attribute on the new declaration or not.
+
 ## Example
 ```f90
 ! y and z are inconsistent with the `dimension` attribute
@@ -26,3 +33,10 @@ real, dimension(5) :: x
 real :: y(2)
 real :: z(3, 4)
 ```
+
+## Options
+- [`check.inconsistent-dimensions.prefer-attribute`][check.inconsistent-dimensions.prefer-attribute]
+
+
+[check.inconsistent-dimensions.prefer-attribute]: ../settings.md#check_inconsistent-dimensions_prefer-attribute
+

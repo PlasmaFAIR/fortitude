@@ -24,6 +24,13 @@ use settings::PreferAttribute;
 /// variables with different shapes to the `dimension` attribute on different
 /// lines.
 ///
+/// ## Automatic Fix
+/// The automatic fix for this moves the variable declaration to a new
+/// statement, and is unsafe as it may clobber comments.
+///
+/// You can use `check.inconsistent-dimension.prefer-attribute` to control
+/// whether to put a `dimension` attribute on the new declaration or not.
+///
 /// ## Example
 /// ```f90
 /// ! y and z are inconsistent with the `dimension` attribute
@@ -36,6 +43,9 @@ use settings::PreferAttribute;
 /// real :: y(2)
 /// real :: z(3, 4)
 /// ```
+///
+/// ## Options
+/// - `check.inconsistent-dimensions.prefer-attribute`
 #[derive(ViolationMetadata)]
 pub(crate) struct InconsistentArrayDeclaration;
 
@@ -165,6 +175,13 @@ fn check_inconsistent_dimension(
 /// reader into thinking all variables are scalar. Prefer to declare arrays in
 /// separate statements to scalars.
 ///
+/// ## Automatic Fix
+/// The automatic fix for this moves the variable declaration to a new
+/// statement, and is unsafe as it may clobber comments.
+///
+/// You can use `check.inconsistent-dimension.prefer-attribute` to control
+/// whether to put a `dimension` attribute on the new declaration or not.
+///
 /// ## Example
 /// ```f90
 /// ! only y is an array here
@@ -176,6 +193,9 @@ fn check_inconsistent_dimension(
 /// real :: x, z
 /// real :: y(2)
 /// ```
+///
+/// ## Options
+/// - `check.inconsistent-dimensions.prefer-attribute`
 #[derive(ViolationMetadata)]
 pub(crate) struct MixedScalarArrayDeclaration;
 
