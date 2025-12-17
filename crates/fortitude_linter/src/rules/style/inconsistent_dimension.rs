@@ -116,8 +116,12 @@ fn fix_inconsistent_dimension(
     };
 
     let indent = decl.node().indentation(src);
-    let line = format!("\n{indent}{first}{new_attr} :: {var_str}{init}");
-    edits.push(Edit::insertion(line, decl.node().end_textsize()));
+    let line = format!("{indent}{first}{new_attr} :: {var_str}{init}\n");
+
+    let source_code = src.to_source_code();
+    let line_index = source_code.line_index(decl.node().end_textsize());
+    let line_end = src.to_source_code().line_end(line_index);
+    edits.push(Edit::insertion(line, line_end));
 
     Ok(edits)
 }
@@ -210,8 +214,10 @@ fn check_mixed_scalar_array(
             .iter()
             .filter(|name| name.size().is_some())
             .filter_map(|node| {
+                // FIXME: use of `.ok()?` means error in fix skips the
+                // diagnostic completely, hiding bugs.
                 let mut edits =
-                    fix_inconsistent_dimension(node, decl_line, src, prefer_attribute).unwrap();
+                    fix_inconsistent_dimension(node, decl_line, src, prefer_attribute).ok()?;
                 Some(
                     Diagnostic::from_node(MixedScalarArrayDeclaration, node.node())
                         .with_fix(Fix::unsafe_edits(edits.remove(0), edits)),
@@ -250,7 +256,7 @@ fn check_mixed_scalar_array(
 /// - `check.inconsistent-dimensions.prefer-attribute`
 #[derive(ViolationMetadata)]
 pub(crate) struct BadArrayDeclaration {
-    prefer_attribute: bool,
+    prefer_attribute: PreferAttribute,
 }
 
 impl AlwaysFixableViolation for BadArrayDeclaration {
@@ -260,7 +266,7 @@ impl AlwaysFixableViolation for BadArrayDeclaration {
     }
 
     fn fix_title(&self) -> String {
-        if self.prefer_attribute {
+        if self.prefer_attribute.is_always() {
             "Add `dimension` attribute to declaration".to_string()
         } else {
             "Remove `dimension` attribute from declaration".to_string()
@@ -268,55 +274,21 @@ impl AlwaysFixableViolation for BadArrayDeclaration {
     }
 }
 
-fn fix_bad_array_decl(
-    var: &NameDecl,
-    decl: &VariableDeclaration,
-    src: &SourceFile,
-    add_attribute: bool,
-) -> Result<Vec<Edit>> {
-    let mut edits = vec![remove_variable_decl(var.node(), decl, src)?];
-
-    let (new_attr, var_str) = dimension_attribute_and_shape(var, decl, src, add_attribute)?;
-
-    let type_ = decl.type_().as_str();
-    let attrs = decl
-        .attributes()
-        .iter()
-        .filter(|attr| !attr.kind().is_dimension())
-        .filter_map(|attr| attr.node().to_text(src.source_text()))
-        .join(", ");
-    let first = if attrs.is_empty() {
-        type_.to_string()
-    } else {
-        format!("{type_}, {attrs}")
-    };
-    let init = if let Some(init) = var.init() {
-        let init_value = init.to_text(src.source_text()).context("expected text")?;
-        format!(" = {init_value}")
-    } else {
-        "".to_string()
-    };
-    let indent = decl.node().indentation(src);
-    let line = format!("{indent}{first}{new_attr} :: {var_str}{init}\n");
-
-    let source_code = src.to_source_code();
-    let line_index = source_code.line_index(decl.node().end_textsize());
-    let line_end = src.to_source_code().line_end(line_index);
-    edits.push(Edit::insertion(line, line_end));
-
-    Ok(edits)
-}
-
-fn check_bad_array_decl_prefer_attribute(
+fn check_bad_array_decl(
     decl_line: &VariableDeclaration,
     src: &SourceFile,
+    prefer_attribute: PreferAttribute,
 ) -> Option<Vec<Diagnostic>> {
-    // Don't complain if there's already a dimension attribute
-    if decl_line
+    let has_dim = decl_line
         .attributes()
         .iter()
-        .any(|attr| attr.kind().is_dimension())
-    {
+        .any(|attr| attr.kind().is_dimension());
+
+    if has_dim && prefer_attribute.is_always() {
+        // We've got a `dimension` attriute and want one
+        return None;
+    } else if !has_dim && prefer_attribute.is_never() {
+        // We don't have a `dimension` attribute and don't want one
         return None;
     }
 
@@ -324,47 +296,17 @@ fn check_bad_array_decl_prefer_attribute(
         decl_line
             .names()
             .iter()
-            .filter(|name| name.size().is_some())
-            .map(|node| {
-                let mut edits = fix_bad_array_decl(node, decl_line, src, true).ok().unwrap();
-                Diagnostic::from_node(
-                    BadArrayDeclaration {
-                        prefer_attribute: true,
-                    },
-                    node.node(),
-                )
-                .with_fix(Fix::unsafe_edits(edits.remove(0), edits))
+            .filter(|name| {
+                (name.size().is_some() && prefer_attribute.is_always())
+                    || (name.size().is_none() && prefer_attribute.is_never())
             })
-            .collect_vec(),
-    )
-}
-
-fn check_bad_array_decl_prefer_no_attribute(
-    decl_line: &VariableDeclaration,
-    src: &SourceFile,
-) -> Option<Vec<Diagnostic>> {
-    // If there's no `dimension` attribute, there's nothing to do
-    decl_line
-        .attributes()
-        .iter()
-        .find(|attr| attr.kind().is_dimension())?;
-
-    Some(
-        decl_line
-            .names()
-            .iter()
-            .filter(|name| name.size().is_none())
             .map(|node| {
-                let mut edits = fix_bad_array_decl(node, decl_line, src, false)
+                // FIXME: use of `ok` hides bugs
+                let mut edits = fix_inconsistent_dimension(node, decl_line, src, prefer_attribute)
                     .ok()
                     .unwrap();
-                Diagnostic::from_node(
-                    BadArrayDeclaration {
-                        prefer_attribute: false,
-                    },
-                    node.node(),
-                )
-                .with_fix(Fix::unsafe_edits(edits.remove(0), edits))
+                Diagnostic::from_node(BadArrayDeclaration { prefer_attribute }, node.node())
+                    .with_fix(Fix::unsafe_edits(edits.remove(0), edits))
             })
             .collect_vec(),
     )
@@ -392,18 +334,13 @@ pub fn check_inconsistent_dimension_rules(
     }
     if rules.enabled(Rule::BadArrayDeclaration) {
         match prefer_attribute {
-            PreferAttribute::Always => {
-                if let Some(violation) = check_bad_array_decl_prefer_attribute(decl_line, src) {
-                    violations.extend(violation);
-                }
-            }
-            PreferAttribute::Never => {
-                if let Some(violation) = check_bad_array_decl_prefer_no_attribute(decl_line, src) {
-                    violations.extend(violation);
-                }
-            }
             // Do nothing!
             PreferAttribute::Keep => (),
+            _ => {
+                if let Some(violation) = check_bad_array_decl(decl_line, src, prefer_attribute) {
+                    violations.extend(violation);
+                }
+            }
         }
     }
     violations
