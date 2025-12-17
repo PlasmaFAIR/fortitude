@@ -1,4 +1,4 @@
-//! Types and utilities for working with text, modifying source files, and `Ruff <-> LSP` type conversion.
+//! Types and utilities for working with text, modifying source files, and `Fortitude <-> LSP` type conversion.
 
 mod range;
 mod replacement;
@@ -25,7 +25,7 @@ pub enum PositionEncoding {
     /// Second choice because UTF32 uses a fixed 4 byte encoding for each character (makes conversion relatively easy)
     UTF32,
 
-    /// Ruff's preferred encoding
+    /// Preferred encoding
     UTF8,
 }
 

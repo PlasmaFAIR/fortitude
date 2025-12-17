@@ -37,7 +37,7 @@ pub(crate) fn fix_all(query: &DocumentQuery, encoding: PositionEncoding) -> crat
     // edit.
     // If we simply generated the diagnostics with `check_path` and then applied fixes individually,
     // there's a possibility they could overlap or introduce new problems that need to be fixed,
-    // which is inconsistent with how `ruff check --fix` works.
+    // which is inconsistent with how `fortitude check --fix` works.
     let FixerResult { transformed, .. } = fortitude_linter::check_and_fix_file(
         &document_path,
         &file,

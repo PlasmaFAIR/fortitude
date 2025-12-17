@@ -19,7 +19,7 @@ struct Argument {
     _version: DocumentVersion,
 }
 
-/// The argument schema for the `ruff.printDebugInformation` command.
+/// The argument schema for the `fortitude.printDebugInformation` command.
 #[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DebugCommandArgument {
@@ -74,7 +74,7 @@ impl super::SyncRequestHandler for ExecuteCommand {
         for Argument { uri, .. } in arguments {
             let Some(snapshot) = session.take_snapshot(uri.clone()) else {
                 tracing::error!("Document at {uri} could not be opened");
-                client.show_error_message("Ruff does not recognize this file");
+                client.show_error_message("Fortitude does not recognize this file");
                 return Ok(None);
             };
             match command {
@@ -126,7 +126,9 @@ fn apply_edit(
                     .failure_reason
                     .unwrap_or_else(|| String::from("unspecified reason"));
                 tracing::error!("Failed to apply workspace edit: {reason}");
-                client.show_error_message(format_args!("Ruff was unable to apply edits: {reason}"));
+                client.show_error_message(format_args!(
+                    "Fortitude was unable to apply edits: {reason}"
+                ));
             }
         },
     )
