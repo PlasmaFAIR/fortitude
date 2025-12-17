@@ -53,8 +53,6 @@ mod tests {
     #[test_case(Rule::SuperfluousElseCycle, Path::new("S253.f90"))]
     #[test_case(Rule::SuperfluousElseExit, Path::new("S254.f90"))]
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
-    #[test_case(Rule::InconsistentArrayDeclaration, Path::new("S261.f90"))]
-    #[test_case(Rule::MixedScalarArrayDeclaration, Path::new("S262.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -136,15 +134,57 @@ mod tests {
         Ok(())
     }
 
-    // #[test_case(Rule::InconsistentArrayDeclaration, Path::new("S261.f90"), true)]
-    // #[test_case(Rule::InconsistentArrayDeclaration, Path::new("S261.f90"), false)]
-    // #[test_case(Rule::MixedScalarArrayDeclaration, Path::new("S262.f90"), true)]
-    // #[test_case(Rule::MixedScalarArrayDeclaration, Path::new("S262.f90"), false)]
-    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), PreferAttribute::Always)]
-    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), PreferAttribute::Never)]
+    #[test_case(
+        Rule::InconsistentArrayDeclaration,
+        Path::new("S261.f90"),
+        PreferAttribute::Always
+    )]
+    #[test_case(
+        Rule::InconsistentArrayDeclaration,
+        Path::new("S261.f90"),
+        PreferAttribute::Never
+    )]
+    #[test_case(
+        Rule::InconsistentArrayDeclaration,
+        Path::new("S261.f90"),
+        PreferAttribute::Keep
+    )]
+    #[test_case(
+        Rule::MixedScalarArrayDeclaration,
+        Path::new("S262.f90"),
+        PreferAttribute::Always
+    )]
+    #[test_case(
+        Rule::MixedScalarArrayDeclaration,
+        Path::new("S262.f90"),
+        PreferAttribute::Never
+    )]
+    #[test_case(
+        Rule::MixedScalarArrayDeclaration,
+        Path::new("S262.f90"),
+        PreferAttribute::Keep
+    )]
+    #[test_case(
+        Rule::BadArrayDeclaration,
+        Path::new("S263.f90"),
+        PreferAttribute::Always
+    )]
+    #[test_case(
+        Rule::BadArrayDeclaration,
+        Path::new("S263.f90"),
+        PreferAttribute::Never
+    )]
     // This one should be a no-op
-    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), PreferAttribute::Keep)]
-    fn inconsistent_dimensions(rule_code: Rule, path: &Path, prefer_attribute: PreferAttribute) -> Result<()> {
+    #[test_case(
+        Rule::BadArrayDeclaration,
+        Path::new("S263.f90"),
+        PreferAttribute::Keep
+    )]
+    fn inconsistent_dimensions(
+        rule_code: Rule,
+        path: &Path,
+        prefer_attribute: PreferAttribute,
+    ) -> Result<()> {
         let snapshot = format!(
             "{}_{}_{}",
             rule_code.as_ref(),

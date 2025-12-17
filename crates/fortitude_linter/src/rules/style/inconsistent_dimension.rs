@@ -12,7 +12,6 @@ use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use settings::PreferAttribute;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for variable declarations that have both the `dimension` attribute
@@ -51,12 +50,51 @@ impl AlwaysFixableViolation for InconsistentArrayDeclaration {
     }
 }
 
-fn fix_inconsistent_dimension(
-    var: &Node,
+fn dimension_attribute_and_shape(
+    var: &NameDecl,
     decl: &VariableDeclaration,
     src: &SourceFile,
+    add_attribute: bool,
+) -> Result<(String, String)> {
+    // Get the shape, if declared on the variable name
+    let size = var
+        .size()
+        .map(|s| s.to_text(src.source_text()).context("expected text"))
+        .transpose()?;
+
+    if add_attribute {
+        // Adding dimension attribute, removing decl size
+        let size = size.context("expected size")?;
+        Ok((format!(", dimension{size}"), var.name().to_string()))
+    } else {
+        // Removing dimension attribute, adding decl size
+
+        let size = size
+            .or_else(|| {
+                let dim = decl
+                    .attributes()
+                    .iter()
+                    .find(|attr| attr.kind().is_dimension());
+
+                dim?.node()
+                    .child_with_name("argument_list")?
+                    .to_text(src.source_text())
+            })
+            .context("expected either size or dimension attribute")?;
+        Ok(("".to_string(), format!("{}{size}", var.name())))
+    }
+}
+
+fn fix_inconsistent_dimension(
+    var: &NameDecl,
+    decl: &VariableDeclaration,
+    src: &SourceFile,
+    prefer_attribute: PreferAttribute,
 ) -> Result<Vec<Edit>> {
-    let mut edits = vec![remove_variable_decl(var, decl, src)?];
+    let mut edits = vec![remove_variable_decl(var.node(), decl, src)?];
+
+    let (new_attr, var_str) =
+        dimension_attribute_and_shape(var, decl, src, prefer_attribute.is_always())?;
 
     let type_ = decl.type_().as_str();
     let attrs = decl
@@ -70,11 +108,15 @@ fn fix_inconsistent_dimension(
     } else {
         format!("{type_}, {attrs}")
     };
+    let init = if let Some(init) = var.init() {
+        let init_value = init.to_text(src.source_text()).context("expected text")?;
+        format!(" = {init_value}")
+    } else {
+        "".to_string()
+    };
+
     let indent = decl.node().indentation(src);
-    let line = format!(
-        "\n{indent}{first} :: {}",
-        var.to_text(src.source_text()).context("expected text")?
-    );
+    let line = format!("\n{indent}{first}{new_attr} :: {var_str}{init}");
     edits.push(Edit::insertion(line, decl.node().end_textsize()));
 
     Ok(edits)
@@ -83,6 +125,7 @@ fn fix_inconsistent_dimension(
 fn check_inconsistent_dimension(
     decl_line: &VariableDeclaration,
     src: &SourceFile,
+    prefer_attribute: PreferAttribute,
 ) -> Option<Vec<Diagnostic>> {
     if !decl_line
         .attributes()
@@ -98,7 +141,8 @@ fn check_inconsistent_dimension(
             .iter()
             .filter(|name| name.size().is_some())
             .filter_map(|node| {
-                let mut edits = fix_inconsistent_dimension(node.node(), decl_line, src).ok()?;
+                let mut edits =
+                    fix_inconsistent_dimension(node, decl_line, src, prefer_attribute).ok()?;
                 Some(
                     Diagnostic::from_node(InconsistentArrayDeclaration, node.node())
                         .with_fix(Fix::unsafe_edits(edits.remove(0), edits)),
@@ -145,6 +189,7 @@ impl AlwaysFixableViolation for MixedScalarArrayDeclaration {
 fn check_mixed_scalar_array(
     decl_line: &VariableDeclaration,
     src: &SourceFile,
+    prefer_attribute: PreferAttribute,
 ) -> Option<Vec<Diagnostic>> {
     if decl_line
         .attributes()
@@ -165,7 +210,8 @@ fn check_mixed_scalar_array(
             .iter()
             .filter(|name| name.size().is_some())
             .filter_map(|node| {
-                let mut edits = fix_inconsistent_dimension(node.node(), decl_line, src).ok()?;
+                let mut edits =
+                    fix_inconsistent_dimension(node, decl_line, src, prefer_attribute).unwrap();
                 Some(
                     Diagnostic::from_node(MixedScalarArrayDeclaration, node.node())
                         .with_fix(Fix::unsafe_edits(edits.remove(0), edits)),
@@ -230,29 +276,7 @@ fn fix_bad_array_decl(
 ) -> Result<Vec<Edit>> {
     let mut edits = vec![remove_variable_decl(var.node(), decl, src)?];
 
-    let (new_attr, var_str) = if add_attribute {
-        // Adding dimension attribute, removing decl size
-        let size = var
-            .size()
-            .context("expected size")?
-            .to_text(src.source_text())
-            .context("expected text")?;
-        (format!(", dimension{size}"), var.name().to_string())
-    } else {
-        // Removing dimension attribute, adding decl size
-        let dim = decl
-            .attributes()
-            .iter()
-            .find(|attr| attr.kind().is_dimension())
-            .context("expected dimension attribute")?;
-        let size = dim
-            .node()
-            .child_with_name("argument_list")
-            .context("expected argument_list child")?
-            .to_text(src.source_text())
-            .context("expected text")?;
-        ("".to_string(), format!("{}{size}", var.name()))
-    };
+    let (new_attr, var_str) = dimension_attribute_and_shape(var, decl, src, add_attribute)?;
 
     let type_ = decl.type_().as_str();
     let attrs = decl
@@ -357,12 +381,12 @@ pub fn check_inconsistent_dimension_rules(
     let prefer_attribute = settings.inconsistent_dimension.prefer_attribute;
 
     if rules.enabled(Rule::InconsistentArrayDeclaration) {
-        if let Some(violation) = check_inconsistent_dimension(decl_line, src) {
+        if let Some(violation) = check_inconsistent_dimension(decl_line, src, prefer_attribute) {
             violations.extend(violation);
         }
     }
     if rules.enabled(Rule::MixedScalarArrayDeclaration) {
-        if let Some(violation) = check_mixed_scalar_array(decl_line, src) {
+        if let Some(violation) = check_mixed_scalar_array(decl_line, src, prefer_attribute) {
             violations.extend(violation);
         }
     }

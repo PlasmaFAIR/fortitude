@@ -1,0 +1,67 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S261.f90:4:28: S261 [*] Inconsistent specification of dimension
+  |
+2 |   implicit none (external, type)
+3 |   ! y and z are inconsistent with decl
+4 |   real, dimension(1) :: x, y(2), z(3, 4)
+  |                            ^^^^ S261
+5 |   ! these are ok
+6 |   real :: a, b(5), c(6, 7)
+  |
+  = help: Move variable declaration to separate statement
+
+ℹ Unsafe fix
+1 1 | program test
+2 2 |   implicit none (external, type)
+3 3 |   ! y and z are inconsistent with decl
+4   |-  real, dimension(1) :: x, y(2), z(3, 4)
+  4 |+  real, dimension(1) :: x,  z(3, 4)
+  5 |+  real, dimension(2) :: y
+5 6 |   ! these are ok
+6 7 |   real :: a, b(5), c(6, 7)
+7 8 |   real, dimension(1) :: alpha = [0], beta(2) = [1, 2] ! more complicated
+
+./resources/test/fixtures/style/S261.f90:4:34: S261 [*] Inconsistent specification of dimension
+  |
+2 |   implicit none (external, type)
+3 |   ! y and z are inconsistent with decl
+4 |   real, dimension(1) :: x, y(2), z(3, 4)
+  |                                  ^^^^^^^ S261
+5 |   ! these are ok
+6 |   real :: a, b(5), c(6, 7)
+  |
+  = help: Move variable declaration to separate statement
+
+ℹ Unsafe fix
+1 1 | program test
+2 2 |   implicit none (external, type)
+3 3 |   ! y and z are inconsistent with decl
+4   |-  real, dimension(1) :: x, y(2), z(3, 4)
+  4 |+  real, dimension(1) :: x, y(2)
+  5 |+  real, dimension(3, 4) :: z
+5 6 |   ! these are ok
+6 7 |   real :: a, b(5), c(6, 7)
+7 8 |   real, dimension(1) :: alpha = [0], beta(2) = [1, 2] ! more complicated
+
+./resources/test/fixtures/style/S261.f90:7:38: S261 [*] Inconsistent specification of dimension
+  |
+5 |   ! these are ok
+6 |   real :: a, b(5), c(6, 7)
+7 |   real, dimension(1) :: alpha = [0], beta(2) = [1, 2] ! more complicated
+  |                                      ^^^^^^^^^^^^^^^^ S261
+8 | end program test
+  |
+  = help: Move variable declaration to separate statement
+
+ℹ Unsafe fix
+4 4 |   real, dimension(1) :: x, y(2), z(3, 4)
+5 5 |   ! these are ok
+6 6 |   real :: a, b(5), c(6, 7)
+7   |-  real, dimension(1) :: alpha = [0], beta(2) = [1, 2] ! more complicated
+  7 |+  real, dimension(1) :: alpha = [0]
+  8 |+  real, dimension(2) :: beta = [1, 2] ! more complicated
+8 9 | end program test

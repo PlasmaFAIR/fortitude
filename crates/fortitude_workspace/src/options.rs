@@ -15,7 +15,8 @@ use fortitude_linter::{
         correctness::exit_labels,
         portability::{self, invalid_tab},
         style::{
-            inconsistent_dimension::{self, settings::PreferAttribute}, keywords,
+            inconsistent_dimension::{self, settings::PreferAttribute},
+            keywords,
             strings::{self, settings::Quote},
         },
     },
