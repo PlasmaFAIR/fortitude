@@ -56,7 +56,9 @@ impl TryFrom<&lsp_types::PositionEncodingKind> for PositionEncoding {
 }
 
 /// A unique document ID, derived from a URL passed as part of an LSP request.
-/// This document ID can point to either be a standalone Python file, a full notebook, or a cell within a notebook.
+/// This document ID can currently only point to a pure Fortran file (*.f90),
+/// but could be extended in the future to point to other document types, such
+/// as C-preprocessor files (*.F90, *.fpp) or notebooks.
 #[derive(Clone, Debug)]
 pub enum DocumentKey {
     Text(Url),

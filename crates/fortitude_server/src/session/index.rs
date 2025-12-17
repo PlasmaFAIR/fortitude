@@ -482,7 +482,9 @@ impl DocumentQuery {
     }
 
     /// Attempt to access the single inner text document selected by the query.
-    /// If this query is selecting an entire notebook document, this will return `None`.
+    /// Adapted from a Ruff function that would return `None` when selecting
+    /// entire notebook documents. May be extended in the future to support
+    /// similar funcitonality here.
     pub(crate) fn as_single_document(&self) -> &TextDocument {
         match self {
             Self::Text { document, .. } => document,

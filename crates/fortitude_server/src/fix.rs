@@ -11,8 +11,8 @@ use crate::{
 use fortitude_linter::FixerResult;
 use ruff_source_file::{LineIndex, SourceFileBuilder};
 
-/// A simultaneous fix made across a single text document or among an arbitrary
-/// number of notebook cells.
+/// A simultaneous fix made across a single text document. In future, this could
+/// also be used to support fixes across an arbitrary number of notebook cells.
 pub(crate) type Fixes = FxHashMap<lsp_types::Url, Vec<lsp_types::TextEdit>>;
 
 pub(crate) fn fix_all(query: &DocumentQuery, encoding: PositionEncoding) -> crate::Result<Fixes> {
