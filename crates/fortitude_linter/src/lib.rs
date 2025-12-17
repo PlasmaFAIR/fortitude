@@ -33,6 +33,7 @@ use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
 use rules::style::file_extensions::NonStandardFileExtension;
+use rules::style::inconsistent_dimension::check_inconsistent_dimension_rules;
 use rules::style::line_length::LineTooLong;
 use rules::style::useless_return::check_superfluous_returns;
 use rules::style::whitespace::{MissingNewlineAtEndOfFile, TrailingWhitespace};
@@ -243,7 +244,23 @@ pub(crate) fn check_path(
         }
 
         if BEGIN_SCOPE_NODES.contains(&node.kind()) {
-            symbol_table.push_table(SymbolTable::new(&node, file.source_text()));
+            let new_table = SymbolTable::new(&node, file.source_text());
+
+            // Run rules over variable declarations without needing to reparse
+            // them into types
+            if rules.any_enabled(&[
+                Rule::InconsistentArrayDeclaration,
+                Rule::MixedScalarArrayDeclaration,
+                Rule::BadArrayDeclaration,
+            ]) {
+                for decl_line in new_table.iter_decl_lines() {
+                    violations.extend(check_inconsistent_dimension_rules(
+                        settings, decl_line, file,
+                    ))
+                }
+            }
+
+            symbol_table.push_table(new_table);
         }
 
         if rules.any_enabled(&[

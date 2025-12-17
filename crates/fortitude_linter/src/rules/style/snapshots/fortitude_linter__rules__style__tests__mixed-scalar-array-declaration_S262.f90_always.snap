@@ -1,0 +1,48 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S262.f90:6:14: S262 [*] Mixed declaration of scalar(s) and array
+  |
+4 |   real, dimension(1) :: x, y(2), z(3, 4)
+5 |   ! these are bad
+6 |   real :: a, b(5), c, d(2) = [1, 2]
+  |              ^^^^ S262
+7 |   ! shouldn't complain if all arrays
+8 |   real :: e(2), f(2)
+  |
+  = help: Move variable declaration to separate statement
+
+ℹ Unsafe fix
+3 3 |   ! these are ok
+4 4 |   real, dimension(1) :: x, y(2), z(3, 4)
+5 5 |   ! these are bad
+6   |-  real :: a, b(5), c, d(2) = [1, 2]
+  6 |+  real :: a,  c, d(2) = [1, 2]
+  7 |+  real, dimension(5) :: b
+7 8 |   ! shouldn't complain if all arrays
+8 9 |   real :: e(2), f(2)
+9 10 | end program test
+
+./resources/test/fixtures/style/S262.f90:6:23: S262 [*] Mixed declaration of scalar(s) and array
+  |
+4 |   real, dimension(1) :: x, y(2), z(3, 4)
+5 |   ! these are bad
+6 |   real :: a, b(5), c, d(2) = [1, 2]
+  |                       ^^^^^^^^^^^^^ S262
+7 |   ! shouldn't complain if all arrays
+8 |   real :: e(2), f(2)
+  |
+  = help: Move variable declaration to separate statement
+
+ℹ Unsafe fix
+3 3 |   ! these are ok
+4 4 |   real, dimension(1) :: x, y(2), z(3, 4)
+5 5 |   ! these are bad
+6   |-  real :: a, b(5), c, d(2) = [1, 2]
+  6 |+  real :: a, b(5), c
+  7 |+  real, dimension(2) :: d = [1, 2]
+7 8 |   ! shouldn't complain if all arrays
+8 9 |   real :: e(2), f(2)
+9 10 | end program test

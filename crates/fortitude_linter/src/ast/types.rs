@@ -54,8 +54,19 @@ impl<'a> NameDecl<'a> {
         }
     }
 
+    /// Variable name
     pub fn name(&self) -> &str {
         self.name.as_str()
+    }
+
+    /// Get size node, if there is one
+    pub fn size(&'a self) -> Option<Node<'a>> {
+        get_size_node_of_declarator(&self.node)
+    }
+
+    /// Get initialiser node, if there is one
+    pub fn init(&'a self) -> Option<Node<'a>> {
+        get_init_node_of_declarator(&self.node)
     }
 }
 
@@ -394,23 +405,33 @@ pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
         "sized_declarator" => node
             .named_child(0)
             .expect("sized_declarator should have named child"),
-        "coarray_declarator" => {
-            let child = node
+        "coarray_declarator" => get_name_node_of_declarator(
+            &node
                 .named_child(0)
-                .expect("coarray_declarator should have named child");
-            match child.kind() {
-                "identifier" => child,
-                "sized_declarator" => child
-                    .named_child(0)
-                    .expect("sized_declarator should have named child"),
-                _ => unreachable!("unexpected node type in coarray_declarator (found: {child:?})"),
-            }
+                .expect("coarray_declarator should have named child"),
+        ),
+        "init_declarator" | "pointer_init_declarator" | "data_declarator" => {
+            get_name_node_of_declarator(
+                &node
+                    .child_by_field_name("left")
+                    .expect("init/pointer_init/data_declarator should have left-hand side"),
+            )
         }
-        "init_declarator" | "pointer_init_declarator" | "data_declarator" => node
-            .child_by_field_name("left")
-            .expect("init/pointer_init/data_declarator should have left-hand side"),
         _ => unreachable!("unexpected node type in declarator ({node:?})"),
     }
+}
+
+/// Returns the tree-sitter node corresponding to the declared size of the
+/// declarator node, if there is one
+pub fn get_size_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
+    node.named_descendants()
+        .find(|child| child.kind() == "size")
+}
+
+/// Returns the tree-sitter node corresponding to the initialiser of the
+/// declarator node, if there is one
+pub fn get_init_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
+    node.child_by_field_name("right")
 }
 
 /// A single Fortran variable

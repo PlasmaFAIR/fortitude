@@ -81,6 +81,11 @@ impl<'a> SymbolTable<'a> {
             None => None,
         }
     }
+
+    /// Iterator over the variable declaration lines
+    pub fn iter_decl_lines(&self) -> impl Iterator<Item = &VariableDeclaration<'a>> {
+        self.decl_lines.iter()
+    }
 }
 
 /// A stack of [`SymbolTable`]

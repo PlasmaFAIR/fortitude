@@ -1,0 +1,88 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S263.f90:4:11: S263 [*] Bad declaration of array
+  |
+2 |   implicit none (external, type)
+3 |   real, dimension(2) :: x, y = [4, 2], z(3)
+4 |   real :: a(1), b(2) = [4, 2], c(3, 4)
+  |           ^^^^ S263
+5 |   integer, dimension(2), parameter :: p = [1, 2]
+6 |   integer, parameter :: q(2) = [1, 2]
+  |
+  = help: Add `dimension` attribute to declaration
+
+ℹ Unsafe fix
+1 1 | program test
+2 2 |   implicit none (external, type)
+3 3 |   real, dimension(2) :: x, y = [4, 2], z(3)
+4   |-  real :: a(1), b(2) = [4, 2], c(3, 4)
+  4 |+  real ::  b(2) = [4, 2], c(3, 4)
+  5 |+  real, dimension(1) :: a
+5 6 |   integer, dimension(2), parameter :: p = [1, 2]
+6 7 |   integer, parameter :: q(2) = [1, 2]
+7 8 | end program test
+
+./resources/test/fixtures/style/S263.f90:4:17: S263 [*] Bad declaration of array
+  |
+2 |   implicit none (external, type)
+3 |   real, dimension(2) :: x, y = [4, 2], z(3)
+4 |   real :: a(1), b(2) = [4, 2], c(3, 4)
+  |                 ^^^^^^^^^^^^^ S263
+5 |   integer, dimension(2), parameter :: p = [1, 2]
+6 |   integer, parameter :: q(2) = [1, 2]
+  |
+  = help: Add `dimension` attribute to declaration
+
+ℹ Unsafe fix
+1 1 | program test
+2 2 |   implicit none (external, type)
+3 3 |   real, dimension(2) :: x, y = [4, 2], z(3)
+4   |-  real :: a(1), b(2) = [4, 2], c(3, 4)
+  4 |+  real :: a(1),  c(3, 4)
+  5 |+  real, dimension(2) :: b = [4, 2]
+5 6 |   integer, dimension(2), parameter :: p = [1, 2]
+6 7 |   integer, parameter :: q(2) = [1, 2]
+7 8 | end program test
+
+./resources/test/fixtures/style/S263.f90:4:32: S263 [*] Bad declaration of array
+  |
+2 |   implicit none (external, type)
+3 |   real, dimension(2) :: x, y = [4, 2], z(3)
+4 |   real :: a(1), b(2) = [4, 2], c(3, 4)
+  |                                ^^^^^^^ S263
+5 |   integer, dimension(2), parameter :: p = [1, 2]
+6 |   integer, parameter :: q(2) = [1, 2]
+  |
+  = help: Add `dimension` attribute to declaration
+
+ℹ Unsafe fix
+1 1 | program test
+2 2 |   implicit none (external, type)
+3 3 |   real, dimension(2) :: x, y = [4, 2], z(3)
+4   |-  real :: a(1), b(2) = [4, 2], c(3, 4)
+  4 |+  real :: a(1), b(2) = [4, 2]
+  5 |+  real, dimension(3, 4) :: c
+5 6 |   integer, dimension(2), parameter :: p = [1, 2]
+6 7 |   integer, parameter :: q(2) = [1, 2]
+7 8 | end program test
+
+./resources/test/fixtures/style/S263.f90:6:25: S263 [*] Bad declaration of array
+  |
+4 |   real :: a(1), b(2) = [4, 2], c(3, 4)
+5 |   integer, dimension(2), parameter :: p = [1, 2]
+6 |   integer, parameter :: q(2) = [1, 2]
+  |                         ^^^^^^^^^^^^^ S263
+7 | end program test
+  |
+  = help: Add `dimension` attribute to declaration
+
+ℹ Unsafe fix
+3 3 |   real, dimension(2) :: x, y = [4, 2], z(3)
+4 4 |   real :: a(1), b(2) = [4, 2], c(3, 4)
+5 5 |   integer, dimension(2), parameter :: p = [1, 2]
+6   |-  integer, parameter :: q(2) = [1, 2]
+  6 |+  integer, parameter, dimension(2) :: q = [1, 2]
+7 7 | end program test
