@@ -23,6 +23,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
+    use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
     use crate::rules::style::{inconsistent_dimension, keywords, strings};
     use crate::settings::CheckSettings;
     use crate::test::test_path;
@@ -139,9 +140,11 @@ mod tests {
     // #[test_case(Rule::InconsistentArrayDeclaration, Path::new("S261.f90"), false)]
     // #[test_case(Rule::MixedScalarArrayDeclaration, Path::new("S262.f90"), true)]
     // #[test_case(Rule::MixedScalarArrayDeclaration, Path::new("S262.f90"), false)]
-    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), true)]
-    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), false)]
-    fn inconsistent_dimensions(rule_code: Rule, path: &Path, prefer_attribute: bool) -> Result<()> {
+    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), PreferAttribute::Always)]
+    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), PreferAttribute::Never)]
+    // This one should be a no-op
+    #[test_case(Rule::BadArrayDeclaration, Path::new("S263.f90"), PreferAttribute::Keep)]
+    fn inconsistent_dimensions(rule_code: Rule, path: &Path, prefer_attribute: PreferAttribute) -> Result<()> {
         let snapshot = format!(
             "{}_{}_{}",
             rule_code.as_ref(),

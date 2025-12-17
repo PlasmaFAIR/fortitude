@@ -11,6 +11,7 @@ use itertools::Itertools;
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
+use settings::PreferAttribute;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -192,6 +193,13 @@ fn check_mixed_scalar_array(
 /// The two forms are exactly equivalent, but some projects prefer to only use
 /// form over the other for consistency.
 ///
+/// !!! note
+///     This rule can feel quite pedantic, and so as well as enabling it, you
+///     must also set `check.inconsistent-dimensions.prefer-attribute` to either
+///     `"always"` or `"never"` to require the `dimension` attribute or to
+///     remove it, respectively. The default value of `"keep"` effectively turns
+///     this rule off.
+///
 /// ## Options
 /// - `check.inconsistent-dimensions.prefer-attribute`
 #[derive(ViolationMetadata)]
@@ -359,12 +367,19 @@ pub fn check_inconsistent_dimension_rules(
         }
     }
     if rules.enabled(Rule::BadArrayDeclaration) {
-        if prefer_attribute {
-            if let Some(violation) = check_bad_array_decl_prefer_attribute(decl_line, src) {
-                violations.extend(violation);
+        match prefer_attribute {
+            PreferAttribute::Always => {
+                if let Some(violation) = check_bad_array_decl_prefer_attribute(decl_line, src) {
+                    violations.extend(violation);
+                }
             }
-        } else if let Some(violation) = check_bad_array_decl_prefer_no_attribute(decl_line, src) {
-            violations.extend(violation);
+            PreferAttribute::Never => {
+                if let Some(violation) = check_bad_array_decl_prefer_no_attribute(decl_line, src) {
+                    violations.extend(violation);
+                }
+            }
+            // Do nothing!
+            PreferAttribute::Keep => (),
         }
     }
     violations
@@ -373,11 +388,37 @@ pub fn check_inconsistent_dimension_rules(
 pub mod settings {
     use crate::display_settings;
     use ruff_macros::CacheKey;
+    use serde::{Deserialize, Serialize};
     use std::fmt::Display;
+    use strum_macros::EnumIs;
+
+    #[derive(
+        CacheKey,
+        Clone,
+        Copy,
+        Debug,
+        Default,
+        Deserialize,
+        EnumIs,
+        Eq,
+        Hash,
+        PartialEq,
+        Serialize,
+        clap::ValueEnum,
+        strum_macros::Display,
+    )]
+    #[serde(rename_all = "lowercase")]
+    #[strum(serialize_all = "lowercase")]
+    pub enum PreferAttribute {
+        #[default]
+        Keep,
+        Always,
+        Never,
+    }
 
     #[derive(Debug, Clone, Default, CacheKey)]
     pub struct Settings {
-        pub prefer_attribute: bool,
+        pub prefer_attribute: PreferAttribute,
     }
 
     impl Display for Settings {

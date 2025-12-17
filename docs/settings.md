@@ -684,11 +684,13 @@ Options for `inconsistent-dimension` set of rules
 <span id="prefer-attribute"></span>
 
 Prefer declaring arrays using the `dimension` attribute rather than an
-inline shape, `foo(N, M)`
+inline shape, `foo(N, M)` or vice-versa.
 
-**Default value**: `false`
+Default behaviour is to keep the current method.
 
-**Type**: `bool`
+**Default value**: `keep`
+
+**Type**: `"keep" | "always" | "never"`
 
 **Example usage**:
 
@@ -696,13 +698,13 @@ inline shape, `foo(N, M)`
 
     ```toml
     [extra.fortitude.check.inconsistent-dimensions]
-    prefer-attribute = true
+    prefer-attribute = "always"
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.inconsistent-dimensions]
-    prefer-attribute = true
+    prefer-attribute = "always"
     ```
 
 ---

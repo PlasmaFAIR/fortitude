@@ -15,7 +15,7 @@ use fortitude_linter::{
         correctness::exit_labels,
         portability::{self, invalid_tab},
         style::{
-            inconsistent_dimension, keywords,
+            inconsistent_dimension::{self, settings::PreferAttribute}, keywords,
             strings::{self, settings::Quote},
         },
     },
@@ -493,13 +493,15 @@ impl InvalidTabOptions {
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct InconsistentDimensionOptions {
     /// Prefer declaring arrays using the `dimension` attribute rather than an
-    /// inline shape, `foo(N, M)`
+    /// inline shape, `foo(N, M)` or vice-versa.
+    ///
+    /// Default behaviour is to keep the current method.
     #[option(
-        default = "false",
-        value_type = "bool",
-        example = "prefer-attribute = true"
+        default = "keep",
+        value_type = r#""keep" | "always" | "never""#,
+        example = r#"prefer-attribute = "always""#
     )]
-    pub prefer_attribute: Option<bool>,
+    pub prefer_attribute: Option<PreferAttribute>,
 }
 
 impl InconsistentDimensionOptions {
