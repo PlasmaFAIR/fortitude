@@ -168,9 +168,7 @@ impl Server {
                                     kind: None,
                                 },
                                 FileSystemWatcher {
-                                    glob_pattern: types::GlobPattern::String(
-                                        "**/pyproject.toml".into(),
-                                    ),
+                                    glob_pattern: types::GlobPattern::String("**/fpm.toml".into()),
                                     kind: None,
                                 },
                             ],

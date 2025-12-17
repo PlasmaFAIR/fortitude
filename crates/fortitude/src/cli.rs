@@ -377,7 +377,7 @@ pub struct ConfigArguments {
     pub(crate) isolated: bool,
     /// The logging level to be used, derived from command-line arguments passed
     pub(crate) log_level: LogLevel,
-    /// Path to a pyproject.toml or ruff.toml configuration file (etc.).
+    /// Path to a fpm.toml or fortitude.toml configuration file (etc.).
     /// Either 0 or 1 configuration file paths may be provided on the command line.
     config_file: Option<PathBuf>,
     /// Overrides provided via dedicated flags such as `--line-length` etc.
