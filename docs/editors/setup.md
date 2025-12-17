@@ -13,12 +13,7 @@ list and would like a setup guide, please open an issue.
 
 !!! warning
 
-    The VS Code extension is not yet published!
-
-Install the Fortitude extension from the [VS Code
-Marketplace](https://marketplace.visualstudio.com/items?itemName=charliermarsh.fortitude). It is
-recommended to have the Fortitude extension version `2024.32.0` or later to get the best experience with
-the Fortitude Language Server.
+    The VS Code extension is experimental and not yet published!
 
 For more documentation on the Fortitude extension, refer to the
 [README](https://github.com/PlasmaFAIR/fortitude-vscode/blob/main/README.md) of the extension repository.
