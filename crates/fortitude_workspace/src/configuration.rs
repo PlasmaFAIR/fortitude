@@ -427,6 +427,9 @@ impl Configuration {
             portability: self.portability.or(config.portability),
             invalid_tab: self.invalid_tab.or(config.invalid_tab),
             target_std: self.target_std.or(config.target_std),
+            inconsistent_dimension: self
+                .inconsistent_dimension
+                .or(config.inconsistent_dimension),
         }
     }
 }
