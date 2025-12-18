@@ -20,7 +20,6 @@ use fortitude_linter::{ast_entrypoint_map, fs, warn_user_once_by_id, warn_user_o
 
 use anyhow::{Context, Result, anyhow};
 use itertools::Itertools;
-use log::warn;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 use std::collections::BTreeSet;

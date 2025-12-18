@@ -1,6 +1,6 @@
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
-use crate::{AstRule, FromAstNode, some_vec};
+use crate::{AstRule, FromAstNode};
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
