@@ -49,7 +49,6 @@ use anyhow::{Context, anyhow};
 use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
 use itertools::Itertools;
-use log::warn;
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::SourceFile;
 use rustc_hash::FxHashMap;
