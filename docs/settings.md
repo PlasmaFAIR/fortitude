@@ -137,15 +137,15 @@ specified by [`select`](#check_select).
 
     ```toml
     [extra.fortitude.check]
-    # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
-    extend-select = ["T031", "R"]
+    # On top of the current `select` rules, enable missing-intent (`C061`) and portability rules (`PORT`).
+    extend-select = ["C061", "PORT"]
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
-    # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
-    extend-select = ["T031", "R"]
+    # On top of the current `select` rules, enable missing-intent (`C061`) and portability rules (`PORT`).
+    extend-select = ["C061", "PORT"]
     ```
 
 ---
@@ -305,8 +305,8 @@ own settings.
 <span id="ignore"></span>
 
 A list of rule codes or prefixes to ignore. Prefixes can specify exact
-rules (like `T003` or `superfluous-implicit-none`), entire categories
-(like `T` or `typing`), or anything in between.
+rules (like `S201` or `superfluous-implicit-none`), entire categories
+(like `C` or `correctness`), or anything in between.
 
 When breaking ties between enabled and disabled rules (via `select` and
 `ignore`, respectively), more specific prefixes override less
@@ -413,21 +413,21 @@ the file pattern.
 
     ```toml
     [extra.fortitude.check.per-file-ignores]
-    # Ignore `T003` (superfluous implicit none) in all `test.f90` files, and in `path/to/file.f90`.
-    "test.f90" = ["T003"]
-    "path/to/file.f90" = ["T003"]
-    # Ignore `P` rules everywhere except for the `src/` directory.
-    "!src/**.f90" = ["P"]
+    # Ignore `S201` (superfluous implicit none) in all `test.f90` files, and in `path/to/file.f90`.
+    "test.f90" = ["S201"]
+    "path/to/file.f90" = ["S201"]
+    # Ignore `S` rules everywhere except for the `src/` directory.
+    "!src/**.f90" = ["S"]
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.per-file-ignores]
-    # Ignore `T003` (superfluous implicit none) in all `test.f90` files, and in `path/to/file.f90`.
-    "test.f90" = ["T003"]
-    "path/to/file.f90" = ["T003"]
-    # Ignore `P` rules everywhere except for the `src/` directory.
-    "!src/**.f90" = ["P"]
+    # Ignore `S201` (superfluous implicit none) in all `test.f90` files, and in `path/to/file.f90`.
+    "test.f90" = ["S201"]
+    "path/to/file.f90" = ["S201"]
+    # Ignore `S` rules everywhere except for the `src/` directory.
+    "!src/**.f90" = ["S"]
     ```
 
 ---
@@ -522,14 +522,17 @@ Enabled by default.
 <span id="select"></span>
 
 A list of rule codes or prefixes to enable. Prefixes can specify exact
-rules (like `T003` or `superfluous-implicit-none`), entire categories
-(like `T` or `typing`), or anything in between.
+rules (like `S201` or `superfluous-implicit-none`), entire categories
+(like `C` or `correctness`), or anything in between.
+
+By default, a curated set of rules across all categories is enabled; see
+the documentation for details.
 
 When breaking ties between enabled and disabled rules (via `select` and
 `ignore`, respectively), more specific prefixes override less
 specific prefixes.
 
-**Default value**: `["E", "F", "S", "T", "OB", "P", "M", "IO", "R", "B"]`
+**Default value**: `[]`
 
 **Type**: `list[RuleSelector]`
 
