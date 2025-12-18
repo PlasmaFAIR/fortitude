@@ -20,26 +20,38 @@ license = "MIT"
 fortitude = { path = "crates/fortitude" }
 fortitude_linter = { path = "crates/fortitude_linter" }
 fortitude_macros = { path = "crates/fortitude_macros" }
+fortitude_server = { path = "crates/fortitude_server" }
 fortitude_workspace = { path = "crates/fortitude_workspace" }
 
 ruff_annotate_snippets = { git = "https://github.com/astral-sh/ruff.git", tag = "0.12.9", version = "0.1.0" }
 anyhow = "1.0.79"
+assert_cmd = "2.0.16"
 bitflags = "2.6.0"
 chrono = { version = "0.4.35", default-features = false, features = ["clock"] }
 clap = { version = "4.4.16", features = ["derive", "string", "env"] }
 clap_complete_command = { version = "0.6.0" }
 colored = { version = "2.1.0" }
+crossbeam = { version = "0.8.4" }
 etcetera = { version = "0.10.0" }
 fern = "0.7.1"
 globset = "0.4.15"
 ignore = "0.4.23"
 indicatif = { version = "0.17.9", features = ["rayon", "improved_unicode"] }
 indexmap = { version = "2.6.0" }
+insta = { version = "1.41.1", features = ["filters", "json", "redactions"] }
+insta-cmd = "0.6.0"
 is-macro = "0.3.7"
 itertools = "0.12.0"
+jod-thread = { version = "0.1.2" }
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"
+libc = { version = "0.2.153" }
+libcst = { version = "1.8.4", default-features = false }
 log = "0.4.22"
+lsp-server = { version = "0.7.8" }
+lsp-types = { git = "https://github.com/astral-sh/lsp-types.git", rev = "3512a9f", features = [
+    "proposed",
+] }
 matchit = { version = "0.8.1" }
 pathdiff = { version = "0.2.1" }
 path-absolutize = { version = "3.1.1", features = [
@@ -47,6 +59,9 @@ path-absolutize = { version = "3.1.1", features = [
     "use_unix_paths_on_wasm",
 ]}
 path-slash = { version = "0.2.1" }
+predicates = "3.1.2"
+pretty_assertions = "1.4.1"
+regex = { version = "1.10.2" }
 ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }
 ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.9.6", version = "0.0.0" }
@@ -57,14 +72,23 @@ quick-junit = { version = "0.5.0" }
 rayon = "1.10.0"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { version = "1.0.113" }
+shellexpand = { version = "3.0.0" }
 similar = { version = "2.4.0", features = ["inline"] }
 similar-asserts = "1.6.0"
 strum = { version = "0.27.1", features = ["strum_macros"] }
 strum_macros = { version = "0.27.1" }
+tempfile = "3.13.0"
+test-case = "3.3.1"
 textwrap = { version = "0.16.0" }
 termimad = { version = "0.31.3" }
 terminal-light = { version = "1.8.0" }
 thiserror = { version = "1.0.58" }
+tracing = { version = "0.1.40" }
+tracing-log = { version = "0.2.0" }
+tracing-subscriber = { version = "0.3.18", default-features = false, features = [
+    "env-filter",
+    "fmt",
+] }
 tree-sitter = "~0.25.0"
 tree-sitter-cli = "~0.25.0"
 tree-sitter-fortran = { git = "https://github.com/stadelmanma/tree-sitter-fortran.git", rev = "95b728f" }

@@ -1,0 +1,58 @@
+{
+    "settings": [
+        {
+            "cwd": "/Users/test/projects/pandas",
+            "workspace": "file:///Users/test/projects/pandas",
+            "path": [],
+            "interpreter": [
+                "/Users/test/projects/pandas/.venv/bin/python"
+            ],
+            "importStrategy": "fromEnvironment",
+            "codeAction": {
+                "fixViolation": {
+                    "enable": false
+                }
+            },
+            "enable": true,
+            "fixAll": true
+        },
+        {
+            "cwd": "/Users/test/projects/scipy",
+            "workspace": "file:///Users/test/projects/scipy",
+            "path": [],
+            "interpreter": [
+                "/Users/test/projects/scipy/.venv/bin/python"
+            ],
+            "importStrategy": "fromEnvironment",
+            "codeAction": {
+                "fixViolation": {
+                    "enable": false
+                }
+            },
+            "check": {
+                "preview": false
+            },
+            "enable": true,
+            "fixAll": true
+        }
+    ],
+    "globalSettings": {
+        "cwd": "/",
+        "workspace": "/",
+        "path": [],
+        "ignoreStandardLibrary": true,
+        "interpreter": [],
+        "importStrategy": "fromEnvironment",
+        "codeAction": {
+            "fixViolation": {
+                "enable": false
+            }
+        },
+        "check": {
+            "preview": true,
+            "select": ["C", "OB"]
+        },
+        "enable": true,
+        "fixAll": false
+    }
+}

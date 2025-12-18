@@ -55,7 +55,7 @@ impl fmt::Display for Settings {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CheckSettings {
     pub project_root: PathBuf,
 
