@@ -364,10 +364,11 @@ To make a new release, the following steps must be completed in order:
 
     - Generate a temporary virtual environment with `rooster`
     - Generate a changelog entry in `CHANGELOG.md`
+    - List contributors
     - Update versions in `pyproject.toml`
 
 1. `rooster` currently doesn't update `CITATION.cff` or `cargo.toml`, so this needs to be
-   done manually for now. It also doesn't list contributors.
+   done manually for now.
 
 1. Some sections of the docs also directly reference the version number and
    need to be manually updated. Use `grep <current_version> docs -r` to find
