@@ -7,8 +7,8 @@ This section provides a detailed overview of the features provided by the Fortit
 Provide diagnostics for your Fortran code in real-time.
 
 <video autoplay loop muted width="1000">
-    <source src="/assets/helix_recording.webm" type="video/webm">
-    Editing a file in Helix. Download the <a href="/assets/helix_recording.webm">webm</a>.
+    <source src="../../assets/helix_recording.webm" type="video/webm">
+    Editing a file in Helix. Download the <a href="../../assets/helix_recording.webm">webm</a>.
 </video>
 
 ## Dynamic Configuration
@@ -21,8 +21,8 @@ If an editor does not support file watching, the server will not be able to dete
 changes to the configuration file and thus will not refresh the diagnostics.
 
 <video autoplay loop muted width="1000">
-    <source src="/assets/dynamic_config_vscode.webm" type="video/webm">
-    Dynamically reloading the config in VS Code. Download the <a href="/assets/dynamic_config_vscode.webm">webm</a>.
+    <source src="../../assets/dynamic_config_vscode.webm" type="video/webm">
+    Dynamically reloading the config in VS Code. Download the <a href="../../assets/dynamic_config_vscode.webm">webm</a>.
 </video>
 
 ## Code Actions
@@ -35,8 +35,8 @@ Server provides the following code actions:
 - Apply all quick fixes available in the document.
 
 <video autoplay loop muted width="1000">
-    <source src="/assets/helix_quickfix.webm" type="video/webm">
-    Applying a quick fix in Helix. Download the <a href="/assets/helix_quickfix.webm">webm</a>.
+    <source src="../../assets/helix_quickfix.webm" type="video/webm">
+    Applying a quick fix in Helix. Download the <a href="../../assets/helix_quickfix.webm">webm</a>.
 </video>
 
 You can even run these actions on-save. For example, to fix all issues and organize imports on save
@@ -68,7 +68,7 @@ The server can provide the rule documentation when focusing over an `allow` code
 Focusing is usually hovering with a mouse, but can also be triggered with a shortcut.
 
 <img
-src="/assets/hover_vscode.png"
+src="../../assets/hover_vscode.png"
 alt="Hovering over an allow code in VS Code"
 width="1000"
 />

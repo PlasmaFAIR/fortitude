@@ -33,7 +33,7 @@ pub struct Options {
     ///
     /// For more information on the glob syntax, refer to the [`globset` documentation](https://docs.rs/globset/latest/globset/#syntax).
     ///
-    /// !!! info "_Introduced in 0.7.6_"
+    /// !!! info "_Introduced in 0.8.0_"
     #[option(
         default = r#"["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23"]"#,
         value_type = "list[str]",
@@ -67,7 +67,7 @@ pub struct CheckOptions {
         "#
     )]
     #[deprecated(
-        since = "0.7.6",
+        since = "0.8.0",
         note = "The `files` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead."
     )]
     pub files: Option<Vec<PathBuf>>,
@@ -158,8 +158,8 @@ pub struct CheckOptions {
 
     // Rule selection
     /// A list of rule codes or prefixes to ignore. Prefixes can specify exact
-    /// rules (like `T003` or `superfluous-implicit-none`), entire categories
-    /// (like `T` or `typing`), or anything in between.
+    /// rules (like `S201` or `superfluous-implicit-none`), entire categories
+    /// (like `C` or `correctness`), or anything in between.
     ///
     /// When breaking ties between enabled and disabled rules (via `select` and
     /// `ignore`, respectively), more specific prefixes override less
@@ -171,16 +171,18 @@ pub struct CheckOptions {
     )]
     pub ignore: Option<Vec<RuleSelector>>,
 
-    // TODO: fix default and example when default rules decided!
     /// A list of rule codes or prefixes to enable. Prefixes can specify exact
-    /// rules (like `T003` or `superfluous-implicit-none`), entire categories
-    /// (like `T` or `typing`), or anything in between.
+    /// rules (like `S201` or `superfluous-implicit-none`), entire categories
+    /// (like `C` or `correctness`), or anything in between.
+    ///
+    /// By default, a curated set of rules across all categories is enabled; see
+    /// the documentation for details.
     ///
     /// When breaking ties between enabled and disabled rules (via `select` and
     /// `ignore`, respectively), more specific prefixes override less
     /// specific prefixes.
     #[option(
-        default = r#"["E", "F", "S", "T", "OB", "P", "M", "IO", "R", "B"]"#,
+        default = "[]",
         value_type = "list[RuleSelector]",
         example = r#"
             # Only check errors and obsolescent features
@@ -189,15 +191,14 @@ pub struct CheckOptions {
     )]
     pub select: Option<Vec<RuleSelector>>,
 
-    // TODO: fix default and example when default rules decided!
     /// A list of rule codes or prefixes to enable, in addition to those
     /// specified by [`select`](#check_select).
     #[option(
         default = "[]",
         value_type = "list[RuleSelector]",
         example = r#"
-            # On top of the current `select` rules, enable missing-intent (`T031`) and readability rules (`R`).
-            extend-select = ["T031", "R"]
+            # On top of the current `select` rules, enable missing-intent (`C061`) and portability rules (`PORT`).
+            extend-select = ["C061", "PORT"]
         "#
     )]
     pub extend_select: Option<Vec<RuleSelector>>,
@@ -212,7 +213,7 @@ pub struct CheckOptions {
         "#
     )]
     #[deprecated(
-        since = "0.7.6",
+        since = "0.8.0",
         note = "The `file_extensions` option is now deprecated in favour of the top-level [`include`](#include). Please update your configuration to use the [`include`](#include) instead."
     )]
     pub file_extensions: Option<Vec<String>>,
@@ -320,11 +321,11 @@ pub struct CheckOptions {
         value_type = "dict[str, list[RuleSelector]]",
         scope = "per-file-ignores",
         example = r#"
-            # Ignore `T003` (superfluous implicit none) in all `test.f90` files, and in `path/to/file.f90`.
-            "test.f90" = ["T003"]
-            "path/to/file.f90" = ["T003"]
-            # Ignore `P` rules everywhere except for the `src/` directory.
-            "!src/**.f90" = ["P"]
+            # Ignore `S201` (superfluous implicit none) in all `test.f90` files, and in `path/to/file.f90`.
+            "test.f90" = ["S201"]
+            "path/to/file.f90" = ["S201"]
+            # Ignore `S` rules everywhere except for the `src/` directory.
+            "!src/**.f90" = ["S"]
         "#
     )]
     pub per_file_ignores: Option<FxHashMap<String, Vec<RuleSelector>>>,

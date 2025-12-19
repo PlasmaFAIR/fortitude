@@ -146,6 +146,15 @@ fortitude explain S
 fortitude explain obsolescent superfluous-implicit-none
 ```
 
+Use `--summary` to get a brief overview:
+
+```bash
+# Overview of all rules
+fortitude explain --summary
+# Overview of all style rules
+fortitude explain style --summary
+```
+
 To see further commands and optional arguments, try using `--help`:
 
 ```bash
@@ -154,9 +163,6 @@ fortitude check --help
 ```
 
 ### Fixes
-
-> [!NOTE]
-> Added in v0.6.0
 
 Fortitude can automatically fix some lint warnings, such as
 unnecessary `implicit none` statements, missing double-colons in
@@ -172,9 +178,6 @@ Number of errors: 2 (2 fixed, 0 remaining)
 Run `fortitude explain` to see which rules have fixes available.
 
 ### Preview
-
-> [!NOTE]
-> Added in v0.6.0
 
 Some fortitude rules are only available through an opt-in preview
 mode to give the community some time to evaluate them and provide
@@ -200,8 +203,6 @@ preview = true
 ```
 
 Run `fortitude explain` to see which rules are in preview mode.
-
-
 
 ## Configuration
 
@@ -235,6 +236,30 @@ rules on top of those in the configuration file.
 fortitude check --extend-select=OB
 ```
 
+A description of configuration options can be viewed using the `config`
+command:
+
+```bash
+# View all options under the 'check' heading
+fortitude config check
+# Get description of the 'extend-select' option
+fortitude config check.extend-select
+```
+
+## Editor Integration
+
+> [!NOTE]
+> Added in v0.8.0
+
+Fortitude can be integrated into text editors and IDEs that support the
+Language Server Protocol (LSP), providing real-time diagnostics and
+code actions for applying fixes as you work.
+
+Please see the [documentation](fortitude.readthedocs.io/en/stable/editors) for
+details on setting this up for your editor.
+
+A VSCode plugin is in development, and will be released shortly.
+
 ## pre-commit
 
 [Pre-commit](https://pre-commit.com/) hooks for Fortitude are available
@@ -246,11 +271,10 @@ See [table of rules](https://fortitude.readthedocs.io/en/stable/rules/) for a li
 
 ## Contributing
 
-Please feel free to add or suggest new rules or comment on the layout of the project
-while it's still at this early stage of development. See
-[`CONTRIBUTING.md`](CONTRIBUTING.md) for a guide on contributing to the project, and
-[`README.dev.md`](README.dev.md) for details on building the project from source,
-running tests, and linting/formatting the code. Please consult our [code of
+Please feel free to add or suggest new rules and features! See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for a guide on contributing to the project.
+This also includes instructions for building the project from source, running
+tests, and linting/formatting the code. Please consult our [code of
 conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ## License

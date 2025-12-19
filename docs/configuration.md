@@ -137,7 +137,7 @@ including `.f90`, `.F90`, `.f95`. You can change the default selection using the
     include = ["*.f90", "*.fpp"]
     ```
 
-!!! info "Introduced in Fortitude 0.7.6"
+!!! info "Introduced in Fortitude 0.8.0"
 
 ## Command-line interface
 
