@@ -1,6 +1,4 @@
 # include-statement (MOD031)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for any include statements
 

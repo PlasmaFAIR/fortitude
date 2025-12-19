@@ -1,6 +1,4 @@
 # magic-number-in-array-size (C031)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for use of literals when specifying array sizes
 

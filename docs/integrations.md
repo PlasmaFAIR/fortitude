@@ -9,7 +9,7 @@ Fortitude can be used as a [pre-commit](https://pre-commit.com/) hook via
 repos:
 - repo: https://github.com/PlasmaFAIR/fortitude-pre-commit
   # Fortitude version.
-  rev: v0.7.5
+  rev: v0.8.0
   hooks:
     - id: fortitude
 ```
@@ -20,7 +20,7 @@ To enable fixes, add the [`--fix`](settings.md#fix) argument:
 repos:
 - repo: https://github.com/PlasmaFAIR/fortitude-pre-commit
   # Fortitude version.
-  rev: v0.7.5
+  rev: v0.8.0
   hooks:
     - id: fortitude
       args: ["--fix"]
@@ -32,7 +32,7 @@ Other additional arguments are also accepted:
 repos:
 - repo: https://github.com/PlasmaFAIR/fortitude-pre-commit
   # Fortitude version.
-  rev: v0.7.5
+  rev: v0.8.0
   hooks:
     - id: fortitude
       args: ["--fix", "--preview", "--unsafe-fixes"]

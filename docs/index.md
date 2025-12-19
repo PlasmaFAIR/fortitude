@@ -12,7 +12,7 @@ Written in Rust :crab: and installable with Python :snake:.
 - :zap: Blazingly fast, up to hundreds of times faster than other open-source Fortran
   linters.
 - :wrench: Automatically fixes linter warnings.
-- :chart_with_upwards_trend: 50+ rules, with many more planned.
+- :chart_with_upwards_trend: Almost 100 rules, with many more planned.
 - :page_with_curl: Multiple output formats, including SARIF and GitHub/GitLab CI.
 - :handshake: Follows [community best
   practices](https://fortran-lang.org/learn/best_practices/).

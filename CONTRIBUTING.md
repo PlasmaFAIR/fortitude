@@ -360,16 +360,15 @@ To make a new release, the following steps must be completed in order:
 
 1. Install [`gh`](https://cli.github.com/) and login with `gh auth login`
 
-1. Run `./scripts/release.sh`; this command will:
+1. Run `./scripts/release.sh crates/fortitude --version x.y.z --changelog-file CHANGELOG.md`; this command will:
 
     - Generate a temporary virtual environment with `rooster`
     - Generate a changelog entry in `CHANGELOG.md`
-    - Update versions in `pyproject.toml` and `Cargo.toml`
-    - Update references to versions in the `README.md` and documentation
-    - Display contributors for the release
+    - List contributors
+    - Update versions in `pyproject.toml`
 
-1. `rooster` currently doesn't update `CITATION.cff`, so this needs to be done
-   manually for now
+1. `rooster` currently doesn't update `CITATION.cff` or `cargo.toml`, so this needs to be
+   done manually for now.
 
 1. Some sections of the docs also directly reference the version number and
    need to be manually updated. Use `grep <current_version> docs -r` to find
