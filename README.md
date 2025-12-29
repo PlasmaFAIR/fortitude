@@ -255,7 +255,7 @@ Fortitude can be integrated into text editors and IDEs that support the
 Language Server Protocol (LSP), providing real-time diagnostics and
 code actions for applying fixes as you work.
 
-Please see the [documentation](fortitude.readthedocs.io/en/stable/editors) for
+Please see the [documentation](https://fortitude.readthedocs.io/en/latest/editors/) for
 details on setting this up for your editor.
 
 A VSCode plugin is in development, and will be released shortly.
