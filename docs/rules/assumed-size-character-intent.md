@@ -2,11 +2,13 @@
 This rule is turned on by default.
 
 ## What does it do?
-Checks `character` dummy arguments have `intent(in)` only
+Checks `character` dummy arguments with an assumed-size length have
+`intent(in)` only.
 
 ## Why is this bad?
-Character dummy arguments with an assumed size should only have `intent(in)`, as
-this can cause data loss with `intent([in]out)`. For example:
+Character dummy arguments whose length is assumed size should only have
+`intent(in)`, as this can cause data loss with `intent([in]out)`. For
+example:
 
 ```f90
 program example
@@ -51,3 +53,11 @@ correct size to avoid data loss:
     text = "hello world!"
   end subroutine set_text
 ```
+
+## User derived type IO procedures
+The standard mandates assumed-size length with `intent(inout)` for the
+`iomsg` argument of user defined IO procedures for derived types, although
+it doesn't specify a minimum length. Unfortunately, Fortitude is currently
+unable to detect this use. You can use [`allow` (suppression)
+comments](https://fortitude.readthedocs.io/en/latest/linter/#error-suppression)
+to disable this rule for those uses only.
