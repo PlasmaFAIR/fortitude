@@ -758,7 +758,7 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S081 [*] unnecessary semicolon
+    [TEMP_FILE] S081 unnecessary semicolon
       |
     4 |   integer :: i
     5 |   integer :: j
@@ -795,10 +795,9 @@ end program foo
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option.
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST.
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST and all fixes.
     ",);
     Ok(())
 }
@@ -829,7 +828,7 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S081 [*] unnecessary semicolon
+    [TEMP_FILE] S081 unnecessary semicolon
       |
     4 |   integer :: i
     5 |   integer :: j
@@ -840,7 +839,7 @@ end program foo
       |
       = help: Remove this character
 
-    [TEMP_FILE] S081 [*] unnecessary semicolon
+    [TEMP_FILE] S081 unnecessary semicolon
       |
     6 |   i = 2;
     7 |   j = i ^ 2  ! This is a syntax error
@@ -857,9 +856,9 @@ end program foo
 
         fortitude explain X001,Y002,...
 
-    [*] 2 fixable with the `--fix` option.
 
     ----- stderr -----
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding all fixes. Some violations from the AST may be unreliable.
     ",);
     Ok(())
 }
@@ -891,7 +890,7 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S081 [*] unnecessary semicolon
+    [TEMP_FILE] S081 unnecessary semicolon
       |
     4 |   integer :: i
     5 |   integer :: j
@@ -902,7 +901,7 @@ end program foo
       |
       = help: Remove this character
 
-    [TEMP_FILE] S081 [*] unnecessary semicolon
+    [TEMP_FILE] S081 unnecessary semicolon
        |
      7 |   ! allow(syntax-error)
      8 |   j = i ^ 2  ! This is a syntax error
@@ -919,10 +918,9 @@ end program foo
 
         fortitude explain X001,Y002,...
 
-    [*] 2 fixable with the `--fix` option.
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST.
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST and all fixes.
     ",);
     Ok(())
 }
@@ -953,7 +951,7 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S081 [*] unnecessary semicolon
+    [TEMP_FILE] S081 unnecessary semicolon
       |
     6 |   i = 2
     7 |   j = i ^ 2  ! This is a syntax error
@@ -970,9 +968,9 @@ end program foo
 
         fortitude explain X001,Y002,...
 
-    [*] 1 fixable with the `--fix` option.
 
     ----- stderr -----
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding all fixes. Some violations from the AST may be unreliable.
     warning: Syntax errors detected in file: [TEMP_FILE] No fixes will be applied.
     ",);
     Ok(())
@@ -2316,6 +2314,7 @@ end program foo
 "#,
     )?;
 
+    apply_common_filters!();
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=C003", "--ignore=E001"])
                          .file(&test_file)
@@ -2329,6 +2328,7 @@ end program foo
 
 
     ----- stderr -----
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding all fixes. Some violations from the AST may be unreliable.
     ");
 
     Ok(())
