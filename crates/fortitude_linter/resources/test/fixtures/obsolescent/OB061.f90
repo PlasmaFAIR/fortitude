@@ -27,10 +27,6 @@ contains
     character(*, c_char) :: l
     character(len=*, kind=4) :: m
 
-    ! this should raise a syntax error and otherwise be ignored
-    ! allow(syntax-error)
-    character*MAX_LEN n
-
   end subroutine char_input
 
 end program cases

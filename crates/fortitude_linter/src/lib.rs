@@ -350,32 +350,50 @@ pub(crate) fn check_path(
         }
     }
 
-    // Check violations for any remaining syntax errors. If any are found, discard violations
-    // after it, as they may be false positives.
-    if rules.enabled(Rule::SyntaxError) && root.has_error() {
-        warn_user_once_by_message!(
-            "Syntax errors detected in file: {}. Discarding subsequent violations from the AST.",
-            path.to_string_lossy()
-        );
-        // Sort by byte-offset in the file
-        violations.sort_by_key(|diagnostic| diagnostic.range.start());
-        // Retain all violations up to the first syntax error, inclusive.
-        // Text and path rules can be safely retained.
-        let syntax_error_idx = violations
-            .iter()
-            .position(|diagnostic| diagnostic.kind.rule() == Rule::SyntaxError);
-        if let Some(syntax_error_idx) = syntax_error_idx {
-            violations = violations
-                .into_iter()
-                .enumerate()
-                .filter_map(|(idx, diagnostic)| {
-                    if idx <= syntax_error_idx || !diagnostic.kind.rule().is_ast_rule() {
-                        Some(diagnostic)
-                    } else {
-                        None
-                    }
-                })
-                .collect_vec();
+    // Handle syntax errors
+    if root.has_error() {
+        // If syntax error violations are present, we can (probably) trust AST
+        // violations up to the first syntax error. If we aren't tracking syntax
+        // errors, we report everything but warn that the results are unreliable.
+        // In either case, fixes should be considered too risky to apply.
+        if rules.enabled(Rule::SyntaxError) {
+            // Check violations for any remaining syntax errors. If any are found, discard violations
+            // after it, as they may be false positives.
+            warn_user_once_by_message!(
+                "Syntax errors detected in file: {}. Discarding subsequent violations from the AST and all fixes.",
+                path.to_string_lossy()
+            );
+            // Sort by byte-offset in the file
+            violations.sort_by_key(|diagnostic| diagnostic.range.start());
+            // Retain all violations up to the first syntax error, inclusive.
+            // Text and path rules can be safely retained.
+            let syntax_error_idx = violations
+                .iter()
+                .position(|diagnostic| diagnostic.kind.rule() == Rule::SyntaxError);
+            if let Some(syntax_error_idx) = syntax_error_idx {
+                violations = violations
+                    .into_iter()
+                    .enumerate()
+                    .filter_map(|(idx, diagnostic)| {
+                        if idx <= syntax_error_idx || !diagnostic.kind.rule().is_ast_rule() {
+                            Some(diagnostic)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect_vec();
+            }
+        } else {
+            // If syntax errors are present but the rule is disabled, just warn
+            // that false positives may be present.
+            warn_user_once_by_message!(
+                "Syntax errors detected in file: {}. Discarding all fixes. Some violations from the AST may be unreliable.",
+                path.to_string_lossy()
+            );
+        }
+        // Disable all fixes
+        for diagnostic in &mut violations {
+            diagnostic.fix = None;
         }
     }
 
