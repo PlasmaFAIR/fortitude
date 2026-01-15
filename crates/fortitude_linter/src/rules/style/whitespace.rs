@@ -151,7 +151,14 @@ impl AstRule for IncorrectSpaceBeforeComment {
         }
         if whitespace < 2 {
             let edit = Edit::insertion("  "[whitespace..].to_string(), comment_start);
-            return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
+            // Unwraps are fine here because we're guaranteed to be at least 2
+            // characters into the file, and `whitespace` is at most 1
+            let span_start = comment_start
+                .checked_sub(TextSize::try_from(whitespace).unwrap())
+                .unwrap();
+
+            let span = TextRange::new(span_start, comment_start);
+            return some_vec!(Diagnostic::new(Self {}, span).with_fix(Fix::safe_edit(edit)));
         }
         None
     }
