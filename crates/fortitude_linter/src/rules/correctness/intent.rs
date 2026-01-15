@@ -67,8 +67,8 @@ impl AstRule for MissingIntent {
                     symbol_table.get(param.to_text(src.source_text())?)
                 })
                 .filter(|param| {
-                    // Not allowed intent
-                    !param.type_().is_procedure()
+                    // Procedures are not allowed intent
+                    !(param.type_().is_procedure() || param.has_attribute(AttributeKind::External))
                 })
                 .filter(|param| {
                     // Intent only allowed on pointers after F2003

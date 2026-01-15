@@ -20,7 +20,8 @@ contains
     integer :: g
   end subroutine bar
 
-  subroutine baz(x)
+  subroutine baz(x, y)
     integer, value :: x  ! Permitted
+    integer, external :: y ! Must not have `intent`
   end subroutine baz
 end module mod_test
