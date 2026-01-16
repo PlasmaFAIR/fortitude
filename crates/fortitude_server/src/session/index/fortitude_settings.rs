@@ -10,7 +10,7 @@ use ignore::{WalkBuilder, WalkState};
 use fortitude_linter::Settings;
 use fortitude_linter::fs::{FilePattern, GlobPath};
 use fortitude_linter::settings::PreviewMode;
-use fortitude_workspace::configuration::{Configuration, ConfigurationTransformer, settings_toml};
+use fortitude_workspace::configuration::{find_user_settings_toml, settings_toml, Configuration, ConfigurationTransformer};
 use fortitude_workspace::resolver::match_exclusion;
 
 use crate::session::Client;
@@ -59,10 +59,30 @@ impl FortitudeSettings {
     ///
     /// In the absence of a valid configuration file, it gracefully falls back to
     /// editor-only settings.
-    pub(crate) fn fallback(editor_settings: &EditorSettings, root: &Path) -> FortitudeSettings {
-        let configuration = Configuration::default();
-        Self::with_editor_settings(editor_settings, root, configuration)
-            .expect("editor configuration should merge successfully with default configuration")
+    pub(crate) fn fallback(editor_settings: &EditorSettings, root: &Path) -> Self {
+        find_user_settings_toml()
+            .and_then(|user_settings| {
+                tracing::debug!(
+                    "Loading settings from user configuration file: `{}`",
+                    user_settings.display()
+                );
+                fortitude_workspace::resolver::resolve_root_settings(
+                    &user_settings,
+                    &EditorConfigurationTransformer(editor_settings, root),
+                    fortitude_workspace::resolver::ConfigurationOrigin::UserSettings,
+                )
+                .ok()
+                .map(|settings| Self {
+                    path: Some(user_settings),
+                    settings,
+                })
+            })
+            .unwrap_or_else(|| {
+                let configuration = Configuration::default();
+                Self::with_editor_settings(editor_settings, root, configuration).expect(
+                    "editor configuration should merge successfully with default configuration",
+                )
+            })
     }
 
     /// Constructs [`FortitudeSettings`] by merging the editor-defined settings with the
