@@ -1,6 +1,5 @@
 /// Defines rules that govern line length.
 use crate::settings::CheckSettings;
-use lazy_regex::regex_is_match;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
@@ -22,13 +21,39 @@ use ruff_text_size::{TextLen, TextRange, TextSize};
 /// difficult to squeeze lines into that width, especially when using large indents
 /// and multiple levels of indentation.
 ///
-/// Some lines that are longer than the maximum length may be acceptable, such as
-/// long strings or comments. This is to allow for long URLs or other text that cannot
-/// be reasonably split across multiple lines.
+/// In the interest of pragmatism, this rule makes a few exceptions when
+/// determining whether a line is overlong. Namely, it:
 ///
-/// Note that the Fortran standard states a maximum line length of 132 characters,
-/// and while some modern compilers will support longer lines, for portability it
-/// is recommended to stay beneath this limit.
+/// 1. Ignores lines that consist of a single "word" (that is, without any
+///    whitespace between its characters).
+/// 2. Ignores lines that end with a URL, as long as the URL starts before
+///    the line-length threshold.
+/// 3. Ignores SPDX license identifiers and copyright notices (for example, `!
+///    SPDX-License-Identifier: MIT`), which are machine-readable and should
+///    _not_ wrap over multiple lines.
+///
+/// Note that the Fortran standard states a maximum line length of 132
+/// characters[^1], and while most modern compilers will support longer lines[^2],
+/// for portability it is recommended to stay beneath this limit.
+///
+/// ## Example
+/// ```f90
+/// call my_long_subroutine(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10)
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// call my_long_subroutine(&
+///     param1, param2, param3, param4, param5, &
+///     param6, param7, param8, param9, param10 &
+/// )
+/// ```
+///
+/// ## Options
+/// - `check.line-length`
+///
+/// [^1]: In F77 this was only 72, and in F2023 it was relaxed to 10,000.
+/// [^2]: Sometimes a compiler flag is required.
 #[derive(ViolationMetadata)]
 pub(crate) struct LineTooLong {
     max_length: usize,
@@ -49,36 +74,71 @@ impl Violation for LineTooLong {
 impl LineTooLong {
     pub fn check(settings: &CheckSettings, source_file: &SourceFile) -> Vec<Diagnostic> {
         let source = source_file.to_source_code();
-        let max_length = settings.line_length;
+        let limit = settings.line_length;
         let mut violations = Vec::new();
+
+        let tab_size = settings.invalid_tab.indent_width.as_usize();
+
         for line in source.text().universal_newlines() {
-            // Note: Can't use string.len(), as that gives byte length, not char length
-            let actual_length = line.chars().count();
-            if actual_length > max_length {
-                // Are we ending on a string or comment? If so, we'll allow it through, as it may
-                // contain something like a long URL that cannot be reasonably split across multiple
-                // lines.
-                if regex_is_match!(r#"(["']\w*&?$)|(!.*$)|(^\w*&)"#, line.as_str()) {
-                    continue;
-                }
-                // Get the byte range from the first character that oversteps the limit
-                // to the end of the line
-                let extra_bytes: TextSize = line
-                    .chars()
-                    .rev()
-                    .take(actual_length - max_length)
-                    .map(TextLen::text_len)
-                    .sum();
-                let range = TextRange::new(line.end() - extra_bytes, line.end());
-                violations.push(Diagnostic::new(
-                    Self {
-                        max_length,
-                        actual_length,
-                    },
-                    range,
-                ));
+            // The maximum width of the line is the number of bytes multiplied by the tab size (the
+            // worst-case scenario is that the line is all tabs). If the maximum width is less than the
+            // limit, then the line is not overlong.
+            let max_possible = line.len() * tab_size;
+            if max_possible < limit {
+                continue;
             }
+
+            // Note: Can't use string.len(), as that gives byte length, not char length
+            let width = measure(&line, tab_size);
+            if width < limit {
+                continue;
+            }
+
+            let mut chunks = line.split_whitespace();
+            let (Some(first_chunk), Some(second_chunk)) = (chunks.next(), chunks.next()) else {
+                // Single word / no printable chars - no way to make the line shorter.
+                continue;
+            };
+
+            // Do not enforce the line length for lines that end with a URL, as long as the URL
+            // begins before the limit.
+            let last_chunk = chunks.last().unwrap_or(second_chunk);
+            if last_chunk.contains("://") && width - measure(last_chunk, tab_size) <= limit {
+                continue;
+            }
+
+            // Do not enforce the line length limit for SPDX license headers, which are machine-readable
+            // and explicitly _not_ recommended to wrap over multiple lines.
+            if matches!(
+                (first_chunk, second_chunk),
+                ("!", "SPDX-License-Identifier:" | "SPDX-FileCopyrightText:")
+            ) {
+                continue;
+            }
+
+            // Get the byte range from the first character that oversteps the limit
+            // to the end of the line
+            let extra_bytes: TextSize = line
+                .chars()
+                .rev()
+                .take(width - limit)
+                .map(TextLen::text_len)
+                .sum();
+            let range = TextRange::new(line.end() - extra_bytes, line.end());
+            violations.push(Diagnostic::new(
+                Self {
+                    max_length: limit,
+                    actual_length: width,
+                },
+                range,
+            ));
         }
         violations
     }
+}
+
+/// Returns the width of a given string, accounting for the tab size.
+// TODO: actually take into account tab width
+fn measure(s: &str, _tab_size: usize) -> usize {
+    s.chars().count()
 }

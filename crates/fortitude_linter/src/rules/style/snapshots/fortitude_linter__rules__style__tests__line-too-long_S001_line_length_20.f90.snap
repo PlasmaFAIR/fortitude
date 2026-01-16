@@ -1,22 +1,32 @@
 ---
-source: fortitude/src/rules/style/mod.rs
+source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S001_line_length_20.f90:2:21: S001 line length of 68, exceeds maximum 20
+./resources/test/fixtures/style/S001_line_length_20.f90:2:21: S001 line length of 26, exceeds maximum 20
   |
-1 | program test
-2 |   use some_really_long_module_name, only : integer_working_precision
-  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
-3 |   implicit none
-4 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
+1 | ! SPDX-License-Identifier: too-long-but-dont-flag
+2 | ! This comment is too long
+  |                     ^^^^^^ S001
+3 | ! https://dont-flag-urls
+4 | program test
   |
 
-./resources/test/fixtures/style/S001_line_length_20.f90:4:21: S001 line length of 72, exceeds maximum 20
+./resources/test/fixtures/style/S001_line_length_20.f90:5:21: S001 line length of 68, exceeds maximum 20
   |
-2 |   use some_really_long_module_name, only : integer_working_precision
-3 |   implicit none
-4 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
-  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
-5 | end program test
+3 | ! https://dont-flag-urls
+4 | program test
+5 |   use some_really_long_module_name, only : integer_working_precision
+  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
+6 |   use &
+7 |     some_other_really_long_module_but_only_word_on_line_so_dont_flag
   |
+
+./resources/test/fixtures/style/S001_line_length_20.f90:9:21: S001 line length of 72, exceeds maximum 20
+   |
+ 7 |     some_other_really_long_module_but_only_word_on_line_so_dont_flag
+ 8 |   implicit none
+ 9 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
+10 | end program test
+   |
