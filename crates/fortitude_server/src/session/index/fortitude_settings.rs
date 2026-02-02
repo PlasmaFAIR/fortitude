@@ -10,7 +10,9 @@ use ignore::{WalkBuilder, WalkState};
 use fortitude_linter::Settings;
 use fortitude_linter::fs::{FilePattern, GlobPath};
 use fortitude_linter::settings::PreviewMode;
-use fortitude_workspace::configuration::{Configuration, ConfigurationTransformer, settings_toml};
+use fortitude_workspace::configuration::{
+    Configuration, ConfigurationTransformer, find_user_settings_toml, settings_toml,
+};
 use fortitude_workspace::resolver::match_exclusion;
 
 use crate::session::Client;
@@ -59,10 +61,76 @@ impl FortitudeSettings {
     ///
     /// In the absence of a valid configuration file, it gracefully falls back to
     /// editor-only settings.
-    pub(crate) fn fallback(editor_settings: &EditorSettings, root: &Path) -> FortitudeSettings {
-        let configuration = Configuration::default();
-        Self::with_editor_settings(editor_settings, root, configuration)
-            .expect("editor configuration should merge successfully with default configuration")
+    pub(crate) fn fallback(editor_settings: &EditorSettings, root: &Path) -> Self {
+        // First, try looking for any settings files in the file's directory or
+        // above. This is useful when the editor has opened the file in
+        // single-file mode outside of an open workspace. However, this means we
+        // can't cache any found settings for other files in the same directory
+        for directory in root.ancestors() {
+            tracing::debug!("Looking for settings in {directory:?}");
+            match settings_toml(directory) {
+                Ok(Some(pyproject)) => {
+                    match fortitude_workspace::resolver::resolve_root_settings(
+                        &pyproject,
+                        &EditorConfigurationTransformer(editor_settings, root),
+                        fortitude_workspace::resolver::ConfigurationOrigin::Ancestor,
+                    ) {
+                        Ok(settings) => {
+                            tracing::debug!("Loaded settings from: `{}`", pyproject.display());
+                            return Self {
+                                path: Some(pyproject),
+                                settings,
+                            };
+                        }
+                        error => {
+                            tracing::error!(
+                                "{:#}",
+                                error
+                                    .with_context(|| {
+                                        format!(
+                                            "Failed to resolve settings for {}",
+                                            pyproject.display()
+                                        )
+                                    })
+                                    .unwrap_err()
+                            );
+                            continue;
+                        }
+                    }
+                }
+                Ok(None) => continue,
+                Err(err) => {
+                    tracing::error!("{err:#}");
+                    continue;
+                }
+            }
+        }
+
+        tracing::warn!("Falling back to default settings");
+
+        find_user_settings_toml()
+            .and_then(|user_settings| {
+                tracing::debug!(
+                    "Loading settings from user configuration file: `{}`",
+                    user_settings.display()
+                );
+                fortitude_workspace::resolver::resolve_root_settings(
+                    &user_settings,
+                    &EditorConfigurationTransformer(editor_settings, root),
+                    fortitude_workspace::resolver::ConfigurationOrigin::UserSettings,
+                )
+                .ok()
+                .map(|settings| Self {
+                    path: Some(user_settings),
+                    settings,
+                })
+            })
+            .unwrap_or_else(|| {
+                let configuration = Configuration::default();
+                Self::with_editor_settings(editor_settings, root, configuration).expect(
+                    "editor configuration should merge successfully with default configuration",
+                )
+            })
     }
 
     /// Constructs [`FortitudeSettings`] by merging the editor-defined settings with the
@@ -90,6 +158,56 @@ impl FortitudeSettings {
 }
 
 impl FortitudeSettingsIndex {
+    pub(super) fn find_and_add_new_settings(
+        &mut self,
+        root: &Path,
+        editor_settings: &EditorSettings,
+    ) {
+        for directory in root.ancestors() {
+            tracing::debug!("Looking for settings in {directory:?}");
+            match settings_toml(directory) {
+                Ok(Some(pyproject)) => {
+                    match fortitude_workspace::resolver::resolve_root_settings(
+                        &pyproject,
+                        &EditorConfigurationTransformer(editor_settings, root),
+                        fortitude_workspace::resolver::ConfigurationOrigin::Ancestor,
+                    ) {
+                        Ok(settings) => {
+                            tracing::debug!("Loaded settings from: `{}`", pyproject.display());
+                            self.index.insert(
+                                directory.to_path_buf(),
+                                Arc::new(FortitudeSettings {
+                                    path: Some(pyproject),
+                                    settings,
+                                }),
+                            );
+                            break;
+                        }
+                        error => {
+                            tracing::error!(
+                                "{:#}",
+                                error
+                                    .with_context(|| {
+                                        format!(
+                                            "Failed to resolve settings for {}",
+                                            pyproject.display()
+                                        )
+                                    })
+                                    .unwrap_err()
+                            );
+                            continue;
+                        }
+                    }
+                }
+                Ok(None) => continue,
+                Err(err) => {
+                    tracing::error!("{err:#}");
+                    continue;
+                }
+            }
+        }
+    }
+
     /// Create the settings index for the given workspace root.
     ///
     /// This will create the index in the following order:
@@ -314,6 +432,13 @@ impl FortitudeSettingsIndex {
             .map(|(_, settings)| settings)
             .unwrap_or_else(|| &self.fallback)
             .clone()
+    }
+
+    pub(super) fn has_settings_for(&self, document_path: &Path) -> bool {
+        self.index
+            .range(..document_path.to_path_buf())
+            .rfind(|(path, _)| document_path.starts_with(path))
+            .is_some()
     }
 
     pub(super) fn fallback(&self) -> Arc<FortitudeSettings> {

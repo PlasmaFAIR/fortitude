@@ -44,6 +44,8 @@ following to your `init.lua`:
     vim.lsp.config('fortitude', {
       cmd = { "fortitude", "server" },
       filetypes = { "fortran" },
+      root_markers = { 'fpm.toml', 'fortitude.toml', '.fortitude.toml', '.git' },
+      single_file_support = true,
       init_options = {
         settings = {
           -- Fortitude language server settings go here
