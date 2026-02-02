@@ -235,7 +235,7 @@ impl Index {
     ) {
         // Check if we have settings for the given url, for example if we're
         // opening a file outside of the existing workspaces.
-        // See https://github.com/astral-sh/fortitude/issues/17944
+        // See https://github.com/astral-sh/ruff/issues/17944
         let has_settings = match self.settings_for_url(&url) {
             None => {
                 tracing::debug!("{url} not in index");
