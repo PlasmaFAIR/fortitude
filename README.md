@@ -277,6 +277,43 @@ This also includes instructions for building the project from source, running
 tests, and linting/formatting the code. Please consult our [code of
 conduct](CODE_OF_CONDUCT.md) before contributing.
 
+## Projects Using Fortitude
+
+More and more open-source Fortran projects are using Fortitude to help maintain
+their code, including:
+
+- [ADCIRC](https://github.com/adcirc/adcirc)
+- [cp2k](https://github.com/cp2k/cp2k)
+- [flexi](https://github.com/flexi-framework/flexi)
+- [FTorch](https://github.com/Cambridge-ICCS/FTorch)
+- [MESA](https://github.com/MESAHub/mesa)
+- [OpenFMS](https://github.com/ispg-group/openfms)
+- [The Met Office](https://github.com/MetOffice/growss/tree/main/fortran-lint)
+
+### Show Your Support
+
+If you've found Fortitude useful in your project, please consider adding the
+Fortitude badge to your `README.md`:
+
+```md
+[![Fortitude](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/PlasmaFAIR/fortitude/main/docs/assets/badge/v0.json)](https://github.com/PlasmaFAIR/fortitude)
+```
+
+or `README.rst`:
+
+```rst
+.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/PlasmaFAIR/fortitude/main/docs/assets/badge/v0.json
+    :target: https://github.com/PlasmaFAIR/fortitude
+    :alt: Fortitude
+```
+
+or, as HTML:
+
+```html
+<a href="https://github.com/PlasmaFAIR/fortitude"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/PlasmaFAIR/fortitude/main/docs/assets/badge/v0.json" alt="Fortitude" style="max-width:100%;"></a>
+```
+
+
 ## License
 
 This work is distributed under the MIT License. See [`LICENSE`](LICENSE) for more
