@@ -176,7 +176,7 @@ impl AstRule for AssumedSize {
 /// `iomsg` argument of user defined IO procedures for derived types, although
 /// it doesn't specify a minimum length. Unfortunately, Fortitude is currently
 /// unable to detect this use. You can use [`allow` (suppression)
-/// comments](https://fortitude.readthedocs.io/en/latest/linter/#error-suppression)
+/// comments](https://fortitude.readthedocs.io/en/stable/linter/#error-suppression)
 /// to disable this rule for those uses only.
 #[derive(ViolationMetadata)]
 pub(crate) struct AssumedSizeCharacterIntent {
