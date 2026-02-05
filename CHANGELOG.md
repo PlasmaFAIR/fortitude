@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.8.0
+
+Released on 2026-02-05.
+
+### Changes
+
+- Allow some exceptions to `line-too-long` ([#582](https://github.com/PlasmaFAIR/fortitude/pull/582))
+- Disable fix reports when syntax errors are present ([#577](https://github.com/PlasmaFAIR/fortitude/pull/577))
+
+### Bug-fixes
+
+- Server: Find config for files outside of open workspaces ([#585](https://github.com/PlasmaFAIR/fortitude/pull/585))
+- Fix `incorrect-space-before-comment` span to point at whitespace ([#581](https://github.com/PlasmaFAIR/fortitude/pull/581))
+- Fix `missing-intent` for `external` dummy arguments ([#580](https://github.com/PlasmaFAIR/fortitude/pull/580))
+
+### Docs
+
+- Add note about `assumed-size-character-intent` with UDTIO ([#576](https://github.com/PlasmaFAIR/fortitude/pull/576))
+- Add some users of Fortitude ([#587](https://github.com/PlasmaFAIR/fortitude/pull/587))
+- Expand docs for `missing-default-case` ([#586](https://github.com/PlasmaFAIR/fortitude/pull/586))
+- Fix broken editors link in README ([#572](https://github.com/PlasmaFAIR/fortitude/pull/572))
+
+### Contributors
+
+- [@jatkinson1000](https://github.com/jatkinson1000)
+- [@LiamPattinson](https://github.com/LiamPattinson)
+- [@ZedThree](https://github.com/ZedThree)
+
 ## 0.8.0rc1
 
 Released on 2025-12-19.
