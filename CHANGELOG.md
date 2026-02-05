@@ -4,29 +4,83 @@
 
 Released on 2026-02-05.
 
-### Changes
+### Enhancements
 
-- Allow some exceptions to `line-too-long` ([#582](https://github.com/PlasmaFAIR/fortitude/pull/582))
-- Disable fix reports when syntax errors are present ([#577](https://github.com/PlasmaFAIR/fortitude/pull/577))
+- Improve config file discovery ([#537](https://github.com/PlasmaFAIR/fortitude/pull/537))
+- Add language server ([#509](https://github.com/PlasmaFAIR/fortitude/pull/509))
 
-### Bug-fixes
+### Rules
 
-- Server: Find config for files outside of open workspaces ([#585](https://github.com/PlasmaFAIR/fortitude/pull/585))
+- Add rule `missing-newline-at-end-of-file` ([#552](https://github.com/PlasmaFAIR/fortitude/pull/552))
+- Add rule `unreachable-statement` ([#563](https://github.com/PlasmaFAIR/fortitude/pull/563))
+- Add rules`useless-return` and `superfluous-else-return/cycle/exit/stop` ([#553](https://github.com/PlasmaFAIR/fortitude/pull/553))
+- Add rules for declaring arrays ([#562](https://github.com/PlasmaFAIR/fortitude/pull/562))
+- Add rules for nonconforming characters and tabs ([#522](https://github.com/PlasmaFAIR/fortitude/pull/522))
+- Add unsafe fix for `implicit-typing`, and check non-module procedures ([#518](https://github.com/PlasmaFAIR/fortitude/pull/518))
+- Add rule `out-of-line-attribute` ([#558](https://github.com/PlasmaFAIR/fortitude/pull/558))
+- Move 15 rules out of `--preview` mode:
+  - `missing-default-case`
+  - `magic-number-in-array-size`
+  - `magic-io-unit`
+  - `missing-action-specifier`
+  - `trailing-backslash`
+  - `missing-default-pointer-initialisation`
+  - `missing-intrinsic`
+  - `include-statement`
+  - `non-portable-io-unit`
+  - `superfluous-semicolon`
+  - `multiple-statements-per-line`
+  - `multiple-modules`
+  - `program-with-module`
+  - `specific-name`
+  - `computed-go-to`
 - Fix `incorrect-space-before-comment` span to point at whitespace ([#581](https://github.com/PlasmaFAIR/fortitude/pull/581))
 - Fix `missing-intent` for `external` dummy arguments ([#580](https://github.com/PlasmaFAIR/fortitude/pull/580))
 
-### Docs
+### CLI / Configuration
 
+- Add more capabilities to `fortitude explain` ([#542](https://github.com/PlasmaFAIR/fortitude/pull/542))
+- Add `fortitude config` command ([#540](https://github.com/PlasmaFAIR/fortitude/pull/540))
+- Add `--isolated` option, and user-specific config files ([#535](https://github.com/PlasmaFAIR/fortitude/pull/535))
+- Add `--target-std` option ([#551](https://github.com/PlasmaFAIR/fortitude/pull/551))
+- Add top-level `include` option; deprecate `files/file_extensions` ([#534](https://github.com/PlasmaFAIR/fortitude/pull/534))
+
+### Bug fixes
+
+- Always report fixes, even if no violations left ([#541](https://github.com/PlasmaFAIR/fortitude/pull/541))
+- Fix `version` command for changed `crates/` layout ([#511](https://github.com/PlasmaFAIR/fortitude/pull/511))
+- Fix GitLab output format ([#494](https://github.com/PlasmaFAIR/fortitude/pull/494))
+
+### Documentation
+
+- General overhaul of documentation ([#521](https://github.com/PlasmaFAIR/fortitude/pull/521))
+- Add Fortitude logo ([#554](https://github.com/PlasmaFAIR/fortitude/pull/554))
+- Document install location ([#539](https://github.com/PlasmaFAIR/fortitude/pull/539))
+- Improve contributing docs ([#543](https://github.com/PlasmaFAIR/fortitude/pull/543))
+- Improve visibility of `.fortitude.toml` config file ([#532](https://github.com/PlasmaFAIR/fortitude/pull/532))
+- Add `Options` management flowchart to docs ([#550](https://github.com/PlasmaFAIR/fortitude/pull/550))
 - Add note about `assumed-size-character-intent` with UDTIO ([#576](https://github.com/PlasmaFAIR/fortitude/pull/576))
 - Add some users of Fortitude ([#587](https://github.com/PlasmaFAIR/fortitude/pull/587))
 - Expand docs for `missing-default-case` ([#586](https://github.com/PlasmaFAIR/fortitude/pull/586))
 - Fix broken editors link in README ([#572](https://github.com/PlasmaFAIR/fortitude/pull/572))
 
+### Miscellaneous
+
+- Reduce minimal Python version to 3.7 ([#538](https://github.com/PlasmaFAIR/fortitude/pull/538))
+- Allow some exceptions to `line-too-long` ([#582](https://github.com/PlasmaFAIR/fortitude/pull/582))
+- Disable fix reports when syntax errors are present ([#577](https://github.com/PlasmaFAIR/fortitude/pull/577))
+
 ### Contributors
 
-- [@jatkinson1000](https://github.com/jatkinson1000)
-- [@LiamPattinson](https://github.com/LiamPattinson)
+- [@loicreynier](https://github.com/loicreynier)
 - [@ZedThree](https://github.com/ZedThree)
+- [@fbjones-lanl](https://github.com/fbjones-lanl)
+- [@LawrenceDior](https://github.com/LawrenceDior)
+- [@casperdcl](https://github.com/casperdcl)
+- [@imciner2](https://github.com/imciner2)
+- [@LiamPattinson](https://github.com/LiamPattinson)
+- [@foxtran](https://github.com/foxtran)
+- [@jatkinson1000](https://github.com/jatkinson1000)
 
 ## 0.8.0rc1
 
