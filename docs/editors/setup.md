@@ -313,3 +313,18 @@ You can also use Fortitude in [`lsp-mode`](https://emacs-lsp.github.io/lsp-mode/
   :priority -2
   :add-on? t))
 ```
+
+## Zed
+
+1. Install the [Zed fortitude extension](https://zed.dev/extensions/fortitude)
+2. Add `fortitude` as language server in your settings. For instance, if you want to use it along `fortls` (highly recommended):
+
+```json
+{
+  "languages": {
+    "Fortran": {
+      "language_servers": ["fortls", "fortitude"]
+    },
+  }
+}
+```
