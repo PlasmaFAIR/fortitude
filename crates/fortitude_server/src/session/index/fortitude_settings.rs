@@ -465,6 +465,7 @@ impl ConfigurationTransformer for EditorConfigurationTransformer<'_> {
             ignore,
             exclude,
             line_length,
+            ignore_comment_length,
             configuration_preference,
         } = self.0.clone();
 
@@ -485,6 +486,7 @@ impl ConfigurationTransformer for EditorConfigurationTransformer<'_> {
                     .collect()
             }),
             line_length,
+            ignore_comment_length,
             ..Configuration::default()
         };
 

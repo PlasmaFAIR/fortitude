@@ -5,6 +5,9 @@ use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};
+use std::collections::HashSet;
+use tree_sitter::Node;
+use tree_sitter::Point;
 
 /// ## What does it do?
 /// Checks line length isn't too long
@@ -72,12 +75,32 @@ impl Violation for LineTooLong {
 }
 
 impl LineTooLong {
-    pub fn check(settings: &CheckSettings, source_file: &SourceFile) -> Vec<Diagnostic> {
+    pub fn check(
+        root: &Node,
+        settings: &CheckSettings,
+        source_file: &SourceFile,
+    ) -> Vec<Diagnostic> {
         let source = source_file.to_source_code();
         let limit = settings.line_length;
+        let ignore_comments = settings.ignore_comment_length;
         let mut violations = Vec::new();
 
         let tab_size = settings.invalid_tab.indent_width.as_usize();
+
+        let comment_positions: HashSet<Point> = source_file
+            .source_text()
+            .char_indices()
+            .filter(|(index, _)| {
+                if let Some(node) = root.named_descendant_for_byte_range(*index, *index) {
+                    matches!(node.kind(), "comment")
+                } else {
+                    false
+                }
+            })
+            .map(|(index, _)| root.named_descendant_for_byte_range(index, index))
+            .filter(|node| node.is_some())
+            .map(|node| node.unwrap().start_position())
+            .collect();
 
         for line in source.text().universal_newlines() {
             // The maximum width of the line is the number of bytes multiplied by the tab size (the
@@ -114,6 +137,23 @@ impl LineTooLong {
                 ("!", "SPDX-License-Identifier:" | "SPDX-FileCopyrightText:")
             ) {
                 continue;
+            }
+
+            // Ignore comments that exceed the limit if setting is enabled
+            if ignore_comments && !comment_positions.is_empty() {
+                let row = source.line_index(line.start()).get() - 1;
+                let comment_column = comment_positions
+                    .iter()
+                    .filter(|node| row == node.row)
+                    .map(|node| node.column)
+                    .next();
+
+                if comment_column.is_some() {
+                    let (code, _) = line.split_at(comment_column.unwrap());
+                    if measure(code.trim_end(), tab_size) <= limit {
+                        continue;
+                    }
+                }
             }
 
             // Get the byte range from the first character that oversteps the limit

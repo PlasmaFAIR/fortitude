@@ -82,6 +82,7 @@ pub(crate) struct EditorSettings {
     pub(super) ignore: Option<Vec<RuleSelector>>,
     pub(super) exclude: Option<Vec<String>>,
     pub(super) line_length: Option<usize>,
+    pub(super) ignore_comment_length: Option<bool>,
     pub(super) configuration_preference: ConfigurationPreference,
 }
 
