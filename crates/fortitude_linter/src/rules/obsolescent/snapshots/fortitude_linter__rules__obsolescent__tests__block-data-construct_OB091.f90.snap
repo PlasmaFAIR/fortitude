@@ -1,0 +1,13 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB091.f90:1:7: OB091 `block data` is obsolescent, use a `module` instead
+  |
+1 |       BLOCK DATA bdfoo
+  |       ^^^^^^^^^^^^^^^^ OB091
+2 |       COMMON /COMFOO/ ICASE, N, INCX
+3 |       DATA ICASE /4/
+4 |       END
+  |
