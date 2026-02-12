@@ -168,6 +168,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedCharacterSyntax),
         (Obsolescent, "071") => (RuleGroup::Preview, Ast, Default, obsolescent::forall_statement::ForallStatement),
+        (Obsolescent, "081") => (RuleGroup::Preview, Ast, Default, obsolescent::equivalence_statement::EquivalenceStatement),
         (Obsolescent, "201") => (RuleGroup::Preview, Ast, Default, obsolescent::mpi::DeprecatedMPIInclude),
         (Obsolescent, "211") => (RuleGroup::Preview, Ast, Default, obsolescent::openmp::DeprecatedOmpInclude),
 
