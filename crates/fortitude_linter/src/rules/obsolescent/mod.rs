@@ -1,3 +1,4 @@
+pub(crate) mod block_data_construct;
 pub(crate) mod common_blocks;
 pub(crate) mod computed_goto;
 pub(crate) mod deprecated_character_syntax;
@@ -34,6 +35,7 @@ mod tests {
     #[test_case(Rule::DeprecatedOmpInclude, Path::new("OB211.f90"))]
     #[test_case(Rule::ForallStatement, Path::new("OB071.f90"))]
     #[test_case(Rule::EquivalenceStatement, Path::new("OB081.f90"))]
+    #[test_case(Rule::BlockDataConstruct, Path::new("OB091.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
