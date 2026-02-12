@@ -1,0 +1,13 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB081.f90:4:3: OB081 `equivalence` is obsolete and should not be used
+  |
+2 |   DOUBLE PRECISION DVAR
+3 |   INTEGER(KIND=2) IARR(4)
+4 |   EQUIVALENCE(DVAR, IARR(1))
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^ OB081
+5 | END PROGRAM test
+  |
