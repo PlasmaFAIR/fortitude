@@ -162,14 +162,14 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         // obsolescent
         (Obsolescent, "001") => (RuleGroup::Removed, Ast, Default, obsolescent::statement_functions::StatementFunction),
         (Obsolescent, "011") => (RuleGroup::Stable, Ast, Default, obsolescent::common_blocks::CommonBlock),
+        (Obsolescent, "012") => (RuleGroup::Preview, Ast, Default, obsolescent::equivalence_statement::EquivalenceStatement),
+        (Obsolescent, "013") => (RuleGroup::Preview, Ast, Default, obsolescent::block_data_construct::BlockDataConstruct),
         (Obsolescent, "021") => (RuleGroup::Stable, Ast, Default, obsolescent::entry_statement::EntryStatement),
         (Obsolescent, "031") => (RuleGroup::Stable, Ast, Default, obsolescent::specific_names::SpecificName),
         (Obsolescent, "041") => (RuleGroup::Stable, Ast, Default, obsolescent::computed_goto::ComputedGoTo),
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedCharacterSyntax),
         (Obsolescent, "071") => (RuleGroup::Preview, Ast, Default, obsolescent::forall_statement::ForallStatement),
-        (Obsolescent, "081") => (RuleGroup::Preview, Ast, Default, obsolescent::equivalence_statement::EquivalenceStatement),
-        (Obsolescent, "091") => (RuleGroup::Preview, Ast, Default, obsolescent::block_data_construct::BlockDataConstruct),
         (Obsolescent, "201") => (RuleGroup::Preview, Ast, Default, obsolescent::mpi::DeprecatedMPIInclude),
         (Obsolescent, "211") => (RuleGroup::Preview, Ast, Default, obsolescent::openmp::DeprecatedOmpInclude),
 

@@ -26,6 +26,8 @@ mod tests {
     use crate::test::test_path;
 
     #[test_case(Rule::CommonBlock, Path::new("OB011.f90"))]
+    #[test_case(Rule::EquivalenceStatement, Path::new("OB012.f90"))]
+    #[test_case(Rule::BlockDataConstruct, Path::new("OB013.f90"))]
     #[test_case(Rule::EntryStatement, Path::new("OB021.f90"))]
     #[test_case(Rule::SpecificName, Path::new("OB031.f90"))]
     #[test_case(Rule::ComputedGoTo, Path::new("OB041.f90"))]
@@ -34,8 +36,6 @@ mod tests {
     #[test_case(Rule::DeprecatedMPIInclude, Path::new("OB201.f90"))]
     #[test_case(Rule::DeprecatedOmpInclude, Path::new("OB211.f90"))]
     #[test_case(Rule::ForallStatement, Path::new("OB071.f90"))]
-    #[test_case(Rule::EquivalenceStatement, Path::new("OB081.f90"))]
-    #[test_case(Rule::BlockDataConstruct, Path::new("OB091.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
