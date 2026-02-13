@@ -133,6 +133,19 @@ pub trait FortitudeNode<'tree> {
     /// Get the next statement (either the next sibling, or the next sibling of
     /// the parent) which isn't a comment
     fn next_non_comment_statement(&self) -> Option<Node<'tree>>;
+
+    /// Get the prev sibling that isn't a comment
+    fn prev_non_comment_sibling(&self) -> Option<Node<'tree>>;
+
+    /// Get the next matching statement label that is a sibling of this node
+    fn next_statement_label_sibling<S: AsRef<str>>(
+        &self,
+        label: S,
+        src: &str,
+    ) -> Option<Node<'tree>>;
+
+    /// Get the next matching statement label
+    fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree>>;
 }
 
 impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
@@ -266,6 +279,48 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         let mut current = *self;
         while let Some(parent) = current.parent() {
             if let Some(sibling) = parent.next_non_comment_sibling() {
+                return Some(sibling);
+            }
+            current = parent;
+        }
+        None
+    }
+
+    fn prev_non_comment_sibling(&self) -> Option<Node<'tree1>> {
+        let mut sibling = self.prev_named_sibling();
+        while let Some(prev_sibling) = sibling {
+            if prev_sibling.kind() != "comment" {
+                return Some(prev_sibling);
+            }
+            sibling = prev_sibling.prev_named_sibling();
+        }
+        None
+    }
+
+    fn next_statement_label_sibling<S: AsRef<str>>(
+        &self,
+        label: S,
+        src: &str,
+    ) -> Option<Node<'tree1>> {
+        let mut sibling = self.next_named_sibling();
+        while let Some(next_sibling) = sibling {
+            if next_sibling.kind() == "statement_label"
+                && next_sibling.to_text(src) == Some(label.as_ref())
+            {
+                return Some(next_sibling);
+            }
+            sibling = next_sibling.next_named_sibling();
+        }
+        None
+    }
+
+    fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree1>> {
+        if let Some(next) = self.next_statement_label_sibling(label.as_ref(), src) {
+            return Some(next);
+        }
+        let mut current = *self;
+        while let Some(parent) = current.parent() {
+            if let Some(sibling) = parent.next_statement_label_sibling(label.as_ref(), src) {
                 return Some(sibling);
             }
             current = parent;

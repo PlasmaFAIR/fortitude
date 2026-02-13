@@ -1,0 +1,15 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB081.f90:5:5: OB081 Obsolete arithmetic `if`
+  |
+3 |     integer x(1)
+4 |     x(1) = 0.0
+5 |     IF(x(1)) 30, 20, 10
+  |     ^^^^^^^^^^^^^^^^^^^ OB081
+6 | 10  PRINT *, 'first case'
+7 |     goto 40
+  |
+  = help: Use `if` statement or `if` construct
