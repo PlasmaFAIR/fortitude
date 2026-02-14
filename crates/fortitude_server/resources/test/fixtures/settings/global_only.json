@@ -12,6 +12,7 @@
         "fixAll": false,
         "logLevel": "warn",
         "lineLength": 80,
+        "ignore_comment_length": false,
         "exclude": ["third_party"]
     }
 }

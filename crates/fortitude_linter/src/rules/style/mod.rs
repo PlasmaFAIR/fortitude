@@ -91,6 +91,20 @@ mod tests {
         Ok(())
     }
 
+    #[test_case(Rule::LineTooLong, Path::new("S001_ignore_comment_length.f90"))]
+    fn ignore_comment_length(rule_code: Rule, path: &Path) -> Result<()> {
+        let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+
+        let settings = CheckSettings {
+            ignore_comment_length: true,
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
     #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
     #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
     fn keyword_whitespace_include_inout_goto(rule_code: Rule, path: &Path) -> Result<()> {

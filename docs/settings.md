@@ -333,6 +333,32 @@ specific prefixes.
 
 ---
 
+#### [`ignore-comment-length`](#check_ignore-comment-length) {: #check_ignore-comment-length }
+<span id="ignore-comment-length"></span>
+
+By default disable ignore-comment-length behavior when running `fortitude`.
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    ignore-comment-length = true
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    ignore-comment-length = true
+    ```
+
+---
+
 #### [`line-length`](#check_line-length) {: #check_line-length }
 <span id="line-length"></span>
 

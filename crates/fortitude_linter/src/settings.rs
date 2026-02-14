@@ -64,6 +64,7 @@ pub struct CheckSettings {
     pub ast_entrypoints: BTreeMap<&'static str, Vec<AstRuleEnum>>,
 
     pub line_length: usize,
+    pub ignore_comment_length: bool,
 
     pub fix: bool,
     pub fix_only: bool,
@@ -100,6 +101,7 @@ impl CheckSettings {
             ast_entrypoints: BTreeMap::new(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
+            ignore_comment_length: false,
             fix: false,
             fix_only: false,
             show_fixes: false,
@@ -144,6 +146,7 @@ impl fmt::Display for CheckSettings {
                 self.rules | nested,
                 self.per_file_ignores,
                 self.line_length,
+                self.ignore_comment_length,
                 self.fix,
                 self.fix_only,
                 self.show_fixes,

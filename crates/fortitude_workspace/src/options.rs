@@ -312,6 +312,14 @@ pub struct CheckOptions {
     )]
     pub line_length: Option<usize>,
 
+    /// By default disable ignore-comment-length behavior when running `fortitude`.
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "ignore-comment-length = true"
+    )]
+    pub ignore_comment_length: Option<bool>,
+
     // Tables are required to go last.
     /// A list of mappings from file pattern to rule codes or prefixes to
     /// exclude, when considering any matching files. An initial '!' negates

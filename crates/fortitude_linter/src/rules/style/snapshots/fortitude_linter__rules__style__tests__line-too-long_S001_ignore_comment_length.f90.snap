@@ -1,0 +1,23 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+assertion_line: 104
+expression: diagnostics
+---
+./resources/test/fixtures/style/S001_ignore_comment_length.f90:3:101: S001 line length of 165, exceeds maximum 100
+  |
+1 | ...xceeds the line length setting is ignored
+2 | ...
+3 | ...lly_really_really_long_module_name, only : integer_working_precision ! This code is not ignored
+  |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
+4 | ...                            !This comment is ignored
+5 | ...1]                               ! This comment is ignored
+  |
+
+./resources/test/fixtures/style/S001_ignore_comment_length.f90:6:101: S001 line length of 163, exceeds maximum 100
+  |
+4 | ...                             !This comment is ignored
+5 | ...[1]                               ! This comment is ignored
+6 | ...lly_really_really_really_really_really_really_really_really_really_really_long string literal'
+  |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
+7 | ...
+  |

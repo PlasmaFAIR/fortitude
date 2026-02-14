@@ -83,6 +83,7 @@ pub struct ClientOptions {
     code_action: Option<CodeActionOptions>,
     exclude: Option<Vec<String>>,
     line_length: Option<usize>,
+    ignore_comment_length: Option<bool>,
     configuration_preference: Option<ConfigurationPreference>,
 }
 
@@ -137,6 +138,7 @@ impl ClientOptions {
             }),
             exclude: self.exclude.clone(),
             line_length: self.line_length,
+            ignore_comment_length: self.ignore_comment_length,
             configuration_preference: self.configuration_preference.unwrap_or_default(),
         };
 
@@ -192,6 +194,8 @@ impl Combine for ClientOptions {
         self.code_action.combine_with(other.code_action);
         self.exclude.combine_with(other.exclude);
         self.line_length.combine_with(other.line_length);
+        self.ignore_comment_length
+            .combine_with(other.ignore_comment_length);
         self.configuration_preference
             .combine_with(other.configuration_preference);
     }
@@ -529,6 +533,7 @@ mod tests {
                     ),
                     exclude: None,
                     line_length: None,
+                    ignore_comment_length: None,
                     configuration_preference: None,
                 },
                 tracing: TracingOptions {
@@ -557,6 +562,7 @@ mod tests {
                         ),
                         exclude: None,
                         line_length: None,
+                        ignore_comment_length: None,
                         configuration_preference: None,
                     },
                     workspace: Url {
@@ -600,6 +606,7 @@ mod tests {
                         ),
                         exclude: None,
                         line_length: None,
+                        ignore_comment_length: None,
                         configuration_preference: None,
                     },
                     workspace: Url {
@@ -656,6 +663,7 @@ mod tests {
                     ignore: None,
                     exclude: None,
                     line_length: None,
+                    ignore_comment_length: None,
                     configuration_preference: ConfigurationPreference::default(),
                 },
             }
@@ -688,6 +696,7 @@ mod tests {
                     ignore: None,
                     exclude: None,
                     line_length: None,
+                    ignore_comment_length: None,
                     configuration_preference: ConfigurationPreference::EditorFirst,
                 },
             }
@@ -731,6 +740,7 @@ mod tests {
                     line_length: Some(
                         80,
                     ),
+                    ignore_comment_length: None,
                     configuration_preference: None,
                 },
                 tracing: TracingOptions {
@@ -767,6 +777,7 @@ mod tests {
                     ignore: Some(vec![RuleSelector::from_str("FORT001").unwrap()]),
                     exclude: Some(vec!["third_party".into()]),
                     line_length: Some(80),
+                    ignore_comment_length: None,
                     configuration_preference: ConfigurationPreference::EditorFirst,
                 },
             }
