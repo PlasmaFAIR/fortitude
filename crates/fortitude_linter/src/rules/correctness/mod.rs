@@ -17,7 +17,7 @@ pub(crate) mod select_default;
 pub(crate) mod split_escaped_quote;
 pub(crate) mod trailing_backslash;
 pub(crate) mod unreachable_statement;
-pub(crate) mod use_statements;
+pub mod use_statements;
 
 #[cfg(test)]
 mod tests {

@@ -921,3 +921,38 @@ Quote style to prefer for string literals (either "single" or "double").
 
 ---
 
+### `check.use-statements`
+
+Options for the `use` statement rules
+
+#### [`allow-no-only`](#check_use-statements_allow-no-only) {: #check_use-statements_allow-no-only }
+<span id="allow-no-only"></span>
+
+List of exceptions to the [`use-all`](rules/use-all.md) rule.  That is, modules allowed to
+appear in a `use` statement without an `only` clause.
+
+While it is recommended to list all `use`d components in an `only` clause, this can
+occasionally be impractical for some modules. For example, if the `only` list would
+commonly be very long, or would often list all or nearly all of the module's contents.
+
+**Default value**: `[]`
+
+**Type**: `list[str]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.use-statements]
+    allow-no-only = ["utils"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.use-statements]
+    allow-no-only = ["utils"]
+    ```
+
+---
+

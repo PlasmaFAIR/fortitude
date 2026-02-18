@@ -41,12 +41,19 @@ impl Violation for UseAll {
 
 impl AstRule for UseAll {
     fn check(
-        _settings: &CheckSettings,
+        settings: &CheckSettings,
         node: &Node,
-        _src: &SourceFile,
+        src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        if node.child_with_name("included_items").is_none() {
+        let module_name = node
+            .child_with_name("module_name")?
+            .to_text(src.source_text())?
+            .to_lowercase();
+
+        if !settings.use_statements.allow_no_only.contains(&module_name)
+            && node.child_with_name("included_items").is_none()
+        {
             return some_vec![Diagnostic::from_node(UseAll {}, node)];
         }
         None
@@ -142,5 +149,27 @@ impl AstRule for MissingIntrinsic {
 
     fn entrypoints() -> Vec<&'static str> {
         vec!["use_statement"]
+    }
+}
+
+pub mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub allow_no_only: Vec<String>,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.use_statements",
+                fields = [self.allow_no_only | debug]
+            }
+            Ok(())
+        }
     }
 }

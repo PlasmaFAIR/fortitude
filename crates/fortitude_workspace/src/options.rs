@@ -12,7 +12,7 @@ use fortitude_linter::{
     line_width::IndentWidth,
     rule_selector::RuleSelector,
     rules::{
-        correctness::exit_labels,
+        correctness::{exit_labels, use_statements},
         portability::{self, invalid_tab},
         style::{
             inconsistent_dimension::{self, settings::PreferAttribute},
@@ -365,6 +365,10 @@ pub struct CheckOptions {
     /// Options for the `line-too-long` rule
     #[option_group]
     pub line_too_long: Option<LineTooLongOptions>,
+
+    /// Options for the `use-all` set of rules
+    #[option_group]
+    pub use_statements: Option<UseStatementsOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -547,6 +551,39 @@ impl LineTooLongOptions {
     pub fn into_settings(self) -> line_length::settings::Settings {
         line_length::settings::Settings {
             ignore_comments: self.ignore_comments.unwrap_or_default(),
+        }
+    }
+}
+
+/// Options for the `use` statement rules
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct UseStatementsOptions {
+    /// List of exceptions to the [`use-all`](rules/use-all.md) rule.  That is, modules allowed to
+    /// appear in a `use` statement without an `only` clause.
+    ///
+    /// While it is recommended to list all `use`d components in an `only` clause, this can
+    /// occasionally be impractical for some modules. For example, if the `only` list would
+    /// commonly be very long, or would often list all or nearly all of the module's contents.
+    #[option(
+        default = "[]",
+        value_type = r#"list[str]"#,
+        example = r#"allow-no-only = ["utils"]"#
+    )]
+    pub allow_no_only: Option<Vec<String>>,
+}
+
+impl UseStatementsOptions {
+    pub fn into_settings(self) -> use_statements::settings::Settings {
+        use_statements::settings::Settings {
+            allow_no_only: self
+                .allow_no_only
+                .unwrap_or_default()
+                .iter()
+                .map(|m| m.to_lowercase())
+                .collect(),
         }
     }
 }

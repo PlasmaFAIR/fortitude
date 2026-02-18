@@ -20,7 +20,7 @@ use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
 use crate::rules::AstRuleEnum;
-use crate::rules::correctness::exit_labels;
+use crate::rules::correctness::{exit_labels, use_statements};
 use crate::rules::portability::{self, invalid_tab};
 use crate::rules::style::{inconsistent_dimension, keywords, line_length, strings};
 use crate::{ast_entrypoint_map, display_settings};
@@ -82,6 +82,7 @@ pub struct CheckSettings {
     pub invalid_tab: invalid_tab::settings::Settings,
     pub inconsistent_dimension: inconsistent_dimension::settings::Settings,
     pub line_too_long: line_length::settings::Settings,
+    pub use_statements: use_statements::settings::Settings,
 }
 
 impl Default for CheckSettings {
@@ -116,6 +117,7 @@ impl CheckSettings {
             invalid_tab: invalid_tab::settings::Settings::default(),
             inconsistent_dimension: inconsistent_dimension::settings::Settings::default(),
             line_too_long: line_length::settings::Settings::default(),
+            use_statements: use_statements::settings::Settings::default(),
         }
     }
 
@@ -167,6 +169,7 @@ impl fmt::Display for CheckSettings {
                 self.invalid_tab | nested,
                 self.inconsistent_dimension | nested,
                 self.line_too_long | nested,
+                self.use_statements | nested,
             ]
         }
         Ok(())
