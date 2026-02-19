@@ -133,6 +133,9 @@ pub trait FortitudeNode<'tree> {
     /// Get the next statement (either the next sibling, or the next sibling of
     /// the parent) which isn't a comment
     fn next_non_comment_statement(&self) -> Option<Node<'tree>>;
+
+    /// Check if the node is an if_statement and lacks an end_if_statement child
+    fn inline_if_statement(&self) -> bool;
 }
 
 impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
@@ -271,6 +274,10 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
             current = parent;
         }
         None
+    }
+
+    fn inline_if_statement(&self) -> bool {
+        self.kind() == "if_statement" && self.child_with_name("end_if_statement").is_none()
     }
 }
 

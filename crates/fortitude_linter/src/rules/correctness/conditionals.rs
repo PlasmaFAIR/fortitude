@@ -59,7 +59,7 @@ impl AstRule for MisleadingInlineIfSemicolon {
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         // If this is an `if (...) then` construct, exit early
-        if !inline_if_statement(node) {
+        if !node.inline_if_statement() {
             return None;
         }
 
@@ -157,7 +157,7 @@ impl AstRule for MisleadingInlineIfContinuation {
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         // If this is an `if (...) then` construct, exit early
-        if !inline_if_statement(node) {
+        if !node.inline_if_statement() {
             return None;
         }
 
@@ -183,17 +183,12 @@ impl AstRule for MisleadingInlineIfContinuation {
     }
 }
 
-/// Given an if statement, return true if it is inline.
-pub fn inline_if_statement(node: &Node) -> bool {
-    node.child_with_name("end_if_statement").is_none()
-}
-
 /// Given an if statement node, convert it from a one-line if statement
 /// to a block if statement.
 /// Returns None if the node is already a block if statement.
 pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
     // check that the node is an if statement without an end if statement
-    if !inline_if_statement(node) {
+    if !node.inline_if_statement() {
         return None;
     }
     let text = node.to_text(src.source_text())?.trim();

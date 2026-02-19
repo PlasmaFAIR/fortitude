@@ -286,7 +286,7 @@ pub(crate) fn check_superfluous_returns<'a>(
 
     if let Some(parent) = node.parent().as_ref() {
         // Skip this node if it's inside an inline IF, because the rule does not apply
-        if inline_if_statement(parent) {
+        if parent.inline_if_statement() {
             return None;
         }
     }
@@ -336,11 +336,6 @@ pub(crate) fn check_superfluous_returns<'a>(
             node,
         ),
     }
-}
-
-/// Check if the node is an if_statement and lacks an end_if_statement child
-fn inline_if_statement(node: &Node) -> bool {
-    node.kind() == "if_statement" && node.child_with_name("end_if_statement").is_none()
 }
 
 #[cfg(test)]
