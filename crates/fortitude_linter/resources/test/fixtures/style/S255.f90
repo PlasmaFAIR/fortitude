@@ -34,4 +34,14 @@ contains
       capped_mult = a * b
     end if
   end function capped_mult
+
+  integer function capped_pow(a, b)
+    integer, intent(in) :: a, b
+    if ((a ** b) > 100) then
+      capped_pow = 100
+      if (b > 10) error stop 2 ! shouldn't trigger!
+    else
+      capped_pow = a ** b
+    end if
+  end function capped_pow
 end module test
