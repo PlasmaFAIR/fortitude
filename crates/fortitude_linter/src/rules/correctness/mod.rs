@@ -34,7 +34,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::rules::correctness::exit_labels;
+    use crate::rules::correctness::{exit_labels, use_statements};
     use crate::settings::{CheckSettings, FortranStandard};
     use crate::test::test_path;
 
@@ -134,6 +134,27 @@ mod tests {
         let snapshot = format!("missing-intent-f95_{}", path.to_string_lossy());
         let mut settings = CheckSettings::for_rule(Rule::MissingIntent);
         settings.target_std = FortranStandard::F95;
+        let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn c121_allow_no_only() -> Result<()> {
+        let rule_code = Rule::UseAll;
+        let path = Path::new("C121.f90");
+        let snapshot = format!(
+            "{}_{}_allow_no_only",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+        let settings = CheckSettings {
+            use_statements: use_statements::settings::Settings {
+                allow_no_only: vec!["iso_c_binding".to_string()],
+            },
+            ..CheckSettings::for_rule(rule_code)
+        };
         let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
