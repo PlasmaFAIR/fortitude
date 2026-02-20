@@ -93,7 +93,7 @@ const INTRINSIC_MODULES: &[&str] = &[
     "iso_fortran_env",
     "iso_c_binding",
     "ieee_exceptions",
-    "ieee_artimetic",
+    "ieee_arithmetic",
     "ieee_features",
 ];
 
