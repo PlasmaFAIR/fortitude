@@ -112,7 +112,7 @@ impl AstRule for MissingIntrinsic {
     fn check(
         settings: &CheckSettings,
         node: &Node,
-        _src: &SourceFile,
+        src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         // Feature only available in Fortran 2003 and later
@@ -121,13 +121,13 @@ impl AstRule for MissingIntrinsic {
         }
         let module_name = node
             .child_with_name("module_name")?
-            .to_text(_src.source_text())?
+            .to_text(src.source_text())?
             .to_lowercase();
 
         if INTRINSIC_MODULES.iter().any(|&m| m == module_name)
             && node
                 .children(&mut node.walk())
-                .filter_map(|child| child.to_text(_src.source_text()))
+                .filter_map(|child| child.to_text(src.source_text()))
                 .all(|child| child != "intrinsic" && child != "non_intrinsic")
         {
             let intrinsic = if node.child(1)?.kind() == "::" {
@@ -138,7 +138,7 @@ impl AstRule for MissingIntrinsic {
 
             let use_field = node
                 .children(&mut node.walk())
-                .find(|&child| child.to_text(_src.source_text()) == Some("use"))?;
+                .find(|&child| child.to_text(src.source_text()) == Some("use"))?;
             let start_pos = use_field.end_textsize();
             let fix = Fix::unsafe_edit(Edit::insertion(intrinsic.to_string(), start_pos));
 
