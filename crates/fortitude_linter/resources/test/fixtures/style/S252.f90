@@ -44,4 +44,14 @@ contains
       capped_div = a * b
     end if
   end function capped_div
+
+  integer function capped_pow(a, b)
+    integer, intent(in) :: a, b
+    if ((a ** b) > 100) then
+      capped_pow = 100
+      if (b > 10) return ! shouldn't trigger!
+    else
+      capped_pow = a ** b
+    end if
+  end function capped_pow
 end module test

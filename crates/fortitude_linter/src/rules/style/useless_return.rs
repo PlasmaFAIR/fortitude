@@ -284,6 +284,12 @@ pub(crate) fn check_superfluous_returns<'a>(
     let text = node.child(0)?.to_text(src.source_text())?;
     let kind = BlockExit::try_from(text).ok()?;
 
+    if let Some(parent) = node.parent().as_ref() {
+        // Skip this node if it's inside an inline IF, because the rule does not apply
+        if parent.inline_if_statement() {
+            return None;
+        }
+    }
     let sibling = node.next_non_comment_statement();
     let branch = match sibling?.kind() {
         "else_clause" => "else",
