@@ -22,7 +22,7 @@ use crate::rule_table::RuleTable;
 use crate::rules::AstRuleEnum;
 use crate::rules::correctness::exit_labels;
 use crate::rules::portability::{self, invalid_tab};
-use crate::rules::style::{inconsistent_dimension, keywords, strings};
+use crate::rules::style::{inconsistent_dimension, keywords, line_length, strings};
 use crate::{ast_entrypoint_map, display_settings};
 
 #[derive(Debug)]
@@ -64,7 +64,6 @@ pub struct CheckSettings {
     pub ast_entrypoints: BTreeMap<&'static str, Vec<AstRuleEnum>>,
 
     pub line_length: usize,
-    pub ignore_comment_length: bool,
 
     pub fix: bool,
     pub fix_only: bool,
@@ -82,6 +81,7 @@ pub struct CheckSettings {
     pub portability: portability::settings::Settings,
     pub invalid_tab: invalid_tab::settings::Settings,
     pub inconsistent_dimension: inconsistent_dimension::settings::Settings,
+    pub line_too_long: line_length::settings::Settings,
 }
 
 impl Default for CheckSettings {
@@ -101,7 +101,6 @@ impl CheckSettings {
             ast_entrypoints: BTreeMap::new(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
-            ignore_comment_length: false,
             fix: false,
             fix_only: false,
             show_fixes: false,
@@ -116,6 +115,7 @@ impl CheckSettings {
             portability: portability::settings::Settings::default(),
             invalid_tab: invalid_tab::settings::Settings::default(),
             inconsistent_dimension: inconsistent_dimension::settings::Settings::default(),
+            line_too_long: line_length::settings::Settings::default(),
         }
     }
 
@@ -146,7 +146,6 @@ impl fmt::Display for CheckSettings {
                 self.rules | nested,
                 self.per_file_ignores,
                 self.line_length,
-                self.ignore_comment_length,
                 self.fix,
                 self.fix_only,
                 self.show_fixes,
@@ -167,6 +166,7 @@ impl fmt::Display for CheckSettings {
                 self.portability | nested,
                 self.invalid_tab | nested,
                 self.inconsistent_dimension | nested,
+                self.line_too_long | nested,
             ]
         }
         Ok(())

@@ -6,7 +6,7 @@ pub(crate) mod functions;
 pub(crate) mod implicit_none;
 pub mod inconsistent_dimension;
 pub mod keywords;
-pub(crate) mod line_length;
+pub mod line_length;
 pub(crate) mod semicolons;
 pub mod strings;
 pub mod useless_return;
@@ -24,7 +24,7 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
-    use crate::rules::style::{inconsistent_dimension, keywords, strings};
+    use crate::rules::style::{inconsistent_dimension, keywords, line_length, strings};
     use crate::settings::CheckSettings;
     use crate::test::test_path;
 
@@ -96,7 +96,9 @@ mod tests {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
 
         let settings = CheckSettings {
-            ignore_comment_length: true,
+            line_too_long: line_length::settings::Settings {
+                ignore_comments: true,
+            },
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;

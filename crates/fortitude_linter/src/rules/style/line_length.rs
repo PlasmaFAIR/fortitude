@@ -54,6 +54,7 @@ use tree_sitter::Point;
 ///
 /// ## Options
 /// - `check.line-length`
+/// - `check.line-too-long.ignore-comments`
 ///
 /// [^1]: In F77 this was only 72, and in F2023 it was relaxed to 10,000.
 /// [^2]: Sometimes a compiler flag is required.
@@ -82,7 +83,7 @@ impl LineTooLong {
     ) -> Vec<Diagnostic> {
         let source = source_file.to_source_code();
         let limit = settings.line_length;
-        let ignore_comments = settings.ignore_comment_length;
+        let ignore_comments = settings.line_too_long.ignore_comments;
         let mut violations = Vec::new();
 
         let tab_size = settings.invalid_tab.indent_width.as_usize();
@@ -181,4 +182,26 @@ impl LineTooLong {
 // TODO: actually take into account tab width
 fn measure(s: &str, _tab_size: usize) -> usize {
     s.chars().count()
+}
+
+pub mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::Display;
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub ignore_comments: bool,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.line-too-long",
+                fields = [self.ignore_comments]
+            }
+            Ok(())
+        }
+    }
 }
