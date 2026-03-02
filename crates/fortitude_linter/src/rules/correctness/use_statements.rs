@@ -29,6 +29,9 @@ use tree_sitter::Node;
 /// This makes it easier for programmers to understand where the symbols in your
 /// code have come from, and avoids introducing many unneeded components to your
 /// local scope.
+///
+/// ## Options
+/// - `check.use-statements.allow-no-only`
 #[derive(ViolationMetadata)]
 pub(crate) struct UseAll {}
 

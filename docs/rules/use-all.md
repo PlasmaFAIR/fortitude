@@ -20,3 +20,10 @@ use, intrinsic :: iso_fortran_env, only: int32, real64
 This makes it easier for programmers to understand where the symbols in your
 code have come from, and avoids introducing many unneeded components to your
 local scope.
+
+## Options
+- [`check.use-statements.allow-no-only`][check.use-statements.allow-no-only]
+
+
+[check.use-statements.allow-no-only]: ../settings.md#check_use-statements_allow-no-only
+
