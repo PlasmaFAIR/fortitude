@@ -225,9 +225,6 @@ pub(crate) fn check_path(
     if rules.enabled(Rule::SplitEscapedQuote) {
         violations.extend(SplitEscapedQuote::check(file));
     }
-    if rules.enabled(Rule::LineTooLong) {
-        violations.extend(LineTooLong::check(settings, file));
-    }
     if rules.enabled(Rule::TrailingWhitespace) {
         violations.extend(TrailingWhitespace::check(file));
     }
@@ -291,6 +288,11 @@ pub(crate) fn check_path(
         if END_SCOPE_NODES.contains(&node.kind()) {
             symbol_table.pop_table();
         }
+    }
+
+    // ignore line length in comments requires AST
+    if rules.enabled(Rule::LineTooLong) {
+        violations.extend(LineTooLong::check(&root, settings, file));
     }
 
     if rules.enabled(Rule::InvalidTab) {

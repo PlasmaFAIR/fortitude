@@ -46,9 +46,11 @@ call my_long_subroutine(&
 
 ## Options
 - [`check.line-length`][check.line-length]
+- [`check.line-too-long.ignore-comments`][check.line-too-long.ignore-comments]
 
 [^1]: In F77 this was only 72, and in F2023 it was relaxed to 10,000.
 [^2]: Sometimes a compiler flag is required.
 
 [check.line-length]: ../settings.md#check_line-length
+[check.line-too-long.ignore-comments]: ../settings.md#check_line-too-long_ignore-comments
 

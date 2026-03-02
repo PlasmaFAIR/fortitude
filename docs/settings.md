@@ -333,6 +333,32 @@ specific prefixes.
 
 ---
 
+#### [`ignore-comment-length`](#check_ignore-comment-length) {: #check_ignore-comment-length }
+<span id="ignore-comment-length"></span>
+
+By default disable ignore-comment-length behavior when running `fortitude`.
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    ignore-comment-length = true
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    ignore-comment-length = true
+    ```
+
+---
+
 #### [`line-length`](#check_line-length) {: #check_line-length }
 <span id="line-length"></span>
 
@@ -794,6 +820,38 @@ Whether to enforce the use of `in out` instead of `inout`.
     ```toml
     [check.keyword-whitespace]
     inout-with-space = true
+    ```
+
+---
+
+### `check.line-too-long`
+
+Options for `line-too-long` rule
+
+#### [`ignore-comments`](#check_line-too-long_ignore-comments) {: #check_line-too-long_ignore-comments }
+<span id="ignore-comments"></span>
+
+If `true`, don't take comments into account when checking if a line is
+too long. This can be useful when dealing with existing codebases with
+long comments, for instance, or inline comments used for other tools.
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.line-too-long]
+    ignore-comments = true
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.line-too-long]
+    ignore-comments = true
     ```
 
 ---

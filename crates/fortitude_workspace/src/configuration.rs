@@ -1,6 +1,6 @@
 use crate::options::{
     ExitUnlabelledLoopOptions, InconsistentDimensionOptions, InvalidTabOptions,
-    KeywordWhitespaceOptions, Options, PortabilityOptions, StringOptions,
+    KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions, StringOptions,
 };
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
@@ -217,6 +217,7 @@ pub struct Configuration {
     pub portability: Option<PortabilityOptions>,
     pub invalid_tab: Option<InvalidTabOptions>,
     pub inconsistent_dimension: Option<InconsistentDimensionOptions>,
+    pub line_too_long: Option<LineTooLongOptions>,
 }
 
 impl Configuration {
@@ -289,6 +290,7 @@ impl Configuration {
             portability: check.portability,
             invalid_tab: check.invalid_tab,
             inconsistent_dimension: check.inconsistent_dimensions,
+            line_too_long: check.line_too_long,
         }
     }
 
@@ -363,6 +365,10 @@ impl Configuration {
                     .inconsistent_dimension
                     .map(InconsistentDimensionOptions::into_settings)
                     .unwrap_or_default(),
+                line_too_long: self
+                    .line_too_long
+                    .map(LineTooLongOptions::into_settings)
+                    .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {
                 project_root: project_root.to_path_buf(),
@@ -429,6 +435,7 @@ impl Configuration {
             inconsistent_dimension: self
                 .inconsistent_dimension
                 .or(config.inconsistent_dimension),
+            line_too_long: self.line_too_long.or(config.line_too_long),
         }
     }
 }

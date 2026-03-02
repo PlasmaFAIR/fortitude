@@ -16,7 +16,7 @@ use fortitude_linter::{
         portability::{self, invalid_tab},
         style::{
             inconsistent_dimension::{self, settings::PreferAttribute},
-            keywords,
+            keywords, line_length,
             strings::{self, settings::Quote},
         },
     },
@@ -312,6 +312,14 @@ pub struct CheckOptions {
     )]
     pub line_length: Option<usize>,
 
+    /// By default disable ignore-comment-length behavior when running `fortitude`.
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "ignore-comment-length = true"
+    )]
+    pub ignore_comment_length: Option<bool>,
+
     // Tables are required to go last.
     /// A list of mappings from file pattern to rule codes or prefixes to
     /// exclude, when considering any matching files. An initial '!' negates
@@ -353,6 +361,10 @@ pub struct CheckOptions {
     /// Options for the `inconsistent-dimensions` set of rules
     #[option_group]
     pub inconsistent_dimensions: Option<InconsistentDimensionOptions>,
+
+    /// Options for the `line-too-long` rule
+    #[option_group]
+    pub line_too_long: Option<LineTooLongOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -510,6 +522,31 @@ impl InconsistentDimensionOptions {
     pub fn into_settings(self) -> inconsistent_dimension::settings::Settings {
         inconsistent_dimension::settings::Settings {
             prefer_attribute: self.prefer_attribute.unwrap_or_default(),
+        }
+    }
+}
+
+/// Options for `line-too-long` rule
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct LineTooLongOptions {
+    /// If `true`, don't take comments into account when checking if a line is
+    /// too long. This can be useful when dealing with existing codebases with
+    /// long comments, for instance, or inline comments used for other tools.
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "ignore-comments = true"
+    )]
+    pub ignore_comments: Option<bool>,
+}
+
+impl LineTooLongOptions {
+    pub fn into_settings(self) -> line_length::settings::Settings {
+        line_length::settings::Settings {
+            ignore_comments: self.ignore_comments.unwrap_or_default(),
         }
     }
 }
