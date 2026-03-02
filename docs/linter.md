@@ -103,6 +103,23 @@ $ fortitude check --fix
 
 To see which rules Fortitude can automatically fix, see [_Rules_](rules.md).
 
+You can use the `--diff` flag to see exactly what Fortitude would change:
+
+```console
+$ fortitude check --diff
+--- test.f90
++++ test.f90
+@@ -1,5 +1,6 @@
+ subroutine test()
+     use, intrinsic :: iso_fortran_env, dp => real64
+-    real(kind=dp) x, y
++    real(kind=dp) :: x, y
+
+     y = ASIN(x)
+
+Would fix 1 error.
+```
+
 ### Fix safety
 
 Another concept Fortitude borrows from Ruff is that of _fix safety_: fixes are labelled as

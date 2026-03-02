@@ -18,6 +18,7 @@ pub mod rule_selector;
 pub mod rule_table;
 pub mod rules;
 pub mod settings;
+pub mod source_kind;
 #[cfg(test)]
 mod test;
 pub mod text_helpers;
@@ -52,8 +53,9 @@ use itertools::Itertools;
 use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::SourceFile;
 use rustc_hash::FxHashMap;
+use source_kind::SourceKindDiff;
 use std::fs::File;
-use std::io::Write;
+use std::io::{self, Write};
 use std::iter::once;
 use std::path::Path;
 use std::{borrow::Cow, collections::BTreeMap};
@@ -133,8 +135,13 @@ pub fn check_file(
                         let mut out_file = File::create(path)?;
                         out_file.write_all(transformed.source_text().as_bytes())?;
                     }
-                    // TODO: diff
-                    FixMode::Diff => {}
+                    FixMode::Diff => {
+                        write!(
+                            &mut io::stdout().lock(),
+                            "{}",
+                            SourceKindDiff::new(file, &transformed, Some(path))
+                        )?;
+                    }
                     FixMode::Generate => {}
                 }
             }
