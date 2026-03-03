@@ -149,8 +149,8 @@ impl LineTooLong {
                     .map(|node| node.column)
                     .next();
 
-                if comment_column.is_some() {
-                    let (code, _) = line.split_at(comment_column.unwrap());
+                if let Some(comment_column) = comment_column {
+                    let (code, _) = line.split_at(comment_column);
                     if measure(code.trim_end(), tab_size) <= limit {
                         continue;
                     }
