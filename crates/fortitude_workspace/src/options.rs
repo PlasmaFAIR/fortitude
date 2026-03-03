@@ -574,16 +574,16 @@ pub struct UseStatementsOptions {
     #[option(
         default = "[]",
         value_type = r#"list[str]"#,
-        example = r#"allow-no-only = ["utils"]"#
+        example = r#"allow-bare-use = ["utils"]"#
     )]
-    pub allow_no_only: Option<Vec<String>>,
+    pub allow_bare_use: Option<Vec<String>>,
 }
 
 impl UseStatementsOptions {
     pub fn into_settings(self) -> use_statements::settings::Settings {
         use_statements::settings::Settings {
-            allow_no_only: self
-                .allow_no_only
+            allow_bare_use: self
+                .allow_bare_use
                 .unwrap_or_default()
                 .iter()
                 .map(|m| m.to_lowercase())

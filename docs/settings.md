@@ -925,8 +925,8 @@ Quote style to prefer for string literals (either "single" or "double").
 
 Options for the `use` statement rules
 
-#### [`allow-no-only`](#check_use-statements_allow-no-only) {: #check_use-statements_allow-no-only }
-<span id="allow-no-only"></span>
+#### [`allow-bare-use`](#check_use-statements_allow-bare-use) {: #check_use-statements_allow-bare-use }
+<span id="allow-bare-use"></span>
 
 List of exceptions to the [`use-all`](rules/use-all.md) rule.  That is, modules allowed to
 appear in a `use` statement without an `only` clause.
@@ -949,13 +949,13 @@ suppression comments](linter.md#error-suppression) such as `! allow(use-all)` in
 
     ```toml
     [extra.fortitude.check.use-statements]
-    allow-no-only = ["utils"]
+    allow-bare-use = ["utils"]
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.use-statements]
-    allow-no-only = ["utils"]
+    allow-bare-use = ["utils"]
     ```
 
 ---

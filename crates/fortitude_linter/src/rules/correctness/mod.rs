@@ -141,17 +141,17 @@ mod tests {
     }
 
     #[test]
-    fn c121_allow_no_only() -> Result<()> {
+    fn c121_allow_bare_use() -> Result<()> {
         let rule_code = Rule::UseAll;
         let path = Path::new("C121.f90");
         let snapshot = format!(
-            "{}_{}_allow_no_only",
+            "{}_{}_allow_bare_use",
             rule_code.as_ref(),
             path.to_string_lossy()
         );
         let settings = CheckSettings {
             use_statements: use_statements::settings::Settings {
-                allow_no_only: vec!["iso_c_binding".to_string()],
+                allow_bare_use: vec!["iso_c_binding".to_string()],
             },
             ..CheckSettings::for_rule(rule_code)
         };

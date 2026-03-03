@@ -22,8 +22,8 @@ code have come from, and avoids introducing many unneeded components to your
 local scope.
 
 ## Options
-- [`check.use-statements.allow-no-only`][check.use-statements.allow-no-only]
+- [`check.use-statements.allow-bare-use`][check.use-statements.allow-bare-use]
 
 
-[check.use-statements.allow-no-only]: ../settings.md#check_use-statements_allow-no-only
+[check.use-statements.allow-bare-use]: ../settings.md#check_use-statements_allow-bare-use
 

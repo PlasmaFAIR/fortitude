@@ -31,7 +31,7 @@ use tree_sitter::Node;
 /// local scope.
 ///
 /// ## Options
-/// - `check.use-statements.allow-no-only`
+/// - `check.use-statements.allow-bare-use`
 #[derive(ViolationMetadata)]
 pub(crate) struct UseAll {}
 
@@ -54,7 +54,10 @@ impl AstRule for UseAll {
             .to_text(src.source_text())?
             .to_lowercase();
 
-        if !settings.use_statements.allow_no_only.contains(&module_name)
+        if !settings
+            .use_statements
+            .allow_bare_use
+            .contains(&module_name)
             && node.child_with_name("included_items").is_none()
         {
             return some_vec![Diagnostic::from_node(UseAll {}, node)];
@@ -162,7 +165,7 @@ pub mod settings {
 
     #[derive(Debug, Clone, Default, CacheKey)]
     pub struct Settings {
-        pub allow_no_only: Vec<String>,
+        pub allow_bare_use: Vec<String>,
     }
 
     impl Display for Settings {
@@ -170,7 +173,7 @@ pub mod settings {
             display_settings! {
                 formatter = f,
                 namespace = "check.use_statements",
-                fields = [self.allow_no_only | debug]
+                fields = [self.allow_bare_use | debug]
             }
             Ok(())
         }
