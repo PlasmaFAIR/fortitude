@@ -935,6 +935,10 @@ While it is recommended to list all `use`d components in an `only` clause, this 
 occasionally be impractical for some modules. For example, if the `only` list would
 commonly be very long, or would often list all or nearly all of the module's contents.
 
+Note that this option is intended for modules that are safe to `use` without an `only`
+clause across the whole codebase.  For one-off instances, consider [inline error
+suppression comments](linter.md#error-suppression) such as `! allow(use-all)` instead.
+
 **Default value**: `[]`
 
 **Type**: `list[str]`
