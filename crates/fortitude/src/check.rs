@@ -10,8 +10,9 @@ use fortitude_linter::fs::{self, read_to_string};
 use fortitude_linter::rules::Rule;
 use fortitude_linter::rules::error::ioerror::IoError;
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
+use fortitude_linter::source_kind::SourceKindDiff;
+use fortitude_linter::warn_user_once;
 use fortitude_linter::{FixerResult, check_and_fix_file, check_file, check_only_file};
-use fortitude_linter::{warn_user_once, warn_user_once_by_message};
 
 use anyhow::Result;
 use colored::Colorize;
@@ -186,7 +187,9 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     // - By default, applicable fixes only include [`Applicablility::Automatic`], but if
     //   `--unsafe-fixes` is set, then [`Applicablility::Suggested`] fixes are included.
 
-    let fix_mode = if fix || fix_only {
+    let fix_mode = if cli.diff {
+        FixMode::Diff
+    } else if fix || fix_only {
         FixMode::Apply
     } else {
         FixMode::Generate
@@ -221,7 +224,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     };
 
     let mut printer_flags = PrinterFlags::empty();
-    if !fix_only {
+    if !(cli.diff || fix_only) {
         printer_flags |= PrinterFlags::SHOW_VIOLATIONS;
     }
     if show_fixes {
@@ -438,9 +441,15 @@ fn check_stdin(
                         let out_file = &mut io::stdout().lock();
                         out_file.write_all(transformed.source_text().as_bytes())?;
                     }
-                    // TODO: diff
                     FixMode::Diff => {
-                        warn_user_once_by_message!("Diff mode is not yet supported for stdin");
+                        // But only write a diff if it's non-empty.
+                        if !fixed.is_empty() {
+                            write!(
+                                &mut io::stdout().lock(),
+                                "{}",
+                                SourceKindDiff::new(&source_file, &transformed, filename)
+                            )?;
+                        }
                     }
                     FixMode::Generate => {}
                 }

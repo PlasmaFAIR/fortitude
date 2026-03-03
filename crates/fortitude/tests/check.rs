@@ -2372,3 +2372,44 @@ ignore = ["missing-intent"]
 
     Ok(())
 }
+
+#[test]
+fn diff_mode() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none
+  integer :: zing
+end program foo
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .args(["--select=C", "--diff", "--unsafe-fixes"])
+                         .file(&test_file)
+                         .build(),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    --- [TEMP_FILE]
+    +++ [TEMP_FILE]
+    @@ -1,5 +1,5 @@
+     
+     program foo
+    -  implicit none
+    +  implicit none (type, external)
+       integer :: zing
+     end program foo
+
+    Would fix 1 error.
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}

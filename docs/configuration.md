@@ -207,6 +207,8 @@ Options:
           Include fixes that may not retain the original intent of the code. Use `--no-unsafe-fixes` to disable
       --show-fixes
           Show an enumeration of all fixed lint violations. Use `--no-show-fixes` to disable
+      --diff
+          Avoid writing any fixed files back; instead, output a diff for each changed file to stdout, and exit 0 if there are no diffs. Implies `--fix-only`
       --fix-only
           Apply fixes to resolve lint violations, but don't report on, or exit non-zero for, leftover violations. Implies `--fix`. Use `--no-fix-only` to disable or `--unsafe-fixes` to include unsafe fixes
       --ignore-allow-comments

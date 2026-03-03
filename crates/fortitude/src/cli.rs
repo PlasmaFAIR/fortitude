@@ -177,6 +177,11 @@ pub struct CheckCommand {
     #[clap(long, overrides_with("show_fixes"), hide = true, action = SetTrue)]
     pub no_show_fixes: Option<bool>,
 
+    /// Avoid writing any fixed files back; instead, output a diff for each changed file to stdout, and exit 0 if there are no diffs.
+    /// Implies `--fix-only`.
+    #[arg(long, conflicts_with = "show_fixes")]
+    pub diff: bool,
+
     /// Apply fixes to resolve lint violations, but don't report on, or exit non-zero for, leftover violations. Implies `--fix`.
     /// Use `--no-fix-only` to disable or `--unsafe-fixes` to include unsafe fixes.
     #[arg(long, overrides_with("no_fix_only"), action = SetTrue)]
@@ -358,6 +363,7 @@ pub struct CheckCommand {
 /// etc.).
 #[expect(clippy::struct_excessive_bools)]
 pub struct CheckArguments {
+    pub diff: bool,
     pub exit_non_zero_on_fix: bool,
     pub exit_zero: bool,
     pub files: Vec<PathBuf>,
@@ -421,6 +427,7 @@ impl CheckCommand {
         global_options: GlobalConfigArgs,
     ) -> anyhow::Result<(CheckArguments, ConfigArguments)> {
         let check_arguments = CheckArguments {
+            diff: self.diff,
             exit_non_zero_on_fix: self.exit_non_zero_on_fix,
             exit_zero: self.exit_zero,
             files: self.files,
