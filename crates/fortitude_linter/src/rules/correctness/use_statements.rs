@@ -29,6 +29,9 @@ use tree_sitter::Node;
 /// This makes it easier for programmers to understand where the symbols in your
 /// code have come from, and avoids introducing many unneeded components to your
 /// local scope.
+///
+/// ## Options
+/// - `check.use-statements.allow-bare-use`
 #[derive(ViolationMetadata)]
 pub(crate) struct UseAll {}
 
@@ -41,12 +44,22 @@ impl Violation for UseAll {
 
 impl AstRule for UseAll {
     fn check(
-        _settings: &CheckSettings,
+        settings: &CheckSettings,
         node: &Node,
-        _src: &SourceFile,
+        src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        if node.child_with_name("included_items").is_none() {
+        let module_name = node
+            .child_with_name("module_name")?
+            .to_text(src.source_text())?
+            .to_lowercase();
+
+        if !settings
+            .use_statements
+            .allow_bare_use
+            .contains(&module_name)
+            && node.child_with_name("included_items").is_none()
+        {
             return some_vec![Diagnostic::from_node(UseAll {}, node)];
         }
         None
@@ -86,7 +99,7 @@ const INTRINSIC_MODULES: &[&str] = &[
     "iso_fortran_env",
     "iso_c_binding",
     "ieee_exceptions",
-    "ieee_artimetic",
+    "ieee_arithmetic",
     "ieee_features",
 ];
 
@@ -105,7 +118,7 @@ impl AstRule for MissingIntrinsic {
     fn check(
         settings: &CheckSettings,
         node: &Node,
-        _src: &SourceFile,
+        src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         // Feature only available in Fortran 2003 and later
@@ -114,13 +127,13 @@ impl AstRule for MissingIntrinsic {
         }
         let module_name = node
             .child_with_name("module_name")?
-            .to_text(_src.source_text())?
+            .to_text(src.source_text())?
             .to_lowercase();
 
         if INTRINSIC_MODULES.iter().any(|&m| m == module_name)
             && node
                 .children(&mut node.walk())
-                .filter_map(|child| child.to_text(_src.source_text()))
+                .filter_map(|child| child.to_text(src.source_text()))
                 .all(|child| child != "intrinsic" && child != "non_intrinsic")
         {
             let intrinsic = if node.child(1)?.kind() == "::" {
@@ -131,7 +144,7 @@ impl AstRule for MissingIntrinsic {
 
             let use_field = node
                 .children(&mut node.walk())
-                .find(|&child| child.to_text(_src.source_text()) == Some("use"))?;
+                .find(|&child| child.to_text(src.source_text()) == Some("use"))?;
             let start_pos = use_field.end_textsize();
             let fix = Fix::unsafe_edit(Edit::insertion(intrinsic.to_string(), start_pos));
 
@@ -142,5 +155,27 @@ impl AstRule for MissingIntrinsic {
 
     fn entrypoints() -> Vec<&'static str> {
         vec!["use_statement"]
+    }
+}
+
+pub mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub allow_bare_use: Vec<String>,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.use_statements",
+                fields = [self.allow_bare_use | debug]
+            }
+            Ok(())
+        }
     }
 }

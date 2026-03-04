@@ -921,3 +921,42 @@ Quote style to prefer for string literals (either "single" or "double").
 
 ---
 
+### `check.use-statements`
+
+Options for the `use` statement rules
+
+#### [`allow-bare-use`](#check_use-statements_allow-bare-use) {: #check_use-statements_allow-bare-use }
+<span id="allow-bare-use"></span>
+
+List of exceptions to the [`use-all`](rules/use-all.md) rule.  That is, modules allowed to
+appear in a `use` statement without an `only` clause.
+
+While it is recommended to list all `use`d components in an `only` clause, this can
+occasionally be impractical for some modules. For example, if the `only` list would
+commonly be very long, or would often list all or nearly all of the module's contents.
+
+Note that this option is intended for modules that are safe to `use` without an `only`
+clause across the whole codebase.  For one-off instances, consider [inline error
+suppression comments](linter.md#error-suppression) such as `! allow(use-all)` instead.
+
+**Default value**: `[]`
+
+**Type**: `list[str]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.use-statements]
+    allow-bare-use = ["utils"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.use-statements]
+    allow-bare-use = ["utils"]
+    ```
+
+---
+
