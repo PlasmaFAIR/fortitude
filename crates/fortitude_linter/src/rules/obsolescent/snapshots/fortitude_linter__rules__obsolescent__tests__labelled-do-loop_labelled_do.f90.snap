@@ -1,0 +1,223 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/labelled_do.f90:5:8: OB091 [*] Obsolescent labelled `do` loop
+  |
+4 |     ! No gotos, so we can autofix
+5 |     do 10 i = 1, 10
+  |        ^^ OB091
+6 |         foo(i) = i
+7 | 10  continue
+  |
+  = help: Remove `do` label
+
+ℹ Unsafe fix
+2 2 |     integer :: i, j, k, l, m, foo(10), A(10, 10), B(10, 10, 10)
+3 3 | 
+4 4 |     ! No gotos, so we can autofix
+5   |-    do 10 i = 1, 10
+  5 |+    do i = 1, 10
+6 6 |         foo(i) = i
+7   |-10  continue
+  7 |+    end do
+8 8 | 
+9 9 |     ! Has a goto which means we can't remove label on `end do`
+10 10 |     do 20 i = 1, 10
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:10:8: OB091 [*] Obsolescent labelled `do` loop
+   |
+ 9 |     ! Has a goto which means we can't remove label on `end do`
+10 |     do 20 i = 1, 10
+   |        ^^ OB091
+11 |         if (i > 5) goto 20
+12 |         foo(i) = 2 * i
+   |
+   = help: Remove `do` label
+
+ℹ Unsafe fix
+7  7  | 10  continue
+8  8  | 
+9  9  |     ! Has a goto which means we can't remove label on `end do`
+10    |-    do 20 i = 1, 10
+   10 |+    do i = 1, 10
+11 11 |         if (i > 5) goto 20
+12 12 |         foo(i) = 2 * i
+13 13 | 20  end do
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:17:8: OB091 [*] Obsolescent labelled `do` loop
+   |
+15 |     ! Has a goto which means we can't remove label on `end do`
+16 |     ! We still have to replace `continue` with `end do`
+17 |     do 25 i = 1, 10
+   |        ^^ OB091
+18 |         if (i > 5) goto 25
+19 |         foo(i) = 2 * i
+   |
+   = help: Remove `do` label
+
+ℹ Unsafe fix
+14 14 | 
+15 15 |     ! Has a goto which means we can't remove label on `end do`
+16 16 |     ! We still have to replace `continue` with `end do`
+17    |-    do 25 i = 1, 10
+   17 |+    do i = 1, 10
+18 18 |         if (i > 5) goto 25
+19 19 |         foo(i) = 2 * i
+20    |-25  continue
+   20 |+25  end do
+21 21 | 
+22 22 |     ! Doesn't end in `continue` or `end do`
+23 23 |     do 30 i = 1,10
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:23:8: OB091 [*] Obsolescent labelled `do` loop
+   |
+22 |     ! Doesn't end in `continue` or `end do`
+23 |     do 30 i = 1,10
+   |        ^^ OB091
+24 | 30  foo(i) = 3 * i
+   |
+   = help: Remove `do` label
+
+ℹ Unsafe fix
+20 20 | 25  continue
+21 21 | 
+22 22 |     ! Doesn't end in `continue` or `end do`
+23    |-    do 30 i = 1,10
+24    |-30  foo(i) = 3 * i
+   23 |+    do i = 1,10
+   24 |+    foo(i) = 3 * i
+   25 |+    end do
+25 26 | 
+26 27 |     ! Doesn't end in `continue` or `end do`
+27 28 |     ! and has arithmetic `if` so we need to keep label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:28:8: OB091 [*] Obsolescent labelled `do` loop
+   |
+26 |     ! Doesn't end in `continue` or `end do`
+27 |     ! and has arithmetic `if` so we need to keep label
+28 |     do 40 i = 1,10
+   |        ^^ OB091
+29 |     if (i - 5) 39, 39, 40
+30 | 39  continue
+   |
+   = help: Remove `do` label
+
+ℹ Unsafe fix
+25 25 | 
+26 26 |     ! Doesn't end in `continue` or `end do`
+27 27 |     ! and has arithmetic `if` so we need to keep label
+28    |-    do 40 i = 1,10
+   28 |+    do i = 1,10
+29 29 |     if (i - 5) 39, 39, 40
+30 30 | 39  continue
+31    |-40  foo(i) = 3 * i
+   31 |+    foo(i) = 3 * i
+   32 |+ 40 end do
+32 33 | 
+33 34 |     ! Shared termination
+34 35 |     do 100 i = 1,10
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:34:8: OB091 Obsolescent labelled `do` loop
+   |
+33 |     ! Shared termination
+34 |     do 100 i = 1,10
+   |        ^^^ OB091
+35 |       do 100 j = 1,10
+36 |         do 200 k = 1,10
+   |
+   = help: Remove `do` label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:35:10: OB091 Obsolescent labelled `do` loop
+   |
+33 |     ! Shared termination
+34 |     do 100 i = 1,10
+35 |       do 100 j = 1,10
+   |          ^^^ OB091
+36 |         do 200 k = 1,10
+37 |           do 200 l = 1,10
+   |
+   = help: Remove `do` label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:36:12: OB091 Obsolescent labelled `do` loop
+   |
+34 |     do 100 i = 1,10
+35 |       do 100 j = 1,10
+36 |         do 200 k = 1,10
+   |            ^^^ OB091
+37 |           do 200 l = 1,10
+38 |             do 200 m = 1,10
+   |
+   = help: Remove `do` label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:37:14: OB091 Obsolescent labelled `do` loop
+   |
+35 |       do 100 j = 1,10
+36 |         do 200 k = 1,10
+37 |           do 200 l = 1,10
+   |              ^^^ OB091
+38 |             do 200 m = 1,10
+39 |             A(i,j) = A(i,j) + B(k,l,m)
+   |
+   = help: Remove `do` label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:38:16: OB091 Obsolescent labelled `do` loop
+   |
+36 |         do 200 k = 1,10
+37 |           do 200 l = 1,10
+38 |             do 200 m = 1,10
+   |                ^^^ OB091
+39 |             A(i,j) = A(i,j) + B(k,l,m)
+40 | 200 Continue
+   |
+   = help: Remove `do` label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:43:21: OB091 [*] Obsolescent labelled `do` loop
+   |
+41 | 100 End Do
+42 |
+43 |     double_loop: do 400, i=1,10
+   |                     ^^^ OB091
+44 |       inner: do 500, j=1,10
+45 |         A(i, j) = i + j
+   |
+   = help: Remove `do` label
+
+ℹ Unsafe fix
+40 40 | 200 Continue
+41 41 | 100 End Do
+42 42 | 
+43    |-    double_loop: do 400, i=1,10
+   43 |+    double_loop: do i=1,10
+44 44 |       inner: do 500, j=1,10
+45 45 |         A(i, j) = i + j
+46 46 | 500   enddo inner
+47    |-400 enddo double_loop
+   47 |+    enddo double_loop
+48 48 | 
+49 49 |     ! This is obviously fine
+50 50 |     do i = 1, 10
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:44:17: OB091 [*] Obsolescent labelled `do` loop
+   |
+43 |     double_loop: do 400, i=1,10
+44 |       inner: do 500, j=1,10
+   |                 ^^^ OB091
+45 |         A(i, j) = i + j
+46 | 500   enddo inner
+   |
+   = help: Remove `do` label
+
+ℹ Unsafe fix
+41 41 | 100 End Do
+42 42 | 
+43 43 |     double_loop: do 400, i=1,10
+44    |-      inner: do 500, j=1,10
+   44 |+      inner: do j=1,10
+45 45 |         A(i, j) = i + j
+46    |-500   enddo inner
+   46 |+      enddo inner
+47 47 | 400 enddo double_loop
+48 48 | 
+49 49 |     ! This is obviously fine
