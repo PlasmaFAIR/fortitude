@@ -1,4 +1,4 @@
-use crate::ast::FortitudeNode;
+use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::settings::CheckSettings;
 use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode, SymbolTables};
@@ -73,62 +73,6 @@ enum LabelRefCmp {
     GreaterThanEqual,
     #[strum(serialize = ">")]
     GreaterThan,
-}
-
-#[derive(Clone, Debug)]
-enum ControlFlow {
-    Continue,
-    Cycle,
-    Exit,
-    GoTo(String),
-    Return,
-    Stop,
-}
-
-impl ControlFlow {
-    fn maybe_from(value: &Node, src: &str) -> Option<Self> {
-        if value.kind() != "keyword_statement" {
-            return None;
-        }
-        match value.child(0)?.to_text(src)?.to_ascii_lowercase().as_str() {
-            "continue" => Some(Self::Continue),
-            "cycle" => Some(Self::Cycle),
-            "exit" => Some(Self::Exit),
-            "return" => Some(Self::Return),
-            "stop" => Some(Self::Stop),
-            "error" => Some(Self::Stop),
-            keyword => Self::parse_goto(keyword, value, src),
-        }
-    }
-
-    fn parse_goto(keyword: &str, value: &Node, src: &str) -> Option<Self> {
-        if !matches!(keyword, "go" | "goto") {
-            return None;
-        }
-
-        // We expect either `go to N` or `goto N`.
-        // Don't bother with assigned or computed gotos for now
-        let expected_ref_index = if keyword == "go" { 2 } else { 1 };
-        if value.child_count() > expected_ref_index + 1 {
-            return None;
-        }
-
-        Some(Self::GoTo(
-            value.child(expected_ref_index)?.to_text(src)?.to_string(),
-        ))
-    }
-}
-
-#[derive(Clone, Debug)]
-struct ControlFlowNode<'a> {
-    control_flow: ControlFlow,
-    node: Node<'a>,
-}
-
-impl<'a> ControlFlowNode<'a> {
-    fn maybe_from(node: Node<'a>, src: &str) -> Option<Self> {
-        ControlFlow::maybe_from(&node, src).map(|control_flow| Self { control_flow, node })
-    }
 }
 
 /// There are either 2 or 3 distinct labels, and the transformed `if` can have
@@ -263,34 +207,27 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
     let third = third.unwrap();
 
     // Node that ends the first block
-    let end_first = ControlFlowNode::maybe_from(second.0.prev_non_comment_sibling()?, src);
+    let end_first = second
+        .0
+        .prev_non_comment_sibling()?
+        .try_to_controlflow(source);
     // Node that ends the second block
-    let end_second = ControlFlowNode::maybe_from(third.0.prev_non_comment_sibling()?, src);
+    let end_second = third
+        .0
+        .prev_non_comment_sibling()?
+        .try_to_controlflow(source);
 
     debug!("end_first = {end_first:?}");
     debug!("end_second = {end_second:?}");
 
     // If they're both gotos, then they better point to the same place
-    if let (
-        Some(ControlFlowNode {
-            control_flow: flow1,
-            node: _,
-        }),
-        Some(ControlFlowNode {
-            control_flow: flow2,
-            node: _,
-        }),
-    ) = (&end_first, &end_second)
+    if let (Some(end_first), Some(end_second)) = (&end_first, &end_second)
+        && let Some(first_ref) = end_first.goto_ref()
+        && let Some(second_ref) = end_second.goto_ref()
+        && first_ref != second_ref
     {
-        if let ControlFlow::GoTo(first_ref) = flow1
-            && let ControlFlow::GoTo(second_ref) = flow2
-            && first_ref != second_ref
-        {
-            debug!(
-                "** Can't fix because gotos point to different places: {first_ref} != {second_ref}"
-            );
-            return None;
-        }
+        debug!("** Can't fix because gotos point to different places: {first_ref} != {second_ref}");
+        return None;
     }
 
     // This is the node that should be replaced with `end if`. It's either the
@@ -298,13 +235,13 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
     // target -- or we can't fix this `if`
     let end_if_node = if let Some(final_block_last_node) = end_second {
         // Second block ends in a goto, so find its target
-        match final_block_last_node.control_flow {
-            ControlFlow::GoTo(ref_) => second.0.next_statement_label_sibling(ref_, src),
+        match final_block_last_node.goto_ref() {
+            Some(ref_) => second.0.next_statement_label_sibling(ref_, src),
             _ => Some(third.0),
         }
     } else if let Some(end_first) = end_first {
-        match end_first.control_flow {
-            ControlFlow::GoTo(ref_) => {
+        match end_first.goto_ref() {
+            Some(ref_) => {
                 // First block ends in a goto that points to the third target
                 if ref_ == third.0.to_text(src)? {
                     Some(third.0)
@@ -398,13 +335,11 @@ fn start_of_replacement(node: &Node, src: &str, base_indentation: &str) -> (Text
 /// Find where we need to replace upto, and what whitespace is needed
 fn end_of_replacement(node: &Node, src: &str, base_indentation: &str) -> (TextSize, String) {
     let next_node = node.next_sibling().unwrap();
-    if let Some(ControlFlowNode {
-        control_flow: ControlFlow::Continue,
-        node,
-    }) = ControlFlowNode::maybe_from(next_node, src)
+    if let Some(control) = ControlFlowNode::maybe_from(next_node, src)
+        && control.control_flow().is_continue()
     {
         // We've got a `continue` node that we can eat up to the end of
-        (node.end_textsize(), "".to_string())
+        (control.node().end_textsize(), "".to_string())
     } else {
         (next_node.start_textsize(), format!("\n{base_indentation}"))
     }

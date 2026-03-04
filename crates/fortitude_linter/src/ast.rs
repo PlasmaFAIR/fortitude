@@ -4,6 +4,7 @@ pub mod types;
 use ruff_diagnostics::Edit;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
+use strum_macros::EnumIs;
 /// Contains methods to parse Fortran code into a tree-sitter Tree and utilities to simplify the
 /// navigation of a Tree.
 use tree_sitter::{Node, TreeCursor};
@@ -153,6 +154,9 @@ pub trait FortitudeNode<'tree> {
 
     /// Get the next matching statement label
     fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree>>;
+
+    /// Convert node to a `ControlFlowNode` if possible
+    fn try_to_controlflow(self, source_file: &SourceFile) -> Option<ControlFlowNode<'tree>>;
 }
 
 impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
@@ -347,6 +351,10 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         }
         None
     }
+
+    fn try_to_controlflow(self, source_file: &SourceFile) -> Option<ControlFlowNode<'tree1>> {
+        ControlFlowNode::maybe_from(self, source_file.source_text())
+    }
 }
 
 /// Strip line breaks from a string of Fortran code.
@@ -361,4 +369,77 @@ pub fn dtype_is_plain_number(dtype: &str) -> bool {
         dtype.to_lowercase().as_str(),
         "integer" | "real" | "logical" | "complex"
     )
+}
+
+/// A control flow keyword
+#[derive(Clone, Debug, EnumIs)]
+pub enum ControlFlow {
+    Continue,
+    Cycle,
+    Exit,
+    GoTo(String),
+    Return,
+    Stop,
+}
+
+impl ControlFlow {
+    pub fn maybe_from(value: &Node, src: &str) -> Option<Self> {
+        if value.kind() != "keyword_statement" {
+            return None;
+        }
+        match value.child(0)?.to_text(src)?.to_ascii_lowercase().as_str() {
+            "continue" => Some(Self::Continue),
+            "cycle" => Some(Self::Cycle),
+            "exit" => Some(Self::Exit),
+            "return" => Some(Self::Return),
+            "stop" => Some(Self::Stop),
+            "error" => Some(Self::Stop),
+            keyword => Self::parse_goto(keyword, value, src),
+        }
+    }
+
+    fn parse_goto(keyword: &str, value: &Node, src: &str) -> Option<Self> {
+        if !matches!(keyword, "go" | "goto") {
+            return None;
+        }
+
+        // We expect either `go to N` or `goto N`.
+        // Don't bother with assigned or computed gotos for now
+        let expected_ref_index = if keyword == "go" { 2 } else { 1 };
+        if value.child_count() > expected_ref_index + 1 {
+            return None;
+        }
+
+        Some(Self::GoTo(
+            value.child(expected_ref_index)?.to_text(src)?.to_string(),
+        ))
+    }
+}
+
+/// A control flow node
+#[derive(Clone, Debug)]
+pub struct ControlFlowNode<'a> {
+    control_flow: ControlFlow,
+    node: Node<'a>,
+}
+
+impl<'a> ControlFlowNode<'a> {
+    pub fn maybe_from(node: Node<'a>, src: &str) -> Option<Self> {
+        ControlFlow::maybe_from(&node, src).map(|control_flow| Self { control_flow, node })
+    }
+
+    pub fn goto_ref(&'a self) -> Option<&'a str> {
+        match self.control_flow {
+            ControlFlow::GoTo(ref ref_) => Some(ref_),
+            _ => None,
+        }
+    }
+
+    pub fn control_flow(&self) -> ControlFlow {
+        self.control_flow.clone()
+    }
+
+    pub fn node(&'a self) -> Node<'a> {
+        self.node
+    }
 }
