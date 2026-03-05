@@ -1,0 +1,44 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB071.f90:7:1: OB071 `forall` statements are obsolescent in F2018, prefer `do concurrent` instead
+  |
+5 | INTEGER :: I, J
+6 |
+7 | FORALL(I = 1:N, J = 1:N, A(I, J) .NE. 0.0) B(I, J) = 1.0 / A(I, J)
+  | ^^^^^^ OB071
+8 |
+9 | FORALL(J=1:8)  PATTERN(J)%P => OBJECT(1+IEOR(J-1,2))
+  |
+  = help: Use `do concurrent` instead
+
+./resources/test/fixtures/obsolescent/OB071.f90:9:1: OB071 `forall` statements are obsolescent in F2018, prefer `do concurrent` instead
+  |
+7 | FORALL(I = 1:N, J = 1:N, A(I, J) .NE. 0.0) B(I, J) = 1.0 / A(I, J)
+8 |
+9 | FORALL(J=1:8)  PATTERN(J)%P => OBJECT(1+IEOR(J-1,2))
+  | ^^^^^^ OB071
+  |
+  = help: Use `do concurrent` instead
+
+./resources/test/fixtures/obsolescent/OB071.f90:12:1: OB071 `forall` statements are obsolescent in F2018, prefer `do concurrent` instead
+   |
+12 | FORALL (I = 1:N, J = 1:N)
+   | ^^^^^^ OB071
+13 |   WHERE(A(I, J) .NE. 0.0) B(I, J) = 1.0/A(I, J)
+14 | END FORALL
+   |
+   = help: Use `do concurrent` instead
+
+./resources/test/fixtures/obsolescent/OB071.f90:16:1: OB071 `forall` statements are obsolescent in F2018, prefer `do concurrent` instead
+   |
+14 | END FORALL
+15 |
+16 | FORALL(I = 3:N + 1, J = 3:N + 1, A(I, J) > 0.0)
+   | ^^^^^^ OB071
+17 |   C(I, J) = C(I, J + 2) + C(I, J - 2) + C(I + 2, J) + C(I - 2, J)
+18 |   D(I, J) = C(I, J)
+   |
+   = help: Use `do concurrent` instead
