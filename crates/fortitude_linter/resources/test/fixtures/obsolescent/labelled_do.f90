@@ -40,6 +40,10 @@ program test
 200 Continue
 100 End Do
 
+    do 300, i = 1, 10
+      do 300, j = 1,10
+    300 A(j, i) = i * j
+
     double_loop: do 400, i=1,10
       inner: do 500, j=1,10
         A(i, j) = i + j

@@ -173,51 +173,71 @@ snapshot_kind: text
    |
    = help: Remove `do` label
 
-./resources/test/fixtures/obsolescent/labelled_do.f90:43:21: OB091 [*] Obsolescent labelled `do` loop
+./resources/test/fixtures/obsolescent/labelled_do.f90:43:8: OB091 Obsolescent labelled `do` loop
    |
 41 | 100 End Do
 42 |
-43 |     double_loop: do 400, i=1,10
+43 |     do 300, i = 1, 10
+   |        ^^^ OB091
+44 |       do 300, j = 1,10
+45 |     300 A(j, i) = i * j
+   |
+   = help: Remove `do` label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:44:10: OB091 Obsolescent labelled `do` loop
+   |
+43 |     do 300, i = 1, 10
+44 |       do 300, j = 1,10
+   |          ^^^ OB091
+45 |     300 A(j, i) = i * j
+   |
+   = help: Remove `do` label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:47:21: OB091 [*] Obsolescent labelled `do` loop
+   |
+45 |     300 A(j, i) = i * j
+46 |
+47 |     double_loop: do 400, i=1,10
    |                     ^^^ OB091
-44 |       inner: do 500, j=1,10
-45 |         A(i, j) = i + j
+48 |       inner: do 500, j=1,10
+49 |         A(i, j) = i + j
    |
    = help: Remove `do` label
 
 ℹ Unsafe fix
-40 40 | 200 Continue
-41 41 | 100 End Do
-42 42 | 
-43    |-    double_loop: do 400, i=1,10
-   43 |+    double_loop: do i=1,10
-44 44 |       inner: do 500, j=1,10
-45 45 |         A(i, j) = i + j
-46 46 | 500   enddo inner
-47    |-400 enddo double_loop
-   47 |+    enddo double_loop
-48 48 | 
-49 49 |     ! This is obviously fine
-50 50 |     do i = 1, 10
+44 44 |       do 300, j = 1,10
+45 45 |     300 A(j, i) = i * j
+46 46 | 
+47    |-    double_loop: do 400, i=1,10
+   47 |+    double_loop: do i=1,10
+48 48 |       inner: do 500, j=1,10
+49 49 |         A(i, j) = i + j
+50 50 | 500   enddo inner
+51    |-400 enddo double_loop
+   51 |+    enddo double_loop
+52 52 | 
+53 53 |     ! This is obviously fine
+54 54 |     do i = 1, 10
 
-./resources/test/fixtures/obsolescent/labelled_do.f90:44:17: OB091 [*] Obsolescent labelled `do` loop
+./resources/test/fixtures/obsolescent/labelled_do.f90:48:17: OB091 [*] Obsolescent labelled `do` loop
    |
-43 |     double_loop: do 400, i=1,10
-44 |       inner: do 500, j=1,10
+47 |     double_loop: do 400, i=1,10
+48 |       inner: do 500, j=1,10
    |                 ^^^ OB091
-45 |         A(i, j) = i + j
-46 | 500   enddo inner
+49 |         A(i, j) = i + j
+50 | 500   enddo inner
    |
    = help: Remove `do` label
 
 ℹ Unsafe fix
-41 41 | 100 End Do
-42 42 | 
-43 43 |     double_loop: do 400, i=1,10
-44    |-      inner: do 500, j=1,10
-   44 |+      inner: do j=1,10
-45 45 |         A(i, j) = i + j
-46    |-500   enddo inner
-   46 |+      enddo inner
-47 47 | 400 enddo double_loop
-48 48 | 
-49 49 |     ! This is obviously fine
+45 45 |     300 A(j, i) = i * j
+46 46 | 
+47 47 |     double_loop: do 400, i=1,10
+48    |-      inner: do 500, j=1,10
+   48 |+      inner: do j=1,10
+49 49 |         A(i, j) = i + j
+50    |-500   enddo inner
+   50 |+      enddo inner
+51 51 | 400 enddo double_loop
+52 52 | 
+53 53 |     ! This is obviously fine

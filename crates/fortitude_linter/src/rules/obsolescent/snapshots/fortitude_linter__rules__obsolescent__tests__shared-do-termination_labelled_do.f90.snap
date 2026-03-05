@@ -1,0 +1,78 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/labelled_do.f90:40:1: OB092 [*] Shared `do` loop termination
+   |
+38 |             do 200 m = 1,10
+39 |             A(i,j) = A(i,j) + B(k,l,m)
+40 | 200 Continue
+   | ^^^^^^^^^^^^ OB092
+41 | 100 End Do
+   |
+   = help: Add `end do` statement
+
+ℹ Safe fix
+35 35 |       do 100 j = 1,10
+36 36 |         do 200 k = 1,10
+37 37 |           do 200 l = 1,10
+38    |-            do 200 m = 1,10
+   38 |+            do m = 1,10
+39 39 |             A(i,j) = A(i,j) + B(k,l,m)
+   40 |+            end do
+40 41 | 200 Continue
+41 42 | 100 End Do
+42 43 | 
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:41:1: OB092 [*] Shared `do` loop termination
+   |
+39 |             A(i,j) = A(i,j) + B(k,l,m)
+40 | 200 Continue
+41 | 100 End Do
+   | ^^^^^^^^^^ OB092
+42 |
+43 |     do 300, i = 1, 10
+   |
+   = help: Add `end do` statement
+
+ℹ Safe fix
+32 32 | 
+33 33 |     ! Shared termination
+34 34 |     do 100 i = 1,10
+35    |-      do 100 j = 1,10
+   35 |+      do j = 1,10
+36 36 |         do 200 k = 1,10
+37 37 |           do 200 l = 1,10
+38 38 |             do 200 m = 1,10
+39 39 |             A(i,j) = A(i,j) + B(k,l,m)
+40 40 | 200 Continue
+   41 |+      end do
+41 42 | 100 End Do
+42 43 | 
+43 44 |     do 300, i = 1, 10
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:45:5: OB092 [*] Shared `do` loop termination
+   |
+43 |     do 300, i = 1, 10
+44 |       do 300, j = 1,10
+45 |     300 A(j, i) = i * j
+   |     ^^^^^^^^^^^^^^^^^^^ OB092
+46 |
+47 |     double_loop: do 400, i=1,10
+   |
+   = help: Add `end do` statement
+
+ℹ Safe fix
+41 41 | 100 End Do
+42 42 | 
+43 43 |     do 300, i = 1, 10
+44    |-      do 300, j = 1,10
+45    |-    300 A(j, i) = i * j
+   44 |+      do j = 1,10
+   45 |+        A(j, i) = i * j
+   46 |+      end do
+   47 |+ 300 end do
+46 48 | 
+47 49 |     double_loop: do 400, i=1,10
+48 50 |       inner: do 500, j=1,10
