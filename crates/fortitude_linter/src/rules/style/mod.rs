@@ -9,6 +9,7 @@ pub mod keywords;
 pub mod line_length;
 pub(crate) mod semicolons;
 pub mod strings;
+pub mod too_complex;
 pub mod useless_return;
 pub(crate) mod whitespace;
 
@@ -24,7 +25,9 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
-    use crate::rules::style::{inconsistent_dimension, keywords, line_length, strings};
+    use crate::rules::style::{
+        inconsistent_dimension, keywords, line_length, strings, too_complex,
+    };
     use crate::settings::CheckSettings;
     use crate::test::test_path;
 
@@ -210,6 +213,20 @@ mod tests {
 
         let settings = CheckSettings {
             inconsistent_dimension: inconsistent_dimension::settings::Settings { prefer_attribute },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Rule::TooComplex, Path::new("S901.f90"))]
+    fn too_complex_threshold_5(rule_code: Rule, path: &Path) -> Result<()> {
+        let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+
+        let settings = CheckSettings {
+            too_complex: too_complex::settings::Settings { max_complexity: 5 },
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;

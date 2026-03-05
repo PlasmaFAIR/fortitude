@@ -18,6 +18,7 @@ use fortitude_linter::{
             inconsistent_dimension::{self, settings::PreferAttribute},
             keywords, line_length,
             strings::{self, settings::Quote},
+            too_complex,
         },
     },
     settings::{FortranStandard, OutputFormat, ProgressBar},
@@ -369,6 +370,10 @@ pub struct CheckOptions {
     /// Options for the `use-all` set of rules
     #[option_group]
     pub use_statements: Option<UseStatementsOptions>,
+
+    /// Options for the `too_complex` rule
+    #[option_group]
+    pub too_complex: Option<TooComplexOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -588,6 +593,26 @@ impl UseStatementsOptions {
                 .iter()
                 .map(|m| m.to_lowercase())
                 .collect(),
+        }
+    }
+}
+
+/// Options for `too-complex` rule
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct TooComplexOptions {
+    /// The maximum cyclomatic complexity allowed for a procedure.
+    /// Procedures exceeding this threshold will be flagged.
+    #[option(default = "10", value_type = "usize", example = "max-complexity = 15")]
+    pub max_complexity: Option<usize>,
+}
+
+impl TooComplexOptions {
+    pub fn into_settings(self) -> too_complex::settings::Settings {
+        too_complex::settings::Settings {
+            max_complexity: self.max_complexity.unwrap_or(10usize),
         }
     }
 }

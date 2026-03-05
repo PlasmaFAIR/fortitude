@@ -1,0 +1,112 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/style/S901.f90:1:1: S901 cyclomatic complexity of 6, exceeds maximum 5
+  |
+1 | program test_program_too_complex ! should trigger
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+2 |   implicit none(external, type)
+3 |   real :: x
+  |
+
+./resources/test/fixtures/style/S901.f90:27:3: S901 cyclomatic complexity of 6, exceeds maximum 5
+   |
+25 |   end subroutine test_simple
+26 |
+27 |   subroutine inline_ifs(x, a, b, c, d, e) ! should trigger
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+28 |     real, intent(in) :: x
+29 |     integer, intent(out) :: a, b, c, d, e
+   |
+
+./resources/test/fixtures/style/S901.f90:54:3: S901 cyclomatic complexity of 8, exceeds maximum 5
+   |
+52 |   end subroutine test_loops
+53 |
+54 |   subroutine test_nested_loops_complex(n, m, arr, result, flag) ! should trigger
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+55 |     integer, intent(in) :: n, m, flag
+56 |     real, intent(in) :: arr(n, m)
+   |
+
+./resources/test/fixtures/style/S901.f90:82:3: S901 cyclomatic complexity of 7, exceeds maximum 5
+   |
+80 |   end subroutine test_nested_loops_complex
+81 |
+82 |   subroutine test_too_complex(x, y) ! should trigger
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+83 |     real, intent(in) :: x
+84 |     integer, intent(out) :: y
+   |
+
+./resources/test/fixtures/style/S901.f90:116:3: S901 cyclomatic complexity of 6, exceeds maximum 5
+    |
+114 |   end subroutine test_simple_enough
+115 |
+116 |   integer function test_function(x, threshold, scale, offset, flag) ! should trigger
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+117 |     real, intent(in) :: x, threshold, scale, offset
+118 |     integer, intent(in) :: flag
+    |
+
+./resources/test/fixtures/style/S901.f90:138:3: S901 cyclomatic complexity of 7, exceeds maximum 5
+    |
+136 |   end function test_function
+137 |
+138 |   subroutine test_where(n, x, y, z, w, v) ! should trigger
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+139 |     integer, intent(in) :: n
+140 |     real, intent(inout) :: x(n), y(n), z(n), w(n), v(n)
+    |
+
+./resources/test/fixtures/style/S901.f90:158:3: S901 cyclomatic complexity of 7, exceeds maximum 5
+    |
+156 |   end subroutine test_where
+157 |
+158 |   subroutine test_do_loops(n, m, p, arr) ! should trigger
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+159 |     integer, intent(in) :: n, m, p
+160 |     real, intent(inout) :: arr(n, m, p)
+    |
+
+./resources/test/fixtures/style/S901.f90:179:3: S901 cyclomatic complexity of 7, exceeds maximum 5
+    |
+177 |   end subroutine test_do_loops
+178 |
+179 |   subroutine test_do_while(x, y, z, w, tol) ! should trigger
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+180 |     real, intent(inout) :: x, y, z, w
+181 |     real, intent(in) :: tol
+    |
+
+./resources/test/fixtures/style/S901.f90:198:3: S901 cyclomatic complexity of 6, exceeds maximum 5
+    |
+196 |   end subroutine test_do_while
+197 |
+198 |   subroutine test_select_case(x, y, z, w, tol) ! should trigger
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+199 |     CHARACTER(LEN=4) :: Title
+200 |     INTEGER, save :: DrMD = 0, PhD = 0, MS = 0, BS = 0, MR = 0, Others = 0
+    |
+
+./resources/test/fixtures/style/S901.f90:217:3: S901 cyclomatic complexity of 10, exceeds maximum 5
+    |
+215 |   end subroutine test_select_case
+216 |
+217 |   subroutine test_logical_expression(a, b, c, d, e, f, g, h, i, x) ! should trigger
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S901
+218 |     real, intent(in) :: a, b, c, d, e, f, g, h, i
+219 |     integer, intent(out) :: x
+    |
+
+./resources/test/fixtures/style/S901.f90:232:3: S901 cyclomatic complexity of 14, exceeds maximum 5
+    |
+231 |     !! Full test example, should trigger
+232 | /   subroutine classify_orbit(semi_major, eccentricity, inclination, &
+233 | |                             period, body_mass, orbit_type, stability)
+    | |______________________________________________________________________^ S901
+234 |       real, intent(in)               :: semi_major, eccentricity
+235 |       real, intent(in)               :: inclination, period, body_mass
+236 |       character(len=20), intent(out) :: orbit_type
+    |
