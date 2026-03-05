@@ -1,0 +1,59 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/labelled_do.f90:24:5: OB093 [*] `do` termination is not `end do` or `continue`
+   |
+22 |     ! Doesn't end in `continue` or `end do`
+23 |     do 30 i = 1,10
+24 | 30  foo(i) = 3 * i
+   |     ^^^^^^^^^^^^^^ OB093
+25 |
+26 |     ! Doesn't end in `continue` or `end do`
+   |
+   = help: Add `end do` statement
+
+ℹ Safe fix
+21 21 | 
+22 22 |     ! Doesn't end in `continue` or `end do`
+23 23 |     do 30 i = 1,10
+24    |-30  foo(i) = 3 * i
+   24 |+    foo(i) = 3 * i
+   25 |+ 30 end do
+25 26 | 
+26 27 |     ! Doesn't end in `continue` or `end do`
+27 28 |     ! and has arithmetic `if` so we need to keep label
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:31:5: OB093 [*] `do` termination is not `end do` or `continue`
+   |
+29 |     if (i - 5) 39, 39, 40
+30 | 39  continue
+31 | 40  foo(i) = 3 * i
+   |     ^^^^^^^^^^^^^^ OB093
+32 |
+33 |     ! Shared termination
+   |
+   = help: Add `end do` statement
+
+ℹ Safe fix
+28 28 |     do 40 i = 1,10
+29 29 |     if (i - 5) 39, 39, 40
+30 30 | 39  continue
+31    |-40  foo(i) = 3 * i
+   31 |+    foo(i) = 3 * i
+   32 |+ 40 end do
+32 33 | 
+33 34 |     ! Shared termination
+34 35 |     do 100 i = 1,10
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:45:9: OB093 `do` termination is not `end do` or `continue`
+   |
+43 |     do 300, i = 1, 10
+44 |       do 300, j = 1,10
+45 |     300 A(j, i) = i * j
+   |         ^^^^^^^^^^^^^^^ OB093
+46 |
+47 |     double_loop: do 400, i=1,10
+   |
+   = help: Add `end do` statement

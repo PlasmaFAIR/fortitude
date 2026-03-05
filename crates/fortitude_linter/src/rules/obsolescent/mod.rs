@@ -41,6 +41,7 @@ mod tests {
     #[test_case(Rule::ArithmeticIf, Path::new("OB081.f90"))]
     #[test_case(Rule::LabelledDoLoop, Path::new("labelled_do.f90"))]
     #[test_case(Rule::SharedDoTermination, Path::new("labelled_do.f90"))]
+    #[test_case(Rule::BadDoTermination, Path::new("labelled_do.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
