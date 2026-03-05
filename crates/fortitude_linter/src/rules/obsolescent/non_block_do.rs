@@ -142,6 +142,80 @@ impl AstRule for SharedDoTermination {
     }
 }
 
+/// ## What it does
+/// Checks for `do` loops that don't end with `end do` or `continue`.
+///
+/// ## Why is this bad?
+/// Until the Fortran 2018 standard, labelled `do` loops were allowed to end in
+/// any executable "action" statement. This makes the code more bugprone and
+/// challenging to understand.
+///
+/// ## Example
+/// ```f90
+///     do 10 i = 1, 10
+/// 10  foo(i) = i
+/// ```
+///
+/// Use instead:
+/// ```f90
+///    do i = 1, 10
+///      foo(i) = i
+///    end do
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct BadDoTermination;
+
+impl Violation for BadDoTermination {
+    const FIX_AVAILABILITY: FixAvailability = FixAvailability::Sometimes;
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "`do` termination is not `end do` or `continue`".to_string()
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        Some("Add `end do` statement".to_string())
+    }
+}
+
+impl AstRule for BadDoTermination {
+    fn check<'a>(
+        _settings: &CheckSettings,
+        node: &'a Node,
+        source: &'a SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
+        let end_do_label = node.child_by_field_name("do_label")?;
+        // Don't catch shared termination
+        if end_do_label.kind() == "do_label_virtual" {
+            return None;
+        }
+        let end_action = end_do_label.next_sibling()?;
+
+        let mut diagnostics = Vec::new();
+
+        let src = source.source_text();
+
+        match end_action.kind() {
+            "end" | "enddo" => (),
+            "keyword_statement" if ControlFlow::maybe_from(&end_action, src)?.is_continue() => (),
+            _ => {
+                let mut diagnostic = Diagnostic::from_node(Self {}, &end_action);
+                if let Some(fix) = fix_bad_do_termination(node, &end_action, &end_do_label, source)
+                {
+                    diagnostic.set_fix(fix);
+                }
+
+                diagnostics.push(diagnostic);
+            }
+        }
+
+        Some(diagnostics)
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["end_do_label_loop_statement"]
+    }
+}
 
 // Include whitespace and optional trailing comma
 fn edit_remove_label(label_node: &Node) -> Option<Edit> {
@@ -156,9 +230,7 @@ fn fix_labelled_do(do_loop: &Node, label_node: &Node, source: &SourceFile) -> Op
     debug!("label_ref = {label_ref:?}");
 
     // 0. check if shared termination label -> bail
-    if do_loop.named_descendants().any(|child| {
-        child.kind() == "do_label_virtual" && child.to_text(src).unwrap_or_default() == label_ref
-    }) {
+    if loop_has_shared_termination(do_loop, label_ref, src) {
         debug!("** Can't fix, has shared termination");
         return None;
     }
