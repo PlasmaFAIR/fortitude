@@ -77,10 +77,10 @@ end subroutine classify
 ```
 
 ## Options
-- [`check.too-complex.max-complexity`][check.too-complex.max-complexity]
+- [`check.complexity.max-complexity`][check.complexity.max-complexity]
 
 ## References
 - [Wikipedia: Cyclomatic complexity](https://en.wikipedia.org/wiki/Cyclomatic_complexity)
 
-[check.too-complex.max-complexity]: ../settings.md#check_too-complex_max-complexity
+[check.complexity.max-complexity]: ../settings.md#check_complexity_max-complexity
 

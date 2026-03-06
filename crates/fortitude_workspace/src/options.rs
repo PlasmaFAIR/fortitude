@@ -15,10 +15,10 @@ use fortitude_linter::{
         correctness::{exit_labels, use_statements},
         portability::{self, invalid_tab},
         style::{
+            complexity,
             inconsistent_dimension::{self, settings::PreferAttribute},
             keywords, line_length,
             strings::{self, settings::Quote},
-            too_complex,
         },
     },
     settings::{FortranStandard, OutputFormat, ProgressBar},
@@ -367,13 +367,13 @@ pub struct CheckOptions {
     #[option_group]
     pub line_too_long: Option<LineTooLongOptions>,
 
-    /// Options for the `use-all` set of rules
+    /// Options for rules related to the `use` statement, such as `use-all`.
     #[option_group]
     pub use_statements: Option<UseStatementsOptions>,
 
-    /// Options for the `too_complex` rule
+    /// Options for rules related to code complexity, such as `too-complex`, `too-many-arguments`, `too-many-`.
     #[option_group]
-    pub too_complex: Option<TooComplexOptions>,
+    pub complexity: Option<ComplexityOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -602,16 +602,16 @@ impl UseStatementsOptions {
     Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
 )]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct TooComplexOptions {
+pub struct ComplexityOptions {
     /// The maximum cyclomatic complexity allowed for a procedure.
     /// Procedures exceeding this threshold will be flagged.
     #[option(default = "10", value_type = "usize", example = "max-complexity = 15")]
     pub max_complexity: Option<usize>,
 }
 
-impl TooComplexOptions {
-    pub fn into_settings(self) -> too_complex::settings::Settings {
-        too_complex::settings::Settings {
+impl ComplexityOptions {
+    pub fn into_settings(self) -> complexity::settings::Settings {
+        complexity::settings::Settings {
             max_complexity: self.max_complexity.unwrap_or(10usize),
         }
     }

@@ -83,7 +83,7 @@ use tree_sitter::Node;
 /// ```
 ///
 /// ## Options
-/// - `check.too-complex.max-complexity`
+/// - `check.complexity.max-complexity`
 ///
 /// ## References
 /// - [Wikipedia: Cyclomatic complexity](https://en.wikipedia.org/wiki/Cyclomatic_complexity)
@@ -113,7 +113,7 @@ impl AstRule for TooComplex {
     ) -> Option<Vec<Diagnostic>> {
         let procedure_stmt = node.named_child(0)?;
         let actual_complexity = cyclomatic_complexity(node);
-        let max_complexity = settings.too_complex.max_complexity;
+        let max_complexity = settings.complexity.max_complexity;
 
         if actual_complexity > max_complexity {
             return some_vec![Diagnostic::from_node(
@@ -185,7 +185,7 @@ pub mod settings {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             display_settings! {
                 formatter = f,
-                namespace = "check.too-complex",
+                namespace = "check.complexity",
                 fields = [self.max_complexity]
             }
             Ok(())
