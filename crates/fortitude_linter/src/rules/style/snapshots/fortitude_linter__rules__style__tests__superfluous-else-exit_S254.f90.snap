@@ -3,7 +3,7 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S254.f90:22:9: S254 Unecessary else-if after `exit` statement
+./resources/test/fixtures/style/S254.f90:22:9: S254 [*] Unecessary else-if after `exit` statement
    |
 20 |     do i = 1, a
 21 |       if ((i - b) < 0) then
@@ -12,8 +12,20 @@ snapshot_kind: text
 23 |       else if ((i - b) > 10) then
 24 |         exit
    |
+   = help: Remove unnecessary 'else-if'
 
-./resources/test/fixtures/style/S254.f90:24:9: S254 Unecessary else after `exit` statement
+ℹ Safe fix
+20 20 |     do i = 1, a
+21 21 |       if ((i - b) < 0) then
+22 22 |         exit
+23    |-      else if ((i - b) > 10) then
+   23 |+      end if
+   24 |+      if ((i - b) > 10) then
+24 25 |         exit
+25 26 |       else
+26 27 |         capped_sub = capped_sub - b
+
+./resources/test/fixtures/style/S254.f90:24:9: S254 [*] Unecessary else after `exit` statement
    |
 22 |         exit
 23 |       else if ((i - b) > 10) then
@@ -22,8 +34,22 @@ snapshot_kind: text
 25 |       else
 26 |         capped_sub = capped_sub - b
    |
+   = help: Remove unnecessary 'else'
 
-./resources/test/fixtures/style/S254.f90:38:9: S254 Unecessary else after `exit` statement
+ℹ Safe fix
+22 22 |         exit
+23 23 |       else if ((i - b) > 10) then
+24 24 |         exit
+25    |-      else
+26    |-        capped_sub = capped_sub - b
+27 25 |       end if
+   26 |+
+   27 |+      capped_sub = capped_sub - b
+28 28 |     end do
+29 29 |   end function capped_sub
+30 30 |       
+
+./resources/test/fixtures/style/S254.f90:38:9: S254 [*] Unecessary else after `exit` statement
    |
 36 |     label: do i = 1, a
 37 |       if ((a * b) > 100) then
@@ -32,3 +58,17 @@ snapshot_kind: text
 39 |       else
 40 |         capped_mult = capped_mult * b
    |
+   = help: Remove unnecessary 'else'
+
+ℹ Safe fix
+36 36 |     label: do i = 1, a
+37 37 |       if ((a * b) > 100) then
+38 38 |         exit label
+39    |-      else
+40    |-        capped_mult = capped_mult * b
+41 39 |       end if
+   40 |+
+   41 |+      capped_mult = capped_mult * b
+42 42 |     end do label
+43 43 |   end function capped_mult
+44 44 |
