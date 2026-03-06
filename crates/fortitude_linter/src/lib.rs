@@ -19,6 +19,7 @@ pub mod rule_table;
 pub mod rules;
 pub mod settings;
 pub mod source_kind;
+pub mod stylist;
 #[cfg(test)]
 mod test;
 pub mod text_helpers;
