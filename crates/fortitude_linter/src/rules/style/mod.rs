@@ -224,7 +224,27 @@ mod tests {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
 
         let settings = CheckSettings {
-            complexity: complexity::settings::Settings { max_complexity: 5 },
+            complexity: complexity::settings::Settings {
+                max_complexity: 5,
+                ..Default::default()
+            },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Rule::TooManyArguments, Path::new("S911.f90"))]
+    fn too_many_arguments_threshold_5(rule_code: Rule, path: &Path) -> Result<()> {
+        let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+
+        let settings = CheckSettings {
+            complexity: complexity::settings::Settings {
+                max_args: 5,
+                ..Default::default()
+            },
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;

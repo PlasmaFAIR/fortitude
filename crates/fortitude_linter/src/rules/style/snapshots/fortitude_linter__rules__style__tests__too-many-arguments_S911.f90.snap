@@ -1,0 +1,21 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/style/S911.f90:40:18: S911 too many arguments in procedure s6 (6 > 5)
+   |
+39 |     ! Should raise
+40 |     subroutine s6(a, b, c, d, e, f)
+   |                  ^^^^^^^^^^^^^^^^^^ S911
+41 |         integer, intent(in) :: a, b, c, d, e, f
+42 |         print *, a, b, c, d, e, f
+   |
+
+./resources/test/fixtures/style/S911.f90:46:24: S911 too many arguments in procedure f6 (6 > 5)
+   |
+45 |     ! Should raise
+46 |     integer function f6(a, b, c, d, e, f) result(g)
+   |                        ^^^^^^^^^^^^^^^^^^ S911
+47 |         integer, intent(in) :: a, b, c, d, e, f
+48 |         g = a + b + c + d + e + f
+   |

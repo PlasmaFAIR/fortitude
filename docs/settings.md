@@ -671,6 +671,33 @@ If set to false, the hint will be hidden.
 
 Options for `too-complex` rule
 
+#### [`max-args`](#check_complexity_max-args) {: #check_complexity_max-args }
+<span id="max-args"></span>
+
+The maximum number of arguments allowed for a procedure.
+Procedures exceeding this threshold will be flagged.
+
+**Default value**: `10`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.complexity]
+    max-args = 15
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.complexity]
+    max-args = 15
+    ```
+
+---
+
 #### [`max-complexity`](#check_complexity_max-complexity) {: #check_complexity_max-complexity }
 <span id="max-complexity"></span>
 

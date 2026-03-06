@@ -607,12 +607,18 @@ pub struct ComplexityOptions {
     /// Procedures exceeding this threshold will be flagged.
     #[option(default = "10", value_type = "usize", example = "max-complexity = 15")]
     pub max_complexity: Option<usize>,
+
+    /// The maximum number of arguments allowed for a procedure.
+    /// Procedures exceeding this threshold will be flagged.
+    #[option(default = "10", value_type = "usize", example = "max-args = 15")]
+    pub max_args: Option<usize>,
 }
 
 impl ComplexityOptions {
     pub fn into_settings(self) -> complexity::settings::Settings {
         complexity::settings::Settings {
-            max_complexity: self.max_complexity.unwrap_or(10usize),
+            max_complexity: self.max_complexity.unwrap_or_default(),
+            max_args: self.max_complexity.unwrap_or_default(),
         }
     }
 }

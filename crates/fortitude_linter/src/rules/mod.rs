@@ -159,6 +159,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "262") => (RuleGroup::Preview, None, Optional, style::inconsistent_dimension::MixedScalarArrayDeclaration),
         (Style, "263") => (RuleGroup::Preview, None, Optional, style::inconsistent_dimension::BadArrayDeclaration),
         (Style, "901") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooComplex),
+        (Style, "911") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooManyArguments),
 
         // obsolescent
         (Obsolescent, "001") => (RuleGroup::Removed, Ast, Default, obsolescent::statement_functions::StatementFunction),
