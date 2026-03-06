@@ -73,4 +73,12 @@ program test
       end do
     end do
 
+    ! This can't be fixed because the `goto` targets the outer loop
+    do 110, i = 1,10
+      do 120, j = 1,10
+        if (i + j > 5) goto 110
+        A(i, j) = i + j
+120    end do
+110 end do
+
 end program test

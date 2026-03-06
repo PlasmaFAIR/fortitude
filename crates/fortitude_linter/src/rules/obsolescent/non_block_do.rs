@@ -1,4 +1,4 @@
-use crate::ast::{ControlFlow, FortitudeNode};
+use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::settings::CheckSettings;
 use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode, SymbolTables};
@@ -217,6 +217,134 @@ impl AstRule for BadDoTermination {
     }
 }
 
+/// ## What it does
+/// Checks for `goto` statements that target `end do` statements.
+///
+/// ## Why is this bad?
+/// `goto` is generally considered harmful because it encourages unstructured
+/// programming, making it much harder to understand the control flow of the
+/// code. `goto` statements that point to the end of loops can be replaced with
+/// `cycle` statements instead. These make the programmer's intentions much
+/// clearer.
+///
+/// When a `goto` is used like this in a nested loop, the loops should instead
+/// use named constructs (see
+/// [`exit-or-cycle-in-unlabelled-loop`](exit-or-cycle-in-unlabelled-loop.md).
+///
+/// ## Example
+/// ```f90
+///     do 20 i = 1, 10
+///         if (i > 5) goto 20
+///         foo(i) = 2 * i
+/// 20  end do
+/// ```
+///
+/// Use instead:
+/// ```f90
+///     do i = 1, 10
+///         if (i > 5) cycle
+///         foo(i) = 2 * i
+///     end do
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct GotoEndDo;
+
+impl Violation for GotoEndDo {
+    const FIX_AVAILABILITY: FixAvailability = FixAvailability::Sometimes;
+
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "`goto` points to `end do`".to_string()
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        Some("Use `cycle` instead of `goto` to `end do`".to_string())
+    }
+}
+
+impl AstRule for GotoEndDo {
+    fn check(
+        _settings: &CheckSettings,
+        node: &Node,
+        source: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
+        let src = source.source_text();
+
+        let goto = ControlFlowNode::maybe_from(*node, src)?;
+        let label_ref = goto.goto_ref()?;
+
+        let label_node = next_statement_label(node, label_ref, src)?;
+
+        if label_node.parent()?.kind() != "end_do_label_loop_statement"
+            && let Some(sibling) = label_node.next_named_sibling()
+            && sibling.kind() != "end_do_loop_statement"
+        {
+            // Label isn't on end of loop
+            return None;
+        }
+        // TODO: extra annotation with `goto` target
+        let mut diagnostic = Diagnostic::from_node(Self {}, node);
+        if let Some(fix) = fix_goto_end_do(node, &label_node, source) {
+            diagnostic.set_fix(fix);
+        }
+
+        some_vec!(diagnostic)
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["keyword_statement"]
+    }
+}
+
+// These are like the versions in the FortitudeNode trait, but also find
+// statement labels in labelled `end do`. Can't have them in the trait, because
+// they'll mess up the arithmetic `if` rule :(
+fn next_statement_label_sibling<'a, S: AsRef<str>>(
+    node: &Node<'a>,
+    label: S,
+    src: &str,
+) -> Option<Node<'a>> {
+    let mut sibling = node.next_named_sibling();
+    while let Some(next_sibling) = sibling {
+        if next_sibling.kind() == "statement_label"
+            && next_sibling.to_text(src) == Some(label.as_ref())
+        {
+            return Some(next_sibling);
+        }
+        // For labelled `do` loops, the label is child, but this should
+        // still *count* as a sibling of `node`
+        if next_sibling.kind() == "end_do_label_loop_statement"
+            && let Some(do_label) = next_sibling.child_by_field_name("do_label")
+            && do_label.kind() == "statement_label"
+            && do_label.to_text(src) == Some(label.as_ref())
+        {
+            return Some(do_label);
+        }
+
+        sibling = next_sibling.next_named_sibling();
+    }
+    None
+}
+
+fn next_statement_label<'a, S: AsRef<str>>(
+    node: &Node<'a>,
+    label: S,
+    src: &str,
+) -> Option<Node<'a>> {
+    if let Some(next) = next_statement_label_sibling(node, label.as_ref(), src) {
+        return Some(next);
+    }
+    let mut current = *node;
+    while let Some(parent) = current.parent() {
+        if let Some(sibling) = next_statement_label_sibling(&parent, label.as_ref(), src) {
+            return Some(sibling);
+        }
+        current = parent;
+    }
+    None
+}
+
 // Include whitespace and optional trailing comma
 fn edit_remove_label(label_node: &Node) -> Option<Edit> {
     let end_edit = label_node.next_named_sibling()?.start_textsize();
@@ -337,7 +465,10 @@ fn fix_shared_termination(do_label_virtual: &Node, source: &SourceFile) -> Optio
             rest.push(new_end_do)
         }
         _ => {
-            rest.push(Edit::insertion(format!("\n{indentation}end do"), end_action.end_textsize()));
+            rest.push(Edit::insertion(
+                format!("\n{indentation}end do"),
+                end_action.end_textsize(),
+            ));
             rest.push(add_new_end_do(&end_action, true, end_label, source));
 
             let width = end_label.len();
@@ -362,6 +493,32 @@ fn find_real_end_do_loop<'a>(do_loop: &'a Node) -> Option<Node<'a>> {
             debug!("** left loop");
             return None;
         }
+    }
+    None
+}
+
+/// This might leave the statement label on the `end do`, but it's quite
+/// complicated to work out if we still need it. Instead, use a separate rule to
+/// check for unused statement labels
+fn fix_goto_end_do(node: &Node, label_node: &Node, source: &SourceFile) -> Option<Fix> {
+    // This can't be fixed if goto is in inner loop and targets outer loop
+    if containing_loop(node)? != containing_loop(label_node)? {
+        return None;
+    }
+
+    Some(Fix::safe_edit(
+        node.edit_replacement(source, "cycle".to_string()),
+    ))
+}
+
+/// Find the first loop that contains `node`
+fn containing_loop<'a>(node: &'a Node) -> Option<Node<'a>> {
+    let mut parent = *node;
+    while let Some(new_parent) = parent.parent() {
+        if new_parent.kind() == "do_loop" {
+            return Some(new_parent);
+        }
+        parent = new_parent;
     }
     None
 }
