@@ -371,7 +371,8 @@ pub struct CheckOptions {
     #[option_group]
     pub use_statements: Option<UseStatementsOptions>,
 
-    /// Options for rules related to code complexity, such as `too-complex`, `too-many-arguments`, `too-many-`.
+    /// Options for rules related to code complexity, such as `too-complex`,
+    /// `too-many-arguments`, `too-many-nested-blocks`, etc.
     #[option_group]
     pub complexity: Option<ComplexityOptions>,
 }
