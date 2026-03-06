@@ -4,6 +4,7 @@ pub mod types;
 use ruff_diagnostics::Edit;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
+use strum_macros::EnumIs;
 /// Contains methods to parse Fortran code into a tree-sitter Tree and utilities to simplify the
 /// navigation of a Tree.
 use tree_sitter::{Node, TreeCursor};
@@ -121,6 +122,10 @@ pub trait FortitudeNode<'tree> {
     /// Get the current indentation level of the node.
     fn indentation(&self, source_file: &SourceFile) -> String;
 
+    /// Get the current indentation level of the node, assuming statement labels
+    /// are part of indentation
+    fn indentation_ignore_stmt_label(&self, source_file: &SourceFile) -> String;
+
     /// Return the edit required to remove this node.
     fn edit_delete(&self, source_file: &SourceFile) -> Edit;
 
@@ -136,6 +141,22 @@ pub trait FortitudeNode<'tree> {
 
     /// Check if the node is an if_statement and lacks an end_if_statement child
     fn inline_if_statement(&self) -> bool;
+
+    /// Get the prev sibling that isn't a comment
+    fn prev_non_comment_sibling(&self) -> Option<Node<'tree>>;
+
+    /// Get the next matching statement label that is a sibling of this node
+    fn next_statement_label_sibling<S: AsRef<str>>(
+        &self,
+        label: S,
+        src: &str,
+    ) -> Option<Node<'tree>>;
+
+    /// Get the next matching statement label
+    fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree>>;
+
+    /// Convert node to a `ControlFlowNode` if possible
+    fn try_to_controlflow(self, source_file: &SourceFile) -> Option<ControlFlowNode<'tree>>;
 }
 
 impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
@@ -218,6 +239,15 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         line.chars().take_while(|&c| c.is_whitespace()).collect()
     }
 
+    fn indentation_ignore_stmt_label(&self, source_file: &SourceFile) -> String {
+        let src = source_file.to_source_code();
+        let start_byte = self.start_textsize();
+        let start_index = src.line_index(start_byte);
+        let start_line = src.line_start(start_index);
+        let width = (start_byte - start_line).to_usize();
+        format!("{:width$}", " ")
+    }
+
     fn edit_delete(&self, source_file: &SourceFile) -> Edit {
         // If deletion results in an empty line (or multiple), remove it
         // TODO handle case where removal should also remove a preceding comma
@@ -279,6 +309,52 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     fn inline_if_statement(&self) -> bool {
         self.kind() == "if_statement" && self.child_with_name("end_if_statement").is_none()
     }
+
+    fn prev_non_comment_sibling(&self) -> Option<Node<'tree1>> {
+        let mut sibling = self.prev_named_sibling();
+        while let Some(prev_sibling) = sibling {
+            if prev_sibling.kind() != "comment" {
+                return Some(prev_sibling);
+            }
+            sibling = prev_sibling.prev_named_sibling();
+        }
+        None
+    }
+
+    fn next_statement_label_sibling<S: AsRef<str>>(
+        &self,
+        label: S,
+        src: &str,
+    ) -> Option<Node<'tree1>> {
+        let mut sibling = self.next_named_sibling();
+        while let Some(next_sibling) = sibling {
+            if next_sibling.kind() == "statement_label"
+                && next_sibling.to_text(src) == Some(label.as_ref())
+            {
+                return Some(next_sibling);
+            }
+            sibling = next_sibling.next_named_sibling();
+        }
+        None
+    }
+
+    fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree1>> {
+        if let Some(next) = self.next_statement_label_sibling(label.as_ref(), src) {
+            return Some(next);
+        }
+        let mut current = *self;
+        while let Some(parent) = current.parent() {
+            if let Some(sibling) = parent.next_statement_label_sibling(label.as_ref(), src) {
+                return Some(sibling);
+            }
+            current = parent;
+        }
+        None
+    }
+
+    fn try_to_controlflow(self, source_file: &SourceFile) -> Option<ControlFlowNode<'tree1>> {
+        ControlFlowNode::maybe_from(self, source_file.source_text())
+    }
 }
 
 /// Strip line breaks from a string of Fortran code.
@@ -293,4 +369,77 @@ pub fn dtype_is_plain_number(dtype: &str) -> bool {
         dtype.to_lowercase().as_str(),
         "integer" | "real" | "logical" | "complex"
     )
+}
+
+/// A control flow keyword
+#[derive(Clone, Debug, EnumIs)]
+pub enum ControlFlow {
+    Continue,
+    Cycle,
+    Exit,
+    GoTo(String),
+    Return,
+    Stop,
+}
+
+impl ControlFlow {
+    pub fn maybe_from(value: &Node, src: &str) -> Option<Self> {
+        if value.kind() != "keyword_statement" {
+            return None;
+        }
+        match value.child(0)?.to_text(src)?.to_ascii_lowercase().as_str() {
+            "continue" => Some(Self::Continue),
+            "cycle" => Some(Self::Cycle),
+            "exit" => Some(Self::Exit),
+            "return" => Some(Self::Return),
+            "stop" => Some(Self::Stop),
+            "error" => Some(Self::Stop),
+            keyword => Self::parse_goto(keyword, value, src),
+        }
+    }
+
+    fn parse_goto(keyword: &str, value: &Node, src: &str) -> Option<Self> {
+        if !matches!(keyword, "go" | "goto") {
+            return None;
+        }
+
+        // We expect either `go to N` or `goto N`.
+        // Don't bother with assigned or computed gotos for now
+        let expected_ref_index = if keyword == "go" { 2 } else { 1 };
+        if value.child_count() > expected_ref_index + 1 {
+            return None;
+        }
+
+        Some(Self::GoTo(
+            value.child(expected_ref_index)?.to_text(src)?.to_string(),
+        ))
+    }
+}
+
+/// A control flow node
+#[derive(Clone, Debug)]
+pub struct ControlFlowNode<'a> {
+    control_flow: ControlFlow,
+    node: Node<'a>,
+}
+
+impl<'a> ControlFlowNode<'a> {
+    pub fn maybe_from(node: Node<'a>, src: &str) -> Option<Self> {
+        ControlFlow::maybe_from(&node, src).map(|control_flow| Self { control_flow, node })
+    }
+
+    pub fn goto_ref(&'a self) -> Option<&'a str> {
+        match self.control_flow {
+            ControlFlow::GoTo(ref ref_) => Some(ref_),
+            _ => None,
+        }
+    }
+
+    pub fn control_flow(&self) -> ControlFlow {
+        self.control_flow.clone()
+    }
+
+    pub fn node(&'a self) -> Node<'a> {
+        self.node
+    }
 }
