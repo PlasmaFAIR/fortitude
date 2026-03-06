@@ -89,6 +89,8 @@ macro_rules! apply_common_filters {
         settings.add_filter(r"\\\\?([\w\d.])", "/$1");
         // Ignore specific os errors
         settings.add_filter(r"E000 Error opening file: .*", "E000 Error opening file: [OS_ERROR]");
+        // Ignore absolute paths into the repo (including Windows drive letter)
+        settings.add_filter(r"[A-Z]?:?/.*(fortitude/crates/.*)", "$1");
         let _bound = settings.bind_to_scope();
     }
 }
@@ -2410,6 +2412,22 @@ end program foo
 
     ----- stderr -----
     ");
+
+    Ok(())
+}
+
+#[test]
+fn nonblock_do_rules() -> anyhow::Result<()> {
+    let test_file =
+        Path::new("../fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90");
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(
+        FortitudeCheck::default()
+            .args(["--select=OB09", "--diff", "--unsafe-fixes", "--preview"])
+            .file(test_file)
+            .build()
+    );
 
     Ok(())
 }
