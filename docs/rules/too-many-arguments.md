@@ -10,14 +10,9 @@ and test. They often indicate that a procedure is doing too much and should
 be refactored into smaller, more focused procedures, or that a derived type
 should be used to group related arguments together.
 
-The equivalent rule in Pylint has a default threshold of 5, but we set it to
-10 for Fortran to account for the fact that Fortran procedures often have
-more arguments than Python functions.
-
 ## Example
 
-If we set the threshold to 6 or lower, then the following procedure would be
-flagged for having too many arguments:
+The following procedure would be flagged for having too many arguments:
 ```f90
 subroutine update_position(x, y, z, vx, vy, vz, dt)
   real, intent(inout) :: x, y, z
@@ -47,6 +42,7 @@ type :: vector
  real :: y
  real :: z
 end type vector
+```
 
 ## Options
 - [`check.complexity.max-args`][check.complexity.max-args]

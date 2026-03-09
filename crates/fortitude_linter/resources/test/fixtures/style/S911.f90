@@ -25,26 +25,27 @@ contains
     end function f1
 
     ! Should not raise
+    subroutine s4(a, b, c, d)
+        integer, intent(in) :: a, b, c, d
+        print *, a, b, c, d
+    end subroutine s4
+
+    ! Should not raise
+    integer function f4(a, b, c, d) result(f)
+        integer, intent(in) :: a, b, c, d
+        f = a + b + c + d
+    end function f4
+
+    ! Should raise
     subroutine s5(a, b, c, d, e)
         integer, intent(in) :: a, b, c, d, e
         print *, a, b, c, d, e
     end subroutine s5
 
-    ! Should not raise
+    ! Should raise
     integer function f5(a, b, c, d, e) result(f)
         integer, intent(in) :: a, b, c, d, e
         f = a + b + c + d + e
     end function f5
 
-    ! Should raise
-    subroutine s6(a, b, c, d, e, f)
-        integer, intent(in) :: a, b, c, d, e, f
-        print *, a, b, c, d, e, f
-    end subroutine s6
-
-    ! Should raise
-    integer function f6(a, b, c, d, e, f) result(g)
-        integer, intent(in) :: a, b, c, d, e, f
-        g = a + b + c + d + e + f
-    end function f6
 end module m

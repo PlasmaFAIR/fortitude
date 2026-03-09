@@ -677,7 +677,7 @@ Options for `too-complex` rule
 The maximum number of arguments allowed for a procedure.
 Procedures exceeding this threshold will be flagged.
 
-**Default value**: `10`
+**Default value**: `5`
 
 **Type**: `usize`
 

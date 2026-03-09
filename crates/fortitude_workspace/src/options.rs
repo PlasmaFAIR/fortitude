@@ -611,7 +611,7 @@ pub struct ComplexityOptions {
 
     /// The maximum number of arguments allowed for a procedure.
     /// Procedures exceeding this threshold will be flagged.
-    #[option(default = "10", value_type = "usize", example = "max-args = 15")]
+    #[option(default = "5", value_type = "usize", example = "max-args = 15")]
     pub max_args: Option<usize>,
 }
 

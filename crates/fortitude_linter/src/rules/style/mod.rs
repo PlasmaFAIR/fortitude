@@ -242,7 +242,7 @@ mod tests {
 
         let settings = CheckSettings {
             complexity: complexity::settings::Settings {
-                max_args: 5,
+                max_args: 4,
                 ..Default::default()
             },
             ..CheckSettings::for_rule(rule_code)
