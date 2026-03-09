@@ -211,6 +211,7 @@ fn cyclomatic_complexity(node: &Node) -> usize {
 ///  real :: y
 ///  real :: z
 /// end type vector
+/// ```
 ///
 /// ## Options
 /// - `check.complexity.max-args`
