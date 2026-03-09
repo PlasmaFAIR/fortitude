@@ -236,7 +236,7 @@ mod tests {
         Ok(())
     }
 
-    #[test_case(Rule::TooManyArguments, Path::new("S911.f90"))]
+    #[test_case(Rule::TooManyArguments, Path::new("S902.f90"))]
     fn too_many_arguments_threshold_5(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
 

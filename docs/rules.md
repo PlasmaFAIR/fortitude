@@ -109,7 +109,7 @@
 | S262 | [mixed-scalar-array-declaration](rules/mixed-scalar-array-declaration.md) | Mixed declaration of scalar(s) and array | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S263 | [bad-array-declaration](rules/bad-array-declaration.md) | Bad declaration of array | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S901 | [too-complex](rules/too-complex.md) | cyclomatic complexity of {actual_complexity}, exceeds maximum {max_complexity\} | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
-| S911 | [too-many-arguments](rules/too-many-arguments.md) | Too many arguments in procedure `{procedure_name}` ({actual_args} > {max_args}) | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S902 | [too-many-arguments](rules/too-many-arguments.md) | Too many arguments in procedure `{procedure_name}` ({actual_args} > {max_args}) | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Portability (PORT)
 
