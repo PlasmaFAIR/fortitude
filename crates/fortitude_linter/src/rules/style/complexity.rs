@@ -230,7 +230,7 @@ impl Violation for TooManyArguments {
             max_args,
             procedure_name,
         } = self;
-        format!("too many arguments in procedure {procedure_name} ({actual_args} > {max_args})")
+        format!("Too many arguments in procedure `{procedure_name}` ({actual_args} > {max_args})")
     }
 }
 
