@@ -136,6 +136,10 @@ pub trait FortitudeNode<'tree> {
 
     /// Check if the node is an if_statement and lacks an end_if_statement child
     fn inline_if_statement(&self) -> bool;
+
+    /// Get the module name from a use statement node.
+    /// Returns None if the node is not a use statement or has no module_name child.
+    fn module_name(&self, src: &str) -> Option<String>;
 }
 
 impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
@@ -278,6 +282,15 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
 
     fn inline_if_statement(&self) -> bool {
         self.kind() == "if_statement" && self.child_with_name("end_if_statement").is_none()
+    }
+
+    fn module_name(&self, src: &str) -> Option<String> {
+        if self.kind() != "use_statement" {
+            return None;
+        }
+        self.child_with_name("module_name")?
+            .to_text(src)
+            .map(|s| s.to_string())
     }
 }
 

@@ -1,0 +1,79 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/style/S271.f90:2:3: S271 [*] `use` statements are not sorted
+  |
+1 |   module test_module
+2 | /   use module_c, only: fun_c3, &
+3 | |                       fun_c2, &
+4 | |                       fun_c1
+  | |____________________________^ S271
+5 |                                   use, intrinsic :: iso_fortran_env, ONLY: int32
+6 |       USE module_a, only: fun_a
+  |
+  = help: Sort `use` statements
+
+ℹ Safe fix
+1 1 | module test_module
+  2 |+                                use, intrinsic :: iso_fortran_env, ONLY: int32
+  3 |+    USE module_a, only: fun_a
+  4 |+					use module_b_with_tab, only: fun_b
+2 5 |   use module_c, only: fun_c3, &
+3 6 |                       fun_c2, &
+4 7 |                       fun_c1
+5   |-                                use, intrinsic :: iso_fortran_env, ONLY: int32
+6   |-    USE module_a, only: fun_a
+7 8 |     use module_no_only
+8   |-					use module_b_with_tab, only: fun_b
+9 9 |     USE module_z_last, only: fun_z
+10 10 | 
+11 11 |   use module_single, only: fun_single
+
+./resources/test/fixtures/style/S271.f90:13:1: S271 [*] `use` statements are not sorted
+   |
+11 |   use module_single, only: fun_single
+12 |
+13 | use, intrinsic :: iso_fortran_env, only: real64
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S271
+14 |         use aa_non_intrinsic_module_d, only: fun_d
+15 |         use, intrinsic :: iso_c_binding, only: fun_i
+   |
+   = help: Sort `use` statements
+
+ℹ Safe fix
+10 10 | 
+11 11 |   use module_single, only: fun_single
+12 12 | 
+   13 |+        use, intrinsic :: iso_c_binding, only: fun_i
+13 14 | use, intrinsic :: iso_fortran_env, only: real64
+14 15 |         use aa_non_intrinsic_module_d, only: fun_d
+15    |-        use, intrinsic :: iso_c_binding, only: fun_i
+16 16 | 
+17 17 |   implicit none (type, external)
+18 18 | 
+
+./resources/test/fixtures/style/S271.f90:23:5: S271 [*] `use` statements are not sorted
+   |
+22 |   real function compute_something(x, y)
+23 |     use custom_math, only: fun_m
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S271
+24 |     use another_package, only: helper, util
+25 |     use, intrinsic :: iso_fortran_env, only: real64, int32
+   |
+   = help: Sort `use` statements
+
+ℹ Safe fix
+20 20 |   contains
+21 21 |
+22 22 |   real function compute_something(x, y)
+   23 |+    use, intrinsic :: ieee_arithmetic, only: fun_a
+   24 |+    use, intrinsic :: iso_fortran_env, only: real64, int32
+   25 |+    use another_package, only: helper, util
+23 26 |     use custom_math, only: fun_m
+24    |-    use another_package, only: helper, util
+25    |-    use, intrinsic :: iso_fortran_env, only: real64, int32
+26    |-    use, intrinsic :: ieee_arithmetic, only: fun_a
+27 27 |     real(real64), intent(in) :: x, y
+28 28 | 
+29 29 |     compute_something = helper(x) + util(y) + real(ieee_max(x,y), real64)
