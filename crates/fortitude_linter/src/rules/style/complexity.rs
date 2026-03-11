@@ -181,6 +181,9 @@ fn cyclomatic_complexity(node: &Node) -> usize {
 /// `self` to make it clear that the routine is type-bound, or else this rule
 /// may flag routines that are actually compliant.
 ///
+/// As routines defined within interface blocks must match the procedure they
+/// are describing, they are exempt from this rule.
+///
 /// ## Example
 ///
 /// The following procedure would be flagged for having too many arguments:
@@ -243,6 +246,14 @@ impl AstRule for TooManyArguments {
         src: &'a SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
+        // Do not check procedures in interface blocks
+        if node
+            .ancestors()
+            .any(|ancestor| ancestor.kind() == "interface")
+        {
+            return None;
+        }
+
         let src = src.source_text();
         let procedure_stmt = node.named_child(0)?;
         let procedure_name = procedure_stmt

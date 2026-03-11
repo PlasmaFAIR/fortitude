@@ -15,6 +15,9 @@ total number of arguments. It is recommended to name this argument `this` or
 `self` to make it clear that the routine is type-bound, or else this rule
 may flag routines that are actually compliant.
 
+As routines defined within interface blocks must match the procedure they
+are describing, they are exempt from this rule.
+
 ## Example
 
 The following procedure would be flagged for having too many arguments:

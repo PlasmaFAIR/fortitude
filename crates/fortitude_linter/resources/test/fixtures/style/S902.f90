@@ -11,6 +11,30 @@ module m
         procedure :: f6_bound
     end type vector
 
+    ! Never raise in interfaces
+    interface
+        subroutine s4_interface(a, b, c, d)
+            implicit none (type, external)
+            integer, intent(in) :: a, b, c, d
+        end subroutine s4_interface
+
+        integer function f4_interface(a, b, c, d)
+            implicit none (type, external)
+            integer, intent(in) :: a, b, c, d
+        end function f4_interface
+
+        subroutine s5_interface(a, b, c, d, e)
+            implicit none (type, external)
+            integer, intent(in) :: a, b, c, d, e
+        end subroutine s5_interface
+
+        integer function f5_interface(a, b, c, d, e)
+            implicit none (type, external)
+            integer, intent(in) :: a, b, c, d, e
+        end function f5_interface
+
+    end interface
+
 contains
     ! Should not raise
     subroutine s0()
