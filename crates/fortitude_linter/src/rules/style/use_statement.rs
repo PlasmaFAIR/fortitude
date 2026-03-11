@@ -5,7 +5,7 @@ use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
-use ruff_source_file::SourceFile;
+use ruff_source_file::{LineEnding, SourceFile, find_newline};
 use ruff_text_size::{TextRange, TextSize};
 use tree_sitter::Node;
 
@@ -133,9 +133,8 @@ fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData
     let node_text = node.to_text(src.source_text()).unwrap_or("");
     let after_node = &src.source_text()[range.end().to_usize()..];
     // Capture any inline comment after the node by reading everything between the end of the node and the next newline.
-    let line_remainder = after_node
-        .find('\n')
-        .map(|pos| &after_node[..pos])
+    let line_remainder = find_newline(after_node)
+        .map(|(pos, _)| &after_node[..pos])
         .unwrap_or("");
     let text = format!("{}{}{}", node.indentation(src), node_text, line_remainder);
 
@@ -189,11 +188,17 @@ fn check_and_fix_block(block: &[Node], src: &SourceFile) -> Option<Diagnostic> {
         first.textrange().start() - TextSize::from(first.indentation(src).len() as u32);
     let block_end = block.last()?.textrange().end();
 
+    // Preserve the line ending style of the source file (LF or CRLF)
+    let nl = find_newline(src.source_text())
+        .map(|(_, ending)| ending)
+        .unwrap_or(LineEnding::Lf)
+        .as_str();
+
     let mut replacement = String::new();
     for (i, stmt) in sorted.iter().enumerate() {
         replacement.push_str(&stmt.text);
         if i < sorted.len() - 1 {
-            replacement.push('\n');
+            replacement.push_str(nl);
         }
     }
 
