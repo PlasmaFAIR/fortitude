@@ -65,7 +65,7 @@ impl AstRule for UnsortedUses {
         }
 
         // Group use statements into blocks separated by empty lines
-        let blocks = group_use_statements_into_blocks(&use_statements, src);
+        let blocks = group_use_statements_into_blocks(&use_statements);
 
         let mut diagnostics = Vec::new();
 
@@ -87,22 +87,18 @@ impl AstRule for UnsortedUses {
     }
 }
 
-fn group_use_statements_into_blocks<'a>(
-    use_statements: &[Node<'a>],
-    src: &SourceFile,
-) -> Vec<Vec<Node<'a>>> {
+fn group_use_statements_into_blocks<'a>(use_statements: &[Node<'a>]) -> Vec<Vec<Node<'a>>> {
     let mut blocks = Vec::new();
     let mut current_block = Vec::new();
 
     for (i, stmt) in use_statements.iter().enumerate() {
         current_block.push(*stmt);
 
-        // Check if this is the last statement or if the next statement is separated by an empty line
-        let is_last = i == use_statements.len() - 1;
-        if !is_last {
-            let next_stmt = &use_statements[i + 1];
-            if !are_statements_adjacent(stmt, next_stmt, src) {
-                // Start a new block
+        if let Some(next_stmt) = use_statements.get(i + 1) {
+            // If the next statement is not on the immediately following line
+            // (blank line, comment, or any other content acts as a block separator),
+            // close the current block and start a new one.
+            if !are_statements_adjacent(stmt, next_stmt) {
                 blocks.push(current_block);
                 current_block = Vec::new();
             }
@@ -116,16 +112,12 @@ fn group_use_statements_into_blocks<'a>(
     blocks
 }
 
-fn are_statements_adjacent(stmt1: &Node, stmt2: &Node, src: &SourceFile) -> bool {
-    let range1 = stmt1.textrange();
-    let range2 = stmt2.textrange();
-
-    // Get the text between the end of stmt1 and start of stmt2
-    let between_range = TextRange::new(range1.end(), range2.start());
-    let between_text = src.slice(between_range);
-
-    // Check if there's only whitespace (no empty lines)
-    !between_text.contains("\n\n") && !between_text.contains("\r\n\r\n")
+/// Two use statements are considered adjacent if the second one starts
+/// on the line immediately following the end of the first one.
+fn are_statements_adjacent(stmt1: &Node, stmt2: &Node) -> bool {
+    let line1 = stmt1.end_position().row;
+    let line2 = stmt2.start_position().row;
+    line2 == line1 + 1
 }
 
 #[derive(Clone)]
@@ -133,6 +125,35 @@ struct UseStatementData {
     text: String,
     module_name: String,
     is_intrinsic: bool,
+}
+
+fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData {
+    // Build full line text: indentation + node text + inline comment if any
+    let range = node.textrange();
+    let node_text = node.to_text(src.source_text()).unwrap_or("");
+    let after_node = &src.source_text()[range.end().to_usize()..];
+    // Capture any inline comment after the node by reading everything between the end of the node and the next newline.
+    let line_remainder = after_node
+        .find('\n')
+        .map(|pos| &after_node[..pos])
+        .unwrap_or("");
+    let text = format!("{}{}{}", node.indentation(src), node_text, line_remainder);
+
+    let module_name = node
+        .module_name(src.source_text())
+        // Fortran is case-insensitive, normalize to lowercase for consistent sorting
+        .map(|s| s.to_lowercase())
+        .unwrap_or_default();
+
+    let is_intrinsic = node
+        .children(&mut node.walk())
+        .any(|child| child.to_text(src.source_text()) == Some("intrinsic"));
+
+    UseStatementData {
+        text,
+        module_name,
+        is_intrinsic,
+    }
 }
 
 fn check_and_fix_block(block: &[Node], src: &SourceFile) -> Option<Diagnostic> {
@@ -143,33 +164,12 @@ fn check_and_fix_block(block: &[Node], src: &SourceFile) -> Option<Diagnostic> {
     // Extract module name, intrinsic status and full line text
     let statements_with_data: Vec<UseStatementData> = block
         .iter()
-        .map(|node| {
-            // Reconstruct the full line by prepending the node's indentation to its text.
-            let indentation = node.indentation(src);
-            let node_text = node.to_text(src.source_text()).unwrap_or("");
-            let text = format!("{}{}", indentation, node_text);
-
-            let module_name = node
-                .module_name(src.source_text())
-                // Fortran is case-insensitive, normalize to lowercase for consistent sorting
-                .map(|s| s.to_lowercase())
-                .unwrap_or_default();
-
-            let is_intrinsic = node
-                .children(&mut node.walk())
-                .any(|child| child.to_text(src.source_text()) == Some("intrinsic"));
-
-            UseStatementData {
-                text,
-                module_name,
-                is_intrinsic,
-            }
-        })
+        .map(|node| extract_use_statement_data(node, src))
         .collect();
 
     // Sort statements
     let mut sorted = statements_with_data.clone();
-    sorted.sort_by(|a, b| compare_use_statements(&a, &b));
+    sorted.sort_by(|a, b| compare_use_statements(a, b));
 
     // Check if already sorted
     let is_sorted = statements_with_data
@@ -184,9 +184,9 @@ fn check_and_fix_block(block: &[Node], src: &SourceFile) -> Option<Diagnostic> {
     // The textrange of a node starts after its indentation.
     // We need to include the indentation in the replacement range,
     // so we walk back to the beginning of the line.
-    let block_indentation = block.first()?.indentation(src);
+    let first = block.first()?;
     let block_start =
-        block.first()?.textrange().start() - TextSize::from(block_indentation.len() as u32);
+        first.textrange().start() - TextSize::from(first.indentation(src).len() as u32);
     let block_end = block.last()?.textrange().end();
 
     let mut replacement = String::new();
