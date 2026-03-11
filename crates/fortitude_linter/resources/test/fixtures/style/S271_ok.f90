@@ -35,4 +35,11 @@ module test_module
     ! fun_b is used for...
     use module_b, only: fun_b
   end subroutine test_comments_as_separator
+
+  subroutine test_freeform()
+    use module_a
+    use module_e
+    use module_f, only: fun_f
+    use module_z, only: fun_z; use module_b; use module_c, only: fun_c
+  end subroutine test_freeform
 end module test_module

@@ -54,10 +54,23 @@ impl AstRule for UnsortedUses {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
+        // Collect only the first `use_statement` per line
+        let mut last_row: Option<usize> = None;
+
         // Find all use statements
         let use_statements: Vec<Node> = node
             .children(&mut node.walk())
             .filter(|child| child.kind() == "use_statement")
+            .filter(|child| {
+                let row = child.start_position().row;
+                // Skip this node if it is on the same line as the previous one
+                if Some(row) == last_row {
+                    false
+                } else {
+                    last_row = Some(row);
+                    true
+                }
+            })
             .collect();
 
         if use_statements.is_empty() {

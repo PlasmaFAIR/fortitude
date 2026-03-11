@@ -100,3 +100,26 @@ expression: diagnostics
 35 35 |     ! fun_b is used for...
 36 36 |     use module_b, only: fun_b
 37 37 |   end subroutine test_comments_as_separator
+
+./resources/test/fixtures/style/S271.f90:40:5: S271 [*] `use` statements are not sorted
+   |
+39 |   subroutine test_freeform()
+40 |     use module_f, only: fun_f
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^ S271
+41 |     use module_a
+42 |     use module_z, only: fun_z; use module_b; use module_c, only: fun_c
+   |
+   = help: Sort `use` statements
+
+ℹ Safe fix
+37 37 |   end subroutine test_comments_as_separator
+38 38 | 
+39 39 |   subroutine test_freeform()
+   40 |+    use module_a
+   41 |+    use module_e
+40 42 |     use module_f, only: fun_f
+41    |-    use module_a
+42 43 |     use module_z, only: fun_z; use module_b; use module_c, only: fun_c
+43    |-    use module_e
+44 44 |   end subroutine test_freeform
+45 45 | end module test_module
