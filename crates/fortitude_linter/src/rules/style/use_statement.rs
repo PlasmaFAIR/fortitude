@@ -5,8 +5,8 @@ use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
-use ruff_source_file::{LineEnding, SourceFile, find_newline};
-use ruff_text_size::{TextRange, TextSize};
+use ruff_source_file::{LineRanges, SourceFile};
+use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -128,15 +128,8 @@ struct UseStatementData {
 }
 
 fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData {
-    // Build full line text: indentation + node text + inline comment if any
     let range = node.textrange();
-    let node_text = node.to_text(src.source_text()).unwrap_or("");
-    let after_node = &src.source_text()[range.end().to_usize()..];
-    // Capture any inline comment after the node by reading everything between the end of the node and the next newline.
-    let line_remainder = find_newline(after_node)
-        .map(|(pos, _)| &after_node[..pos])
-        .unwrap_or("");
-    let text = format!("{}{}{}", node.indentation(src), node_text, line_remainder);
+    let text = src.source_text().full_lines_str(range).to_string();
 
     let module_name = node
         .module_name(src.source_text())
@@ -180,27 +173,15 @@ fn check_and_fix_block(block: &[Node], src: &SourceFile) -> Option<Diagnostic> {
         return None;
     }
 
-    // The textrange of a node starts after its indentation.
-    // We need to include the indentation in the replacement range,
-    // so we walk back to the beginning of the line.
-    let first = block.first()?;
-    let block_start =
-        first.textrange().start() - TextSize::from(first.indentation(src).len() as u32);
-    let block_end = block.last()?.textrange().end();
+    let block_start = src
+        .source_text()
+        .line_start(block.first()?.textrange().start());
+    let block_end = src
+        .source_text()
+        .full_line_end(block.last()?.textrange().end());
 
-    // Preserve the line ending style of the source file (LF or CRLF)
-    let nl = find_newline(src.source_text())
-        .map(|(_, ending)| ending)
-        .unwrap_or(LineEnding::Lf)
-        .as_str();
-
-    let mut replacement = String::new();
-    for (i, stmt) in sorted.iter().enumerate() {
-        replacement.push_str(&stmt.text);
-        if i < sorted.len() - 1 {
-            replacement.push_str(nl);
-        }
-    }
+    // Concatenate the sorted use statements into a single replacement string
+    let replacement = sorted.iter().map(|s| s.text.as_str()).collect::<String>();
 
     let edit = Edit::range_replacement(replacement, TextRange::new(block_start, block_end));
     let fix = Fix::safe_edit(edit);
