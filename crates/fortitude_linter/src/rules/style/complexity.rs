@@ -1,10 +1,12 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
+use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
+use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -174,6 +176,11 @@ fn cyclomatic_complexity(node: &Node) -> usize {
 /// be refactored into smaller, more focused procedures, or that a derived type
 /// should be used to group related arguments together.
 ///
+/// For type-bound procedures, the first argument is not counted towards the
+/// total number of arguments. It is recommended to name this argument `this` or
+/// `self` to make it clear that the routine is type-bound, or else this rule
+/// may flag routines that are actually compliant.
+///
 /// ## Example
 ///
 /// The following procedure would be flagged for having too many arguments:
@@ -212,7 +219,7 @@ fn cyclomatic_complexity(node: &Node) -> usize {
 /// - `check.complexity.max-args`
 #[derive(ViolationMetadata)]
 pub(crate) struct TooManyArguments {
-    actual_args: usize,
+    arg_count: usize,
     max_args: usize,
     procedure_name: String,
 }
@@ -221,11 +228,11 @@ impl Violation for TooManyArguments {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self {
-            actual_args,
+            arg_count,
             max_args,
             procedure_name,
         } = self;
-        format!("Too many arguments in procedure `{procedure_name}` ({actual_args} > {max_args})")
+        format!("Too many arguments in procedure `{procedure_name}` ({arg_count} > {max_args})")
     }
 }
 
@@ -243,20 +250,40 @@ impl AstRule for TooManyArguments {
             .to_text(src)?
             .to_string();
         let parameters = procedure_stmt.child_with_name("parameters")?;
-        let actual_args = parameters
+        let args: Vec<_> = parameters
             .named_descendants()
             .filter(|node| node.kind() == "identifier")
-            .count();
+            .enumerate()
+            .filter_map(|(idx, node)| {
+                // skip the first argument if it is 'self' or 'this', assuming
+                // it is a type-bound procedure
+                if idx > 0 {
+                    return Some(node);
+                }
+                let name = node.to_text(src).map(|s| s.to_ascii_lowercase());
+                if matches!(name.as_deref(), Some("self") | Some("this")) {
+                    None
+                } else {
+                    Some(node)
+                }
+            })
+            .collect();
+        let arg_count = args.len();
         let max_args = settings.complexity.max_args;
 
-        if actual_args > max_args {
-            return some_vec![Diagnostic::from_node(
+        if arg_count > max_args {
+            // arg_count must be at least 1, so args.first() and args.last() are guaranteed to exist
+            let text_range = TextRange::new(
+                args.first().unwrap().start_textsize(),
+                args.last().unwrap().end_textsize(),
+            );
+            return some_vec![Diagnostic::new(
                 TooManyArguments {
-                    actual_args,
+                    arg_count,
                     max_args,
                     procedure_name,
                 },
-                &parameters,
+                text_range
             )];
         }
         None

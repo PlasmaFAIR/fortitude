@@ -1,6 +1,16 @@
 module m
     implicit none (type, external)
     private
+
+    type :: vector
+        integer :: x, y, z
+    contains
+        procedure :: s5_bound
+        procedure :: f5_bound
+        procedure :: s6_bound
+        procedure :: f6_bound
+    end type vector
+
 contains
     ! Should not raise
     subroutine s0()
@@ -47,5 +57,33 @@ contains
         integer, intent(in) :: a, b, c, d, e
         f = a + b + c + d + e
     end function f5
+
+    ! Should not raise, since the first argument is 'this' and is likely a type-bound procedure
+    subroutine s5_bound(tHiS, a, b, c, d)
+        class(vector), intent(in) :: tHiS
+        integer, intent(in) :: a, b, c, d
+        print *, tHiS%x, tHiS%y, tHiS%z, a, b, c, d
+    end subroutine s5_bound
+
+    ! Should not raise, since the first argument is 'self' and is likely a type-bound procedure
+    integer function f5_bound(Self, a, b, c, d) result(f)
+        class(vector), intent(in) :: Self
+        integer, intent(in) :: a, b, c, d
+        f = Self%x + Self%y + Self%z + a + b + c + d
+    end function f5_bound
+
+    ! Should raise
+    subroutine s6_bound(this, a, b, c, d, e)
+        class(vector), intent(in) :: this
+        integer, intent(in) :: a, b, c, d, e
+        print *, this%x, this%y, this%z, a, b, c, d, e
+    end subroutine s6_bound
+
+    ! Should raise
+    integer function f6_bound(self, a, b, c, d, e) result(f)
+        class(vector), intent(in) :: self
+        integer, intent(in) :: a, b, c, d, e
+        f =  self%x + self%y + self%z + a + b + c + d + e
+    end function f6_bound
 
 end module m

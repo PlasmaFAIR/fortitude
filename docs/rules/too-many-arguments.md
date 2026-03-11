@@ -10,6 +10,11 @@ and test. They often indicate that a procedure is doing too much and should
 be refactored into smaller, more focused procedures, or that a derived type
 should be used to group related arguments together.
 
+For type-bound procedures, the first argument is not counted towards the
+total number of arguments. It is recommended to name this argument `this` or
+`self` to make it clear that the routine is type-bound, or else this rule
+may flag routines that are actually compliant.
+
 ## Example
 
 The following procedure would be flagged for having too many arguments:
