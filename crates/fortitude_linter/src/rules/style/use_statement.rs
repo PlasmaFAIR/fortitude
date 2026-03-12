@@ -1,8 +1,8 @@
+use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
-use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::{LineRanges, SourceFile};
@@ -54,38 +54,51 @@ impl AstRule for UnsortedUses {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        // Collect only the first `use_statement` per line
-        let mut last_row: Option<usize> = None;
-
-        // Find all use statements
-        let use_statements: Vec<Node> = node
+        let use_statements: Vec<UseStatementData> = node
             .children(&mut node.walk())
             .filter(|child| child.kind() == "use_statement")
-            .filter(|child| {
-                let row = child.start_position().row;
-                // Skip this node if it is on the same line as the previous one
-                if Some(row) == last_row {
-                    false
-                } else {
-                    last_row = Some(row);
-                    true
-                }
-            })
+            .map(|child| extract_use_statement_data(&child, src))
             .collect();
 
-        if use_statements.is_empty() {
+        if use_statements.len() <= 1 {
             return None;
         }
-
         // Group use statements into blocks separated by empty lines
         let blocks = group_use_statements_into_blocks(&use_statements);
 
         let mut diagnostics = Vec::new();
 
-        for block in blocks {
-            if let Some(diagnostic) = check_and_fix_block(&block, src) {
-                diagnostics.push(diagnostic);
+        for block in &blocks {
+            if block.len() <= 1 {
+                continue;
             }
+
+            let mut sorted: Vec<&UseStatementData> = block.to_vec();
+            sorted.sort_by(|a, b| compare_use_statements(a, b));
+
+            let is_sorted = block
+                .iter()
+                .zip(sorted.iter())
+                .all(|(orig, s)| orig.text == s.text);
+
+            if is_sorted {
+                continue;
+            }
+
+            let block_start = src
+                .source_text()
+                .line_start(block.first()?.text_range.start());
+            let block_end = src
+                .source_text()
+                .full_line_end(block.last()?.text_range.end());
+
+            let replacement = sorted.iter().map(|s| s.text.as_str()).collect::<String>();
+            let edit = Edit::range_replacement(replacement, TextRange::new(block_start, block_end));
+            let fix = Fix::safe_edit(edit);
+
+            let first = block.first()?;
+            let diag = Diagnostic::new(UnsortedUses {}, first.text_range).with_fix(fix);
+            diagnostics.push(diag);
         }
 
         if diagnostics.is_empty() {
@@ -100,41 +113,59 @@ impl AstRule for UnsortedUses {
     }
 }
 
-fn group_use_statements_into_blocks<'a>(use_statements: &[Node<'a>]) -> Vec<Vec<Node<'a>>> {
-    let mut blocks = Vec::new();
-    let mut current_block = Vec::new();
+/// Groups indices of `use` statements into contiguous blocks.
+fn group_use_statements_into_blocks<'a>(
+    all_use_statements: &'a [UseStatementData],
+) -> Vec<Vec<&'a UseStatementData>> {
+    let mut last_row: Option<usize> = None;
 
-    for (i, stmt) in use_statements.iter().enumerate() {
-        current_block.push(*stmt);
-
-        if let Some(next_stmt) = use_statements.get(i + 1) {
-            // If the next statement is not on the immediately following line
-            // (blank line, comment, or any other content acts as a block separator),
-            // close the current block and start a new one.
-            if !are_statements_adjacent(stmt, next_stmt) {
-                blocks.push(current_block);
-                current_block = Vec::new();
+    let use_statements: Vec<&UseStatementData> = all_use_statements
+        .iter()
+        .filter(|child| {
+            let row = child.start_position_row;
+            if Some(row) == last_row {
+                false
+            } else {
+                last_row = Some(row);
+                true
             }
+        })
+        .collect();
+
+    if use_statements.is_empty() {
+        return Vec::new();
+    }
+    let mut blocks: Vec<Vec<&'a UseStatementData>> = Vec::new();
+    let mut current_block = vec![use_statements[0]];
+
+    for i in 1..use_statements.len() {
+        let prev = &use_statements[i - 1];
+        let curr = &use_statements[i];
+
+        if are_statements_adjacent(prev, curr) {
+            current_block.push(curr);
+        } else {
+            blocks.push(current_block);
+            current_block = vec![curr];
         }
     }
 
-    if !current_block.is_empty() {
-        blocks.push(current_block);
-    }
-
+    blocks.push(current_block);
     blocks
 }
 
 /// Two use statements are considered adjacent if the second one starts
 /// on the line immediately following the end of the first one.
-fn are_statements_adjacent(stmt1: &Node, stmt2: &Node) -> bool {
-    let line1 = stmt1.end_position().row;
-    let line2 = stmt2.start_position().row;
+fn are_statements_adjacent(stmt1: &UseStatementData, stmt2: &UseStatementData) -> bool {
+    let line1 = stmt1.end_position_row;
+    let line2 = stmt2.start_position_row;
     line2 == line1 + 1
 }
 
-#[derive(Clone)]
 struct UseStatementData {
+    text_range: TextRange,
+    start_position_row: usize,
+    end_position_row: usize,
     text: String,
     module_name: String,
     is_intrinsic: bool,
@@ -155,51 +186,13 @@ fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData
         .any(|child| child.to_text(src.source_text()) == Some("intrinsic"));
 
     UseStatementData {
+        text_range: node.textrange(),
+        start_position_row: node.start_position().row,
+        end_position_row: node.end_position().row,
         text,
         module_name,
         is_intrinsic,
     }
-}
-
-fn check_and_fix_block(block: &[Node], src: &SourceFile) -> Option<Diagnostic> {
-    if block.len() <= 1 {
-        return None; // Single statements or empty blocks don't need sorting
-    }
-
-    // Extract module name, intrinsic status and full line text
-    let statements_with_data: Vec<UseStatementData> = block
-        .iter()
-        .map(|node| extract_use_statement_data(node, src))
-        .collect();
-
-    // Sort statements
-    let mut sorted = statements_with_data.clone();
-    sorted.sort_by(|a, b| compare_use_statements(a, b));
-
-    // Check if already sorted
-    let is_sorted = statements_with_data
-        .iter()
-        .zip(sorted.iter())
-        .all(|(orig, s)| orig.text == s.text);
-
-    if is_sorted {
-        return None;
-    }
-
-    let block_start = src
-        .source_text()
-        .line_start(block.first()?.textrange().start());
-    let block_end = src
-        .source_text()
-        .full_line_end(block.last()?.textrange().end());
-
-    // Concatenate the sorted use statements into a single replacement string
-    let replacement = sorted.iter().map(|s| s.text.as_str()).collect::<String>();
-
-    let edit = Edit::range_replacement(replacement, TextRange::new(block_start, block_end));
-    let fix = Fix::safe_edit(edit);
-
-    Some(Diagnostic::from_node(UnsortedUses {}, block.first().unwrap()).with_fix(fix))
 }
 
 // Intrinsic modules (e.g. `use, intrinsic :: iso_fortran_env`) always come first,
@@ -209,5 +202,165 @@ fn compare_use_statements(a: &UseStatementData, b: &UseStatementData) -> std::cm
         (true, false) => std::cmp::Ordering::Less,
         (false, true) => std::cmp::Ordering::Greater,
         _ => a.module_name.cmp(&b.module_name),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::{Context, Result};
+    use ruff_source_file::SourceFileBuilder;
+    use tree_sitter::Parser;
+
+    use crate::rules::style::use_statement::{
+        UseStatementData, extract_use_statement_data, group_use_statements_into_blocks,
+    };
+
+    #[test]
+    fn test_group_use_statements_into_blocks() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        // Block 1: alpha, beta
+        // blank line separator
+        // Block 2: charlie, delta
+        // comment separator
+        // Block 3: echo (alone)
+        // Block 4: only foxtrot is kept — golf is on the same line and must be ignored
+        let code = {
+            r#"
+        program foo
+          use alpha_module
+          use beta_module
+
+          use charlie_module
+          use delta_module
+          ! a comment acts as a separator
+          use echo_module
+
+          use foxtrot_module; use golf_module
+        end program foo
+    "#
+        };
+
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let src = SourceFileBuilder::new("test.f90", code).finish();
+
+        let program_node = tree.root_node().child(0).context("Missing program node")?;
+        assert_eq!(program_node.kind(), "program");
+
+        let use_statements: Vec<UseStatementData> = program_node
+            .children(&mut program_node.walk())
+            .filter(|child| child.kind() == "use_statement")
+            .map(|child| extract_use_statement_data(&child, &src))
+            .collect();
+        let blocks = group_use_statements_into_blocks(&use_statements);
+        let block_names = |block: &Vec<&UseStatementData>| -> Vec<String> {
+            block.iter().map(|s| s.module_name.clone()).collect()
+        };
+
+        assert_eq!(blocks.len(), 4, "expected 4 blocks");
+        assert_eq!(block_names(&blocks[0]), vec!["alpha_module", "beta_module"]);
+        assert_eq!(
+            block_names(&blocks[1]),
+            vec!["charlie_module", "delta_module"]
+        );
+        assert_eq!(block_names(&blocks[2]), vec!["echo_module"]);
+        assert_eq!(block_names(&blocks[3]), vec!["foxtrot_module"]); // golf_module ignored: same line
+
+        Ok(())
+    }
+    #[test]
+    fn test_extract_use_statement_data() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = {
+            r#"
+        program foo
+          use iso_fortran_env, only: real64
+          use, intrinsic :: iso_c_binding, only: c_int
+          use My_Module
+          use foxtrot_module; use golf_module
+          use multiline_module, only: fun_1, &
+                                      fun_2, & !! 123_comments
+                                      fun_3
+        end program foo
+    "#
+        };
+
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+        let src = SourceFileBuilder::new("test.f90", code).finish();
+
+        let all_use_statements: Vec<UseStatementData> = root
+            .children(&mut root.walk())
+            .filter(|child| child.kind() == "use_statement")
+            .map(|child| extract_use_statement_data(&child, &src))
+            .collect();
+
+        assert_eq!(all_use_statements.len(), 6);
+
+        // Test regular use statement
+        let regular = &all_use_statements[0];
+        assert!(!regular.is_intrinsic);
+        assert_eq!(regular.module_name, "iso_fortran_env");
+        assert_eq!(regular.start_position_row, 2);
+        assert_eq!(regular.end_position_row, 2);
+        assert!(regular.text.contains("iso_fortran_env"));
+        assert!(!regular.text_range.is_empty());
+
+        // Test intrinsic use statement
+        let intrinsic = &all_use_statements[1];
+        assert!(intrinsic.is_intrinsic);
+        assert_eq!(intrinsic.module_name, "iso_c_binding");
+        assert_eq!(intrinsic.start_position_row, 3);
+        assert_eq!(intrinsic.end_position_row, 3);
+        assert!(intrinsic.text.contains("iso_c_binding"));
+        assert!(!intrinsic.text_range.is_empty());
+
+        // Test mixed case use statement
+        let mixed_case = &all_use_statements[2];
+        assert!(!mixed_case.is_intrinsic);
+        assert_eq!(mixed_case.module_name, "my_module");
+        assert_eq!(mixed_case.start_position_row, 4);
+        assert_eq!(mixed_case.end_position_row, 4);
+        assert!(mixed_case.text.contains("My_Module"));
+        assert!(!mixed_case.text_range.is_empty());
+
+        // Test foxtrot_module (first on same line)
+        let foxtrot = &all_use_statements[3];
+        assert!(!foxtrot.is_intrinsic);
+        assert_eq!(foxtrot.module_name, "foxtrot_module");
+        assert_eq!(foxtrot.start_position_row, 5);
+        assert_eq!(foxtrot.end_position_row, 5);
+        assert!(foxtrot.text.contains("foxtrot_module"));
+        assert!(!foxtrot.text_range.is_empty());
+
+        // Test golf_module (second on same line)
+        let golf = &all_use_statements[4];
+        assert!(!golf.is_intrinsic);
+        assert_eq!(golf.module_name, "golf_module");
+        assert_eq!(golf.start_position_row, 5);
+        assert_eq!(golf.end_position_row, 5);
+        assert!(golf.text.contains("golf_module"));
+        assert!(!golf.text_range.is_empty());
+
+        // Test multiline_module
+        let multiline = &all_use_statements[5];
+        assert!(!multiline.is_intrinsic);
+        assert_eq!(multiline.module_name, "multiline_module");
+        assert_eq!(multiline.start_position_row, 6);
+        assert_eq!(multiline.end_position_row, 8);
+        assert!(multiline.text.contains("fun_1"));
+        assert!(multiline.text.contains("fun_2"));
+        assert!(multiline.text.contains("fun_3"));
+        assert!(multiline.text.contains("123_comments"));
+
+        assert!(!golf.text_range.is_empty());
+        Ok(())
     }
 }
