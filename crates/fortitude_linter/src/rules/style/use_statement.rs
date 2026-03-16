@@ -172,9 +172,6 @@ struct UseStatementData {
 }
 
 fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData {
-    let range = node.textrange();
-    let text = src.source_text().full_lines_str(range).to_string();
-
     let module_name = node
         .module_name(src.source_text())
         // Fortran is case-insensitive, normalize to lowercase for consistent sorting
@@ -185,9 +182,21 @@ fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData
         .children(&mut node.walk())
         .any(|child| child.to_text(src.source_text()) == Some("intrinsic"));
 
+    let mut text_range = node.textrange();
+    let mut start_position_row = node.start_position().row;
+
+    // If there's a preceding block of comments, then keep those attached to
+    // this statement
+    if let Some(comments) = node.prev_attached_comment_block(src.source_text()) {
+        text_range = TextRange::new(comments.start_textsize(), node.end_textsize());
+        start_position_row = comments.start_row();
+    }
+
+    let text = src.source_text().full_lines_str(text_range).to_string();
+
     UseStatementData {
-        text_range: node.textrange(),
-        start_position_row: node.start_position().row,
+        text_range,
+        start_position_row,
         end_position_row: node.end_position().row,
         text,
         module_name,
@@ -224,9 +233,7 @@ mod tests {
 
         // Block 1: alpha, beta
         // blank line separator
-        // Block 2: charlie, delta
-        // comment separator
-        // Block 3: echo (alone)
+        // Block 2: charlie, delta, echo
         // Block 4: only foxtrot is kept — golf is on the same line and must be ignored
         let code = {
             r#"
@@ -260,14 +267,13 @@ mod tests {
             block.iter().map(|s| s.module_name.clone()).collect()
         };
 
-        assert_eq!(blocks.len(), 4, "expected 4 blocks");
+        assert_eq!(blocks.len(), 3, "expected 3 blocks");
         assert_eq!(block_names(&blocks[0]), vec!["alpha_module", "beta_module"]);
         assert_eq!(
             block_names(&blocks[1]),
-            vec!["charlie_module", "delta_module"]
+            vec!["charlie_module", "delta_module", "echo_module"]
         );
-        assert_eq!(block_names(&blocks[2]), vec!["echo_module"]);
-        assert_eq!(block_names(&blocks[3]), vec!["foxtrot_module"]); // golf_module ignored: same line
+        assert_eq!(block_names(&blocks[2]), vec!["foxtrot_module"]); // golf_module ignored: same line
 
         Ok(())
     }

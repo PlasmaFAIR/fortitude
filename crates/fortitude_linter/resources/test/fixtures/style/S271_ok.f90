@@ -28,14 +28,6 @@ module test_module
     compute_something = helper(x) + util(y) + real(ieee_max(x,y), real64)
   end function compute_something
 
-  subroutine test_comments_as_separator()
-    !! fun_c is used for...
-    use module_a, only: fun_a
-    use module_c, only: fun_c
-    ! fun_b is used for...
-    use module_b, only: fun_b
-  end subroutine test_comments_as_separator
-
   subroutine test_freeform()
     use module_a
     use module_e

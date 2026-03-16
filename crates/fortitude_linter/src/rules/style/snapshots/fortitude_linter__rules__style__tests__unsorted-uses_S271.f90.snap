@@ -1,6 +1,7 @@
 ---
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
+snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S271.f90:2:2: S271 [*] `use` statements are not sorted
   |
@@ -13,22 +14,19 @@ expression: diagnostics
   = help: Sort `use` statements
 
 ℹ Safe fix
-1  1  | module test_module
-2     |-	use module_z_with_tab, only: fun_z_with_tab
-   2  |+  use, intrinsic :: iso_fortran_env, ONLY: int32
-   3  |+    USE module_a, only: fun_a !! module_a inline comments
-3  4  |   use module_c, only: fun_c3, &
-4  5  |                       fun_c2, & !! fun_c2 comments
-5  6  |                       fun_c1
-6     |-  use, intrinsic :: iso_fortran_env, ONLY: int32
-7     |-    USE module_a, only: fun_a !! module_a inline comments
-   7  |+  use module_no_only
-8  8  |   USE module_z, only: fun_z
-9     |-  use module_no_only
-   9  |+	use module_z_with_tab, only: fun_z_with_tab
+1 1 | module test_module
+2   |-	use module_z_with_tab, only: fun_z_with_tab
+  2 |+  use, intrinsic :: iso_fortran_env, ONLY: int32
+  3 |+    USE module_a, only: fun_a !! module_a inline comments
+3 4 |   use module_c, only: fun_c3, &
+4 5 |                       fun_c2, & !! fun_c2 comments
+5 6 |                       fun_c1
+6   |-  use, intrinsic :: iso_fortran_env, ONLY: int32
+7   |-    USE module_a, only: fun_a !! module_a inline comments
+  7 |+	use module_z_with_tab, only: fun_z_with_tab
+8 8 |   USE module_z, only: fun_z
+9 9 |   use module_no_only
 10 10 | 
-11 11 |   use module_single, only: fun_single
-12 12 | 
 
 ./resources/test/fixtures/style/S271.f90:13:3: S271 [*] `use` statements are not sorted
    |
@@ -79,27 +77,31 @@ expression: diagnostics
 27 27 | 
 28 28 |     compute_something = helper(x) + util(y) + real(ieee_max(x,y), real64)
 
-./resources/test/fixtures/style/S271.f90:33:5: S271 [*] `use` statements are not sorted
+./resources/test/fixtures/style/S271.f90:32:5: S271 [*] `use` statements are not sorted
    |
-31 |   subroutine test_comments_as_separator()
-32 |     !! fun_c is used for...
-33 |     use module_c, only: fun_c
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^ S271
-34 |     use module_a, only: fun_a
-35 |     ! fun_b is used for...
+31 |     subroutine test_comments_as_separator()
+32 | /     !! fun_c is used for...
+33 | |     use module_c, only: fun_c
+   | |_____________________________^ S271
+34 |       use module_a, only: fun_a
+35 |       ! fun_b is used for...
    |
    = help: Sort `use` statements
 
 ℹ Safe fix
+29 29 |   end function compute_something
 30 30 | 
 31 31 |   subroutine test_comments_as_separator()
-32 32 |     !! fun_c is used for...
-   33 |+    use module_a, only: fun_a
-33 34 |     use module_c, only: fun_c
-34    |-    use module_a, only: fun_a
-35 35 |     ! fun_b is used for...
-36 36 |     use module_b, only: fun_b
+32    |-    !! fun_c is used for...
+33    |-    use module_c, only: fun_c
+34 32 |     use module_a, only: fun_a
+35 33 |     ! fun_b is used for...
+36 34 |     use module_b, only: fun_b
+   35 |+    !! fun_c is used for...
+   36 |+    use module_c, only: fun_c
 37 37 |   end subroutine test_comments_as_separator
+38 38 | 
+39 39 |   subroutine test_freeform()
 
 ./resources/test/fixtures/style/S271.f90:40:5: S271 [*] `use` statements are not sorted
    |
