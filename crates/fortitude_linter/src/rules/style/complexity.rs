@@ -1,10 +1,12 @@
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
+use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
+use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -83,7 +85,7 @@ use tree_sitter::Node;
 /// ```
 ///
 /// ## Options
-/// - `check.too-complex.max-complexity`
+/// - `check.complexity.max-complexity`
 ///
 /// ## References
 /// - [Wikipedia: Cyclomatic complexity](https://en.wikipedia.org/wiki/Cyclomatic_complexity)
@@ -113,7 +115,7 @@ impl AstRule for TooComplex {
     ) -> Option<Vec<Diagnostic>> {
         let procedure_stmt = node.named_child(0)?;
         let actual_complexity = cyclomatic_complexity(node);
-        let max_complexity = settings.too_complex.max_complexity;
+        let max_complexity = settings.complexity.max_complexity;
 
         if actual_complexity > max_complexity {
             return some_vec![Diagnostic::from_node(
@@ -165,6 +167,144 @@ fn cyclomatic_complexity(node: &Node) -> usize {
     complexity
 }
 
+/// ## What it does
+/// Checks for procedures with a large number of arguments.
+///
+/// ## Why is this bad?
+/// Procedures with many arguments are harder to understand, maintain, call,
+/// and test. They often indicate that a procedure is doing too much and should
+/// be refactored into smaller, more focused procedures, or that a derived type
+/// should be used to group related arguments together.
+///
+/// For type-bound procedures, the first argument is not counted towards the
+/// total number of arguments. It is recommended to name this argument `this` or
+/// `self` to make it clear that the routine is type-bound, or else this rule
+/// may flag routines that are actually compliant.
+///
+/// As routines defined within interface blocks must match the procedure they
+/// are describing, they are exempt from this rule.
+///
+/// ## Example
+///
+/// The following procedure would be flagged for having too many arguments:
+/// ```f90
+/// subroutine update_position(x, y, z, vx, vy, vz, dt)
+///   real, intent(inout) :: x, y, z
+///   real, intent(in) :: vx, vy, vz, dt
+///   x = x + vx * dt
+///   y = y + vy * dt
+///   z = z + vz * dt
+/// end subroutine update_position
+/// ```
+///
+/// Use instead:
+/// ```f90
+/// subroutine update_position(position, velocity, dt)
+///   type(vector), intent(inout) :: position
+///   type(vector), intent(in) :: velocity
+///   real, intent(in) :: dt
+///   position%x = position%x + velocity%x * dt
+///   position%y = position%y + velocity%y * dt
+///   position%z = position%z + velocity%z * dt
+/// end subroutine update_position
+/// ```
+///
+/// where `vector` is a derived type defined as:
+/// ```f90
+/// type :: vector
+///  real :: x
+///  real :: y
+///  real :: z
+/// end type vector
+/// ```
+///
+/// ## Options
+/// - `check.complexity.max-args`
+#[derive(ViolationMetadata)]
+pub(crate) struct TooManyArguments {
+    arg_count: usize,
+    max_args: usize,
+    procedure_name: String,
+}
+
+impl Violation for TooManyArguments {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self {
+            arg_count,
+            max_args,
+            procedure_name,
+        } = self;
+        format!("Too many arguments in procedure `{procedure_name}` ({arg_count} > {max_args})")
+    }
+}
+
+impl AstRule for TooManyArguments {
+    fn check<'a>(
+        settings: &CheckSettings,
+        node: &'a Node,
+        src: &'a SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
+        // Do not check procedures in interface blocks
+        if node
+            .ancestors()
+            .any(|ancestor| ancestor.kind() == "interface")
+        {
+            return None;
+        }
+
+        let src = src.source_text();
+        let procedure_stmt = node.named_child(0)?;
+        let procedure_name = procedure_stmt
+            .child_with_name("name")?
+            .to_text(src)?
+            .to_string();
+        let parameters = procedure_stmt.child_with_name("parameters")?;
+        let args: Vec<_> = parameters
+            .named_descendants()
+            .filter(|node| node.kind() == "identifier")
+            .enumerate()
+            .filter_map(|(idx, node)| {
+                // skip the first argument if it is 'self' or 'this', assuming
+                // it is a type-bound procedure
+                if idx > 0 {
+                    return Some(node);
+                }
+                let name = node.to_text(src).map(|s| s.to_ascii_lowercase());
+                if matches!(name.as_deref(), Some("self") | Some("this")) {
+                    None
+                } else {
+                    Some(node)
+                }
+            })
+            .collect();
+        let arg_count = args.len();
+        let max_args = settings.complexity.max_args;
+
+        if arg_count > max_args {
+            // arg_count must be at least 1, so args.first() and args.last() are guaranteed to exist
+            let text_range = TextRange::new(
+                args.first().unwrap().start_textsize(),
+                args.last().unwrap().end_textsize(),
+            );
+            return some_vec![Diagnostic::new(
+                TooManyArguments {
+                    arg_count,
+                    max_args,
+                    procedure_name,
+                },
+                text_range
+            )];
+        }
+        None
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["function", "subroutine"]
+    }
+}
+
 pub mod settings {
     use crate::display_settings;
     use ruff_macros::CacheKey;
@@ -173,11 +313,15 @@ pub mod settings {
     #[derive(Debug, Clone, CacheKey)]
     pub struct Settings {
         pub max_complexity: usize,
+        pub max_args: usize,
     }
 
     impl Default for Settings {
         fn default() -> Self {
-            Self { max_complexity: 10 }
+            Self {
+                max_complexity: 10,
+                max_args: 5,
+            }
         }
     }
 
@@ -185,8 +329,8 @@ pub mod settings {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             display_settings! {
                 formatter = f,
-                namespace = "check.too-complex",
-                fields = [self.max_complexity]
+                namespace = "check.complexity",
+                fields = [self.max_complexity, self.max_args]
             }
             Ok(())
         }

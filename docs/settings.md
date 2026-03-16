@@ -667,6 +667,64 @@ If set to false, the hint will be hidden.
 
 ---
 
+### `check.complexity`
+
+Options for `too-complex` rule
+
+#### [`max-args`](#check_complexity_max-args) {: #check_complexity_max-args }
+<span id="max-args"></span>
+
+The maximum number of arguments allowed for a procedure.
+Procedures exceeding this threshold will be flagged.
+
+**Default value**: `5`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.complexity]
+    max-args = 15
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.complexity]
+    max-args = 15
+    ```
+
+---
+
+#### [`max-complexity`](#check_complexity_max-complexity) {: #check_complexity_max-complexity }
+<span id="max-complexity"></span>
+
+The maximum cyclomatic complexity allowed for a procedure.
+Procedures exceeding this threshold will be flagged.
+
+**Default value**: `10`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.complexity]
+    max-complexity = 15
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.complexity]
+    max-complexity = 15
+    ```
+
+---
+
 ### `check.exit-unlabelled-loops`
 
 Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -917,37 +975,6 @@ Quote style to prefer for string literals (either "single" or "double").
     ```toml
     [check.strings]
     quotes = "single"
-    ```
-
----
-
-### `check.too-complex`
-
-Options for `too-complex` rule
-
-#### [`max-complexity`](#check_too-complex_max-complexity) {: #check_too-complex_max-complexity }
-<span id="max-complexity"></span>
-
-The maximum cyclomatic complexity allowed for a procedure.
-Procedures exceeding this threshold will be flagged.
-
-**Default value**: `10`
-
-**Type**: `usize`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.too-complex]
-    max-complexity = 15
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.too-complex]
-    max-complexity = 15
     ```
 
 ---

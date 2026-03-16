@@ -1,7 +1,7 @@
 use crate::options::{
-    ExitUnlabelledLoopOptions, InconsistentDimensionOptions, InvalidTabOptions,
+    ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions, InvalidTabOptions,
     KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions, StringOptions,
-    TooComplexOptions, UseStatementsOptions,
+    UseStatementsOptions,
 };
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
@@ -220,7 +220,7 @@ pub struct Configuration {
     pub inconsistent_dimension: Option<InconsistentDimensionOptions>,
     pub line_too_long: Option<LineTooLongOptions>,
     pub use_statements: Option<UseStatementsOptions>,
-    pub too_complex: Option<TooComplexOptions>,
+    pub complexity: Option<ComplexityOptions>,
 }
 
 impl Configuration {
@@ -295,7 +295,7 @@ impl Configuration {
             inconsistent_dimension: check.inconsistent_dimensions,
             line_too_long: check.line_too_long,
             use_statements: check.use_statements,
-            too_complex: check.too_complex,
+            complexity: check.complexity,
         }
     }
 
@@ -378,9 +378,9 @@ impl Configuration {
                     .use_statements
                     .map(UseStatementsOptions::into_settings)
                     .unwrap_or_default(),
-                too_complex: self
-                    .too_complex
-                    .map(TooComplexOptions::into_settings)
+                complexity: self
+                    .complexity
+                    .map(ComplexityOptions::into_settings)
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {
@@ -450,7 +450,7 @@ impl Configuration {
                 .or(config.inconsistent_dimension),
             line_too_long: self.line_too_long.or(config.line_too_long),
             use_statements: self.use_statements.or(config.use_statements),
-            too_complex: self.too_complex.or(config.too_complex),
+            complexity: self.complexity.or(config.complexity),
         }
     }
 }
