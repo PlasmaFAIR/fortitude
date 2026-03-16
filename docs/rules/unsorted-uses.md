@@ -13,6 +13,8 @@ Intrinsic modules (`use, intrinsic ::`) are always placed first.
 Sorted imports are easier to scan, reduce cognitive load when reviewing code,
 and help avoid merge conflicts when multiple developers add imports to the same block.
 
+Blocks of `use` statements separated by blank lines are sorted independently.
+
 ## Example
 ```f90
 ! Not recommended
@@ -27,5 +29,3 @@ use module_a, only: fun_a
 use module_b, only: fun_b
 use module_c, only: fun_c
 ```
-
-Blocks of `use` statements separated by blank lines are sorted independently.

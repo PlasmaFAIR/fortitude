@@ -17,6 +17,8 @@ use tree_sitter::Node;
 /// Sorted imports are easier to scan, reduce cognitive load when reviewing code,
 /// and help avoid merge conflicts when multiple developers add imports to the same block.
 ///
+/// Blocks of `use` statements separated by blank lines are sorted independently.
+///
 /// ## Example
 /// ```f90
 /// ! Not recommended
@@ -31,8 +33,6 @@ use tree_sitter::Node;
 /// use module_b, only: fun_b
 /// use module_c, only: fun_c
 /// ```
-///
-/// Blocks of `use` statements separated by blank lines are sorted independently.
 #[derive(ViolationMetadata)]
 pub(crate) struct UnsortedUses {}
 
