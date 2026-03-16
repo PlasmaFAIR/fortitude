@@ -97,7 +97,9 @@ impl AstRule for UnsortedUses {
             let fix = Fix::safe_edit(edit);
 
             let first = block.first()?;
-            let diag = Diagnostic::new(UnsortedUses {}, first.text_range).with_fix(fix);
+            let last = block.last()?;
+            let range = TextRange::new(first.start_textsize(), last.end_textsize());
+            let diag = Diagnostic::new(UnsortedUses {}, range).with_fix(fix);
             diagnostics.push(diag);
         }
 
@@ -169,6 +171,12 @@ struct UseStatementData {
     text: String,
     module_name: String,
     is_intrinsic: bool,
+}
+
+impl TextRanged for UseStatementData {
+    fn textrange(&self) -> TextRange {
+        self.text_range
+    }
 }
 
 fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData {
