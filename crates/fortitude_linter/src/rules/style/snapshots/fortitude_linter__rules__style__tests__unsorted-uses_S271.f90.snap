@@ -5,11 +5,16 @@ snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S271.f90:2:2: S271 [*] `use` statements are not sorted
   |
-1 | module test_module
-2 |     use module_z_with_tab, only: fun_z_with_tab
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S271
-3 |   use module_c, only: fun_c3, &
-4 |                       fun_c2, & !! fun_c2 comments
+1 |   module test_module
+2 | /     use module_z_with_tab, only: fun_z_with_tab
+3 | |   use module_c, only: fun_c3, &
+4 | |                       fun_c2, & !! fun_c2 comments
+5 | |                       fun_c1
+6 | |   use, intrinsic :: iso_fortran_env, ONLY: int32
+7 | |     USE module_a, only: fun_a !! module_a inline comments
+  | |_____________________________^ S271
+8 |     USE module_z, only: fun_z
+9 |     use module_no_only
   |
   = help: Sort `use` statements
 
@@ -30,12 +35,14 @@ snapshot_kind: text
 
 ./resources/test/fixtures/style/S271.f90:13:3: S271 [*] `use` statements are not sorted
    |
-11 |   use module_single, only: fun_single
+11 |     use module_single, only: fun_single
 12 |
-13 |   use, intrinsic :: iso_fortran_env, only: real64
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S271
-14 |   use aa_non_intrinsic_module_d, only: fun_d
-15 |   use, intrinsic :: iso_c_binding, only: fun_i
+13 | /   use, intrinsic :: iso_fortran_env, only: real64
+14 | |   use aa_non_intrinsic_module_d, only: fun_d
+15 | |   use, intrinsic :: iso_c_binding, only: fun_i
+   | |______________________________________________^ S271
+16 |
+17 |     implicit none (type, external)
    |
    = help: Sort `use` statements
 
@@ -53,12 +60,14 @@ snapshot_kind: text
 
 ./resources/test/fixtures/style/S271.f90:22:5: S271 [*] `use` statements are not sorted
    |
-20 |   contains
-21 |   real function compute_something(x, y)
-22 |     use custom_math, only: fun_m
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S271
-23 |     use another_package, only: helper, util
-24 |     use, intrinsic :: iso_fortran_env, only: real64, int32
+20 |     contains
+21 |     real function compute_something(x, y)
+22 | /     use custom_math, only: fun_m
+23 | |     use another_package, only: helper, util
+24 | |     use, intrinsic :: iso_fortran_env, only: real64, int32
+25 | |     use, intrinsic :: ieee_arithmetic, only: fun_a
+   | |__________________________________________________^ S271
+26 |       real(real64), intent(in) :: x, y
    |
    = help: Sort `use` statements
 
@@ -83,9 +92,11 @@ snapshot_kind: text
 32 |       !! fun_c is used for...
    |  __________^
 33 | |     use module_c, only: fun_c
+34 | |     use module_a, only: fun_a
+35 | |     ! fun_b is used for...
+36 | |     use module_b, only: fun_b
    | |_____________________________^ S271
-34 |       use module_a, only: fun_a
-35 |       ! fun_b is used for...
+37 |     end subroutine test_comments_as_separator
    |
    = help: Sort `use` statements
 
@@ -106,11 +117,14 @@ snapshot_kind: text
 
 ./resources/test/fixtures/style/S271.f90:40:5: S271 [*] `use` statements are not sorted
    |
-39 |   subroutine test_freeform()
-40 |     use module_f, only: fun_f
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^ S271
-41 |     use module_a
-42 |     use module_z, only: fun_z; use module_b; use module_c, only: fun_c
+39 |     subroutine test_freeform()
+40 | /     use module_f, only: fun_f
+41 | |     use module_a
+42 | |     use module_z, only: fun_z; use module_b; use module_c, only: fun_c
+43 | |     use module_e
+   | |________________^ S271
+44 |     end subroutine test_freeform
+45 |   end module test_module
    |
    = help: Sort `use` statements
 
