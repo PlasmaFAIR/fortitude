@@ -100,7 +100,7 @@ pub trait FortitudeNode<'tree> {
     fn ancestors(&self) -> impl Iterator<Item = Node<'_>>;
 
     /// Get the first child with a given name. Returns None if not found.
-    fn child_with_name(&self, name: &str) -> Option<Node<'_>>;
+    fn child_with_name(&self, name: &str) -> Option<Node<'tree>>;
 
     /// Get a named `keyword_argument` child node, if it exists.
     fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>>;
@@ -175,7 +175,7 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         AncestorsIterator { node: *self }
     }
 
-    fn child_with_name(&self, name: &str) -> Option<Self> {
+    fn child_with_name(&self, name: &str) -> Option<Node<'tree1>> {
         self.named_children(&mut self.walk())
             .find(|x| x.kind() == name)
     }
