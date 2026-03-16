@@ -1,0 +1,8 @@
+-   id: fortitude
+    name: Fortitude Fortran code linter
+    description: Runs the Fortitude code linter to check for code quality issues in Fortran files.
+    entry: fortitude
+    language: python
+    files: \.[fF]\d*$
+    args: [check]
+
