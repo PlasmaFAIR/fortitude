@@ -33,9 +33,10 @@ contains
     if ((a * b) > 100) then
       capped_mult = 100
       return
-    else
+    else  ! This comment should be moved onto next line
       ! And some other bits that
       ! should also be unindented
+ ! unindented comment shouldn't cause over-indentation
       capped_mult = a * b
     end if
   end function capped_mult
