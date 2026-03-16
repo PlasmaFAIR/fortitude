@@ -77,7 +77,7 @@ snapshot_kind: text
 34 |       capped_mult = 100
 35 |       return
    |       ^^^^^^ S252
-36 |     else
+36 |     else  ! This comment should be moved onto next line
 37 |       ! And some other bits that
    |
    = help: Remove unnecessary 'else'
@@ -86,26 +86,28 @@ snapshot_kind: text
 33 33 |     if ((a * b) > 100) then
 34 34 |       capped_mult = 100
 35 35 |       return
-36    |-    else
+36    |-    else  ! This comment should be moved onto next line
 37    |-      ! And some other bits that
 38    |-      ! should also be unindented
-39    |-      capped_mult = a * b
-40 36 |     end if
-   37 |+
+   36 |+    end if
+   37 |+    ! This comment should be moved onto next line
    38 |+    ! And some other bits that
    39 |+    ! should also be unindented
-   40 |+    capped_mult = a * b
-41 41 |   end function capped_mult
-42 42 | 
-43 43 |   integer function capped_div(a, b)
+39 40 |  ! unindented comment shouldn't cause over-indentation
+40    |-      capped_mult = a * b
+41    |-    end if
+   41 |+    capped_mult = a * b
+42 42 |   end function capped_mult
+43 43 | 
+44 44 |   integer function capped_div(a, b)
 
-./resources/test/fixtures/style/S252.f90:67:7: S252 Unecessary else after `return` statement
+./resources/test/fixtures/style/S252.f90:68:7: S252 Unecessary else after `return` statement
    |
-65 |     something: if ((a + b + b) > 100) then
-66 |       capped_double_add = 100
-67 |       return
+66 |     something: if ((a + b + b) > 100) then
+67 |       capped_double_add = 100
+68 |       return
    |       ^^^^^^ S252
-68 |     else
-69 |       ! Can't auto-fix due to label
+69 |     else
+70 |       ! Can't auto-fix due to label
    |
    = help: Remove unnecessary 'else'

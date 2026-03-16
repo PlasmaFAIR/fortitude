@@ -1,4 +1,5 @@
 use crate::ast::{FortitudeNode, types::BlockExit};
+use crate::fix::edits::redent;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
@@ -8,7 +9,6 @@ use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailab
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
-use textwrap::{dedent, indent};
 use tree_sitter::Node;
 
 /// ## What it does
@@ -420,18 +420,33 @@ fn fix_superfluous_return<'a>(branch: &'a Node, src: &'a SourceFile) -> Option<F
         let end_if = parent_if.named_children(&mut parent_if.walk()).last()?;
         rest.push(end_if.edit_delete(src));
 
-        // end of the `else`
-        let start = keyword.end_textsize();
+        // Start reindenting from start of next line
+        let lines = src.to_source_code();
+        let else_line_num = lines.line_index(keyword.end_textsize());
+        let next_line_num = else_line_num.saturating_add(1);
+
+        let start = lines.line_start(next_line_num);
         let end = branch.children(&mut branch.walk()).last()?.end_textsize();
         let branch_range = TextRange::new(start, end);
 
         let branch_text = src.slice(branch_range);
-        // This is maybe a little overkill, but makes this implementation a lot
-        // simpler than doing it ourselves. Note that tabs and statement labels
-        // will probably mess things up!
-        let replacement = indent(&dedent(branch_text), &indentation);
+        // Note that tabs, statement labels, and unindented comments will
+        // probably mess things up in various ways!
+        let replacement = redent(branch_text, &indentation);
 
         rest.push(Edit::range_replacement(replacement, branch_range));
+
+        // There's a comment on the same line, fix up the whitespace
+        if let Some(next_sib) = keyword.next_named_sibling()
+            && next_sib.kind() == "comment"
+            && else_line_num == lines.line_index(next_sib.start_textsize())
+        {
+            rest.push(Edit::replacement(
+                indentation,
+                keyword.end_textsize(),
+                next_sib.start_textsize(),
+            ));
+        }
     };
 
     Some(Fix::safe_edits(edit, rest))
