@@ -288,6 +288,7 @@ pub(crate) fn check_path(
                 }
             }
         }
+
         if let Some(allow_rules) = gather_allow_comments(&node, file) {
             allow_comments.push(allow_rules);
         };

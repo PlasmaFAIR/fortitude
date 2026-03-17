@@ -9,5 +9,23 @@ Using loop labels with `exit` and `cycle` statements prevents bugs when exiting 
 wrong loop, and helps readability in deeply nested or long loops. The danger is
 particularly enhanced when code is refactored to add further loops.
 
+## Example
+```f90
+do i = 1, 10
+  do j = 1, 10
+    if (i + j > 5) cycle
+  end do
+end do
+```
+
+Use instead:
+```f90
+do i = 1, 10
+  inner: do j = 1, 10
+    if (i + j > 5) cycle inner
+  end do inner
+end do
+```
+
 ## Settings
 See [allow-unnested-loops](../settings.md#check_exit-unlabelled-loops_allow-unnested-loops)
