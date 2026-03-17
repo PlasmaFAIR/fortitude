@@ -1,5 +1,6 @@
 use std::{borrow::Cow, cell::OnceCell, fmt, ops::Deref};
 
+use lazy_regex::{Captures, lazy_regex};
 use ruff_macros::CacheKey;
 use ruff_source_file::{LineEnding, SourceFile, find_newline};
 use ruff_text_size::TextSize;
@@ -11,12 +12,17 @@ use crate::{ast::FortitudeNode, traits::TextRanged};
 #[derive(Debug, Clone)]
 pub struct Stylist<'a> {
     source: Cow<'a, str>,
+    capitalisation: Capitalisation,
     indentation: Indentation,
     quote: Quote,
     line_ending: OnceCell<LineEnding>,
 }
 
 impl<'a> Stylist<'a> {
+    pub fn capitalisation(&self) -> Capitalisation {
+        self.capitalisation
+    }
+
     pub fn indentation(&self) -> &Indentation {
         &self.indentation
     }
@@ -36,19 +42,29 @@ impl<'a> Stylist<'a> {
     pub fn into_owned(self) -> Stylist<'static> {
         Stylist {
             source: Cow::Owned(self.source.into_owned()),
-            indentation: self.indentation,
+            capitalisation: self.capitalisation,
+            indentation: self.indentation.clone(),
             quote: self.quote,
             line_ending: self.line_ending,
         }
     }
 
     pub fn from_ast(root: &Node, source: &'a SourceFile) -> Self {
-        let indentation = detect_indentation(root, source);
+        let first_statement = find_keyword(root);
+        let capitalisation: Capitalisation = first_statement
+            .map(|node| {
+                node.to_text(source.source_text())
+                    .unwrap_or_default()
+                    .into()
+            })
+            .unwrap_or_default();
+        let indentation = detect_indentation(&first_statement, source);
         let src = source.source_text();
         let quote = detect_quote(root, src);
 
         Self {
             source: Cow::Borrowed(src),
+            capitalisation,
             indentation,
             quote,
             line_ending: OnceCell::default(),
@@ -63,17 +79,20 @@ fn detect_quote(root: &Node, src: &str) -> Quote {
         .unwrap_or_default()
 }
 
-/// Find a top-level entity, and then find the first statement that has
-/// indentation longer than the indentation on that entity, and use the
-/// difference
-fn detect_indentation(root: &Node, src: &SourceFile) -> Indentation {
-    let first_statement = root.named_descendants().find(|node| {
+/// Find the first "interesting" keyword
+fn find_keyword<'a>(root: &'a Node) -> Option<Node<'a>> {
+    root.named_descendants().find(|node| {
         matches!(
             node.kind(),
-            "program" | "module" | "submodule" | "function" | "subroutine"
+            "program" | "module" | "submodule" | "function" | "subroutine" | "interface"
         )
-    });
+    })
+}
 
+/// Given a top-level entity, and then find the first statement that has
+/// indentation longer than the indentation on that entity, and use the
+/// difference
+fn detect_indentation(first_statement: &Option<Node>, src: &SourceFile) -> Indentation {
     if first_statement.is_none() {
         return Indentation::default();
     }
@@ -198,11 +217,85 @@ impl fmt::Display for Quote {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, CacheKey)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+#[derive(Default)]
+pub enum Capitalisation {
+    /// Use "lowercase" for keywords
+    #[default]
+    Lowercase,
+    /// Use "UPPERCASE" for keywords
+    Uppercase,
+    /// Use "Titlecase" for keywords
+    Titlecase,
+}
+
+impl From<&str> for Capitalisation {
+    fn from(value: &str) -> Self {
+        if value == value.to_uppercase() {
+            Self::Uppercase
+        } else if value.starts_with(|c: char| c.is_uppercase()) {
+            Self::Titlecase
+        } else {
+            Self::Lowercase
+        }
+    }
+}
+
+pub trait ToCapitalisation {
+    fn to_capitalisation(&self, capitalisation: Capitalisation) -> String;
+}
+
+impl ToCapitalisation for str {
+    fn to_capitalisation(&self, capitalisation: Capitalisation) -> String {
+        match capitalisation {
+            Capitalisation::Lowercase => self.to_lowercase(),
+            Capitalisation::Uppercase => self.to_uppercase(),
+            Capitalisation::Titlecase => titlecase(self),
+        }
+    }
+}
+
+fn titlecase(input: &str) -> String {
+    let words_regex = lazy_regex!(r"(\w+)");
+
+    // If input is yelling (all uppercase) make lowercase
+    let input = if input.chars().any(|ch| ch.is_lowercase()) {
+        Cow::from(input)
+    } else {
+        Cow::from(input.to_lowercase())
+    };
+
+    words_regex
+        .replace_all(&input, |captures: &Captures| {
+            let mut result = String::new();
+            let word = &captures[1];
+            result.push_str(&uppercase_first_letter(word));
+            result
+        })
+        .into_owned()
+}
+
+/// Uppercase first letter of word
+///
+/// Source - https://stackoverflow.com/a/38406885
+/// Posted by Shepmaster, modified by community. See post 'Timeline' for change history
+/// Retrieved 2026-03-17, License - CC BY-SA 4.0
+fn uppercase_first_letter(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use anyhow::{Context, Result};
     use ruff_source_file::{LineEnding, SourceFile, SourceFileBuilder, find_newline};
     use tree_sitter::{Parser, Tree};
+
+    use crate::stylist::{Capitalisation, ToCapitalisation};
 
     use super::{Indentation, Quote, Stylist};
 
@@ -332,6 +425,42 @@ end
         assert_eq!(
             find_newline(contents).map(|(_, ending)| ending),
             Some(LineEnding::CrLf)
+        );
+    }
+
+    #[test]
+    fn capitalisation() {
+        assert_eq!(Capitalisation::from("PROGRAM"), Capitalisation::Uppercase);
+        assert_eq!(Capitalisation::from("Program"), Capitalisation::Titlecase);
+        assert_eq!(Capitalisation::from("program"), Capitalisation::Lowercase);
+    }
+
+    #[test]
+    fn to_capitalisation() {
+        assert_eq!(
+            "program".to_capitalisation(Capitalisation::Uppercase),
+            "PROGRAM"
+        );
+        assert_eq!(
+            "program".to_capitalisation(Capitalisation::Titlecase),
+            "Program"
+        );
+        assert_eq!(
+            "PROGRAM".to_capitalisation(Capitalisation::Lowercase),
+            "program"
+        );
+
+        assert_eq!(
+            "end if".to_capitalisation(Capitalisation::Uppercase),
+            "END IF"
+        );
+        assert_eq!(
+            "end if".to_capitalisation(Capitalisation::Titlecase),
+            "End If"
+        );
+        assert_eq!(
+            "END IF".to_capitalisation(Capitalisation::Lowercase),
+            "end if"
         );
     }
 }
