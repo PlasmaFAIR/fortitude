@@ -4,7 +4,7 @@ use anyhow::{Result, anyhow};
 use itertools::Itertools;
 use lazy_regex::lazy_regex;
 use ruff_diagnostics::Edit;
-use ruff_source_file::SourceFile;
+use ruff_source_file::{LineEnding, SourceFile};
 use ruff_text_size::Ranged;
 use tree_sitter::Node;
 
@@ -92,13 +92,14 @@ pub(crate) fn add_attribute_to_var_decl(decl: &VariableDeclaration, attribute: &
 ///
 /// ```
 /// use fortitude_linter::fix::edits::redent;
+/// use ruff_source_file::LineEnding;
 ///
 /// assert_eq!(redent("
 ///     1st line
 ///       2nd line
 ///  !     comment
 ///     3rd line
-/// ", "  "), "
+/// ", "  ", LineEnding::Lf), "
 ///   1st line
 ///     2nd line
 ///  !     comment
@@ -109,7 +110,7 @@ pub(crate) fn add_attribute_to_var_decl(decl: &VariableDeclaration, attribute: &
 /// Adapted from `textwrap`
 /// Copyright 2016 Martin Geisler
 /// SPDX-License-Identifier: MIT
-pub fn redent(s: &str, indentation: &str) -> String {
+pub fn redent(s: &str, indentation: &str, line_ending: LineEnding) -> String {
     let mut prefix = "";
     let mut lines = s.lines();
     let comment_line = lazy_regex!(r"^\s*[&!]");
@@ -170,11 +171,11 @@ pub fn redent(s: &str, indentation: &str) -> String {
             // Preserve under-indented comment and continuation lines
             result.push_str(line);
         }
-        result.push('\n');
+        result.push_str(line_ending.as_str());
     }
 
     if result.ends_with('\n') && !s.ends_with('\n') {
-        let new_len = result.len() - 1;
+        let new_len = result.len() - line_ending.len();
         result.truncate(new_len);
     }
 
@@ -298,7 +299,7 @@ end program foo
 
     #[test]
     fn redent_empty() {
-        assert_eq!(redent("", ""), "");
+        assert_eq!(redent("", "", LineEnding::Lf), "");
     }
 
     #[test]
@@ -314,7 +315,7 @@ end program foo
             " bar",
             "   baz"
         ].join("\n");
-        assert_eq!(redent(&x, " "), y);
+        assert_eq!(redent(&x, " ", LineEnding::Lf), y);
     }
 
     #[test]
@@ -332,7 +333,7 @@ end program foo
             "",
             "   baz"
         ].join("\n");
-        assert_eq!(redent(&x, " "), y);
+        assert_eq!(redent(&x, " ", LineEnding::Lf), y);
     }
 
     #[test]
@@ -354,7 +355,7 @@ end program foo
             "    bar",
             "    baz",
         ].join("\n");
-        assert_eq!(redent(&x, ""), y);
+        assert_eq!(redent(&x, "", LineEnding::Lf), y);
     }
 
     #[test]
@@ -376,7 +377,7 @@ end program foo
             "      bar",
             "      baz",
         ].join("\n");
-        assert_eq!(redent(&x, "  "), y);
+        assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
     }
 
     #[test]
@@ -390,7 +391,7 @@ end program foo
             "\tfoo",
             "  bar",
         ].join("\n");
-        assert_eq!(redent(&x, ""), y);
+        assert_eq!(redent(&x, "", LineEnding::Lf), y);
     }
 
     #[test]
@@ -404,7 +405,7 @@ end program foo
             "\tfoo",
             "\t\tbar",
         ].join("\n");
-        assert_eq!(redent(&x, "\t"), y);
+        assert_eq!(redent(&x, "\t", LineEnding::Lf), y);
     }
 
     #[test]
@@ -418,7 +419,7 @@ end program foo
             "  foo",
             "  \tbar",
         ].join("\n");
-        assert_eq!(redent(&x, "  "), y);
+        assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
     }
 
     #[test]
@@ -432,7 +433,7 @@ end program foo
             "  \tfoo",
             "    \tbar",
         ].join("\n");
-        assert_eq!(redent(&x, "  "), y);
+        assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
     }
 
     #[test]
@@ -446,7 +447,7 @@ end program foo
             "foo",
             "  bar",
         ].join("\n");
-        assert_eq!(redent(&x, ""), y);
+        assert_eq!(redent(&x, "", LineEnding::Lf), y);
     }
 
     #[test]
@@ -466,6 +467,6 @@ end program foo
             "     !     bar",
             "      baz",
         ].join("\n");
-        assert_eq!(redent(&x, "  "), y);
+        assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
     }
 }
