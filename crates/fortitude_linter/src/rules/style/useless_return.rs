@@ -1,6 +1,7 @@
 use crate::ast::{FortitudeNode, types::BlockExit};
 use crate::fix::edits::redent;
 use crate::settings::CheckSettings;
+use crate::stylist::{Stylist, ToCapitalisation};
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode, Rule};
@@ -377,7 +378,8 @@ pub(crate) fn check_superfluous_returns<'a>(
 }
 
 fn fix_superfluous_return<'a>(branch: &'a Node, src: &'a SourceFile) -> Option<Fix> {
-    // TODO(peter): use stylist for line endings and capitalisation
+    // TODO(peter): use passed-in stylist
+    let stylist = Stylist::from_ast(branch, src);
 
     let parent_if = branch.parent()?;
     if let Some(block_label) = parent_if.child_with_name("block_label_start_expression") {
@@ -399,7 +401,13 @@ fn fix_superfluous_return<'a>(branch: &'a Node, src: &'a SourceFile) -> Option<F
 
     let keyword = branch.child(0)?;
     let edit = if keyword.kind() == "elseif" {
-        keyword.edit_replacement(src, format!("end if\n{indentation}if"))
+        let mut replacement = String::new();
+        replacement.push_str(&"end if".to_capitalisation(stylist.capitalisation()));
+        replacement.push_str(stylist.line_ending().as_str());
+        replacement.push_str(&indentation);
+        replacement.push_str(&"if".to_capitalisation(stylist.capitalisation()));
+
+        keyword.edit_replacement(src, replacement)
     } else {
         // Indent the `if`
         if branch.kind() == "elseif_clause" {
@@ -411,7 +419,10 @@ fn fix_superfluous_return<'a>(branch: &'a Node, src: &'a SourceFile) -> Option<F
         }
 
         // This covers both `else` and `else if`, replacing the `else`
-        keyword.edit_replacement(src, "end if\n".to_string())
+        let mut replacement = String::new();
+        replacement.push_str(&"end if".to_capitalisation(stylist.capitalisation()));
+        replacement.push_str(stylist.line_ending().as_str());
+        keyword.edit_replacement(src, replacement)
     };
 
     // for `else`, we need to also remove the existing `end if`, and then
@@ -432,7 +443,7 @@ fn fix_superfluous_return<'a>(branch: &'a Node, src: &'a SourceFile) -> Option<F
         let branch_text = src.slice(branch_range);
         // Note that tabs, statement labels, and unindented comments will
         // probably mess things up in various ways!
-        let replacement = redent(branch_text, &indentation);
+        let replacement = redent(branch_text, &indentation, stylist.line_ending());
 
         rest.push(Edit::range_replacement(replacement, branch_range));
 
