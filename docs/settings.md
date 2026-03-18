@@ -796,6 +796,38 @@ Default behaviour is to keep the current method.
 
 ---
 
+### `check.incorrect-keyword-case`
+
+Options for the `incorrect-keyword-case` rule
+
+#### [`keyword-case`](#check_incorrect-keyword-case_keyword-case) {: #check_incorrect-keyword-case_keyword-case }
+<span id="keyword-case"></span>
+
+Preferred casing for Fortran keywords, as enforced by the [`incorrect-keyword-case`](rules/incorrect-keyword-case.md) rule.
+
+Defaults to `"lowercase"`, consistent with modern Fortran conventions.
+
+**Default value**: `lower`
+
+**Type**: `"lowercase" | "uppercase" | "titlecase"`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-keyword-case]
+    keyword-case = "lowercase"
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-keyword-case]
+    keyword-case = "lowercase"
+    ```
+
+---
+
 ### `check.invalid-tab`
 
 Options for `invalid-tab` rule

@@ -1,7 +1,7 @@
 use crate::options::{
-    ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions, InvalidTabOptions,
-    KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions, StringOptions,
-    UseStatementsOptions,
+    ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions,
+    IncorrectKeywordCaseOptions, InvalidTabOptions, KeywordWhitespaceOptions, LineTooLongOptions,
+    Options, PortabilityOptions, StringOptions, UseStatementsOptions,
 };
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
@@ -213,6 +213,7 @@ pub struct Configuration {
 
     // Individual rules
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
+    pub incorrect_keyword_case: Option<IncorrectKeywordCaseOptions>,
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
     pub strings: Option<StringOptions>,
     pub portability: Option<PortabilityOptions>,
@@ -288,6 +289,7 @@ impl Configuration {
 
             // Individual rules
             exit_unlabelled_loops: check.exit_unlabelled_loops,
+            incorrect_keyword_case: check.incorrect_keyword_case,
             keyword_whitespace: check.keyword_whitespace,
             strings: check.strings,
             portability: check.portability,
@@ -349,6 +351,10 @@ impl Configuration {
                 exit_unlabelled_loops: self
                     .exit_unlabelled_loops
                     .map(ExitUnlabelledLoopOptions::into_settings)
+                    .unwrap_or_default(),
+                incorrect_keyword_case: self
+                    .incorrect_keyword_case
+                    .map(IncorrectKeywordCaseOptions::into_settings)
                     .unwrap_or_default(),
                 keyword_whitespace: self
                     .keyword_whitespace
@@ -440,6 +446,9 @@ impl Configuration {
             force_exclude: self.force_exclude.or(config.force_exclude),
             respect_gitignore: self.respect_gitignore.or(config.respect_gitignore),
             exit_unlabelled_loops: self.exit_unlabelled_loops.or(config.exit_unlabelled_loops),
+            incorrect_keyword_case: self
+                .incorrect_keyword_case
+                .or(config.incorrect_keyword_case),
             keyword_whitespace: self.keyword_whitespace.or(config.keyword_whitespace),
             strings: self.strings.or(config.strings),
             portability: self.portability.or(config.portability),

@@ -1,6 +1,7 @@
 /// Defines rules that govern the use of keywords.
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::stylist::ToCapitalisation;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
@@ -289,6 +290,256 @@ pub mod settings {
                 formatter = f,
                 namespace = "check.keyword-whitespace",
                 fields = [self.inout_with_space, self.goto_with_space]
+            }
+            Ok(())
+        }
+    }
+}
+
+/// ## What it does
+/// Checks that Fortran keywords use a consistent casing style. Flags any keyword
+/// whose casing does not match the configured style (see
+/// [`keyword-case`](../settings.md#keyword-case)).
+///
+/// ## Why is this bad?
+/// Fortran is case-insensitive, so keyword casing is purely a stylistic choice.
+/// However, inconsistent casing — mixing `IMPLICIT NONE`, `implicit none`, and
+/// `Implicit None` in the same codebase — reduces readability and makes code
+/// harder to scan. Enforcing a consistent style helps maintain a uniform
+/// appearance across the codebase.
+///
+/// Modern Fortran style guides generally favour lowercase keywords. Older
+/// codebases often use uppercase, inherited from fixed-form Fortran conventions.
+///
+/// ## Examples
+///
+/// With `keyword-case = "lowercase"`:
+///
+/// ### Incorrect
+/// ```fortran
+/// IMPLICIT NONE
+/// INTEGER, INTENT(IN) :: x
+/// END SUBROUTINE foo
+/// ```
+///
+/// ### Correct
+/// ```fortran
+/// implicit none
+/// integer, intent(in) :: x
+/// end subroutine foo
+/// ```
+///
+/// With `keyword-case = "uppercase"`:
+///
+/// ### Incorrect
+/// ```fortran
+/// implicit none
+/// integer, intent(in) :: x
+/// end subroutine foo
+/// ```
+///
+/// ### Correct
+/// ```fortran
+/// IMPLICIT NONE
+/// INTEGER, INTENT(IN) :: x
+/// END SUBROUTINE foo
+/// ```
+#[derive(ViolationMetadata)]
+pub struct IncorrectKeywordCase {
+    actual: String,
+    expected: String,
+}
+
+impl AlwaysFixableViolation for IncorrectKeywordCase {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self { actual, expected } = self;
+        format!("Keyword '{actual}' should be '{expected}'")
+    }
+
+    fn fix_title(&self) -> String {
+        let Self {
+            actual: _,
+            expected,
+        } = self;
+        format!("Change to '{expected}'")
+    }
+}
+
+impl AstRule for IncorrectKeywordCase {
+    fn check(
+        settings: &CheckSettings,
+        node: &Node,
+        src: &SourceFile,
+        _symbol_table: &SymbolTables,
+    ) -> Option<Vec<Diagnostic>> {
+        if node.child_count() > 0 {
+            // Filter node that wrap other nodes, we want only leafs
+            return None;
+        }
+        let text = node.to_text(src.source_text())?;
+
+        let expected = text.to_capitalisation(settings.incorrect_keyword_case.keyword_case);
+        if text == expected {
+            return None;
+        }
+
+        // build fix
+        let fix = Fix::safe_edit(Edit::replacement(
+            expected.clone(),
+            TextSize::from(node.start_byte() as u32),
+            TextSize::from(node.end_byte() as u32),
+        ));
+
+        some_vec!(
+            Diagnostic::from_node(
+                Self {
+                    actual: text.to_string(),
+                    expected
+                },
+                node
+            )
+            .with_fix(fix)
+        )
+    }
+
+    fn entrypoints() -> Vec<&'static str> {
+        vec![
+            "abstract",
+            "allocatable",
+            "allocate",
+            "assign",
+            "assignment",
+            "associate",
+            "asynchronous",
+            "bind",
+            "block",
+            "call",
+            "case",
+            "change",
+            "character",
+            "class",
+            "close",
+            "codimension",
+            "common",
+            "complex",
+            "concurrent",
+            "contains",
+            "contiguous",
+            "continue",
+            "critical",
+            "cycle",
+            "data",
+            "deallocate",
+            "default",
+            "deferred",
+            "dimension",
+            "do",
+            "double",
+            "elemental",
+            "else",
+            "elsewhere",
+            "end",
+            "enddo",
+            "endif",
+            "endtype",
+            "enum",
+            "enumerator",
+            "equivalence",
+            "error",
+            "event",
+            "exit",
+            "extends",
+            "external",
+            "final",
+            "forall",
+            "function",
+            "generic",
+            "go",
+            "goto",
+            "if",
+            "implicit",
+            "import",
+            "impure",
+            "in",
+            "inout",
+            "inquire",
+            "integer",
+            "intent",
+            "interface",
+            "intrinsic",
+            "is",
+            "local",
+            "local_init",
+            "logical",
+            "module",
+            "non_intrinsic",
+            "non_overridable",
+            "non_recursive",
+            "none",
+            "nopass",
+            "nullify",
+            "only",
+            "open",
+            "operator",
+            "optional",
+            "out",
+            "parameter",
+            "pass",
+            "pointer",
+            "post",
+            "precision",
+            "print",
+            "private",
+            "procedure",
+            "program",
+            "protected",
+            "public",
+            "pure",
+            "read",
+            "real",
+            "recursive",
+            "result",
+            "return",
+            "save",
+            "select",
+            "sequence",
+            "shared",
+            "stop",
+            "submodule",
+            "subroutine",
+            "sync",
+            "target",
+            "team",
+            "then",
+            "to",
+            "type",
+            "use",
+            "value",
+            "volatile",
+            "wait",
+            "where",
+            "write",
+        ]
+    }
+}
+
+pub mod settings_keyword_case {
+    use crate::{display_settings, stylist::Capitalisation};
+    use ruff_macros::CacheKey;
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct Settings {
+        pub keyword_case: Capitalisation,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.keyword-case",
+                fields = [self.keyword_case]
             }
             Ok(())
         }

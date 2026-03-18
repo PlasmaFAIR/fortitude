@@ -22,6 +22,7 @@ use fortitude_linter::{
         },
     },
     settings::{FortranStandard, OutputFormat, ProgressBar},
+    stylist::Capitalisation,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, Serialize, Deserialize)]
@@ -343,6 +344,10 @@ pub struct CheckOptions {
     #[option_group]
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
 
+    /// Options for the `incorrect-keyword-case` rule
+    #[option_group]
+    pub incorrect_keyword_case: Option<IncorrectKeywordCaseOptions>,
+
     /// Options for the `keyword-missing-space` and `keyword-has-whitespace` rules
     #[option_group]
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
@@ -436,6 +441,31 @@ impl KeywordWhitespaceOptions {
         keywords::settings::Settings {
             inout_with_space: self.inout_with_space.unwrap_or(false),
             goto_with_space: self.goto_with_space.unwrap_or(false),
+        }
+    }
+}
+
+/// Options for the `incorrect-keyword-case` rule
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct IncorrectKeywordCaseOptions {
+    /// Preferred casing for Fortran keywords, as enforced by the [`incorrect-keyword-case`](rules/incorrect-keyword-case.md) rule.
+    ///
+    /// Defaults to `"lowercase"`, consistent with modern Fortran conventions.
+    #[option(
+        default = "lower",
+        value_type = r#""lowercase" | "uppercase" | "titlecase""#,
+        example = r#"keyword-case = "lowercase""#
+    )]
+    pub keyword_case: Option<Capitalisation>,
+}
+
+impl IncorrectKeywordCaseOptions {
+    pub fn into_settings(self) -> keywords::settings_keyword_case::Settings {
+        keywords::settings_keyword_case::Settings {
+            keyword_case: self.keyword_case.unwrap_or_default(),
         }
     }
 }

@@ -217,7 +217,9 @@ impl fmt::Display for Quote {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, CacheKey)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, CacheKey, strum_macros::Display,
+)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 #[derive(Default)]
 pub enum Capitalisation {

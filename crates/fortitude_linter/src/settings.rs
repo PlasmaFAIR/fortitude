@@ -76,6 +76,7 @@ pub struct CheckSettings {
 
     // Individual rule settings
     pub exit_unlabelled_loops: exit_labels::settings::Settings,
+    pub incorrect_keyword_case: keywords::settings_keyword_case::Settings,
     pub keyword_whitespace: keywords::settings::Settings,
     pub strings: strings::settings::Settings,
     pub portability: portability::settings::Settings,
@@ -112,6 +113,7 @@ impl CheckSettings {
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
             exit_unlabelled_loops: exit_labels::settings::Settings::default(),
+            incorrect_keyword_case: keywords::settings_keyword_case::Settings::default(),
             keyword_whitespace: keywords::settings::Settings::default(),
             strings: strings::settings::Settings::default(),
             portability: portability::settings::Settings::default(),
@@ -165,6 +167,7 @@ impl fmt::Display for CheckSettings {
             namespace = "check",
             fields = [
                 self.exit_unlabelled_loops | nested,
+                self.incorrect_keyword_case | nested,
                 self.keyword_whitespace | nested,
                 self.strings | nested,
                 self.portability | nested,
