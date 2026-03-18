@@ -93,13 +93,10 @@ impl AstRule for OldMPIModule {
     fn check(
         _settings: &CheckSettings,
         node: &Node,
-        _src: &SourceFile,
+        src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        let module_name = node
-            .child_with_name("module_name")?
-            .to_text(_src.source_text())?
-            .to_lowercase();
+        let module_name = node.module_name(src.source_text())?.to_lowercase();
 
         if module_name == "mpi" {
             return some_vec![Diagnostic::from_node(OldMPIModule {}, node)];

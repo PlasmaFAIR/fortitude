@@ -10,6 +10,7 @@ pub mod keywords;
 pub mod line_length;
 pub(crate) mod semicolons;
 pub mod strings;
+pub(crate) mod use_statement;
 pub mod useless_return;
 pub(crate) mod whitespace;
 
@@ -54,6 +55,7 @@ mod tests {
     #[test_case(Rule::SuperfluousElseCycle, Path::new("S253.f90"))]
     #[test_case(Rule::SuperfluousElseExit, Path::new("S254.f90"))]
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
+    #[test_case(Rule::UnsortedUses, Path::new("S271.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -66,6 +68,7 @@ mod tests {
     }
 
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201_ok.f90"))]
+    #[test_case(Rule::UnsortedUses, Path::new("S271_ok.f90"))]
     fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),

@@ -1,6 +1,8 @@
 pub mod symbol_table;
 pub mod types;
 
+use anyhow::{Result, anyhow};
+use itertools::Itertools;
 use ruff_diagnostics::Edit;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
@@ -100,7 +102,7 @@ pub trait FortitudeNode<'tree> {
     fn ancestors(&self) -> impl Iterator<Item = Node<'_>>;
 
     /// Get the first child with a given name. Returns None if not found.
-    fn child_with_name(&self, name: &str) -> Option<Node<'_>>;
+    fn child_with_name(&self, name: &str) -> Option<Node<'tree>>;
 
     /// Get a named `keyword_argument` child node, if it exists.
     fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>>;
@@ -136,6 +138,16 @@ pub trait FortitudeNode<'tree> {
 
     /// Check if the node is an if_statement and lacks an end_if_statement child
     fn inline_if_statement(&self) -> bool;
+
+    /// Get the module name from a use statement node.
+    /// Returns None if the node is not a use statement or has no module_name child.
+    fn module_name(&self, src: &str) -> Option<String>;
+
+    /// Get preceding comment block, if it exists.
+    ///
+    /// This is the set of comments without interleaving blank lines that starts
+    /// immediately before this node
+    fn prev_attached_comment_block(&self, src: &str) -> Option<CommentBlock>;
 }
 
 impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
@@ -171,7 +183,7 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         AncestorsIterator { node: *self }
     }
 
-    fn child_with_name(&self, name: &str) -> Option<Self> {
+    fn child_with_name(&self, name: &str) -> Option<Node<'tree1>> {
         self.named_children(&mut self.walk())
             .find(|x| x.kind() == name)
     }
@@ -279,6 +291,35 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     fn inline_if_statement(&self) -> bool {
         self.kind() == "if_statement" && self.child_with_name("end_if_statement").is_none()
     }
+
+    fn module_name(&self, src: &str) -> Option<String> {
+        if self.kind() != "use_statement" {
+            return None;
+        }
+        self.child_with_name("module_name")?
+            .to_text(src)
+            .map(|s| s.to_string())
+    }
+
+    fn prev_attached_comment_block(&self, src: &str) -> Option<CommentBlock> {
+        let mut comments = Vec::new();
+        let mut prev_comment = *self;
+
+        while let Some(comment) = prev_comment.prev_named_sibling() {
+            if comment.kind() != "comment" {
+                break;
+            }
+            if comment.end_position().row != prev_comment.start_position().row.saturating_sub(1) {
+                break;
+            }
+            comments.push(comment);
+            prev_comment = comment;
+        }
+
+        // We've worked backwards, so reverse to get in correct order
+        comments.reverse();
+        CommentBlock::try_from_node_range(comments, src).ok()
+    }
 }
 
 /// Strip line breaks from a string of Fortran code.
@@ -293,4 +334,144 @@ pub fn dtype_is_plain_number(dtype: &str) -> bool {
         dtype.to_lowercase().as_str(),
         "integer" | "real" | "logical" | "complex"
     )
+}
+
+/// A block of consecutive comments (no blank lines)
+#[derive(Debug, Clone)]
+pub struct CommentBlock {
+    text_range: TextRange,
+    start_row: usize,
+    end_row: usize,
+    text: String,
+}
+
+impl CommentBlock {
+    pub fn try_from_node_range(nodes: Vec<Node>, src: &str) -> Result<Self> {
+        if let Some(non_comment) = nodes.iter().find(|node| node.kind() != "comment") {
+            return Err(anyhow!(
+                "Unexpected non-comment '{non_comment:?}' in comment block"
+            ));
+        }
+        if nodes.is_empty() {
+            return Err(anyhow!("CommentBlock requires at least one node"));
+        }
+        // Have at least one, so can get first and last
+        let first = nodes.first().unwrap();
+        let last = nodes.last().unwrap();
+
+        let start_textsize = first.start_textsize();
+        let end_textsize = last.end_textsize();
+        let text_range = TextRange::new(start_textsize, end_textsize);
+
+        let start_row = first.start_position().row;
+        let end_row = last.end_position().row;
+
+        let text = nodes
+            .iter()
+            .filter_map(|node| node.to_text(src))
+            .collect_vec()
+            .join("\n");
+
+        Ok(Self {
+            text_range,
+            start_row,
+            end_row,
+            text,
+        })
+    }
+
+    pub fn start_row(&self) -> usize {
+        self.start_row
+    }
+
+    pub fn end_row(&self) -> usize {
+        self.end_row
+    }
+
+    pub fn text(&self) -> &str {
+        self.text.as_ref()
+    }
+}
+
+impl TextRanged for CommentBlock {
+    fn textrange(&self) -> TextRange {
+        self.text_range
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::{Context, Result};
+    use textwrap::dedent;
+    use tree_sitter::Parser;
+
+    #[test]
+    fn test_comment_block() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          ! one
+          ! two
+          program foo
+
+          contains
+
+            ! not this
+
+            ! but this
+            subroutine bar()
+            end subroutine bar
+          end program foo
+
+          ! not this either
+
+          module zing
+          end module zing
+
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+
+        let program_node = tree
+            .root_node()
+            .child_with_name("program")
+            .context("Missing program node")?;
+        let program_comments = program_node
+            .prev_attached_comment_block(&code)
+            .context("Couldn't find program comment block")?;
+
+        let expected_text = "! one\n! two";
+        assert_eq!(
+            program_comments.textrange(),
+            TextRange::new(
+                TextSize::new(1),
+                TextSize::new(expected_text.len().saturating_add(1).try_into()?)
+            )
+        );
+        assert_eq!(program_comments.text(), expected_text);
+
+        let subroutine_node = program_node
+            .descendants()
+            .find(|node| node.kind() == "subroutine")
+            .context("Missing subroutine node")?;
+        let subroutine_comments = subroutine_node
+            .prev_attached_comment_block(&code)
+            .context("Couldn't find subroutine comment block")?;
+        let expected_text = "! but this";
+        assert_eq!(subroutine_comments.text(), expected_text);
+
+        let module_node = tree
+            .root_node()
+            .child_with_name("module")
+            .context("Missing module node")?;
+        assert!(module_node.prev_attached_comment_block(&code).is_none());
+
+        Ok(())
+    }
 }
