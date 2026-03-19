@@ -255,6 +255,8 @@ File selection:
           Enforce exclusions, even for paths passed to Fortitude directly on the command-line. Use `--no-force_exclude` to disable
       --respect-gitignore
           Respect `.gitignore`` files when determining which files to check. Use `--no-respect-gitignore` to disable
+      --line-filter <LINE_FILTER>
+          List of files with line ranges to filter warnings. The format is JSON array of objects: [ {"name": "file1.f90", "lines": [[6, 7], [42, 45]]}, {"name": "file2.f90"} ] Line ranges include the end
 
 Per-Rule Options:
       --line-length <LINE_LENGTH>  Set the maximum allowable line length

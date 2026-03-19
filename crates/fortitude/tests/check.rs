@@ -2413,3 +2413,74 @@ end program foo
 
     Ok(())
 }
+
+#[test]
+fn line_filter() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+  logical*4, parameter :: false = .false.
+  ! more lines
+  !
+  !
+  logical*4 :: maybe.
+end program test
+"#,
+    )?;
+
+    // Note: path must be formatted with Debug to ensure backslashes on Windows
+    // are properly escaped
+    let filter_arg = format!(
+        "--line-filter=[{{\"name\":{:?}, \"lines\":[[1, 3], [8, 8]]}}]",
+        test_file
+    );
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args([
+                             &filter_arg,
+                             "--select=PORT011",
+                         ]).build(),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
+      |
+    2 | program test
+    3 |   logical*4, parameter :: true = .true.
+      |           ^ PORT011
+    4 |   logical*4, parameter :: false = .false.
+    5 |   ! more lines
+      |
+      = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
+      |
+    6 |   !
+    7 |   !
+    8 |   logical*4 :: maybe.
+      |           ^ PORT011
+    9 | end program test
+      |
+      = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    warning: Syntax errors detected in file: [TEMP_FILE] Discarding all fixes. Some violations from the AST may be unreliable.
+    ");
+
+    Ok(())
+}
