@@ -9,6 +9,7 @@ use std::sync::RwLock;
 
 use anyhow::{Context, Result};
 use anyhow::{anyhow, bail};
+use fortitude_linter::line_filter::FilterMap;
 use fortitude_linter::settings::FileResolverSettings;
 use globset::{Candidate, GlobSet};
 use ignore::{DirEntry, Error, ParallelVisitor, WalkBuilder, WalkState};
@@ -291,6 +292,7 @@ pub fn resolve_root_settings(
 /// Find all Fortran (`.f90`, `.F90` files, and so on) in a set of paths.
 pub fn fortran_files_in_path<'a>(
     paths: &[PathBuf],
+    filter: &'a Option<FilterMap>,
     fortitude_config: &'a ConfigFile,
     transformer: &(dyn ConfigurationTransformer + Sync),
 ) -> Result<(Vec<Result<ResolvedFile, ignore::Error>>, Resolver<'a>)> {
@@ -356,7 +358,7 @@ pub fn fortran_files_in_path<'a>(
     let walker = builder.build_parallel();
 
     // Run the `WalkParallel` to collect all Fortran files.
-    let state = WalkFortranFilesState::new(resolver);
+    let state = WalkFortranFilesState::new(resolver, filter);
     let mut visitor = FortranFilesVisitorBuilder::new(transformer, &state);
     walker.visit(&mut visitor);
 
@@ -369,14 +371,16 @@ struct WalkFortranFilesState<'config> {
     is_hierarchical: bool,
     merged: std::sync::Mutex<(ResolvedFiles, Result<()>)>,
     resolver: RwLock<Resolver<'config>>,
+    files_filter: Option<FilterMap>,
 }
 
 impl<'config> WalkFortranFilesState<'config> {
-    fn new(resolver: Resolver<'config>) -> Self {
+    fn new(resolver: Resolver<'config>, filter: &'config Option<FilterMap>) -> Self {
         Self {
             is_hierarchical: resolver.is_hierarchical(),
             merged: std::sync::Mutex::new((Vec::new(), Ok(()))),
             resolver: RwLock::new(resolver),
+            files_filter: filter.clone(),
         }
     }
 
@@ -537,6 +541,17 @@ impl Drop for FortranFilesVisitor<'_, '_> {
             *files = std::mem::take(&mut self.local_files);
         } else {
             files.append(&mut self.local_files);
+        }
+
+        // only keep files that are in the line_filter
+        if let Some(ref files_filter) = self.global.files_filter {
+            files.retain(|file| {
+                if let Ok(file) = file {
+                    files_filter.contains(file.path())
+                } else {
+                    false
+                }
+            });
         }
 
         let local_error = std::mem::replace(&mut self.local_error, Ok(()));
@@ -851,6 +866,7 @@ mod tests {
 
         let (paths, _) = fortran_files_in_path(
             &[root.to_path_buf()],
+            &None,
             &ConfigFile::new(
                 ConfigFileDiscoveryStrategy::Fixed,
                 Settings::default(),

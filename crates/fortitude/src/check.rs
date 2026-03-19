@@ -7,6 +7,7 @@ use crate::stdin::read_from_stdin;
 use fortitude_linter::diagnostic_message::DiagnosticMessage;
 use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, read_to_string};
+use fortitude_linter::line_filter::FilterMap;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::rules::error::ioerror::IoError;
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
@@ -161,12 +162,24 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     let files = resolve_default_files(cli.files, is_stdin);
 
     if cli.show_settings {
-        show_settings(&files, &file_configuration, &config_arguments, &mut writer)?;
+        show_settings(
+            &files,
+            &cli.line_filter,
+            &file_configuration,
+            &config_arguments,
+            &mut writer,
+        )?;
         return Ok(ExitCode::SUCCESS);
     }
 
     if cli.show_files {
-        show_files(&files, &file_configuration, &config_arguments, &mut writer)?;
+        show_files(
+            &files,
+            &cli.line_filter,
+            &file_configuration,
+            &config_arguments,
+            &mut writer,
+        )?;
         return Ok(ExitCode::SUCCESS);
     }
 
@@ -207,6 +220,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     } else {
         check_files(
             &files,
+            &cli.line_filter,
             &file_configuration,
             &config_arguments,
             fix_mode,
@@ -271,13 +285,15 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
 
 fn check_files(
     files: &[PathBuf],
+    file_filter: &Option<FilterMap>,
     fortitude_config: &ConfigFile,
     config_arguments: &ConfigArguments,
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> Result<CheckResults> {
     let start = Instant::now();
-    let (paths, resolver) = fortran_files_in_path(files, fortitude_config, config_arguments)?;
+    let (paths, resolver) =
+        fortran_files_in_path(files, file_filter, fortitude_config, config_arguments)?;
     debug!("Identified files to lint in: {:?}", start.elapsed());
 
     let file_digits = paths.len().to_string().len();
@@ -341,9 +357,12 @@ fn check_files(
                     let file =
                         SourceFileBuilder::new(path.to_string_lossy(), source.as_str()).finish();
 
+                    let line_filter = file_filter.as_ref().and_then(|f| f.get(path, &file));
+
                     check_file(
                         path,
                         &file,
+                        &line_filter,
                         &settings.check,
                         fix_mode,
                         ignore_allow_comments,
