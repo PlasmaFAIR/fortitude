@@ -2427,7 +2427,7 @@ program test
   ! more lines
   !
   !
-  logical*4 :: maybe.
+  logical*4 :: maybe
 end program test
 "#,
     )?;
@@ -2464,7 +2464,7 @@ end program test
       |
     6 |   !
     7 |   !
-    8 |   logical*4 :: maybe.
+    8 |   logical*4 :: maybe
       |           ^ PORT011
     9 | end program test
       |
@@ -2479,7 +2479,102 @@ end program test
 
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding all fixes. Some violations from the AST may be unreliable.
+    ");
+
+    Ok(())
+}
+
+#[test]
+fn git_staged_only() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let filename = Path::new("test.f90");
+    let test_file = tempdir.path().join(filename);
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+  ! space out the diff hunks
+
+
+
+  logical*4, parameter :: false = .false.
+
+
+
+end program test
+"#,
+    )?;
+
+    // This is a bit of a complicated test, because we need to make a new repo,
+    // make a commit, and then stage a change
+    // git init
+    let repo = git2::Repository::init(&tempdir)?;
+    // git add
+    let mut index = repo.index()?;
+    index.add_path(filename)?;
+    index.write()?;
+    // git commit
+    let oid = index.write_tree()?;
+    let tree = repo.find_tree(oid)?;
+    let sig = git2::Signature::now("fortitude_test", "fortitude@example.com")?;
+    repo.commit(Some("HEAD"), &sig, &sig, "initial commit", &tree, &[])?;
+
+    // Now edit the file
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+  ! space out the diff hunks
+
+
+
+  logical*4, parameter :: false = .false.
+
+
+
+  ! new line, only this should get flagged
+  logical*4 :: maybe
+end program test
+"#,
+    )?;
+
+    // git add
+    let mut index = repo.index()?;
+    index.add_path(filename)?;
+    index.write()?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args([
+                             "--git-staged-only",
+                             "--select=PORT011",
+                         ]).build()
+                         .current_dir(&tempdir),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    test.f90:13:11: PORT011 logical kind set with number literal '4'
+       |
+    12 |   ! new line, only this should get flagged
+    13 |   logical*4 :: maybe
+       |           ^ PORT011
+    14 | end program test
+       |
+       = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
     ");
 
     Ok(())

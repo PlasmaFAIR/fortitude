@@ -47,6 +47,7 @@ textwrap = { workspace = true }
 assert_cmd = { workspace = true }
 # Disable colored output in tests
 colored = { workspace = true, features = ["no-color"] }
+git2 = { workspace = true }
 insta = { workspace = true }
 insta-cmd = { workspace = true }
 predicates = { workspace = true }

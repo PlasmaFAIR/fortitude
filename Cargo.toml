@@ -34,6 +34,7 @@ colored = { version = "2.1.0" }
 crossbeam = { version = "0.8.4" }
 etcetera = { version = "0.10.0" }
 fern = "0.7.1"
+git2 = "0.20.4"
 globset = "0.4.15"
 ignore = "0.4.23"
 indicatif = { version = "0.17.9", features = ["rayon", "improved_unicode"] }

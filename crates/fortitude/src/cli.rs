@@ -339,6 +339,10 @@ pub struct CheckCommand {
     #[arg(long, help_heading = "File selection", value_name = "LINE_FILTER")]
     pub line_filter: Option<Filter>,
 
+    /// Only run on files that have been staged in a git repository
+    #[arg(long, help_heading = "File selection")]
+    pub git_staged_only: bool,
+
     // Options for individual rules
     /// Set the maximum allowable line length.
     #[arg(long, help_heading = "Per-Rule Options")]
@@ -378,6 +382,7 @@ pub struct CheckArguments {
     pub exit_non_zero_on_fix: bool,
     pub exit_zero: bool,
     pub files: Vec<PathBuf>,
+    pub git_staged_only: bool,
     pub ignore_allow_comments: IgnoreAllowComments,
     pub line_filter: Option<FilterMap>,
     pub output_file: Option<PathBuf>,
@@ -443,6 +448,7 @@ impl CheckCommand {
             exit_non_zero_on_fix: self.exit_non_zero_on_fix,
             exit_zero: self.exit_zero,
             files: self.files,
+            git_staged_only: self.git_staged_only,
             line_filter: self.line_filter.map(FilterMap::new),
             ignore_allow_comments: self.ignore_allow_comments.into(),
             output_file: self.output_file,

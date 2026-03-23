@@ -7,7 +7,7 @@ use crate::stdin::read_from_stdin;
 use fortitude_linter::diagnostic_message::DiagnosticMessage;
 use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, read_to_string};
-use fortitude_linter::line_filter::FilterMap;
+use fortitude_linter::line_filter::{FilterMap, git_staged_files};
 use fortitude_linter::rules::Rule;
 use fortitude_linter::rules::error::ioerror::IoError;
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
@@ -161,10 +161,20 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     let is_stdin = is_stdin(&cli.files, stdin_filename.as_deref());
     let files = resolve_default_files(cli.files, is_stdin);
 
+    let line_filter = if cli.git_staged_only {
+        Some(git_staged_files(
+            &file_configuration.settings.file_resolver.project_root,
+        )?)
+    } else {
+        cli.line_filter
+    };
+
+    debug!("Using line filter: {line_filter:?}");
+
     if cli.show_settings {
         show_settings(
             &files,
-            &cli.line_filter,
+            &line_filter,
             &file_configuration,
             &config_arguments,
             &mut writer,
@@ -175,7 +185,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     if cli.show_files {
         show_files(
             &files,
-            &cli.line_filter,
+            &line_filter,
             &file_configuration,
             &config_arguments,
             &mut writer,
@@ -220,7 +230,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     } else {
         check_files(
             &files,
-            &cli.line_filter,
+            &line_filter,
             &file_configuration,
             &config_arguments,
             fix_mode,
