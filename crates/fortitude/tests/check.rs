@@ -2432,15 +2432,18 @@ end program test
 "#,
     )?;
 
-    apply_common_filters!();
+    let filter_arg = format!(
+        "--line-filter=[{{\"name\":{:?}, \"lines\":[[1, 3], [8, 8]]}}]",
+        test_file
+    );
+
+    // apply_common_filters!();
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args([
-                             "--line-filter=[{\"name\":\"test.f90\", \"lines\":[[1, 3], [8, 8]]}]",
+                             &filter_arg,
                              "--select=PORT011",
-                         ])
-                         .build()
-                         .current_dir(&tempdir),
+                         ]).build(),
                          @r"
     success: false
     exit_code: 1
