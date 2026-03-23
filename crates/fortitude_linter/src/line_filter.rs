@@ -1,9 +1,16 @@
-use std::{collections::HashMap, path::PathBuf, str::FromStr};
-
-use path_absolutize::Absolutize;
+use anyhow::Result;
+use git2::{DiffDelta, DiffHunk, Repository};
 use ruff_source_file::{LineIndex, OneIndexed, SourceFile};
 use ruff_text_size::{TextRange, TextSize};
 use serde::Deserialize;
+
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
+
+use crate::fs::{self};
 
 /// Type exposed to user for input
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Deserialize)]
@@ -68,12 +75,7 @@ impl FilterMap {
             .into_iter()
             .map(|line_filter| {
                 (
-                    // Make the path name absolute, or fall back to given path
-                    line_filter
-                        .name
-                        .absolutize()
-                        .map(|file| file.into_owned())
-                        .unwrap_or(line_filter.name),
+                    fs::normalize_path(line_filter.name),
                     line_filter.lines.unwrap_or_default(),
                 )
             })
@@ -156,10 +158,43 @@ impl FilterSet {
     }
 }
 
+pub fn git_staged_files<P: AsRef<Path>>(project_root: P) -> Result<FilterMap> {
+    let repo = Repository::open_from_env()?;
+
+    let head_tree = repo.head()?.peel_to_tree()?;
+    let diff = repo.diff_tree_to_index(Some(&head_tree), None, None)?;
+
+    let mut filter = FilterMap {
+        inner: HashMap::new(),
+    };
+
+    let mut hunk_cb = |diff_delta: DiffDelta, hunk: DiffHunk| -> bool {
+        if let Some(file) = diff_delta.new_file().path() {
+            let start = OneIndexed::new(hunk.new_start() as usize).unwrap();
+            let end = OneIndexed::new((hunk.new_start() + hunk.new_lines()) as usize).unwrap();
+            let range = LineRange { start, end };
+            let file_abs = fs::normalize_path_to(file, project_root.as_ref());
+            filter
+                .inner
+                .entry(file_abs)
+                .and_modify(|f| f.push(range.clone()))
+                .or_insert(vec![range]);
+        }
+
+        true
+    };
+
+    diff.foreach(&mut file_cb, None, Some(&mut hunk_cb), None)?;
+
+    Ok(filter)
+}
+
+fn file_cb(_diff_delta: DiffDelta, _progress: f32) -> bool {
+    true
+}
+
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-
     use super::*;
 
     use anyhow::{Context, Result};
@@ -228,7 +263,7 @@ line 10
 
         assert!(
             filter
-                .get(Path::new("file1.f90").absolutize()?, &SOURCE_FILE)
+                .get(fs::normalize_path("file1.f90"), &SOURCE_FILE)
                 .is_some()
         );
         assert!(filter.get("nothing", &SOURCE_FILE).is_none());
@@ -239,7 +274,7 @@ line 10
     fn filter_set() -> Result<()> {
         let filter = FilterMap::new(make_filter());
         let filter = filter
-            .get(Path::new("file1.f90").absolutize()?, &SOURCE_FILE)
+            .get(fs::normalize_path("file1.f90"), &SOURCE_FILE)
             .context("Expected file1.f90")?;
 
         assert!(filter.contains(TextSize::new(18)));
