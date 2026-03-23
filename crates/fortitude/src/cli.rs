@@ -286,6 +286,39 @@ pub struct CheckCommand {
     )]
     pub extend_per_file_ignores: Option<Vec<PatternPrefixPair>>,
 
+    /// List of rule codes to treat as eligible for fix. Only has an effect if `--fix` is also enabled.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub fixable: Option<Vec<RuleSelector>>,
+
+    /// List of rule codes to treat as ineligible for fix. Only has an effect if `--fix` is also enabled.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub unfixable: Option<Vec<RuleSelector>>,
+
+    /// Like `--fixable`, but adds additional rule codes on top of those already specified.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Rule selection",
+        hide_possible_values = true
+    )]
+    pub extend_fixable: Option<Vec<RuleSelector>>,
+
     // File selection
     /// File extensions to check
     #[arg(
@@ -458,6 +491,9 @@ impl CheckCommand {
             select: self.select,
             ignore: self.ignore,
             extend_select: self.extend_select,
+            fixable: self.fixable,
+            unfixable: self.unfixable,
+            extend_fixable: self.extend_fixable,
             target_std: self.target_std,
             progress_bar: self.progress_bar,
         };
@@ -488,6 +524,9 @@ struct ExplicitConfigOverrides {
     select: Option<Vec<RuleSelector>>,
     extend_select: Option<Vec<RuleSelector>>,
     ignore: Option<Vec<RuleSelector>>,
+    fixable: Option<Vec<RuleSelector>>,
+    unfixable: Option<Vec<RuleSelector>>,
+    extend_fixable: Option<Vec<RuleSelector>>,
     target_std: Option<FortranStandard>,
     progress_bar: Option<ProgressBar>,
 }
@@ -555,6 +594,15 @@ impl ConfigurationTransformer for ExplicitConfigOverrides {
         }
         if let Some(ignore) = &self.ignore {
             config.ignore.extend(ignore.clone());
+        }
+        if let Some(fixable) = &self.fixable {
+            config.fixable = Some(fixable.clone());
+        }
+        if let Some(unfixable) = &self.unfixable {
+            config.unfixable.extend(unfixable.clone());
+        }
+        if let Some(extend_fixable) = &self.extend_fixable {
+            config.extend_fixable.extend(extend_fixable.clone());
         }
         if self.target_std.is_some() {
             config.target_std = self.target_std;

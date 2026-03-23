@@ -727,6 +727,120 @@ end program foo
     Ok(())
 }
 
+#[test]
+fn apply_fixable_fixes() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none
+endprogram
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--fixable=S061")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C003 'implicit none' missing 'external'
+      |
+    2 | program foo
+    3 |   implicit none
+      |   ^^^^^^^^^^^^^ C003
+    4 | end program foo
+      |
+      = help: Add `(external)` to 'implicit none'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2 (1 fixed, 1 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    let expected = r#"
+program foo
+  implicit none
+end program foo
+"#
+    .to_string();
+
+    let transformed = fs::read_to_string(&test_file)?;
+    assert_eq!(transformed, expected);
+
+    Ok(())
+}
+
+#[test]
+fn skip_unfixable_fixes() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none
+endprogram
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--unfixable=C003")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C003 'implicit none' missing 'external'
+      |
+    2 | program foo
+    3 |   implicit none
+      |   ^^^^^^^^^^^^^ C003
+    4 | end program foo
+      |
+      = help: Add `(external)` to 'implicit none'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2 (1 fixed, 1 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    let expected = r#"
+program foo
+  implicit none
+end program foo
+"#
+    .to_string();
+
+    let transformed = fs::read_to_string(&test_file)?;
+    assert_eq!(transformed, expected);
+
+    Ok(())
+}
+
 /// When checking a file with syntax errors, any AST violations after the syntax
 /// error are discarded.  This is to prevent the linter from raising false
 /// positives due to an inaccurate AST. In this case, the syntax error should
