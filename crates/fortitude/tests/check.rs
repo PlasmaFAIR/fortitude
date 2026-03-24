@@ -2485,7 +2485,7 @@ end program test
 }
 
 #[test]
-fn git_staged_only() -> anyhow::Result<()> {
+fn git_staged() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
     let test_file = tempdir.path().join(filename);
@@ -2549,7 +2549,7 @@ end program test
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args([
-                             "--git-staged-only",
+                             "--git-staged",
                              "--select=PORT011",
                          ]).build()
                          .current_dir(&tempdir),

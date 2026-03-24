@@ -340,7 +340,7 @@ pub struct CheckCommand {
         long,
         help_heading = "File selection",
         value_name = "LINE_FILTER",
-        conflicts_with = "git_staged_only",
+        conflicts_with = "git_staged",
         conflicts_with = "git_since"
     )]
     pub line_filter: Option<Filter>,
@@ -352,7 +352,7 @@ pub struct CheckCommand {
         conflicts_with = "line_filter",
         conflicts_with = "git_since"
     )]
-    pub git_staged_only: bool,
+    pub git_staged: bool,
 
     /// Only run on files that differ between the files in the working directory
     /// of a git repository and `COMMIT`. `COMMIT` can be most things that look
@@ -362,7 +362,7 @@ pub struct CheckCommand {
         help_heading = "File selection",
         value_name = "COMMIT",
         conflicts_with = "line_filter",
-        conflicts_with = "git_staged_only"
+        conflicts_with = "git_staged"
     )]
     pub git_since: Option<String>,
 
@@ -405,7 +405,7 @@ pub struct CheckArguments {
     pub exit_non_zero_on_fix: bool,
     pub exit_zero: bool,
     pub files: Vec<PathBuf>,
-    pub git_staged_only: bool,
+    pub git_staged: bool,
     pub git_since: Option<String>,
     pub ignore_allow_comments: IgnoreAllowComments,
     pub line_filter: Option<FilterMap>,
@@ -472,7 +472,7 @@ impl CheckCommand {
             exit_non_zero_on_fix: self.exit_non_zero_on_fix,
             exit_zero: self.exit_zero,
             files: self.files,
-            git_staged_only: self.git_staged_only,
+            git_staged: self.git_staged,
             git_since: self.git_since,
             line_filter: self.line_filter.map(FilterMap::new),
             ignore_allow_comments: self.ignore_allow_comments.into(),

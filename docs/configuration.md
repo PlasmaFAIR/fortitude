@@ -257,7 +257,7 @@ File selection:
           Respect `.gitignore`` files when determining which files to check. Use `--no-respect-gitignore` to disable
       --line-filter <LINE_FILTER>
           List of files with line ranges to filter warnings. The format is JSON array of objects: [ {"name": "file1.f90", "lines": [[6, 7], [42, 45]]}, {"name": "file2.f90"} ] Line ranges include the end
-      --git-staged-only
+      --git-staged
           Only run on files that have been staged in a git repository
       --git-since <COMMIT>
           Only run on files that differ between the files in the working directory of a git repository and `COMMIT`. `COMMIT` can be most things that look like a commit, for example `main`, `0f3abc`, `HEAD~`

@@ -161,7 +161,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     let is_stdin = is_stdin(&cli.files, stdin_filename.as_deref());
     let files = resolve_default_files(cli.files, is_stdin);
 
-    let line_filter = if cli.git_staged_only {
+    let line_filter = if cli.git_staged {
         Some(git_staged_files(
             &file_configuration.settings.file_resolver.project_root,
         )?)
