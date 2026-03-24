@@ -158,23 +158,69 @@ impl FilterSet {
     }
 }
 
+/// Create a line filter for just the files currently staged in the index
 pub fn git_staged_files<P: AsRef<Path>>(project_root: P) -> Result<FilterMap> {
     let repo = Repository::open_from_env()?;
 
     let head_tree = repo.head()?.peel_to_tree()?;
     let diff = repo.diff_tree_to_index(Some(&head_tree), None, None)?;
 
-    let mut filter = FilterMap {
-        inner: HashMap::new(),
-    };
+    // Bit annoying, but the `FnMut` trait is still nightly, so we can't
+    // implement it directly on `HunkCb`, so we need a closure that captures our
+    // state and then calls it
+    let mut hunk_state = HunkCb::new(project_root.as_ref());
+    let mut hunk_cb =
+        |diff_delta: DiffDelta, hunk: DiffHunk| -> bool { hunk_state.call(diff_delta, hunk) };
 
-    let mut hunk_cb = |diff_delta: DiffDelta, hunk: DiffHunk| -> bool {
+    diff.foreach(&mut file_cb, None, Some(&mut hunk_cb), None)?;
+
+    Ok(hunk_state.filter)
+}
+
+/// Create a filter for files that have changed since ``treeish``
+pub fn git_since<P: AsRef<Path>>(treeish: &str, project_root: P) -> Result<FilterMap> {
+    let repo = Repository::open_from_env()?;
+
+    // TODO(peter): nicer error message if treeish isn't correct
+    let object = repo.revparse_single(treeish)?;
+    let tree = object.peel_to_tree()?;
+    let diff = repo.diff_tree_to_workdir(Some(&tree), None)?;
+
+    let mut hunk_state = HunkCb::new(project_root.as_ref());
+    let mut hunk_cb =
+        |diff_delta: DiffDelta, hunk: DiffHunk| -> bool { hunk_state.call(diff_delta, hunk) };
+
+    diff.foreach(&mut file_cb, None, Some(&mut hunk_cb), None)?;
+
+    Ok(hunk_state.filter)
+}
+
+/// Callback for hunks with `Diff::foreach`
+///
+/// Let's us reuse the same closure between the `git_staged_files` and
+/// `git_since`
+struct HunkCb<'a> {
+    filter: FilterMap,
+    project_root: &'a Path,
+}
+
+impl<'a> HunkCb<'a> {
+    fn new(project_root: &'a Path) -> Self {
+        let inner = HashMap::new();
+        let filter = FilterMap { inner };
+        Self {
+            filter,
+            project_root,
+        }
+    }
+
+    fn call(&mut self, diff_delta: DiffDelta, hunk: DiffHunk) -> bool {
         if let Some(file) = diff_delta.new_file().path() {
-            let start = OneIndexed::new(hunk.new_start() as usize).unwrap();
-            let end = OneIndexed::new((hunk.new_start() + hunk.new_lines()) as usize).unwrap();
+            let start = OneIndexed::from_zero_indexed(hunk.new_start() as usize);
+            let end = OneIndexed::from_zero_indexed((hunk.new_start() + hunk.new_lines()) as usize);
             let range = LineRange { start, end };
-            let file_abs = fs::normalize_path_to(file, project_root.as_ref());
-            filter
+            let file_abs = fs::normalize_path_to(file, self.project_root);
+            self.filter
                 .inner
                 .entry(file_abs)
                 .and_modify(|f| f.push(range.clone()))
@@ -182,11 +228,7 @@ pub fn git_staged_files<P: AsRef<Path>>(project_root: P) -> Result<FilterMap> {
         }
 
         true
-    };
-
-    diff.foreach(&mut file_cb, None, Some(&mut hunk_cb), None)?;
-
-    Ok(filter)
+    }
 }
 
 fn file_cb(_diff_delta: DiffDelta, _progress: f32) -> bool {

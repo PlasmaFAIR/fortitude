@@ -7,7 +7,7 @@ use crate::stdin::read_from_stdin;
 use fortitude_linter::diagnostic_message::DiagnosticMessage;
 use fortitude_linter::diagnostics::{Diagnostics, FixMap};
 use fortitude_linter::fs::{self, read_to_string};
-use fortitude_linter::line_filter::{FilterMap, git_staged_files};
+use fortitude_linter::line_filter::{FilterMap, git_since, git_staged_files};
 use fortitude_linter::rules::Rule;
 use fortitude_linter::rules::error::ioerror::IoError;
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
@@ -163,6 +163,11 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
 
     let line_filter = if cli.git_staged_only {
         Some(git_staged_files(
+            &file_configuration.settings.file_resolver.project_root,
+        )?)
+    } else if let Some(commit) = cli.git_since {
+        Some(git_since(
+            &commit,
             &file_configuration.settings.file_resolver.project_root,
         )?)
     } else {

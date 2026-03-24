@@ -336,12 +336,35 @@ pub struct CheckCommand {
     ///    {"name": "file2.f90"}
     ///  ]
     /// Line ranges include the end.
-    #[arg(long, help_heading = "File selection", value_name = "LINE_FILTER")]
+    #[arg(
+        long,
+        help_heading = "File selection",
+        value_name = "LINE_FILTER",
+        conflicts_with = "git_staged_only",
+        conflicts_with = "git_since"
+    )]
     pub line_filter: Option<Filter>,
 
     /// Only run on files that have been staged in a git repository
-    #[arg(long, help_heading = "File selection")]
+    #[arg(
+        long,
+        help_heading = "File selection",
+        conflicts_with = "line_filter",
+        conflicts_with = "git_since"
+    )]
     pub git_staged_only: bool,
+
+    /// Only run on files that differ between the files in the working directory
+    /// of a git repository and `COMMIT`. `COMMIT` can be most things that look
+    /// like a commit, for example `main`, `0f3abc`, `HEAD~`
+    #[arg(
+        long,
+        help_heading = "File selection",
+        value_name = "COMMIT",
+        conflicts_with = "line_filter",
+        conflicts_with = "git_staged_only"
+    )]
+    pub git_since: Option<String>,
 
     // Options for individual rules
     /// Set the maximum allowable line length.
@@ -383,6 +406,7 @@ pub struct CheckArguments {
     pub exit_zero: bool,
     pub files: Vec<PathBuf>,
     pub git_staged_only: bool,
+    pub git_since: Option<String>,
     pub ignore_allow_comments: IgnoreAllowComments,
     pub line_filter: Option<FilterMap>,
     pub output_file: Option<PathBuf>,
@@ -449,6 +473,7 @@ impl CheckCommand {
             exit_zero: self.exit_zero,
             files: self.files,
             git_staged_only: self.git_staged_only,
+            git_since: self.git_since,
             line_filter: self.line_filter.map(FilterMap::new),
             ignore_allow_comments: self.ignore_allow_comments.into(),
             output_file: self.output_file,
