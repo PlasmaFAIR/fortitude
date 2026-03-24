@@ -841,6 +841,166 @@ end program foo
     Ok(())
 }
 
+#[test]
+fn check_extend_fixable() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  implicit none
+end program
+"#,
+    )?;
+
+    let config_file = tempdir.path().join("fortitude.toml");
+    fs::write(
+        &config_file,
+        r#"
+[check]
+fixable = ["C003"]
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--extend-fixable=S061")
+                         .arg(&test_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 1 files scanned.
+    Number of errors: 2 (2 fixed, 0 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_overwrite_fixable() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  implicit none
+end program
+"#,
+    )?;
+
+    let config_file = tempdir.path().join("fortitude.toml");
+    fs::write(
+        &config_file,
+        r#"
+[check]
+fixable = ["C003"]
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--fixable=S061")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C003 'implicit none' missing 'external'
+      |
+    2 | program test
+    3 |   implicit none
+      |   ^^^^^^^^^^^^^ C003
+    4 | end program test
+      |
+      = help: Add `(external)` to 'implicit none'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2 (1 fixed, 1 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_overwrite_unfixable() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  implicit none
+end program
+"#,
+    )?;
+
+    let config_file = tempdir.path().join("fortitude.toml");
+    fs::write(
+        &config_file,
+        r#"
+[check]
+fixable = ["S061"]
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--unfixable=S061")
+                         .arg("--extend-fixable=C003")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] S061 end statement should be named.
+      |
+    2 | program test
+    3 |   implicit none (type, external)
+    4 | end program
+      | ^^^^^^^^^^^ S061
+      |
+      = help: Write as 'end program test'.
+
+    fortitude: 1 files scanned.
+    Number of errors: 2 (1 fixed, 1 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
 /// When checking a file with syntax errors, any AST violations after the syntax
 /// error are discarded.  This is to prevent the linter from raising false
 /// positives due to an inaccurate AST. In this case, the syntax error should
