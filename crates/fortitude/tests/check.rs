@@ -2545,7 +2545,6 @@ end program test
     index.add_path(filename)?;
     index.write()?;
 
-    apply_common_filters!();
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args([
@@ -2651,7 +2650,9 @@ end program test
     let sig = git2::Signature::now("fortitude_test", "fortitude@example.com")?;
     repo.commit(Some("HEAD"), &sig, &sig, "second commit", &tree, &[&commit])?;
 
-    apply_common_filters!();
+    Command::new("ls").current_dir(&tempdir);
+    Command::new("pwd").current_dir(&tempdir);
+
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args([
