@@ -1,6 +1,5 @@
 use std::{borrow::Cow, cell::OnceCell, fmt, ops::Deref};
 
-use lazy_regex::{Captures, lazy_regex};
 use ruff_macros::CacheKey;
 use ruff_source_file::{LineEnding, SourceFile, find_newline};
 use ruff_text_size::TextSize;
@@ -258,36 +257,48 @@ impl ToCapitalisation for str {
     }
 }
 
-fn titlecase(input: &str) -> String {
-    let words_regex = lazy_regex!(r"(\w+)");
+/// Converts a string to title case.
+///
+/// Every word (sequence of alphanumeric characters) has its first letter
+/// uppercased. Non-alphanumeric characters act as word separators and are
+/// preserved verbatim in the output.
+pub fn titlecase(input: &str) -> String {
+    let input = input.to_lowercase();
+    let mut result = String::with_capacity(input.len());
+    let mut start = 0;
 
-    // If input is yelling (all uppercase) make lowercase
-    let input = if input.chars().any(|ch| ch.is_lowercase()) {
-        Cow::from(input)
-    } else {
-        Cow::from(input.to_lowercase())
-    };
+    for (i, ch) in input.char_indices() {
+        if !ch.is_alphanumeric() {
+            if start < i {
+                push_titlecase_word(&mut result, &input[start..i]);
+            }
+            result.push(ch);
+            start = i + ch.len_utf8();
+        }
+    }
 
-    words_regex
-        .replace_all(&input, |captures: &Captures| {
-            let mut result = String::new();
-            let word = &captures[1];
-            result.push_str(&uppercase_first_letter(word));
-            result
-        })
-        .into_owned()
+    if start < input.len() {
+        push_titlecase_word(&mut result, &input[start..]);
+    }
+
+    result
 }
 
-/// Uppercase first letter of word
+/// Writes `word` into `buf` with its first character uppercased.
 ///
-/// Source - https://stackoverflow.com/a/38406885
-/// Posted by Shepmaster, modified by community. See post 'Timeline' for change history
-/// Retrieved 2026-03-17, License - CC BY-SA 4.0
-fn uppercase_first_letter(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+/// Writes directly into the caller's buffer — no intermediate allocation.
+/// The word is assumed to already be in lowercase (caller's responsibility).
+fn push_titlecase_word(buf: &mut String, word: &str) {
+    let mut chars = word.chars();
+    if let Some(first) = chars.next() {
+        // to_uppercase() yields an iterator because some chars expand
+        // (e.g. 'ß' -> "SS"), so we can't just call .to_uppercase() as char.
+        for ch in first.to_uppercase() {
+            buf.push(ch);
+        }
+        // as_str() returns the remainder of the iterator as a &str slice —
+        // zero copy, no reallocation.
+        buf.push_str(chars.as_str());
     }
 }
 
@@ -297,7 +308,7 @@ mod tests {
     use ruff_source_file::{LineEnding, SourceFile, SourceFileBuilder, find_newline};
     use tree_sitter::{Parser, Tree};
 
-    use crate::stylist::{Capitalisation, ToCapitalisation};
+    use crate::stylist::{Capitalisation, ToCapitalisation, titlecase};
 
     use super::{Indentation, Quote, Stylist};
 
@@ -428,6 +439,19 @@ end
             find_newline(contents).map(|(_, ending)| ending),
             Some(LineEnding::CrLf)
         );
+    }
+
+    #[test]
+    fn titlecase_tests() {
+        assert_eq!(titlecase(""), "");
+        assert_eq!(titlecase("hello world"), "Hello World");
+        assert_eq!(titlecase("RUST is GREAT"), "Rust Is Great");
+        assert_eq!(titlecase("café au lait"), "Café Au Lait");
+        assert_eq!(titlecase("hello--world"), "Hello--World");
+        assert_eq!(titlecase("  leading"), "  Leading");
+        assert_eq!(titlecase("île de france"), "Île De France");
+        assert_eq!(titlecase("été indien"), "Été Indien");
+        assert_eq!(titlecase("ßtraße"), "SStraße");
     }
 
     #[test]
