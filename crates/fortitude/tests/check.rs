@@ -2551,6 +2551,7 @@ end program test
                          .args([
                              "--git-staged",
                              "--select=PORT011",
+                             "--verbose",
                          ]).build()
                          .current_dir(&tempdir),
                          @r"
@@ -2657,6 +2658,7 @@ end program test
                              "--git-since",
                              "test-branch",
                              "--select=PORT011",
+                             "--verbose",
                          ]).build()
                          .current_dir(&tempdir),
                          @r"

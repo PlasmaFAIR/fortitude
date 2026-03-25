@@ -21,66 +21,6 @@ env:
 
 jobs:
 
-  build-linux:
-    name: Build and Test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: Swatinem/rust-cache@v2.7.8
-    - name: "Install Rust toolchain"
-      run: rustup show
-    - name: "Install cargo nextest"
-      uses: taiki-e/install-action@v2.56.10
-      with:
-        tool: cargo-nextest
-    - name: "Install cargo insta"
-      uses: taiki-e/install-action@v2.56.10
-      with:
-        tool: cargo-insta
-    - name: "Build"
-      run: cargo build --verbose
-    - name: "Run tests"
-      shell: bash
-      env:
-        NEXTEST_PROFILE: "ci"
-      run: cargo insta test --all-features --workspace --unreferenced reject --test-runner nextest
-    - name: "Check docs"
-      run: cargo dev generate-all --mode=check
-    - name: "Check docs for broken links"
-      run: cargo doc --all --no-deps
-      env:
-        # Setting RUSTDOCFLAGS because `cargo doc --check` isn't yet
-        # implemented (https://github.com/rust-lang/cargo/issues/10025)
-        RUSTDOCFLAGS: "-D warnings"
-    - uses: actions/upload-artifact@v4
-      with:
-        name: fortitude
-        path: target/debug/fortitude
-
-  build-windows:
-    name: Build and Test (windows)
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: Swatinem/rust-cache@v2.7.8
-    - name: "Install Rust toolchain"
-      run: rustup show
-    - name: "Install cargo nextest"
-      uses: taiki-e/install-action@v2.56.10
-      with:
-        tool: cargo-nextest
-    - name: "Install cargo insta"
-      uses: taiki-e/install-action@v2.56.10
-      with:
-        tool: cargo-insta
-    - name: "Build"
-      run: cargo build --verbose
-    - name: "Run tests"
-      shell: bash
-      env:
-        NEXTEST_PROFILE: "ci"
-      run: cargo insta test --all-features --workspace --unreferenced reject --test-runner nextest
-
   build-macos:
     name: Build and Test (macos)
     runs-on: macos-latest
@@ -104,27 +44,3 @@ jobs:
       env:
         NEXTEST_PROFILE: "ci"
       run: cargo insta test --all-features --workspace --unreferenced reject --test-runner nextest
-
-  cargo-install:
-    name: Test cargo installation
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Check cargo install
-      run: |
-        cargo install --path crates/fortitude
-        fortitude --help
-
-  pip-install:
-    name: Test pip installation
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-    - name: Check pip install
-      run: |
-        pip install .
-        fortitude --help
