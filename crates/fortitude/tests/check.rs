@@ -2488,7 +2488,10 @@ end program test
 fn git_staged() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
-    let test_file = tempdir.path().join(filename);
+    let test_file = fortitude_linter::fs::normalize_path_to(
+        tempdir.path().join(filename),
+        fortitude_linter::fs::normalize_path(&tempdir),
+    );
     fs::write(
         &test_file,
         r#"
@@ -2584,8 +2587,10 @@ end program test
 fn git_since() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
-    let test_file =
-        fortitude_linter::fs::normalize_path_to(tempdir.path().join(filename), &tempdir);
+    let test_file = fortitude_linter::fs::normalize_path_to(
+        tempdir.path().join(filename),
+        fortitude_linter::fs::normalize_path(&tempdir),
+    );
     fs::write(
         &test_file,
         r#"
