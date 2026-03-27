@@ -372,7 +372,11 @@ fn check_files(
                     let file =
                         SourceFileBuilder::new(path.to_string_lossy(), source.as_str()).finish();
 
-                    let line_filter = file_filter.as_ref().and_then(|f| f.get(path, &file));
+                    let line_filter = file_filter.as_ref().and_then(|f| {
+                        let project_root = &settings.file_resolver.project_root;
+                        let path = fs::fully_normalize_path_to(path, project_root);
+                        f.get(path, &file)
+                    });
 
                     check_file(
                         path,

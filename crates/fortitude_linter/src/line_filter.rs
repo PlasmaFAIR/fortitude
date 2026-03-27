@@ -219,7 +219,7 @@ impl<'a> HunkCb<'a> {
             let start = OneIndexed::from_zero_indexed(hunk.new_start() as usize);
             let end = OneIndexed::from_zero_indexed((hunk.new_start() + hunk.new_lines()) as usize);
             let range = LineRange { start, end };
-            let file_abs = fs::normalize_path_to(file, self.project_root);
+            let file_abs = fs::fully_normalize_path_to(file, self.project_root);
             self.filter
                 .inner
                 .entry(file_abs)

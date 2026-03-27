@@ -2436,7 +2436,7 @@ end program test
     // are properly escaped
     let filter_arg = format!(
         "--line-filter=[{{\"name\":{:?}, \"lines\":[[1, 3], [8, 8]]}}]",
-        test_file
+        std::fs::canonicalize(&test_file)?
     );
 
     apply_common_filters!();
@@ -2488,7 +2488,10 @@ end program test
 fn git_staged() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
-    let test_file = tempdir.path().join(filename);
+    let test_file = fortitude_linter::fs::fully_normalize_path_to(
+        tempdir.path().join(filename),
+        fortitude_linter::fs::normalize_path(&tempdir),
+    );
     fs::write(
         &test_file,
         r#"
@@ -2552,7 +2555,7 @@ end program test
                              "--git-staged",
                              "--select=PORT011",
                          ]).build()
-                         .current_dir(&tempdir),
+                         .current_dir(tempdir.path()),
                          @r"
     success: false
     exit_code: 1
@@ -2584,7 +2587,10 @@ end program test
 fn git_since() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
-    let test_file = tempdir.path().join(filename);
+    let test_file = fortitude_linter::fs::fully_normalize_path_to(
+        tempdir.path().join(filename),
+        fortitude_linter::fs::normalize_path(&tempdir),
+    );
     fs::write(
         &test_file,
         r#"
@@ -2658,7 +2664,7 @@ end program test
                              "test-branch",
                              "--select=PORT011",
                          ]).build()
-                         .current_dir(&tempdir),
+                         .current_dir(tempdir.path()),
                          @r"
     success: false
     exit_code: 1
