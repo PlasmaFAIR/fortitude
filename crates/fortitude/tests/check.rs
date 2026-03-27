@@ -2584,7 +2584,8 @@ end program test
 fn git_since() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
-    let test_file = fortitude_linter::fs::normalize_path(tempdir.path().join(filename));
+    let test_file =
+        fortitude_linter::fs::normalize_path_to(tempdir.path().join(filename), &tempdir);
     fs::write(
         &test_file,
         r#"
@@ -2649,9 +2650,6 @@ end program test
     let tree = repo.find_tree(oid)?;
     let sig = git2::Signature::now("fortitude_test", "fortitude@example.com")?;
     repo.commit(Some("HEAD"), &sig, &sig, "second commit", &tree, &[&commit])?;
-
-    Command::new("ls").current_dir(&tempdir);
-    Command::new("pwd").current_dir(&tempdir);
 
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)

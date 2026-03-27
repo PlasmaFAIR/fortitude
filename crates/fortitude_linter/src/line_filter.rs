@@ -174,6 +174,11 @@ pub fn git_staged_files<P: AsRef<Path>>(project_root: P) -> Result<FilterMap> {
 
     diff.foreach(&mut file_cb, None, Some(&mut hunk_cb), None)?;
 
+    let ls = std::process::Command::new("ls").output()?;
+    log::debug!("ls: {:?}", str::from_utf8(&ls.stdout)?);
+    let pwd = std::process::Command::new("pwd").output()?;
+    log::debug!("pwd: {:?}", str::from_utf8(&pwd.stdout)?);
+
     Ok(hunk_state.filter)
 }
 
@@ -191,6 +196,11 @@ pub fn git_since<P: AsRef<Path>>(treeish: &str, project_root: P) -> Result<Filte
         |diff_delta: DiffDelta, hunk: DiffHunk| -> bool { hunk_state.call(diff_delta, hunk) };
 
     diff.foreach(&mut file_cb, None, Some(&mut hunk_cb), None)?;
+
+    let ls = std::process::Command::new("ls").output()?;
+    log::debug!("ls: {:?}", str::from_utf8(&ls.stdout)?);
+    let pwd = std::process::Command::new("pwd").output()?;
+    log::debug!("pwd: {:?}", str::from_utf8(&pwd.stdout)?);
 
     Ok(hunk_state.filter)
 }
