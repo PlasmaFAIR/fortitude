@@ -547,7 +547,10 @@ impl Drop for FortranFilesVisitor<'_, '_> {
         if let Some(ref files_filter) = self.global.files_filter {
             files.retain(|file| {
                 if let Ok(file) = file {
-                    let norm_path = fs::normalize_path(file.path());
+                    let resolver = self.global.resolver.read().unwrap();
+                    let settings = resolver.resolve(file.path());
+                    let project_root = &settings.file_resolver.project_root;
+                    let norm_path = fs::normalize_path_to(file.path(), project_root);
                     if files_filter.contains(&norm_path) {
                         debug!("Retaining path due to file filter: {:?}", norm_path);
                         true
