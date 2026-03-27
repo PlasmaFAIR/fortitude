@@ -2584,7 +2584,7 @@ end program test
 fn git_since() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
-    let test_file = tempdir.path().join(filename);
+    let test_file = fortitude_linter::fs::normalize_path(tempdir.path().join(filename));
     fs::write(
         &test_file,
         r#"
