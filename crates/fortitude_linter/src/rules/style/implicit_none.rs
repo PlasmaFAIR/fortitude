@@ -1,6 +1,5 @@
 /// Defines rules that raise errors if implicit typing is in use.
-use crate::ast::FortitudeNode;
-use crate::rules::correctness::implicit_typing::{has_implicit_none, implicit_statement_is_none};
+use crate::ast::{FortitudeNode, types::ImplicitType};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
@@ -39,7 +38,9 @@ impl AstRule for SuperfluousImplicitNone {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        if !implicit_statement_is_none(node) {
+        // If this isn't an `implicit none` statement, then we don't care about it.
+        let implicit_type = ImplicitType::from_implicit_statement(node, src)?;
+        if implicit_type == ImplicitType::Implicit {
             return None;
         }
         let parent = node.parent()?;
@@ -48,14 +49,36 @@ impl AstRule for SuperfluousImplicitNone {
                 let kind = ancestor.kind();
                 match kind {
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
-                        if !has_implicit_none(&ancestor) {
-                            continue;
+                        match ImplicitType::from_scope(&ancestor, src)? {
+                            ImplicitType::Missing => {
+                                // Keep searching up the tree for a higher-level
+                                // entity with `implicit none`, if any. If we
+                                // reach the top without finding one, then it's
+                                // not a problem.
+                                continue;
+                            }
+                            ImplicitType::Implicit => {
+                                // If we find an ancestor entity with `implicit
+                                // type(a-z)`, then this one is not superfluous.
+                                break;
+                            }
+                            ancestor_implicit_type => {
+                                // If we find an ancestor entity with `implicit
+                                // none`, then this one is superfluous provided
+                                // it is equivalent to the ancestor's `implicit
+                                // none` (e.g. `implicit none (type)` is not
+                                // equivalent to `implicit none (external)`, but
+                                // is to `implicit none`).
+                                if !implicit_type.equivalent_to(&ancestor_implicit_type) {
+                                    break;
+                                }
+                                let entity = kind.to_string();
+                                let fix = Fix::safe_edit(node.edit_delete(src));
+                                return some_vec![
+                                    Diagnostic::from_node(Self { entity }, node).with_fix(fix)
+                                ];
+                            }
                         }
-                        let entity = kind.to_string();
-                        let fix = Fix::safe_edit(node.edit_delete(src));
-                        return some_vec![
-                            Diagnostic::from_node(Self { entity }, node).with_fix(fix)
-                        ];
                     }
                     "interface" => {
                         break;

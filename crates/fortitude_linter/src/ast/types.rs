@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use anyhow::{Context, Result, anyhow};
 use itertools::Itertools;
+use ruff_source_file::SourceFile;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
 
@@ -483,4 +484,66 @@ pub(crate) enum BlockExit {
     Exit,
     Stop,
     Error,
+}
+
+#[derive(Eq, PartialEq)]
+pub(crate) enum ImplicitType {
+    Missing,
+    Implicit,
+    None,
+    NoneType,
+    NoneExternal,
+    NoneTypeExternal,
+}
+
+impl ImplicitType {
+    pub fn equivalent_to(&self, other: &Self) -> bool {
+        match self {
+            Self::Implicit => false, // Assume implicit type(...) is never equivalent to anything else
+            Self::None | Self::NoneType => matches!(other, Self::None | Self::NoneType),
+            this => other == this, // All other variants are only equivalent to themselves
+        }
+    }
+
+    /// Classify an implicit statement as either `implicit none`, `implicit none
+    /// (type)`, `implicit none (external)`, `implicit none (type, external)`,
+    /// or `implicit type(...)`.
+    pub fn from_implicit_statement(node: &Node, src: &SourceFile) -> Option<Self> {
+        if node.kind() != "implicit_statement" {
+            return None;
+        }
+        // Expect something after 'implicit'. If not, just return None and let
+        // the rule exit early -- this is probably a syntax error.
+        let child = node.child(1)?;
+        if child.kind() == "none" {
+            let text = node.to_text(src.source_text())?.to_lowercase();
+            let none_type = text.contains("type");
+            let none_external = text.contains("external");
+            if none_type && none_external {
+                return Some(ImplicitType::NoneTypeExternal);
+            } else if none_type {
+                return Some(ImplicitType::NoneType);
+            } else if none_external {
+                return Some(ImplicitType::NoneExternal);
+            } else {
+                return Some(ImplicitType::None);
+            }
+        }
+        Some(ImplicitType::Implicit)
+    }
+
+    /// Determine the implicit typing scheme of a
+    /// program/module/submodule/function/subroutine node.
+    pub fn from_scope(node: &Node, src: &SourceFile) -> Option<Self> {
+        if matches!(
+            node.kind(),
+            "module" | "submodule" | "program" | "function" | "subroutine"
+        ) {
+            if let Some(child) = node.child_with_name("implicit_statement") {
+                return ImplicitType::from_implicit_statement(&child, src);
+            }
+            return Some(ImplicitType::Missing);
+        }
+        None
+    }
 }

@@ -1,5 +1,5 @@
 /// Defines rules that raise errors if implicit typing is in use.
-use crate::ast::FortitudeNode;
+use crate::ast::{FortitudeNode, types::ImplicitType};
 use crate::settings::{CheckSettings, FortranStandard};
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
@@ -8,20 +8,6 @@ use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
-
-pub fn implicit_statement_is_none(node: &Node) -> bool {
-    if let Some(child) = node.child(1) {
-        return child.kind() == "none";
-    }
-    false
-}
-
-pub fn has_implicit_none(node: &Node) -> bool {
-    if let Some(child) = node.child_with_name("implicit_statement") {
-        return implicit_statement_is_none(&child);
-    }
-    false
-}
 
 fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Fix> {
     // Find suitable place to insert `implicit none`, the line
@@ -111,7 +97,9 @@ impl AstRule for ImplicitTyping {
             return None;
         }
 
-        if has_implicit_none(node) {
+        let implicit_type = ImplicitType::from_scope(node, src)?;
+
+        if implicit_type != ImplicitType::Missing {
             return None;
         }
         let entity = node.kind().to_string();
@@ -161,7 +149,11 @@ impl AstRule for InterfaceImplicitTyping {
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
         let parent = node.parent()?;
-        if parent.kind() == "interface" && !has_implicit_none(node) {
+        if parent.kind() != "interface" {
+            return None;
+        }
+        let implicit_type = ImplicitType::from_scope(node, src)?;
+        if implicit_type == ImplicitType::Missing {
             let name = node.kind().to_string();
             let interface_stmt = node.child(0)?;
             return some_vec![
@@ -211,34 +203,41 @@ impl AstRule for ImplicitExternalProcedures {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
+        // implicit none (type, external) was added in Fortran 2018, so don't
+        // run this rule if we're targeting an older standard.
         if settings.target_std < FortranStandard::F2018 {
             return None;
         }
 
-        if !implicit_statement_is_none(node) {
-            return None;
-        }
-
-        let text = node.to_text(src.source_text())?.to_lowercase();
-
-        if !text.contains("external") {
-            let edit = if let Some(type_node) = node
-                .children(&mut node.walk())
-                .find(|child| child.to_text(src.source_text()).unwrap().to_lowercase() == "type")
-            {
-                // Seems unlikely someone would have `implicit none (type)`
-                // without `external` -- is that a sign they _explicitly_ don't
-                // want it? That's probably still unwise though
-                Edit::insertion(", external".to_string(), type_node.end_textsize())
-            } else {
+        let edit = match ImplicitType::from_implicit_statement(node, src)? {
+            ImplicitType::Missing
+            | ImplicitType::Implicit
+            | ImplicitType::NoneTypeExternal
+            | ImplicitType::NoneExternal => {
+                // If it's not `implicit none`, then we don't care about it.
+                // If it's `implicit none (type, external)`, then it's already correct.
+                // If it's `implicit none (external)`, then it's technically
+                // correct, but probably a bad idea. C001/implicit-typing will
+                // catch this.
+                return None;
+            }
+            ImplicitType::None => {
+                // If it's `implicit none` without `(external)`, then we want to fix it
                 Edit::insertion(" (type, external)".to_string(), node.end_textsize())
-            };
-            let fix = Fix::unsafe_edit(edit);
+            }
+            ImplicitType::NoneType => {
+                // If it's `implicit none (type)`, then we want to fix it.
+                node.children(&mut node.walk())
+                    .find(|child| {
+                        child.to_text(src.source_text()).unwrap().to_lowercase() == "type"
+                    })
+                    .map(|type_node| {
+                        Edit::insertion(", external".to_string(), type_node.end_textsize())
+                    })?
+            }
+        };
 
-            some_vec!(Diagnostic::from_node(Self {}, node).with_fix(fix))
-        } else {
-            None
-        }
+        some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::unsafe_edit(edit)))
     }
 
     fn entrypoints() -> Vec<&'static str> {
