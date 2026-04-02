@@ -1,0 +1,39 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+assertion_line: 68
+expression: diagnostics
+---
+./resources/test/fixtures/style/S281.f90:2:3: S281 [*] save statement is superfluous at the module level
+  |
+1 | module test
+2 |   save
+  |   ^^^^ S281
+3 |
+4 |   integer :: a
+  |
+  = help: Remove `save`
+
+ℹ Unsafe fix
+1 1 | module test
+2   |-  save
+  2 |+  
+3 3 | 
+4 4 |   integer :: a
+5 5 | 
+
+./resources/test/fixtures/style/S281.f90:13:12: S281 [*] save attribute is superfluous at the module level
+   |
+12 | module test
+13 |   integer, save :: a
+   |            ^^^^ S281
+14 | end module test
+   |
+   = help: Remove `save`
+
+ℹ Unsafe fix
+10 10 | end module test
+11 11 | 
+12 12 | module test
+13    |-  integer, save :: a
+   13 |+  integer :: a
+14 14 | end module test
