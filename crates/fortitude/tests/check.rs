@@ -2436,7 +2436,7 @@ end program test
     // are properly escaped
     let filter_arg = format!(
         "--line-filter=[{{\"name\":{:?}, \"lines\":[[1, 3], [8, 8]]}}]",
-        test_file
+        std::fs::canonicalize(&test_file)?
     );
 
     apply_common_filters!();
@@ -2548,12 +2548,12 @@ end program test
     index.add_path(filename)?;
     index.write()?;
 
+    apply_common_filters!();
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args([
                              "--git-staged",
                              "--select=PORT011",
-                             "--verbose",
                          ]).build()
                          .current_dir(&tempdir),
                          @r"
@@ -2656,13 +2656,13 @@ end program test
     let sig = git2::Signature::now("fortitude_test", "fortitude@example.com")?;
     repo.commit(Some("HEAD"), &sig, &sig, "second commit", &tree, &[&commit])?;
 
+    apply_common_filters!();
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args([
                              "--git-since",
                              "test-branch",
                              "--select=PORT011",
-                             "--verbose",
                          ]).build()
                          .current_dir(&tempdir),
                          @r"
