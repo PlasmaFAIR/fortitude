@@ -550,17 +550,21 @@ impl Drop for FortranFilesVisitor<'_, '_> {
                     let resolver = self.global.resolver.read().unwrap();
                     let settings = resolver.resolve(file.path());
                     let project_root = &settings.file_resolver.project_root;
-                    let norm_path = fs::normalize_path_to(file.path(), project_root);
+                    let file_abs = fs::normalize_path_to(file.path(), project_root);
 
                     debug!("file: {}", file.path().display());
                     debug!("project_root: {}", project_root.display());
-                    debug!("norm_path: {}", norm_path.display());
+                    debug!("file_abs: {}", file_abs.display());
 
-                    if files_filter.contains(&norm_path) {
-                        debug!("Retaining path due to file filter: {:?}", norm_path);
+                    let file_canonical = std::fs::canonicalize(&file_abs).unwrap_or(file_abs);
+
+                    debug!("file_canonical: {}", file_canonical.display());
+
+                    if files_filter.contains(&file_canonical) {
+                        debug!("Retaining path due to file filter: {:?}", file_canonical);
                         true
                     } else {
-                        debug!("Dropping path due to file filter: {:?}", norm_path);
+                        debug!("Dropping path due to file filter: {:?}", file_canonical);
                         false
                     }
                 } else {

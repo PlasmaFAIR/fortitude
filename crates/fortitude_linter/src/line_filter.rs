@@ -233,9 +233,12 @@ impl<'a> HunkCb<'a> {
             log::debug!("file: {}", file.display());
             log::debug!("project_root: {}", self.project_root.display());
             log::debug!("file_abs: {}", file_abs.display());
+
+            let file_canonical = std::fs::canonicalize(&file_abs).unwrap_or(file_abs);
+            log::debug!("file_canonical: {}", file_canonical.display());
             self.filter
                 .inner
-                .entry(file_abs)
+                .entry(file_canonical)
                 .and_modify(|f| f.push(range.clone()))
                 .or_insert(vec![range]);
         }
