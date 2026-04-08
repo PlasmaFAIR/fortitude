@@ -229,11 +229,10 @@ impl<'a> HunkCb<'a> {
             let start = OneIndexed::from_zero_indexed(hunk.new_start() as usize);
             let end = OneIndexed::from_zero_indexed((hunk.new_start() + hunk.new_lines()) as usize);
             let range = LineRange { start, end };
-            let file_abs = fs::normalize_path_to(file, self.project_root);
-            let file_canonical = std::fs::canonicalize(&file_abs).unwrap_or(file_abs);
+            let file_abs = fs::fully_normalize_path_to(file, self.project_root);
             self.filter
                 .inner
-                .entry(file_canonical)
+                .entry(file_abs)
                 .and_modify(|f| f.push(range.clone()))
                 .or_insert(vec![range]);
         }
