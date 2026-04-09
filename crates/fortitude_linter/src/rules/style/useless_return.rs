@@ -450,7 +450,7 @@ fn fix_superfluous_return<'a>(branch: &'a Node, src: &'a SourceFile) -> Option<F
     };
 
     let fix = Fix::safe_edits(edit, rest);
-    debug!("{fix:?}");
+    debug!("** fix: {fix:?}");
 
     Some(fix)
 }

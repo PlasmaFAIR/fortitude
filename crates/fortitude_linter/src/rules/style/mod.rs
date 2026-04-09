@@ -24,6 +24,7 @@ mod tests {
     use test_case::test_case;
 
     use crate::apply_common_filters;
+    use crate::logging::set_up_logging;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
     use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
@@ -69,6 +70,7 @@ mod tests {
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+        set_up_logging(crate::logging::LogLevel::Verbose)?;
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),
             &CheckSettings::for_rule(rule_code),
