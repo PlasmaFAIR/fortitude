@@ -121,6 +121,35 @@ For more information on the glob syntax, refer to the [`globset` documentation](
 
 ---
 
+#### [`extend-fixable`](#check_extend-fixable) {: #check_extend-fixable }
+<span id="extend-fixable"></span>
+
+A list of rule codes or prefixes to consider fixable, in addition to those
+specified by [`fixable`](#check_fixable).
+
+**Default value**: `[]`
+
+**Type**: `list[RuleSelector]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # On top of the current `fixable` rules, enable fix for implicit-typing (`C001`) and style rules (`S`).
+    extend-fixable = ["C001", "S"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # On top of the current `fixable` rules, enable fix for implicit-typing (`C001`) and style rules (`S`).
+    extend-fixable = ["C001", "S"]
+    ```
+
+---
+
 #### [`extend-select`](#check_extend-select) {: #check_extend-select }
 <span id="extend-select"></span>
 
@@ -263,6 +292,35 @@ Like [`fix`](#fix), but disables reporting on leftover violation. Implies [`fix`
     ```toml
     [check]
     fix-only = true
+    ```
+
+---
+
+#### [`fixable`](#check_fixable) {: #check_fixable }
+<span id="fixable"></span>
+
+A list of rule codes or prefixes to consider fixable. By default,
+all rules are considered fixable.
+
+**Default value**: `["ALL"]`
+
+**Type**: `list[RuleSelector]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Only allow fix behavior for style (`S`) and modernisation (`MOD`) rules.
+    fixable = ["S", "MOD"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Only allow fix behavior for style (`S`) and modernisation (`MOD`) rules.
+    fixable = ["S", "MOD"]
     ```
 
 ---
@@ -635,6 +693,34 @@ Options are "f2023", "f2018" (default), "f2008", "f2003", and "f95".
     [check]
     # Set standard to Fortran 2008
     target-std = "f2008"
+    ```
+
+---
+
+#### [`unfixable`](#check_unfixable) {: #check_unfixable }
+<span id="unfixable"></span>
+
+A list of rule codes or prefixes to consider non-fixable.
+
+**Default value**: `[]`
+
+**Type**: `list[RuleSelector]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Disable fix for implicit-external-procedures (`C003`).
+    unfixable = ["C003"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Disable fix for implicit-external-procedures (`C003`).
+    unfixable = ["C003"]
     ```
 
 ---
