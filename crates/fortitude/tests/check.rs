@@ -2488,7 +2488,7 @@ end program test
 fn git_staged() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
-    let test_file = fortitude_linter::fs::normalize_path_to(
+    let test_file = fortitude_linter::fs::fully_normalize_path_to(
         tempdir.path().join(filename),
         fortitude_linter::fs::normalize_path(&tempdir),
     );
@@ -2555,7 +2555,7 @@ end program test
                              "--git-staged",
                              "--select=PORT011",
                          ]).build()
-                         .current_dir(&tempdir),
+                         .current_dir(tempdir.path()),
                          @r"
     success: false
     exit_code: 1
@@ -2587,7 +2587,7 @@ end program test
 fn git_since() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let filename = Path::new("test.f90");
-    let test_file = fortitude_linter::fs::normalize_path_to(
+    let test_file = fortitude_linter::fs::fully_normalize_path_to(
         tempdir.path().join(filename),
         fortitude_linter::fs::normalize_path(&tempdir),
     );
@@ -2664,7 +2664,7 @@ end program test
                              "test-branch",
                              "--select=PORT011",
                          ]).build()
-                         .current_dir(&tempdir),
+                         .current_dir(tempdir.path()),
                          @r"
     success: false
     exit_code: 1
