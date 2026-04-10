@@ -407,6 +407,14 @@ pub(crate) fn check_path(
         }
     }
 
+    // Disable any fixes for unfixable rules
+    for diagnostic in &mut violations {
+        let rule = diagnostic.kind.rule();
+        if diagnostic.fix.is_some() && !rules.should_fix(rule) {
+            diagnostic.fix = None;
+        }
+    }
+
     violations
 }
 

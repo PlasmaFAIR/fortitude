@@ -193,6 +193,29 @@ pub struct CheckOptions {
     )]
     pub select: Option<Vec<RuleSelector>>,
 
+    /// A list of rule codes or prefixes to consider fixable. By default,
+    /// all rules are considered fixable.
+    #[option(
+        default = r#"["ALL"]"#,
+        value_type = "list[RuleSelector]",
+        example = r#"
+            # Only allow fix behavior for style (`S`) and modernisation (`MOD`) rules.
+            fixable = ["S", "MOD"]
+        "#
+    )]
+    pub fixable: Option<Vec<RuleSelector>>,
+
+    /// A list of rule codes or prefixes to consider non-fixable.
+    #[option(
+        default = "[]",
+        value_type = "list[RuleSelector]",
+        example = r#"
+            # Disable fix for implicit-external-procedures (`C003`).
+            unfixable = ["C003"]
+        "#
+    )]
+    pub unfixable: Option<Vec<RuleSelector>>,
+
     /// A list of rule codes or prefixes to enable, in addition to those
     /// specified by [`select`](#check_select).
     #[option(
@@ -204,6 +227,18 @@ pub struct CheckOptions {
         "#
     )]
     pub extend_select: Option<Vec<RuleSelector>>,
+
+    /// A list of rule codes or prefixes to consider fixable, in addition to those
+    /// specified by [`fixable`](#check_fixable).
+    #[option(
+        default = r#"[]"#,
+        value_type = "list[RuleSelector]",
+        example = r#"
+            # On top of the current `fixable` rules, enable fix for implicit-typing (`C001`) and style rules (`S`).
+            extend-fixable = ["C001", "S"]
+        "#
+    )]
+    pub extend_fixable: Option<Vec<RuleSelector>>,
 
     // File resolver options
     /// A list of file extensions to check
