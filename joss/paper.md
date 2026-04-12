@@ -209,7 +209,7 @@ government institutions. The earliest known external use was for FTorch
 Met Office uses Fortitude for various projects, including LFRic [@lfric], CASIM
 [@casim], and Socrates [@socrates]. It is also used by the quantum chemistry and
 solid state physics package cp2k [@cp2k] and the stellar astrophysics package
-MESA [@paxton:2011].
+MESA [@Paxton:2011].
 
 The number of contributors to Fortitude has grown from the original two authors
 to over 19, and more community members have raised feature requests and bug
