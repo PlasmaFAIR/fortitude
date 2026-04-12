@@ -1,0 +1,28 @@
+
+❯ hyperfine --warmup 3 -i 'fortitude check --select=ALL --preview --file-extensions="f90" src'
+Benchmark 1: fortitude check --select=ALL --preview --file-extensions="f90" src
+  Time (mean ± σ):     241.0 ms ±   7.7 ms    [User: 803.1 ms, System: 35.2 ms]
+  Range (min … max):   230.1 ms … 253.8 ms    12 runs
+ 
+  Warning: Ignoring non-zero exit code.
+
+❯ hyperfine --warmup 3 -i 'find src -type f -name "*.f90" | xargs -I {} flint lint -r fortran_rc_default.yaml {}'
+Benchmark 1: find src -type f -name "*.f90" | xargs -I {} flint lint -r fortran_rc_default.yaml {}
+  Time (mean ± σ):     12.915 s ±  0.058 s    [User: 11.952 s, System: 0.946 s]
+  Range (min … max):   12.824 s … 12.983 s    10 runs
+
+
+❯ hyperfine --warmup 3 -i 'stylist -configuration stylist.py -style simple src'
+Benchmark 1: stylist -configuration stylist.py -style simple src
+  Time (mean ± σ):     14.830 s ±  0.137 s    [User: 14.416 s, System: 0.393 s]
+  Range (min … max):   14.667 s … 15.120 s    10 runs
+ 
+  Warning: Ignoring non-zero exit code.
+
+❯ hyperfine --warmup 3 -i 'find src -type f -name "*.f90" | xargs -I {} ../camfort/camfort basic-checks {} '
+Benchmark 1: find src -type f -name "*.f90" | xargs -I {} ../camfort/camfort basic-checks {} 
+  Time (mean ± σ):     25.135 s ±  0.201 s    [User: 34.791 s, System: 48.780 s]
+  Range (min … max):   24.973 s … 25.682 s    10 runs
+ 
+  Warning: Ignoring non-zero exit code.
+
