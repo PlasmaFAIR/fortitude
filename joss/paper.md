@@ -68,10 +68,11 @@ intend to improve:
 
 - Correctness: Rules to find bug-prone coding patterns, helping developers to
   catch errors early and improve the safety of their code.
-- Obsolescent: Rules to flag Fortran features marked as obsolescent in the
+- Obsolescent: Rules to flag features marked as obsolescent in the Fortran
   standard and recommend refactoring strategies to avoid them.
-- Modernisation: Rules to update Fortran code to make use of newer features
-  beyond the recommendations of the standard.
+- Modernisation: Rules to update Fortran code to make use of newer features.
+  These are complementary to 'obsolescent' rules, and go beyond the strict
+  recommendations of the Fortran standard.
 - Style: Rules to make Fortran code more readable and help adhere to a common
   set of coding conventions.
 - Portability: Rules to avoid compiler- or platform-specific features in favour
@@ -89,10 +90,11 @@ end if
 
 In languages like C and Python, the order of operations in a logical expression
 is guaranteed to run left-to-right, so equivalent statements would be safe. A
-programmer may expect similar behaviour in Fortran, but as this is not
-guaranteed by the standard, it is possible that this could result in a reference
-to invalid data and a critical error. Running Fortitude over this code with the
-rule activated delivers a diagnostic message to the user:
+programmer may expect similar behaviour in Fortran, but as this is
+compiler-dependent behaviour in Fortran and not guaranteed by the standard, it
+is possible that this could result in a reference to invalid data and a critical
+error. Running Fortitude over this code with the rule activated delivers a
+diagnostic message to the user:
 
 ```console
 test.f90:12:32: C161 variable inquiry `present(arg)` and use in same logical expression
@@ -102,10 +104,30 @@ test.f90:12:32: C161 variable inquiry `present(arg)` and use in same logical exp
 13 |             print *, arg
 14 |         end if
    |
-
-fortitude: 1 files scanned.
-Number of errors: 1
 ```
+
+For another example, the modernisation rule `deprecated-relational-operator`
+flags the use of operators such as `.lt.` and `.ge.` in place of `<` and `>=`.
+Though the Fortran standard permits the use of either operator style, the latter
+is generally considered to be more readable, and is recommended in most style
+guides. Fortitude will report this to the user as follows:
+
+```console
+test.f90:22:17: MOD021 [*] deprecated relational operator '.lt.', prefer '<' instead
+   |
+22 |         if (arg .lt. 0) then
+   |                 ^^^^ MOD021
+23 |             print *, arg
+24 |         end if
+   |
+   = help: Use '<'
+```
+
+The symbol `[*]` indicates that Fortitude can fix this issue automatically,
+which can be achieved by re-running with the `--fix` flag. This feature makes it
+much easier for developers to introduce Fortitude into existing projects, as a
+large proportion of linter warnings raised by Fortitude can be corrected
+instantaneously.
 
 The use of a linter is especially beneficial when working on large projects with
 multiple developers, as it allows the team to enforce a consistent coding style.
