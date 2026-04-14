@@ -147,8 +147,9 @@ aid users in navigating a project. It can also be used alongside the fprettify
 # State of the field
 
 Fortitude was developed due to notable deficiencies in existing open-source
-Fortran linting tools, most of which are unmaintained, lacking in features, use
-unreliable Fortran parsers, or have poor performance. The decision to write a
+Fortran linting tools, most of which are unmaintained, have few linting rules,
+use unreliable Fortran parsers, or have poor performance. Features such as
+automatic fixes and editor integration were also absent. The decision to write a
 new linter rather than contribute to existing solutions was inspired by the much
 higher quality of linters in other languages; it was easier to adapt those
 solutions to work with Fortran than to upgrade the existing Fortran linters to
