@@ -252,7 +252,7 @@ spelling and grammar checking, this paper was written without AI assistance.
 
 # Acknowledgements
 
-Fortitude's development has been funded by the PlasmaFAIR project.
+Fortitude's development has been funded by the PlasmaFAIR project, EPSRC Grant EP/V051822/1.
 
 The authors are also grateful for the support of the Software Sustainabiliy
 Institute.
