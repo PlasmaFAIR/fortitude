@@ -180,9 +180,11 @@ follows:
 - Flint v0.7.1: Activated the default set of 38 rules. One file had to be
   excluded due to a parse error.
 
-The runtime of each tool is shown in \autoref{fig:performance}. Despite
-implementing many more checks than the alternatives, Fortitude was found to run
-between 50 and 100 times as quickly than its main competitors.
+The runtime of each tool is shown in \autoref{fig:performance}. In all cases,
+the tests were run on a simple laptop featuring a 4-core 11th generation Intel
+i5 CPU running at 2.60GHz. Despite implementing many more checks than the
+alternatives, Fortitude was found to run between 50 and 100 times as quickly
+than its main competitors.
 
 ![Time taken for Fortran linters to lint 72 files in the GS2 project.\label{fig:performance}](performance_plot.pdf)
 
