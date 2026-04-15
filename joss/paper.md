@@ -196,7 +196,7 @@ but over 150 rule candidates have been identified by the authors or requested by
 the community. Some of these will require the use of more semantic information
 that linters based on compilers, such as clang-tidy for C++ [@clangtidy], can
 access readily, and therefore there are plans to upgrade Fortitude's
-capabilities to capture information within a Fortran project.
+capabilities to capture more information within a Fortran project.
 
 # Software design
 
