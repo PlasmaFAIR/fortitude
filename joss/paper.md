@@ -41,14 +41,14 @@ improve their software, and they achieve this by examining their source code
 and/or binaries without running the software. A ‘linter’ is a type of static
 analysis tool that offers an opinionated critique of software beyond its
 syntactic validity, highlighting bug-prone coding patterns, deviations from
-common style guides, and ways to upgrade to more modern features.
+common style guides, use of outdated features, and, generally, suggestions to
+improve the code in some way.
 
 Fortitude is a linter targeting Fortran, which has hitherto lacked a standard
-open-source solution. It is orders of magnitude faster than its open-source
+open-source solution. It is two orders of magnitude faster than its open-source
 counterparts, is highly customisable, has robust parsing capabilities, can
-automatically fix linting issues, and can integrate directly into a user’s
-automatically fix linting issues, and can integrate either into a CI/CD pipeline
-or directly into a user’s editor or IDE.
+automatically fix many linting issues, and can integrate either into a CI/CD
+pipeline or directly into a user’s editor or IDE.
 
 # Statement of need
 
@@ -89,12 +89,13 @@ end if
 ```
 
 In languages like C and Python, the order of operations in a logical expression
-is guaranteed to run left-to-right, so equivalent statements would be safe. A
-programmer may expect similar behaviour in Fortran, but as this is
-compiler-dependent behaviour in Fortran and not guaranteed by the standard, it
-is possible that this could result in a reference to invalid data and a critical
-error. Running Fortitude over this code with the rule activated delivers a
-diagnostic message to the user:
+is guaranteed to run left-to-right and will exit as soon as the outcome of the
+expression is known, skipping any remaining operations. A programmer may
+expect similar behaviour in Fortran, but as this is compiler-dependent behaviour
+in Fortran and not guaranteed by the standard, it is possible that this could
+result in a reference to invalid data and a critical error. Running Fortitude
+over this code with the rule activated delivers a diagnostic message to the
+user:
 
 ```console
 test.f90:12:32: C161 variable inquiry `present(arg)` and use in same logical expression
@@ -147,17 +148,17 @@ aid users in navigating a project. It can also be used alongside the fprettify
 # State of the field
 
 Fortitude was developed due to notable deficiencies in existing open-source
-Fortran linting tools, most of which are unmaintained, have few linting rules,
-use unreliable Fortran parsers, or have poor performance. Features such as
-automatic fixes and editor integration were also absent. The decision to write a
-new linter rather than contribute to existing solutions was inspired by the much
-higher quality of linters in other languages; it was easier to adapt those
-solutions to work with Fortran than to upgrade the existing Fortran linters to
-meet the state-of-the-art. Fortitude borrows many language-agnostic assets from
-the Python linter Ruff [@ruff], including much of the command-line interface,
-output formats, and configuration file design. While these structural elements
-could be reused directly, the linting rules themselves had to be written
-specifically for Fortran.
+Fortran linting tools, most of which are some combination of unmaintained,
+have few linting rules, use unreliable Fortran parsers, and/or have poor performance.
+Features such as automatic fixes and editor integration were also absent. The
+decision to write a new linter rather than contribute to existing solutions was
+inspired by the much higher quality of linters in other languages; it was easier
+to adapt those solutions to work with Fortran than to upgrade the existing
+Fortran linters to meet the state-of-the-art. Fortitude borrows many
+language-agnostic assets from the Python linter Ruff [@ruff], including much of
+the command-line interface, output formats, and configuration file design. While
+these structural elements could be reused directly, the linting rules themselves
+had to be written specifically for Fortran.
 
 Other popular open-source Fortran linting tools include:
 
@@ -188,13 +189,14 @@ than its main competitors.
 
 ![Time taken for Fortran linters to lint 72 files in the GS2 project.\label{fig:performance}](performance_plot.pdf)
 
-Further work is needed to bring Fortitude up to parity with the most popular
-linting tools in other languages. For instance, despite borrowing heavily from
-Ruff [@ruff], Fortitude does not implement a code formatting mode, and Ruff
-implements over 900 rules compared to the 87 rules in Fortitude v0.8.0. It also
-lacks some advanced checks that linters based on compilers can perform due to
-their ability to access more semantic information within a project, such as
-clang-tidy for C++ [@clangtidy].
+Fortitude has an ambitious roadmap of further feature additions, including the
+addition of a code formatting mode similar to that of Ruff [@ruff] and fprettify
+[@fprettify]. Version 0.8.0 of Fortitude features 87 implemented linting rules,
+but over 150 rule candidates have been identified by the authors or requested by
+the community. Some of these will require the use of more semantic information
+that linters based on compilers, such as clang-tidy for C++ [@clangtidy], can
+access readily, and therefore there are plans to upgrade Fortitude's
+capabilities to capture information within a Fortran project.
 
 # Software design
 
@@ -202,10 +204,11 @@ As linting is effectively a solved problem in other languages, the design of
 Fortitude was guided by the reuse of existing resources. The core architecture
 and user interface of Fortitude was inspired primarily by Ruff [@ruff], a
 widely-used Python linter, and, where possible, Ruff’s language-agnostic
-features were directly repurposed. This reuse of a tried-and-tested design
-permitted much more rapid development than would otherwise be possible, and
-resulted in a user experience that can be readily understood by programmers who
-are already familiar with Ruff.
+features were able to be directly repurposed thanks to its open and permissive
+licensing. This reuse of a tried-and-tested design enabled much more rapid
+development than would otherwise be possible, and has resulted in a user
+experience that can be readily understood by programmers who are already
+familiar with Ruff.
 
 However, the core checking loop of Fortitude differs to that of Ruff. Most rules
 that operate over the Concrete Syntax Tree (CST) inherit a common trait that
@@ -214,8 +217,11 @@ should be activated. When Fortitude scans the CST of any Fortran files, it
 checks whether the user has requested the activation of any rules that start on
 each node type it encounters, and runs each of these checks in turn. This way,
 Fortitude only needs to perform a single pass over the CST for all activated
-rules, rather than performing a full pass per rule. This is largely how it
-achieves such high performance.
+rules, rather than performing a full pass per rule. This is largely how Fortitude
+achieves such high performance. Ruff similarly performs its checks via a single
+pass over the CST, but the logic of activating each rule is achieved by
+extremely long manually-coded match statements, which is much harder to maintain
+than Fortitude's solution.
 
 The generation of the CST from a Fortran file is no simple task, especially
 given the high degree of backwards compatibility in the Fortran standards.
