@@ -53,13 +53,13 @@ pipeline or directly into a user’s editor or IDE.
 
 # Statement of need
 
-The Fortran programming language, first released in 1957[@fortran:1957], is the
+The Fortran programming language, first released in 1957 [@fortran:1957], is the
 oldest high-level programming language still in common usage
-today[@fortran:2022], and is widely used for high-performance research
+today [@fortran:2022], and is widely used for high-performance research
 applications in fields such as climatology, quantum condensed matter physics,
 and fusion energy. Fortran powers the majority of the software run on Archer2,
 which until 2024 was the most powerful supercomputer in the United
-Kingdom[@archer2].
+Kingdom [@archer2].
 
 The longevity of Fortran means that much of the research software in use today
 is written to older standards and contains a lot of technical debt. This places
