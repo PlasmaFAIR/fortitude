@@ -52,14 +52,18 @@ pipeline or directly into a user’s editor or IDE.
 
 # Statement of need
 
-Fortran is the oldest programming language still in common usage today, and is
+The Fortran programming language, first released in 1957[@fortran], is the
+oldest high-level programming language still in common usage today, and is
 widely used for high-performance research applications in fields such as
-climatology, quantum condensed matter physics, and fusion energy. The longevity
-of Fortran means that much of the research software in use today is written to
-older standards and contains a lot of technical debt. This places a large burden
-on the maintainers of this research software, and porting Fortran codes to more
-modern languages is not typically worth the resources required or the risks of
-introducing new bugs or performance issues.
+climatology, quantum condensed matter physics, and fusion energy. Fortran powers
+the majority of the software run on Archer2, which until 2024 was the most
+powerful supercomputer in the UK[@archer2].
+
+The longevity of Fortran means that much of the research software in use today
+is written to older standards and contains a lot of technical debt. This places
+a large burden on the maintainers of this research software, and porting Fortran
+codes to more modern languages is not typically worth the resources required or
+the risks of introducing new bugs or performance issues.
 
 Fortitude is a Fortran linter designed to help writers and maintainers of
 Fortran research software to improve the quality of their code. Its linting
