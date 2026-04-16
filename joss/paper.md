@@ -22,6 +22,7 @@ authors:
     orcid: 0000-0003-2616-9771
     affiliation: 2
   - name: Connor Aird
+    orcid: 0009-0001-7879-3472  
     affiliation: 3
 affiliations:
  - name: University of York, United Kingdom
