@@ -57,7 +57,8 @@ oldest high-level programming language still in common usage
 today[@fortran:2022], and is widely used for high-performance research
 applications in fields such as climatology, quantum condensed matter physics,
 and fusion energy. Fortran powers the majority of the software run on Archer2,
-which until 2024 was the most powerful supercomputer in the UK[@archer2].
+which until 2024 was the most powerful supercomputer in the United
+Kingdom[@archer2].
 
 The longevity of Fortran means that much of the research software in use today
 is written to older standards and contains a lot of technical debt. This places
@@ -195,12 +196,13 @@ than its main competitors.
 
 Fortitude has an ambitious roadmap of further feature additions, including the
 addition of a code formatting mode similar to that of Ruff [@ruff] and fprettify
-[@fprettify]. Version 0.8.0 of Fortitude features 87 implemented linting rules,
-but over 150 rule candidates have been identified by the authors or requested by
-the community. Some of these will require the use of more semantic information
-that linters based on compilers, such as clang-tidy for C++ [@clangtidy], can
-access readily, and therefore there are plans to upgrade Fortitude's
-capabilities to capture more information within a Fortran project.
+[@fprettify]. Version 0.8.0 of Fortitude features 87 linting rules, but over 150
+rule candidates have been identified by the authors or requested by the
+community. Implementing some of these will require access to the kind of
+semantic information that is readily available to linters build on compiler
+frameworks, such as clang-tidy for C++ [@clangtidy], and therefore there are
+plans to upgrade Fortitude's capabilities to capture more information within a
+Fortran project.
 
 # Software design
 
@@ -221,11 +223,11 @@ should be activated. When Fortitude scans the CST of any Fortran files, it
 checks whether the user has requested the activation of any rules that start on
 each node type it encounters, and runs each of these checks in turn. This way,
 Fortitude only needs to perform a single pass over the CST for all activated
-rules, rather than performing a full pass per rule. This is largely how Fortitude
-achieves such high performance. Ruff similarly performs its checks via a single
-pass over the CST, but the logic of activating each rule is achieved by
-extremely long manually-coded match statements, which is much harder to maintain
-than Fortitude's solution.
+rules, rather than performing a full pass per rule. This is largely how
+Fortitude achieves such high performance. Ruff similarly performs its checks via
+a single pass over the CST, but the logic of activating each rule is achieved
+via extremely long and manually-coded match statements, which are much harder to
+maintain than Fortitude's solution.
 
 The generation of the CST from a Fortran file is no simple task, especially
 given the high degree of backwards compatibility in the Fortran standards.
