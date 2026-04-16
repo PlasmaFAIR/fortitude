@@ -136,6 +136,11 @@ much easier for developers to introduce Fortitude into existing projects, as a
 large proportion of linter warnings raised by Fortitude can be corrected
 instantaneously.
 
+To ensure rules and their auto-fixes are safe and robust, new rules are
+initially placed in 'preview' mode, so users need to run with the `--preview`
+flag to access them. They are moved into the standard rule set in the next
+release following community feedback and testing.
+
 The use of a linter is especially beneficial when working on large projects with
 multiple developers, as it allows the team to enforce a consistent coding style.
 To aid in this, the set of linting rules and other customisations may be set in
