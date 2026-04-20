@@ -3,6 +3,7 @@
 use std::str::FromStr;
 
 use anyhow::{Context, Result, anyhow};
+use bitflags::bitflags;
 use itertools::Itertools;
 use ruff_source_file::SourceFile;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
@@ -486,64 +487,75 @@ pub(crate) enum BlockExit {
     Error,
 }
 
-#[derive(Eq, PartialEq)]
-pub(crate) enum ImplicitType {
-    Missing,
-    Implicit,
-    None,
-    NoneType,
-    NoneExternal,
-    NoneTypeExternal,
+bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct ImplicitNoneType: u8 {
+        const TYPE = 0b0001;
+        const EXTERNAL = 0b0010;
+    }
 }
 
-impl ImplicitType {
-    pub fn equivalent_to(&self, other: &Self) -> bool {
-        match self {
-            Self::Implicit => false, // Assume implicit type(...) is never equivalent to anything else
-            Self::None | Self::NoneType => matches!(other, Self::None | Self::NoneType),
-            this => other == this, // All other variants are only equivalent to themselves
-        }
-    }
+#[derive(Clone, Debug)]
+pub(crate) struct ImplicitStatement<'a> {
+    node: Node<'a>,
+    none_type: ImplicitNoneType,
+}
 
-    /// Classify an implicit statement as either `implicit none`, `implicit none
-    /// (type)`, `implicit none (external)`, `implicit none (type, external)`,
-    /// or `implicit type(...)`.
-    pub fn from_implicit_statement(node: &Node, src: &SourceFile) -> Option<Self> {
+impl<'a> ImplicitStatement<'a> {
+    pub fn try_from_node(node: Node<'a>, src: &SourceFile) -> Option<Self> {
         if node.kind() != "implicit_statement" {
             return None;
         }
-        // Expect something after 'implicit'. If not, just return None and let
-        // the rule exit early -- this is probably a syntax error.
-        let child = node.child(1)?;
-        if child.kind() == "none" {
-            let text = node.to_text(src.source_text())?.to_lowercase();
-            let none_type = text.contains("type");
-            let none_external = text.contains("external");
-            if none_type && none_external {
-                return Some(ImplicitType::NoneTypeExternal);
-            } else if none_type {
-                return Some(ImplicitType::NoneType);
-            } else if none_external {
-                return Some(ImplicitType::NoneExternal);
-            } else {
-                return Some(ImplicitType::None);
-            }
+        let text = node.to_text(src.source_text()).map(|t| t.to_lowercase())?;
+        let mut none_type = ImplicitNoneType::empty();
+        if !text.contains("none") {
+            return Some(Self { node, none_type });
         }
-        Some(ImplicitType::Implicit)
+        if text.contains("type") {
+            none_type |= ImplicitNoneType::TYPE;
+        }
+        if text.contains("external") {
+            none_type |= ImplicitNoneType::EXTERNAL;
+        }
+        // If the (type, external) part is missing, then 'type' is implied
+        if !text.contains("type") && !text.contains("external") {
+            none_type = ImplicitNoneType::TYPE;
+        }
+        Some(Self { node, none_type })
     }
 
     /// Determine the implicit typing scheme of a
     /// program/module/submodule/function/subroutine node.
-    pub fn from_scope(node: &Node, src: &SourceFile) -> Option<Self> {
+    pub fn try_from_scope(node: &'a Node, src: &SourceFile) -> Option<Self> {
         if matches!(
             node.kind(),
             "module" | "submodule" | "program" | "function" | "subroutine"
         ) {
             if let Some(child) = node.child_with_name("implicit_statement") {
-                return ImplicitType::from_implicit_statement(&child, src);
+                return ImplicitStatement::try_from_node(child, src);
             }
-            return Some(ImplicitType::Missing);
+            return None;
         }
         None
+    }
+
+    pub fn node(&self) -> &Node<'a> {
+        &self.node
+    }
+
+    pub fn is_equivalent_to(&self, other: &Self) -> bool {
+        self.none_type == other.none_type
+    }
+
+    pub fn is_not_implicit_none(&self) -> bool {
+        self.none_type.is_empty()
+    }
+
+    pub fn is_implicit_none_type(&self) -> bool {
+        self.none_type.contains(ImplicitNoneType::TYPE)
+    }
+
+    pub fn is_implicit_none_external(&self) -> bool {
+        self.none_type.contains(ImplicitNoneType::EXTERNAL)
     }
 }

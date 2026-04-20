@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/style/mod.rs
+source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S201.f90:5:5: S201 [*] 'implicit none' set on the enclosing module
   |
@@ -27,8 +26,8 @@ snapshot_kind: text
    |
  8 |   end function myfunc
  9 |   subroutine mysub(x)
-10 |     implicit none
-   |     ^^^^^^^^^^^^^ S201
+10 |     implicit none (type)
+   |     ^^^^^^^^^^^^^^^^^^^^ S201
 11 |     integer, intent(inout) :: x
 12 |     x = x * 2
    |
@@ -38,7 +37,7 @@ snapshot_kind: text
 7  7  |     myfunc = x * 2
 8  8  |   end function myfunc
 9  9  |   subroutine mysub(x)
-10    |-    implicit none
+10    |-    implicit none (type)
 11 10 |     integer, intent(inout) :: x
 12 11 |     x = x * 2
 13 12 |   end subroutine mysub

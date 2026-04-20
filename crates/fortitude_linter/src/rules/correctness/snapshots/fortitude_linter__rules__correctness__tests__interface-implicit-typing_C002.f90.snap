@@ -1,9 +1,8 @@
 ---
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C002.f90:4:5: C002 [*] interface 'function' missing 'implicit none'
+./resources/test/fixtures/correctness/C002.f90:4:5: C002 [*] interface 'function' uses implicit typing
   |
 2 |   implicit none
 3 |   interface
@@ -11,7 +10,6 @@ snapshot_kind: text
   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ C002
 5 |       integer, intent(in) :: x
 6 |     end function myfunc
-7 |   end interface
   |
   = help: Insert `implicit none`
 
@@ -22,25 +20,68 @@ snapshot_kind: text
   5 |+    implicit none
 5 6 |       integer, intent(in) :: x
 6 7 |     end function myfunc
-7 8 |   end interface
+7 8 | 
 
-./resources/test/fixtures/correctness/C002.f90:13:5: C002 [*] interface 'subroutine' missing 'implicit none'
+./resources/test/fixtures/correctness/C002.f90:8:5: C002 [*] interface 'subroutine' uses implicit typing
    |
-11 |   implicit none
-12 |   interface
-13 |     subroutine myfunc2(x)
-   |     ^^^^^^^^^^^^^^^^^^^^^ C002
-14 |       integer, intent(inout) :: x
-15 |     end subroutine myfunc2
-16 |   end interface
+ 6 |     end function myfunc
+ 7 |
+ 8 |     subroutine mysub(x)
+   |     ^^^^^^^^^^^^^^^^^^^ C002
+ 9 |       implicit none (external)
+10 |       integer, intent(in) :: x
+11 |     end subroutine mysub
+   |
+   = help: Change to `implicit none (type, external)`
+
+ℹ Unsafe fix
+6  6  |     end function myfunc
+7  7  | 
+8  8  |     subroutine mysub(x)
+9     |-      implicit none (external)
+   9  |+      implicit none (type, external)
+10 10 |       integer, intent(in) :: x
+11 11 |     end subroutine mysub
+12 12 |   end interface
+
+./resources/test/fixtures/correctness/C002.f90:18:5: C002 [*] interface 'function' uses implicit typing
+   |
+16 |   implicit none
+17 |   interface
+18 |     real function myfunc2(x)
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^ C002
+19 |       implicit real (a,z)
+20 |     end function myfunc2
+   |
+   = help: Change to `implicit none`
+
+ℹ Unsafe fix
+16 16 |   implicit none
+17 17 |   interface
+18 18 |     real function myfunc2(x)
+19    |-      implicit real (a,z)
+   19 |+      implicit none
+20 20 |     end function myfunc2
+21 21 | 
+22 22 |     subroutine mysub2(x)
+
+./resources/test/fixtures/correctness/C002.f90:22:5: C002 [*] interface 'subroutine' uses implicit typing
+   |
+20 |     end function myfunc2
+21 |
+22 |     subroutine mysub2(x)
+   |     ^^^^^^^^^^^^^^^^^^^^ C002
+23 |       integer, intent(inout) :: x
+24 |     end subroutine mysub2
+25 |   end interface
    |
    = help: Insert `implicit none`
 
 ℹ Unsafe fix
-11 11 |   implicit none
-12 12 |   interface
-13 13 |     subroutine myfunc2(x)
-   14 |+    implicit none
-14 15 |       integer, intent(inout) :: x
-15 16 |     end subroutine myfunc2
-16 17 |   end interface
+20 20 |     end function myfunc2
+21 21 | 
+22 22 |     subroutine mysub2(x)
+   23 |+    implicit none
+23 24 |       integer, intent(inout) :: x
+24 25 |     end subroutine mysub2
+25 26 |   end interface

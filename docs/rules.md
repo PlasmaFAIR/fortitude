@@ -14,8 +14,8 @@
 
 | Code | Name | Message | |
 | ---- | ---- | ------- | ------: |
-| C001 | [implicit-typing](rules/implicit-typing.md) | {entity} missing 'implicit none' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
-| C002 | [interface-implicit-typing](rules/interface-implicit-typing.md) | interface '{name}' missing 'implicit none' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| C001 | [implicit-typing](rules/implicit-typing.md) | {entity} uses implicit typing | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| C002 | [interface-implicit-typing](rules/interface-implicit-typing.md) | interface '{name}' uses implicit typing | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C003 | [implicit-external-procedures](rules/implicit-external-procedures.md) | 'implicit none' missing 'external' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C011 | [missing-default-case](rules/missing-default-case.md) | Missing default case may not handle all values | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C021 | [no-real-suffix](rules/no-real-suffix.md) | real literal {literal} missing kind suffix | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |

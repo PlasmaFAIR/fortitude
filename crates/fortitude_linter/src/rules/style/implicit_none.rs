@@ -1,5 +1,5 @@
 /// Defines rules that raise errors if implicit typing is in use.
-use crate::ast::{FortitudeNode, types::ImplicitType};
+use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
 use crate::{AstRule, FromAstNode};
@@ -38,9 +38,9 @@ impl AstRule for SuperfluousImplicitNone {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
+        let stmt = ImplicitStatement::try_from_node(*node, src)?;
         // If this isn't an `implicit none` statement, then we don't care about it.
-        let implicit_type = ImplicitType::from_implicit_statement(node, src)?;
-        if implicit_type == ImplicitType::Implicit {
+        if stmt.is_not_implicit_none() {
             return None;
         }
         let parent = node.parent()?;
@@ -48,40 +48,33 @@ impl AstRule for SuperfluousImplicitNone {
             for ancestor in parent.ancestors() {
                 let kind = ancestor.kind();
                 match kind {
+                    "interface" => {
+                        // Implicit none doesn't propagate through interfaces.
+                        break;
+                    }
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
-                        match ImplicitType::from_scope(&ancestor, src)? {
-                            ImplicitType::Missing => {
-                                // Keep searching up the tree for a higher-level
-                                // entity with `implicit none`, if any. If we
-                                // reach the top without finding one, then it's
-                                // not a problem.
+                        match ImplicitStatement::try_from_scope(&ancestor, src) {
+                            None => {
+                                // If the ancestor doesn't have any `implicit` statement, then
+                                // keep searching up the tree for a higher-level entity with
+                                // `implicit none`, if any. If we reach the top without finding
+                                // one, then it's not a problem.
                                 continue;
                             }
-                            ImplicitType::Implicit => {
-                                // If we find an ancestor entity with `implicit
-                                // type(a-z)`, then this one is not superfluous.
-                                break;
-                            }
-                            ancestor_implicit_type => {
-                                // If we find an ancestor entity with `implicit
-                                // none`, then this one is superfluous provided
-                                // it is equivalent to the ancestor's `implicit
-                                // none` (e.g. `implicit none (type)` is not
-                                // equivalent to `implicit none (external)`, but
-                                // is to `implicit none`).
-                                if !implicit_type.equivalent_to(&ancestor_implicit_type) {
+                            Some(ancestor_stmt) => {
+                                // If the ancestor statement is equivalent to this one,
+                                // then this one is superfluous and should be removed.
+                                if stmt.is_equivalent_to(&ancestor_stmt) {
+                                    let entity = kind.to_string();
+                                    let fix = Fix::safe_edit(node.edit_delete(src));
+                                    return some_vec![
+                                        Diagnostic::from_node(Self { entity }, node).with_fix(fix)
+                                    ];
+                                } else {
                                     break;
                                 }
-                                let entity = kind.to_string();
-                                let fix = Fix::safe_edit(node.edit_delete(src));
-                                return some_vec![
-                                    Diagnostic::from_node(Self { entity }, node).with_fix(fix)
-                                ];
                             }
                         }
-                    }
-                    "interface" => {
-                        break;
                     }
                     _ => {
                         continue;

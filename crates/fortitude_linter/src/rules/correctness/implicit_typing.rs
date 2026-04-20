@@ -1,5 +1,5 @@
 /// Defines rules that raise errors if implicit typing is in use.
-use crate::ast::{FortitudeNode, types::ImplicitType};
+use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::settings::{CheckSettings, FortranStandard};
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
@@ -9,7 +9,9 @@ use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Fix> {
+/// Inserts `implicit none` in the current scope. Should be called on a program,
+/// module, submodule, function, or subroutine.
+fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
     // Find suitable place to insert `implicit none`, the line
     // after the last `use` statement, if any
     let last_use_statement_range = node
@@ -33,10 +35,78 @@ fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Fix> {
     // TODO(peter): determine indentation of file using `Stylist` struct
     let indent = (last_use_statement_range.start() - line_start).to_usize();
     let insert = format!("{:indent$}implicit none\n", "");
+    Some(Edit::insertion(insert, line_end))
+}
 
-    let edit = Edit::insertion(insert, line_end);
+/// Replaces an existing implicit statement with `implicit none`. Used when
+/// there is an implicit statement such as `implicit real(a-z)`.
+fn replace_with_implicit_none(node: &Node, src: &SourceFile) -> Edit {
+    node.edit_replacement(src, "implicit none".to_owned())
+}
 
-    Some(Fix::unsafe_edit(edit))
+/// Assuming we have `implicit none (external)` for some cursed reason, adds
+/// `type` to it to make it `implicit none (type, external)`.
+fn add_type_to_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
+    node.children(&mut node.walk())
+        .find(|child| child.to_text(src.source_text()).unwrap().to_lowercase() == "external")
+        .map(|external_node| Edit::insertion("type, ".to_string(), external_node.start_textsize()))
+}
+
+enum ImplicitTypingErrorType {
+    NoImplicitStatement,
+    NotImplicitNone,
+    ExternalWithoutType,
+}
+
+impl ImplicitTypingErrorType {
+    fn fix_title(&self) -> String {
+        match self {
+            Self::NoImplicitStatement => "Insert `implicit none`".to_string(),
+            Self::NotImplicitNone => "Change to `implicit none`".to_string(),
+            Self::ExternalWithoutType => "Change to `implicit none (type, external)`".to_string(),
+        }
+    }
+}
+
+struct ImplicitTypingEdit {
+    edit: Edit,
+    error_type: ImplicitTypingErrorType,
+}
+
+impl ImplicitTypingEdit {
+    /// Called on the scope that should contain an `implicit none` statement.
+    /// Returns an edit if a violation is found, otherwise returns `None`.
+    fn try_from_scope(node: &Node, src: &SourceFile) -> Option<Self> {
+        match ImplicitStatement::try_from_scope(node, src) {
+            Some(stmt) => {
+                if stmt.is_implicit_none_type() {
+                    // This is sufficient for these rules.
+                    // implicit-external-procedures will handle missing `external` in `implicit none (type)`.
+                    return None;
+                }
+                if stmt.is_implicit_none_external() {
+                    // User has specified `implicit none (external)`, which is
+                    // technically correct but probably a mistake, so we want to
+                    // fix it to `implicit none (type, external)`.
+                    let error_type = ImplicitTypingErrorType::ExternalWithoutType;
+                    let edit = add_type_to_implicit_none(stmt.node(), src)?;
+                    return Some(Self { edit, error_type });
+                }
+                // If we get here, then there is an implicit statement but it's
+                // not `implicit none`. Should replace the whole statement with
+                // `implicit none`.
+                let error_type = ImplicitTypingErrorType::NotImplicitNone;
+                let edit = replace_with_implicit_none(stmt.node(), src);
+                Some(Self { edit, error_type })
+            }
+            None => {
+                // Missing implicit statement -- should insert one.
+                let error_type = ImplicitTypingErrorType::NoImplicitStatement;
+                let edit = insert_implicit_none(node, src)?;
+                Some(Self { edit, error_type })
+            }
+        }
+    }
 }
 
 /// ## What does it do?
@@ -67,6 +137,7 @@ fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Fix> {
 #[derive(ViolationMetadata)]
 pub(crate) struct ImplicitTyping {
     entity: String,
+    error_type: ImplicitTypingErrorType,
 }
 
 impl Violation for ImplicitTyping {
@@ -74,14 +145,15 @@ impl Violation for ImplicitTyping {
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { entity } = self;
-        format!("{entity} missing 'implicit none'")
+        let Self { entity, .. } = self;
+        format!("{entity} uses implicit typing")
     }
 
     fn fix_title(&self) -> Option<String> {
-        Some("Insert `implicit none`".to_string())
+        Some(self.error_type.fix_title())
     }
 }
+
 impl AstRule for ImplicitTyping {
     fn check(
         _settings: &CheckSettings,
@@ -89,25 +161,23 @@ impl AstRule for ImplicitTyping {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        // If a procedure _isn't_ in a parent entity, then it should
-        // have `implicit none`
+        // Run on functions and subroutines only if they aren't in a module,
+        // program, or submodule. This rule will catch implicit typing in the
+        // parent enttity, so we don't need to check it in the children.
         if matches!(node.kind(), "function" | "subroutine")
             && node.parent()?.kind() != "translation_unit"
         {
             return None;
         }
 
-        let implicit_type = ImplicitType::from_scope(node, src)?;
-
-        if implicit_type != ImplicitType::Missing {
-            return None;
-        }
+        let ImplicitTypingEdit { edit, error_type } =
+            ImplicitTypingEdit::try_from_scope(node, src)?;
         let entity = node.kind().to_string();
         let block_stmt = node.child(0)?;
 
         some_vec![
-            Diagnostic::from_node(Self { entity }, &block_stmt)
-                .with_fix(insert_implicit_none(node, src)?)
+            Diagnostic::from_node(Self { entity, error_type }, &block_stmt)
+                .with_fix(Fix::unsafe_edit(edit))
         ]
     }
 
@@ -125,6 +195,7 @@ impl AstRule for ImplicitTyping {
 #[derive(ViolationMetadata)]
 pub(crate) struct InterfaceImplicitTyping {
     name: String,
+    error_type: ImplicitTypingErrorType,
 }
 
 impl Violation for InterfaceImplicitTyping {
@@ -132,12 +203,12 @@ impl Violation for InterfaceImplicitTyping {
 
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { name } = self;
-        format!("interface '{name}' missing 'implicit none'")
+        let Self { name, .. } = self;
+        format!("interface '{name}' uses implicit typing")
     }
 
     fn fix_title(&self) -> Option<String> {
-        Some("Insert `implicit none`".to_string())
+        Some(self.error_type.fix_title())
     }
 }
 
@@ -148,20 +219,21 @@ impl AstRule for InterfaceImplicitTyping {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
+        // Exit early if we're not in an interface.
         let parent = node.parent()?;
         if parent.kind() != "interface" {
             return None;
         }
-        let implicit_type = ImplicitType::from_scope(node, src)?;
-        if implicit_type == ImplicitType::Missing {
-            let name = node.kind().to_string();
-            let interface_stmt = node.child(0)?;
-            return some_vec![
-                Diagnostic::from_node(Self { name }, &interface_stmt)
-                    .with_fix(insert_implicit_none(node, src)?)
-            ];
-        }
-        None
+
+        let ImplicitTypingEdit { edit, error_type } =
+            ImplicitTypingEdit::try_from_scope(node, src)?;
+        let name = node.kind().to_string();
+        let interface_stmt = node.child(0)?;
+
+        some_vec![
+            Diagnostic::from_node(Self { name, error_type }, &interface_stmt)
+                .with_fix(Fix::unsafe_edit(edit))
+        ]
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -209,34 +281,27 @@ impl AstRule for ImplicitExternalProcedures {
             return None;
         }
 
-        let edit = match ImplicitType::from_implicit_statement(node, src)? {
-            ImplicitType::Missing
-            | ImplicitType::Implicit
-            | ImplicitType::NoneTypeExternal
-            | ImplicitType::NoneExternal => {
-                // If it's not `implicit none`, then we don't care about it.
-                // If it's `implicit none (type, external)`, then it's already correct.
-                // If it's `implicit none (external)`, then it's technically
-                // correct, but probably a bad idea. C001/implicit-typing will
-                // catch this.
-                return None;
-            }
-            ImplicitType::None => {
-                // If it's `implicit none` without `(external)`, then we want to fix it
-                Edit::insertion(" (type, external)".to_string(), node.end_textsize())
-            }
-            ImplicitType::NoneType => {
-                // If it's `implicit none (type)`, then we want to fix it.
-                node.children(&mut node.walk())
-                    .find(|child| {
-                        child.to_text(src.source_text()).unwrap().to_lowercase() == "type"
-                    })
-                    .map(|type_node| {
-                        Edit::insertion(", external".to_string(), type_node.end_textsize())
-                    })?
-            }
-        };
+        let stmt = ImplicitStatement::try_from_node(*node, src)?;
 
+        if stmt.is_implicit_none_external() {
+            // If `external` is already present, then it's correct.
+            return None;
+        }
+
+        if stmt.is_not_implicit_none() {
+            // This isn't `implicit none` at all, so we don't care about it.
+            return None;
+        }
+
+        // If we get here, it's either `implicit none` or `implicit none
+        // (type)`, so we want to add `external` to it.
+        let edit = node
+            .children(&mut node.walk())
+            .find(|child| child.to_text(src.source_text()).unwrap().to_lowercase() == "type")
+            .map_or_else(
+                || Edit::insertion(" (type, external)".to_string(), node.end_textsize()),
+                |type_node| Edit::insertion(", external".to_string(), type_node.end_textsize()),
+            );
         some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::unsafe_edit(edit)))
     }
 
