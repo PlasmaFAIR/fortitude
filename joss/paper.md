@@ -24,14 +24,19 @@ authors:
   - name: Connor Aird
     orcid: 0009-0001-7879-3472  
     affiliation: 3
+  - name: Cyril Gandon
+    orcid: 0009-0006-9705-8867
+    affiliation: 4
 affiliations:
- - name: University of York, United Kingdom
-   index: 1
- - name: Imperial College London, United Kingdom
-   index: 2
- - name: University College London, United Kingdom
-   index: 3
-date: 14 April 2026
+  - name: University of York, United Kingdom
+    index: 1
+  - name: Imperial College London, United Kingdom
+    index: 2
+  - name: University College London, United Kingdom
+    index: 3
+  - name: INRAE (French National Research Institute for Agriculture, Food and Environment), France
+    index: 4
+date: 21 April 2026
 bibliography: paper.bib
 ---
 
