@@ -143,18 +143,6 @@ much easier for developers to introduce Fortitude into existing projects, as a
 large proportion of linter warnings raised by Fortitude can be corrected
 instantaneously.
 
-To ensure rules and their auto-fixes are safe and robust, new rules are
-initially placed in 'preview' mode, so users need to run with the `--preview`
-flag to access them. They are moved into the standard rule set in the next
-release following community feedback and testing.
-
-The use of a linter is especially beneficial when working on large projects with
-multiple developers, as it allows the team to enforce a consistent coding style.
-To aid in this, the set of linting rules and other customisations may be set in
-a configuration file and saved at a project level. Fortitude also offers a
-pre-commit hook so teams can ensure that code is passing all checks before being
-committed to a repository.
-
 Fortitude may be used alongside other tooling in the Fortran ecosystem. For
 example, its settings may be specified in the `fpm.toml` files used by the
 Fortran Package Manager (FPM) [@fpm]. Fortitude’s editor integration using the
@@ -207,16 +195,6 @@ than its main competitors.
 
 ![Time taken for Fortran linters to lint 72 files in the GS2 project.\label{fig:performance}](performance_plot.pdf)
 
-Fortitude has an ambitious roadmap of further feature additions, including the
-addition of a code formatting mode similar to that of Ruff [@ruff] and fprettify
-[@fprettify]. Version 0.8.0 of Fortitude features 87 linting rules, but over 150
-rule candidates have been identified by the authors or requested by the
-community. Implementing some of these will require access to the kind of
-semantic information that is readily available to linters build on compiler
-frameworks, such as clang-tidy for C++ [@clangtidy], and therefore there are
-plans to upgrade Fortitude's capabilities to capture more information within a
-Fortran project.
-
 # Software design
 
 As linting is effectively a solved problem in other languages, the design of
@@ -228,19 +206,6 @@ licensing. This reuse of a tried-and-tested design enabled much more rapid
 development than would otherwise be possible, and has resulted in a user
 experience that can be readily understood by programmers who are already
 familiar with Ruff.
-
-However, the core checking loop of Fortitude differs to that of Ruff. Most rules
-that operate over the Concrete Syntax Tree (CST) inherit a common trait that
-requires them to specify their 'entrypoints': the CST node types on which they
-should be activated. When Fortitude scans the CST of any Fortran files, it
-checks whether the user has requested the activation of any rules that start on
-each node type it encounters, and runs each of these checks in turn. This way,
-Fortitude only needs to perform a single pass over the CST for all activated
-rules, rather than performing a full pass per rule. This is largely how
-Fortitude achieves such high performance. Ruff similarly performs its checks via
-a single pass over the CST, but the logic of activating each rule is achieved
-via extremely long and manually-coded match statements, which are much harder to
-maintain than Fortitude's solution.
 
 The generation of the CST from a Fortran file is no simple task, especially
 given the high degree of backwards compatibility in the Fortran standards.
