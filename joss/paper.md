@@ -109,7 +109,8 @@ over this code with the rule activated delivers a diagnostic message to the
 user:
 
 ```console
-test.f90:12:32: C161 variable inquiry `present(arg)` and use in same logical expression
+test.f90:12:32: C161 variable inquiry `present(arg)` and use in \
+        same logical expression
    |
 12 |         if (present(arg) .and. arg > 0) then
    |                                ^^^ C161
@@ -125,7 +126,8 @@ is generally considered to be more readable, and is recommended in most style
 guides. Fortitude will report this to the user as follows:
 
 ```console
-test.f90:22:17: MOD021 [*] deprecated relational operator '.lt.', prefer '<' instead
+test.f90:22:17: MOD021 [*] deprecated relational operator '.lt.', \
+        prefer '<' instead
    |
 22 |         if (arg .lt. 0) then
    |                 ^^^^ MOD021
