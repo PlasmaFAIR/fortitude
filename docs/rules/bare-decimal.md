@@ -1,4 +1,4 @@
-# implicit-zero-digit (S291)
+# bare-decimal (S291)
 Fix is always available.
 
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.

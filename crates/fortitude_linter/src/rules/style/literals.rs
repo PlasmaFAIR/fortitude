@@ -20,13 +20,13 @@ use tree_sitter::Node;
 /// before the decimal point and a trailing zero after the decimal point for
 /// clarity, such as `0.5` and `2.0`.
 #[derive(ViolationMetadata)]
-pub(crate) struct ImplicitZeroDigit {
+pub(crate) struct BareDecimal {
     literal: String,
     preferred: String,
     is_trailing: bool,
 }
 
-impl AlwaysFixableViolation for ImplicitZeroDigit {
+impl AlwaysFixableViolation for BareDecimal {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self {
@@ -44,7 +44,7 @@ impl AlwaysFixableViolation for ImplicitZeroDigit {
     }
 }
 
-impl AstRule for ImplicitZeroDigit {
+impl AstRule for BareDecimal {
     fn check(
         _settings: &CheckSettings,
         node: &Node,
@@ -85,7 +85,7 @@ impl AstRule for ImplicitZeroDigit {
         };
         some_vec![
             Diagnostic::from_node(
-                ImplicitZeroDigit {
+                BareDecimal {
                     literal: txt.to_string(),
                     preferred,
                     is_trailing
