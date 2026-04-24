@@ -248,7 +248,7 @@ end program
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -319,7 +319,7 @@ end program
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -381,7 +381,7 @@ select = ["C001", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -444,7 +444,7 @@ select = ["C001"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -506,7 +506,7 @@ select = ["C001", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -1411,7 +1411,7 @@ end module {file}{idx}
     success: false
     exit_code: 1
     ----- stdout -----
-    bar0.f90:2:1: C001 module missing 'implicit none'
+    bar0.f90:2:1: C001 module uses implicit typing
       |
     2 | module bar0
       | ^^^^^^^^^^^ C001
@@ -1421,7 +1421,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    baz0.f90:2:1: C001 module missing 'implicit none'
+    baz0.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz0
       | ^^^^^^^^^^^ C001
@@ -1431,7 +1431,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    foo0.f90:2:1: C001 module missing 'implicit none'
+    foo0.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo0
       | ^^^^^^^^^^^ C001
@@ -1441,7 +1441,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/bar1.f90:2:1: C001 module missing 'implicit none'
+    nested/bar1.f90:2:1: C001 module uses implicit typing
       |
     2 | module bar1
       | ^^^^^^^^^^^ C001
@@ -1451,7 +1451,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/baz1.f90:2:1: C001 module missing 'implicit none'
+    nested/baz1.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz1
       | ^^^^^^^^^^^ C001
@@ -1461,7 +1461,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/foo1.f90:2:1: C001 module missing 'implicit none'
+    nested/foo1.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo1
       | ^^^^^^^^^^^ C001
@@ -1531,7 +1531,7 @@ end module {file}{idx}
     success: false
     exit_code: 1
     ----- stdout -----
-    baz0.f90:2:1: C001 module missing 'implicit none'
+    baz0.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz0
       | ^^^^^^^^^^^ C001
@@ -1541,7 +1541,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    foo0.f90:2:1: C001 module missing 'implicit none'
+    foo0.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo0
       | ^^^^^^^^^^^ C001
@@ -1551,7 +1551,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/baz1.f90:2:1: C001 module missing 'implicit none'
+    nested/baz1.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz1
       | ^^^^^^^^^^^ C001
@@ -1561,7 +1561,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/foo1.f90:2:1: C001 module missing 'implicit none'
+    nested/foo1.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo1
       | ^^^^^^^^^^^ C001
@@ -1637,7 +1637,7 @@ fn check_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module missing 'implicit none'
+    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module uses implicit typing
       |
     2 | module numpy
       | ^^^^^^^^^^^^ C001
@@ -1647,7 +1647,7 @@ fn check_exclude() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    base.f90:2:1: C001 module missing 'implicit none'
+    base.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -1657,7 +1657,7 @@ fn check_exclude() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    foo/foo.f90:2:1: C001 module missing 'implicit none'
+    foo/foo.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo
       | ^^^^^^^^^^ C001
@@ -1697,7 +1697,7 @@ fn check_extend_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    base.f90:2:1: C001 module missing 'implicit none'
+    base.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -1737,7 +1737,7 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    foo/foo.f90:2:1: C001 module missing 'implicit none'
+    foo/foo.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo
       | ^^^^^^^^^^ C001
@@ -1801,7 +1801,7 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module missing 'implicit none'
+    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module uses implicit typing
       |
     2 | module numpy
       | ^^^^^^^^^^^^ C001
@@ -1924,7 +1924,7 @@ end program
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | ! allow(C001, unnamed-end-statement, literal-kind)
     3 | program test
@@ -2096,7 +2096,7 @@ end program myprogram
     exit_code: 1
     ----- stdout -----
     [TEMP_FILE] S091 file extension should be '.f90' or '.F90'
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program myprogram
       | ^^^^^^^^^^^^^^^^^ C001
@@ -2184,7 +2184,7 @@ fn check_gitignore() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    include.f90:2:1: C001 module missing 'implicit none'
+    include.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -2194,7 +2194,7 @@ fn check_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/include.f90:2:1: C001 module missing 'implicit none'
+    include/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
       | ^^^^^^^^^^^^^^ C001
@@ -2233,7 +2233,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    exclude.f90:2:1: C001 module missing 'implicit none'
+    exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -2243,7 +2243,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    exclude/exclude.f90:2:1: C001 module missing 'implicit none'
+    exclude/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
       | ^^^^^^^^^^^^^^ C001
@@ -2253,7 +2253,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    exclude/include.f90:2:1: C001 module missing 'implicit none'
+    exclude/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
       | ^^^^^^^^^^^^^^ C001
@@ -2263,7 +2263,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include.f90:2:1: C001 module missing 'implicit none'
+    include.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -2273,7 +2273,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/exclude.f90:2:1: C001 module missing 'implicit none'
+    include/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
       | ^^^^^^^^^^^^^^ C001
@@ -2283,7 +2283,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/exclude/exclude.f90:2:1: C001 module missing 'implicit none'
+    include/exclude/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
       | ^^^^^^^^^^^^^^ C001
@@ -2293,7 +2293,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/exclude/include.f90:2:1: C001 module missing 'implicit none'
+    include/exclude/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
       | ^^^^^^^^^^^^^^ C001
@@ -2303,7 +2303,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/include.f90:2:1: C001 module missing 'implicit none'
+    include/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
       | ^^^^^^^^^^^^^^ C001

@@ -1,9 +1,8 @@
 ---
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C001.f90:1:1: C001 [*] module missing 'implicit none'
+./resources/test/fixtures/correctness/C001.f90:1:1: C001 [*] module uses implicit typing
   |
 1 | module my_module
   | ^^^^^^^^^^^^^^^^ C001
@@ -19,7 +18,7 @@ snapshot_kind: text
 3 4 | end module my_module
 4 5 | 
 
-./resources/test/fixtures/correctness/C001.f90:5:1: C001 [*] module missing 'implicit none'
+./resources/test/fixtures/correctness/C001.f90:5:1: C001 [*] module uses implicit typing
   |
 3 | end module my_module
 4 |
@@ -40,7 +39,7 @@ snapshot_kind: text
 8 9 | contains
 9 10 |   integer function double(x)
 
-./resources/test/fixtures/correctness/C001.f90:15:1: C001 [*] program missing 'implicit none'
+./resources/test/fixtures/correctness/C001.f90:15:1: C001 [*] program uses implicit typing
    |
 13 | end module safe_fix
 14 |
@@ -61,7 +60,7 @@ snapshot_kind: text
 20 21 |   write(*,*) 42
 21 22 | end program my_program
 
-./resources/test/fixtures/correctness/C001.f90:23:1: C001 [*] subroutine missing 'implicit none'
+./resources/test/fixtures/correctness/C001.f90:23:1: C001 [*] subroutine uses implicit typing
    |
 21 | end program my_program
 22 |
@@ -79,3 +78,47 @@ snapshot_kind: text
    24 |+implicit none
 24 25 |   print*, x
 25 26 | end subroutine external_sub
+26 27 | 
+
+./resources/test/fixtures/correctness/C001.f90:27:1: C001 [*] module uses implicit typing
+   |
+25 | end subroutine external_sub
+26 |
+27 | module my_module_external
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^ C001
+28 |   implicit none (external)
+29 |   parameter(N = 1)
+30 | end module my_module_external
+   |
+   = help: Change to `implicit none (type, external)`
+
+ℹ Unsafe fix
+25 25 | end subroutine external_sub
+26 26 | 
+27 27 | module my_module_external
+28    |-  implicit none (external)
+   28 |+  implicit none (type, external)
+29 29 |   parameter(N = 1)
+30 30 | end module my_module_external
+31 31 | 
+
+./resources/test/fixtures/correctness/C001.f90:32:1: C001 [*] function uses implicit typing
+   |
+30 | end module my_module_external
+31 |
+32 | real function external_func() result(x)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ C001
+33 |   implicit real (a-z)
+34 |   x = 3.14
+35 | end function external_func
+   |
+   = help: Change to `implicit none`
+
+ℹ Unsafe fix
+30 30 | end module my_module_external
+31 31 | 
+32 32 | real function external_func() result(x)
+33    |-  implicit real (a-z)
+   33 |+  implicit none
+34 34 |   x = 3.14
+35 35 | end function external_func

@@ -7,14 +7,14 @@ contains
     myfunc = x * 2
   end function myfunc
   subroutine mysub(x)
-    implicit none
+    implicit none (type)
     integer, intent(inout) :: x
     x = x * 2
   end subroutine mysub
 end module my_module
 
 program my_program
-  implicit none
+  implicit none (type)
 
   write(*,*) 42
 
