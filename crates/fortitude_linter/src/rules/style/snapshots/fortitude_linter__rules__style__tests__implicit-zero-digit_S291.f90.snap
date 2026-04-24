@@ -2,11 +2,11 @@
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 ---
-./resources/test/fixtures/style/S281.f90:6:17: S281 [*] trailing decimal point in `real` literal `6.`
+./resources/test/fixtures/style/S291.f90:6:17: S291 [*] trailing decimal point in `real` literal `6.`
   |
 5 |     real :: a = 6.0
 6 |     real :: b = 6.
-  |                 ^^ S281
+  |                 ^^ S291
 7 |     real :: c = .6
 8 |     real :: d = 12.45
   |
@@ -22,12 +22,12 @@ expression: diagnostics
 8 8 |     real :: d = 12.45
 9 9 |     real :: e = .45
 
-./resources/test/fixtures/style/S281.f90:7:17: S281 [*] leading decimal point in `real` literal `.6`
+./resources/test/fixtures/style/S291.f90:7:17: S291 [*] leading decimal point in `real` literal `.6`
   |
 5 |     real :: a = 6.0
 6 |     real :: b = 6.
 7 |     real :: c = .6
-  |                 ^^ S281
+  |                 ^^ S291
 8 |     real :: d = 12.45
 9 |     real :: e = .45
   |
@@ -43,12 +43,12 @@ expression: diagnostics
 9 9 |     real :: e = .45
 10 10 |     real :: f = 45.
 
-./resources/test/fixtures/style/S281.f90:9:17: S281 [*] leading decimal point in `real` literal `.45`
+./resources/test/fixtures/style/S291.f90:9:17: S291 [*] leading decimal point in `real` literal `.45`
    |
  7 |     real :: c = .6
  8 |     real :: d = 12.45
  9 |     real :: e = .45
-   |                 ^^^ S281
+   |                 ^^^ S291
 10 |     real :: f = 45.
 11 |     real :: g = 1.0e+10
    |
@@ -64,12 +64,12 @@ expression: diagnostics
 11 11 |     real :: g = 1.0e+10
 12 12 |     real :: h = 3.e+10
 
-./resources/test/fixtures/style/S281.f90:10:17: S281 [*] trailing decimal point in `real` literal `45.`
+./resources/test/fixtures/style/S291.f90:10:17: S291 [*] trailing decimal point in `real` literal `45.`
    |
  8 |     real :: d = 12.45
  9 |     real :: e = .45
 10 |     real :: f = 45.
-   |                 ^^^ S281
+   |                 ^^^ S291
 11 |     real :: g = 1.0e+10
 12 |     real :: h = 3.e+10
    |
@@ -85,12 +85,12 @@ expression: diagnostics
 12 12 |     real :: h = 3.e+10
 13 13 |     real :: i = .5e10
 
-./resources/test/fixtures/style/S281.f90:12:17: S281 [*] trailing decimal point in `real` literal `3.e+10`
+./resources/test/fixtures/style/S291.f90:12:17: S291 [*] trailing decimal point in `real` literal `3.e+10`
    |
 10 |     real :: f = 45.
 11 |     real :: g = 1.0e+10
 12 |     real :: h = 3.e+10
-   |                 ^^^^^^ S281
+   |                 ^^^^^^ S291
 13 |     real :: i = .5e10
 14 |     real :: j = 11.0d+10
    |
@@ -106,12 +106,12 @@ expression: diagnostics
 14 14 |     real :: j = 11.0d+10
 15 15 |     real :: k = 53.d+10
 
-./resources/test/fixtures/style/S281.f90:13:17: S281 [*] leading decimal point in `real` literal `.5e10`
+./resources/test/fixtures/style/S291.f90:13:17: S291 [*] leading decimal point in `real` literal `.5e10`
    |
 11 |     real :: g = 1.0e+10
 12 |     real :: h = 3.e+10
 13 |     real :: i = .5e10
-   |                 ^^^^^ S281
+   |                 ^^^^^ S291
 14 |     real :: j = 11.0d+10
 15 |     real :: k = 53.d+10
    |
@@ -127,12 +127,12 @@ expression: diagnostics
 15 15 |     real :: k = 53.d+10
 16 16 |     real :: l = .75d10
 
-./resources/test/fixtures/style/S281.f90:15:17: S281 [*] trailing decimal point in `real` literal `53.d+10`
+./resources/test/fixtures/style/S291.f90:15:17: S291 [*] trailing decimal point in `real` literal `53.d+10`
    |
 13 |     real :: i = .5e10
 14 |     real :: j = 11.0d+10
 15 |     real :: k = 53.d+10
-   |                 ^^^^^^^ S281
+   |                 ^^^^^^^ S291
 16 |     real :: l = .75d10
    |
    = help: Prefer `53.0d+10`
@@ -147,12 +147,12 @@ expression: diagnostics
 17 17 | 
 18 18 | end program p
 
-./resources/test/fixtures/style/S281.f90:16:17: S281 [*] leading decimal point in `real` literal `.75d10`
+./resources/test/fixtures/style/S291.f90:16:17: S291 [*] leading decimal point in `real` literal `.75d10`
    |
 14 |     real :: j = 11.0d+10
 15 |     real :: k = 53.d+10
 16 |     real :: l = .75d10
-   |                 ^^^^^^ S281
+   |                 ^^^^^^ S291
 17 |
 18 | end program p
    |
