@@ -8,6 +8,7 @@ pub(crate) mod implicit_none;
 pub mod inconsistent_dimension;
 pub mod keywords;
 pub mod line_length;
+pub mod literals;
 pub(crate) mod semicolons;
 pub mod strings;
 pub(crate) mod use_statement;
@@ -56,6 +57,7 @@ mod tests {
     #[test_case(Rule::SuperfluousElseExit, Path::new("S254.f90"))]
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
     #[test_case(Rule::UnsortedUses, Path::new("S271.f90"))]
+    #[test_case(Rule::BareDecimal, Path::new("S291.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
