@@ -1,0 +1,349 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/OB081.f90:6:5: OB081 [*] Obsolete arithmetic `if`
+  |
+5 |     ! Permutations on three blocks
+6 |     if (k) 1, 2, 3
+  |     ^^^^^^^^^^^^^^ OB081
+7 | 1   continue
+8 |     print*, "<"
+  |
+  = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+3  3  |     integer :: x(1), k, i
+4  4  | 
+5  5  |     ! Permutations on three blocks
+6     |-    if (k) 1, 2, 3
+7     |-1   continue
+   6  |+    if (k < 0) then
+8  7  |     print*, "<"
+9  8  |     i = 0
+10    |-    goto 4
+11    |-2   continue
+   9  |+    else if (k == 0) then
+12 10 |     print*, "=="
+13 11 |     i = 1
+14    |-    goto 4
+15    |-3   continue
+   12 |+    else
+16 13 |     print*, ">"
+17 14 |     i = 2
+18    |-4   continue
+   15 |+    end if
+19 16 | 
+20 17 |     if (k) 13, 12, 11
+21 18 | 11  continue
+
+./resources/test/fixtures/obsolescent/OB081.f90:20:5: OB081 [*] Obsolete arithmetic `if`
+   |
+18 | 4   continue
+19 |
+20 |     if (k) 13, 12, 11
+   |     ^^^^^^^^^^^^^^^^^ OB081
+21 | 11  continue
+22 |     print*, ">"
+   |
+   = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+17 17 |     i = 2
+18 18 | 4   continue
+19 19 | 
+20    |-    if (k) 13, 12, 11
+21    |-11  continue
+   20 |+    if (k > 0) then
+22 21 |     print*, ">"
+23 22 |     i = 0
+24    |-    goto 14
+25    |-12  continue
+   23 |+    else if (k == 0) then
+26 24 |     print*, "=="
+27 25 |     i = 1
+28    |-    goto 14
+29    |-13  continue
+   26 |+    else
+30 27 |     print*, "<"
+31 28 |     i = 2
+32    |-14  continue
+   29 |+    end if
+33 30 | 
+34 31 |     if (k) 23, 21, 22
+35 32 | 21  continue
+
+./resources/test/fixtures/obsolescent/OB081.f90:34:5: OB081 [*] Obsolete arithmetic `if`
+   |
+32 | 14  continue
+33 |
+34 |     if (k) 23, 21, 22
+   |     ^^^^^^^^^^^^^^^^^ OB081
+35 | 21  continue
+36 |     print*, "=="
+   |
+   = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+31 31 |     i = 2
+32 32 | 14  continue
+33 33 | 
+34    |-    if (k) 23, 21, 22
+35    |-21  continue
+   34 |+    if (k == 0) then
+36 35 |     print*, "=="
+37 36 |     i = 0
+38    |-    goto 24
+39    |-22  continue
+   37 |+    else if (k > 0) then
+40 38 |     print*, ">"
+41 39 |     i = 1
+42    |-    goto 24
+43    |-23  continue
+   40 |+    else
+44 41 |     print*, "<"
+45 42 |     i = 2
+46    |-24  continue
+   43 |+    end if
+47 44 | 
+48 45 |     ! Permutations on two blocks
+49 46 |     if (k) 31, 31, 32
+
+./resources/test/fixtures/obsolescent/OB081.f90:49:5: OB081 [*] Obsolete arithmetic `if`
+   |
+48 |     ! Permutations on two blocks
+49 |     if (k) 31, 31, 32
+   |     ^^^^^^^^^^^^^^^^^ OB081
+50 | 31  continue
+51 |     print*, "<="
+   |
+   = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+46 46 | 24  continue
+47 47 | 
+48 48 |     ! Permutations on two blocks
+49    |-    if (k) 31, 31, 32
+50    |-31  continue
+   49 |+    if (k <= 0) then
+51 50 |     print*, "<="
+52 51 |     i = 0
+53    |-    goto 34
+54    |-32  continue
+   52 |+    else
+55 53 |     print*, ">"
+56 54 |     i = 2
+57    |-34  continue
+   55 |+    end if
+58 56 | 
+59 57 |     if (k) 41, 42, 42
+60 58 | 41  continue
+
+./resources/test/fixtures/obsolescent/OB081.f90:59:5: OB081 [*] Obsolete arithmetic `if`
+   |
+57 | 34  continue
+58 |
+59 |     if (k) 41, 42, 42
+   |     ^^^^^^^^^^^^^^^^^ OB081
+60 | 41  continue
+61 |     print*, "<"
+   |
+   = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+56 56 |     i = 2
+57 57 | 34  continue
+58 58 | 
+59    |-    if (k) 41, 42, 42
+60    |-41  continue
+   59 |+    if (k < 0) then
+61 60 |     print*, "<"
+62 61 |     i = 0
+63    |-    goto 44
+64    |-42  continue
+   62 |+    else
+65 63 |     print*, ">="
+66 64 |     i = 2
+67    |-44  continue
+   65 |+    end if
+68 66 | 
+69 67 |     if (k) 51, 52, 54
+70 68 | 51  continue
+
+./resources/test/fixtures/obsolescent/OB081.f90:69:5: OB081 [*] Obsolete arithmetic `if`
+   |
+67 | 44  continue
+68 |
+69 |     if (k) 51, 52, 54
+   |     ^^^^^^^^^^^^^^^^^ OB081
+70 | 51  continue
+71 |     print*, "<"
+   |
+   = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+66 66 |     i = 2
+67 67 | 44  continue
+68 68 | 
+69    |-    if (k) 51, 52, 54
+70    |-51  continue
+   69 |+    if (k < 0) then
+71 70 |     print*, "<"
+72 71 |     i = 0
+73    |-    goto 54
+74    |-52  continue
+   72 |+    else if (k == 0) then
+75 73 |     print*, "=="
+76 74 |     i = 2
+77    |-54  continue
+   75 |+    end if
+78 76 | 
+79 77 |     ! Single block
+80 78 |     if (k) 62, 61, 62
+
+./resources/test/fixtures/obsolescent/OB081.f90:80:5: OB081 [*] Obsolete arithmetic `if`
+   |
+79 |     ! Single block
+80 |     if (k) 62, 61, 62
+   |     ^^^^^^^^^^^^^^^^^ OB081
+81 | 61  print*, "=="
+82 | 62  continue
+   |
+   = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+77 77 | 54  continue
+78 78 | 
+79 79 |     ! Single block
+80    |-    if (k) 62, 61, 62
+81    |-61  print*, "=="
+82    |-62  continue
+   80 |+    if (k == 0) then
+   81 |+    print*, "=="
+   82 |+    end if
+83 83 | 
+84 84 |     if (k) 71, 72, 71
+85 85 | 71  continue
+
+./resources/test/fixtures/obsolescent/OB081.f90:84:5: OB081 [*] Obsolete arithmetic `if`
+   |
+82 | 62  continue
+83 |
+84 |     if (k) 71, 72, 71
+   |     ^^^^^^^^^^^^^^^^^ OB081
+85 | 71  continue
+86 |     print*, "/="
+   |
+   = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+81 81 | 61  print*, "=="
+82 82 | 62  continue
+83 83 | 
+84    |-    if (k) 71, 72, 71
+85    |-71  continue
+   84 |+    if (k /= 0) then
+86 85 |     print*, "/="
+87    |-72  continue
+   86 |+    end if
+88 87 | 
+89 88 | 85  do 110 k=1,9
+90 89 | 87     if(i-1) 100,90,100
+
+./resources/test/fixtures/obsolescent/OB081.f90:90:8: OB081 [*] Obsolete arithmetic `if`
+   |
+89 | 85  do 110 k=1,9
+90 | 87     if(i-1) 100,90,100
+   |        ^^^^^^^^^^^^^^^^^^ OB081
+91 | 90     print*, "=="
+92 |        goto 110
+   |
+   = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+87 87 | 72  continue
+88 88 | 
+89 89 | 85  do 110 k=1,9
+90    |-87     if(i-1) 100,90,100
+91    |-90     print*, "=="
+   90 |+87     if (i-1 == 0) then
+   91 |+       print*, "=="
+92 92 |        goto 110
+93    |-100    continue
+   93 |+       end if
+94 94 | 110 continue
+95 95 | 
+96 96 |    ! This should become:
+
+./resources/test/fixtures/obsolescent/OB081.f90:110:5: OB081 [*] Obsolete arithmetic `if`
+    |
+108 |   subroutine blocks_end_in_control_flows(M)
+109 |     integer, intent(in) :: M
+110 |     if (k) 1, 2, 3
+    |     ^^^^^^^^^^^^^^ OB081
+111 | 1   continue
+112 |     print*, "<"
+    |
+    = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+107 107 |   ! These should be fixable, but we have to not consume the returns
+108 108 |   subroutine blocks_end_in_control_flows(M)
+109 109 |     integer, intent(in) :: M
+110     |-    if (k) 1, 2, 3
+111     |-1   continue
+    110 |+    if (k < 0) then
+112 111 |     print*, "<"
+113 112 |     i = 0
+114 113 |     return
+115     |-2   continue
+    114 |+    end if
+    115 |+    if (k == 0) then
+116 116 |     print*, "=="
+117 117 |     i = 1
+118 118 |     return
+119     |-3   continue
+    119 |+    end if
+120 120 |     print*, ">"
+121 121 |     i = 2
+122 122 |     continue
+
+./resources/test/fixtures/obsolescent/OB081.f90:128:5: OB081 [*] Obsolete arithmetic `if`
+    |
+126 |     integer, intent(inout) :: n
+127 |     ! TEST LESS THAN TWO POINTS
+128 |     if(n-1)  90,90,80
+    |     ^^^^^^^^^^^^^^^^^ OB081
+129 | 80  continue
+130 |     ! infinite loop, but never mind that
+    |
+    = help: Use `if` statement or `if` construct
+
+ℹ Unsafe fix
+125 125 |   subroutine bar(n)
+126 126 |     integer, intent(inout) :: n
+127 127 |     ! TEST LESS THAN TWO POINTS
+128     |-    if(n-1)  90,90,80
+129     |-80  continue
+    128 |+    if (n-1 > 0) then
+130 129 |     ! infinite loop, but never mind that
+131 130 | 30  n = 1
+132 131 |     goto 30
+133     |-90  return
+    132 |+    end if
+    133 |+    return
+134 134 |   end subroutine bar
+135 135 | 
+136 136 |   subroutine unfixable_versions(x)
+
+./resources/test/fixtures/obsolescent/OB081.f90:141:5: OB081 Obsolete arithmetic `if`
+    |
+139 |     x = 0
+140 |     ! Probably can't auto-fix because first block falls-through into second
+141 |     if (x) 130,170,140
+    |     ^^^^^^^^^^^^^^^^^^ OB081
+142 | 130 continue
+143 |     x = 1
+    |
+    = help: Use `if` statement or `if` construct

@@ -1,3 +1,4 @@
+pub(crate) mod arithmetic_if;
 pub(crate) mod block_data_construct;
 pub(crate) mod common_blocks;
 pub(crate) mod computed_goto;
@@ -36,6 +37,7 @@ mod tests {
     #[test_case(Rule::DeprecatedMPIInclude, Path::new("OB201.f90"))]
     #[test_case(Rule::DeprecatedOmpInclude, Path::new("OB211.f90"))]
     #[test_case(Rule::ForallStatement, Path::new("OB071.f90"))]
+    #[test_case(Rule::ArithmeticIf, Path::new("OB081.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
