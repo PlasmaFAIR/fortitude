@@ -52,6 +52,16 @@ fn add_type_to_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
         .map(|external_node| Edit::insertion("type, ".to_string(), external_node.start_textsize()))
 }
 
+// Add `(external)` to `implicit none (type)` or `(type, external)` to `implicit none`.
+fn add_external_to_implicit_none(node: &Node, src: &SourceFile) -> Edit {
+    node.children(&mut node.walk())
+        .find(|child| child.to_text(src.source_text()).unwrap().to_lowercase() == "type")
+        .map_or_else(
+            || Edit::insertion(" (type, external)".to_string(), node.end_textsize()),
+            |type_node| Edit::insertion(", external".to_string(), type_node.end_textsize()),
+        )
+}
+
 enum ImplicitTypingErrorType {
     NoImplicitStatement,
     NotImplicitNone,
@@ -295,13 +305,7 @@ impl AstRule for ImplicitExternalProcedures {
 
         // If we get here, it's either `implicit none` or `implicit none
         // (type)`, so we want to add `external` to it.
-        let edit = node
-            .children(&mut node.walk())
-            .find(|child| child.to_text(src.source_text()).unwrap().to_lowercase() == "type")
-            .map_or_else(
-                || Edit::insertion(" (type, external)".to_string(), node.end_textsize()),
-                |type_node| Edit::insertion(", external".to_string(), type_node.end_textsize()),
-            );
+        let edit = add_external_to_implicit_none(stmt.node(), src);
         some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::unsafe_edit(edit)))
     }
 
