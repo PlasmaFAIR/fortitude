@@ -40,7 +40,7 @@ impl AlwaysFixableViolation for ImplicitZeroDigit {
 
     fn fix_title(&self) -> String {
         let Self { preferred, .. } = self;
-        format!("Prefer '{preferred}'")
+        format!("Prefer `{preferred}`")
     }
 }
 
