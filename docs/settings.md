@@ -121,6 +121,35 @@ For more information on the glob syntax, refer to the [`globset` documentation](
 
 ---
 
+#### [`extend-fixable`](#check_extend-fixable) {: #check_extend-fixable }
+<span id="extend-fixable"></span>
+
+A list of rule codes or prefixes to consider fixable, in addition to those
+specified by [`fixable`](#check_fixable).
+
+**Default value**: `[]`
+
+**Type**: `list[RuleSelector]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # On top of the current `fixable` rules, enable fix for implicit-typing (`C001`) and style rules (`S`).
+    extend-fixable = ["C001", "S"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # On top of the current `fixable` rules, enable fix for implicit-typing (`C001`) and style rules (`S`).
+    extend-fixable = ["C001", "S"]
+    ```
+
+---
+
 #### [`extend-select`](#check_extend-select) {: #check_extend-select }
 <span id="extend-select"></span>
 
@@ -263,6 +292,35 @@ Like [`fix`](#fix), but disables reporting on leftover violation. Implies [`fix`
     ```toml
     [check]
     fix-only = true
+    ```
+
+---
+
+#### [`fixable`](#check_fixable) {: #check_fixable }
+<span id="fixable"></span>
+
+A list of rule codes or prefixes to consider fixable. By default,
+all rules are considered fixable.
+
+**Default value**: `["ALL"]`
+
+**Type**: `list[RuleSelector]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Only allow fix behavior for style (`S`) and modernisation (`MOD`) rules.
+    fixable = ["S", "MOD"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Only allow fix behavior for style (`S`) and modernisation (`MOD`) rules.
+    fixable = ["S", "MOD"]
     ```
 
 ---
@@ -639,6 +697,34 @@ Options are "f2023", "f2018" (default), "f2008", "f2003", and "f95".
 
 ---
 
+#### [`unfixable`](#check_unfixable) {: #check_unfixable }
+<span id="unfixable"></span>
+
+A list of rule codes or prefixes to consider non-fixable.
+
+**Default value**: `[]`
+
+**Type**: `list[RuleSelector]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Disable fix for implicit-external-procedures (`C003`).
+    unfixable = ["C003"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Disable fix for implicit-external-procedures (`C003`).
+    unfixable = ["C003"]
+    ```
+
+---
+
 #### [`unsafe-fixes`](#check_unsafe-fixes) {: #check_unsafe-fixes }
 <span id="unsafe-fixes"></span>
 
@@ -663,6 +749,64 @@ If set to false, the hint will be hidden.
     ```toml
     [check]
     unsafe-fixes = true
+    ```
+
+---
+
+### `check.complexity`
+
+Options for `too-complex` rule
+
+#### [`max-args`](#check_complexity_max-args) {: #check_complexity_max-args }
+<span id="max-args"></span>
+
+The maximum number of arguments allowed for a procedure.
+Procedures exceeding this threshold will be flagged.
+
+**Default value**: `5`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.complexity]
+    max-args = 15
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.complexity]
+    max-args = 15
+    ```
+
+---
+
+#### [`max-complexity`](#check_complexity_max-complexity) {: #check_complexity_max-complexity }
+<span id="max-complexity"></span>
+
+The maximum cyclomatic complexity allowed for a procedure.
+Procedures exceeding this threshold will be flagged.
+
+**Default value**: `10`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.complexity]
+    max-complexity = 15
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.complexity]
+    max-complexity = 15
     ```
 
 ---
@@ -917,37 +1061,6 @@ Quote style to prefer for string literals (either "single" or "double").
     ```toml
     [check.strings]
     quotes = "single"
-    ```
-
----
-
-### `check.too-complex`
-
-Options for `too-complex` rule
-
-#### [`max-complexity`](#check_too-complex_max-complexity) {: #check_too-complex_max-complexity }
-<span id="max-complexity"></span>
-
-The maximum cyclomatic complexity allowed for a procedure.
-Procedures exceeding this threshold will be flagged.
-
-**Default value**: `10`
-
-**Type**: `usize`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.too-complex]
-    max-complexity = 15
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.too-complex]
-    max-complexity = 15
     ```
 
 ---

@@ -243,6 +243,12 @@ Rule selection:
           List of mappings from file pattern to code to exclude
       --extend-per-file-ignores <FILE_PATTERN:RULE_CODE>
           Like `--per-file-ignores`, but adds additional ignores on top of those already specified
+      --fixable <RULE_CODE>
+          List of rule codes to treat as eligible for fix. Only has an effect if `--fix` is also enabled
+      --unfixable <RULE_CODE>
+          List of rule codes to treat as ineligible for fix. Only has an effect if `--fix` is also enabled
+      --extend-fixable <RULE_CODE>
+          Like `--fixable`, but adds additional rule codes on top of those already specified
 
 File selection:
       --file-extensions <EXTENSION>

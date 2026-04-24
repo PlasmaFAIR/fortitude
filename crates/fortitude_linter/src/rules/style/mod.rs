@@ -1,3 +1,4 @@
+pub mod complexity;
 pub(crate) mod double_colon_in_decl;
 pub(crate) mod end_statements;
 pub(crate) mod file_contents;
@@ -7,9 +8,10 @@ pub(crate) mod implicit_none;
 pub mod inconsistent_dimension;
 pub mod keywords;
 pub mod line_length;
+pub mod literals;
 pub(crate) mod semicolons;
 pub mod strings;
-pub mod too_complex;
+pub(crate) mod use_statement;
 pub mod useless_return;
 pub(crate) mod whitespace;
 
@@ -25,9 +27,7 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
-    use crate::rules::style::{
-        inconsistent_dimension, keywords, line_length, strings, too_complex,
-    };
+    use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
     use crate::settings::CheckSettings;
     use crate::test::test_path;
 
@@ -56,6 +56,8 @@ mod tests {
     #[test_case(Rule::SuperfluousElseCycle, Path::new("S253.f90"))]
     #[test_case(Rule::SuperfluousElseExit, Path::new("S254.f90"))]
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
+    #[test_case(Rule::UnsortedUses, Path::new("S271.f90"))]
+    #[test_case(Rule::BareDecimal, Path::new("S291.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -68,6 +70,7 @@ mod tests {
     }
 
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201_ok.f90"))]
+    #[test_case(Rule::UnsortedUses, Path::new("S271_ok.f90"))]
     fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),
@@ -226,7 +229,27 @@ mod tests {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
 
         let settings = CheckSettings {
-            too_complex: too_complex::settings::Settings { max_complexity: 5 },
+            complexity: complexity::settings::Settings {
+                max_complexity: 5,
+                ..Default::default()
+            },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Rule::TooManyArguments, Path::new("S902.f90"))]
+    fn too_many_arguments_threshold_5(rule_code: Rule, path: &Path) -> Result<()> {
+        let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+
+        let settings = CheckSettings {
+            complexity: complexity::settings::Settings {
+                max_args: 4,
+                ..Default::default()
+            },
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;

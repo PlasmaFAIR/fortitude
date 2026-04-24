@@ -1,5 +1,5 @@
 module my_module
-  implicit none
+  implicit none (type)
   interface
     integer function myfunc(x)
       implicit none
@@ -12,7 +12,7 @@ program my_program
   implicit none
   interface
     subroutine mysub(x)
-      implicit none
+      implicit none (type)
       integer, intent(inout) :: x
     end subroutine mysub
   end interface

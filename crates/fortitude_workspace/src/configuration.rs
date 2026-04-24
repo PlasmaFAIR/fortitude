@@ -1,7 +1,7 @@
 use crate::options::{
-    ExitUnlabelledLoopOptions, InconsistentDimensionOptions, InvalidTabOptions,
+    ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions, InvalidTabOptions,
     KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions, StringOptions,
-    TooComplexOptions, UseStatementsOptions,
+    UseStatementsOptions,
 };
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
@@ -192,6 +192,9 @@ pub struct Configuration {
     pub ignore: Vec<RuleSelector>,
     pub select: Option<Vec<RuleSelector>>,
     pub extend_select: Vec<RuleSelector>,
+    pub fixable: Option<Vec<RuleSelector>>,
+    pub unfixable: Vec<RuleSelector>,
+    pub extend_fixable: Vec<RuleSelector>,
     pub per_file_ignores: Option<Vec<PerFileIgnore>>,
     pub extend_per_file_ignores: Vec<PerFileIgnore>,
     pub line_length: Option<usize>,
@@ -220,7 +223,7 @@ pub struct Configuration {
     pub inconsistent_dimension: Option<InconsistentDimensionOptions>,
     pub line_too_long: Option<LineTooLongOptions>,
     pub use_statements: Option<UseStatementsOptions>,
-    pub too_complex: Option<TooComplexOptions>,
+    pub complexity: Option<ComplexityOptions>,
 }
 
 impl Configuration {
@@ -235,6 +238,9 @@ impl Configuration {
             ignore: check.ignore.into_iter().flatten().collect(),
             select: check.select,
             extend_select: check.extend_select.unwrap_or_default(),
+            fixable: check.fixable,
+            unfixable: check.unfixable.unwrap_or_default(),
+            extend_fixable: check.extend_fixable.unwrap_or_default(),
             per_file_ignores: check.per_file_ignores.map(|per_file_ignores| {
                 per_file_ignores
                     .into_iter()
@@ -295,7 +301,7 @@ impl Configuration {
             inconsistent_dimension: check.inconsistent_dimensions,
             line_too_long: check.line_too_long,
             use_statements: check.use_statements,
-            too_complex: check.too_complex,
+            complexity: check.complexity,
         }
     }
 
@@ -306,9 +312,9 @@ impl Configuration {
             select: self.select,
             ignore: self.ignore,
             extend_select: self.extend_select,
-            fixable: None,
-            unfixable: vec![],
-            extend_fixable: vec![],
+            fixable: self.fixable,
+            unfixable: self.unfixable,
+            extend_fixable: self.extend_fixable,
         };
         let rules = to_rule_table(rule_selection, &preview)?;
         let ast_entrypoints = ast_entrypoint_map(&rules);
@@ -378,9 +384,9 @@ impl Configuration {
                     .use_statements
                     .map(UseStatementsOptions::into_settings)
                     .unwrap_or_default(),
-                too_complex: self
-                    .too_complex
-                    .map(TooComplexOptions::into_settings)
+                complexity: self
+                    .complexity
+                    .map(ComplexityOptions::into_settings)
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {
@@ -417,6 +423,13 @@ impl Configuration {
                 .into_iter()
                 .chain(config.extend_select)
                 .collect(),
+            fixable: self.fixable.or(config.fixable),
+            unfixable: self.unfixable.into_iter().chain(config.unfixable).collect(),
+            extend_fixable: self
+                .extend_fixable
+                .into_iter()
+                .chain(config.extend_fixable)
+                .collect(),
             per_file_ignores: self.per_file_ignores.or(config.per_file_ignores),
             extend_per_file_ignores: self
                 .extend_per_file_ignores
@@ -450,7 +463,7 @@ impl Configuration {
                 .or(config.inconsistent_dimension),
             line_too_long: self.line_too_long.or(config.line_too_long),
             use_statements: self.use_statements.or(config.use_statements),
-            too_complex: self.too_complex.or(config.too_complex),
+            complexity: self.complexity.or(config.complexity),
         }
     }
 }
@@ -486,6 +499,13 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
         BTreeSet::default()
     };
 
+    // The fixable_set keeps track of which rules are fixable.
+    let mut fixable_set: BTreeSet<Rule> = if args.fixable.is_none() {
+        RuleSelector::All.all_rules().collect()
+    } else {
+        BTreeSet::default()
+    };
+
     for spec in Specificity::iter() {
         // Iterate over rule selectors in order of specificity.
         for selector in args
@@ -499,10 +519,29 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
                 select_set.insert(rule);
             }
         }
+        // Apply the same logic to `fixable`.`.
+        for selector in args
+            .fixable
+            .iter()
+            .flatten()
+            .chain(&args.extend_fixable)
+            .filter(|s| s.specificity() == spec)
+        {
+            for rule in selector.all_rules() {
+                fixable_set.insert(rule);
+            }
+        }
 
+        // Remove anything in the `ignore` list.
         for selector in args.ignore.iter().filter(|s| s.specificity() == spec) {
             for rule in selector.rules(&preview) {
                 select_set.remove(&rule);
+            }
+        }
+        // Apply the same logic to `unfixable`.
+        for selector in args.unfixable.iter().filter(|s| s.specificity() == spec) {
+            for rule in selector.all_rules() {
+                fixable_set.remove(&rule);
             }
         }
 
@@ -659,7 +698,7 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
     let mut rules = RuleTable::empty();
 
     for rule in select_set {
-        let should_fix = true;
+        let should_fix = fixable_set.contains(&rule);
         rules.enable(rule, should_fix);
     }
 
@@ -891,6 +930,67 @@ mod tests {
         let one_rules = RuleSet::from_rules(&[Rule::IoError, Rule::SyntaxError]);
 
         assert_eq!(rules, one_rules);
+
+        Ok(())
+    }
+
+    #[test]
+    fn fixable() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: None,
+            extend_select: vec![],
+            fixable: Some(vec![RuleSelector::from_str("E000")?]),
+            extend_fixable: vec![],
+            unfixable: vec![],
+        };
+
+        let preview_mode = PreviewMode::default();
+        let rules = to_rule_table(args, &preview_mode)?;
+
+        assert!(rules.should_fix(Rule::IoError));
+        assert!(!rules.should_fix(Rule::SyntaxError));
+
+        Ok(())
+    }
+
+    #[test]
+    fn unfixable() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: None,
+            extend_select: vec![],
+            fixable: None,
+            extend_fixable: vec![],
+            unfixable: vec![RuleSelector::from_str("C001")?],
+        };
+
+        let preview_mode = PreviewMode::default();
+        let rules = to_rule_table(args, &preview_mode)?;
+
+        assert!(rules.should_fix(Rule::IoError));
+        assert!(!rules.should_fix(Rule::ImplicitTyping));
+
+        Ok(())
+    }
+
+    #[test]
+    fn extend_fixable() -> anyhow::Result<()> {
+        let args = RuleSelection {
+            ignore: vec![],
+            select: None,
+            extend_select: vec![],
+            fixable: Some(vec![RuleSelector::from_str("E000")?]),
+            extend_fixable: vec![RuleSelector::from_str("E001")?],
+            unfixable: vec![],
+        };
+
+        let preview_mode = PreviewMode::default();
+        let rules = to_rule_table(args, &preview_mode)?;
+
+        assert!(rules.should_fix(Rule::IoError));
+        assert!(rules.should_fix(Rule::SyntaxError));
+        assert!(!rules.should_fix(Rule::ImplicitTyping));
 
         Ok(())
     }

@@ -2,11 +2,11 @@ use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailab
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextLen, TextSize};
-use settings::Quote;
 use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
+use crate::stylist::Quote;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
@@ -67,7 +67,7 @@ impl AstRule for BadQuoteString {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        let preferred_quote = settings.strings.quotes;
+        let preferred_quote: Quote = settings.strings.quotes.into();
         let bad_quote = preferred_quote.opposite();
 
         let text = node.to_text(src.source_text())?;
@@ -226,8 +226,7 @@ fn unescape_string(haystack: &str, quote: char) -> String {
 }
 
 pub mod settings {
-    use super::*;
-    use crate::display_settings;
+    use crate::{display_settings, stylist};
     use ruff_macros::CacheKey;
     use serde::{Deserialize, Serialize};
     use std::fmt::{Display, Formatter};
@@ -243,53 +242,12 @@ pub mod settings {
         Single,
     }
 
-    impl TryFrom<char> for Quote {
-        type Error = &'static str;
-
-        fn try_from(value: char) -> Result<Self, Self::Error> {
+    impl From<Quote> for stylist::Quote {
+        fn from(value: Quote) -> Self {
             match value {
-                '"' => Ok(Self::Double),
-                '\'' => Ok(Self::Single),
-                _ => Err("not a quote"),
+                Quote::Double => stylist::Quote::Double,
+                Quote::Single => stylist::Quote::Single,
             }
-        }
-    }
-
-    impl Quote {
-        #[must_use]
-        pub const fn opposite(self) -> Self {
-            match self {
-                Self::Double => Self::Single,
-                Self::Single => Self::Double,
-            }
-        }
-
-        #[must_use]
-        pub const fn escaped(self) -> &'static str {
-            match self {
-                Self::Double => r#""""#,
-                Self::Single => r#"''"#,
-            }
-        }
-
-        /// Get the character used to represent this quote.
-        pub const fn as_char(self) -> char {
-            match self {
-                Self::Double => '"',
-                Self::Single => '\'',
-            }
-        }
-
-        pub fn from_literal(node: &Node, text: &str) -> Self {
-            let mut start = TextSize::new(0);
-            if let Some(kind) = node.child_by_field_name("kind") {
-                start = kind.textrange().len() + TextSize::new(1);
-            }
-            let first_quote = text
-                .chars()
-                .nth(start.to_usize())
-                .expect("couldn't slice string literal correctly");
-            Quote::try_from(first_quote).expect("string literal doesn't begin with a quote")
         }
     }
 

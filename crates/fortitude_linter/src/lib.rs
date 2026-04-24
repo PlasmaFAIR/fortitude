@@ -19,6 +19,7 @@ pub mod rule_table;
 pub mod rules;
 pub mod settings;
 pub mod source_kind;
+pub mod stylist;
 #[cfg(test)]
 mod test;
 pub mod text_helpers;
@@ -402,6 +403,14 @@ pub(crate) fn check_path(
         }
         // Disable all fixes
         for diagnostic in &mut violations {
+            diagnostic.fix = None;
+        }
+    }
+
+    // Disable any fixes for unfixable rules
+    for diagnostic in &mut violations {
+        let rule = diagnostic.kind.rule();
+        if diagnostic.fix.is_some() && !rules.should_fix(rule) {
             diagnostic.fix = None;
         }
     }

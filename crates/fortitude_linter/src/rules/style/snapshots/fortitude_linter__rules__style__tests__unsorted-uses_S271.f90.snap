@@ -1,0 +1,141 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/style/S271.f90:2:2: S271 [*] `use` statements are not sorted
+  |
+1 |   module test_module
+2 | /     use module_z_with_tab, only: fun_z_with_tab
+3 | |   use module_c, only: fun_c3, &
+4 | |                       fun_c2, & !! fun_c2 comments
+5 | |                       fun_c1
+6 | |   use, intrinsic :: iso_fortran_env, ONLY: int32
+7 | |     USE module_a, only: fun_a !! module_a inline comments
+  | |_____________________________^ S271
+8 |     USE module_z, only: fun_z
+9 |     use module_no_only
+  |
+  = help: Sort `use` statements
+
+ℹ Safe fix
+1 1 | module test_module
+2   |-	use module_z_with_tab, only: fun_z_with_tab
+  2 |+  use, intrinsic :: iso_fortran_env, ONLY: int32
+  3 |+    USE module_a, only: fun_a !! module_a inline comments
+3 4 |   use module_c, only: fun_c3, &
+4 5 |                       fun_c2, & !! fun_c2 comments
+5 6 |                       fun_c1
+6   |-  use, intrinsic :: iso_fortran_env, ONLY: int32
+7   |-    USE module_a, only: fun_a !! module_a inline comments
+  7 |+	use module_z_with_tab, only: fun_z_with_tab
+8 8 |   USE module_z, only: fun_z
+9 9 |   use module_no_only
+10 10 | 
+
+./resources/test/fixtures/style/S271.f90:13:3: S271 [*] `use` statements are not sorted
+   |
+11 |     use module_single, only: fun_single
+12 |
+13 | /   use, intrinsic :: iso_fortran_env, only: real64
+14 | |   use aa_non_intrinsic_module_d, only: fun_d
+15 | |   use, intrinsic :: iso_c_binding, only: fun_i
+   | |______________________________________________^ S271
+16 |
+17 |     implicit none (type, external)
+   |
+   = help: Sort `use` statements
+
+ℹ Safe fix
+10 10 | 
+11 11 |   use module_single, only: fun_single
+12 12 | 
+   13 |+  use, intrinsic :: iso_c_binding, only: fun_i
+13 14 |   use, intrinsic :: iso_fortran_env, only: real64
+14 15 |   use aa_non_intrinsic_module_d, only: fun_d
+15    |-  use, intrinsic :: iso_c_binding, only: fun_i
+16 16 | 
+17 17 |   implicit none (type, external)
+18 18 | 
+
+./resources/test/fixtures/style/S271.f90:22:5: S271 [*] `use` statements are not sorted
+   |
+20 |     contains
+21 |     real function compute_something(x, y)
+22 | /     use custom_math, only: fun_m
+23 | |     use another_package, only: helper, util
+24 | |     use, intrinsic :: iso_fortran_env, only: real64, int32
+25 | |     use, intrinsic :: ieee_arithmetic, only: fun_a
+   | |__________________________________________________^ S271
+26 |       real(real64), intent(in) :: x, y
+   |
+   = help: Sort `use` statements
+
+ℹ Safe fix
+19 19 |   private
+20 20 |   contains
+21 21 |   real function compute_something(x, y)
+   22 |+    use, intrinsic :: ieee_arithmetic, only: fun_a
+   23 |+    use, intrinsic :: iso_fortran_env, only: real64, int32
+   24 |+    use another_package, only: helper, util
+22 25 |     use custom_math, only: fun_m
+23    |-    use another_package, only: helper, util
+24    |-    use, intrinsic :: iso_fortran_env, only: real64, int32
+25    |-    use, intrinsic :: ieee_arithmetic, only: fun_a
+26 26 |     real(real64), intent(in) :: x, y
+27 27 | 
+28 28 |     compute_something = helper(x) + util(y) + real(ieee_max(x,y), real64)
+
+./resources/test/fixtures/style/S271.f90:32:5: S271 [*] `use` statements are not sorted
+   |
+31 |     subroutine test_comments_as_separator()
+32 | /     !! fun_c is used for...
+33 | |     use module_c, only: fun_c
+34 | |     use module_a, only: fun_a
+35 | |     ! fun_b is used for...
+36 | |     use module_b, only: fun_b
+   | |_____________________________^ S271
+37 |     end subroutine test_comments_as_separator
+   |
+   = help: Sort `use` statements
+
+ℹ Safe fix
+29 29 |   end function compute_something
+30 30 | 
+31 31 |   subroutine test_comments_as_separator()
+32    |-    !! fun_c is used for...
+33    |-    use module_c, only: fun_c
+34 32 |     use module_a, only: fun_a
+35 33 |     ! fun_b is used for...
+36 34 |     use module_b, only: fun_b
+   35 |+    !! fun_c is used for...
+   36 |+    use module_c, only: fun_c
+37 37 |   end subroutine test_comments_as_separator
+38 38 | 
+39 39 |   subroutine test_freeform()
+
+./resources/test/fixtures/style/S271.f90:40:5: S271 [*] `use` statements are not sorted
+   |
+39 |     subroutine test_freeform()
+40 | /     use module_f, only: fun_f
+41 | |     use module_a
+42 | |     use module_z, only: fun_z; use module_b; use module_c, only: fun_c
+43 | |     use module_e
+   | |________________^ S271
+44 |     end subroutine test_freeform
+45 |   end module test_module
+   |
+   = help: Sort `use` statements
+
+ℹ Safe fix
+37 37 |   end subroutine test_comments_as_separator
+38 38 | 
+39 39 |   subroutine test_freeform()
+   40 |+    use module_a
+   41 |+    use module_e
+40 42 |     use module_f, only: fun_f
+41    |-    use module_a
+42 43 |     use module_z, only: fun_z; use module_b; use module_c, only: fun_c
+43    |-    use module_e
+44 44 |   end subroutine test_freeform
+45 45 | end module test_module

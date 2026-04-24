@@ -14,8 +14,8 @@
 
 | Code | Name | Message | |
 | ---- | ---- | ------- | ------: |
-| C001 | [implicit-typing](rules/implicit-typing.md) | {entity} missing 'implicit none' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
-| C002 | [interface-implicit-typing](rules/interface-implicit-typing.md) | interface '{name}' missing 'implicit none' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| C001 | [implicit-typing](rules/implicit-typing.md) | {entity} uses implicit typing | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| C002 | [interface-implicit-typing](rules/interface-implicit-typing.md) | interface '{name}' uses implicit typing | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C003 | [implicit-external-procedures](rules/implicit-external-procedures.md) | 'implicit none' missing 'external' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C011 | [missing-default-case](rules/missing-default-case.md) | Missing default case may not handle all values | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | C021 | [no-real-suffix](rules/no-real-suffix.md) | real literal {literal} missing kind suffix | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
@@ -109,7 +109,10 @@
 | S261 | [inconsistent-array-declaration](rules/inconsistent-array-declaration.md) | Inconsistent specification of dimension | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S262 | [mixed-scalar-array-declaration](rules/mixed-scalar-array-declaration.md) | Mixed declaration of scalar(s) and array | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | S263 | [bad-array-declaration](rules/bad-array-declaration.md) | Bad declaration of array | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S271 | [unsorted-uses](rules/unsorted-uses.md) | `use` statements are not sorted | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| S291 | [bare-decimal](rules/bare-decimal.md) | {trailing} decimal point in `real` literal `{literal}` | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | S901 | [too-complex](rules/too-complex.md) | cyclomatic complexity of {actual_complexity}, exceeds maximum {max_complexity\} | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| S902 | [too-many-arguments](rules/too-many-arguments.md) | Too many arguments in procedure `{procedure_name}` ({arg_count} > {max_args}) | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Portability (PORT)
 

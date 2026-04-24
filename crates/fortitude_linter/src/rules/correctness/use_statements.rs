@@ -49,10 +49,7 @@ impl AstRule for UseAll {
         src: &SourceFile,
         _symbol_table: &SymbolTables,
     ) -> Option<Vec<Diagnostic>> {
-        let module_name = node
-            .child_with_name("module_name")?
-            .to_text(src.source_text())?
-            .to_lowercase();
+        let module_name = node.module_name(src.source_text())?.to_lowercase();
 
         if !settings
             .use_statements
@@ -125,10 +122,7 @@ impl AstRule for MissingIntrinsic {
         if settings.target_std < FortranStandard::F2003 {
             return None;
         }
-        let module_name = node
-            .child_with_name("module_name")?
-            .to_text(src.source_text())?
-            .to_lowercase();
+        let module_name = node.module_name(src.source_text())?.to_lowercase();
 
         if INTRINSIC_MODULES.iter().any(|&m| m == module_name)
             && node

@@ -15,10 +15,10 @@ use fortitude_linter::{
         correctness::{exit_labels, use_statements},
         portability::{self, invalid_tab},
         style::{
+            complexity,
             inconsistent_dimension::{self, settings::PreferAttribute},
             keywords, line_length,
             strings::{self, settings::Quote},
-            too_complex,
         },
     },
     settings::{FortranStandard, OutputFormat, ProgressBar},
@@ -192,6 +192,29 @@ pub struct CheckOptions {
     )]
     pub select: Option<Vec<RuleSelector>>,
 
+    /// A list of rule codes or prefixes to consider fixable. By default,
+    /// all rules are considered fixable.
+    #[option(
+        default = r#"["ALL"]"#,
+        value_type = "list[RuleSelector]",
+        example = r#"
+            # Only allow fix behavior for style (`S`) and modernisation (`MOD`) rules.
+            fixable = ["S", "MOD"]
+        "#
+    )]
+    pub fixable: Option<Vec<RuleSelector>>,
+
+    /// A list of rule codes or prefixes to consider non-fixable.
+    #[option(
+        default = "[]",
+        value_type = "list[RuleSelector]",
+        example = r#"
+            # Disable fix for implicit-external-procedures (`C003`).
+            unfixable = ["C003"]
+        "#
+    )]
+    pub unfixable: Option<Vec<RuleSelector>>,
+
     /// A list of rule codes or prefixes to enable, in addition to those
     /// specified by [`select`](#check_select).
     #[option(
@@ -203,6 +226,18 @@ pub struct CheckOptions {
         "#
     )]
     pub extend_select: Option<Vec<RuleSelector>>,
+
+    /// A list of rule codes or prefixes to consider fixable, in addition to those
+    /// specified by [`fixable`](#check_fixable).
+    #[option(
+        default = r#"[]"#,
+        value_type = "list[RuleSelector]",
+        example = r#"
+            # On top of the current `fixable` rules, enable fix for implicit-typing (`C001`) and style rules (`S`).
+            extend-fixable = ["C001", "S"]
+        "#
+    )]
+    pub extend_fixable: Option<Vec<RuleSelector>>,
 
     // File resolver options
     /// A list of file extensions to check
@@ -367,13 +402,14 @@ pub struct CheckOptions {
     #[option_group]
     pub line_too_long: Option<LineTooLongOptions>,
 
-    /// Options for the `use-all` set of rules
+    /// Options for rules related to the `use` statement, such as `use-all`.
     #[option_group]
     pub use_statements: Option<UseStatementsOptions>,
 
-    /// Options for the `too_complex` rule
+    /// Options for rules related to code complexity, such as `too-complex`,
+    /// `too-many-arguments`, `too-many-nested-blocks`, etc.
     #[option_group]
-    pub too_complex: Option<TooComplexOptions>,
+    pub complexity: Option<ComplexityOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -602,17 +638,23 @@ impl UseStatementsOptions {
     Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
 )]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct TooComplexOptions {
+pub struct ComplexityOptions {
     /// The maximum cyclomatic complexity allowed for a procedure.
     /// Procedures exceeding this threshold will be flagged.
     #[option(default = "10", value_type = "usize", example = "max-complexity = 15")]
     pub max_complexity: Option<usize>,
+
+    /// The maximum number of arguments allowed for a procedure.
+    /// Procedures exceeding this threshold will be flagged.
+    #[option(default = "5", value_type = "usize", example = "max-args = 15")]
+    pub max_args: Option<usize>,
 }
 
-impl TooComplexOptions {
-    pub fn into_settings(self) -> too_complex::settings::Settings {
-        too_complex::settings::Settings {
-            max_complexity: self.max_complexity.unwrap_or(10usize),
+impl ComplexityOptions {
+    pub fn into_settings(self) -> complexity::settings::Settings {
+        complexity::settings::Settings {
+            max_complexity: self.max_complexity.unwrap_or_default(),
+            max_args: self.max_complexity.unwrap_or_default(),
         }
     }
 }

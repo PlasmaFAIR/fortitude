@@ -248,7 +248,7 @@ end program
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -319,7 +319,7 @@ end program
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -381,7 +381,7 @@ select = ["C001", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -444,7 +444,7 @@ select = ["C001"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -506,7 +506,7 @@ select = ["C001", "style"]
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
       | ^^^^^^^^^^^^ C001
@@ -724,6 +724,280 @@ end program foo
     let transformed = fs::read_to_string(&test_file)?;
     assert_eq!(transformed, expected);
 
+    Ok(())
+}
+
+#[test]
+fn apply_fixable_fixes() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none
+endprogram
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--fixable=S061")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C003 'implicit none' missing 'external'
+      |
+    2 | program foo
+    3 |   implicit none
+      |   ^^^^^^^^^^^^^ C003
+    4 | end program foo
+      |
+      = help: Add `(external)` to 'implicit none'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2 (1 fixed, 1 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    let expected = r#"
+program foo
+  implicit none
+end program foo
+"#
+    .to_string();
+
+    let transformed = fs::read_to_string(&test_file)?;
+    assert_eq!(transformed, expected);
+
+    Ok(())
+}
+
+#[test]
+fn skip_unfixable_fixes() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program foo
+  implicit none
+endprogram
+"#,
+    )?;
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--unfixable=C003")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C003 'implicit none' missing 'external'
+      |
+    2 | program foo
+    3 |   implicit none
+      |   ^^^^^^^^^^^^^ C003
+    4 | end program foo
+      |
+      = help: Add `(external)` to 'implicit none'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2 (1 fixed, 1 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    let expected = r#"
+program foo
+  implicit none
+end program foo
+"#
+    .to_string();
+
+    let transformed = fs::read_to_string(&test_file)?;
+    assert_eq!(transformed, expected);
+
+    Ok(())
+}
+
+#[test]
+fn check_extend_fixable() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  implicit none
+end program
+"#,
+    )?;
+
+    let config_file = tempdir.path().join("fortitude.toml");
+    fs::write(
+        &config_file,
+        r#"
+[check]
+fixable = ["C003"]
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--extend-fixable=S061")
+                         .arg(&test_file),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 1 files scanned.
+    Number of errors: 2 (2 fixed, 0 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_overwrite_fixable() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  implicit none
+end program
+"#,
+    )?;
+
+    let config_file = tempdir.path().join("fortitude.toml");
+    fs::write(
+        &config_file,
+        r#"
+[check]
+fixable = ["C003"]
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--fixable=S061")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C003 'implicit none' missing 'external'
+      |
+    2 | program test
+    3 |   implicit none
+      |   ^^^^^^^^^^^^^ C003
+    4 | end program test
+      |
+      = help: Add `(external)` to 'implicit none'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2 (1 fixed, 1 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_overwrite_unfixable() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  implicit none
+end program
+"#,
+    )?;
+
+    let config_file = tempdir.path().join("fortitude.toml");
+    fs::write(
+        &config_file,
+        r#"
+[check]
+fixable = ["S061"]
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(fortitude_cmd()
+                         .arg("check")
+                         .arg("--select=S061,C003")
+                         .arg("--unsafe-fixes")
+                         .arg("--fix")
+                         .arg("--unfixable=S061")
+                         .arg("--extend-fixable=C003")
+                         .arg(&test_file),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] S061 end statement should be named.
+      |
+    2 | program test
+    3 |   implicit none (type, external)
+    4 | end program
+      | ^^^^^^^^^^^ S061
+      |
+      = help: Write as 'end program test'.
+
+    fortitude: 1 files scanned.
+    Number of errors: 2 (1 fixed, 1 remaining)
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
     Ok(())
 }
 
@@ -1137,7 +1411,7 @@ end module {file}{idx}
     success: false
     exit_code: 1
     ----- stdout -----
-    bar0.f90:2:1: C001 module missing 'implicit none'
+    bar0.f90:2:1: C001 module uses implicit typing
       |
     2 | module bar0
       | ^^^^^^^^^^^ C001
@@ -1147,7 +1421,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    baz0.f90:2:1: C001 module missing 'implicit none'
+    baz0.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz0
       | ^^^^^^^^^^^ C001
@@ -1157,7 +1431,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    foo0.f90:2:1: C001 module missing 'implicit none'
+    foo0.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo0
       | ^^^^^^^^^^^ C001
@@ -1167,7 +1441,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/bar1.f90:2:1: C001 module missing 'implicit none'
+    nested/bar1.f90:2:1: C001 module uses implicit typing
       |
     2 | module bar1
       | ^^^^^^^^^^^ C001
@@ -1177,7 +1451,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/baz1.f90:2:1: C001 module missing 'implicit none'
+    nested/baz1.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz1
       | ^^^^^^^^^^^ C001
@@ -1187,7 +1461,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/foo1.f90:2:1: C001 module missing 'implicit none'
+    nested/foo1.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo1
       | ^^^^^^^^^^^ C001
@@ -1257,7 +1531,7 @@ end module {file}{idx}
     success: false
     exit_code: 1
     ----- stdout -----
-    baz0.f90:2:1: C001 module missing 'implicit none'
+    baz0.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz0
       | ^^^^^^^^^^^ C001
@@ -1267,7 +1541,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    foo0.f90:2:1: C001 module missing 'implicit none'
+    foo0.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo0
       | ^^^^^^^^^^^ C001
@@ -1277,7 +1551,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/baz1.f90:2:1: C001 module missing 'implicit none'
+    nested/baz1.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz1
       | ^^^^^^^^^^^ C001
@@ -1287,7 +1561,7 @@ end module {file}{idx}
       |
       = help: Insert `implicit none`
 
-    nested/foo1.f90:2:1: C001 module missing 'implicit none'
+    nested/foo1.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo1
       | ^^^^^^^^^^^ C001
@@ -1363,7 +1637,7 @@ fn check_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module missing 'implicit none'
+    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module uses implicit typing
       |
     2 | module numpy
       | ^^^^^^^^^^^^ C001
@@ -1373,7 +1647,7 @@ fn check_exclude() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    base.f90:2:1: C001 module missing 'implicit none'
+    base.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -1383,7 +1657,7 @@ fn check_exclude() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    foo/foo.f90:2:1: C001 module missing 'implicit none'
+    foo/foo.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo
       | ^^^^^^^^^^ C001
@@ -1423,7 +1697,7 @@ fn check_extend_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    base.f90:2:1: C001 module missing 'implicit none'
+    base.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -1463,7 +1737,7 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    foo/foo.f90:2:1: C001 module missing 'implicit none'
+    foo/foo.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo
       | ^^^^^^^^^^ C001
@@ -1527,7 +1801,7 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module missing 'implicit none'
+    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module uses implicit typing
       |
     2 | module numpy
       | ^^^^^^^^^^^^ C001
@@ -1650,7 +1924,7 @@ end program
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | ! allow(C001, unnamed-end-statement, literal-kind)
     3 | program test
@@ -1822,7 +2096,7 @@ end program myprogram
     exit_code: 1
     ----- stdout -----
     [TEMP_FILE] S091 file extension should be '.f90' or '.F90'
-    [TEMP_FILE] C001 program missing 'implicit none'
+    [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program myprogram
       | ^^^^^^^^^^^^^^^^^ C001
@@ -1910,7 +2184,7 @@ fn check_gitignore() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    include.f90:2:1: C001 module missing 'implicit none'
+    include.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -1920,7 +2194,7 @@ fn check_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/include.f90:2:1: C001 module missing 'implicit none'
+    include/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
       | ^^^^^^^^^^^^^^ C001
@@ -1959,7 +2233,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    exclude.f90:2:1: C001 module missing 'implicit none'
+    exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -1969,7 +2243,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    exclude/exclude.f90:2:1: C001 module missing 'implicit none'
+    exclude/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
       | ^^^^^^^^^^^^^^ C001
@@ -1979,7 +2253,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    exclude/include.f90:2:1: C001 module missing 'implicit none'
+    exclude/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
       | ^^^^^^^^^^^^^^ C001
@@ -1989,7 +2263,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include.f90:2:1: C001 module missing 'implicit none'
+    include.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
       | ^^^^^^^^^^^ C001
@@ -1999,7 +2273,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/exclude.f90:2:1: C001 module missing 'implicit none'
+    include/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
       | ^^^^^^^^^^^^^^ C001
@@ -2009,7 +2283,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/exclude/exclude.f90:2:1: C001 module missing 'implicit none'
+    include/exclude/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
       | ^^^^^^^^^^^^^^ C001
@@ -2019,7 +2293,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/exclude/include.f90:2:1: C001 module missing 'implicit none'
+    include/exclude/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
       | ^^^^^^^^^^^^^^ C001
@@ -2029,7 +2303,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
       |
       = help: Insert `implicit none`
 
-    include/include.f90:2:1: C001 module missing 'implicit none'
+    include/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
       | ^^^^^^^^^^^^^^ C001
