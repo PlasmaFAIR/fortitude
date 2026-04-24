@@ -35,7 +35,7 @@ impl AlwaysFixableViolation for ImplicitZeroDigit {
             ..
         } = self;
         let trailing = if *is_trailing { "trailing" } else { "leading" };
-        format!("{trailing} decimal point in literal {literal}")
+        format!("{trailing} decimal point in `real` literal `{literal}`")
     }
 
     fn fix_title(&self) -> String {
