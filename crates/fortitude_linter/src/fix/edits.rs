@@ -2,8 +2,9 @@
 
 use anyhow::{Result, anyhow};
 use itertools::Itertools;
+use lazy_regex::lazy_regex;
 use ruff_diagnostics::Edit;
-use ruff_source_file::SourceFile;
+use ruff_source_file::{LineEnding, SourceFile};
 use ruff_text_size::Ranged;
 use tree_sitter::Node;
 
@@ -79,6 +80,106 @@ pub(crate) fn add_attribute_to_var_decl(decl: &VariableDeclaration, attribute: &
 
     let colon = if decl.has_colon() { "" } else { " ::" };
     Edit::insertion(format!(", {attribute}{colon}"), start)
+}
+
+/// Unindent and then indent each line, ignoring under-indented comments and
+/// continuation lines.
+///
+/// This function will look at each non-empty line and determine the maximum
+/// amount of whitespace that can be removed from all lines, and then add back
+/// the given indentation. Fortran comments and continuation lines that are
+/// "under-indented" will be ignored during this process:
+///
+/// ```
+/// use fortitude_linter::fix::edits::redent;
+/// use ruff_source_file::LineEnding;
+///
+/// assert_eq!(redent("
+///     1st line
+///       2nd line
+///  !     comment
+///     3rd line
+/// ", "  ", LineEnding::Lf), "
+///   1st line
+///     2nd line
+///  !     comment
+///   3rd line
+/// ");
+/// ```
+///
+/// Adapted from `textwrap`
+/// Copyright 2016 Martin Geisler
+/// SPDX-License-Identifier: MIT
+pub fn redent(s: &str, indentation: &str, line_ending: LineEnding) -> String {
+    let mut prefix = "";
+    let mut lines = s.lines();
+    let comment_line = lazy_regex!(r"^\s*[&!]");
+
+    // We first search for a non-empty line to find a prefix.
+    for line in &mut lines {
+        // Don't let comments or continuations set the prefix
+        if comment_line.is_match(line) {
+            continue;
+        }
+
+        let mut whitespace_idx = line.len();
+        for (idx, ch) in line.char_indices() {
+            if !ch.is_whitespace() {
+                whitespace_idx = idx;
+                break;
+            }
+        }
+
+        // Check if the line had anything but whitespace
+        if whitespace_idx < line.len() {
+            prefix = &line[..whitespace_idx];
+            break;
+        }
+    }
+
+    // We then continue looking through the remaining lines to
+    // possibly shorten the prefix.
+    for line in &mut lines {
+        // Don't let comments or continuations shorten the prefix
+        if comment_line.is_match(line) {
+            continue;
+        }
+
+        let mut whitespace_idx = line.len();
+        for ((idx, a), b) in line.char_indices().zip(prefix.chars()) {
+            if a != b {
+                whitespace_idx = idx;
+                break;
+            }
+        }
+
+        // Check if the line had anything but whitespace and if we
+        // have found a shorter prefix
+        if whitespace_idx < line.len() && whitespace_idx < prefix.len() {
+            prefix = &line[..whitespace_idx];
+        }
+    }
+
+    // We now go over the lines a second time to build the result.
+    let mut result = String::new();
+    for line in s.lines() {
+        if line.starts_with(prefix) && line.chars().any(|c| !c.is_whitespace()) {
+            let (_, tail) = line.split_at(prefix.len());
+            result.push_str(indentation);
+            result.push_str(tail);
+        } else if comment_line.is_match(line) {
+            // Preserve under-indented comment and continuation lines
+            result.push_str(line);
+        }
+        result.push_str(line_ending.as_str());
+    }
+
+    if result.ends_with('\n') && !s.ends_with('\n') {
+        let new_len = result.len() - line_ending.len();
+        result.truncate(new_len);
+    }
+
+    result
 }
 
 #[cfg(test)]
@@ -194,5 +295,178 @@ end program foo
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn redent_empty() {
+        assert_eq!(redent("", "", LineEnding::Lf), "");
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_multi_line() {
+        let x = [
+            "    foo",
+            "  bar",
+            "    baz",
+        ].join("\n");
+        let y = [
+            "   foo",
+            " bar",
+            "   baz"
+        ].join("\n");
+        assert_eq!(redent(&x, " ", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_empty_line() {
+        let x = [
+            "    foo",
+            "  bar",
+            "   ",
+            "    baz"
+        ].join("\n");
+        let y = [
+            "   foo",
+            " bar",
+            "",
+            "   baz"
+        ].join("\n");
+        assert_eq!(redent(&x, " ", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_blank_line() {
+        let x = [
+            "      foo",
+            "",
+            "        bar",
+            "          foo",
+            "          bar",
+            "          baz",
+        ].join("\n");
+        let y = [
+            "foo",
+            "",
+            "  bar",
+            "    foo",
+            "    bar",
+            "    baz",
+        ].join("\n");
+        assert_eq!(redent(&x, "", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_whitespace_line() {
+        let x = [
+            "      foo",
+            " ",
+            "        bar",
+            "          foo",
+            "          bar",
+            "          baz",
+        ].join("\n");
+        let y = [
+            "  foo",
+            "",
+            "    bar",
+            "      foo",
+            "      bar",
+            "      baz",
+        ].join("\n");
+        assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_mixed_whitespace() {
+        let x = [
+            "\tfoo",
+            "  bar",
+        ].join("\n");
+        let y = [
+            "\tfoo",
+            "  bar",
+        ].join("\n");
+        assert_eq!(redent(&x, "", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_tabbed_whitespace() {
+        let x = [
+            "\t\tfoo",
+            "\t\t\tbar",
+        ].join("\n");
+        let y = [
+            "\tfoo",
+            "\t\tbar",
+        ].join("\n");
+        assert_eq!(redent(&x, "\t", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_mixed_tabbed_whitespace() {
+        let x = [
+            "\t  \tfoo",
+            "\t  \t\tbar",
+        ].join("\n");
+        let y = [
+            "  foo",
+            "  \tbar",
+        ].join("\n");
+        assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_mixed_tabbed_whitespace2() {
+        let x = [
+            "\t  \tfoo",
+            "\t    \tbar",
+        ].join("\n");
+        let y = [
+            "  \tfoo",
+            "    \tbar",
+        ].join("\n");
+        assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_preserve_no_terminating_newline() {
+        let x = [
+            "  foo",
+            "    bar",
+        ].join("\n");
+        let y = [
+            "foo",
+            "  bar",
+        ].join("\n");
+        assert_eq!(redent(&x, "", LineEnding::Lf), y);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn redent_leave_shorter_comments() {
+        let x = [
+            "      foo",
+            "        bar",
+            "   !       foo",
+            "     !     bar",
+            "          baz",
+        ].join("\n");
+        let y = [
+            "  foo",
+            "    bar",
+            "   !       foo",
+            "     !     bar",
+            "      baz",
+        ].join("\n");
+        assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
     }
 }

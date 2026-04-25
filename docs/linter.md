@@ -120,6 +120,18 @@ $ fortitude check --diff
 Would fix 1 error.
 ```
 
+!!! note "Indentation"
+    For rules such as [`superfluous-else-return`][elsereturn], where the fix may
+    move code out of the `else` branch of an `if` statement for example,
+    Fortitude will also attempt to fix the indentation of the moved code. This
+    can be hampered by tab characters (but see [`invalid-tab`][invalidtab]),
+    or "under-indented" code, comments, or continuation characters. We will give
+    a "best effort" formatting of the code in these cases, but Fortitude will
+    always make sure that the code remains syntactically and semantically valid.
+
+[elsereturn]: rules/superfluous-else-return.md
+[invalidtab]: rules/invalid-tab.md
+
 ### Fix safety
 
 Another concept Fortitude borrows from Ruff is that of _fix safety_: fixes are labelled as

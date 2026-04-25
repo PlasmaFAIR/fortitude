@@ -20,6 +20,9 @@ contains
     else if ((a - b) > 10) then
       capped_sub = 10
       return
+    ELSEIF (.false.) then
+      capped_sub = -1
+      return
     else
       capped_sub = a - b
     end if
@@ -30,7 +33,10 @@ contains
     if ((a * b) > 100) then
       capped_mult = 100
       return
-    else
+    else  ! This comment should be moved onto next line
+      ! And some other bits that
+      ! should also be unindented
+ ! unindented comment shouldn't cause over-indentation
       capped_mult = a * b
     end if
   end function capped_mult
@@ -54,4 +60,18 @@ contains
       capped_pow = a ** b
     end if
   end function capped_pow
+
+  integer function capped_double_add(a, b)
+    integer, intent(in) :: a, b
+    something: if ((a + b + b) > 100) then
+      capped_double_add = 100
+      return
+    else
+      ! Can't auto-fix due to label
+      if (a == 4) exit something
+      capped_double_add = a + b + b
+    end if something
+
+    capped_double_add = a + b + b
+  end function capped_double_add
 end module test

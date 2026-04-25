@@ -3,7 +3,7 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S252.f90:19:7: S252 Unecessary else-if after `return` statement
+./resources/test/fixtures/style/S252.f90:19:7: S252 [*] Unecessary else-if after `return` statement
    |
 17 |     if ((a - b) < 0) then
 18 |       capped_sub = 0
@@ -12,23 +12,102 @@ snapshot_kind: text
 20 |     else if ((a - b) > 10) then
 21 |       capped_sub = 10
    |
+   = help: Remove unnecessary 'else-if'
 
-./resources/test/fixtures/style/S252.f90:22:7: S252 Unecessary else after `return` statement
+ℹ Safe fix
+17 17 |     if ((a - b) < 0) then
+18 18 |       capped_sub = 0
+19 19 |       return
+20    |-    else if ((a - b) > 10) then
+   20 |+    end if
+   21 |+    if ((a - b) > 10) then
+21 22 |       capped_sub = 10
+22 23 |       return
+23 24 |     ELSEIF (.false.) then
+
+./resources/test/fixtures/style/S252.f90:22:7: S252 [*] Unecessary else-if after `return` statement
    |
 20 |     else if ((a - b) > 10) then
 21 |       capped_sub = 10
 22 |       return
    |       ^^^^^^ S252
-23 |     else
-24 |       capped_sub = a - b
+23 |     ELSEIF (.false.) then
+24 |       capped_sub = -1
    |
+   = help: Remove unnecessary 'else-if'
 
-./resources/test/fixtures/style/S252.f90:32:7: S252 Unecessary else after `return` statement
+ℹ Safe fix
+20 20 |     else if ((a - b) > 10) then
+21 21 |       capped_sub = 10
+22 22 |       return
+23    |-    ELSEIF (.false.) then
+   23 |+    end if
+   24 |+    if (.false.) then
+24 25 |       capped_sub = -1
+25 26 |       return
+26 27 |     else
+
+./resources/test/fixtures/style/S252.f90:25:7: S252 [*] Unecessary else after `return` statement
    |
-30 |     if ((a * b) > 100) then
-31 |       capped_mult = 100
-32 |       return
+23 |     ELSEIF (.false.) then
+24 |       capped_sub = -1
+25 |       return
    |       ^^^^^^ S252
-33 |     else
-34 |       capped_mult = a * b
+26 |     else
+27 |       capped_sub = a - b
    |
+   = help: Remove unnecessary 'else'
+
+ℹ Safe fix
+23 23 |     ELSEIF (.false.) then
+24 24 |       capped_sub = -1
+25 25 |       return
+26    |-    else
+27    |-      capped_sub = a - b
+28 26 |     end if
+   27 |+
+   28 |+    capped_sub = a - b
+29 29 |   end function capped_sub
+30 30 | 
+31 31 |   integer function capped_mult(a, b)
+
+./resources/test/fixtures/style/S252.f90:35:7: S252 [*] Unecessary else after `return` statement
+   |
+33 |     if ((a * b) > 100) then
+34 |       capped_mult = 100
+35 |       return
+   |       ^^^^^^ S252
+36 |     else  ! This comment should be moved onto next line
+37 |       ! And some other bits that
+   |
+   = help: Remove unnecessary 'else'
+
+ℹ Safe fix
+33 33 |     if ((a * b) > 100) then
+34 34 |       capped_mult = 100
+35 35 |       return
+36    |-    else  ! This comment should be moved onto next line
+37    |-      ! And some other bits that
+38    |-      ! should also be unindented
+   36 |+    end if
+   37 |+    ! This comment should be moved onto next line
+   38 |+    ! And some other bits that
+   39 |+    ! should also be unindented
+39 40 |  ! unindented comment shouldn't cause over-indentation
+40    |-      capped_mult = a * b
+41    |-    end if
+   41 |+    capped_mult = a * b
+42 42 |   end function capped_mult
+43 43 | 
+44 44 |   integer function capped_div(a, b)
+
+./resources/test/fixtures/style/S252.f90:68:7: S252 Unecessary else after `return` statement
+   |
+66 |     something: if ((a + b + b) > 100) then
+67 |       capped_double_add = 100
+68 |       return
+   |       ^^^^^^ S252
+69 |     else
+70 |       ! Can't auto-fix due to label
+   |
+   = help: Remove unnecessary 'else'

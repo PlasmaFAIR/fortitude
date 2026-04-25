@@ -1,10 +1,15 @@
 use crate::ast::{FortitudeNode, types::BlockExit};
+use crate::fix::edits::redent;
 use crate::settings::CheckSettings;
+use crate::stylist::{Stylist, ToCapitalisation};
 use crate::symbol_table::SymbolTables;
+use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode, Rule};
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix, Violation};
+use log::debug;
+use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
 use ruff_macros::{ViolationMetadata, derive_message_formats};
 use ruff_source_file::SourceFile;
+use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -122,10 +127,17 @@ pub(crate) struct SuperfluousElseReturn {
 }
 
 impl Violation for SuperfluousElseReturn {
+    const FIX_AVAILABILITY: ruff_diagnostics::FixAvailability = FixAvailability::Sometimes;
+
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { branch } = self;
         format!("Unecessary {branch} after `return` statement")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let Self { branch } = self;
+        Some(format!("Remove unnecessary '{branch}'"))
     }
 }
 
@@ -172,10 +184,17 @@ pub(crate) struct SuperfluousElseCycle {
 }
 
 impl Violation for SuperfluousElseCycle {
+    const FIX_AVAILABILITY: ruff_diagnostics::FixAvailability = FixAvailability::Sometimes;
+
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { branch } = self;
         format!("Unecessary {branch} after `cycle` statement")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let Self { branch } = self;
+        Some(format!("Remove unnecessary '{branch}'"))
     }
 }
 
@@ -222,10 +241,17 @@ pub(crate) struct SuperfluousElseExit {
 }
 
 impl Violation for SuperfluousElseExit {
+    const FIX_AVAILABILITY: ruff_diagnostics::FixAvailability = FixAvailability::Sometimes;
+
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { branch } = self;
         format!("Unecessary {branch} after `exit` statement")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let Self { branch } = self;
+        Some(format!("Remove unnecessary '{branch}'"))
     }
 }
 
@@ -269,10 +295,17 @@ pub(crate) struct SuperfluousElseStop {
 }
 
 impl Violation for SuperfluousElseStop {
+    const FIX_AVAILABILITY: ruff_diagnostics::FixAvailability = FixAvailability::Sometimes;
+
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { branch, stop } = self;
         format!("Unecessary {branch} after `{stop}` statement")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let Self { branch, .. } = self;
+        Some(format!("Remove unnecessary '{branch}'"))
     }
 }
 
@@ -284,21 +317,19 @@ pub(crate) fn check_superfluous_returns<'a>(
     let text = node.child(0)?.to_text(src.source_text())?;
     let kind = BlockExit::try_from(text).ok()?;
 
-    if let Some(parent) = node.parent().as_ref() {
-        // Skip this node if it's inside an inline IF, because the rule does not apply
-        if parent.inline_if_statement() {
-            return None;
-        }
+    // Skip this node if it's inside an inline IF, because the rule does not apply
+    if node.parent()?.inline_if_statement() {
+        return None;
     }
-    let sibling = node.next_non_comment_statement();
-    let branch = match sibling?.kind() {
+    let sibling = node.next_non_comment_statement()?;
+    let branch = match sibling.kind() {
         "else_clause" => "else",
         "elseif_clause" => "else-if",
         _ => return None,
     }
     .to_string();
 
-    match kind {
+    let mut diagnostic = match kind {
         BlockExit::Return => Diagnostic::from_node_if_rule_enabled(
             settings,
             Rule::SuperfluousElseReturn,
@@ -335,7 +366,101 @@ pub(crate) fn check_superfluous_returns<'a>(
             },
             node,
         ),
+    };
+
+    if let Some(ref mut diagnostic) = diagnostic
+        && let Some(fix) = fix_superfluous_return(&sibling, src)
+    {
+        diagnostic.set_fix(fix);
     }
+
+    diagnostic
+}
+
+fn fix_superfluous_return<'a>(branch: &'a Node, src: &'a SourceFile) -> Option<Fix> {
+    // TODO(peter): use passed-in stylist
+    let stylist = Stylist::from_ast(branch, src);
+
+    let parent_if = branch.parent()?;
+    if let Some(block_label) = parent_if.child_with_name("block_label_start_expression") {
+        // TODO: This is overly cautious, we really only need to bail if this
+        // branch contains a reference to the block label. If not, we could move
+        // it from the original `end if` to the newly inserted one. We could
+        // probably also handle it if the label _only_ appears in this branch
+        let label_text = block_label
+            .child(0)?
+            .to_text(src.source_text())?
+            .to_lowercase();
+        debug!("Can't fix superfluous `else` due to block label '{label_text}'");
+        return None;
+    }
+
+    let mut rest = Vec::new();
+
+    let indentation = branch.indentation(src);
+
+    let keyword = branch.child(0)?;
+    let edit = if keyword.kind() == "elseif" {
+        let mut replacement = String::new();
+        replacement.push_str(&"end if".to_capitalisation(stylist.capitalisation()));
+        replacement.push_str(stylist.line_ending().as_str());
+        replacement.push_str(&indentation);
+        replacement.push_str(&"if".to_capitalisation(stylist.capitalisation()));
+
+        keyword.edit_replacement(src, replacement)
+    } else {
+        // Indent the `if`
+        if branch.kind() == "elseif_clause" {
+            rest.push(Edit::replacement(
+                indentation.clone(),
+                keyword.end_textsize(),
+                branch.child(1)?.start_textsize(),
+            ));
+        }
+
+        // This covers both `else` and `else if`, replacing the `else`
+        let mut replacement = String::new();
+        replacement.push_str(&"end if".to_capitalisation(stylist.capitalisation()));
+        replacement.push_str(stylist.line_ending().as_str());
+        keyword.edit_replacement(src, replacement)
+    };
+
+    // for `else`, we need to also remove the existing `end if`, and then
+    // unindent the block one level
+    if branch.kind() == "else_clause" {
+        let end_if = parent_if.named_children(&mut parent_if.walk()).last()?;
+        rest.push(end_if.edit_delete(src));
+
+        // Start reindenting from start of next line
+        let lines = src.to_source_code();
+        let else_line_num = lines.line_index(keyword.end_textsize());
+        let next_line_num = else_line_num.saturating_add(1);
+
+        let start = lines.line_start(next_line_num);
+        let end = branch.children(&mut branch.walk()).last()?.end_textsize();
+        let branch_range = TextRange::new(start, end);
+
+        let branch_text = src.slice(branch_range);
+        // Note that tabs, statement labels, and unindented comments will
+        // probably mess things up in various ways!
+        let replacement = redent(branch_text, &indentation, stylist.line_ending());
+
+        rest.push(Edit::range_replacement(replacement, branch_range));
+
+        // There's a comment on the same line, fix up the whitespace
+        if let Some(next_sib) = keyword.next_named_sibling()
+            && next_sib.kind() == "comment"
+            && else_line_num == lines.line_index(next_sib.start_textsize())
+        {
+            rest.push(Edit::replacement(
+                indentation,
+                keyword.end_textsize(),
+                next_sib.start_textsize(),
+            ));
+        }
+    };
+
+    Some(Fix::safe_edits(edit, rest))
 }
 
 #[cfg(test)]
