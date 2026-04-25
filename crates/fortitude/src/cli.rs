@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 
 use fortitude_linter::{
     fs::{FilePattern, GlobPath},
+    line_filter::{Filter, FilterMap},
     logging::LogLevel,
     rule_selector::{RuleSelector, clap_completion::RuleSelectorParser, collect_per_file_ignores},
     settings::{
@@ -361,6 +362,43 @@ pub struct CheckCommand {
     #[clap(long, overrides_with("respect_gitignore"), hide = true, action = SetTrue)]
     pub no_respect_gitignore: Option<bool>,
 
+    /// List of files with line ranges to filter warnings. The format is JSON
+    /// array of objects:
+    ///  [
+    ///    {"name": "file1.f90", "lines": [[6, 7], [42, 45]]},
+    ///    {"name": "file2.f90"}
+    ///  ]
+    /// Line ranges include the end.
+    #[arg(
+        long,
+        help_heading = "File selection",
+        value_name = "LINE_FILTER",
+        conflicts_with = "git_staged",
+        conflicts_with = "git_since"
+    )]
+    pub line_filter: Option<Filter>,
+
+    /// Only run on files that have been staged in a git repository
+    #[arg(
+        long,
+        help_heading = "File selection",
+        conflicts_with = "line_filter",
+        conflicts_with = "git_since"
+    )]
+    pub git_staged: bool,
+
+    /// Only run on files that differ between the files in the working directory
+    /// of a git repository and `COMMIT`. `COMMIT` can be most things that look
+    /// like a commit, for example `main`, `0f3abc`, `HEAD~`
+    #[arg(
+        long,
+        help_heading = "File selection",
+        value_name = "COMMIT",
+        conflicts_with = "line_filter",
+        conflicts_with = "git_staged"
+    )]
+    pub git_since: Option<String>,
+
     // Options for individual rules
     /// Set the maximum allowable line length.
     #[arg(long, help_heading = "Per-Rule Options")]
@@ -400,7 +438,10 @@ pub struct CheckArguments {
     pub exit_non_zero_on_fix: bool,
     pub exit_zero: bool,
     pub files: Vec<PathBuf>,
+    pub git_staged: bool,
+    pub git_since: Option<String>,
     pub ignore_allow_comments: IgnoreAllowComments,
+    pub line_filter: Option<FilterMap>,
     pub output_file: Option<PathBuf>,
     pub show_files: bool,
     pub show_settings: bool,
@@ -464,6 +505,9 @@ impl CheckCommand {
             exit_non_zero_on_fix: self.exit_non_zero_on_fix,
             exit_zero: self.exit_zero,
             files: self.files,
+            git_staged: self.git_staged,
+            git_since: self.git_since,
+            line_filter: self.line_filter.map(FilterMap::new),
             ignore_allow_comments: self.ignore_allow_comments.into(),
             output_file: self.output_file,
             show_files: self.show_files,

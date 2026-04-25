@@ -209,6 +209,34 @@ Fortitude can automatically remove unused `allow` comments.
 You can also temporarily ignore these suppression comments with `--ignore-allow-comments`
 on the command line.
 
+### Running `fortitude` on only modified files
+
+!!! info "_Introduced in 0.9.0_"
+
+Rather than running Fortitude on all the files in a project, you may wish to
+restrict it to only those files which have been modified, for example when
+starting to use Fortitude on an existing project. For this, there are two
+command line flags you can use:
+
+- `--git-staged` will only run Fortitude on those lines in files which have been
+  staged in a git repository
+- `--git-since <commit>` will run Fortitude on lines in files have been modified
+  since the given commit/branch/reference -- for example, `main`, `01c34f`,
+  `HEAD~`
+
+There is also `--line-filter` for advanced users, which lets you specify exactly
+which lines of which files to run on.
+
+These flags work with the passed set of paths, so it's possible to filter to
+files that have been staged in a given directory, for example:
+
+```console
+# Run only on lines in files in `subdir` that have been staged
+$ fortitude check --git-staged subdir/
+# Run only on those lines in `foo.f90` that have been modified since `main`
+$ fortitude check --git-since main foo.f90
+```
+
 ## Learning more about a rule
 
 The `explain` command can be used to get extra information about any rules. Without any

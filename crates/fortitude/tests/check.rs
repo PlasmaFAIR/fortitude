@@ -93,6 +93,16 @@ macro_rules! apply_common_filters {
     }
 }
 
+macro_rules! apply_git_repo_filters {
+    () => {
+        // We need to additionally filter relative paths, because macs get an
+        // absolute path which the common filters filter
+        let mut settings = insta::Settings::clone_current();
+        settings.add_filter(r"test\.f90:\d+:\d+:", "[TEMP_FILE]");
+        let _bound = settings.bind_to_scope();
+    };
+}
+
 #[test]
 fn check_file_doesnt_exist() -> anyhow::Result<()> {
     apply_common_filters!();
@@ -2681,6 +2691,249 @@ end program foo
      end program foo
 
     Would fix 1 error.
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[test]
+fn line_filter() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+  logical*4, parameter :: false = .false.
+  ! more lines
+  !
+  !
+  logical*4 :: maybe
+end program test
+"#,
+    )?;
+
+    // Note: path must be formatted with Debug to ensure backslashes on Windows
+    // are properly escaped
+    let filter_arg = format!(
+        "--line-filter=[{{\"name\":{:?}, \"lines\":[[1, 3], [8, 8]]}}]",
+        std::fs::canonicalize(&test_file)?
+    );
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args([
+                             &filter_arg,
+                             "--select=PORT011",
+                         ]).build(),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
+      |
+    2 | program test
+    3 |   logical*4, parameter :: true = .true.
+      |           ^ PORT011
+    4 |   logical*4, parameter :: false = .false.
+    5 |   ! more lines
+      |
+      = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
+      |
+    6 |   !
+    7 |   !
+    8 |   logical*4 :: maybe
+      |           ^ PORT011
+    9 | end program test
+      |
+      = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+/// Helper for a tests in a git repo with commit changes
+fn set_up_git_repo<P: AsRef<Path>>(
+    tempdir: P,
+) -> anyhow::Result<(git2::Repository, PathBuf, git2::Oid)> {
+    let filename = Path::new("test.f90");
+    let test_file = fortitude_linter::fs::fully_normalize_path_to(
+        tempdir.as_ref().join(filename),
+        fortitude_linter::fs::normalize_path(&tempdir),
+    );
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+  ! space out the diff hunks
+
+
+
+  logical*4, parameter :: false = .false.
+
+
+
+end program test
+"#,
+    )?;
+
+    // This is a bit of a complicated test, because we need to make a new repo,
+    // make a commit, and then stage a change
+    // git init
+    let repo = git2::Repository::init(&tempdir)?;
+    // git add
+    let mut index = repo.index()?;
+    index.add_path(filename)?;
+    index.write()?;
+    // git commit
+    let oid = index.write_tree()?;
+    let tree = repo.find_tree(oid)?;
+    let sig = git2::Signature::now("fortitude_test", "fortitude@example.com")?;
+    let first_commit = repo.commit(Some("HEAD"), &sig, &sig, "initial commit", &tree, &[])?;
+
+    // `tree` is borrowing `repo`, preventing us from returning it
+    drop(tree);
+
+    Ok((repo, test_file, first_commit))
+}
+
+const GIT_TEST_FILE_UPDATED_CONTENTS: &str = r#"
+program test
+  logical*4, parameter :: true = .true.
+  ! space out the diff hunks
+
+
+
+  logical*4, parameter :: false = .false.
+
+
+
+  ! new line, only this should get flagged
+  logical*4 :: maybe
+end program test
+"#;
+
+/// Test changes that have been staged in a git repo
+#[test]
+fn git_staged() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let filename = Path::new("test.f90");
+    let (repo, test_file, _) = set_up_git_repo(tempdir.path())?;
+    // Now edit the file
+    fs::write(&test_file, GIT_TEST_FILE_UPDATED_CONTENTS)?;
+
+    // git add
+    let mut index = repo.index()?;
+    index.add_path(filename)?;
+    index.write()?;
+
+    apply_common_filters!();
+    apply_git_repo_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args([
+                             "--git-staged",
+                             "--select=PORT011",
+                         ]).build()
+                         .current_dir(tempdir.path()),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
+       |
+    12 |   ! new line, only this should get flagged
+    13 |   logical*4 :: maybe
+       |           ^ PORT011
+    14 | end program test
+       |
+       = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+/// Test filtering to just the commited changes on a git branch
+#[test]
+fn git_since() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let filename = Path::new("test.f90");
+    let (repo, test_file, commit_oid) = set_up_git_repo(tempdir.path())?;
+
+    // git switch -c
+    let commit = repo.find_commit(commit_oid)?;
+    repo.branch("test-branch", &commit, false)?;
+
+    // Now edit the file
+    fs::write(&test_file, GIT_TEST_FILE_UPDATED_CONTENTS)?;
+
+    // git add
+    let mut index = repo.index()?;
+    index.add_path(filename)?;
+    index.write()?;
+    // git commit
+    let oid = index.write_tree()?;
+    let tree = repo.find_tree(oid)?;
+    let sig = git2::Signature::now("fortitude_test", "fortitude@example.com")?;
+    repo.commit(Some("HEAD"), &sig, &sig, "second commit", &tree, &[&commit])?;
+
+    apply_common_filters!();
+    apply_git_repo_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args([
+                             "--git-since",
+                             "test-branch",
+                             "--select=PORT011",
+                         ]).build()
+                         .current_dir(tempdir.path()),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] PORT011 logical kind set with number literal '4'
+       |
+    12 |   ! new line, only this should get flagged
+    13 |   logical*4 :: maybe
+       |           ^ PORT011
+    14 | end program test
+       |
+       = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
 
     ----- stderr -----
     ");
