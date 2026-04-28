@@ -2,7 +2,7 @@
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does
-Checks for floating point literals that using `d` or `D` as the exponentiation.
+Checks for floating point literals that use `d` or `D` as the exponentiation.
 
 ## Why is this bad?
 Floating point literals using `d` or `D` for the exponent, such as `1.23d2`,

@@ -23,3 +23,13 @@ end program my_program
 subroutine external_sub(x)
   print*, x
 end subroutine external_sub
+
+module my_module_external
+  implicit none (external)
+  parameter(N = 1)
+end module my_module_external
+
+real function external_func() result(x)
+  implicit real (a-z)
+  x = 3.14
+end function external_func

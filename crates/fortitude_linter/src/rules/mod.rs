@@ -160,6 +160,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "262") => (RuleGroup::Preview, None, Optional, style::inconsistent_dimension::MixedScalarArrayDeclaration),
         (Style, "263") => (RuleGroup::Preview, None, Optional, style::inconsistent_dimension::BadArrayDeclaration),
         (Style, "271") => (RuleGroup::Preview, Ast, Default, style::use_statement::UnsortedUses),
+        (Style, "291") => (RuleGroup::Preview, Ast, Default, style::literals::BareDecimal),
         (Style, "901") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooComplex),
         (Style, "902") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooManyArguments),
 
@@ -174,6 +175,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "051") => (RuleGroup::Stable, Ast, Default, obsolescent::pause_statement::PauseStatement),
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedCharacterSyntax),
         (Obsolescent, "071") => (RuleGroup::Preview, Ast, Default, obsolescent::forall_statement::ForallStatement),
+        (Obsolescent, "081") => (RuleGroup::Preview, Ast, Default, obsolescent::arithmetic_if::ArithmeticIf),
         (Obsolescent, "201") => (RuleGroup::Preview, Ast, Default, obsolescent::mpi::DeprecatedMPIInclude),
         (Obsolescent, "211") => (RuleGroup::Preview, Ast, Default, obsolescent::openmp::DeprecatedOmpInclude),
 

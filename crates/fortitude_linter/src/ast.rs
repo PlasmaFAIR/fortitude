@@ -123,6 +123,10 @@ pub trait FortitudeNode<'tree> {
     /// Get the current indentation level of the node.
     fn indentation(&self, source_file: &SourceFile) -> String;
 
+    /// Get the current indentation level of the node, assuming statement labels
+    /// are part of indentation
+    fn indentation_ignore_stmt_label(&self, source_file: &SourceFile) -> String;
+
     /// Return the edit required to remove this node.
     fn edit_delete(&self, source_file: &SourceFile) -> Edit;
 
@@ -138,6 +142,19 @@ pub trait FortitudeNode<'tree> {
 
     /// Check if the node is an if_statement and lacks an end_if_statement child
     fn inline_if_statement(&self) -> bool;
+
+    /// Get the prev sibling that isn't a comment
+    fn prev_non_comment_sibling(&self) -> Option<Node<'tree>>;
+
+    /// Get the next matching statement label that is a sibling of this node
+    fn next_statement_label_sibling<S: AsRef<str>>(
+        &self,
+        label: S,
+        src: &str,
+    ) -> Option<Node<'tree>>;
+
+    /// Get the next matching statement label
+    fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree>>;
 
     /// Get the module name from a use statement node.
     /// Returns None if the node is not a use statement or has no module_name child.
@@ -230,6 +247,15 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         line.chars().take_while(|&c| c.is_whitespace()).collect()
     }
 
+    fn indentation_ignore_stmt_label(&self, source_file: &SourceFile) -> String {
+        let src = source_file.to_source_code();
+        let start_byte = self.start_textsize();
+        let start_index = src.line_index(start_byte);
+        let start_line = src.line_start(start_index);
+        let width = (start_byte - start_line).to_usize();
+        format!("{:width$}", " ")
+    }
+
     fn edit_delete(&self, source_file: &SourceFile) -> Edit {
         // If deletion results in an empty line (or multiple), remove it
         // TODO handle case where removal should also remove a preceding comma
@@ -290,6 +316,48 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
 
     fn inline_if_statement(&self) -> bool {
         self.kind() == "if_statement" && self.child_with_name("end_if_statement").is_none()
+    }
+
+    fn prev_non_comment_sibling(&self) -> Option<Node<'tree1>> {
+        let mut sibling = self.prev_named_sibling();
+        while let Some(prev_sibling) = sibling {
+            if prev_sibling.kind() != "comment" {
+                return Some(prev_sibling);
+            }
+            sibling = prev_sibling.prev_named_sibling();
+        }
+        None
+    }
+
+    fn next_statement_label_sibling<S: AsRef<str>>(
+        &self,
+        label: S,
+        src: &str,
+    ) -> Option<Node<'tree1>> {
+        let mut sibling = self.next_named_sibling();
+        while let Some(next_sibling) = sibling {
+            if next_sibling.kind() == "statement_label"
+                && next_sibling.to_text(src) == Some(label.as_ref())
+            {
+                return Some(next_sibling);
+            }
+            sibling = next_sibling.next_named_sibling();
+        }
+        None
+    }
+
+    fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree1>> {
+        if let Some(next) = self.next_statement_label_sibling(label.as_ref(), src) {
+            return Some(next);
+        }
+        let mut current = *self;
+        while let Some(parent) = current.parent() {
+            if let Some(sibling) = parent.next_statement_label_sibling(label.as_ref(), src) {
+                return Some(sibling);
+            }
+            current = parent;
+        }
+        None
     }
 
     fn module_name(&self, src: &str) -> Option<String> {

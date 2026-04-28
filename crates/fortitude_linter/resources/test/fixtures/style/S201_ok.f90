@@ -20,7 +20,7 @@ contains
 end module my_module
 
 program my_program
-  implicit none
+  implicit none (type)
 
   write(*,*) 42
 
@@ -33,4 +33,7 @@ contains
     integer, intent(inout) :: x
     x = x * 2
   end subroutine mysub2
+  subroutine mysub3(x)
+    implicit real (a-z)
+  end subroutine mysub3
 end program my_program

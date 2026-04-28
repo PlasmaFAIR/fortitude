@@ -91,7 +91,7 @@ tracing-subscriber = { version = "0.3.18", default-features = false, features = 
 ] }
 tree-sitter = "~0.25.0"
 tree-sitter-cli = "~0.25.0"
-tree-sitter-fortran = { git = "https://github.com/stadelmanma/tree-sitter-fortran.git", rev = "95b728f" }
+tree-sitter-fortran = { git = "https://github.com/stadelmanma/tree-sitter-fortran.git", rev = "2880b7a" }
 toml = "0.8.19"
 unicode-width = "0.2.0"
 url = { version = "2.5.0" }
