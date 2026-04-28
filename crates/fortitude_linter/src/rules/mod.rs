@@ -160,6 +160,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "262") => (RuleGroup::Preview, None, Optional, style::inconsistent_dimension::MixedScalarArrayDeclaration),
         (Style, "263") => (RuleGroup::Preview, None, Optional, style::inconsistent_dimension::BadArrayDeclaration),
         (Style, "271") => (RuleGroup::Preview, Ast, Default, style::use_statement::UnsortedUses),
+        (Style, "281") => (RuleGroup::Preview, Ast, Default, style::save::SuperfluousSave),
         (Style, "291") => (RuleGroup::Preview, Ast, Default, style::literals::BareDecimal),
         (Style, "901") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooComplex),
         (Style, "902") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooManyArguments),
