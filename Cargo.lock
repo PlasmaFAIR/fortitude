@@ -2593,9 +2593,10 @@ dependencies = [
 [[package]]
 name = "tree-sitter-fortran"
 version = "0.5.1"
-source = "git+https://github.com/stadelmanma/tree-sitter-fortran.git?rev=2880b7a#2880b7aab4fb7cc618de1ef3d4c6d93b2396c031"
+source = "git+https://github.com/stadelmanma/tree-sitter-fortran.git?rev=32a3e63#32a3e63622933bccd48e88aa27e3ca16b3e449df"
 dependencies = [
  "cc",
+ "serde_json",
  "tree-sitter-language",
 ]
 

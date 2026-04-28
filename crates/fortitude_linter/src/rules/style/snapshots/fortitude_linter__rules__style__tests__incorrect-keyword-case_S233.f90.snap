@@ -507,26 +507,6 @@ expression: diagnostics
 20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 21 21 |     FINAL :: FINALIZE_TEST
 
-./resources/test/fixtures/style/S233.f90:18:16: S233 [*] Keyword 'VALUE' should be 'value'
-   |
-17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-18 |     INTEGER :: VALUE
-   |                ^^^^^ S233
-19 | CONTAINS
-20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
-   |
-   = help: Change to 'value'
-
-ℹ Safe fix
-15 15 | END INTERFACE
-16 16 | 
-17 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-18    |-    INTEGER :: VALUE
-   18 |+    INTEGER :: value
-19 19 | CONTAINS
-20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
-21 21 |     FINAL :: FINALIZE_TEST
-
 ./resources/test/fixtures/style/S233.f90:19:1: S233 [*] Keyword 'CONTAINS' should be 'contains'
    |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
@@ -1694,7 +1674,7 @@ expression: diagnostics
    63 |+character(LEN=10) :: STR
 64 64 | COMPLEX :: CMPLX
 65 65 | 
-66 66 | TYPE(TEST_TYPE) :: OBJ
+66 66 | INTEGER :: ENDIF, IF, ELSEIF
 
 ./resources/test/fixtures/style/S233.f90:64:1: S233 [*] Keyword 'COMPLEX' should be 'complex'
    |
@@ -1703,7 +1683,7 @@ expression: diagnostics
 64 | COMPLEX :: CMPLX
    | ^^^^^^^ S233
 65 |
-66 | TYPE(TEST_TYPE) :: OBJ
+66 | INTEGER :: ENDIF, IF, ELSEIF
    |
    = help: Change to 'complex'
 
@@ -1714,1770 +1694,1996 @@ expression: diagnostics
 64    |-COMPLEX :: CMPLX
    64 |+complex :: CMPLX
 65 65 | 
-66 66 | TYPE(TEST_TYPE) :: OBJ
-67 67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+66 66 | INTEGER :: ENDIF, IF, ELSEIF
+67 67 | INTEGER, DIMENSION(2) :: FUNCTION
 
-./resources/test/fixtures/style/S233.f90:66:1: S233 [*] Keyword 'TYPE' should be 'type'
+./resources/test/fixtures/style/S233.f90:66:1: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
 64 | COMPLEX :: CMPLX
 65 |
-66 | TYPE(TEST_TYPE) :: OBJ
-   | ^^^^ S233
-67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+66 | INTEGER :: ENDIF, IF, ELSEIF
+   | ^^^^^^^ S233
+67 | INTEGER, DIMENSION(2) :: FUNCTION
+68 | ENDIF = 3; IF = 2
    |
-   = help: Change to 'type'
+   = help: Change to 'integer'
 
 ℹ Safe fix
 63 63 | CHARACTER(LEN=10) :: STR
 64 64 | COMPLEX :: CMPLX
 65 65 | 
-66    |-TYPE(TEST_TYPE) :: OBJ
-   66 |+type(TEST_TYPE) :: OBJ
-67 67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-68 68 | 
-69 69 | ENUM, BIND(C)
+66    |-INTEGER :: ENDIF, IF, ELSEIF
+   66 |+integer :: ENDIF, IF, ELSEIF
+67 67 | INTEGER, DIMENSION(2) :: FUNCTION
+68 68 | ENDIF = 3; IF = 2
+69 69 | 
 
-./resources/test/fixtures/style/S233.f90:67:1: S233 [*] Keyword 'CLASS' should be 'class'
+./resources/test/fixtures/style/S233.f90:67:1: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
-66 | TYPE(TEST_TYPE) :: OBJ
-67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-   | ^^^^^ S233
-68 |
-69 | ENUM, BIND(C)
-   |
-   = help: Change to 'class'
-
-ℹ Safe fix
-64 64 | COMPLEX :: CMPLX
-65 65 | 
-66 66 | TYPE(TEST_TYPE) :: OBJ
-67    |-CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-   67 |+class(BASE_TYPE), ALLOCATABLE :: POLY
-68 68 | 
-69 69 | ENUM, BIND(C)
-70 70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-
-./resources/test/fixtures/style/S233.f90:67:19: S233 [*] Keyword 'ALLOCATABLE' should be 'allocatable'
-   |
-66 | TYPE(TEST_TYPE) :: OBJ
-67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-   |                   ^^^^^^^^^^^ S233
-68 |
-69 | ENUM, BIND(C)
-   |
-   = help: Change to 'allocatable'
-
-ℹ Safe fix
-64 64 | COMPLEX :: CMPLX
-65 65 | 
-66 66 | TYPE(TEST_TYPE) :: OBJ
-67    |-CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-   67 |+CLASS(BASE_TYPE), allocatable :: POLY
-68 68 | 
-69 69 | ENUM, BIND(C)
-70 70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-
-./resources/test/fixtures/style/S233.f90:69:1: S233 [*] Keyword 'ENUM' should be 'enum'
-   |
-67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-68 |
-69 | ENUM, BIND(C)
-   | ^^^^ S233
-70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71 | END ENUM
-   |
-   = help: Change to 'enum'
-
-ℹ Safe fix
-66 66 | TYPE(TEST_TYPE) :: OBJ
-67 67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-68 68 | 
-69    |-ENUM, BIND(C)
-   69 |+enum, BIND(C)
-70 70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71 71 | END ENUM
-72 72 | 
-
-./resources/test/fixtures/style/S233.f90:69:7: S233 [*] Keyword 'BIND' should be 'bind'
-   |
-67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-68 |
-69 | ENUM, BIND(C)
-   |       ^^^^ S233
-70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71 | END ENUM
-   |
-   = help: Change to 'bind'
-
-ℹ Safe fix
-66 66 | TYPE(TEST_TYPE) :: OBJ
-67 67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-68 68 | 
-69    |-ENUM, BIND(C)
-   69 |+ENUM, bind(C)
-70 70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71 71 | END ENUM
-72 72 | 
-
-./resources/test/fixtures/style/S233.f90:70:5: S233 [*] Keyword 'ENUMERATOR' should be 'enumerator'
-   |
-69 | ENUM, BIND(C)
-70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-   |     ^^^^^^^^^^ S233
-71 | END ENUM
-   |
-   = help: Change to 'enumerator'
-
-ℹ Safe fix
-67 67 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-68 68 | 
-69 69 | ENUM, BIND(C)
-70    |-    ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-   70 |+    enumerator :: RED = 1, GREEN = 2, BLUE = 3
-71 71 | END ENUM
-72 72 | 
-73 73 | ALLOCATE(ARR(N))
-
-./resources/test/fixtures/style/S233.f90:71:1: S233 [*] Keyword 'END' should be 'end'
-   |
-69 | ENUM, BIND(C)
-70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71 | END ENUM
-   | ^^^ S233
-72 |
-73 | ALLOCATE(ARR(N))
-   |
-   = help: Change to 'end'
-
-ℹ Safe fix
-68 68 | 
-69 69 | ENUM, BIND(C)
-70 70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71    |-END ENUM
-   71 |+end ENUM
-72 72 | 
-73 73 | ALLOCATE(ARR(N))
-74 74 | ARR = 0.0
-
-./resources/test/fixtures/style/S233.f90:71:5: S233 [*] Keyword 'ENUM' should be 'enum'
-   |
-69 | ENUM, BIND(C)
-70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71 | END ENUM
-   |     ^^^^ S233
-72 |
-73 | ALLOCATE(ARR(N))
-   |
-   = help: Change to 'enum'
-
-ℹ Safe fix
-68 68 | 
-69 69 | ENUM, BIND(C)
-70 70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71    |-END ENUM
-   71 |+END enum
-72 72 | 
-73 73 | ALLOCATE(ARR(N))
-74 74 | ARR = 0.0
-
-./resources/test/fixtures/style/S233.f90:73:1: S233 [*] Keyword 'ALLOCATE' should be 'allocate'
-   |
-71 | END ENUM
-72 |
-73 | ALLOCATE(ARR(N))
-   | ^^^^^^^^ S233
-74 | ARR = 0.0
-   |
-   = help: Change to 'allocate'
-
-ℹ Safe fix
-70 70 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-71 71 | END ENUM
-72 72 | 
-73    |-ALLOCATE(ARR(N))
-   73 |+allocate(ARR(N))
-74 74 | ARR = 0.0
-75 75 | 
-76 76 | ALLOCATE(TEST_TYPE :: POLY)
-
-./resources/test/fixtures/style/S233.f90:76:1: S233 [*] Keyword 'ALLOCATE' should be 'allocate'
-   |
-74 | ARR = 0.0
-75 |
-76 | ALLOCATE(TEST_TYPE :: POLY)
-   | ^^^^^^^^ S233
-77 |
-78 | ASSOCIATE (TMP => ARR)
-   |
-   = help: Change to 'allocate'
-
-ℹ Safe fix
-73 73 | ALLOCATE(ARR(N))
-74 74 | ARR = 0.0
-75 75 | 
-76    |-ALLOCATE(TEST_TYPE :: POLY)
-   76 |+allocate(TEST_TYPE :: POLY)
-77 77 | 
-78 78 | ASSOCIATE (TMP => ARR)
-79 79 |     TMP = 1.0
-
-./resources/test/fixtures/style/S233.f90:78:1: S233 [*] Keyword 'ASSOCIATE' should be 'associate'
-   |
-76 | ALLOCATE(TEST_TYPE :: POLY)
-77 |
-78 | ASSOCIATE (TMP => ARR)
-   | ^^^^^^^^^ S233
-79 |     TMP = 1.0
-80 | END ASSOCIATE
-   |
-   = help: Change to 'associate'
-
-ℹ Safe fix
-75 75 | 
-76 76 | ALLOCATE(TEST_TYPE :: POLY)
-77 77 | 
-78    |-ASSOCIATE (TMP => ARR)
-   78 |+associate (TMP => ARR)
-79 79 |     TMP = 1.0
-80 80 | END ASSOCIATE
-81 81 | 
-
-./resources/test/fixtures/style/S233.f90:80:1: S233 [*] Keyword 'END' should be 'end'
-   |
-78 | ASSOCIATE (TMP => ARR)
-79 |     TMP = 1.0
-80 | END ASSOCIATE
-   | ^^^ S233
-81 |
-82 | BLOCK
-   |
-   = help: Change to 'end'
-
-ℹ Safe fix
-77 77 | 
-78 78 | ASSOCIATE (TMP => ARR)
-79 79 |     TMP = 1.0
-80    |-END ASSOCIATE
-   80 |+end ASSOCIATE
-81 81 | 
-82 82 | BLOCK
-83 83 |     INTEGER :: LOCAL
-
-./resources/test/fixtures/style/S233.f90:80:5: S233 [*] Keyword 'ASSOCIATE' should be 'associate'
-   |
-78 | ASSOCIATE (TMP => ARR)
-79 |     TMP = 1.0
-80 | END ASSOCIATE
-   |     ^^^^^^^^^ S233
-81 |
-82 | BLOCK
-   |
-   = help: Change to 'associate'
-
-ℹ Safe fix
-77 77 | 
-78 78 | ASSOCIATE (TMP => ARR)
-79 79 |     TMP = 1.0
-80    |-END ASSOCIATE
-   80 |+END associate
-81 81 | 
-82 82 | BLOCK
-83 83 |     INTEGER :: LOCAL
-
-./resources/test/fixtures/style/S233.f90:82:1: S233 [*] Keyword 'BLOCK' should be 'block'
-   |
-80 | END ASSOCIATE
-81 |
-82 | BLOCK
-   | ^^^^^ S233
-83 |     INTEGER :: LOCAL
-84 |     LOCAL = 42
-   |
-   = help: Change to 'block'
-
-ℹ Safe fix
-79 79 |     TMP = 1.0
-80 80 | END ASSOCIATE
-81 81 | 
-82    |-BLOCK
-   82 |+block
-83 83 |     INTEGER :: LOCAL
-84 84 |     LOCAL = 42
-85 85 | END BLOCK
-
-./resources/test/fixtures/style/S233.f90:83:5: S233 [*] Keyword 'INTEGER' should be 'integer'
-   |
-82 | BLOCK
-83 |     INTEGER :: LOCAL
-   |     ^^^^^^^ S233
-84 |     LOCAL = 42
-85 | END BLOCK
+66 | INTEGER :: ENDIF, IF, ELSEIF
+67 | INTEGER, DIMENSION(2) :: FUNCTION
+   | ^^^^^^^ S233
+68 | ENDIF = 3; IF = 2
    |
    = help: Change to 'integer'
 
 ℹ Safe fix
-80 80 | END ASSOCIATE
-81 81 | 
-82 82 | BLOCK
-83    |-    INTEGER :: LOCAL
-   83 |+    integer :: LOCAL
-84 84 |     LOCAL = 42
-85 85 | END BLOCK
-86 86 | 
+64 64 | COMPLEX :: CMPLX
+65 65 | 
+66 66 | INTEGER :: ENDIF, IF, ELSEIF
+67    |-INTEGER, DIMENSION(2) :: FUNCTION
+   67 |+integer, DIMENSION(2) :: FUNCTION
+68 68 | ENDIF = 3; IF = 2
+69 69 | 
+70 70 | TYPE(TEST_TYPE) :: OBJ
 
-./resources/test/fixtures/style/S233.f90:85:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:67:10: S233 [*] Keyword 'DIMENSION' should be 'dimension'
    |
-83 |     INTEGER :: LOCAL
-84 |     LOCAL = 42
-85 | END BLOCK
+66 | INTEGER :: ENDIF, IF, ELSEIF
+67 | INTEGER, DIMENSION(2) :: FUNCTION
+   |          ^^^^^^^^^ S233
+68 | ENDIF = 3; IF = 2
+   |
+   = help: Change to 'dimension'
+
+ℹ Safe fix
+64 64 | COMPLEX :: CMPLX
+65 65 | 
+66 66 | INTEGER :: ENDIF, IF, ELSEIF
+67    |-INTEGER, DIMENSION(2) :: FUNCTION
+   67 |+INTEGER, dimension(2) :: FUNCTION
+68 68 | ENDIF = 3; IF = 2
+69 69 | 
+70 70 | TYPE(TEST_TYPE) :: OBJ
+
+./resources/test/fixtures/style/S233.f90:70:1: S233 [*] Keyword 'TYPE' should be 'type'
+   |
+68 | ENDIF = 3; IF = 2
+69 |
+70 | TYPE(TEST_TYPE) :: OBJ
+   | ^^^^ S233
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+   |
+   = help: Change to 'type'
+
+ℹ Safe fix
+67 67 | INTEGER, DIMENSION(2) :: FUNCTION
+68 68 | ENDIF = 3; IF = 2
+69 69 | 
+70    |-TYPE(TEST_TYPE) :: OBJ
+   70 |+type(TEST_TYPE) :: OBJ
+71 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 72 | 
+73 73 | ENUM, BIND(C)
+
+./resources/test/fixtures/style/S233.f90:71:1: S233 [*] Keyword 'CLASS' should be 'class'
+   |
+70 | TYPE(TEST_TYPE) :: OBJ
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+   | ^^^^^ S233
+72 |
+73 | ENUM, BIND(C)
+   |
+   = help: Change to 'class'
+
+ℹ Safe fix
+68 68 | ENDIF = 3; IF = 2
+69 69 | 
+70 70 | TYPE(TEST_TYPE) :: OBJ
+71    |-CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+   71 |+class(BASE_TYPE), ALLOCATABLE :: POLY
+72 72 | 
+73 73 | ENUM, BIND(C)
+74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+
+./resources/test/fixtures/style/S233.f90:71:19: S233 [*] Keyword 'ALLOCATABLE' should be 'allocatable'
+   |
+70 | TYPE(TEST_TYPE) :: OBJ
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+   |                   ^^^^^^^^^^^ S233
+72 |
+73 | ENUM, BIND(C)
+   |
+   = help: Change to 'allocatable'
+
+ℹ Safe fix
+68 68 | ENDIF = 3; IF = 2
+69 69 | 
+70 70 | TYPE(TEST_TYPE) :: OBJ
+71    |-CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+   71 |+CLASS(BASE_TYPE), allocatable :: POLY
+72 72 | 
+73 73 | ENUM, BIND(C)
+74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+
+./resources/test/fixtures/style/S233.f90:73:1: S233 [*] Keyword 'ENUM' should be 'enum'
+   |
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 |
+73 | ENUM, BIND(C)
+   | ^^^^ S233
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 | END ENUM
+   |
+   = help: Change to 'enum'
+
+ℹ Safe fix
+70 70 | TYPE(TEST_TYPE) :: OBJ
+71 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 72 | 
+73    |-ENUM, BIND(C)
+   73 |+enum, BIND(C)
+74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 75 | END ENUM
+76 76 | 
+
+./resources/test/fixtures/style/S233.f90:73:7: S233 [*] Keyword 'BIND' should be 'bind'
+   |
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 |
+73 | ENUM, BIND(C)
+   |       ^^^^ S233
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 | END ENUM
+   |
+   = help: Change to 'bind'
+
+ℹ Safe fix
+70 70 | TYPE(TEST_TYPE) :: OBJ
+71 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 72 | 
+73    |-ENUM, BIND(C)
+   73 |+ENUM, bind(C)
+74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 75 | END ENUM
+76 76 | 
+
+./resources/test/fixtures/style/S233.f90:74:5: S233 [*] Keyword 'ENUMERATOR' should be 'enumerator'
+   |
+73 | ENUM, BIND(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+   |     ^^^^^^^^^^ S233
+75 | END ENUM
+   |
+   = help: Change to 'enumerator'
+
+ℹ Safe fix
+71 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 72 | 
+73 73 | ENUM, BIND(C)
+74    |-    ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+   74 |+    enumerator :: RED = 1, GREEN = 2, BLUE = 3
+75 75 | END ENUM
+76 76 | 
+77 77 | IF (ENDIF == 2) then
+
+./resources/test/fixtures/style/S233.f90:75:1: S233 [*] Keyword 'END' should be 'end'
+   |
+73 | ENUM, BIND(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 | END ENUM
    | ^^^ S233
-86 |
-87 | CRITICAL
+76 |
+77 | IF (ENDIF == 2) then
    |
    = help: Change to 'end'
 
 ℹ Safe fix
-82 82 | BLOCK
-83 83 |     INTEGER :: LOCAL
-84 84 |     LOCAL = 42
-85    |-END BLOCK
-   85 |+end BLOCK
-86 86 | 
-87 87 | CRITICAL
-88 88 |     PRINT *, "CRITICAL SECTION"
+72 72 | 
+73 73 | ENUM, BIND(C)
+74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75    |-END ENUM
+   75 |+end ENUM
+76 76 | 
+77 77 | IF (ENDIF == 2) then
+78 78 |     ENDIF = 5
 
-./resources/test/fixtures/style/S233.f90:85:5: S233 [*] Keyword 'BLOCK' should be 'block'
+./resources/test/fixtures/style/S233.f90:75:5: S233 [*] Keyword 'ENUM' should be 'enum'
    |
-83 |     INTEGER :: LOCAL
-84 |     LOCAL = 42
-85 | END BLOCK
-   |     ^^^^^ S233
-86 |
-87 | CRITICAL
+73 | ENUM, BIND(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 | END ENUM
+   |     ^^^^ S233
+76 |
+77 | IF (ENDIF == 2) then
    |
-   = help: Change to 'block'
-
-ℹ Safe fix
-82 82 | BLOCK
-83 83 |     INTEGER :: LOCAL
-84 84 |     LOCAL = 42
-85    |-END BLOCK
-   85 |+END block
-86 86 | 
-87 87 | CRITICAL
-88 88 |     PRINT *, "CRITICAL SECTION"
-
-./resources/test/fixtures/style/S233.f90:87:1: S233 [*] Keyword 'CRITICAL' should be 'critical'
-   |
-85 | END BLOCK
-86 |
-87 | CRITICAL
-   | ^^^^^^^^ S233
-88 |     PRINT *, "CRITICAL SECTION"
-89 | END CRITICAL
-   |
-   = help: Change to 'critical'
+   = help: Change to 'enum'
 
 ℹ Safe fix
-84 84 |     LOCAL = 42
-85 85 | END BLOCK
-86 86 | 
-87    |-CRITICAL
-   87 |+critical
-88 88 |     PRINT *, "CRITICAL SECTION"
-89 89 | END CRITICAL
-90 90 | 
+72 72 | 
+73 73 | ENUM, BIND(C)
+74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75    |-END ENUM
+   75 |+END enum
+76 76 | 
+77 77 | IF (ENDIF == 2) then
+78 78 |     ENDIF = 5
 
-./resources/test/fixtures/style/S233.f90:88:5: S233 [*] Keyword 'PRINT' should be 'print'
+./resources/test/fixtures/style/S233.f90:77:1: S233 [*] Keyword 'IF' should be 'if'
    |
-87 | CRITICAL
-88 |     PRINT *, "CRITICAL SECTION"
+75 | END ENUM
+76 |
+77 | IF (ENDIF == 2) then
+   | ^^ S233
+78 |     ENDIF = 5
+79 |     ELSEIF = IF + 4*(ENDIF + &
+   |
+   = help: Change to 'if'
+
+ℹ Safe fix
+74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 75 | END ENUM
+76 76 | 
+77    |-IF (ENDIF == 2) then
+   77 |+if (ENDIF == 2) then
+78 78 |     ENDIF = 5
+79 79 |     ELSEIF = IF + 4*(ENDIF + &
+80 80 |                     2**10)
+
+./resources/test/fixtures/style/S233.f90:81:5: S233 [*] Keyword 'ELSEIF' should be 'elseif'
+   |
+79 |     ELSEIF = IF + 4*(ENDIF + &
+80 |                     2**10)
+81 |     ELSEIF (ENDIF == 3) THEN
+   |     ^^^^^^ S233
+82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 |     PRINT *, ENDIF
+   |
+   = help: Change to 'elseif'
+
+ℹ Safe fix
+78 78 |     ENDIF = 5
+79 79 |     ELSEIF = IF + 4*(ENDIF + &
+80 80 |                     2**10)
+81    |-    ELSEIF (ENDIF == 3) THEN
+   81 |+    elseif (ENDIF == 3) THEN
+82 82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 83 |     PRINT *, ENDIF
+84 84 | ENDIF
+
+./resources/test/fixtures/style/S233.f90:81:25: S233 [*] Keyword 'THEN' should be 'then'
+   |
+79 |     ELSEIF = IF + 4*(ENDIF + &
+80 |                     2**10)
+81 |     ELSEIF (ENDIF == 3) THEN
+   |                         ^^^^ S233
+82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 |     PRINT *, ENDIF
+   |
+   = help: Change to 'then'
+
+ℹ Safe fix
+78 78 |     ENDIF = 5
+79 79 |     ELSEIF = IF + 4*(ENDIF + &
+80 80 |                     2**10)
+81    |-    ELSEIF (ENDIF == 3) THEN
+   81 |+    ELSEIF (ENDIF == 3) then
+82 82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 83 |     PRINT *, ENDIF
+84 84 | ENDIF
+
+./resources/test/fixtures/style/S233.f90:83:5: S233 [*] Keyword 'PRINT' should be 'print'
+   |
+81 |     ELSEIF (ENDIF == 3) THEN
+82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 |     PRINT *, ENDIF
    |     ^^^^^ S233
-89 | END CRITICAL
+84 | ENDIF
    |
    = help: Change to 'print'
 
 ℹ Safe fix
-85 85 | END BLOCK
-86 86 | 
-87 87 | CRITICAL
-88    |-    PRINT *, "CRITICAL SECTION"
-   88 |+    print *, "CRITICAL SECTION"
-89 89 | END CRITICAL
-90 90 | 
-91 91 | DO CONCURRENT (I = 1:N)
+80 80 |                     2**10)
+81 81 |     ELSEIF (ENDIF == 3) THEN
+82 82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83    |-    PRINT *, ENDIF
+   83 |+    print *, ENDIF
+84 84 | ENDIF
+85 85 | 
+86 86 | ALLOCATE(ARR(N))
 
-./resources/test/fixtures/style/S233.f90:89:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:84:1: S233 [*] Keyword 'ENDIF' should be 'endif'
    |
-87 | CRITICAL
-88 |     PRINT *, "CRITICAL SECTION"
-89 | END CRITICAL
-   | ^^^ S233
-90 |
-91 | DO CONCURRENT (I = 1:N)
+82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 |     PRINT *, ENDIF
+84 | ENDIF
+   | ^^^^^ S233
+85 |
+86 | ALLOCATE(ARR(N))
    |
-   = help: Change to 'end'
-
-ℹ Safe fix
-86 86 | 
-87 87 | CRITICAL
-88 88 |     PRINT *, "CRITICAL SECTION"
-89    |-END CRITICAL
-   89 |+end CRITICAL
-90 90 | 
-91 91 | DO CONCURRENT (I = 1:N)
-92 92 |     ARR(I) = I
-
-./resources/test/fixtures/style/S233.f90:89:5: S233 [*] Keyword 'CRITICAL' should be 'critical'
-   |
-87 | CRITICAL
-88 |     PRINT *, "CRITICAL SECTION"
-89 | END CRITICAL
-   |     ^^^^^^^^ S233
-90 |
-91 | DO CONCURRENT (I = 1:N)
-   |
-   = help: Change to 'critical'
+   = help: Change to 'endif'
 
 ℹ Safe fix
-86 86 | 
-87 87 | CRITICAL
-88 88 |     PRINT *, "CRITICAL SECTION"
-89    |-END CRITICAL
-   89 |+END critical
-90 90 | 
-91 91 | DO CONCURRENT (I = 1:N)
-92 92 |     ARR(I) = I
+81 81 |     ELSEIF (ENDIF == 3) THEN
+82 82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 83 |     PRINT *, ENDIF
+84    |-ENDIF
+   84 |+endif
+85 85 | 
+86 86 | ALLOCATE(ARR(N))
+87 87 | ARR = 0.0
 
-./resources/test/fixtures/style/S233.f90:91:1: S233 [*] Keyword 'DO' should be 'do'
+./resources/test/fixtures/style/S233.f90:86:1: S233 [*] Keyword 'ALLOCATE' should be 'allocate'
    |
-89 | END CRITICAL
-90 |
-91 | DO CONCURRENT (I = 1:N)
-   | ^^ S233
-92 |     ARR(I) = I
-93 | END DO
+84 | ENDIF
+85 |
+86 | ALLOCATE(ARR(N))
+   | ^^^^^^^^ S233
+87 | ARR = 0.0
    |
-   = help: Change to 'do'
-
-ℹ Safe fix
-88 88 |     PRINT *, "CRITICAL SECTION"
-89 89 | END CRITICAL
-90 90 | 
-91    |-DO CONCURRENT (I = 1:N)
-   91 |+do CONCURRENT (I = 1:N)
-92 92 |     ARR(I) = I
-93 93 | END DO
-94 94 | 
-
-./resources/test/fixtures/style/S233.f90:91:4: S233 [*] Keyword 'CONCURRENT' should be 'concurrent'
-   |
-89 | END CRITICAL
-90 |
-91 | DO CONCURRENT (I = 1:N)
-   |    ^^^^^^^^^^ S233
-92 |     ARR(I) = I
-93 | END DO
-   |
-   = help: Change to 'concurrent'
+   = help: Change to 'allocate'
 
 ℹ Safe fix
-88 88 |     PRINT *, "CRITICAL SECTION"
-89 89 | END CRITICAL
+83 83 |     PRINT *, ENDIF
+84 84 | ENDIF
+85 85 | 
+86    |-ALLOCATE(ARR(N))
+   86 |+allocate(ARR(N))
+87 87 | ARR = 0.0
+88 88 | 
+89 89 | ALLOCATE(TEST_TYPE :: POLY)
+
+./resources/test/fixtures/style/S233.f90:89:1: S233 [*] Keyword 'ALLOCATE' should be 'allocate'
+   |
+87 | ARR = 0.0
+88 |
+89 | ALLOCATE(TEST_TYPE :: POLY)
+   | ^^^^^^^^ S233
+90 |
+91 | ASSOCIATE (TMP => ARR)
+   |
+   = help: Change to 'allocate'
+
+ℹ Safe fix
+86 86 | ALLOCATE(ARR(N))
+87 87 | ARR = 0.0
+88 88 | 
+89    |-ALLOCATE(TEST_TYPE :: POLY)
+   89 |+allocate(TEST_TYPE :: POLY)
 90 90 | 
-91    |-DO CONCURRENT (I = 1:N)
-   91 |+DO concurrent (I = 1:N)
-92 92 |     ARR(I) = I
-93 93 | END DO
+91 91 | ASSOCIATE (TMP => ARR)
+92 92 |     TMP = 1.0
+
+./resources/test/fixtures/style/S233.f90:91:1: S233 [*] Keyword 'ASSOCIATE' should be 'associate'
+   |
+89 | ALLOCATE(TEST_TYPE :: POLY)
+90 |
+91 | ASSOCIATE (TMP => ARR)
+   | ^^^^^^^^^ S233
+92 |     TMP = 1.0
+93 | END ASSOCIATE
+   |
+   = help: Change to 'associate'
+
+ℹ Safe fix
+88 88 | 
+89 89 | ALLOCATE(TEST_TYPE :: POLY)
+90 90 | 
+91    |-ASSOCIATE (TMP => ARR)
+   91 |+associate (TMP => ARR)
+92 92 |     TMP = 1.0
+93 93 | END ASSOCIATE
 94 94 | 
 
 ./resources/test/fixtures/style/S233.f90:93:1: S233 [*] Keyword 'END' should be 'end'
    |
-91 | DO CONCURRENT (I = 1:N)
-92 |     ARR(I) = I
-93 | END DO
+91 | ASSOCIATE (TMP => ARR)
+92 |     TMP = 1.0
+93 | END ASSOCIATE
    | ^^^ S233
 94 |
-95 | FORALL (J = 1:N)
+95 | BLOCK
    |
    = help: Change to 'end'
 
 ℹ Safe fix
 90 90 | 
-91 91 | DO CONCURRENT (I = 1:N)
-92 92 |     ARR(I) = I
-93    |-END DO
-   93 |+end DO
+91 91 | ASSOCIATE (TMP => ARR)
+92 92 |     TMP = 1.0
+93    |-END ASSOCIATE
+   93 |+end ASSOCIATE
 94 94 | 
-95 95 | FORALL (J = 1:N)
-96 96 |     ARR(J) = ARR(J) * 2
+95 95 | BLOCK
+96 96 |     INTEGER :: LOCAL
 
-./resources/test/fixtures/style/S233.f90:93:5: S233 [*] Keyword 'DO' should be 'do'
+./resources/test/fixtures/style/S233.f90:93:5: S233 [*] Keyword 'ASSOCIATE' should be 'associate'
    |
-91 | DO CONCURRENT (I = 1:N)
-92 |     ARR(I) = I
-93 | END DO
-   |     ^^ S233
+91 | ASSOCIATE (TMP => ARR)
+92 |     TMP = 1.0
+93 | END ASSOCIATE
+   |     ^^^^^^^^^ S233
 94 |
-95 | FORALL (J = 1:N)
+95 | BLOCK
    |
-   = help: Change to 'do'
+   = help: Change to 'associate'
 
 ℹ Safe fix
 90 90 | 
-91 91 | DO CONCURRENT (I = 1:N)
-92 92 |     ARR(I) = I
-93    |-END DO
-   93 |+END do
+91 91 | ASSOCIATE (TMP => ARR)
+92 92 |     TMP = 1.0
+93    |-END ASSOCIATE
+   93 |+END associate
 94 94 | 
-95 95 | FORALL (J = 1:N)
-96 96 |     ARR(J) = ARR(J) * 2
+95 95 | BLOCK
+96 96 |     INTEGER :: LOCAL
 
-./resources/test/fixtures/style/S233.f90:95:1: S233 [*] Keyword 'FORALL' should be 'forall'
+./resources/test/fixtures/style/S233.f90:95:1: S233 [*] Keyword 'BLOCK' should be 'block'
    |
-93 | END DO
+93 | END ASSOCIATE
 94 |
-95 | FORALL (J = 1:N)
-   | ^^^^^^ S233
-96 |     ARR(J) = ARR(J) * 2
-97 | END FORALL
+95 | BLOCK
+   | ^^^^^ S233
+96 |     INTEGER :: LOCAL
+97 |     LOCAL = 42
    |
-   = help: Change to 'forall'
+   = help: Change to 'block'
 
 ℹ Safe fix
-92 92 |     ARR(I) = I
-93 93 | END DO
+92 92 |     TMP = 1.0
+93 93 | END ASSOCIATE
 94 94 | 
-95    |-FORALL (J = 1:N)
-   95 |+forall (J = 1:N)
-96 96 |     ARR(J) = ARR(J) * 2
-97 97 | END FORALL
-98 98 | 
+95    |-BLOCK
+   95 |+block
+96 96 |     INTEGER :: LOCAL
+97 97 |     LOCAL = 42
+98 98 | END BLOCK
 
-./resources/test/fixtures/style/S233.f90:97:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:96:5: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
-95 | FORALL (J = 1:N)
-96 |     ARR(J) = ARR(J) * 2
-97 | END FORALL
-   | ^^^ S233
-98 |
-99 | WHERE (ARR > 2.0)
+95 | BLOCK
+96 |     INTEGER :: LOCAL
+   |     ^^^^^^^ S233
+97 |     LOCAL = 42
+98 | END BLOCK
    |
-   = help: Change to 'end'
+   = help: Change to 'integer'
 
 ℹ Safe fix
+93 93 | END ASSOCIATE
 94 94 | 
-95 95 | FORALL (J = 1:N)
-96 96 |     ARR(J) = ARR(J) * 2
-97    |-END FORALL
-   97 |+end FORALL
-98 98 | 
-99 99 | WHERE (ARR > 2.0)
-100 100 |     ARR = ARR + 1.0
+95 95 | BLOCK
+96    |-    INTEGER :: LOCAL
+   96 |+    integer :: LOCAL
+97 97 |     LOCAL = 42
+98 98 | END BLOCK
+99 99 | 
 
-./resources/test/fixtures/style/S233.f90:97:5: S233 [*] Keyword 'FORALL' should be 'forall'
-   |
-95 | FORALL (J = 1:N)
-96 |     ARR(J) = ARR(J) * 2
-97 | END FORALL
-   |     ^^^^^^ S233
-98 |
-99 | WHERE (ARR > 2.0)
-   |
-   = help: Change to 'forall'
-
-ℹ Safe fix
-94 94 | 
-95 95 | FORALL (J = 1:N)
-96 96 |     ARR(J) = ARR(J) * 2
-97    |-END FORALL
-   97 |+END forall
-98 98 | 
-99 99 | WHERE (ARR > 2.0)
-100 100 |     ARR = ARR + 1.0
-
-./resources/test/fixtures/style/S233.f90:99:1: S233 [*] Keyword 'WHERE' should be 'where'
+./resources/test/fixtures/style/S233.f90:98:1: S233 [*] Keyword 'END' should be 'end'
     |
- 97 | END FORALL
- 98 |
- 99 | WHERE (ARR > 2.0)
+ 96 |     INTEGER :: LOCAL
+ 97 |     LOCAL = 42
+ 98 | END BLOCK
+    | ^^^ S233
+ 99 |
+100 | CRITICAL
+    |
+    = help: Change to 'end'
+
+ℹ Safe fix
+95 95 | BLOCK
+96 96 |     INTEGER :: LOCAL
+97 97 |     LOCAL = 42
+98    |-END BLOCK
+   98 |+end BLOCK
+99 99 | 
+100 100 | CRITICAL
+101 101 |     PRINT *, "CRITICAL SECTION"
+
+./resources/test/fixtures/style/S233.f90:98:5: S233 [*] Keyword 'BLOCK' should be 'block'
+    |
+ 96 |     INTEGER :: LOCAL
+ 97 |     LOCAL = 42
+ 98 | END BLOCK
+    |     ^^^^^ S233
+ 99 |
+100 | CRITICAL
+    |
+    = help: Change to 'block'
+
+ℹ Safe fix
+95 95 | BLOCK
+96 96 |     INTEGER :: LOCAL
+97 97 |     LOCAL = 42
+98    |-END BLOCK
+   98 |+END block
+99 99 | 
+100 100 | CRITICAL
+101 101 |     PRINT *, "CRITICAL SECTION"
+
+./resources/test/fixtures/style/S233.f90:100:1: S233 [*] Keyword 'CRITICAL' should be 'critical'
+    |
+ 98 | END BLOCK
+ 99 |
+100 | CRITICAL
+    | ^^^^^^^^ S233
+101 |     PRINT *, "CRITICAL SECTION"
+102 | END CRITICAL
+    |
+    = help: Change to 'critical'
+
+ℹ Safe fix
+97  97  |     LOCAL = 42
+98  98  | END BLOCK
+99  99  | 
+100     |-CRITICAL
+    100 |+critical
+101 101 |     PRINT *, "CRITICAL SECTION"
+102 102 | END CRITICAL
+103 103 | 
+
+./resources/test/fixtures/style/S233.f90:101:5: S233 [*] Keyword 'PRINT' should be 'print'
+    |
+100 | CRITICAL
+101 |     PRINT *, "CRITICAL SECTION"
+    |     ^^^^^ S233
+102 | END CRITICAL
+    |
+    = help: Change to 'print'
+
+ℹ Safe fix
+98  98  | END BLOCK
+99  99  | 
+100 100 | CRITICAL
+101     |-    PRINT *, "CRITICAL SECTION"
+    101 |+    print *, "CRITICAL SECTION"
+102 102 | END CRITICAL
+103 103 | 
+104 104 | DO CONCURRENT (I = 1:N)
+
+./resources/test/fixtures/style/S233.f90:102:1: S233 [*] Keyword 'END' should be 'end'
+    |
+100 | CRITICAL
+101 |     PRINT *, "CRITICAL SECTION"
+102 | END CRITICAL
+    | ^^^ S233
+103 |
+104 | DO CONCURRENT (I = 1:N)
+    |
+    = help: Change to 'end'
+
+ℹ Safe fix
+99  99  | 
+100 100 | CRITICAL
+101 101 |     PRINT *, "CRITICAL SECTION"
+102     |-END CRITICAL
+    102 |+end CRITICAL
+103 103 | 
+104 104 | DO CONCURRENT (I = 1:N)
+105 105 |     ARR(I) = I
+
+./resources/test/fixtures/style/S233.f90:102:5: S233 [*] Keyword 'CRITICAL' should be 'critical'
+    |
+100 | CRITICAL
+101 |     PRINT *, "CRITICAL SECTION"
+102 | END CRITICAL
+    |     ^^^^^^^^ S233
+103 |
+104 | DO CONCURRENT (I = 1:N)
+    |
+    = help: Change to 'critical'
+
+ℹ Safe fix
+99  99  | 
+100 100 | CRITICAL
+101 101 |     PRINT *, "CRITICAL SECTION"
+102     |-END CRITICAL
+    102 |+END critical
+103 103 | 
+104 104 | DO CONCURRENT (I = 1:N)
+105 105 |     ARR(I) = I
+
+./resources/test/fixtures/style/S233.f90:104:1: S233 [*] Keyword 'DO' should be 'do'
+    |
+102 | END CRITICAL
+103 |
+104 | DO CONCURRENT (I = 1:N)
+    | ^^ S233
+105 |     ARR(I) = I
+106 | END DO
+    |
+    = help: Change to 'do'
+
+ℹ Safe fix
+101 101 |     PRINT *, "CRITICAL SECTION"
+102 102 | END CRITICAL
+103 103 | 
+104     |-DO CONCURRENT (I = 1:N)
+    104 |+do CONCURRENT (I = 1:N)
+105 105 |     ARR(I) = I
+106 106 | END DO
+107 107 | 
+
+./resources/test/fixtures/style/S233.f90:104:4: S233 [*] Keyword 'CONCURRENT' should be 'concurrent'
+    |
+102 | END CRITICAL
+103 |
+104 | DO CONCURRENT (I = 1:N)
+    |    ^^^^^^^^^^ S233
+105 |     ARR(I) = I
+106 | END DO
+    |
+    = help: Change to 'concurrent'
+
+ℹ Safe fix
+101 101 |     PRINT *, "CRITICAL SECTION"
+102 102 | END CRITICAL
+103 103 | 
+104     |-DO CONCURRENT (I = 1:N)
+    104 |+DO concurrent (I = 1:N)
+105 105 |     ARR(I) = I
+106 106 | END DO
+107 107 | 
+
+./resources/test/fixtures/style/S233.f90:106:1: S233 [*] Keyword 'END' should be 'end'
+    |
+104 | DO CONCURRENT (I = 1:N)
+105 |     ARR(I) = I
+106 | END DO
+    | ^^^ S233
+107 |
+108 | FORALL (J = 1:N)
+    |
+    = help: Change to 'end'
+
+ℹ Safe fix
+103 103 | 
+104 104 | DO CONCURRENT (I = 1:N)
+105 105 |     ARR(I) = I
+106     |-END DO
+    106 |+end DO
+107 107 | 
+108 108 | FORALL (J = 1:N)
+109 109 |     ARR(J) = ARR(J) * 2
+
+./resources/test/fixtures/style/S233.f90:106:5: S233 [*] Keyword 'DO' should be 'do'
+    |
+104 | DO CONCURRENT (I = 1:N)
+105 |     ARR(I) = I
+106 | END DO
+    |     ^^ S233
+107 |
+108 | FORALL (J = 1:N)
+    |
+    = help: Change to 'do'
+
+ℹ Safe fix
+103 103 | 
+104 104 | DO CONCURRENT (I = 1:N)
+105 105 |     ARR(I) = I
+106     |-END DO
+    106 |+END do
+107 107 | 
+108 108 | FORALL (J = 1:N)
+109 109 |     ARR(J) = ARR(J) * 2
+
+./resources/test/fixtures/style/S233.f90:108:1: S233 [*] Keyword 'FORALL' should be 'forall'
+    |
+106 | END DO
+107 |
+108 | FORALL (J = 1:N)
+    | ^^^^^^ S233
+109 |     ARR(J) = ARR(J) * 2
+110 | END FORALL
+    |
+    = help: Change to 'forall'
+
+ℹ Safe fix
+105 105 |     ARR(I) = I
+106 106 | END DO
+107 107 | 
+108     |-FORALL (J = 1:N)
+    108 |+forall (J = 1:N)
+109 109 |     ARR(J) = ARR(J) * 2
+110 110 | END FORALL
+111 111 | 
+
+./resources/test/fixtures/style/S233.f90:110:1: S233 [*] Keyword 'END' should be 'end'
+    |
+108 | FORALL (J = 1:N)
+109 |     ARR(J) = ARR(J) * 2
+110 | END FORALL
+    | ^^^ S233
+111 |
+112 | WHERE (ARR > 2.0)
+    |
+    = help: Change to 'end'
+
+ℹ Safe fix
+107 107 | 
+108 108 | FORALL (J = 1:N)
+109 109 |     ARR(J) = ARR(J) * 2
+110     |-END FORALL
+    110 |+end FORALL
+111 111 | 
+112 112 | WHERE (ARR > 2.0)
+113 113 |     ARR = ARR + 1.0
+
+./resources/test/fixtures/style/S233.f90:110:5: S233 [*] Keyword 'FORALL' should be 'forall'
+    |
+108 | FORALL (J = 1:N)
+109 |     ARR(J) = ARR(J) * 2
+110 | END FORALL
+    |     ^^^^^^ S233
+111 |
+112 | WHERE (ARR > 2.0)
+    |
+    = help: Change to 'forall'
+
+ℹ Safe fix
+107 107 | 
+108 108 | FORALL (J = 1:N)
+109 109 |     ARR(J) = ARR(J) * 2
+110     |-END FORALL
+    110 |+END forall
+111 111 | 
+112 112 | WHERE (ARR > 2.0)
+113 113 |     ARR = ARR + 1.0
+
+./resources/test/fixtures/style/S233.f90:112:1: S233 [*] Keyword 'WHERE' should be 'where'
+    |
+110 | END FORALL
+111 |
+112 | WHERE (ARR > 2.0)
     | ^^^^^ S233
-100 |     ARR = ARR + 1.0
-101 | ELSEWHERE
+113 |     ARR = ARR + 1.0
+114 | ELSEWHERE
     |
     = help: Change to 'where'
 
 ℹ Safe fix
-96  96  |     ARR(J) = ARR(J) * 2
-97  97  | END FORALL
-98  98  | 
-99      |-WHERE (ARR > 2.0)
-    99  |+where (ARR > 2.0)
-100 100 |     ARR = ARR + 1.0
-101 101 | ELSEWHERE
-102 102 |     ARR = 0.0
+109 109 |     ARR(J) = ARR(J) * 2
+110 110 | END FORALL
+111 111 | 
+112     |-WHERE (ARR > 2.0)
+    112 |+where (ARR > 2.0)
+113 113 |     ARR = ARR + 1.0
+114 114 | ELSEWHERE
+115 115 |     ARR = 0.0
 
-./resources/test/fixtures/style/S233.f90:101:1: S233 [*] Keyword 'ELSEWHERE' should be 'elsewhere'
+./resources/test/fixtures/style/S233.f90:114:1: S233 [*] Keyword 'ELSEWHERE' should be 'elsewhere'
     |
- 99 | WHERE (ARR > 2.0)
-100 |     ARR = ARR + 1.0
-101 | ELSEWHERE
+112 | WHERE (ARR > 2.0)
+113 |     ARR = ARR + 1.0
+114 | ELSEWHERE
     | ^^^^^^^^^ S233
-102 |     ARR = 0.0
-103 | END WHERE
+115 |     ARR = 0.0
+116 | END WHERE
     |
     = help: Change to 'elsewhere'
 
 ℹ Safe fix
-98  98  | 
-99  99  | WHERE (ARR > 2.0)
-100 100 |     ARR = ARR + 1.0
-101     |-ELSEWHERE
-    101 |+elsewhere
-102 102 |     ARR = 0.0
-103 103 | END WHERE
-104 104 | 
+111 111 | 
+112 112 | WHERE (ARR > 2.0)
+113 113 |     ARR = ARR + 1.0
+114     |-ELSEWHERE
+    114 |+elsewhere
+115 115 |     ARR = 0.0
+116 116 | END WHERE
+117 117 | 
 
-./resources/test/fixtures/style/S233.f90:103:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:116:1: S233 [*] Keyword 'END' should be 'end'
     |
-101 | ELSEWHERE
-102 |     ARR = 0.0
-103 | END WHERE
+114 | ELSEWHERE
+115 |     ARR = 0.0
+116 | END WHERE
     | ^^^ S233
-104 |
-105 | SELECT CASE (N)
+117 |
+118 | SELECT CASE (N)
     |
     = help: Change to 'end'
 
 ℹ Safe fix
-100 100 |     ARR = ARR + 1.0
-101 101 | ELSEWHERE
-102 102 |     ARR = 0.0
-103     |-END WHERE
-    103 |+end WHERE
-104 104 | 
-105 105 | SELECT CASE (N)
-106 106 | CASE (1)
+113 113 |     ARR = ARR + 1.0
+114 114 | ELSEWHERE
+115 115 |     ARR = 0.0
+116     |-END WHERE
+    116 |+end WHERE
+117 117 | 
+118 118 | SELECT CASE (N)
+119 119 | CASE (1)
 
-./resources/test/fixtures/style/S233.f90:103:5: S233 [*] Keyword 'WHERE' should be 'where'
+./resources/test/fixtures/style/S233.f90:116:5: S233 [*] Keyword 'WHERE' should be 'where'
     |
-101 | ELSEWHERE
-102 |     ARR = 0.0
-103 | END WHERE
+114 | ELSEWHERE
+115 |     ARR = 0.0
+116 | END WHERE
     |     ^^^^^ S233
-104 |
-105 | SELECT CASE (N)
+117 |
+118 | SELECT CASE (N)
     |
     = help: Change to 'where'
 
 ℹ Safe fix
-100 100 |     ARR = ARR + 1.0
-101 101 | ELSEWHERE
-102 102 |     ARR = 0.0
-103     |-END WHERE
-    103 |+END where
-104 104 | 
-105 105 | SELECT CASE (N)
-106 106 | CASE (1)
+113 113 |     ARR = ARR + 1.0
+114 114 | ELSEWHERE
+115 115 |     ARR = 0.0
+116     |-END WHERE
+    116 |+END where
+117 117 | 
+118 118 | SELECT CASE (N)
+119 119 | CASE (1)
 
-./resources/test/fixtures/style/S233.f90:105:1: S233 [*] Keyword 'SELECT' should be 'select'
+./resources/test/fixtures/style/S233.f90:118:1: S233 [*] Keyword 'SELECT' should be 'select'
     |
-103 | END WHERE
-104 |
-105 | SELECT CASE (N)
+116 | END WHERE
+117 |
+118 | SELECT CASE (N)
     | ^^^^^^ S233
-106 | CASE (1)
-107 |     PRINT *, "ONE"
+119 | CASE (1)
+120 |     PRINT *, "ONE"
     |
     = help: Change to 'select'
 
 ℹ Safe fix
-102 102 |     ARR = 0.0
-103 103 | END WHERE
-104 104 | 
-105     |-SELECT CASE (N)
-    105 |+select CASE (N)
-106 106 | CASE (1)
-107 107 |     PRINT *, "ONE"
-108 108 | CASE DEFAULT
+115 115 |     ARR = 0.0
+116 116 | END WHERE
+117 117 | 
+118     |-SELECT CASE (N)
+    118 |+select CASE (N)
+119 119 | CASE (1)
+120 120 |     PRINT *, "ONE"
+121 121 | CASE DEFAULT
 
-./resources/test/fixtures/style/S233.f90:105:8: S233 [*] Keyword 'CASE' should be 'case'
+./resources/test/fixtures/style/S233.f90:118:8: S233 [*] Keyword 'CASE' should be 'case'
     |
-103 | END WHERE
-104 |
-105 | SELECT CASE (N)
+116 | END WHERE
+117 |
+118 | SELECT CASE (N)
     |        ^^^^ S233
-106 | CASE (1)
-107 |     PRINT *, "ONE"
+119 | CASE (1)
+120 |     PRINT *, "ONE"
     |
     = help: Change to 'case'
 
 ℹ Safe fix
-102 102 |     ARR = 0.0
-103 103 | END WHERE
-104 104 | 
-105     |-SELECT CASE (N)
-    105 |+SELECT case (N)
-106 106 | CASE (1)
-107 107 |     PRINT *, "ONE"
-108 108 | CASE DEFAULT
+115 115 |     ARR = 0.0
+116 116 | END WHERE
+117 117 | 
+118     |-SELECT CASE (N)
+    118 |+SELECT case (N)
+119 119 | CASE (1)
+120 120 |     PRINT *, "ONE"
+121 121 | CASE DEFAULT
 
-./resources/test/fixtures/style/S233.f90:106:1: S233 [*] Keyword 'CASE' should be 'case'
+./resources/test/fixtures/style/S233.f90:119:1: S233 [*] Keyword 'CASE' should be 'case'
     |
-105 | SELECT CASE (N)
-106 | CASE (1)
+118 | SELECT CASE (N)
+119 | CASE (1)
     | ^^^^ S233
-107 |     PRINT *, "ONE"
-108 | CASE DEFAULT
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
     |
     = help: Change to 'case'
 
 ℹ Safe fix
-103 103 | END WHERE
-104 104 | 
-105 105 | SELECT CASE (N)
-106     |-CASE (1)
-    106 |+case (1)
-107 107 |     PRINT *, "ONE"
-108 108 | CASE DEFAULT
-109 109 |     PRINT *, "OTHER"
+116 116 | END WHERE
+117 117 | 
+118 118 | SELECT CASE (N)
+119     |-CASE (1)
+    119 |+case (1)
+120 120 |     PRINT *, "ONE"
+121 121 | CASE DEFAULT
+122 122 |     PRINT *, "OTHER"
 
-./resources/test/fixtures/style/S233.f90:107:5: S233 [*] Keyword 'PRINT' should be 'print'
+./resources/test/fixtures/style/S233.f90:120:5: S233 [*] Keyword 'PRINT' should be 'print'
     |
-105 | SELECT CASE (N)
-106 | CASE (1)
-107 |     PRINT *, "ONE"
+118 | SELECT CASE (N)
+119 | CASE (1)
+120 |     PRINT *, "ONE"
     |     ^^^^^ S233
-108 | CASE DEFAULT
-109 |     PRINT *, "OTHER"
+121 | CASE DEFAULT
+122 |     PRINT *, "OTHER"
     |
     = help: Change to 'print'
 
 ℹ Safe fix
-104 104 | 
-105 105 | SELECT CASE (N)
-106 106 | CASE (1)
-107     |-    PRINT *, "ONE"
-    107 |+    print *, "ONE"
-108 108 | CASE DEFAULT
-109 109 |     PRINT *, "OTHER"
-110 110 | END SELECT
+117 117 | 
+118 118 | SELECT CASE (N)
+119 119 | CASE (1)
+120     |-    PRINT *, "ONE"
+    120 |+    print *, "ONE"
+121 121 | CASE DEFAULT
+122 122 |     PRINT *, "OTHER"
+123 123 | END SELECT
 
-./resources/test/fixtures/style/S233.f90:108:1: S233 [*] Keyword 'CASE' should be 'case'
+./resources/test/fixtures/style/S233.f90:121:1: S233 [*] Keyword 'CASE' should be 'case'
     |
-106 | CASE (1)
-107 |     PRINT *, "ONE"
-108 | CASE DEFAULT
+119 | CASE (1)
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
     | ^^^^ S233
-109 |     PRINT *, "OTHER"
-110 | END SELECT
+122 |     PRINT *, "OTHER"
+123 | END SELECT
     |
     = help: Change to 'case'
 
 ℹ Safe fix
-105 105 | SELECT CASE (N)
-106 106 | CASE (1)
-107 107 |     PRINT *, "ONE"
-108     |-CASE DEFAULT
-    108 |+case DEFAULT
-109 109 |     PRINT *, "OTHER"
-110 110 | END SELECT
-111 111 | 
+118 118 | SELECT CASE (N)
+119 119 | CASE (1)
+120 120 |     PRINT *, "ONE"
+121     |-CASE DEFAULT
+    121 |+case DEFAULT
+122 122 |     PRINT *, "OTHER"
+123 123 | END SELECT
+124 124 | 
 
-./resources/test/fixtures/style/S233.f90:108:6: S233 [*] Keyword 'DEFAULT' should be 'default'
+./resources/test/fixtures/style/S233.f90:121:6: S233 [*] Keyword 'DEFAULT' should be 'default'
     |
-106 | CASE (1)
-107 |     PRINT *, "ONE"
-108 | CASE DEFAULT
+119 | CASE (1)
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
     |      ^^^^^^^ S233
-109 |     PRINT *, "OTHER"
-110 | END SELECT
+122 |     PRINT *, "OTHER"
+123 | END SELECT
     |
     = help: Change to 'default'
 
 ℹ Safe fix
-105 105 | SELECT CASE (N)
-106 106 | CASE (1)
-107 107 |     PRINT *, "ONE"
-108     |-CASE DEFAULT
-    108 |+CASE default
-109 109 |     PRINT *, "OTHER"
-110 110 | END SELECT
-111 111 | 
+118 118 | SELECT CASE (N)
+119 119 | CASE (1)
+120 120 |     PRINT *, "ONE"
+121     |-CASE DEFAULT
+    121 |+CASE default
+122 122 |     PRINT *, "OTHER"
+123 123 | END SELECT
+124 124 | 
 
-./resources/test/fixtures/style/S233.f90:109:5: S233 [*] Keyword 'PRINT' should be 'print'
+./resources/test/fixtures/style/S233.f90:122:5: S233 [*] Keyword 'PRINT' should be 'print'
     |
-107 |     PRINT *, "ONE"
-108 | CASE DEFAULT
-109 |     PRINT *, "OTHER"
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
+122 |     PRINT *, "OTHER"
     |     ^^^^^ S233
-110 | END SELECT
+123 | END SELECT
     |
     = help: Change to 'print'
 
 ℹ Safe fix
-106 106 | CASE (1)
-107 107 |     PRINT *, "ONE"
-108 108 | CASE DEFAULT
-109     |-    PRINT *, "OTHER"
-    109 |+    print *, "OTHER"
-110 110 | END SELECT
-111 111 | 
-112 112 | SELECT TYPE (POLY)
+119 119 | CASE (1)
+120 120 |     PRINT *, "ONE"
+121 121 | CASE DEFAULT
+122     |-    PRINT *, "OTHER"
+    122 |+    print *, "OTHER"
+123 123 | END SELECT
+124 124 | 
+125 125 | SELECT TYPE (POLY)
 
-./resources/test/fixtures/style/S233.f90:110:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:123:1: S233 [*] Keyword 'END' should be 'end'
     |
-108 | CASE DEFAULT
-109 |     PRINT *, "OTHER"
-110 | END SELECT
+121 | CASE DEFAULT
+122 |     PRINT *, "OTHER"
+123 | END SELECT
     | ^^^ S233
-111 |
-112 | SELECT TYPE (POLY)
+124 |
+125 | SELECT TYPE (POLY)
     |
     = help: Change to 'end'
 
 ℹ Safe fix
-107 107 |     PRINT *, "ONE"
-108 108 | CASE DEFAULT
-109 109 |     PRINT *, "OTHER"
-110     |-END SELECT
-    110 |+end SELECT
-111 111 | 
-112 112 | SELECT TYPE (POLY)
-113 113 | TYPE IS (TEST_TYPE)
+120 120 |     PRINT *, "ONE"
+121 121 | CASE DEFAULT
+122 122 |     PRINT *, "OTHER"
+123     |-END SELECT
+    123 |+end SELECT
+124 124 | 
+125 125 | SELECT TYPE (POLY)
+126 126 | TYPE IS (TEST_TYPE)
 
-./resources/test/fixtures/style/S233.f90:110:5: S233 [*] Keyword 'SELECT' should be 'select'
+./resources/test/fixtures/style/S233.f90:123:5: S233 [*] Keyword 'SELECT' should be 'select'
     |
-108 | CASE DEFAULT
-109 |     PRINT *, "OTHER"
-110 | END SELECT
+121 | CASE DEFAULT
+122 |     PRINT *, "OTHER"
+123 | END SELECT
     |     ^^^^^^ S233
-111 |
-112 | SELECT TYPE (POLY)
+124 |
+125 | SELECT TYPE (POLY)
     |
     = help: Change to 'select'
 
 ℹ Safe fix
-107 107 |     PRINT *, "ONE"
-108 108 | CASE DEFAULT
-109 109 |     PRINT *, "OTHER"
-110     |-END SELECT
-    110 |+END select
-111 111 | 
-112 112 | SELECT TYPE (POLY)
-113 113 | TYPE IS (TEST_TYPE)
+120 120 |     PRINT *, "ONE"
+121 121 | CASE DEFAULT
+122 122 |     PRINT *, "OTHER"
+123     |-END SELECT
+    123 |+END select
+124 124 | 
+125 125 | SELECT TYPE (POLY)
+126 126 | TYPE IS (TEST_TYPE)
 
-./resources/test/fixtures/style/S233.f90:112:1: S233 [*] Keyword 'SELECT' should be 'select'
+./resources/test/fixtures/style/S233.f90:125:1: S233 [*] Keyword 'SELECT' should be 'select'
     |
-110 | END SELECT
-111 |
-112 | SELECT TYPE (POLY)
+123 | END SELECT
+124 |
+125 | SELECT TYPE (POLY)
     | ^^^^^^ S233
-113 | TYPE IS (TEST_TYPE)
-114 |     PRINT *, "TEST_TYPE"
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
     |
     = help: Change to 'select'
 
 ℹ Safe fix
-109 109 |     PRINT *, "OTHER"
-110 110 | END SELECT
-111 111 | 
-112     |-SELECT TYPE (POLY)
-    112 |+select TYPE (POLY)
-113 113 | TYPE IS (TEST_TYPE)
-114 114 |     PRINT *, "TEST_TYPE"
-115 115 | CLASS DEFAULT
+122 122 |     PRINT *, "OTHER"
+123 123 | END SELECT
+124 124 | 
+125     |-SELECT TYPE (POLY)
+    125 |+select TYPE (POLY)
+126 126 | TYPE IS (TEST_TYPE)
+127 127 |     PRINT *, "TEST_TYPE"
+128 128 | CLASS DEFAULT
 
-./resources/test/fixtures/style/S233.f90:112:8: S233 [*] Keyword 'TYPE' should be 'type'
+./resources/test/fixtures/style/S233.f90:125:8: S233 [*] Keyword 'TYPE' should be 'type'
     |
-110 | END SELECT
-111 |
-112 | SELECT TYPE (POLY)
+123 | END SELECT
+124 |
+125 | SELECT TYPE (POLY)
     |        ^^^^ S233
-113 | TYPE IS (TEST_TYPE)
-114 |     PRINT *, "TEST_TYPE"
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
     |
     = help: Change to 'type'
 
 ℹ Safe fix
-109 109 |     PRINT *, "OTHER"
-110 110 | END SELECT
-111 111 | 
-112     |-SELECT TYPE (POLY)
-    112 |+SELECT type (POLY)
-113 113 | TYPE IS (TEST_TYPE)
-114 114 |     PRINT *, "TEST_TYPE"
-115 115 | CLASS DEFAULT
+122 122 |     PRINT *, "OTHER"
+123 123 | END SELECT
+124 124 | 
+125     |-SELECT TYPE (POLY)
+    125 |+SELECT type (POLY)
+126 126 | TYPE IS (TEST_TYPE)
+127 127 |     PRINT *, "TEST_TYPE"
+128 128 | CLASS DEFAULT
 
-./resources/test/fixtures/style/S233.f90:113:1: S233 [*] Keyword 'TYPE' should be 'type'
+./resources/test/fixtures/style/S233.f90:126:1: S233 [*] Keyword 'TYPE' should be 'type'
     |
-112 | SELECT TYPE (POLY)
-113 | TYPE IS (TEST_TYPE)
+125 | SELECT TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
     | ^^^^ S233
-114 |     PRINT *, "TEST_TYPE"
-115 | CLASS DEFAULT
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
     |
     = help: Change to 'type'
 
 ℹ Safe fix
-110 110 | END SELECT
-111 111 | 
-112 112 | SELECT TYPE (POLY)
-113     |-TYPE IS (TEST_TYPE)
-    113 |+type IS (TEST_TYPE)
-114 114 |     PRINT *, "TEST_TYPE"
-115 115 | CLASS DEFAULT
-116 116 |     PRINT *, "UNKNOWN"
+123 123 | END SELECT
+124 124 | 
+125 125 | SELECT TYPE (POLY)
+126     |-TYPE IS (TEST_TYPE)
+    126 |+type IS (TEST_TYPE)
+127 127 |     PRINT *, "TEST_TYPE"
+128 128 | CLASS DEFAULT
+129 129 |     PRINT *, "UNKNOWN"
 
-./resources/test/fixtures/style/S233.f90:113:6: S233 [*] Keyword 'IS' should be 'is'
+./resources/test/fixtures/style/S233.f90:126:6: S233 [*] Keyword 'IS' should be 'is'
     |
-112 | SELECT TYPE (POLY)
-113 | TYPE IS (TEST_TYPE)
+125 | SELECT TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
     |      ^^ S233
-114 |     PRINT *, "TEST_TYPE"
-115 | CLASS DEFAULT
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
     |
     = help: Change to 'is'
 
 ℹ Safe fix
-110 110 | END SELECT
-111 111 | 
-112 112 | SELECT TYPE (POLY)
-113     |-TYPE IS (TEST_TYPE)
-    113 |+TYPE is (TEST_TYPE)
-114 114 |     PRINT *, "TEST_TYPE"
-115 115 | CLASS DEFAULT
-116 116 |     PRINT *, "UNKNOWN"
+123 123 | END SELECT
+124 124 | 
+125 125 | SELECT TYPE (POLY)
+126     |-TYPE IS (TEST_TYPE)
+    126 |+TYPE is (TEST_TYPE)
+127 127 |     PRINT *, "TEST_TYPE"
+128 128 | CLASS DEFAULT
+129 129 |     PRINT *, "UNKNOWN"
 
-./resources/test/fixtures/style/S233.f90:114:5: S233 [*] Keyword 'PRINT' should be 'print'
+./resources/test/fixtures/style/S233.f90:127:5: S233 [*] Keyword 'PRINT' should be 'print'
     |
-112 | SELECT TYPE (POLY)
-113 | TYPE IS (TEST_TYPE)
-114 |     PRINT *, "TEST_TYPE"
+125 | SELECT TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
     |     ^^^^^ S233
-115 | CLASS DEFAULT
-116 |     PRINT *, "UNKNOWN"
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
     |
     = help: Change to 'print'
 
 ℹ Safe fix
-111 111 | 
-112 112 | SELECT TYPE (POLY)
-113 113 | TYPE IS (TEST_TYPE)
-114     |-    PRINT *, "TEST_TYPE"
-    114 |+    print *, "TEST_TYPE"
-115 115 | CLASS DEFAULT
-116 116 |     PRINT *, "UNKNOWN"
-117 117 | END SELECT
+124 124 | 
+125 125 | SELECT TYPE (POLY)
+126 126 | TYPE IS (TEST_TYPE)
+127     |-    PRINT *, "TEST_TYPE"
+    127 |+    print *, "TEST_TYPE"
+128 128 | CLASS DEFAULT
+129 129 |     PRINT *, "UNKNOWN"
+130 130 | END SELECT
 
-./resources/test/fixtures/style/S233.f90:115:1: S233 [*] Keyword 'CLASS DEFAULT' should be 'class default'
+./resources/test/fixtures/style/S233.f90:128:1: S233 [*] Keyword 'CLASS' should be 'class'
     |
-113 | TYPE IS (TEST_TYPE)
-114 |     PRINT *, "TEST_TYPE"
-115 | CLASS DEFAULT
-    | ^^^^^^^^^^^^^ S233
-116 |     PRINT *, "UNKNOWN"
-117 | END SELECT
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
+    | ^^^^^ S233
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
     |
-    = help: Change to 'class default'
+    = help: Change to 'class'
 
 ℹ Safe fix
-112 112 | SELECT TYPE (POLY)
-113 113 | TYPE IS (TEST_TYPE)
-114 114 |     PRINT *, "TEST_TYPE"
-115     |-CLASS DEFAULT
-    115 |+class default
-116 116 |     PRINT *, "UNKNOWN"
-117 117 | END SELECT
-118 118 | 
+125 125 | SELECT TYPE (POLY)
+126 126 | TYPE IS (TEST_TYPE)
+127 127 |     PRINT *, "TEST_TYPE"
+128     |-CLASS DEFAULT
+    128 |+class DEFAULT
+129 129 |     PRINT *, "UNKNOWN"
+130 130 | END SELECT
+131 131 | 
 
-./resources/test/fixtures/style/S233.f90:116:5: S233 [*] Keyword 'PRINT' should be 'print'
+./resources/test/fixtures/style/S233.f90:128:7: S233 [*] Keyword 'DEFAULT' should be 'default'
     |
-114 |     PRINT *, "TEST_TYPE"
-115 | CLASS DEFAULT
-116 |     PRINT *, "UNKNOWN"
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
+    |       ^^^^^^^ S233
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
+    |
+    = help: Change to 'default'
+
+ℹ Safe fix
+125 125 | SELECT TYPE (POLY)
+126 126 | TYPE IS (TEST_TYPE)
+127 127 |     PRINT *, "TEST_TYPE"
+128     |-CLASS DEFAULT
+    128 |+CLASS default
+129 129 |     PRINT *, "UNKNOWN"
+130 130 | END SELECT
+131 131 | 
+
+./resources/test/fixtures/style/S233.f90:129:5: S233 [*] Keyword 'PRINT' should be 'print'
+    |
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
     |     ^^^^^ S233
-117 | END SELECT
+130 | END SELECT
     |
     = help: Change to 'print'
 
 ℹ Safe fix
-113 113 | TYPE IS (TEST_TYPE)
-114 114 |     PRINT *, "TEST_TYPE"
-115 115 | CLASS DEFAULT
-116     |-    PRINT *, "UNKNOWN"
-    116 |+    print *, "UNKNOWN"
-117 117 | END SELECT
-118 118 | 
-119 119 | IF (N > 0) THEN
+126 126 | TYPE IS (TEST_TYPE)
+127 127 |     PRINT *, "TEST_TYPE"
+128 128 | CLASS DEFAULT
+129     |-    PRINT *, "UNKNOWN"
+    129 |+    print *, "UNKNOWN"
+130 130 | END SELECT
+131 131 | 
+132 132 | IF (N > 0) THEN
 
-./resources/test/fixtures/style/S233.f90:117:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:130:1: S233 [*] Keyword 'END' should be 'end'
     |
-115 | CLASS DEFAULT
-116 |     PRINT *, "UNKNOWN"
-117 | END SELECT
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
     | ^^^ S233
-118 |
-119 | IF (N > 0) THEN
+131 |
+132 | IF (N > 0) THEN
     |
     = help: Change to 'end'
 
 ℹ Safe fix
-114 114 |     PRINT *, "TEST_TYPE"
-115 115 | CLASS DEFAULT
-116 116 |     PRINT *, "UNKNOWN"
-117     |-END SELECT
-    117 |+end SELECT
-118 118 | 
-119 119 | IF (N > 0) THEN
-120 120 |     CALL TEST_PROC(I)
+127 127 |     PRINT *, "TEST_TYPE"
+128 128 | CLASS DEFAULT
+129 129 |     PRINT *, "UNKNOWN"
+130     |-END SELECT
+    130 |+end SELECT
+131 131 | 
+132 132 | IF (N > 0) THEN
+133 133 |     CALL TEST_PROC(I)
 
-./resources/test/fixtures/style/S233.f90:117:5: S233 [*] Keyword 'SELECT' should be 'select'
+./resources/test/fixtures/style/S233.f90:130:5: S233 [*] Keyword 'SELECT' should be 'select'
     |
-115 | CLASS DEFAULT
-116 |     PRINT *, "UNKNOWN"
-117 | END SELECT
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
     |     ^^^^^^ S233
-118 |
-119 | IF (N > 0) THEN
+131 |
+132 | IF (N > 0) THEN
     |
     = help: Change to 'select'
 
 ℹ Safe fix
-114 114 |     PRINT *, "TEST_TYPE"
-115 115 | CLASS DEFAULT
-116 116 |     PRINT *, "UNKNOWN"
-117     |-END SELECT
-    117 |+END select
-118 118 | 
-119 119 | IF (N > 0) THEN
-120 120 |     CALL TEST_PROC(I)
+127 127 |     PRINT *, "TEST_TYPE"
+128 128 | CLASS DEFAULT
+129 129 |     PRINT *, "UNKNOWN"
+130     |-END SELECT
+    130 |+END select
+131 131 | 
+132 132 | IF (N > 0) THEN
+133 133 |     CALL TEST_PROC(I)
 
-./resources/test/fixtures/style/S233.f90:119:1: S233 [*] Keyword 'IF' should be 'if'
+./resources/test/fixtures/style/S233.f90:132:1: S233 [*] Keyword 'IF' should be 'if'
     |
-117 | END SELECT
-118 |
-119 | IF (N > 0) THEN
+130 | END SELECT
+131 |
+132 | IF (N > 0) THEN
     | ^^ S233
-120 |     CALL TEST_PROC(I)
-121 | ELSE IF (N == 0) THEN
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
     |
     = help: Change to 'if'
 
 ℹ Safe fix
-116 116 |     PRINT *, "UNKNOWN"
-117 117 | END SELECT
-118 118 | 
-119     |-IF (N > 0) THEN
-    119 |+if (N > 0) THEN
-120 120 |     CALL TEST_PROC(I)
-121 121 | ELSE IF (N == 0) THEN
-122 122 |     STOP
+129 129 |     PRINT *, "UNKNOWN"
+130 130 | END SELECT
+131 131 | 
+132     |-IF (N > 0) THEN
+    132 |+if (N > 0) THEN
+133 133 |     CALL TEST_PROC(I)
+134 134 | ELSE IF (N == 0) THEN
+135 135 |     STOP
 
-./resources/test/fixtures/style/S233.f90:119:12: S233 [*] Keyword 'THEN' should be 'then'
+./resources/test/fixtures/style/S233.f90:132:12: S233 [*] Keyword 'THEN' should be 'then'
     |
-117 | END SELECT
-118 |
-119 | IF (N > 0) THEN
+130 | END SELECT
+131 |
+132 | IF (N > 0) THEN
     |            ^^^^ S233
-120 |     CALL TEST_PROC(I)
-121 | ELSE IF (N == 0) THEN
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
     |
     = help: Change to 'then'
 
 ℹ Safe fix
-116 116 |     PRINT *, "UNKNOWN"
-117 117 | END SELECT
-118 118 | 
-119     |-IF (N > 0) THEN
-    119 |+IF (N > 0) then
-120 120 |     CALL TEST_PROC(I)
-121 121 | ELSE IF (N == 0) THEN
-122 122 |     STOP
+129 129 |     PRINT *, "UNKNOWN"
+130 130 | END SELECT
+131 131 | 
+132     |-IF (N > 0) THEN
+    132 |+IF (N > 0) then
+133 133 |     CALL TEST_PROC(I)
+134 134 | ELSE IF (N == 0) THEN
+135 135 |     STOP
 
-./resources/test/fixtures/style/S233.f90:120:5: S233 [*] Keyword 'CALL' should be 'call'
+./resources/test/fixtures/style/S233.f90:133:5: S233 [*] Keyword 'CALL' should be 'call'
     |
-119 | IF (N > 0) THEN
-120 |     CALL TEST_PROC(I)
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
     |     ^^^^ S233
-121 | ELSE IF (N == 0) THEN
-122 |     STOP
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
     |
     = help: Change to 'call'
 
 ℹ Safe fix
-117 117 | END SELECT
-118 118 | 
-119 119 | IF (N > 0) THEN
-120     |-    CALL TEST_PROC(I)
-    120 |+    call TEST_PROC(I)
-121 121 | ELSE IF (N == 0) THEN
-122 122 |     STOP
-123 123 | ELSE
+130 130 | END SELECT
+131 131 | 
+132 132 | IF (N > 0) THEN
+133     |-    CALL TEST_PROC(I)
+    133 |+    call TEST_PROC(I)
+134 134 | ELSE IF (N == 0) THEN
+135 135 |     STOP
+136 136 | ELSE
 
-./resources/test/fixtures/style/S233.f90:121:1: S233 [*] Keyword 'ELSE' should be 'else'
+./resources/test/fixtures/style/S233.f90:134:1: S233 [*] Keyword 'ELSE' should be 'else'
     |
-119 | IF (N > 0) THEN
-120 |     CALL TEST_PROC(I)
-121 | ELSE IF (N == 0) THEN
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
     | ^^^^ S233
-122 |     STOP
-123 | ELSE
+135 |     STOP
+136 | ELSE
     |
     = help: Change to 'else'
 
 ℹ Safe fix
-118 118 | 
-119 119 | IF (N > 0) THEN
-120 120 |     CALL TEST_PROC(I)
-121     |-ELSE IF (N == 0) THEN
-    121 |+else IF (N == 0) THEN
-122 122 |     STOP
-123 123 | ELSE
-124 124 |     ERROR STOP "NEGATIVE"
+131 131 | 
+132 132 | IF (N > 0) THEN
+133 133 |     CALL TEST_PROC(I)
+134     |-ELSE IF (N == 0) THEN
+    134 |+else IF (N == 0) THEN
+135 135 |     STOP
+136 136 | ELSE
+137 137 |     ERROR STOP "NEGATIVE"
 
-./resources/test/fixtures/style/S233.f90:121:6: S233 [*] Keyword 'IF' should be 'if'
+./resources/test/fixtures/style/S233.f90:134:6: S233 [*] Keyword 'IF' should be 'if'
     |
-119 | IF (N > 0) THEN
-120 |     CALL TEST_PROC(I)
-121 | ELSE IF (N == 0) THEN
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
     |      ^^ S233
-122 |     STOP
-123 | ELSE
+135 |     STOP
+136 | ELSE
     |
     = help: Change to 'if'
 
 ℹ Safe fix
-118 118 | 
-119 119 | IF (N > 0) THEN
-120 120 |     CALL TEST_PROC(I)
-121     |-ELSE IF (N == 0) THEN
-    121 |+ELSE if (N == 0) THEN
-122 122 |     STOP
-123 123 | ELSE
-124 124 |     ERROR STOP "NEGATIVE"
+131 131 | 
+132 132 | IF (N > 0) THEN
+133 133 |     CALL TEST_PROC(I)
+134     |-ELSE IF (N == 0) THEN
+    134 |+ELSE if (N == 0) THEN
+135 135 |     STOP
+136 136 | ELSE
+137 137 |     ERROR STOP "NEGATIVE"
 
-./resources/test/fixtures/style/S233.f90:121:18: S233 [*] Keyword 'THEN' should be 'then'
+./resources/test/fixtures/style/S233.f90:134:18: S233 [*] Keyword 'THEN' should be 'then'
     |
-119 | IF (N > 0) THEN
-120 |     CALL TEST_PROC(I)
-121 | ELSE IF (N == 0) THEN
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
     |                  ^^^^ S233
-122 |     STOP
-123 | ELSE
+135 |     STOP
+136 | ELSE
     |
     = help: Change to 'then'
 
 ℹ Safe fix
-118 118 | 
-119 119 | IF (N > 0) THEN
-120 120 |     CALL TEST_PROC(I)
-121     |-ELSE IF (N == 0) THEN
-    121 |+ELSE IF (N == 0) then
-122 122 |     STOP
-123 123 | ELSE
-124 124 |     ERROR STOP "NEGATIVE"
+131 131 | 
+132 132 | IF (N > 0) THEN
+133 133 |     CALL TEST_PROC(I)
+134     |-ELSE IF (N == 0) THEN
+    134 |+ELSE IF (N == 0) then
+135 135 |     STOP
+136 136 | ELSE
+137 137 |     ERROR STOP "NEGATIVE"
 
-./resources/test/fixtures/style/S233.f90:122:5: S233 [*] Keyword 'STOP' should be 'stop'
+./resources/test/fixtures/style/S233.f90:135:5: S233 [*] Keyword 'STOP' should be 'stop'
     |
-120 |     CALL TEST_PROC(I)
-121 | ELSE IF (N == 0) THEN
-122 |     STOP
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
     |     ^^^^ S233
-123 | ELSE
-124 |     ERROR STOP "NEGATIVE"
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
     |
     = help: Change to 'stop'
 
 ℹ Safe fix
-119 119 | IF (N > 0) THEN
-120 120 |     CALL TEST_PROC(I)
-121 121 | ELSE IF (N == 0) THEN
-122     |-    STOP
-    122 |+    stop
-123 123 | ELSE
-124 124 |     ERROR STOP "NEGATIVE"
-125 125 | END IF
+132 132 | IF (N > 0) THEN
+133 133 |     CALL TEST_PROC(I)
+134 134 | ELSE IF (N == 0) THEN
+135     |-    STOP
+    135 |+    stop
+136 136 | ELSE
+137 137 |     ERROR STOP "NEGATIVE"
+138 138 | END IF
 
-./resources/test/fixtures/style/S233.f90:123:1: S233 [*] Keyword 'ELSE' should be 'else'
+./resources/test/fixtures/style/S233.f90:136:1: S233 [*] Keyword 'ELSE' should be 'else'
     |
-121 | ELSE IF (N == 0) THEN
-122 |     STOP
-123 | ELSE
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
+136 | ELSE
     | ^^^^ S233
-124 |     ERROR STOP "NEGATIVE"
-125 | END IF
+137 |     ERROR STOP "NEGATIVE"
+138 | END IF
     |
     = help: Change to 'else'
 
 ℹ Safe fix
-120 120 |     CALL TEST_PROC(I)
-121 121 | ELSE IF (N == 0) THEN
-122 122 |     STOP
-123     |-ELSE
-    123 |+else
-124 124 |     ERROR STOP "NEGATIVE"
-125 125 | END IF
-126 126 | 
+133 133 |     CALL TEST_PROC(I)
+134 134 | ELSE IF (N == 0) THEN
+135 135 |     STOP
+136     |-ELSE
+    136 |+else
+137 137 |     ERROR STOP "NEGATIVE"
+138 138 | END IF
+139 139 | 
 
-./resources/test/fixtures/style/S233.f90:124:5: S233 [*] Keyword 'ERROR' should be 'error'
+./resources/test/fixtures/style/S233.f90:137:5: S233 [*] Keyword 'ERROR' should be 'error'
     |
-122 |     STOP
-123 | ELSE
-124 |     ERROR STOP "NEGATIVE"
+135 |     STOP
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
     |     ^^^^^ S233
-125 | END IF
+138 | END IF
     |
     = help: Change to 'error'
 
 ℹ Safe fix
-121 121 | ELSE IF (N == 0) THEN
-122 122 |     STOP
-123 123 | ELSE
-124     |-    ERROR STOP "NEGATIVE"
-    124 |+    error STOP "NEGATIVE"
-125 125 | END IF
-126 126 | 
-127 127 | DO I = 1, N
+134 134 | ELSE IF (N == 0) THEN
+135 135 |     STOP
+136 136 | ELSE
+137     |-    ERROR STOP "NEGATIVE"
+    137 |+    error STOP "NEGATIVE"
+138 138 | END IF
+139 139 | 
+140 140 | DO I = 1, N
 
-./resources/test/fixtures/style/S233.f90:124:11: S233 [*] Keyword 'STOP' should be 'stop'
+./resources/test/fixtures/style/S233.f90:137:11: S233 [*] Keyword 'STOP' should be 'stop'
     |
-122 |     STOP
-123 | ELSE
-124 |     ERROR STOP "NEGATIVE"
+135 |     STOP
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
     |           ^^^^ S233
-125 | END IF
+138 | END IF
     |
     = help: Change to 'stop'
 
 ℹ Safe fix
-121 121 | ELSE IF (N == 0) THEN
-122 122 |     STOP
-123 123 | ELSE
-124     |-    ERROR STOP "NEGATIVE"
-    124 |+    ERROR stop "NEGATIVE"
-125 125 | END IF
-126 126 | 
-127 127 | DO I = 1, N
+134 134 | ELSE IF (N == 0) THEN
+135 135 |     STOP
+136 136 | ELSE
+137     |-    ERROR STOP "NEGATIVE"
+    137 |+    ERROR stop "NEGATIVE"
+138 138 | END IF
+139 139 | 
+140 140 | DO I = 1, N
 
-./resources/test/fixtures/style/S233.f90:125:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:138:1: S233 [*] Keyword 'END' should be 'end'
     |
-123 | ELSE
-124 |     ERROR STOP "NEGATIVE"
-125 | END IF
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
+138 | END IF
     | ^^^ S233
-126 |
-127 | DO I = 1, N
+139 |
+140 | DO I = 1, N
     |
     = help: Change to 'end'
 
 ℹ Safe fix
-122 122 |     STOP
-123 123 | ELSE
-124 124 |     ERROR STOP "NEGATIVE"
-125     |-END IF
-    125 |+end IF
-126 126 | 
-127 127 | DO I = 1, N
-128 128 |     IF (I == 3) CYCLE
+135 135 |     STOP
+136 136 | ELSE
+137 137 |     ERROR STOP "NEGATIVE"
+138     |-END IF
+    138 |+end IF
+139 139 | 
+140 140 | DO I = 1, N
+141 141 |     IF (I == 3) CYCLE
 
-./resources/test/fixtures/style/S233.f90:125:5: S233 [*] Keyword 'IF' should be 'if'
+./resources/test/fixtures/style/S233.f90:138:5: S233 [*] Keyword 'IF' should be 'if'
     |
-123 | ELSE
-124 |     ERROR STOP "NEGATIVE"
-125 | END IF
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
+138 | END IF
     |     ^^ S233
-126 |
-127 | DO I = 1, N
+139 |
+140 | DO I = 1, N
     |
     = help: Change to 'if'
 
 ℹ Safe fix
-122 122 |     STOP
-123 123 | ELSE
-124 124 |     ERROR STOP "NEGATIVE"
-125     |-END IF
-    125 |+END if
-126 126 | 
-127 127 | DO I = 1, N
-128 128 |     IF (I == 3) CYCLE
+135 135 |     STOP
+136 136 | ELSE
+137 137 |     ERROR STOP "NEGATIVE"
+138     |-END IF
+    138 |+END if
+139 139 | 
+140 140 | DO I = 1, N
+141 141 |     IF (I == 3) CYCLE
 
-./resources/test/fixtures/style/S233.f90:127:1: S233 [*] Keyword 'DO' should be 'do'
+./resources/test/fixtures/style/S233.f90:140:1: S233 [*] Keyword 'DO' should be 'do'
     |
-125 | END IF
-126 |
-127 | DO I = 1, N
+138 | END IF
+139 |
+140 | DO I = 1, N
     | ^^ S233
-128 |     IF (I == 3) CYCLE
-129 |     IF (I == 4) EXIT
+141 |     IF (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
     |
     = help: Change to 'do'
 
 ℹ Safe fix
-124 124 |     ERROR STOP "NEGATIVE"
-125 125 | END IF
-126 126 | 
-127     |-DO I = 1, N
-    127 |+do I = 1, N
-128 128 |     IF (I == 3) CYCLE
-129 129 |     IF (I == 4) EXIT
-130 130 | END DO
+137 137 |     ERROR STOP "NEGATIVE"
+138 138 | END IF
+139 139 | 
+140     |-DO I = 1, N
+    140 |+do I = 1, N
+141 141 |     IF (I == 3) CYCLE
+142 142 |     IF (I == 4) EXIT
+143 143 | END DO
 
-./resources/test/fixtures/style/S233.f90:128:5: S233 [*] Keyword 'IF' should be 'if'
+./resources/test/fixtures/style/S233.f90:141:5: S233 [*] Keyword 'IF' should be 'if'
     |
-127 | DO I = 1, N
-128 |     IF (I == 3) CYCLE
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
     |     ^^ S233
-129 |     IF (I == 4) EXIT
-130 | END DO
+142 |     IF (I == 4) EXIT
+143 | END DO
     |
     = help: Change to 'if'
 
 ℹ Safe fix
-125 125 | END IF
-126 126 | 
-127 127 | DO I = 1, N
-128     |-    IF (I == 3) CYCLE
-    128 |+    if (I == 3) CYCLE
-129 129 |     IF (I == 4) EXIT
-130 130 | END DO
-131 131 | 
+138 138 | END IF
+139 139 | 
+140 140 | DO I = 1, N
+141     |-    IF (I == 3) CYCLE
+    141 |+    if (I == 3) CYCLE
+142 142 |     IF (I == 4) EXIT
+143 143 | END DO
+144 144 | 
 
-./resources/test/fixtures/style/S233.f90:128:17: S233 [*] Keyword 'CYCLE' should be 'cycle'
+./resources/test/fixtures/style/S233.f90:141:17: S233 [*] Keyword 'CYCLE' should be 'cycle'
     |
-127 | DO I = 1, N
-128 |     IF (I == 3) CYCLE
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
     |                 ^^^^^ S233
-129 |     IF (I == 4) EXIT
-130 | END DO
+142 |     IF (I == 4) EXIT
+143 | END DO
     |
     = help: Change to 'cycle'
 
 ℹ Safe fix
-125 125 | END IF
-126 126 | 
-127 127 | DO I = 1, N
-128     |-    IF (I == 3) CYCLE
-    128 |+    IF (I == 3) cycle
-129 129 |     IF (I == 4) EXIT
-130 130 | END DO
-131 131 | 
+138 138 | END IF
+139 139 | 
+140 140 | DO I = 1, N
+141     |-    IF (I == 3) CYCLE
+    141 |+    IF (I == 3) cycle
+142 142 |     IF (I == 4) EXIT
+143 143 | END DO
+144 144 | 
 
-./resources/test/fixtures/style/S233.f90:129:5: S233 [*] Keyword 'IF' should be 'if'
+./resources/test/fixtures/style/S233.f90:142:5: S233 [*] Keyword 'IF' should be 'if'
     |
-127 | DO I = 1, N
-128 |     IF (I == 3) CYCLE
-129 |     IF (I == 4) EXIT
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
     |     ^^ S233
-130 | END DO
+143 | END DO
     |
     = help: Change to 'if'
 
 ℹ Safe fix
-126 126 | 
-127 127 | DO I = 1, N
-128 128 |     IF (I == 3) CYCLE
-129     |-    IF (I == 4) EXIT
-    129 |+    if (I == 4) EXIT
-130 130 | END DO
-131 131 | 
-132 132 | GOTO 100
+139 139 | 
+140 140 | DO I = 1, N
+141 141 |     IF (I == 3) CYCLE
+142     |-    IF (I == 4) EXIT
+    142 |+    if (I == 4) EXIT
+143 143 | END DO
+144 144 | 
+145 145 | GOTO 100
 
-./resources/test/fixtures/style/S233.f90:129:17: S233 [*] Keyword 'EXIT' should be 'exit'
+./resources/test/fixtures/style/S233.f90:142:17: S233 [*] Keyword 'EXIT' should be 'exit'
     |
-127 | DO I = 1, N
-128 |     IF (I == 3) CYCLE
-129 |     IF (I == 4) EXIT
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
     |                 ^^^^ S233
-130 | END DO
+143 | END DO
     |
     = help: Change to 'exit'
 
 ℹ Safe fix
-126 126 | 
-127 127 | DO I = 1, N
-128 128 |     IF (I == 3) CYCLE
-129     |-    IF (I == 4) EXIT
-    129 |+    IF (I == 4) exit
-130 130 | END DO
-131 131 | 
-132 132 | GOTO 100
+139 139 | 
+140 140 | DO I = 1, N
+141 141 |     IF (I == 3) CYCLE
+142     |-    IF (I == 4) EXIT
+    142 |+    IF (I == 4) exit
+143 143 | END DO
+144 144 | 
+145 145 | GOTO 100
 
-./resources/test/fixtures/style/S233.f90:130:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:143:1: S233 [*] Keyword 'END' should be 'end'
     |
-128 |     IF (I == 3) CYCLE
-129 |     IF (I == 4) EXIT
-130 | END DO
+141 |     IF (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
+143 | END DO
     | ^^^ S233
-131 |
-132 | GOTO 100
+144 |
+145 | GOTO 100
     |
     = help: Change to 'end'
 
 ℹ Safe fix
-127 127 | DO I = 1, N
-128 128 |     IF (I == 3) CYCLE
-129 129 |     IF (I == 4) EXIT
-130     |-END DO
-    130 |+end DO
-131 131 | 
-132 132 | GOTO 100
-133 133 | GO TO 100
+140 140 | DO I = 1, N
+141 141 |     IF (I == 3) CYCLE
+142 142 |     IF (I == 4) EXIT
+143     |-END DO
+    143 |+end DO
+144 144 | 
+145 145 | GOTO 100
+146 146 | GO TO 100
 
-./resources/test/fixtures/style/S233.f90:130:5: S233 [*] Keyword 'DO' should be 'do'
+./resources/test/fixtures/style/S233.f90:143:5: S233 [*] Keyword 'DO' should be 'do'
     |
-128 |     IF (I == 3) CYCLE
-129 |     IF (I == 4) EXIT
-130 | END DO
+141 |     IF (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
+143 | END DO
     |     ^^ S233
-131 |
-132 | GOTO 100
+144 |
+145 | GOTO 100
     |
     = help: Change to 'do'
 
 ℹ Safe fix
-127 127 | DO I = 1, N
-128 128 |     IF (I == 3) CYCLE
-129 129 |     IF (I == 4) EXIT
-130     |-END DO
-    130 |+END do
-131 131 | 
-132 132 | GOTO 100
-133 133 | GO TO 100
+140 140 | DO I = 1, N
+141 141 |     IF (I == 3) CYCLE
+142 142 |     IF (I == 4) EXIT
+143     |-END DO
+    143 |+END do
+144 144 | 
+145 145 | GOTO 100
+146 146 | GO TO 100
 
-./resources/test/fixtures/style/S233.f90:132:1: S233 [*] Keyword 'GOTO' should be 'goto'
+./resources/test/fixtures/style/S233.f90:145:1: S233 [*] Keyword 'GOTO' should be 'goto'
     |
-130 | END DO
-131 |
-132 | GOTO 100
+143 | END DO
+144 |
+145 | GOTO 100
     | ^^^^ S233
-133 | GO TO 100
-134 | PRINT *, "SHOULD NOT PRINT"
+146 | GO TO 100
+147 | PRINT *, "SHOULD NOT PRINT"
     |
     = help: Change to 'goto'
 
 ℹ Safe fix
-129 129 |     IF (I == 4) EXIT
-130 130 | END DO
-131 131 | 
-132     |-GOTO 100
-    132 |+goto 100
-133 133 | GO TO 100
-134 134 | PRINT *, "SHOULD NOT PRINT"
-135 135 | 100 CONTINUE
+142 142 |     IF (I == 4) EXIT
+143 143 | END DO
+144 144 | 
+145     |-GOTO 100
+    145 |+goto 100
+146 146 | GO TO 100
+147 147 | PRINT *, "SHOULD NOT PRINT"
+148 148 | 100 CONTINUE
 
-./resources/test/fixtures/style/S233.f90:133:1: S233 [*] Keyword 'GO' should be 'go'
+./resources/test/fixtures/style/S233.f90:146:1: S233 [*] Keyword 'GO' should be 'go'
     |
-132 | GOTO 100
-133 | GO TO 100
+145 | GOTO 100
+146 | GO TO 100
     | ^^ S233
-134 | PRINT *, "SHOULD NOT PRINT"
-135 | 100 CONTINUE
+147 | PRINT *, "SHOULD NOT PRINT"
+148 | 100 CONTINUE
     |
     = help: Change to 'go'
 
 ℹ Safe fix
-130 130 | END DO
-131 131 | 
-132 132 | GOTO 100
-133     |-GO TO 100
-    133 |+go TO 100
-134 134 | PRINT *, "SHOULD NOT PRINT"
-135 135 | 100 CONTINUE
-136 136 | 
+143 143 | END DO
+144 144 | 
+145 145 | GOTO 100
+146     |-GO TO 100
+    146 |+go TO 100
+147 147 | PRINT *, "SHOULD NOT PRINT"
+148 148 | 100 CONTINUE
+149 149 | 
 
-./resources/test/fixtures/style/S233.f90:133:4: S233 [*] Keyword 'TO' should be 'to'
+./resources/test/fixtures/style/S233.f90:146:4: S233 [*] Keyword 'TO' should be 'to'
     |
-132 | GOTO 100
-133 | GO TO 100
+145 | GOTO 100
+146 | GO TO 100
     |    ^^ S233
-134 | PRINT *, "SHOULD NOT PRINT"
-135 | 100 CONTINUE
+147 | PRINT *, "SHOULD NOT PRINT"
+148 | 100 CONTINUE
     |
     = help: Change to 'to'
 
 ℹ Safe fix
-130 130 | END DO
-131 131 | 
-132 132 | GOTO 100
-133     |-GO TO 100
-    133 |+GO to 100
-134 134 | PRINT *, "SHOULD NOT PRINT"
-135 135 | 100 CONTINUE
-136 136 | 
+143 143 | END DO
+144 144 | 
+145 145 | GOTO 100
+146     |-GO TO 100
+    146 |+GO to 100
+147 147 | PRINT *, "SHOULD NOT PRINT"
+148 148 | 100 CONTINUE
+149 149 | 
 
-./resources/test/fixtures/style/S233.f90:134:1: S233 [*] Keyword 'PRINT' should be 'print'
+./resources/test/fixtures/style/S233.f90:147:1: S233 [*] Keyword 'PRINT' should be 'print'
     |
-132 | GOTO 100
-133 | GO TO 100
-134 | PRINT *, "SHOULD NOT PRINT"
+145 | GOTO 100
+146 | GO TO 100
+147 | PRINT *, "SHOULD NOT PRINT"
     | ^^^^^ S233
-135 | 100 CONTINUE
+148 | 100 CONTINUE
     |
     = help: Change to 'print'
 
 ℹ Safe fix
-131 131 | 
-132 132 | GOTO 100
-133 133 | GO TO 100
-134     |-PRINT *, "SHOULD NOT PRINT"
-    134 |+print *, "SHOULD NOT PRINT"
-135 135 | 100 CONTINUE
-136 136 | 
-137 137 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+144 144 | 
+145 145 | GOTO 100
+146 146 | GO TO 100
+147     |-PRINT *, "SHOULD NOT PRINT"
+    147 |+print *, "SHOULD NOT PRINT"
+148 148 | 100 CONTINUE
+149 149 | 
+150 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
 
-./resources/test/fixtures/style/S233.f90:135:5: S233 [*] Keyword 'CONTINUE' should be 'continue'
+./resources/test/fixtures/style/S233.f90:148:5: S233 [*] Keyword 'CONTINUE' should be 'continue'
     |
-133 | GO TO 100
-134 | PRINT *, "SHOULD NOT PRINT"
-135 | 100 CONTINUE
+146 | GO TO 100
+147 | PRINT *, "SHOULD NOT PRINT"
+148 | 100 CONTINUE
     |     ^^^^^^^^ S233
-136 |
-137 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+149 |
+150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
     |
     = help: Change to 'continue'
 
 ℹ Safe fix
-132 132 | GOTO 100
-133 133 | GO TO 100
-134 134 | PRINT *, "SHOULD NOT PRINT"
-135     |-100 CONTINUE
-    135 |+100 continue
-136 136 | 
-137 137 | CALL C_F_POINTER(C_NULL_PTR, ARR)
-138 138 | 
+145 145 | GOTO 100
+146 146 | GO TO 100
+147 147 | PRINT *, "SHOULD NOT PRINT"
+148     |-100 CONTINUE
+    148 |+100 continue
+149 149 | 
+150 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+151 151 | 
 
-./resources/test/fixtures/style/S233.f90:137:1: S233 [*] Keyword 'CALL' should be 'call'
+./resources/test/fixtures/style/S233.f90:150:1: S233 [*] Keyword 'CALL' should be 'call'
     |
-135 | 100 CONTINUE
-136 |
-137 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+148 | 100 CONTINUE
+149 |
+150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
     | ^^^^ S233
-138 |
-139 | SYNC ALL
+151 |
+152 | SYNC ALL
     |
     = help: Change to 'call'
 
 ℹ Safe fix
-134 134 | PRINT *, "SHOULD NOT PRINT"
-135 135 | 100 CONTINUE
-136 136 | 
-137     |-CALL C_F_POINTER(C_NULL_PTR, ARR)
-    137 |+call C_F_POINTER(C_NULL_PTR, ARR)
-138 138 | 
-139 139 | SYNC ALL
-140 140 | 
+147 147 | PRINT *, "SHOULD NOT PRINT"
+148 148 | 100 CONTINUE
+149 149 | 
+150     |-CALL C_F_POINTER(C_NULL_PTR, ARR)
+    150 |+call C_F_POINTER(C_NULL_PTR, ARR)
+151 151 | 
+152 152 | SYNC ALL
+153 153 | 
 
-./resources/test/fixtures/style/S233.f90:139:1: S233 [*] Keyword 'SYNC' should be 'sync'
+./resources/test/fixtures/style/S233.f90:152:1: S233 [*] Keyword 'SYNC' should be 'sync'
     |
-137 | CALL C_F_POINTER(C_NULL_PTR, ARR)
-138 |
-139 | SYNC ALL
+150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+151 |
+152 | SYNC ALL
     | ^^^^ S233
-140 |
-141 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+153 |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
     |
     = help: Change to 'sync'
 
 ℹ Safe fix
-136 136 | 
-137 137 | CALL C_F_POINTER(C_NULL_PTR, ARR)
-138 138 | 
-139     |-SYNC ALL
-    139 |+sync ALL
-140 140 | 
-141 141 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-142 142 | WRITE(10,*) "HELLO"
+149 149 | 
+150 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+151 151 | 
+152     |-SYNC ALL
+    152 |+sync ALL
+153 153 | 
+154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 155 | WRITE(10,*) "HELLO"
 
-./resources/test/fixtures/style/S233.f90:141:1: S233 [*] Keyword 'OPEN' should be 'open'
+./resources/test/fixtures/style/S233.f90:152:6: S233 [*] Keyword 'ALL' should be 'all'
     |
-139 | SYNC ALL
-140 |
-141 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+151 |
+152 | SYNC ALL
+    |      ^^^ S233
+153 |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+    |
+    = help: Change to 'all'
+
+ℹ Safe fix
+149 149 | 
+150 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+151 151 | 
+152     |-SYNC ALL
+    152 |+SYNC all
+153 153 | 
+154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 155 | WRITE(10,*) "HELLO"
+
+./resources/test/fixtures/style/S233.f90:154:1: S233 [*] Keyword 'OPEN' should be 'open'
+    |
+152 | SYNC ALL
+153 |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
     | ^^^^ S233
-142 | WRITE(10,*) "HELLO"
-143 | READ(10,*) STR
+155 | WRITE(10,*) "HELLO"
+156 | READ(10,*) STR
     |
     = help: Change to 'open'
 
 ℹ Safe fix
-138 138 | 
-139 139 | SYNC ALL
-140 140 | 
-141     |-OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-    141 |+open(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-142 142 | WRITE(10,*) "HELLO"
-143 143 | READ(10,*) STR
-144 144 | CLOSE(10)
+151 151 | 
+152 152 | SYNC ALL
+153 153 | 
+154     |-OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+    154 |+open(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 155 | WRITE(10,*) "HELLO"
+156 156 | READ(10,*) STR
+157 157 | CLOSE(10)
 
-./resources/test/fixtures/style/S233.f90:142:1: S233 [*] Keyword 'WRITE' should be 'write'
+./resources/test/fixtures/style/S233.f90:154:6: S233 [*] Keyword 'UNIT' should be 'unit'
     |
-141 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-142 | WRITE(10,*) "HELLO"
+152 | SYNC ALL
+153 |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+    |      ^^^^ S233
+155 | WRITE(10,*) "HELLO"
+156 | READ(10,*) STR
+    |
+    = help: Change to 'unit'
+
+ℹ Safe fix
+151 151 | 
+152 152 | SYNC ALL
+153 153 | 
+154     |-OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+    154 |+OPEN(unit=10, FILE="test.txt", STATUS="UNKNOWN")
+155 155 | WRITE(10,*) "HELLO"
+156 156 | READ(10,*) STR
+157 157 | CLOSE(10)
+
+./resources/test/fixtures/style/S233.f90:155:1: S233 [*] Keyword 'WRITE' should be 'write'
+    |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 | WRITE(10,*) "HELLO"
     | ^^^^^ S233
-143 | READ(10,*) STR
-144 | CLOSE(10)
+156 | READ(10,*) STR
+157 | CLOSE(10)
     |
     = help: Change to 'write'
 
 ℹ Safe fix
-139 139 | SYNC ALL
-140 140 | 
-141 141 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-142     |-WRITE(10,*) "HELLO"
-    142 |+write(10,*) "HELLO"
-143 143 | READ(10,*) STR
-144 144 | CLOSE(10)
-145 145 | 
+152 152 | SYNC ALL
+153 153 | 
+154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155     |-WRITE(10,*) "HELLO"
+    155 |+write(10,*) "HELLO"
+156 156 | READ(10,*) STR
+157 157 | CLOSE(10)
+158 158 | 
 
-./resources/test/fixtures/style/S233.f90:143:1: S233 [*] Keyword 'READ' should be 'read'
+./resources/test/fixtures/style/S233.f90:156:1: S233 [*] Keyword 'READ' should be 'read'
     |
-141 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-142 | WRITE(10,*) "HELLO"
-143 | READ(10,*) STR
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 | WRITE(10,*) "HELLO"
+156 | READ(10,*) STR
     | ^^^^ S233
-144 | CLOSE(10)
+157 | CLOSE(10)
     |
     = help: Change to 'read'
 
 ℹ Safe fix
-140 140 | 
-141 141 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-142 142 | WRITE(10,*) "HELLO"
-143     |-READ(10,*) STR
-    143 |+read(10,*) STR
-144 144 | CLOSE(10)
-145 145 | 
-146 146 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+153 153 | 
+154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 155 | WRITE(10,*) "HELLO"
+156     |-READ(10,*) STR
+    156 |+read(10,*) STR
+157 157 | CLOSE(10)
+158 158 | 
+159 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
 
-./resources/test/fixtures/style/S233.f90:144:1: S233 [*] Keyword 'CLOSE' should be 'close'
+./resources/test/fixtures/style/S233.f90:157:1: S233 [*] Keyword 'CLOSE' should be 'close'
     |
-142 | WRITE(10,*) "HELLO"
-143 | READ(10,*) STR
-144 | CLOSE(10)
+155 | WRITE(10,*) "HELLO"
+156 | READ(10,*) STR
+157 | CLOSE(10)
     | ^^^^^ S233
-145 |
-146 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+158 |
+159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
     |
     = help: Change to 'close'
 
 ℹ Safe fix
-141 141 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-142 142 | WRITE(10,*) "HELLO"
-143 143 | READ(10,*) STR
-144     |-CLOSE(10)
-    144 |+close(10)
-145 145 | 
-146 146 | INQUIRE(FILE="test.txt", EXIST=FLAG)
-147 147 | 
+154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 155 | WRITE(10,*) "HELLO"
+156 156 | READ(10,*) STR
+157     |-CLOSE(10)
+    157 |+close(10)
+158 158 | 
+159 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+160 160 | 
 
-./resources/test/fixtures/style/S233.f90:146:1: S233 [*] Keyword 'INQUIRE' should be 'inquire'
+./resources/test/fixtures/style/S233.f90:159:1: S233 [*] Keyword 'INQUIRE' should be 'inquire'
     |
-144 | CLOSE(10)
-145 |
-146 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+157 | CLOSE(10)
+158 |
+159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
     | ^^^^^^^ S233
-147 |
-148 | NULLIFY(POLY)
+160 |
+161 | NULLIFY(POLY)
     |
     = help: Change to 'inquire'
 
 ℹ Safe fix
-143 143 | READ(10,*) STR
-144 144 | CLOSE(10)
-145 145 | 
-146     |-INQUIRE(FILE="test.txt", EXIST=FLAG)
-    146 |+inquire(FILE="test.txt", EXIST=FLAG)
-147 147 | 
-148 148 | NULLIFY(POLY)
-149 149 | 
+156 156 | READ(10,*) STR
+157 157 | CLOSE(10)
+158 158 | 
+159     |-INQUIRE(FILE="test.txt", EXIST=FLAG)
+    159 |+inquire(FILE="test.txt", EXIST=FLAG)
+160 160 | 
+161 161 | NULLIFY(POLY)
+162 162 | 
 
-./resources/test/fixtures/style/S233.f90:148:1: S233 [*] Keyword 'NULLIFY' should be 'nullify'
+./resources/test/fixtures/style/S233.f90:161:1: S233 [*] Keyword 'NULLIFY' should be 'nullify'
     |
-146 | INQUIRE(FILE="test.txt", EXIST=FLAG)
-147 |
-148 | NULLIFY(POLY)
+159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+160 |
+161 | NULLIFY(POLY)
     | ^^^^^^^ S233
-149 |
-150 | DEALLOCATE(ARR)
+162 |
+163 | DEALLOCATE(ARR)
     |
     = help: Change to 'nullify'
 
 ℹ Safe fix
-145 145 | 
-146 146 | INQUIRE(FILE="test.txt", EXIST=FLAG)
-147 147 | 
-148     |-NULLIFY(POLY)
-    148 |+nullify(POLY)
-149 149 | 
-150 150 | DEALLOCATE(ARR)
-151 151 | 
+158 158 | 
+159 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+160 160 | 
+161     |-NULLIFY(POLY)
+    161 |+nullify(POLY)
+162 162 | 
+163 163 | DEALLOCATE(ARR)
+164 164 | 
 
-./resources/test/fixtures/style/S233.f90:150:1: S233 [*] Keyword 'DEALLOCATE' should be 'deallocate'
+./resources/test/fixtures/style/S233.f90:163:1: S233 [*] Keyword 'DEALLOCATE' should be 'deallocate'
     |
-148 | NULLIFY(POLY)
-149 |
-150 | DEALLOCATE(ARR)
+161 | NULLIFY(POLY)
+162 |
+163 | DEALLOCATE(ARR)
     | ^^^^^^^^^^ S233
-151 |
-152 | STOP
+164 |
+165 | STOP
     |
     = help: Change to 'deallocate'
 
 ℹ Safe fix
-147 147 | 
-148 148 | NULLIFY(POLY)
-149 149 | 
-150     |-DEALLOCATE(ARR)
-    150 |+deallocate(ARR)
-151 151 | 
-152 152 | STOP
-153 153 | END PROGRAM KEYWORD_ZOO
+160 160 | 
+161 161 | NULLIFY(POLY)
+162 162 | 
+163     |-DEALLOCATE(ARR)
+    163 |+deallocate(ARR)
+164 164 | 
+165 165 | STOP
+166 166 | END PROGRAM KEYWORD_ZOO
 
-./resources/test/fixtures/style/S233.f90:152:1: S233 [*] Keyword 'STOP' should be 'stop'
+./resources/test/fixtures/style/S233.f90:165:1: S233 [*] Keyword 'STOP' should be 'stop'
     |
-150 | DEALLOCATE(ARR)
-151 |
-152 | STOP
+163 | DEALLOCATE(ARR)
+164 |
+165 | STOP
     | ^^^^ S233
-153 | END PROGRAM KEYWORD_ZOO
+166 | END PROGRAM KEYWORD_ZOO
     |
     = help: Change to 'stop'
 
 ℹ Safe fix
-149 149 | 
-150 150 | DEALLOCATE(ARR)
-151 151 | 
-152     |-STOP
-    152 |+stop
-153 153 | END PROGRAM KEYWORD_ZOO
+162 162 | 
+163 163 | DEALLOCATE(ARR)
+164 164 | 
+165     |-STOP
+    165 |+stop
+166 166 | END PROGRAM KEYWORD_ZOO
 
-./resources/test/fixtures/style/S233.f90:153:1: S233 [*] Keyword 'END' should be 'end'
+./resources/test/fixtures/style/S233.f90:166:1: S233 [*] Keyword 'END' should be 'end'
     |
-152 | STOP
-153 | END PROGRAM KEYWORD_ZOO
+165 | STOP
+166 | END PROGRAM KEYWORD_ZOO
     | ^^^ S233
     |
     = help: Change to 'end'
 
 ℹ Safe fix
-150 150 | DEALLOCATE(ARR)
-151 151 | 
-152 152 | STOP
-153     |-END PROGRAM KEYWORD_ZOO
-    153 |+end PROGRAM KEYWORD_ZOO
+163 163 | DEALLOCATE(ARR)
+164 164 | 
+165 165 | STOP
+166     |-END PROGRAM KEYWORD_ZOO
+    166 |+end PROGRAM KEYWORD_ZOO
 
-./resources/test/fixtures/style/S233.f90:153:5: S233 [*] Keyword 'PROGRAM' should be 'program'
+./resources/test/fixtures/style/S233.f90:166:5: S233 [*] Keyword 'PROGRAM' should be 'program'
     |
-152 | STOP
-153 | END PROGRAM KEYWORD_ZOO
+165 | STOP
+166 | END PROGRAM KEYWORD_ZOO
     |     ^^^^^^^ S233
     |
     = help: Change to 'program'
 
 ℹ Safe fix
-150 150 | DEALLOCATE(ARR)
-151 151 | 
-152 152 | STOP
-153     |-END PROGRAM KEYWORD_ZOO
-    153 |+END program KEYWORD_ZOO
+163 163 | DEALLOCATE(ARR)
+164 164 | 
+165 165 | STOP
+166     |-END PROGRAM KEYWORD_ZOO
+    166 |+END program KEYWORD_ZOO
