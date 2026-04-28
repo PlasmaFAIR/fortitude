@@ -49,6 +49,7 @@ mod tests {
     #[test_case(Rule::FunctionMissingResult, Path::new("S221.f90"))]
     #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
     #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
+    #[test_case(Rule::IncorrectKeywordCase, Path::new("S233.f90"))]
     #[test_case(Rule::BadQuoteString, Path::new("S241.f90"))]
     #[test_case(Rule::AvoidableEscapedQuote, Path::new("S242.f90"))]
     #[test_case(Rule::UselessReturn, Path::new("S251.f90"))]
