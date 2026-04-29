@@ -35,7 +35,7 @@ type mytype
     real :: val1
     integer :: val2
 
-    real, pointer :: pReal1
+    real, pointer :: pReal1 => null()
 
     integer, pointer :: pInt1 => null()
     integer, pointer :: pI1 => null()
