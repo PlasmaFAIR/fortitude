@@ -12,9 +12,7 @@ use ruff_diagnostics::Edit;
 use ruff_source_file::SourceCode;
 use ruff_text_size::Ranged;
 
-use crate::message::{Emitter, SourceLocation};
-
-use super::DiagnosticMessage;
+use super::{DiagnosticMessage, Emitter, SourceLocation};
 
 #[derive(Default)]
 pub struct RdjsonEmitter;
@@ -129,8 +127,8 @@ fn rdjson_range(start: &SourceLocation, end: &SourceLocation) -> Value {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::RdjsonEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::RdjsonEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
 
     #[test]
     fn output() {

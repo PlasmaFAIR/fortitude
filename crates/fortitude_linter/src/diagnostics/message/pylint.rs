@@ -4,10 +4,8 @@
 
 use std::io::Write;
 
+use super::{DiagnosticMessage, Emitter};
 use crate::fs::relativize_path;
-use crate::message::Emitter;
-
-use super::DiagnosticMessage;
 
 /// Generate violations in Pylint format.
 /// See: [Flake8 documentation](https://flake8.pycqa.org/en/latest/internal/formatters.html#pylint-formatter)
@@ -48,8 +46,8 @@ impl Emitter for PylintEmitter {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::PylintEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::PylintEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
 
     #[test]
     fn output() {

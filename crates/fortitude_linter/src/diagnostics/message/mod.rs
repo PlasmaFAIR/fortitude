@@ -27,7 +27,7 @@ use std::collections::BTreeMap;
 use std::io::Write;
 use std::ops::Deref;
 
-use crate::diagnostic_message::DiagnosticMessage;
+use super::diagnostic_message::DiagnosticMessage;
 use ruff_source_file::SourceLocation;
 
 /// Display format for a [`DiagnosticMessage`]s.
@@ -77,7 +77,7 @@ mod tests {
     use ruff_source_file::SourceFileBuilder;
     use ruff_text_size::{TextRange, TextSize};
 
-    use crate::message::{DiagnosticMessage, Emitter};
+    use super::{DiagnosticMessage, Emitter};
 
     pub(super) fn create_messages() -> Vec<DiagnosticMessage> {
         let test_contents = r#"module test

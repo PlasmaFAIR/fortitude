@@ -3,7 +3,6 @@ pub use settings::Settings;
 
 pub mod allow_comments;
 pub mod ast;
-pub mod diagnostic_message;
 pub mod diagnostics;
 pub mod fix;
 pub mod fs;
@@ -11,7 +10,6 @@ pub mod line_width;
 pub mod locator;
 #[macro_use]
 pub mod logging;
-pub mod message;
 pub mod registry;
 pub mod rule_redirects;
 pub mod rule_selector;
@@ -27,8 +25,7 @@ pub mod traits;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
-use diagnostic_message::DiagnosticMessage;
-use diagnostics::{Diagnostics, FixMap};
+use diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
 use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;

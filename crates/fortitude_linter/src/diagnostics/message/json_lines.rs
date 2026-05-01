@@ -4,10 +4,8 @@
 
 use std::io::Write;
 
-use crate::message::Emitter;
-use crate::message::json::message_to_json_value;
-
-use super::DiagnosticMessage;
+use super::json::message_to_json_value;
+use super::{DiagnosticMessage, Emitter};
 
 #[derive(Default)]
 pub struct JsonLinesEmitter;
@@ -30,8 +28,8 @@ impl Emitter for JsonLinesEmitter {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::json_lines::JsonLinesEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::JsonLinesEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
 
     #[test]
     fn output() {

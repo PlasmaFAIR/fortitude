@@ -15,11 +15,10 @@ use ruff_text_size::{Ranged, TextRange};
 use crate::fs::relativize_path;
 use crate::settings::UnsafeFixes;
 // use crate::line_width::{IndentWidth, LineWidthBuilder};
-use crate::message::Emitter;
-use crate::message::diff::Diff;
 use crate::text_helpers::ShowNonprinting;
 
-use super::DiagnosticMessage;
+use super::diff::Diff;
+use super::{DiagnosticMessage, Emitter};
 
 bitflags! {
     #[derive(Default)]
@@ -237,8 +236,8 @@ impl Display for MessageCodeFrame<'_> {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::TextEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::TextEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
     use crate::settings::UnsafeFixes;
 
     #[test]

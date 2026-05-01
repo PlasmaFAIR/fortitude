@@ -2,12 +2,15 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
+pub mod diagnostic_message;
+pub mod message;
+
 use std::ops::{Add, AddAssign};
 
 use rustc_hash::FxHashMap;
 
-use crate::diagnostic_message::DiagnosticMessage;
 use crate::fix::FixTable;
+pub use diagnostic_message::DiagnosticMessage;
 
 #[derive(Debug, Default, PartialEq)]
 pub struct Diagnostics {

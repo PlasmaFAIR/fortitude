@@ -5,8 +5,8 @@ use ruff_source_file::{SourceFile, SourceFileBuilder};
 
 use crate::{
     check_file,
+    diagnostics::message::{Emitter, TextEmitter},
     fs::read_to_string,
-    message::{Emitter, TextEmitter},
     settings::{self, CheckSettings, FixMode, UnsafeFixes},
 };
 

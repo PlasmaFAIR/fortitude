@@ -5,9 +5,8 @@
 use std::io::Write;
 
 use crate::fs::relativize_path;
-use crate::message::Emitter;
 
-use super::DiagnosticMessage;
+use super::{DiagnosticMessage, Emitter};
 
 /// Generate error workflow command in GitHub Actions format.
 /// See: [GitHub documentation](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message)
@@ -62,8 +61,8 @@ impl Emitter for GithubEmitter {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::GithubEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::GithubEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
 
     #[test]
     fn output() {

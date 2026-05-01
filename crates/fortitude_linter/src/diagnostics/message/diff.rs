@@ -13,7 +13,7 @@ use similar::{ChangeTag, TextDiff};
 use ruff_diagnostics::{Applicability, Fix};
 use ruff_source_file::{OneIndexed, SourceFile};
 
-use crate::message::DiagnosticMessage;
+use super::DiagnosticMessage;
 use crate::text_helpers::ShowNonprinting;
 
 /// Renders a diff that shows the code fixes.
