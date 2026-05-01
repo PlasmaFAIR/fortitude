@@ -44,4 +44,4 @@ formatters in use.
 Note that the Fortitude pre-commit hook will run with the option
 [`--force-exclude`](settings.md#force-exclude) switched on by default.  This
 will prevent Fortitude from checking files that have been explicitly added to
-your exclude list in `fpm.toml`, `fortitude.toml` or `.fortitude.toml`.
+your exclude list in your configuration file (`fortitude/fpm/pyproject.toml`).

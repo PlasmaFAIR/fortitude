@@ -183,12 +183,17 @@ fn emit_field(output: &mut String, name: &str, field: &OptionField, parents: &[S
     output.push_str("**Example usage**:\n\n");
     output.push_str(&format_tab(
         "`fpm.toml`",
-        &format_header(field.scope, parents, ConfigurationFile::FpmToml),
+        &format_header(field.scope, parents, ConfigurationFile::Fpm),
         field.example,
     ));
     output.push_str(&format_tab(
         "`fortitude.toml` or `.fortitude.toml`",
-        &format_header(field.scope, parents, ConfigurationFile::FortitudeToml),
+        &format_header(field.scope, parents, ConfigurationFile::Fortitude),
+        field.example,
+    ));
+    output.push_str(&format_tab(
+        "`pyproject.toml`",
+        &format_header(field.scope, parents, ConfigurationFile::Pyproject),
         field.example,
     ));
     output.push('\n');
@@ -209,8 +214,9 @@ fn format_tab(tab_name: &str, header: &str, content: &str) -> String {
 /// `fortitude.toml`.
 fn format_header(scope: Option<&str>, parents: &[Set], configuration: ConfigurationFile) -> String {
     let tool_parent = match configuration {
-        ConfigurationFile::FpmToml => Some("extra.fortitude"),
-        ConfigurationFile::FortitudeToml => None,
+        ConfigurationFile::Fpm => Some("extra.fortitude"),
+        ConfigurationFile::Fortitude => None,
+        ConfigurationFile::Pyproject => Some("tool.fortitude"),
     };
 
     let header = tool_parent
@@ -228,8 +234,9 @@ fn format_header(scope: Option<&str>, parents: &[Set], configuration: Configurat
 
 #[derive(Debug, Copy, Clone)]
 enum ConfigurationFile {
-    FpmToml,
-    FortitudeToml,
+    Fpm,
+    Fortitude,
+    Pyproject,
 }
 
 #[derive(Default)]

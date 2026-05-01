@@ -551,7 +551,7 @@ This indicates a bug in fortitude. If you could open an issue at:
 
     https://github.com/PlasmaFAIR/fortitude/issues/new?title=%5BInfinite%20loop%5D
 
-...quoting the contents of `{}`, the rule codes {}, along with the `fpm.toml` settings and executed command, we'd be very appreciative!
+...quoting the contents of `{}`, the rule codes {}, along with any settings files and the executed command, we'd be very appreciative!
 "#,
             "error".red().bold(),
             ":".bold(),
@@ -582,7 +582,7 @@ This indicates a bug in Fortitude. If you could open an issue at:
 
     https://github.com/PlasmaFAIR/fortitude/issues/new?title=%5BFix%20error%5D
 
-...quoting the contents of `{}`, the rule codes {}, along with the `fortitude.toml`/`fpm.toml` settings and executed command, we'd be very appreciative!
+...quoting the contents of `{}`, the rule codes {}, along with the any settings files and the executed command, we'd be very appreciative!
 "#,
             "error".red().bold(),
             ":".bold(),

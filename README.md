@@ -206,10 +206,10 @@ Run `fortitude explain` to see which rules are in preview mode.
 
 ## Configuration
 
-Fortitude will look for either a `fortitude.toml`, `.fortitude.toml` or `fpm.toml`
-file in the current directory, or one of its parents.
-If using `fortitude.toml` or `.fortitude.toml`, settings
-should be under the command name:
+Fortitude will look for either a `fortitude.toml`, `.fortitude.toml`,
+`fpm.toml`, or `pyproject.toml` file in the current directory, or one of its
+parents.  If using `fortitude.toml` or `.fortitude.toml`, settings should be
+under the command name:
 
 ```toml
 [check]
@@ -227,6 +227,8 @@ select = ["C", "E", "S"]
 ignore = ["S001", "S082"]
 line-length = 132
 ```
+
+while `pyproject.toml` uses `tool.fortitude`.
 
 You can use `--extend-select` from the command line to select additional
 rules on top of those in the configuration file.
