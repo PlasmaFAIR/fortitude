@@ -1,9 +1,8 @@
 use crate::server::Result;
 use crate::session::{Client, DocumentSnapshot};
-use fortitude_linter::registry::Rule;
+use fortitude_linter::{diagnostics::FixAvailability, registry::Rule};
 use lazy_regex::regex;
 use lsp_types::{self as types, request as req};
-use ruff_diagnostics::FixAvailability;
 use ruff_source_file::OneIndexed;
 use std::fmt::Write;
 use std::str::FromStr;

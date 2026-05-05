@@ -1,9 +1,21 @@
+use crate::violation_metadata::violation_metadata;
+
 mod map_codes;
 mod rule_code_prefix;
 mod rule_namespace;
+mod violation_metadata;
 
 use proc_macro::TokenStream;
-use syn::{DeriveInput, ItemFn, parse_macro_input};
+use syn::{DeriveInput, Error, ItemFn, parse_macro_input};
+
+#[proc_macro_derive(ViolationMetadata, attributes(violation_metadata))]
+pub fn derive_violation_metadata(item: TokenStream) -> TokenStream {
+    let input: DeriveInput = parse_macro_input!(item);
+
+    violation_metadata(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
+}
 
 #[proc_macro_derive(RuleNamespace, attributes(prefix))]
 pub fn derive_rule_namespace(input: TokenStream) -> TokenStream {

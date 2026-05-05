@@ -1,8 +1,8 @@
 //! Interface for generating fix edits from higher-level actions (e.g., "remove an argument").
 
+use crate::diagnostics::Edit;
 use anyhow::{Result, anyhow};
 use itertools::Itertools;
-use ruff_diagnostics::Edit;
 use ruff_source_file::SourceFile;
 use ruff_text_size::Ranged;
 use tree_sitter::Node;

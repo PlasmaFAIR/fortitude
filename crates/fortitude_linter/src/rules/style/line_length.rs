@@ -1,7 +1,8 @@
 /// Defines rules that govern line length.
+use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::CheckSettings;
-use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};

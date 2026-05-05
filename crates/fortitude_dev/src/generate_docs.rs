@@ -14,8 +14,7 @@ use pretty_assertions::StrComparison;
 use regex::{Captures, Regex};
 use strum::IntoEnumIterator;
 
-use ruff_diagnostics::FixAvailability;
-
+use fortitude_linter::diagnostics::FixAvailability;
 use fortitude_linter::registry::Rule;
 use fortitude_workspace::{
     options::Options,

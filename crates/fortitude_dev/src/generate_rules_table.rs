@@ -6,13 +6,12 @@
 //!
 //! Used for <https://docs.astral.sh/ruff/rules/>.
 
+use fortitude_linter::diagnostics::FixAvailability;
 use fortitude_linter::registry::{Category, Rule, RuleNamespace};
 use fortitude_linter::rules::RuleGroup;
 
 use std::borrow::Cow;
 use strum::IntoEnumIterator;
-
-use ruff_diagnostics::FixAvailability;
 
 const FIX_SYMBOL: &str = "🛠️";
 const PREVIEW_SYMBOL: &str = "🧪";

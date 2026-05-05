@@ -1,6 +1,7 @@
 /// Defines rules that enforce widely accepted whitespace rules.
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_source_file::{SourceFile, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;

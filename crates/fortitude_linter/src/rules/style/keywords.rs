@@ -1,12 +1,15 @@
 /// Defines rules that govern the use of keywords.
 use crate::ast::FortitudeNode;
+use crate::diagnostics::{
+    AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
+};
 use crate::settings::CheckSettings;
 use crate::stylist::ToCapitalisation;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
 use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use std::str::FromStr;

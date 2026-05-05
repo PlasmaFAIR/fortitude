@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::ast::types::{ParameterStatement, Variable, get_name_node_of_declarator};
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,
 };
@@ -7,9 +8,9 @@ use crate::traits::{HasNode, TextRanged};
 use crate::{AstRule, FromAstNode, SymbolTables};
 
 use anyhow::{Context, Result};
+use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use ruff_macros::derive_message_formats;
 use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::TextRange;
 use tree_sitter::Node;

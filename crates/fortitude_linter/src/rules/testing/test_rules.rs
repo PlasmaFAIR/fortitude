@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 /// Fake rules for testing fortitude's behaviour
-use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_text_size::{TextRange, TextSize};
 
 use crate::rules::Rule;

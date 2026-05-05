@@ -449,9 +449,9 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         });
         // Apply the `attrs` to each arm, like `[cfg(feature = "foo")]`.
         rule_message_formats_match_arms
-            .extend(quote! {#(#attrs)* Self::#name => <#path as ruff_diagnostics::Violation>::message_formats(),});
+            .extend(quote! {#(#attrs)* Self::#name => <#path as crate::diagnostics::Violation>::message_formats(),});
         rule_fixable_match_arms.extend(
-            quote! {#(#attrs)* Self::#name => <#path as ruff_diagnostics::Violation>::FIX_AVAILABILITY,},
+            quote! {#(#attrs)* Self::#name => <#path as crate::diagnostics::Violation>::FIX_AVAILABILITY,},
         );
         rule_explanation_match_arms.extend(quote! {#(#attrs)* Self::#name => #path::explain(),});
         rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
@@ -484,10 +484,10 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
     quote! {
         use std::path::Path;
-        use ruff_diagnostics::{Diagnostic, Violation};
         use ruff_source_file::SourceFile;
         use tree_sitter::Node;
         use crate::AstRule;
+        use crate::diagnostics::{Diagnostic, DiagnosticKind, Violation};
         use crate::settings::CheckSettings;
         use crate::symbol_table::SymbolTables;
 
@@ -519,7 +519,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
             /// Returns the documentation for this rule.
             pub fn explanation(&self) -> Option<&'static str> {
-                use ruff_diagnostics::ViolationMetadata;
+                use crate::diagnostics::ViolationMetadata;
                 match self { #rule_explanation_match_arms }
             }
 
@@ -529,13 +529,13 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             }
 
             /// Returns the fix status of this rule.
-            pub const fn fixable(&self) -> ruff_diagnostics::FixAvailability {
+            pub const fn fixable(&self) -> crate::diagnostics::FixAvailability {
                 match self { #rule_fixable_match_arms }
             }
 
         }
 
-        impl AsRule for ruff_diagnostics::DiagnosticKind {
+        impl AsRule for DiagnosticKind {
             fn rule(&self) -> Rule {
                 match self.name.as_str() {
                     #from_impls_for_diagnostic_kind

@@ -44,11 +44,11 @@ use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 
+use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use anyhow::{Context, anyhow};
 use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
 use itertools::Itertools;
-use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::SourceFile;
 use rustc_hash::FxHashMap;
 use source_kind::SourceKindDiff;

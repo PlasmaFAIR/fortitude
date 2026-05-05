@@ -8,9 +8,9 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use crate::diagnostics::Applicability;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
-use ruff_diagnostics::Applicability;
 use ruff_macros::CacheKey;
 use serde::{Deserialize, Deserializer, Serialize, de};
 use strum::IntoEnumIterator;

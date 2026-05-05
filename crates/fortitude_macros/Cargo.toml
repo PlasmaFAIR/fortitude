@@ -11,3 +11,4 @@ proc-macro2 = "1.0.89"
 quote = "1.0.37"
 syn = "2.0.86"
 itertools = { workspace = true }
+regex = { workspace = true }

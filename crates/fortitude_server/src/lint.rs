@@ -7,8 +7,11 @@ use crate::{
     DIAGNOSTIC_NAME, PositionEncoding, edit::ToRangeExt, resolve::is_document_excluded_for_linting,
     session::DocumentQuery,
 };
-use fortitude_linter::{check_only_file, diagnostics::DiagnosticMessage, locator::Locator};
-use ruff_diagnostics::{Applicability, Fix};
+use fortitude_linter::{
+    check_only_file,
+    diagnostics::{Applicability, DiagnosticMessage, Fix},
+    locator::Locator,
+};
 use ruff_source_file::{LineIndex, SourceFileBuilder};
 use ruff_text_size::{Ranged, TextRange};
 

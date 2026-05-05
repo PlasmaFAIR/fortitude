@@ -73,7 +73,7 @@ fn group_messages_by_filename(
 
 #[cfg(test)]
 mod tests {
-    use ruff_diagnostics::{Diagnostic, DiagnosticKind, Edit, Fix};
+    use crate::diagnostics::{Diagnostic, DiagnosticKind, Edit, Fix};
     use ruff_source_file::SourceFileBuilder;
     use ruff_text_size::{TextRange, TextSize};
 

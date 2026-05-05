@@ -23,7 +23,6 @@ lazy-regex = { workspace = true }
 lsp-server = { workspace = true }
 lsp-types = { workspace = true }
 rustc-hash = { workspace = true }
-ruff_diagnostics = { workspace = true }
 ruff_source_file = { workspace = true }
 ruff_text_size = { workspace = true }
 serde = { workspace = true }
