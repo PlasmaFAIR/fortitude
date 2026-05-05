@@ -57,43 +57,9 @@ use std::io::{self, Write};
 use std::iter::once;
 use std::path::Path;
 use std::{borrow::Cow, collections::BTreeMap};
-use traits::TextRanged;
 use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-// Violation type
-// --------------
-
-pub trait FromAstNode {
-    fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self;
-
-    fn from_node_if_rule_enabled<T: Into<DiagnosticKind>>(
-        settings: &CheckSettings,
-        rule: Rule,
-        violation: T,
-        node: &Node,
-    ) -> Option<Diagnostic>;
-}
-
-impl FromAstNode for Diagnostic {
-    fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
-        Self::new(violation, node.textrange())
-    }
-
-    fn from_node_if_rule_enabled<T: Into<DiagnosticKind>>(
-        settings: &CheckSettings,
-        rule: Rule,
-        violation: T,
-        node: &Node,
-    ) -> Option<Self> {
-        if settings.rules.enabled(rule) {
-            Some(Diagnostic::from_node(violation, node))
-        } else {
-            None
-        }
-    }
-}
 
 // Rule trait
 // ----------

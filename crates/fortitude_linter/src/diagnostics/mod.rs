@@ -14,8 +14,9 @@ use anyhow::Result;
 use log::debug;
 use ruff_text_size::{Ranged, TextRange, TextSize};
 use serde::{Deserialize, Serialize};
+use tree_sitter::Node;
 
-use crate::fix::FixTable;
+use crate::{fix::FixTable, rules::Rule, settings::CheckSettings, traits::TextRanged};
 
 pub use diagnostic_message::DiagnosticMessage;
 pub use violation::{AlwaysFixableViolation, FixAvailability, Violation, ViolationMetadata};
@@ -130,6 +131,23 @@ impl Diagnostic {
             range,
             fix: None,
             parent: None,
+        }
+    }
+
+    pub fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
+        Self::new(violation, node.textrange())
+    }
+
+    pub fn from_node_if_rule_enabled<T: Into<DiagnosticKind>>(
+        settings: &CheckSettings,
+        rule: Rule,
+        violation: T,
+        node: &Node,
+    ) -> Option<Self> {
+        if settings.rules.enabled(rule) {
+            Some(Diagnostic::from_node(violation, node))
+        } else {
+            None
         }
     }
 

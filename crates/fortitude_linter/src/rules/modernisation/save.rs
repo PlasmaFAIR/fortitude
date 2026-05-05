@@ -2,9 +2,7 @@ use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 
-use crate::{
-    AstRule, FromAstNode, ast::FortitudeNode, settings::FortranStandard, traits::TextRanged,
-};
+use crate::{AstRule, ast::FortitudeNode, settings::FortranStandard, traits::TextRanged};
 
 /// ## What it does
 /// Checks for unnecessary `save` statements and qualifiers

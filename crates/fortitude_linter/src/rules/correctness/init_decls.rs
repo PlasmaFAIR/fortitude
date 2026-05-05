@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::ast::types::{AttributeKind, get_name_node_of_declarator};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::CheckSettings;
-use crate::{AstRule, FromAstNode, SymbolTables};
+use crate::{AstRule, SymbolTables};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;

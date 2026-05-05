@@ -1,9 +1,9 @@
+use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::rules::utilities::literal_as_io_unit;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
-use crate::{AstRule, FromAstNode};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;

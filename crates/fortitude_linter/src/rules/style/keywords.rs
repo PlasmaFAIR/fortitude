@@ -1,3 +1,4 @@
+use crate::AstRule;
 /// Defines rules that govern the use of keywords.
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{
@@ -7,7 +8,6 @@ use crate::settings::CheckSettings;
 use crate::stylist::ToCapitalisation;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
-use crate::{AstRule, FromAstNode};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;

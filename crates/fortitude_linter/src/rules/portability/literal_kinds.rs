@@ -1,8 +1,8 @@
+use crate::AstRule;
 use crate::ast::{FortitudeNode, dtype_is_plain_number};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
-use crate::{AstRule, FromAstNode};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex_is_match;
 use ruff_macros::derive_message_formats;

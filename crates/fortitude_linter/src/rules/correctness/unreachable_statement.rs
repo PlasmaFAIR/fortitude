@@ -1,8 +1,8 @@
+use crate::AstRule;
 use crate::ast::{FortitudeNode, types::BlockExit};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
-use crate::{AstRule, FromAstNode};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;

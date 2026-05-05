@@ -5,10 +5,10 @@ use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
+use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
-use crate::{AstRule, FromAstNode};
 
 fn semicolon_is_superfluous(node: &Node) -> bool {
     let line_number = node.start_position().row;

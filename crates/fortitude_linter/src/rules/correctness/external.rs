@@ -4,9 +4,7 @@ use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-use crate::{
-    AstRule, FromAstNode, ast::FortitudeNode, settings::CheckSettings, symbol_table::SymbolTables,
-};
+use crate::{AstRule, ast::FortitudeNode, settings::CheckSettings, symbol_table::SymbolTables};
 
 /// ## What does it do?
 /// Checks for procedures declared with just `external`

@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::settings::CheckSettings;
 use crate::traits::TextRanged;
-use crate::{AstRule, FromAstNode, SymbolTables};
+use crate::{AstRule, SymbolTables};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use log::debug;

@@ -7,12 +7,12 @@ use ruff_source_file::SourceFile;
 use ruff_text_size::{TextLen, TextSize};
 use tree_sitter::Node;
 
+use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::stylist::Quote;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
-use crate::{AstRule, FromAstNode};
 
 /// ## What does it do?
 /// Catches use of single- or double-quoted strings, depending on the value of

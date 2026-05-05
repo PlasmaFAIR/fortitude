@@ -1,4 +1,3 @@
-use crate::FromAstNode;
 use crate::Rule;
 use crate::ast::FortitudeNode;
 use crate::ast::types::NameDecl;

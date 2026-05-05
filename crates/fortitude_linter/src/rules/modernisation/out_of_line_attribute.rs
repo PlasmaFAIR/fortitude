@@ -5,7 +5,7 @@ use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,
 };
 use crate::traits::{HasNode, TextRanged};
-use crate::{AstRule, FromAstNode, SymbolTables};
+use crate::{AstRule, SymbolTables};
 
 use anyhow::{Context, Result};
 use fortitude_macros::ViolationMetadata;

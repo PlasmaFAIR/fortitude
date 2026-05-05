@@ -79,7 +79,7 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
             f"""\
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
-use crate::{{AstRule, FromAstNode, SymbolTables}};
+use crate::{{AstRule, SymbolTables}};
 use crate::diagnostics::{{Diagnostic, Edit, Fix, FixAvailability, Violation}};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
