@@ -57,6 +57,14 @@ For example, in the following configuration file:
     ignore = ["implict-external-procedures", "S001"]
     ```
 
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    select = ["C", "style"]
+    ignore = ["implict-external-procedures", "S001"]
+    ```
+
 Fortitude would enable all rules in the `correctness` (`C`) and `style` (`S`) categories,
 except for `implicit-external-procedures` (`C003`) and `line-too-long` (`S001`).
 
@@ -154,13 +162,13 @@ enabled. The suggestion can be silenced by setting the
 Fortitude has several ways of suppressing lint errors, whether they're false positives or
 permissible in context.
 
-To globally ignore a rule, add it to the [`check.ignore`][check_ignore] list, either on
-the command line for a one-off check, or in your `fpm.toml`, `fortitude.toml` or `.fortitude.toml`
-file for a more permanent suppression for a project.
+To globally ignore a rule, add it to the [`check.ignore`][check_ignore] list,
+either on the command line for a one-off check, or in your configuration file
+for a more permanent suppression for a project.
 
 For slightly more fine-grained control, rules can be ignored for individual files through
 the [`check.per-file-ignores`](settings.md#check_per-file-ignores) setting in your
-`fpm.toml` or `fortitude.toml` file.
+configuration file.
 
 For the most fine-grained control, rules can be suppressed in the source code too, which
 is useful for allowing individual exceptions for whatever reason. Fortitude deviates from

@@ -30,6 +30,12 @@ For more information on the glob syntax, refer to the [`globset` documentation](
     
     include = ["*.f90", "*.F90"]
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude]
+    include = ["*.f90", "*.F90"]
+    ```
 
 ---
 
@@ -77,6 +83,12 @@ Note that you'll typically want to use
     [check]
     exclude = [".venv"]
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    exclude = [".venv"]
+    ```
 
 ---
 
@@ -118,6 +130,13 @@ For more information on the glob syntax, refer to the [`globset` documentation](
     # In addition to the standard set of exclusions, omit all tests, plus a specific file.
     extend-exclude = ["tests", "src/bad.f90"]
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # In addition to the standard set of exclusions, omit all tests, plus a specific file.
+    extend-exclude = ["tests", "src/bad.f90"]
+    ```
 
 ---
 
@@ -144,6 +163,13 @@ specified by [`fixable`](#check_fixable).
 
     ```toml
     [check]
+    # On top of the current `fixable` rules, enable fix for implicit-typing (`C001`) and style rules (`S`).
+    extend-fixable = ["C001", "S"]
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     # On top of the current `fixable` rules, enable fix for implicit-typing (`C001`) and style rules (`S`).
     extend-fixable = ["C001", "S"]
     ```
@@ -176,6 +202,13 @@ specified by [`select`](#check_select).
     # On top of the current `select` rules, enable missing-intent (`C061`) and portability rules (`PORT`).
     extend-select = ["C061", "PORT"]
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # On top of the current `select` rules, enable missing-intent (`C061`) and portability rules (`PORT`).
+    extend-select = ["C061", "PORT"]
+    ```
 
 ---
 
@@ -203,6 +236,12 @@ A list of file extensions to check
 
     ```toml
     [check]
+    file-extensions = ["f90", "fpp"]
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     file-extensions = ["f90", "fpp"]
     ```
 
@@ -239,6 +278,12 @@ For more information on the glob syntax, refer to the [`globset` documentation](
     [check]
     files = ["foo.f90"]
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    files = ["foo.f90"]
+    ```
 
 ---
 
@@ -267,6 +312,12 @@ Only includes automatic fixes unless `--unsafe-fixes` is provided.
     [check]
     fix = true
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    fix = true
+    ```
 
 ---
 
@@ -291,6 +342,12 @@ Like [`fix`](#fix), but disables reporting on leftover violation. Implies [`fix`
 
     ```toml
     [check]
+    fix-only = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     fix-only = true
     ```
 
@@ -319,6 +376,13 @@ all rules are considered fixable.
 
     ```toml
     [check]
+    # Only allow fix behavior for style (`S`) and modernisation (`MOD`) rules.
+    fixable = ["S", "MOD"]
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     # Only allow fix behavior for style (`S`) and modernisation (`MOD`) rules.
     fixable = ["S", "MOD"]
     ```
@@ -356,6 +420,12 @@ own settings.
     [check]
     force-exclude = true
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    force-exclude = true
+    ```
 
 ---
 
@@ -388,6 +458,12 @@ specific prefixes.
     [check]
     ignore = ["superfluous-implicit-none"]
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    ignore = ["superfluous-implicit-none"]
+    ```
 
 ---
 
@@ -412,6 +488,12 @@ By default disable ignore-comment-length behavior when running `fortitude`.
 
     ```toml
     [check]
+    ignore-comment-length = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     ignore-comment-length = true
     ```
 
@@ -445,6 +527,13 @@ For these lines, the [unicode width](https://unicode.org/reports/tr11/) of each 
     # Allow lines to be as long as 120.
     line-length = 120
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Allow lines to be as long as 120.
+    line-length = 120
+    ```
 
 ---
 
@@ -474,6 +563,13 @@ Actions annotations), `"gitlab"` (GitLab CI code quality report),
 
     ```toml
     [check]
+    # Group violations by containing file.
+    output-format = "grouped"
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     # Group violations by containing file.
     output-format = "grouped"
     ```
@@ -513,6 +609,16 @@ the file pattern.
     # Ignore `S` rules everywhere except for the `src/` directory.
     "!src/**.f90" = ["S"]
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.per-file-ignores]
+    # Ignore `S201` (superfluous implicit none) in all `test.f90` files, and in `path/to/file.f90`.
+    "test.f90" = ["S201"]
+    "path/to/file.f90" = ["S201"]
+    # Ignore `S` rules everywhere except for the `src/` directory.
+    "!src/**.f90" = ["S"]
+    ```
 
 ---
 
@@ -539,6 +645,13 @@ use unstable rules, fixes, and formatting.
 
     ```toml
     [check]
+    # Enable preview features.
+    preview = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     # Enable preview features.
     preview = true
     ```
@@ -571,6 +684,13 @@ Options are "off" (default), "ascii", and "fancy"
     # Enable unicode progress bar
     progress-bar = "fancy"
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.progress-bar]
+    # Enable unicode progress bar
+    progress-bar = "fancy"
+    ```
 
 ---
 
@@ -597,6 +717,12 @@ Enabled by default.
 
     ```toml
     [check]
+    respect-gitignore = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     respect-gitignore = false
     ```
 
@@ -636,6 +762,13 @@ specific prefixes.
     # Only check errors and obsolescent features
     select = ["E", "OB"]
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Only check errors and obsolescent features
+    select = ["E", "OB"]
+    ```
 
 ---
 
@@ -662,6 +795,13 @@ Whether to show an enumeration of all fixed lint violations
 
     ```toml
     [check]
+    # Enumerate all fixed violations.
+    show-fixes = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     # Enumerate all fixed violations.
     show-fixes = true
     ```
@@ -694,6 +834,13 @@ Options are "f2023", "f2018" (default), "f2008", "f2003", and "f95".
     # Set standard to Fortran 2008
     target-std = "f2008"
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Set standard to Fortran 2008
+    target-std = "f2008"
+    ```
 
 ---
 
@@ -719,6 +866,13 @@ A list of rule codes or prefixes to consider non-fixable.
 
     ```toml
     [check]
+    # Disable fix for implicit-external-procedures (`C003`).
+    unfixable = ["C003"]
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     # Disable fix for implicit-external-procedures (`C003`).
     unfixable = ["C003"]
     ```
@@ -748,6 +902,12 @@ If set to false, the hint will be hidden.
 
     ```toml
     [check]
+    unsafe-fixes = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     unsafe-fixes = true
     ```
 
@@ -781,6 +941,12 @@ Procedures exceeding this threshold will be flagged.
     [check.complexity]
     max-args = 15
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.complexity]
+    max-args = 15
+    ```
 
 ---
 
@@ -806,6 +972,12 @@ Procedures exceeding this threshold will be flagged.
 
     ```toml
     [check.complexity]
+    max-complexity = 15
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.complexity]
     max-complexity = 15
     ```
 
@@ -846,6 +1018,12 @@ end do
     [check.exit-unlabelled-loops]
     allow-unnested-loops = true
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.exit-unlabelled-loops]
+    allow-unnested-loops = true
+    ```
 
 ---
 
@@ -877,6 +1055,12 @@ Default behaviour is to keep the current method.
 
     ```toml
     [check.inconsistent-dimensions]
+    prefer-attribute = "always"
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.inconsistent-dimensions]
     prefer-attribute = "always"
     ```
 
@@ -911,6 +1095,12 @@ Defaults to `"lowercase"`, consistent with modern Fortran conventions.
     [check.incorrect-keyword-case]
     keyword-case = "lowercase"
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-keyword-case]
+    keyword-case = "lowercase"
+    ```
 
 ---
 
@@ -939,6 +1129,12 @@ The number of spaces to replace tabs with.
 
     ```toml
     [check.invalid-tab]
+    indent-width = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-tab]
     indent-width = 2
     ```
 
@@ -971,6 +1167,12 @@ Whether to enforce the use of `go to` instead of `goto`.
     [check.keyword-whitespace]
     goto-with-space = true
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.keyword-whitespace]
+    goto-with-space = true
+    ```
 
 ---
 
@@ -995,6 +1197,12 @@ Whether to enforce the use of `in out` instead of `inout`.
 
     ```toml
     [check.keyword-whitespace]
+    inout-with-space = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.keyword-whitespace]
     inout-with-space = true
     ```
 
@@ -1027,6 +1235,12 @@ long comments, for instance, or inline comments used for other tools.
 
     ```toml
     [check.line-too-long]
+    ignore-comments = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.line-too-long]
     ignore-comments = true
     ```
 
@@ -1064,6 +1278,12 @@ wish to switch this to `true` -- but see also
     [check.portability]
     allow-cray-file-units = true
     ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.portability]
+    allow-cray-file-units = true
+    ```
 
 ---
 
@@ -1092,6 +1312,12 @@ Quote style to prefer for string literals (either "single" or "double").
 
     ```toml
     [check.strings]
+    quotes = "single"
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.strings]
     quotes = "single"
     ```
 
@@ -1131,6 +1357,12 @@ suppression comments](linter.md#error-suppression) such as `! allow(use-all)` in
 
     ```toml
     [check.use-statements]
+    allow-bare-use = ["utils"]
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.use-statements]
     allow-bare-use = ["utils"]
     ```
 

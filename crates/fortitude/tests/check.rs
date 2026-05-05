@@ -539,6 +539,68 @@ select = ["C001", "style"]
 }
 
 #[test]
+fn check_select_file_pyproject_toml() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+end program
+"#,
+    )?;
+
+    let config_file = tempdir.path().join("pyproject.toml");
+    fs::write(
+        &config_file,
+        r#"
+[tool.fortitude.check]
+select = ["C001", "style"]
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .config(&config_file)
+                         .file(&test_file).build(),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C001 program uses implicit typing
+      |
+    2 | program test
+      | ^^^^^^^^^^^^ C001
+    3 |   logical*4, parameter :: true = .true.
+    4 | end program
+      |
+      = help: Insert `implicit none`
+
+    [TEMP_FILE] S061 [*] end statement should be named.
+      |
+    2 | program test
+    3 |   logical*4, parameter :: true = .true.
+    4 | end program
+      | ^^^^^^^^^^^ S061
+      |
+      = help: Write as 'end program test'.
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
 fn apply_fixes() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let test_file = tempdir.path().join("test.f90");

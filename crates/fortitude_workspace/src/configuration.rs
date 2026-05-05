@@ -35,12 +35,24 @@ struct Fpm {
 }
 
 #[derive(Debug, PartialEq, Eq, Default, Deserialize)]
+struct PyprojectToml {
+    tool: Option<Extra>,
+}
+
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
 struct Extra {
     fortitude: Option<Options>,
 }
 
 // Adapted from ruff
 fn parse_fpm_toml<P: AsRef<Path>>(path: P) -> Result<Fpm> {
+    let contents = std::fs::read_to_string(path.as_ref())
+        .with_context(|| format!("Failed to read {}", path.as_ref().display()))?;
+    toml::from_str(&contents)
+        .with_context(|| format!("Failed to parse {}", path.as_ref().display()))
+}
+
+fn parse_pyproject_toml<P: AsRef<Path>>(path: P) -> Result<PyprojectToml> {
     let contents = std::fs::read_to_string(path.as_ref())
         .with_context(|| format!("Failed to read {}", path.as_ref().display()))?;
     toml::from_str(&contents)
@@ -54,12 +66,17 @@ fn parse_fortitude_toml<P: AsRef<Path>>(path: P) -> Result<Options> {
         .with_context(|| format!("Failed to parse {}", path.as_ref().display()))
 }
 
-pub fn fortitude_enabled<P: AsRef<Path>>(path: P) -> Result<bool> {
+pub fn fpm_fortitude_enabled<P: AsRef<Path>>(path: P) -> Result<bool> {
     let fpm = parse_fpm_toml(path)?;
     Ok(fpm.extra.and_then(|extra| extra.fortitude).is_some())
 }
 
-/// Return the path to the `fpm.toml` or `fortitude.toml` file in a given
+pub fn pyproject_fortitude_enabled<P: AsRef<Path>>(path: P) -> Result<bool> {
+    let fpm = parse_pyproject_toml(path)?;
+    Ok(fpm.tool.and_then(|tool| tool.fortitude).is_some())
+}
+
+/// Return the path to the `fpm/fortitude/pyproject.toml` file in a given
 /// directory. Adapted from ruff
 pub fn settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     // Check for `.fortitude.toml`.
@@ -76,14 +93,20 @@ pub fn settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
 
     // Check for `fpm.toml`.
     let fpm_toml = path.as_ref().join("fpm.toml");
-    if fpm_toml.is_file() && fortitude_enabled(&fpm_toml)? {
+    if fpm_toml.is_file() && fpm_fortitude_enabled(&fpm_toml)? {
         return Ok(Some(fpm_toml));
+    }
+
+    // Check for `pyproject.toml`.
+    let pyproject_toml = path.as_ref().join("pyproject.toml");
+    if pyproject_toml.is_file() && pyproject_fortitude_enabled(&pyproject_toml)? {
+        return Ok(Some(pyproject_toml));
     }
 
     Ok(None)
 }
 
-/// Find the path to the `fpm.toml` or `fortitude.toml` file, if such a file
+/// Find the path to the `fpm/fortitude/pyproject.toml` file, if such a file
 /// exists. Adapted from ruff
 pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     for directory in path.as_ref().ancestors() {
@@ -94,7 +117,7 @@ pub fn find_settings_toml<P: AsRef<Path>>(path: P) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
-/// Find the path to the user-specific `fpm.toml` or `fortitude.toml`, if it
+/// Find the path to the user-specific `fpm/fortitude/pyproject.toml`, if it
 /// exists.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn find_user_settings_toml() -> Option<PathBuf> {
@@ -103,8 +126,13 @@ pub fn find_user_settings_toml() -> Option<PathBuf> {
     let strategy = etcetera::base_strategy::choose_base_strategy().ok()?;
     let config_dir = strategy.config_dir().join("fortitude");
 
-    // Search for a user-specific `.fortitude.toml`, then a `fortitude.toml`, then a `fpm.toml`.
-    for filename in [".fortitude.toml", "fortitude.toml", "fpm.toml"] {
+    // Search for a user-specific config file (in precedence order)
+    for filename in [
+        ".fortitude.toml",
+        "fortitude.toml",
+        "fpm.toml",
+        "pyproject.toml",
+    ] {
         let path = config_dir.join(filename);
         if path.is_file() {
             return Some(path);
@@ -114,7 +142,7 @@ pub fn find_user_settings_toml() -> Option<PathBuf> {
     None
 }
 
-/// Find the path to the project root, which contains the `fpm.toml` or `fortitude.toml` file.
+/// Find the path to the project root, which contains the `fpm/fortitude/pyproject.toml` file.
 /// If no such file exists, return the current working directory.
 pub fn project_root<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
     find_settings_toml(&path)?.map_or(Ok(fs::normalize_path(&path)), |settings| {
@@ -133,6 +161,11 @@ pub fn load_options<P: AsRef<Path>>(path: P) -> Result<Options> {
         // Unwrap should be ok here because we've already checked this
         // file has these tables
         Ok(config.extra.unwrap().fortitude.unwrap())
+    } else if path.as_ref().ends_with("pyproject.toml") {
+        let config = parse_pyproject_toml(&path)?;
+        // Unwrap should be ok here because we've already checked this
+        // file has these tables
+        Ok(config.tool.unwrap().fortitude.unwrap())
     } else {
         parse_fortitude_toml(&path)
     }
@@ -1028,7 +1061,7 @@ mod tests {
         )?;
 
         let fpm = find_settings_toml(tempdir.path())?.context("Failed to find fpm.toml")?;
-        let enabled = fortitude_enabled(fpm)?;
+        let enabled = fpm_fortitude_enabled(fpm)?;
         assert!(enabled);
 
         Ok(())

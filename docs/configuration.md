@@ -1,14 +1,15 @@
 # Configuration
 
-Fortitude will look for either a `fortitude.toml`, `.fortitude.toml`, or
-`fpm.toml` file in the current directory, or one of its parents.
+Fortitude will look for either a `fortitude.toml`, `.fortitude.toml`,
+`fpm.toml`, or `pyproject.toml` (in order of priority) file in the current
+directory, or one of its parents.
 
 For complete documentation of the available configuration options, see
 [_Settings_](settings.md).
 
 If using `fortitude.toml` or `.fortitude.toml`, settings should be under the
 command name, while for `fpm.toml` files, this has to be additionally nested
-under the `extra.fortitude` table:
+under the `extra.fortitude` table, or `tool.fortitude` for `pyproject.toml`:
 
 
 === "`fpm.toml`"
@@ -28,6 +29,17 @@ under the `extra.fortitude` table:
     ignore = ["S001", "S051"]
     line-length = 132
     ```
+
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    select = ["S", "T"]
+    ignore = ["S001", "S051"]
+    line-length = 132
+    ```
+
+!!! info "Support for `pyproject.toml` introduced in Fortitude 0.8.1"
 
 ## Configuration file discovery
 
@@ -55,7 +67,8 @@ strategy](https://docs.rs/etcetera/latest/etcetera/#native-strategy) for how
 If no config file is found, Fortitude will fall back to a default configuration.
 
 If multiple config files are found, `.fortitude.toml` takes precedence
-over `fortitude.toml`, which takes precedence over `fpm.toml`.
+over `fortitude.toml`, which takes precedence over `fpm.toml`, with
+`pyproject.toml` having the lowest precedence.
 
 ## Discovering files
 
@@ -92,6 +105,13 @@ to the default excluded files:
     extend-exclude = ["benchmarks", "tests"]
     ```
 
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    extend-exclude = ["benchmarks", "tests"]
+    ```
+
 You can also use pattern matching with a glob (`*`) symbol:
 
 === "`fpm.toml`"
@@ -105,6 +125,13 @@ You can also use pattern matching with a glob (`*`) symbol:
 
     ```toml
     [check]
+    extend-exclude = ["test_*"]
+    ```
+
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     extend-exclude = ["test_*"]
     ```
 
@@ -134,6 +161,13 @@ including `.f90`, `.F90`, `.f95`. You can change the default selection using the
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
+    include = ["*.f90", "*.fpp"]
+    ```
+
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude]
     include = ["*.f90", "*.fpp"]
     ```
 
