@@ -1,15 +1,15 @@
-use crate::FromAstNode;
 use crate::Rule;
 use crate::ast::FortitudeNode;
 use crate::ast::types::NameDecl;
 use crate::ast::types::VariableDeclaration;
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::remove_variable_decl;
 use crate::settings::CheckSettings;
 use crate::traits::{HasNode, TextRanged};
 use anyhow::{Context, Result};
+use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use settings::PreferAttribute;
 

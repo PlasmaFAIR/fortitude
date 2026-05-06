@@ -3,7 +3,6 @@ pub use settings::Settings;
 
 pub mod allow_comments;
 pub mod ast;
-pub mod diagnostic_message;
 pub mod diagnostics;
 pub mod fix;
 pub mod fs;
@@ -11,7 +10,6 @@ pub mod line_width;
 pub mod locator;
 #[macro_use]
 pub mod logging;
-pub mod message;
 pub mod registry;
 pub mod rule_redirects;
 pub mod rule_selector;
@@ -27,8 +25,7 @@ pub mod traits;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
-use diagnostic_message::DiagnosticMessage;
-use diagnostics::{Diagnostics, FixMap};
+use diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
 use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
@@ -47,11 +44,11 @@ use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 
+use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use anyhow::{Context, anyhow};
 use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
 use itertools::Itertools;
-use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_source_file::SourceFile;
 use rustc_hash::FxHashMap;
 use source_kind::SourceKindDiff;
@@ -60,43 +57,9 @@ use std::io::{self, Write};
 use std::iter::once;
 use std::path::Path;
 use std::{borrow::Cow, collections::BTreeMap};
-use traits::TextRanged;
 use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-// Violation type
-// --------------
-
-pub trait FromAstNode {
-    fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self;
-
-    fn from_node_if_rule_enabled<T: Into<DiagnosticKind>>(
-        settings: &CheckSettings,
-        rule: Rule,
-        violation: T,
-        node: &Node,
-    ) -> Option<Diagnostic>;
-}
-
-impl FromAstNode for Diagnostic {
-    fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
-        Self::new(violation, node.textrange())
-    }
-
-    fn from_node_if_rule_enabled<T: Into<DiagnosticKind>>(
-        settings: &CheckSettings,
-        rule: Rule,
-        violation: T,
-        node: &Node,
-    ) -> Option<Self> {
-        if settings.rules.enabled(rule) {
-            Some(Diagnostic::from_node(violation, node))
-        } else {
-            None
-        }
-    }
-}
 
 // Rule trait
 // ----------

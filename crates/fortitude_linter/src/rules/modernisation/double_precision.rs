@@ -1,10 +1,11 @@
+use crate::AstRule;
 use crate::ast::FortitudeNode;
+use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
-use crate::{AstRule, FromAstNode};
+use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex_captures;
-use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 

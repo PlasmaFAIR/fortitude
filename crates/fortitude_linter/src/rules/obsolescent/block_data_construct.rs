@@ -1,7 +1,9 @@
+use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::{CheckSettings, FortranStandard};
-use crate::{AstRule, FromAstNode, SymbolTables};
-use ruff_diagnostics::{Diagnostic, Violation};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use crate::{AstRule, SymbolTables};
+
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 

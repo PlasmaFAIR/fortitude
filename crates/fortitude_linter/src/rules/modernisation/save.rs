@@ -1,9 +1,8 @@
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 
-use crate::{
-    AstRule, FromAstNode, ast::FortitudeNode, settings::FortranStandard, traits::TextRanged,
-};
+use crate::{AstRule, ast::FortitudeNode, settings::FortranStandard, traits::TextRanged};
 
 /// ## What it does
 /// Checks for unnecessary `save` statements and qualifiers
@@ -55,7 +54,7 @@ impl AstRule for SuperfluousSave {
         node: &tree_sitter::Node,
         source: &ruff_source_file::SourceFile,
         _symbol_table: &crate::ast::symbol_table::SymbolTables,
-    ) -> Option<Vec<ruff_diagnostics::Diagnostic>> {
+    ) -> Option<Vec<Diagnostic>> {
         // Only F2008 and later made `save` at the module level implicit
         if settings.target_std < FortranStandard::F2008 {
             return None;

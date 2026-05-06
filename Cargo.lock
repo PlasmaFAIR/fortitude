@@ -732,7 +732,6 @@ dependencies = [
  "path-absolutize",
  "predicates",
  "rayon",
- "ruff_diagnostics",
  "ruff_source_file",
  "ruff_text_size",
  "rustc-hash",
@@ -757,7 +756,6 @@ dependencies = [
  "itertools 0.12.1",
  "pretty_assertions",
  "regex",
- "ruff_diagnostics",
  "strum",
  "textwrap",
  "tree-sitter",
@@ -820,6 +818,7 @@ dependencies = [
  "itertools 0.12.1",
  "proc-macro2",
  "quote",
+ "regex",
  "syn",
 ]
 
@@ -839,7 +838,6 @@ dependencies = [
  "libc",
  "lsp-server",
  "lsp-types",
- "ruff_diagnostics",
  "ruff_source_file",
  "ruff_text_size",
  "rustc-hash",

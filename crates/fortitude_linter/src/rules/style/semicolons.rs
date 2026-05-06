@@ -1,13 +1,14 @@
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
+use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
-use crate::{AstRule, FromAstNode};
 
 fn semicolon_is_superfluous(node: &Node) -> bool {
     let line_number = node.start_position().row;

@@ -9,14 +9,13 @@ use itertools::{Itertools, iterate};
 use serde::Serialize;
 
 use crate::check::CheckResults;
-use fortitude_linter::diagnostic_message::DiagnosticMessage;
-use fortitude_linter::diagnostics::{Diagnostics, FixMap};
-use fortitude_linter::fs::relativize_path;
-use fortitude_linter::logging::LogLevel;
-use fortitude_linter::message::{
+use fortitude_linter::diagnostics::message::{
     AzureEmitter, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
     JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
 };
+use fortitude_linter::diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
+use fortitude_linter::fs::relativize_path;
+use fortitude_linter::logging::LogLevel;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::settings::{FixMode, OutputFormat, UnsafeFixes};
 

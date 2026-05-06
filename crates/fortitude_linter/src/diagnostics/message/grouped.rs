@@ -11,12 +11,11 @@ use colored::Colorize;
 use ruff_source_file::OneIndexed;
 
 use crate::fs::relativize_path;
-use crate::message::diff::calculate_print_width;
-use crate::message::text::{MessageCodeFrame, RuleCodeAndBody};
-use crate::message::{Emitter, MessageWithLocation, group_messages_by_filename};
 use crate::settings::UnsafeFixes;
 
-use super::DiagnosticMessage;
+use super::diff::calculate_print_width;
+use super::text::{MessageCodeFrame, RuleCodeAndBody};
+use super::{DiagnosticMessage, Emitter, MessageWithLocation, group_messages_by_filename};
 
 #[derive(Default)]
 pub struct GroupedEmitter {
@@ -183,8 +182,8 @@ impl std::fmt::Write for PadAdapter<'_> {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::GroupedEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::GroupedEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
     use crate::settings::UnsafeFixes;
 
     #[test]

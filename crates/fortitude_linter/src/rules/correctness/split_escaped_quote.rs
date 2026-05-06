@@ -1,6 +1,8 @@
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic};
+use crate::diagnostics::{Edit, Fix};
+use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex;
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 

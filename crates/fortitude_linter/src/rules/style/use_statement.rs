@@ -1,10 +1,12 @@
 use crate::AstRule;
 use crate::ast::FortitudeNode;
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic};
+use crate::diagnostics::{Edit, Fix};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_source_file::{LineRanges, SourceFile};
 use ruff_text_size::TextRange;
 use tree_sitter::Node;

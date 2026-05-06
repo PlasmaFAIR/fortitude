@@ -1,11 +1,12 @@
 use crate::ast::FortitudeNode;
+use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::settings::CheckSettings;
 use crate::traits::TextRanged;
-use crate::{AstRule, FromAstNode, SymbolTables};
+use crate::{AstRule, SymbolTables};
+use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use log::debug;
-use ruff_diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use strum_macros::{Display, EnumString};

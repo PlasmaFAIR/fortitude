@@ -7,9 +7,7 @@ use std::path::Path;
 
 use quick_junit::{NonSuccessKind, Report, TestCase, TestCaseStatus, TestSuite, XmlString};
 
-use crate::message::{Emitter, MessageWithLocation, group_messages_by_filename};
-
-use super::DiagnosticMessage;
+use super::{DiagnosticMessage, Emitter, MessageWithLocation, group_messages_by_filename};
 
 #[derive(Default)]
 pub struct JunitEmitter;
@@ -92,8 +90,8 @@ impl Emitter for JunitEmitter {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::JunitEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::JunitEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
 
     #[test]
     fn output() {

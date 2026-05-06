@@ -11,10 +11,8 @@ use serde::ser::SerializeSeq;
 use serde::{Serialize, Serializer};
 use serde_json::json;
 
+use super::{DiagnosticMessage, Emitter};
 use crate::fs::{relativize_path, relativize_path_to};
-use crate::message::Emitter;
-
-use super::DiagnosticMessage;
 
 /// Generate JSON with violations in GitLab CI format
 //  https://docs.gitlab.com/ee/ci/testing/code_quality.html#implement-a-custom-tool
@@ -125,8 +123,8 @@ fn fingerprint(message: &DiagnosticMessage, project_path: &str, salt: u64) -> u6
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::GitlabEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::GitlabEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
 
     #[test]
     fn output() {

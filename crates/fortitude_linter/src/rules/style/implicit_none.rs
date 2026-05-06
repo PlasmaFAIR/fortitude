@@ -1,10 +1,11 @@
+use crate::AstRule;
 /// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::{FortitudeNode, types::ImplicitStatement};
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
-use crate::{AstRule, FromAstNode};
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 

@@ -10,10 +10,10 @@ use colored::{Color, ColoredString, Colorize, Styles};
 use ruff_text_size::{Ranged, TextRange, TextSize};
 use similar::{ChangeTag, TextDiff};
 
-use ruff_diagnostics::{Applicability, Fix};
+use crate::diagnostics::{Applicability, Fix};
 use ruff_source_file::{OneIndexed, SourceFile};
 
-use crate::message::DiagnosticMessage;
+use super::DiagnosticMessage;
 use crate::text_helpers::ShowNonprinting;
 
 /// Renders a diff that shows the code fixes.
@@ -23,7 +23,7 @@ use crate::text_helpers::ShowNonprinting;
 /// * Replace tabs with spaces for a consistent experience across terminals
 /// * Replace zero-width whitespaces
 /// * Print a simpler diff if only a single line has changed
-/// * Compute the diff from the [`ruff_diagnostics::Edit`] because diff calculation is expensive.
+/// * Compute the diff from the [`crate::diagnostics::Edit`] because diff calculation is expensive.
 pub(super) struct Diff<'a> {
     fix: &'a Fix,
     source_code: &'a SourceFile,

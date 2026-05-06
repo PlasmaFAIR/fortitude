@@ -4,9 +4,7 @@
 
 use std::io::Write;
 
-use crate::message::Emitter;
-
-use super::DiagnosticMessage;
+use super::{DiagnosticMessage, Emitter};
 
 /// Generate error logging commands for Azure Pipelines format.
 /// See [documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#logissue-log-an-error-or-warning)
@@ -44,8 +42,9 @@ impl Emitter for AzureEmitter {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::message::AzureEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
+
+    use super::AzureEmitter;
 
     #[test]
     fn output() {

@@ -9,9 +9,9 @@ use crate::rules::fortitude::allow_comments::{
 };
 use crate::traits::TextRanged;
 
+use crate::diagnostics::{Diagnostic, Edit, Fix};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
-use ruff_diagnostics::{Diagnostic, Edit, Fix};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashSet;

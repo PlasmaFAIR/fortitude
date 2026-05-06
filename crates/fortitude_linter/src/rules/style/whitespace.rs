@@ -1,15 +1,16 @@
 /// Defines rules that enforce widely accepted whitespace rules.
-use ruff_diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 use ruff_source_file::{SourceFile, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
 
+use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::settings::CheckSettings;
 use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
-use crate::{AstRule, FromAstNode};
 
 /// ## What does it do?
 /// Checks for trailing whitespace.

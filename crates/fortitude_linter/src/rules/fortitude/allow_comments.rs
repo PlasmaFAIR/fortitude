@@ -1,5 +1,6 @@
-use ruff_diagnostics::{AlwaysFixableViolation, Violation};
-use ruff_macros::{ViolationMetadata, derive_message_formats};
+use crate::diagnostics::{AlwaysFixableViolation, Violation};
+use fortitude_macros::ViolationMetadata;
+use ruff_macros::derive_message_formats;
 
 /// ## What it does
 /// Checks for invalid rules in allow comments.

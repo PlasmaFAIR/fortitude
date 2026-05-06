@@ -13,11 +13,10 @@ use ruff_source_file::OneIndexed;
 
 use crate::VERSION;
 use crate::fs::normalize_path;
-use crate::message::Emitter;
 use crate::registry::{Category, RuleNamespace};
 use crate::rules::Rule;
 
-use super::DiagnosticMessage;
+use super::{DiagnosticMessage, Emitter};
 
 pub struct SarifEmitter;
 
@@ -187,8 +186,8 @@ impl Serialize for SarifResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::message::SarifEmitter;
-    use crate::message::tests::{capture_emitter_output, create_messages};
+    use super::SarifEmitter;
+    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
 
     fn get_output() -> String {
         let mut emitter = SarifEmitter {};

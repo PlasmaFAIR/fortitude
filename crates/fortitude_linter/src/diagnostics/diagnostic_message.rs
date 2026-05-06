@@ -1,5 +1,5 @@
+use crate::diagnostics::{Diagnostic, DiagnosticKind, Fix};
 use crate::{registry::AsRule, rules::Rule};
-use ruff_diagnostics::{Diagnostic, DiagnosticKind, Fix};
 use ruff_source_file::{SourceFile, SourceFileBuilder, SourceLocation};
 use ruff_text_size::{Ranged, TextRange};
 use std::cmp::Ordering;

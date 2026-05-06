@@ -4,12 +4,12 @@ use std::process::ExitCode;
 
 use anyhow::Result;
 use colored::{Color, Colorize};
+use fortitude_linter::diagnostics::FixAvailability;
 use fortitude_linter::registry::{Category, RuleNamespace};
 use fortitude_linter::rule_selector::PreviewOptions;
 use fortitude_linter::rules::{Rule, RuleGroup};
 use fortitude_linter::settings::DEFAULT_SELECTORS;
 use itertools::Itertools;
-use ruff_diagnostics::FixAvailability;
 use serde::ser::SerializeSeq;
 use serde::{Serialize, Serializer};
 use strum::IntoEnumIterator;
