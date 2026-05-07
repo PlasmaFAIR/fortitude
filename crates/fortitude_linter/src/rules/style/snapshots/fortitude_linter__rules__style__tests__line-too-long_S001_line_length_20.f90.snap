@@ -28,5 +28,6 @@ snapshot_kind: text
  8 |   implicit none
  9 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
-10 | end program test
+10 |   integer  exactly20
+11 | end program test
    |
