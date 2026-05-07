@@ -426,7 +426,7 @@ fn check_stdin(
     let path = filename.unwrap_or_else(|| Path::new("-"));
     let source_file = SourceFileBuilder::new(path.to_str().unwrap_or("-"), stdin.as_str()).finish();
 
-    let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+    let (messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         match check_and_fix_file(path, &source_file, &settings.check, ignore_allow_comments) {
             Ok(FixerResult {
                 result,
@@ -477,24 +477,6 @@ fn check_stdin(
         let fixed = FxHashMap::default();
         (result, fixed)
     };
-
-    let per_file_ignores = &settings.check.per_file_ignores;
-    // Ignore based on per-file-ignores.
-    // If the DiagnosticMessage is discarded, its fix will also be ignored.
-    let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {
-        fs::ignores_from_path(path, per_file_ignores)
-    } else {
-        vec![]
-    };
-    if !per_file_ignores.is_empty() {
-        messages.retain(|message| {
-            if let Some(rule) = message.rule() {
-                !per_file_ignores.contains(&rule)
-            } else {
-                true
-            }
-        });
-    }
 
     let diagnostics = Diagnostics {
         messages,

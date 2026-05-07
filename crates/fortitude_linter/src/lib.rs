@@ -29,8 +29,6 @@ use diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
 use fix::{FixResult, fix_file};
 use locator::Locator;
 use registry::AsRule;
-use rule_table::RuleTable;
-use rules::AstRuleEnum;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
@@ -52,11 +50,11 @@ use itertools::Itertools;
 use ruff_source_file::SourceFile;
 use rustc_hash::FxHashMap;
 use source_kind::SourceKindDiff;
+use std::borrow::Cow;
 use std::fs::File;
 use std::io::{self, Write};
 use std::iter::once;
 use std::path::Path;
-use std::{borrow::Cow, collections::BTreeMap};
 use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -86,7 +84,7 @@ pub fn check_file(
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Diagnostics> {
-    let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+    let (messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
             result,
             transformed,
@@ -122,24 +120,6 @@ pub fn check_file(
         let fixed = FxHashMap::default();
         (result, fixed)
     };
-
-    // Ignore based on per-file-ignores.
-    // If the DiagnosticMessage is discarded, its fix will also be ignored.
-    let per_file_ignores = &settings.per_file_ignores;
-    let per_file_ignores = if !messages.is_empty() && !per_file_ignores.is_empty() {
-        fs::ignores_from_path(path, per_file_ignores)
-    } else {
-        vec![]
-    };
-    if !per_file_ignores.is_empty() {
-        messages.retain(|message| {
-            if let Some(rule) = message.rule() {
-                !per_file_ignores.contains(&rule)
-            } else {
-                true
-            }
-        });
-    }
 
     Ok(Diagnostics {
         messages,
@@ -183,7 +163,11 @@ pub(crate) fn check_path(
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
 
-    let rules = &settings.rules;
+    // Ignore diagnostics based on per-file-ignores.
+    let mut rules = settings.rules.clone();
+    for ignore in crate::fs::ignores_from_path(path, &settings.per_file_ignores) {
+        rules.disable(ignore);
+    }
 
     // Check file paths directly
     if rules.enabled(Rule::NonStandardFileExtension) {
@@ -245,7 +229,7 @@ pub(crate) fn check_path(
             }
         }
 
-        if let Some(rules) = settings.ast_entrypoints.get(node.kind()) {
+        if let Some(rules) = rules.ast_entrypoints().get(node.kind()) {
             for rule in rules {
                 if let Some(violation) = rule.check(settings, &node, file, &symbol_table) {
                     violations.extend(violation);
@@ -315,7 +299,7 @@ pub(crate) fn check_path(
             Rule::DisabledAllowComment,
         ])
     {
-        let ignored = check_allow_comments(&mut violations, &allow_comments, rules, file);
+        let ignored = check_allow_comments(&mut violations, &allow_comments, &rules, file);
         if ignore_allow_comments.is_disabled() {
             for index in ignored.iter().rev() {
                 violations.swap_remove(*index);
@@ -553,29 +537,6 @@ This indicates a bug in Fortitude. If you could open an issue at:
             codes,
         );
     }
-}
-
-/// Create a mapping of AST entrypoints to lists of the rules and codes that operate on them.
-pub fn ast_entrypoint_map(rules: &RuleTable) -> BTreeMap<&'static str, Vec<AstRuleEnum>> {
-    let ast_rules: Vec<AstRuleEnum> = rules
-        .iter_enabled()
-        .filter_map(|rule| TryFrom::try_from(rule).ok())
-        .collect();
-
-    let mut map: BTreeMap<&'static str, Vec<_>> = BTreeMap::new();
-    for rule in ast_rules {
-        for entrypoint in rule.entrypoints() {
-            match map.get_mut(entrypoint) {
-                Some(rule_vec) => {
-                    rule_vec.push(rule);
-                }
-                None => {
-                    map.insert(entrypoint, vec![rule]);
-                }
-            }
-        }
-    }
-    map
 }
 
 /// Simplify making a `SourceFile` in tests
