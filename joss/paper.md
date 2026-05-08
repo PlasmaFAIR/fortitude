@@ -249,8 +249,8 @@ Fortitude's development has been funded by the PlasmaFAIR project, EPSRC Grant E
 The authors are also grateful for the support of the Software Sustainabiliy
 Institute.
 
-We acknowledge contributions from Lawrence Dior at the University of York, Jack
-Atkinson at the University of Cambridge, and Andrew Browne and Austen Rainer at
-Queen's University Belfast.
+We acknowledge contributions from Lawrence Dior at the University of York; Jack
+Atkinson and Tom Meltzer at the University of Cambridge; Andrew Browne and
+Austen Rainer at Queen's University Belfast; and John Collins at SimCon Ltd.
 
 # References
