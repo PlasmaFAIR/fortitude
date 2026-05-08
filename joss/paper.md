@@ -66,22 +66,21 @@ and fusion energy. Fortran powers the majority of the software run on Archer2,
 which until 2024 was the most powerful supercomputer in the United
 Kingdom [@archer2].
 
-The longevity of Fortran means that much of the research software in use today
+Due to Fortran's longevity, much of the research software in use today
 is written to older standards and contains a lot of technical debt. This places
 a large burden on the maintainers of this research software, and porting Fortran
 codes to more modern languages is not typically worth the resources required or
 the risks of introducing new bugs or performance issues.
 
-Fortitude is a Fortran linter designed to help writers and maintainers of
-Fortran research software to improve the quality of their code. Its linting
-rules are grouped under categories specifying what aspect of software they
-intend to improve:
+Fortitude is a Fortran linter designed to help developers of Fortran research
+software improve the quality of their code. Its linting rules are grouped
+under categories specifying what aspect of software they intend to improve:
 
-- Correctness: Rules to find bug-prone coding patterns, helping developers to
+- Correctness: Rules to find bug-prone coding patterns, helping developers
   catch errors early and improve the safety of their code.
 - Obsolescent: Rules to flag features marked as obsolescent in the Fortran
   standard and recommend refactoring strategies to avoid them.
-- Modernisation: Rules to update Fortran code to make use of newer features.
+- Modernisation: Rules to recommend newer features that promote cleaner code.
   These are complementary to 'obsolescent' rules, and go beyond the strict
   recommendations of the Fortran standard.
 - Style: Rules to make Fortran code more readable and help adhere to a common
@@ -99,14 +98,12 @@ if (present(arg) .and. arg > 0) then
 end if
 ```
 
-In languages like C and Python, the order of operations in a logical expression
-is guaranteed to run left-to-right and will exit as soon as the outcome of the
-expression is known, skipping any remaining operations. A programmer may
-expect similar behaviour in Fortran, but as this is compiler-dependent behaviour
-in Fortran and not guaranteed by the standard, it is possible that this could
-result in a reference to invalid data and a critical error. Running Fortitude
-over this code with the rule activated delivers a diagnostic message to the
-user:
+Unlike in languages such as C and Python, the order of operations in a logical
+Fortran expression is neither guaranteed to run left-to-right nor to exit once
+the result is known, and therefore may result in all operations within the
+expression being executed. It is therefore possible that this could result in a
+reference to invalid data and a critical error. Running Fortitude over this code
+with the rule activated delivers a diagnostic message to the user:
 
 ```console
 test.f90:12:32: C161 variable inquiry `present(arg)` and use in \
@@ -158,7 +155,7 @@ Fortran linting tools, most of which are some combination of unmaintained,
 have few linting rules, use unreliable Fortran parsers, and/or have poor performance.
 Features such as automatic fixes and editor integration were also absent. The
 decision to write a new linter rather than contribute to existing solutions was
-inspired by the much higher quality of linters in other languages; it was easier
+inspired by the higher quality of linters in other languages; it was easier
 to adapt those solutions to work with Fortran than to upgrade the existing
 Fortran linters to meet the state-of-the-art. Fortitude borrows many
 language-agnostic assets from the Python linter Ruff [@ruff], including much of
@@ -201,31 +198,30 @@ As linting is effectively a solved problem in other languages, the design of
 Fortitude was guided by the reuse of existing resources. The core architecture
 and user interface of Fortitude was inspired primarily by Ruff [@ruff], a
 widely-used Python linter, and, where possible, Ruff’s language-agnostic
-features were able to be directly repurposed thanks to its open and permissive
-licensing. This reuse of a tried-and-tested design enabled much more rapid
-development than would otherwise be possible, and has resulted in a user
-experience that can be readily understood by programmers who are already
-familiar with Ruff.
+features directly repurposed thanks to its open and permissive licensing. This
+reuse of a tried-and-tested design enabled more rapid development than would
+otherwise be possible, and resulted in a user experience that can be readily
+understood by those already familiar with Ruff.
 
-The generation of the CST from a Fortran file is no simple task, especially
-given the high degree of backwards compatibility in the Fortran standards.
-Rather than writing a Fortran parser from scratch, this was achieved using the
-TreeSitter parsing framework, which provides a fast and robust solution with
-Rust bindings [@treesitter]. The Fortran extension, tree-sitter-fortran, has
-itself received numerous upgrades thanks to the experience gained working on
-Fortitude [@treesitterfortran].
+The generation of an abstract/concrete syntax tree from a Fortran file is no
+simple task, especially given the high degree of backwards compatibility in the
+Fortran standards. Therefore, this was achieved with the pre-existing TreeSitter
+parsing framework, which provides a fast and robust solution with Rust bindings
+[@treesitter]. The Fortran extension, tree-sitter-fortran, has itself received
+numerous upgrades thanks to the experience gained working on Fortitude
+[@treesitterfortran].
 
 # Research impact statement
 
-Fortitude began life as an in-house tool to aid in the refactoring of legacy
-Fortran codes within plasma physics, and is now used for code quality control by
-teams all over the world, with users ranging from individual researchers to
-government institutions. The earliest known external use was for FTorch
-[@Atkinson:2025], a library for running neural network models in Fortran. The
-Met Office uses Fortitude for various projects, including LFRic [@lfric], CASIM
-[@casim], and Socrates [@socrates]. It is also used by the quantum chemistry and
-solid state physics package cp2k [@cp2k] and the stellar astrophysics package
-MESA [@Paxton:2011].
+Fortitude started as an in-house tool for refactoring legacy Fortran codes
+within plasma physics, and is now used for code quality control by teams all
+over the world, with users ranging from individual researchers to government
+institutions. The earliest known external use was for FTorch [@Atkinson:2025], a
+library for running neural network models in Fortran. The Met Office uses
+Fortitude for various projects, including LFRic [@lfric], CASIM [@casim], and
+Socrates [@socrates]. It is also used by the quantum chemistry and solid state
+physics package cp2k [@cp2k] and the stellar astrophysics package MESA
+[@Paxton:2011].
 
 The number of contributors to Fortitude has grown from the original two authors
 to over 19, and more community members have raised feature requests and bug
