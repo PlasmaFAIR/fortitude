@@ -7,4 +7,5 @@ program test
     some_other_really_long_module_but_only_word_on_line_so_dont_flag
   implicit none
   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
+  integer  exactly20
 end program test

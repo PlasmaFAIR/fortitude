@@ -109,13 +109,13 @@ impl LineTooLong {
             // worst-case scenario is that the line is all tabs). If the maximum width is less than the
             // limit, then the line is not overlong.
             let max_possible = line.len() * tab_size;
-            if max_possible < limit {
+            if max_possible <= limit {
                 continue;
             }
 
             // Note: Can't use string.len(), as that gives byte length, not char length
             let width = measure(&line, tab_size);
-            if width < limit {
+            if width <= limit {
                 continue;
             }
 
