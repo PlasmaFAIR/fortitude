@@ -2,9 +2,13 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use std::fmt::{Debug, Display, Formatter};
+use std::{
+    collections::BTreeMap,
+    fmt::{Debug, Display, Formatter},
+    sync::OnceLock,
+};
 
-use crate::display_settings;
+use crate::{display_settings, rules::AstRuleEnum};
 use ruff_macros::CacheKey;
 
 use crate::registry::{Rule, RuleSet, RuleSetIterator};
@@ -15,6 +19,8 @@ pub struct RuleTable {
     /// Maps rule codes to a boolean indicating if the rule should be fixed.
     enabled: RuleSet,
     should_fix: RuleSet,
+    #[cache_key(ignore)]
+    ast_entrypoints: OnceLock<BTreeMap<&'static str, Vec<AstRuleEnum>>>,
 }
 
 impl RuleTable {
@@ -23,6 +29,7 @@ impl RuleTable {
         Self {
             enabled: RuleSet::empty(),
             should_fix: RuleSet::empty(),
+            ast_entrypoints: OnceLock::new(),
         }
     }
 
@@ -57,6 +64,8 @@ impl RuleTable {
         if should_fix {
             self.should_fix.insert(rule);
         }
+        // Invalidate the AST entrypoints
+        self.ast_entrypoints.take();
     }
 
     /// Disables the given rule.
@@ -64,6 +73,26 @@ impl RuleTable {
     pub fn disable(&mut self, rule: Rule) {
         self.enabled.remove(rule);
         self.should_fix.remove(rule);
+        // Invalidate the AST entrypoints
+        self.ast_entrypoints.take();
+    }
+
+    /// Return a mapping of AST entrypoints to lists of the rules and codes that
+    /// operate on them.
+    pub fn ast_entrypoints(&self) -> &BTreeMap<&'static str, Vec<AstRuleEnum>> {
+        self.ast_entrypoints.get_or_init(|| {
+            let mut map: BTreeMap<&'static str, Vec<_>> = BTreeMap::new();
+
+            self.iter_enabled()
+                .filter_map(|rule| TryFrom::try_from(rule).ok())
+                .for_each(|rule: AstRuleEnum| {
+                    for entrypoint in rule.entrypoints() {
+                        map.entry(entrypoint).or_default().push(rule);
+                    }
+                });
+
+            map
+        })
     }
 }
 
@@ -87,6 +116,7 @@ impl FromIterator<Rule> for RuleTable {
         Self {
             enabled: rules.clone(),
             should_fix: rules,
+            ast_entrypoints: OnceLock::new(),
         }
     }
 }

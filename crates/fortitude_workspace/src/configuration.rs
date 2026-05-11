@@ -17,7 +17,7 @@ use fortitude_linter::settings::{
     CheckSettings, DEFAULT_SELECTORS, ExcludeMode, FileResolverSettings, FortranStandard,
     GitignoreMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes,
 };
-use fortitude_linter::{ast_entrypoint_map, fs, warn_user_once_by_id, warn_user_once_by_message};
+use fortitude_linter::{fs, warn_user_once_by_id, warn_user_once_by_message};
 
 use anyhow::{Context, Result, anyhow};
 use itertools::Itertools;
@@ -352,7 +352,6 @@ impl Configuration {
             extend_fixable: self.extend_fixable,
         };
         let rules = to_rule_table(rule_selection, &preview)?;
-        let ast_entrypoints = ast_entrypoint_map(&rules);
 
         let mut progress_bar = self.progress_bar.unwrap_or_default();
         // Override progress bar settings if not using colour terminal
@@ -366,7 +365,6 @@ impl Configuration {
             check: CheckSettings {
                 project_root: project_root.to_path_buf(),
                 rules,
-                ast_entrypoints,
                 fix: self.fix.unwrap_or_default(),
                 fix_only: self.fix_only.unwrap_or_default(),
                 line_length: self
