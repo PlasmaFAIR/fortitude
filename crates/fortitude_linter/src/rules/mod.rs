@@ -177,6 +177,10 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Obsolescent, "061") => (RuleGroup::Stable, Ast, Default, obsolescent::deprecated_character_syntax::DeprecatedCharacterSyntax),
         (Obsolescent, "071") => (RuleGroup::Preview, Ast, Default, obsolescent::forall_statement::ForallStatement),
         (Obsolescent, "081") => (RuleGroup::Preview, Ast, Default, obsolescent::arithmetic_if::ArithmeticIf),
+        (Obsolescent, "091") => (RuleGroup::Preview, Ast, Default, obsolescent::non_block_do::LabelledDoLoop),
+        (Obsolescent, "092") => (RuleGroup::Preview, Ast, Default, obsolescent::non_block_do::SharedDoTermination),
+        (Obsolescent, "093") => (RuleGroup::Preview, Ast, Default, obsolescent::non_block_do::BadDoTermination),
+        (Obsolescent, "094") => (RuleGroup::Preview, Ast, Default, obsolescent::non_block_do::GotoEndDo),
         (Obsolescent, "201") => (RuleGroup::Preview, Ast, Default, obsolescent::mpi::DeprecatedMPIInclude),
         (Obsolescent, "211") => (RuleGroup::Preview, Ast, Default, obsolescent::openmp::DeprecatedOmpInclude),
 

@@ -1,0 +1,78 @@
+---
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
+expression: diagnostics
+snapshot_kind: text
+---
+./resources/test/fixtures/obsolescent/labelled_do.f90:11:20: OB094 [*] `goto` points to `end do`
+   |
+ 9 |     ! Has a goto which means we can't remove label on `end do`
+10 |     do 20 i = 1, 10
+11 |         if (i > 5) goto 20
+   |                    ^^^^^^^ OB094
+12 |         foo(i) = 2 * i
+13 | 20  end do
+   |
+   = help: Use `cycle` instead of `goto` to `end do`
+
+ℹ Safe fix
+8  8  | 
+9  9  |     ! Has a goto which means we can't remove label on `end do`
+10 10 |     do 20 i = 1, 10
+11    |-        if (i > 5) goto 20
+   11 |+        if (i > 5) cycle
+12 12 |         foo(i) = 2 * i
+13 13 | 20  end do
+14 14 | 
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:18:20: OB094 [*] `goto` points to `end do`
+   |
+16 |     ! We still have to replace `continue` with `end do`
+17 |     do 25 i = 1, 10
+18 |         if (i > 5) goto 25
+   |                    ^^^^^^^ OB094
+19 |         foo(i) = 2 * i
+20 | 25  continue
+   |
+   = help: Use `cycle` instead of `goto` to `end do`
+
+ℹ Safe fix
+15 15 |     ! Has a goto which means we can't remove label on `end do`
+16 16 |     ! We still have to replace `continue` with `end do`
+17 17 |     do 25 i = 1, 10
+18    |-        if (i > 5) goto 25
+   18 |+        if (i > 5) cycle
+19 19 |         foo(i) = 2 * i
+20 20 | 25  continue
+21 21 | 
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:60:20: OB094 [*] `goto` points to `end do`
+   |
+58 |     ! This only has a `goto` that could be a `cycle`
+59 |     do i = 1, 10
+60 |         if (i > 5) goto 91
+   |                    ^^^^^^^ OB094
+61 |         foo(i) = 2 * i
+62 | 91  end do
+   |
+   = help: Use `cycle` instead of `goto` to `end do`
+
+ℹ Safe fix
+57 57 | 
+58 58 |     ! This only has a `goto` that could be a `cycle`
+59 59 |     do i = 1, 10
+60    |-        if (i > 5) goto 91
+   60 |+        if (i > 5) cycle
+61 61 |         foo(i) = 2 * i
+62 62 | 91  end do
+63 63 | 
+
+./resources/test/fixtures/obsolescent/labelled_do.f90:79:24: OB094 `goto` points to `end do`
+   |
+77 |     do 110, i = 1,10
+78 |       do 120, j = 1,10
+79 |         if (i + j > 5) goto 110
+   |                        ^^^^^^^^ OB094
+80 |         A(i, j) = i + j
+81 | 120    end do
+   |
+   = help: Use `cycle` instead of `goto` to `end do`
