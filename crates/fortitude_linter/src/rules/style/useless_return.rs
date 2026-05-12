@@ -135,7 +135,7 @@ impl Violation for SuperfluousElseReturn {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { branch } = self;
-        format!("Unecessary {branch} after `return` statement")
+        format!("Unnecessary {branch} after `return` statement")
     }
 
     fn fix_title(&self) -> Option<String> {
@@ -192,7 +192,7 @@ impl Violation for SuperfluousElseCycle {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { branch } = self;
-        format!("Unecessary {branch} after `cycle` statement")
+        format!("Unnecessary {branch} after `cycle` statement")
     }
 
     fn fix_title(&self) -> Option<String> {
@@ -249,7 +249,7 @@ impl Violation for SuperfluousElseExit {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { branch } = self;
-        format!("Unecessary {branch} after `exit` statement")
+        format!("Unnecessary {branch} after `exit` statement")
     }
 
     fn fix_title(&self) -> Option<String> {
@@ -303,7 +303,7 @@ impl Violation for SuperfluousElseStop {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { branch, stop } = self;
-        format!("Unecessary {branch} after `{stop}` statement")
+        format!("Unnecessary {branch} after `{stop}` statement")
     }
 
     fn fix_title(&self) -> Option<String> {
