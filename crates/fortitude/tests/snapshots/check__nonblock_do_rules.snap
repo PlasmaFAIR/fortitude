@@ -1,0 +1,133 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--isolated"
+    - "../fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90"
+    - "--select=OB09"
+    - "--diff"
+    - "--unsafe-fixes"
+    - "--preview"
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+--- fortitude/crates/fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90
++++ fortitude/crates/fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90
+@@ -2,53 +2,60 @@
+     integer :: i, j, k, l, m, foo(10), A(10, 10), B(10, 10, 10)
+ 
+     ! No gotos, so we can autofix
+-    do 10 i = 1, 10
++    do i = 1, 10
+         foo(i) = i
+-10  continue
++    end do
+ 
+     ! Has a goto which means we can't remove label on `end do`
+-    do 20 i = 1, 10
+-        if (i > 5) goto 20
++    do i = 1, 10
++        if (i > 5) cycle
+         foo(i) = 2 * i
+ 20  end do
+ 
+     ! Has a goto which means we can't remove label on `end do`
+     ! We still have to replace `continue` with `end do`
+-    do 25 i = 1, 10
+-        if (i > 5) goto 25
++    do i = 1, 10
++        if (i > 5) cycle
+         foo(i) = 2 * i
+-25  continue
++25  end do
+ 
+     ! Doesn't end in `continue` or `end do`
+-    do 30 i = 1,10
+-30  foo(i) = 3 * i
++    do i = 1,10
++    foo(i) = 3 * i
++    end do
+ 
+     ! Doesn't end in `continue` or `end do`
+     ! and has arithmetic `if` so we need to keep label
+-    do 40 i = 1,10
++    do i = 1,10
+     if (i - 5) 39, 39, 40
+ 39  continue
+-40  foo(i) = 3 * i
++    foo(i) = 3 * i
++ 40 end do
+ 
+     ! Shared termination
+-    do 100 i = 1,10
+-      do 100 j = 1,10
+-        do 200 k = 1,10
+-          do 200 l = 1,10
+-            do 200 m = 1,10
++    do i = 1,10
++      do j = 1,10
++        do k = 1,10
++          do l = 1,10
++            do m = 1,10
+             A(i,j) = A(i,j) + B(k,l,m)
+-200 Continue
+-100 End Do
++            end do
++          end do
++    end do
++      end do
++    End Do
+ 
+-    do 300, i = 1, 10
+-      do 300, j = 1,10
+-    300 A(j, i) = i * j
++    do i = 1, 10
++      do j = 1,10
++        A(j, i) = i * j
++      end do
++     end do
+ 
+-    double_loop: do 400, i=1,10
+-      inner: do 500, j=1,10
++    double_loop: do i=1,10
++      inner: do j=1,10
+         A(i, j) = i + j
+-500   enddo inner
+-400 enddo double_loop
++      enddo inner
++    enddo double_loop
+ 
+     ! This is obviously fine
+     do i = 1, 10
+@@ -57,7 +64,7 @@
+ 
+     ! This only has a `goto` that could be a `cycle`
+     do i = 1, 10
+-        if (i > 5) goto 91
++        if (i > 5) cycle
+         foo(i) = 2 * i
+ 91  end do
+ 
+@@ -74,11 +81,11 @@
+     end do
+ 
+     ! This can't be fixed because the `goto` targets the outer loop
+-    do 110, i = 1,10
+-      do 120, j = 1,10
++    do i = 1,10
++      do j = 1,10
+         if (i + j > 5) goto 110
+         A(i, j) = i + j
+-120    end do
++       end do
+ 110 end do
+ 
+ end program test
+
+Would fix 20 errors.
+
+----- stderr -----
