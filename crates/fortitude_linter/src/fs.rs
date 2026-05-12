@@ -255,11 +255,25 @@ pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
     path.to_path_buf()
 }
 
-/// Convert any path to an absolute path (based on the specified project root).
+/// Convert any path to an absolute path (based on the specified project root)
 pub fn normalize_path_to<P: AsRef<Path>, R: AsRef<Path>>(path: P, project_root: R) -> PathBuf {
     let path = path.as_ref();
     if let Ok(path) = path.absolutize_from(project_root.as_ref()) {
         return path.to_path_buf();
+    }
+    path.to_path_buf()
+}
+
+/// Convert any path to an absolute path (based on the specified project root) and resolve symlinks
+pub fn fully_normalize_path_to<P: AsRef<Path>, R: AsRef<Path>>(
+    path: P,
+    project_root: R,
+) -> PathBuf {
+    let path = path.as_ref();
+    if let Ok(path) = path.absolutize_from(project_root.as_ref())
+        && let Ok(canonical_path) = std::fs::canonicalize(path)
+    {
+        return canonical_path.to_path_buf();
     }
     path.to_path_buf()
 }

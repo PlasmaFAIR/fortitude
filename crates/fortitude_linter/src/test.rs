@@ -37,6 +37,7 @@ pub(crate) fn test_contents(path: &Path, file: &SourceFile, settings: &CheckSett
     match check_file(
         path,
         file,
+        &None,
         settings,
         FixMode::Generate,
         settings::IgnoreAllowComments::Disabled,

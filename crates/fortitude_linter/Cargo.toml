@@ -20,6 +20,7 @@ chrono = { workspace = true, default-features = false, features = ["clock"] }
 clap = { workspace = true }
 colored = { workspace = true }
 fern = { workspace = true }
+git2 = { workspace = true }
 globset = { workspace = true }
 ignore = { workspace = true }
 is-macro = { workspace = true }

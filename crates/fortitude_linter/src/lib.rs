@@ -1,3 +1,5 @@
+use line_filter::FilterSet;
+use ruff_text_size::Ranged;
 pub use rule_selector::RuleSelector;
 pub use settings::Settings;
 
@@ -6,6 +8,7 @@ pub mod ast;
 pub mod diagnostics;
 pub mod fix;
 pub mod fs;
+pub mod line_filter;
 pub mod line_width;
 pub mod locator;
 #[macro_use]
@@ -80,11 +83,12 @@ pub trait AstRule {
 pub fn check_file(
     path: &Path,
     file: &SourceFile,
+    line_filter: &Option<FilterSet>,
     settings: &CheckSettings,
     fix_mode: FixMode,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Diagnostics> {
-    let (messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
+    let (mut messages, fixed) = if matches!(fix_mode, FixMode::Apply | FixMode::Diff) {
         if let Ok(FixerResult {
             result,
             transformed,
@@ -120,6 +124,10 @@ pub fn check_file(
         let fixed = FxHashMap::default();
         (result, fixed)
     };
+
+    if let Some(line_filter) = line_filter {
+        messages.retain(|message| line_filter.contains(message.start()));
+    }
 
     Ok(Diagnostics {
         messages,
