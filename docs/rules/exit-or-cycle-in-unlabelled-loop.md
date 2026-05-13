@@ -1,6 +1,4 @@
 # exit-or-cycle-in-unlabelled-loop (C142)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What does it do?
 Checks for `exit` or `cycle` in unnamed `do` loops
 

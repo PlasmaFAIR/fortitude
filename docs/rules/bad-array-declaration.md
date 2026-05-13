@@ -1,8 +1,6 @@
 # bad-array-declaration (S263)
 Fix is always available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for variable array declarations that either do or do not use the
 `dimension` attribute.

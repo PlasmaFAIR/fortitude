@@ -1,8 +1,6 @@
 # avoidable-escaped-quote (S242)
 Fix is always available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for strings that include escaped quotes that can be removed if the
 quote style is changed.

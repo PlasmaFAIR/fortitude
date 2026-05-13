@@ -1,8 +1,6 @@
 # incorrect-space-around-double-colon (S103)
 Fix is always available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What does it do?
 Checks for `::` that aren't surrounded by a space on either side.
 

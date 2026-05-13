@@ -1,6 +1,4 @@
 # double-precision-literal (MOD002)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for floating point literals that use `d` or `D` as the exponentiation.
 

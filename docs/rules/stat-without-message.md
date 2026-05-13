@@ -1,6 +1,4 @@
 # stat-without-message (C183)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What does it do?
 This rule detects whether `stat` is used without also setting `errmsg` when
 allocating or deallocating. Similarly checks for the use of `iostat` without

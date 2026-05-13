@@ -1,8 +1,6 @@
 # split-escaped-quote (C171)
 Fix is always available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for Fortran-escaped quotes in string literals that have been split over two lines.
 
