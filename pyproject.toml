@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "fortitude-lint"
-version = "0.8.0"
+version = "0.9.0"
 description = "A Fortran linter, written in Rust and installable with Python"
 readme = "README.md"
 authors = [
@@ -12,7 +12,7 @@ authors = [
     {name = "Peter Hill", email = "peter.hill@york.ac.uk"},
     {name = "Ian McInerney", email = "i.mcinerney17@imperial.ac.uk"},
 ]
-licence = {file = "LICENSE"}
+license = {file = "LICENSE"}
 keywords = ["Fortran", "linter"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",

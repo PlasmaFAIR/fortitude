@@ -4,13 +4,19 @@ authors:
 - family-names: "Pattinson"
   given-names: "Liam"
   orcid: "https://orcid.org/0000-0001-8604-6904"
-- family-names: Hill
-  given-names: Peter
+- family-names: "Hill"
+  given-names: "Peter"
   orcid: "https://orcid.org/0000-0003-3092-1858"
 - family-names: "McInerney"
   given-names: "Ian"
   orcid: "https://orcid.org/0000-0003-2616-9771"
+- family-names: "Aird"
+  given-names: "Connor"
+  orcid: "https://orcid.org/0009-0001-7879-3472"
+- family-names: "Gandon"
+  given-names: "Cyril"
+  orcid: "https://orcid.org/0009-0006-9705-8867"
 title: "fortitude"
-version: 0.8.0
-date-released: 2026-02-05
+version: 0.9.0
+date-released: 2026-05-13
 url: "https://github.com/PlasmaFAIR/fortitude"

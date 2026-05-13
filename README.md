@@ -25,7 +25,7 @@ Written in Rust :crab: and installable with Python :snake:.
 - :zap: Blazingly fast, up to hundreds of times faster than other open-source Fortran
   linters.
 - :wrench: Automatically fixes linter warnings.
-- :chart_with_upwards_trend: Almost 100 rules, with many more planned.
+- :chart_with_upwards_trend: Over 100 rules, with many more planned.
 - :page_with_curl: Multiple output formats, including SARIF and GitHub/GitLab CI.
 - :handshake: Follows [community best
   practices](https://fortran-lang.org/learn/best_practices/).
@@ -250,9 +250,6 @@ fortitude config check.extend-select
 
 ## Editor Integration
 
-> [!NOTE]
-> Added in v0.8.0
-
 Fortitude can be integrated into text editors and IDEs that support the
 Language Server Protocol (LSP), providing real-time diagnostics and
 code actions for applying fixes as you work.
@@ -260,7 +257,7 @@ code actions for applying fixes as you work.
 Please see the [documentation](https://fortitude.readthedocs.io/en/stable/editors/) for
 details on setting this up for your editor.
 
-A VSCode plugin is in development, and will be released shortly.
+We also have a [VSCode plugin](https://marketplace.visualstudio.com/items?itemName=PlasmaFAIR.fortitude)!.
 
 ## pre-commit
 

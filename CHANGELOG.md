@@ -1,5 +1,98 @@
 # Changelog
 
+## 0.9.0
+
+Released on 2026-05-13.
+
+Adds a large number of new rules and configuration options.
+
+### Changes
+
+- Add support for pFUnit ([#636](https://github.com/PlasmaFAIR/fortitude/pull/636))
+- Add support for `pyproject.toml` config files ([#626](https://github.com/PlasmaFAIR/fortitude/pull/626))
+- Add `--git-staged` and `--git-since` CLI arguments to facilitate incremental linting ([#613](https://github.com/PlasmaFAIR/fortitude/pull/613))
+- Add `--diff` CLI flag for previewing fix results ([#598](https://github.com/PlasmaFAIR/fortitude/pull/598))
+- Add `ignore-comment-length` setting for the `line-too-long` rule ([#591](https://github.com/PlasmaFAIR/fortitude/pull/591))
+- Add `allow-bare-use` option to exclude modules from the `use-all` rule ([#599](https://github.com/PlasmaFAIR/fortitude/pull/599))
+
+### Rules
+
+- Upgrade implicit typing rules to catch more edge cases ([#616](https://github.com/PlasmaFAIR/fortitude/pull/616))
+- Add fixes for `superfluous-else-*` rules ([#612](https://github.com/PlasmaFAIR/fortitude/pull/612))
+- Add rule `incorrect_keyword_case` ([#611](https://github.com/PlasmaFAIR/fortitude/pull/611))
+- Add rule `unsorted-uses` ([#608](https://github.com/PlasmaFAIR/fortitude/pull/608))
+- Add rule `bare-decimal` ([#624](https://github.com/PlasmaFAIR/fortitude/pull/624))
+- Add cyclomatic complexity rule `too-complex` ([#602](https://github.com/PlasmaFAIR/fortitude/pull/602))
+- Add rule `too-many-arguments` ([#606](https://github.com/PlasmaFAIR/fortitude/pull/606))
+- Add rule for obsolete `arithmetic-if` ([#603](https://github.com/PlasmaFAIR/fortitude/pull/603))
+- Add rules for non-block `do` statements ([#604](https://github.com/PlasmaFAIR/fortitude/pull/604))
+  - `labelled-do-loop`
+  - `shared-do-termination`
+  - `bad-do-termination`
+  - `goto-end-do`
+- Add rules for obsolescent `equivalence`, `block data`, and `forall` ([#592](https://github.com/PlasmaFAIR/fortitude/pull/592))
+  - `equivalence-statement`
+  - `block-data-construct`
+  - `forall-statement`
+- Add rule `superfluous-save` ([#619](https://github.com/PlasmaFAIR/fortitude/pull/619))
+- Move 34 rules out of preview:
+  - `avoidable-escaped-quote`
+  - `bad-array-declaration`
+  - `bad-quote-string`
+  - `deprecated-mpi-include`
+  - `deprecated-omp-include`
+  - `double-precision-literal`
+  - `exit-or-cycle-in-unlabelled-loop`
+  - `function-missing-result`
+  - `inconsistent-array-declaration`
+  - `incorrect-space-around-double-colon`
+  - `incorrect-space-between-brackets`
+  - `invalid-character`
+  - `invalid-tab`
+  - `keyword-has-whitespace`
+  - `keywords-missing-space`
+  - `misleading-inline-if-continuation`
+  - `misleading-inline-if-semicolon`
+  - `missing-end-label`
+  - `missing-newline-at-end-of-file`
+  - `mixed-scalar-array-declaration`
+  - `multiple-allocations-with-stat`
+  - `nonportable-shortcircuit-inquiry`
+  - `old-mpi-module`
+  - `out-of-line-attribute`
+  - `pointer-initialisation-in-declaration`
+  - `pointer-initialisation-in-declaration`
+  - `split-escaped-quote`
+  - `stat-without-message`
+  - `superfluous-else-cycle`
+  - `superfluous-else-exit`
+  - `superfluous-else-return`
+  - `superfluous-else-stop`
+  - `unchecked-stat`
+  - `unreachable-statement`
+  - `useless-return`
+
+### Bug fixes
+
+- Fix `line-too-long` for lines exactly on limit ([#631](https://github.com/PlasmaFAIR/fortitude/pull/631))
+- Fix false positive with inline `if(...) return` in `superfluous-else-*` rules (S25*) ([#595](https://github.com/PlasmaFAIR/fortitude/pull/595))
+
+### Docs
+
+- Fix explanation of `missing-default-pointer-initialisation` ([#625](https://github.com/PlasmaFAIR/fortitude/pull/625))
+- Add instructions for using fortitude within the zed editor ([#590](https://github.com/PlasmaFAIR/fortitude/pull/590))
+
+### Contributors
+
+- [@cyrilgandon](https://github.com/cyrilgandon)
+- [@LiamPattinson](https://github.com/LiamPattinson)
+- [@jhelgert](https://github.com/jhelgert)
+- [@ZedThree](https://github.com/ZedThree)
+- [@oyarzun](https://github.com/oyarzun)
+- [@VincentVanlaer](https://github.com/VincentVanlaer)
+- [@vsherratt](https://github.com/vsherratt)
+- [@mcbarton](https://github.com/mcbarton)
+
 ## 0.8.0
 
 Released on 2026-02-05.
