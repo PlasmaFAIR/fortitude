@@ -1,8 +1,6 @@
 # invalid-tab (PORT031)
 Fix is sometimes available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 This rule is turned on by default.
 
 ## What it does

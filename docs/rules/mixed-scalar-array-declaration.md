@@ -1,8 +1,6 @@
 # mixed-scalar-array-declaration (S262)
 Fix is always available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for variable declarations that mix declarations of both scalars and
 arrays.

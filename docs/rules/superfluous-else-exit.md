@@ -1,8 +1,6 @@
 # superfluous-else-exit (S254)
 Fix is sometimes available.
 
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for `else` statements with a `exit` statement in the preceeding
 `if` block
