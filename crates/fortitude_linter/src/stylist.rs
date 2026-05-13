@@ -216,8 +216,11 @@ impl fmt::Display for Quote {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, CacheKey)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, CacheKey, strum_macros::Display,
+)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
+#[strum(serialize_all = "kebab-case")]
 #[derive(Default)]
 pub enum Capitalisation {
     /// Use "lowercase" for keywords
@@ -227,16 +230,6 @@ pub enum Capitalisation {
     Uppercase,
     /// Use "Titlecase" for keywords
     Titlecase,
-}
-
-impl fmt::Display for Capitalisation {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Lowercase => write!(f, "lowercase"),
-            Self::Uppercase => write!(f, "uppercase"),
-            Self::Titlecase => write!(f, "titlecase"),
-        }
-    }
 }
 
 impl From<&str> for Capitalisation {
