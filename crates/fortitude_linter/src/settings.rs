@@ -149,6 +149,7 @@ impl fmt::Display for CheckSettings {
                 self.fix,
                 self.fix_only,
                 self.show_fixes,
+                self.unsafe_fixes,
                 self.output_format,
                 self.target_std,
                 self.progress_bar,
@@ -169,6 +170,7 @@ impl fmt::Display for CheckSettings {
                 self.inconsistent_dimension | nested,
                 self.line_too_long | nested,
                 self.use_statements | nested,
+                self.complexity | nested,
             ]
         }
         Ok(())

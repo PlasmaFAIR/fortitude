@@ -220,6 +220,7 @@ impl fmt::Display for Quote {
     Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, CacheKey, strum_macros::Display,
 )]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
+#[strum(serialize_all = "kebab-case")]
 #[derive(Default)]
 pub enum Capitalisation {
     /// Use "lowercase" for keywords

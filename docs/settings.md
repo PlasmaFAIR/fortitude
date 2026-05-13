@@ -1077,7 +1077,7 @@ Preferred casing for Fortran keywords, as enforced by the [`incorrect-keyword-ca
 
 Defaults to `"lowercase"`, consistent with modern Fortran conventions.
 
-**Default value**: `lower`
+**Default value**: `lowercase`
 
 **Type**: `"lowercase" | "uppercase" | "titlecase"`
 

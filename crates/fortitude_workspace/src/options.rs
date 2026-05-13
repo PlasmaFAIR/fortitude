@@ -443,7 +443,7 @@ pub struct ExitUnlabelledLoopOptions {
 impl ExitUnlabelledLoopOptions {
     pub fn into_settings(self) -> exit_labels::settings::Settings {
         exit_labels::settings::Settings {
-            allow_unnested_loops: self.allow_unnested_loops.unwrap_or(false),
+            allow_unnested_loops: self.allow_unnested_loops.unwrap_or_default(),
         }
     }
 }
@@ -474,8 +474,8 @@ pub struct KeywordWhitespaceOptions {
 impl KeywordWhitespaceOptions {
     pub fn into_settings(self) -> keywords::settings::Settings {
         keywords::settings::Settings {
-            inout_with_space: self.inout_with_space.unwrap_or(false),
-            goto_with_space: self.goto_with_space.unwrap_or(false),
+            inout_with_space: self.inout_with_space.unwrap_or_default(),
+            goto_with_space: self.goto_with_space.unwrap_or_default(),
         }
     }
 }
@@ -490,7 +490,7 @@ pub struct IncorrectKeywordCaseOptions {
     ///
     /// Defaults to `"lowercase"`, consistent with modern Fortran conventions.
     #[option(
-        default = "lower",
+        default = "lowercase",
         value_type = r#""lowercase" | "uppercase" | "titlecase""#,
         example = r#"keyword-case = "lowercase""#
     )]
@@ -683,8 +683,8 @@ pub struct ComplexityOptions {
 impl ComplexityOptions {
     pub fn into_settings(self) -> complexity::settings::Settings {
         complexity::settings::Settings {
-            max_complexity: self.max_complexity.unwrap_or_default(),
-            max_args: self.max_complexity.unwrap_or_default(),
+            max_complexity: self.max_complexity.unwrap_or(10),
+            max_args: self.max_args.unwrap_or(5),
         }
     }
 }
