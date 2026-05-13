@@ -12,7 +12,7 @@ For more information on the glob syntax, refer to the [`globset` documentation](
 
 !!! info "_Introduced in 0.8.0_"
 
-**Default value**: `["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23"]`
+**Default value**: `["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23", "*.pf"]`
 
 **Type**: `list[str]`
 
@@ -220,7 +220,7 @@ specified by [`select`](#check_select).
 
 A list of file extensions to check
 
-**Default value**: `["f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23"]`
+**Default value**: `["f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23", "pf"]`
 
 **Type**: `list[str]`
 

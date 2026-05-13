@@ -306,7 +306,7 @@ pub fn relativize_path_to<P: AsRef<Path>, R: AsRef<Path>>(path: P, project_root:
 
 /// Default extensions to check
 pub const FORTRAN_EXTS: &[&str] = &[
-    "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23",
+    "f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23", "pf",
 ];
 
 /// Default paths to exclude when searching paths
@@ -342,4 +342,5 @@ pub const INCLUDE: &[FilePattern] = &[
     FilePattern::Builtin("*.F18"),
     FilePattern::Builtin("*.f23"),
     FilePattern::Builtin("*.F23"),
+    FilePattern::Builtin("*.pf"),
 ];
