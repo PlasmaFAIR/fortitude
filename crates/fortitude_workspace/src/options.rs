@@ -37,7 +37,7 @@ pub struct Options {
     ///
     /// !!! info "_Introduced in 0.8.0_"
     #[option(
-        default = r#"["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23"]"#,
+        default = r#"["*.f90", "*.F90", "*.f95", "*.F95", "*.f03", "*.F03", "*.f08", "*.F08", "*.f18", "*.F18", "*.f23", "*.F23", "*.pf"]"#,
         value_type = "list[str]",
         example = r#"
             include = ["*.f90", "*.F90"]
@@ -243,7 +243,7 @@ pub struct CheckOptions {
     // File resolver options
     /// A list of file extensions to check
     #[option(
-        default = r#"["f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23"]"#,
+        default = r#"["f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08", "f18", "F18", "f23", "F23", "pf"]"#,
         value_type = "list[str]",
         example = r#"
           file-extensions = ["f90", "fpp"]

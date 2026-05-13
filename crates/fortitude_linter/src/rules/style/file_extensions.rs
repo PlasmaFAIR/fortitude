@@ -12,6 +12,8 @@ use std::path::Path;
 /// The standard file extensions for modern (free-form) Fortran are '.f90' or  '.F90'.
 /// Forms that reference later Fortran standards such as '.f08' or '.F95' may be rejected
 /// by some compilers and build tools.
+///
+/// The file extension '.pf' is permitted for users of the pFUnit testing framework.
 #[derive(ViolationMetadata)]
 pub(crate) struct NonStandardFileExtension {}
 
@@ -27,7 +29,7 @@ impl NonStandardFileExtension {
         match path.extension() {
             Some(ext) => {
                 // Must check like this as ext is an OsStr
-                if ["f90", "F90"].iter().any(|&x| x == ext) {
+                if ["f90", "F90", "pf"].iter().any(|&x| x == ext) {
                     None
                 } else {
                     Some(Diagnostic::new(Self {}, TextRange::default()))
@@ -70,7 +72,9 @@ mod tests {
     fn test_correct_file_extensions() {
         let path1 = Path::new("my/dir/to/file.f90");
         let path2 = Path::new("my/dir/to/file.F90");
+        let path3 = Path::new("my/dir/to/file.pf");
         assert_eq!(NonStandardFileExtension::check(path1), None);
         assert_eq!(NonStandardFileExtension::check(path2), None);
+        assert_eq!(NonStandardFileExtension::check(path3), None);
     }
 }
