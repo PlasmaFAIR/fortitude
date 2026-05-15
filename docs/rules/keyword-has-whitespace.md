@@ -10,7 +10,7 @@ Either may be exempted from this rule by setting the options
 [`goto-with-space`](../settings.md#goto-with-space).
 
 ## Why is this bad?
-By convention, `inout` in normally preferred to `in out`. Both `go to` and
+By convention, `inout` is normally preferred to `in out`. Both `go to` and
 `goto` are valid, but Fortitude prefers the latter as `goto` is most common
 in other languages, and neither `go` nor `to` have secondary purposes in
 other keywords. Enforcing this rule can help maintain a consistent style.
