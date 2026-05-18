@@ -12,7 +12,7 @@ use rustc_hash::FxHashMap;
 
 use anyhow::Result;
 use log::debug;
-use ruff_text_size::{Ranged, TextRange, TextSize};
+use ruff_text_size::{Ranged, TextRange};
 use tree_sitter::Node;
 
 use crate::{fix::FixTable, rules::Rule, settings::CheckSettings, traits::TextRanged};
@@ -115,7 +115,6 @@ pub struct Diagnostic {
     pub suggestion: Option<String>,
     pub range: TextRange,
     pub fix: Option<Fix>,
-    pub parent: Option<TextSize>,
 }
 
 impl Diagnostic {
@@ -126,7 +125,6 @@ impl Diagnostic {
             suggestion: Violation::fix_title(&kind),
             range,
             fix: None,
-            parent: None,
         }
     }
 
@@ -180,20 +178,6 @@ impl Diagnostic {
             Ok(Some(fix)) => self.fix = Some(fix),
             Err(err) => debug!("Failed to create fix for {}: {}", self.name, err),
         }
-    }
-
-    /// Consumes `self` and returns a new `Diagnostic` with the given parent node.
-    #[inline]
-    #[must_use]
-    pub fn with_parent(mut self, parent: TextSize) -> Self {
-        self.set_parent(parent);
-        self
-    }
-
-    /// Set the location of the diagnostic's parent node.
-    #[inline]
-    pub fn set_parent(&mut self, parent: TextSize) {
-        self.parent = Some(parent);
     }
 }
 

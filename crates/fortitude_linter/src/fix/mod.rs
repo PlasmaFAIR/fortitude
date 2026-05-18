@@ -162,7 +162,6 @@ mod tests {
                 suggestion: rule.fix_title(),
                 range: edit.range(),
                 fix: Some(Fix::safe_edit(edit)),
-                parent: None,
             })
             .collect()
     }
