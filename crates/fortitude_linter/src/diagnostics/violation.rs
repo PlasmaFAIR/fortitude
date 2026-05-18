@@ -26,9 +26,6 @@ pub trait ViolationMetadata {
     /// Returns the rule for this violation
     fn rule() -> Rule;
 
-    /// Returns the rule name of this violation
-    fn rule_name() -> &'static str;
-
     /// Returns an explanation of what this violation catches,
     /// why it's bad, and what users should do instead.
     fn explain() -> Option<&'static str>;

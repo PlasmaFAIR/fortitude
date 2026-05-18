@@ -15,10 +15,6 @@ pub(crate) fn violation_metadata(input: DeriveInput) -> syn::Result<TokenStream>
         #[automatically_derived]
         #[expect(deprecated)]
         impl crate::diagnostics::ViolationMetadata for #name {
-            fn rule_name() -> &'static str {
-                stringify!(#name)
-            }
-
             fn rule() -> crate::registry::Rule {
                 crate::registry::Rule::#name
             }
