@@ -1,5 +1,6 @@
-use crate::diagnostics::{Diagnostic, DiagnosticKind, Fix};
-use crate::{registry::AsRule, rules::Rule};
+use crate::diagnostics::{Diagnostic, Fix};
+use crate::registry::AsRule;
+use crate::rules::Rule;
 use ruff_source_file::{SourceFile, SourceFileBuilder, SourceLocation};
 use ruff_text_size::{Ranged, TextRange};
 use std::cmp::Ordering;
@@ -7,47 +8,55 @@ use std::cmp::Ordering;
 /// Reports of each violation. They are pretty-printable and sortable.
 #[derive(Debug, PartialEq, Eq)]
 pub struct DiagnosticMessage {
-    kind: DiagnosticKind,
-    range: TextRange,
+    pub body: String,
+    pub suggestion: Option<String>,
+    pub range: TextRange,
     /// The file where an error was reported.
-    file: SourceFile,
+    pub file: SourceFile,
     /// The rule code that was violated, expressed as a string.
-    code: String,
+    pub code: String,
     /// The suggested fix for the violation.
-    fix: Option<Fix>,
+    pub fix: Option<Fix>,
+    pub rule: Rule,
 }
 
 impl DiagnosticMessage {
     pub fn from_ruff(file: &SourceFile, diagnostic: Diagnostic) -> Self {
-        let code = diagnostic.kind.rule().noqa_code().to_string();
+        let rule = diagnostic.rule();
+        let code = diagnostic.rule().noqa_code().to_string();
         Self {
-            kind: diagnostic.kind,
+            body: diagnostic.body,
+            suggestion: diagnostic.suggestion,
             file: file.clone(),
             code,
             range: diagnostic.range,
             fix: diagnostic.fix,
+            rule,
         }
     }
 
     pub fn from_error<S: AsRef<str>>(filename: S, diagnostic: Diagnostic) -> Self {
-        let code = diagnostic.kind.rule().noqa_code().to_string();
+        let rule = diagnostic.rule();
+        let code = diagnostic.rule().noqa_code().to_string();
         Self {
-            kind: diagnostic.kind,
+            body: diagnostic.body,
+            suggestion: diagnostic.suggestion,
             file: SourceFileBuilder::new(filename.as_ref(), "").finish(),
             code,
             range: diagnostic.range,
             fix: diagnostic.fix,
+            rule,
         }
     }
 
     /// Returns the name used to represent the diagnostic.
     pub fn name(&self) -> &str {
-        &self.kind.name
+        self.rule.into()
     }
 
     /// Returns the message body to display to the user.
     pub fn body(&self) -> &str {
-        &self.kind.body
+        &self.body
     }
 
     /// Returns the rule code that was violated.
@@ -57,7 +66,7 @@ impl DiagnosticMessage {
 
     /// Returns the fix suggestion for the violation.
     pub fn suggestion(&self) -> Option<&str> {
-        self.kind.suggestion.as_deref()
+        self.suggestion.as_deref()
     }
 
     /// Returns the [`Fix`] for the message, if there is any.
@@ -72,7 +81,7 @@ impl DiagnosticMessage {
 
     /// Returns the [`Rule`] corresponding to the diagnostic message.
     pub fn rule(&self) -> Rule {
-        self.kind.rule()
+        self.rule
     }
 
     /// Returns the filename for the message.
@@ -105,7 +114,7 @@ impl DiagnosticMessage {
         format!(
             "{}/en/stable/rules/{}",
             env!("CARGO_PKG_HOMEPAGE"),
-            self.kind.rule()
+            self.rule()
         )
     }
 }

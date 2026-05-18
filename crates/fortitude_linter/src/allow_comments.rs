@@ -112,9 +112,7 @@ pub fn check_allow_comments(
         for allow in allow_comments {
             for code in &allow.codes {
                 if let Some(rule) = code.rule {
-                    if rule == diagnostic.kind.rule()
-                        && allow.range.contains_range(diagnostic.range)
-                    {
+                    if rule == diagnostic.rule() && allow.range.contains_range(diagnostic.range) {
                         used_codes.insert(rule);
                         ignored_diagnostics.push(index);
                         // We've ignored this diagnostic, so no point

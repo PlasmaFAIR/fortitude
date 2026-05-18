@@ -73,7 +73,10 @@ fn group_messages_by_filename(
 
 #[cfg(test)]
 mod tests {
-    use crate::diagnostics::{Diagnostic, DiagnosticKind, Edit, Fix};
+    use crate::{
+        diagnostics::{Edit, Fix},
+        rules::Rule,
+    };
     use ruff_source_file::SourceFileBuilder;
     use ruff_text_size::{TextRange, TextSize};
 
@@ -90,48 +93,45 @@ contains
 end module
 "#;
 
-        let superfluous_implicit_none = Diagnostic::new(
-            DiagnosticKind {
-                name: "SuperfluousImplicitNone".to_string(),
-                body: "'implicit none' set on the enclosing module".to_string(),
-                suggestion: Some("Remove unnecessary 'implicit none'".to_string()),
-            },
-            TextRange::new(TextSize::from(57), TextSize::from(70)),
-        )
-        .with_fix(Fix::unsafe_edit(Edit::range_deletion(TextRange::new(
-            TextSize::from(57),
-            TextSize::from(70),
-        ))));
-
-        let unnamed_end_statement = Diagnostic::new(
-            DiagnosticKind {
-                name: "UnnamedEndStatement".to_string(),
-                body: "end statement should read 'end subroutine foo'".to_string(),
-                suggestion: None,
-            },
-            TextRange::new(TextSize::from(73), TextSize::from(87)),
-        );
-
         let test_source = SourceFileBuilder::new("test.f90", test_contents).finish();
 
+        let superfluous_implicit_none = DiagnosticMessage {
+            rule: Rule::SuperfluousImplicitNone,
+            body: "'implicit none' set on the enclosing module".to_string(),
+            suggestion: Some("Remove unnecessary 'implicit none'".to_string()),
+            range: TextRange::new(TextSize::from(57), TextSize::from(70)),
+            file: test_source.clone(),
+            code: Rule::SuperfluousImplicitNone.noqa_code().to_string(),
+            fix: Some(Fix::unsafe_edit(Edit::range_deletion(TextRange::new(
+                TextSize::from(57),
+                TextSize::from(70),
+            )))),
+        };
+
+        let unnamed_end_statement = DiagnosticMessage {
+            rule: Rule::UnnamedEndStatement,
+            body: "end statement should read 'end subroutine foo'".to_string(),
+            suggestion: None,
+            range: TextRange::new(TextSize::from(73), TextSize::from(87)),
+            file: test_source,
+            code: Rule::UnnamedEndStatement.noqa_code().to_string(),
+            fix: None,
+        };
+
         let file_2 = r"integer*4 foo; end";
-
-        let star_kind = Diagnostic::new(
-            DiagnosticKind {
-                name: "StarKind".to_string(),
-                body: "integer*4 is non-standard, use integer(4)".to_string(),
-                suggestion: None,
-            },
-            TextRange::new(TextSize::from(7), TextSize::from(8)),
-        );
-
         let file_2_source = SourceFileBuilder::new("star_kind.f90", file_2).finish();
 
-        vec![
-            DiagnosticMessage::from_ruff(&test_source, superfluous_implicit_none),
-            DiagnosticMessage::from_ruff(&test_source, unnamed_end_statement),
-            DiagnosticMessage::from_ruff(&file_2_source, star_kind),
-        ]
+        let star_kind = DiagnosticMessage {
+            rule: Rule::StarKind,
+            body: "integer*4 is non-standard, use integer(4)".to_string(),
+            suggestion: None,
+            range: TextRange::new(TextSize::from(7), TextSize::from(8)),
+            file: file_2_source,
+            code: Rule::StarKind.noqa_code().to_string(),
+            fix: None,
+        };
+
+        vec![superfluous_implicit_none, unnamed_end_statement, star_kind]
     }
 
     pub(super) fn capture_emitter_output(

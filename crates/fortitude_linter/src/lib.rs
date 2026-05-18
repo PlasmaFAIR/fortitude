@@ -45,7 +45,7 @@ use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 
-use crate::diagnostics::{Diagnostic, DiagnosticKind};
+use crate::diagnostics::Diagnostic;
 use anyhow::{Context, anyhow};
 use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
@@ -335,13 +335,13 @@ pub(crate) fn check_path(
             // Text and path rules can be safely retained.
             let syntax_error_idx = violations
                 .iter()
-                .position(|diagnostic| diagnostic.kind.rule() == Rule::SyntaxError);
+                .position(|diagnostic| diagnostic.rule() == Rule::SyntaxError);
             if let Some(syntax_error_idx) = syntax_error_idx {
                 violations = violations
                     .into_iter()
                     .enumerate()
                     .filter_map(|(idx, diagnostic)| {
-                        if idx <= syntax_error_idx || !diagnostic.kind.rule().is_ast_rule() {
+                        if idx <= syntax_error_idx || !diagnostic.rule().is_ast_rule() {
                             Some(diagnostic)
                         } else {
                             None
@@ -365,7 +365,7 @@ pub(crate) fn check_path(
 
     // Disable any fixes for unfixable rules
     for diagnostic in &mut violations {
-        let rule = diagnostic.kind.rule();
+        let rule = diagnostic.rule();
         if diagnostic.fix.is_some() && !rules.should_fix(rule) {
             diagnostic.fix = None;
         }
@@ -487,7 +487,7 @@ fn collect_rule_codes(rules: impl IntoIterator<Item = Rule>) -> String {
 
 #[allow(clippy::print_stderr)]
 fn report_failed_to_converge_error(path: &Path, transformed: &str, diagnostics: &[Diagnostic]) {
-    let codes = collect_rule_codes(diagnostics.iter().map(|diagnostic| diagnostic.kind.rule()));
+    let codes = collect_rule_codes(diagnostics.iter().map(|diagnostic| diagnostic.rule()));
     if cfg!(debug_assertions) {
         eprintln!(
             "{}{} Failed to converge after {} iterations in `{}` with rule codes {}:---\n{}\n---",

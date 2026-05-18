@@ -13,7 +13,6 @@ use rustc_hash::FxHashMap;
 use anyhow::Result;
 use log::debug;
 use ruff_text_size::{Ranged, TextRange, TextSize};
-use serde::{Deserialize, Serialize};
 use tree_sitter::Node;
 
 use crate::{fix::FixTable, rules::Rule, settings::CheckSettings, traits::TextRanged};
@@ -106,39 +105,36 @@ impl AddAssign for FixMap {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct DiagnosticKind {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Diagnostic {
     /// The identifier of the diagnostic, used to align the diagnostic with a rule.
-    pub name: String,
+    pub name: &'static str,
     /// The message body to display to the user, to explain the diagnostic.
     pub body: String,
     /// The message to display to the user, to explain the suggested fix.
     pub suggestion: Option<String>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Diagnostic {
-    pub kind: DiagnosticKind,
     pub range: TextRange,
     pub fix: Option<Fix>,
     pub parent: Option<TextSize>,
 }
 
 impl Diagnostic {
-    pub fn new<T: Into<DiagnosticKind>>(kind: T, range: TextRange) -> Self {
+    pub fn new<T: Violation>(kind: T, range: TextRange) -> Self {
         Self {
-            kind: kind.into(),
+            name: T::rule().into(),
+            body: Violation::message(&kind),
+            suggestion: Violation::fix_title(&kind),
             range,
             fix: None,
             parent: None,
         }
     }
 
-    pub fn from_node<T: Into<DiagnosticKind>>(violation: T, node: &Node) -> Self {
+    pub fn from_node<T: Violation>(violation: T, node: &Node) -> Self {
         Self::new(violation, node.textrange())
     }
 
-    pub fn from_node_if_rule_enabled<T: Into<DiagnosticKind>>(
+    pub fn from_node_if_rule_enabled<T: Violation>(
         settings: &CheckSettings,
         rule: Rule,
         violation: T,
@@ -171,7 +167,7 @@ impl Diagnostic {
     pub fn try_set_fix(&mut self, func: impl FnOnce() -> Result<Fix>) {
         match func() {
             Ok(fix) => self.fix = Some(fix),
-            Err(err) => debug!("Failed to create fix for {}: {}", self.kind.name, err),
+            Err(err) => debug!("Failed to create fix for {}: {}", self.name, err),
         }
     }
 
@@ -182,7 +178,7 @@ impl Diagnostic {
         match func() {
             Ok(None) => {}
             Ok(Some(fix)) => self.fix = Some(fix),
-            Err(err) => debug!("Failed to create fix for {}: {}", self.kind.name, err),
+            Err(err) => debug!("Failed to create fix for {}: {}", self.name, err),
         }
     }
 
