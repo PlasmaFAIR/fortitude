@@ -28,7 +28,7 @@ pub mod traits;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
-use diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
+use diagnostics::{Diagnostic, Diagnostics, FixMap};
 use fix::{FixResult, fix_file};
 use locator::Locator;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
@@ -44,7 +44,6 @@ use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 
-use crate::diagnostics::Diagnostic;
 use anyhow::{Context, anyhow};
 use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
@@ -140,7 +139,7 @@ pub fn check_only_file(
     file: &SourceFile,
     settings: &CheckSettings,
     ignore_allow_comments: settings::IgnoreAllowComments,
-) -> anyhow::Result<Vec<DiagnosticMessage>> {
+) -> anyhow::Result<Vec<Diagnostic>> {
     let mut parser = Parser::new();
     parser
         .set_language(&tree_sitter_fortran::LANGUAGE.into())
@@ -153,7 +152,7 @@ pub fn check_only_file(
 
     Ok(violations
         .into_iter()
-        .map(|v| DiagnosticMessage::from_ruff(file, v))
+        .map(|v| v.with_file(file.clone()))
         .collect_vec())
 }
 
@@ -379,7 +378,7 @@ pub type FixTable = FxHashMap<Rule, usize>;
 
 pub struct FixerResult<'a> {
     /// The result returned by the linter, after applying any fixes.
-    pub result: Vec<DiagnosticMessage>,
+    pub result: Vec<Diagnostic>,
     /// The resulting source code, after applying any fixes.
     pub transformed: Cow<'a, SourceFile>,
     /// The number of fixes applied for each [`Rule`].
@@ -467,7 +466,7 @@ pub fn check_and_fix_file<'a>(
         return Ok(FixerResult {
             result: violations
                 .into_iter()
-                .map(|v| DiagnosticMessage::from_ruff(&transformed, v))
+                .map(|v| v.with_file(transformed.clone().into_owned()))
                 .collect_vec(),
             transformed,
             fixed,

@@ -4,7 +4,8 @@
 
 use std::io::Write;
 
-use super::{DiagnosticMessage, Emitter};
+use super::Emitter;
+use crate::Diagnostic;
 
 /// Generate error logging commands for Azure Pipelines format.
 /// See [documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#logissue-log-an-error-or-warning)
@@ -12,11 +13,7 @@ use super::{DiagnosticMessage, Emitter};
 pub struct AzureEmitter;
 
 impl Emitter for AzureEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         for message in messages {
             let location = message.compute_start_location();
 

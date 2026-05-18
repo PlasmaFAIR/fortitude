@@ -12,17 +12,14 @@ use crate::diagnostics::Edit;
 use ruff_source_file::SourceCode;
 use ruff_text_size::Ranged;
 
-use super::{DiagnosticMessage, Emitter, SourceLocation};
+use super::{Emitter, SourceLocation};
+use crate::Diagnostic;
 
 #[derive(Default)]
 pub struct RdjsonEmitter;
 
 impl Emitter for RdjsonEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         serde_json::to_writer_pretty(
             writer,
             &json!({
@@ -40,7 +37,7 @@ impl Emitter for RdjsonEmitter {
 }
 
 struct ExpandedMessages<'a> {
-    messages: &'a [DiagnosticMessage],
+    messages: &'a [Diagnostic],
 }
 
 impl Serialize for ExpandedMessages<'_> {
@@ -59,7 +56,7 @@ impl Serialize for ExpandedMessages<'_> {
     }
 }
 
-fn message_to_rdjson_value(message: &DiagnosticMessage) -> Value {
+fn message_to_rdjson_value(message: &Diagnostic) -> Value {
     let source_code = message.source_file().to_source_code();
 
     let start_location = source_code.source_location(message.start());

@@ -17,8 +17,9 @@ use crate::settings::UnsafeFixes;
 // use crate::line_width::{IndentWidth, LineWidthBuilder};
 use crate::text_helpers::ShowNonprinting;
 
+use super::Emitter;
 use super::diff::Diff;
-use super::{DiagnosticMessage, Emitter};
+use crate::Diagnostic;
 
 bitflags! {
     #[derive(Default)]
@@ -66,11 +67,7 @@ impl TextEmitter {
 }
 
 impl Emitter for TextEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         for message in messages {
             write!(
                 writer,
@@ -115,7 +112,7 @@ impl Emitter for TextEmitter {
 }
 
 pub(super) struct RuleCodeAndBody<'a> {
-    pub(crate) message: &'a DiagnosticMessage,
+    pub(crate) message: &'a Diagnostic,
     pub(crate) show_fix_status: bool,
     pub(crate) unsafe_fixes: UnsafeFixes,
 }
@@ -151,7 +148,7 @@ impl Display for RuleCodeAndBody<'_> {
 }
 
 pub(super) struct MessageCodeFrame<'a> {
-    pub(crate) message: &'a DiagnosticMessage,
+    pub(crate) message: &'a Diagnostic,
 }
 
 impl Display for MessageCodeFrame<'_> {

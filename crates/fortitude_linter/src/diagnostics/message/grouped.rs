@@ -15,7 +15,8 @@ use crate::settings::UnsafeFixes;
 
 use super::diff::calculate_print_width;
 use super::text::{MessageCodeFrame, RuleCodeAndBody};
-use super::{DiagnosticMessage, Emitter, MessageWithLocation, group_messages_by_filename};
+use super::{Emitter, MessageWithLocation, group_messages_by_filename};
+use crate::Diagnostic;
 
 #[derive(Default)]
 pub struct GroupedEmitter {
@@ -47,11 +48,7 @@ impl GroupedEmitter {
 }
 
 impl Emitter for GroupedEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         for (filename, messages) in group_messages_by_filename(messages) {
             // Compute the maximum number of digits in the row and column, for messages in
             // this file.

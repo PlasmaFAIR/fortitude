@@ -4,7 +4,7 @@ use crate::resolve;
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
-use fortitude_linter::diagnostics::{Diagnostic, DiagnosticMessage, Diagnostics, FixMap};
+use fortitude_linter::diagnostics::{Diagnostic, Diagnostics, FixMap};
 use fortitude_linter::fs::{self, read_to_string};
 use fortitude_linter::line_filter::{FilterMap, git_since, git_staged_files};
 use fortitude_linter::rules::Rule;
@@ -350,10 +350,13 @@ fn check_files(
                         Err(error) => {
                             if settings.check.rules.enabled(Rule::IoError) {
                                 let message = format!("Error opening file: {error}");
-                                let diagnostics = vec![DiagnosticMessage::from_error(
-                                    resolved_file.file_name().to_string_lossy(),
-                                    Diagnostic::new(IoError { message }, TextRange::default()),
-                                )];
+                                let filename = resolved_file.file_name().to_string_lossy();
+                                let diagnostics = vec![
+                                    Diagnostic::new(IoError { message }, TextRange::default())
+                                        .with_file(
+                                            SourceFileBuilder::new(filename.as_ref(), "").finish(),
+                                        ),
+                                ];
                                 return CheckStatus::Skipped(Diagnostics::new(diagnostics));
                             } else {
                                 warn!(
@@ -418,10 +421,13 @@ fn check_files(
                         let settings = resolver.resolve(path);
                         if settings.check.rules.enabled(Rule::IoError) {
                             let message = format!("Error opening file: {message}");
-                            let diagnostics = vec![DiagnosticMessage::from_error(
-                                path.to_string_lossy(),
-                                Diagnostic::new(IoError { message }, TextRange::default()),
-                            )];
+                            let filename = path.to_string_lossy();
+                            let diagnostics = vec![
+                                Diagnostic::new(IoError { message }, TextRange::default())
+                                    .with_file(
+                                        SourceFileBuilder::new(filename.as_ref(), "").finish(),
+                                    ),
+                            ];
                             CheckStatus::Skipped(Diagnostics::new(diagnostics))
                         } else {
                             warn!(

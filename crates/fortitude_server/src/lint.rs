@@ -9,7 +9,7 @@ use crate::{
 };
 use fortitude_linter::{
     check_only_file,
-    diagnostics::{Applicability, DiagnosticMessage, Fix},
+    diagnostics::{Applicability, Diagnostic, Fix},
     locator::Locator,
 };
 use ruff_source_file::{LineIndex, SourceFileBuilder};
@@ -120,7 +120,7 @@ pub(crate) fn fixes_for_diagnostics(
 
 /// Generates an LSP diagnostic
 fn to_lsp_diagnostic(
-    diagnostic: &DiagnosticMessage,
+    diagnostic: &Diagnostic,
     source: &str,
     index: &LineIndex,
     encoding: PositionEncoding,

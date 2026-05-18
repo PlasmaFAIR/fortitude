@@ -16,12 +16,13 @@ use crate::fs::normalize_path;
 use crate::registry::{Category, RuleNamespace};
 use crate::rules::Rule;
 
-use super::{DiagnosticMessage, Emitter};
+use super::Emitter;
+use crate::Diagnostic;
 
 pub struct SarifEmitter;
 
 impl Emitter for SarifEmitter {
-    fn emit(&mut self, writer: &mut dyn Write, messages: &[DiagnosticMessage]) -> Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> Result<()> {
         let results = messages
             .iter()
             .map(SarifResult::from_message)
@@ -118,7 +119,7 @@ struct SarifResult {
 
 impl SarifResult {
     #[cfg(not(target_arch = "wasm32"))]
-    fn from_message(message: &DiagnosticMessage) -> Result<Self> {
+    fn from_message(message: &Diagnostic) -> Result<Self> {
         let start_location = message.compute_start_location();
         let end_location = message.compute_end_location();
         let path = normalize_path(message.filename());

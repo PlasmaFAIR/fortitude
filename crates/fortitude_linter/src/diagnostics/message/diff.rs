@@ -13,7 +13,7 @@ use similar::{ChangeTag, TextDiff};
 use crate::diagnostics::{Applicability, Fix};
 use ruff_source_file::{OneIndexed, SourceFile};
 
-use super::DiagnosticMessage;
+use crate::Diagnostic;
 use crate::text_helpers::ShowNonprinting;
 
 /// Renders a diff that shows the code fixes.
@@ -30,7 +30,7 @@ pub(super) struct Diff<'a> {
 }
 
 impl<'a> Diff<'a> {
-    pub(crate) fn from_message(message: &'a DiagnosticMessage) -> Option<Diff<'a>> {
+    pub(crate) fn from_message(message: &'a Diagnostic) -> Option<Diff<'a>> {
         message.fix().map(|fix| Diff {
             source_code: message.source_file(),
             fix,

@@ -13,7 +13,7 @@ use fortitude_linter::diagnostics::message::{
     AzureEmitter, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
     JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
 };
-use fortitude_linter::diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
+use fortitude_linter::diagnostics::{Diagnostic, Diagnostics, FixMap};
 use fortitude_linter::fs::relativize_path;
 use fortitude_linter::logging::LogLevel;
 use fortitude_linter::rules::Rule;
@@ -363,19 +363,16 @@ impl Printer {
             .messages
             .iter()
             .sorted_by_key(|message| (message.rule(), message.fixable()))
-            .fold(
-                vec![],
-                |mut acc: Vec<(&DiagnosticMessage, usize)>, message| {
-                    if let Some((prev_message, count)) = acc.last_mut()
-                        && prev_message.rule() == message.rule()
-                    {
-                        *count += 1;
-                        return acc;
-                    }
-                    acc.push((message, 1));
-                    acc
-                },
-            )
+            .fold(vec![], |mut acc: Vec<(&Diagnostic, usize)>, message| {
+                if let Some((prev_message, count)) = acc.last_mut()
+                    && prev_message.rule() == message.rule()
+                {
+                    *count += 1;
+                    return acc;
+                }
+                acc.push((message, 1));
+                acc
+            })
             .iter()
             .map(|&(message, count)| ExpandedStatistics {
                 code: message.rule().into(),

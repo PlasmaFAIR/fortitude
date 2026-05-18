@@ -6,7 +6,8 @@ use std::io::Write;
 
 use crate::fs::relativize_path;
 
-use super::{DiagnosticMessage, Emitter};
+use super::Emitter;
+use crate::Diagnostic;
 
 /// Generate error workflow command in GitHub Actions format.
 /// See: [GitHub documentation](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message)
@@ -14,11 +15,7 @@ use super::{DiagnosticMessage, Emitter};
 pub struct GithubEmitter;
 
 impl Emitter for GithubEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         for message in messages {
             let source_location = message.compute_start_location();
             let location = source_location.clone();

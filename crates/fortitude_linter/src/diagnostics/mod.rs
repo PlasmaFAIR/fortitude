@@ -2,22 +2,24 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-pub mod diagnostic_message;
 pub mod message;
 pub mod violation;
 
-use std::ops::{Add, AddAssign};
+use std::{
+    cmp::Ordering,
+    ops::{Add, AddAssign},
+};
 
+use ruff_source_file::{SourceFile, SourceLocation};
 use rustc_hash::FxHashMap;
 
 use anyhow::Result;
 use log::debug;
-use ruff_text_size::TextRange;
+use ruff_text_size::{Ranged, TextRange};
 use tree_sitter::Node;
 
 use crate::{fix::FixTable, rules::Rule, settings::CheckSettings, traits::TextRanged};
 
-pub use diagnostic_message::DiagnosticMessage;
 pub use violation::{AlwaysFixableViolation, FixAvailability, Violation, ViolationMetadata};
 
 // Re-export some things from ruff
@@ -25,12 +27,12 @@ pub use ruff_diagnostics::{Applicability, Edit, Fix, IsolationLevel, SourceMap, 
 
 #[derive(Debug, Default, PartialEq)]
 pub struct Diagnostics {
-    pub messages: Vec<DiagnosticMessage>,
+    pub messages: Vec<Diagnostic>,
     pub fixed: FixMap,
 }
 
 impl Diagnostics {
-    pub fn new(messages: Vec<DiagnosticMessage>) -> Self {
+    pub fn new(messages: Vec<Diagnostic>) -> Self {
         Self {
             messages,
             fixed: FixMap::default(),
@@ -119,6 +121,10 @@ pub struct Diagnostic {
     rule: Rule,
     /// The rule code that was violated, expressed as a string.
     code: String,
+    /// The file where an error was reported.
+    ///
+    /// Optional so we can delay setting it for now
+    file: Option<SourceFile>,
 }
 
 impl Diagnostic {
@@ -131,6 +137,7 @@ impl Diagnostic {
             fix: None,
             code: T::rule().noqa_code().to_string(),
             rule: T::rule(),
+            file: None,
         }
     }
 
@@ -149,6 +156,13 @@ impl Diagnostic {
         } else {
             None
         }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_file(mut self, file: SourceFile) -> Self {
+        self.file = Some(file);
+        self
     }
 
     /// Consumes `self` and returns a new `Diagnostic` with the given `fix`.
@@ -200,10 +214,6 @@ impl Diagnostic {
         self
     }
 
-    pub fn range(&self) -> TextRange {
-        self.range
-    }
-
     /// Returns the name used to represent the diagnostic.
     pub fn name(&self) -> &str {
         self.rule.into()
@@ -239,6 +249,31 @@ impl Diagnostic {
         self.rule
     }
 
+    /// Returns the filename for the message.
+    pub fn filename(&self) -> &str {
+        self.source_file().name()
+    }
+
+    /// Computes the start source location for the message.
+    pub fn compute_start_location(&self) -> SourceLocation {
+        self.source_file()
+            .to_source_code()
+            .source_location(self.start())
+    }
+
+    /// Computes the end source location for the message.
+    #[allow(dead_code)]
+    pub fn compute_end_location(&self) -> SourceLocation {
+        self.source_file()
+            .to_source_code()
+            .source_location(self.end())
+    }
+
+    /// Returns the [`SourceFile`] which the message belongs to.
+    pub fn source_file(&self) -> &SourceFile {
+        self.file.as_ref().expect("Must have file set")
+    }
+
     /// Returns the URL for the rule documentation
     pub fn to_fortitude_url(&self) -> String {
         format!(
@@ -246,6 +281,24 @@ impl Diagnostic {
             env!("CARGO_PKG_HOMEPAGE"),
             self.rule()
         )
+    }
+}
+
+impl Ord for Diagnostic {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (&self.file, self.range().start()).cmp(&(&other.file, other.range().start()))
+    }
+}
+
+impl PartialOrd for Diagnostic {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ranged for Diagnostic {
+    fn range(&self) -> TextRange {
+        self.range
     }
 }
 
@@ -259,5 +312,6 @@ pub fn test_diagnostic_builder(rule: Rule, body: &str, range: TextRange) -> Diag
         fix: None,
         rule,
         code: rule.noqa_code().to_string(),
+        file: None,
     }
 }
