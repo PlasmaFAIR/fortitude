@@ -12,7 +12,7 @@ use rustc_hash::FxHashMap;
 
 use anyhow::Result;
 use log::debug;
-use ruff_text_size::{Ranged, TextRange};
+use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
 use crate::{fix::FixTable, rules::Rule, settings::CheckSettings, traits::TextRanged};
@@ -108,13 +108,17 @@ impl AddAssign for FixMap {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Diagnostic {
     /// The identifier of the diagnostic, used to align the diagnostic with a rule.
-    pub name: &'static str,
+    name: &'static str,
     /// The message body to display to the user, to explain the diagnostic.
-    pub body: String,
+    body: String,
     /// The message to display to the user, to explain the suggested fix.
-    pub suggestion: Option<String>,
-    pub range: TextRange,
-    pub fix: Option<Fix>,
+    suggestion: Option<String>,
+    range: TextRange,
+    /// The suggested fix for the violation.
+    fix: Option<Fix>,
+    rule: Rule,
+    /// The rule code that was violated, expressed as a string.
+    code: String,
 }
 
 impl Diagnostic {
@@ -125,6 +129,8 @@ impl Diagnostic {
             suggestion: Violation::fix_title(&kind),
             range,
             fix: None,
+            code: T::rule().noqa_code().to_string(),
+            rule: T::rule(),
         }
     }
 
@@ -179,10 +185,79 @@ impl Diagnostic {
             Err(err) => debug!("Failed to create fix for {}: {}", self.name, err),
         }
     }
+
+    /// Remove any previously set [`Fix`]
+    #[inline]
+    pub fn drop_fix(&mut self) {
+        self.fix = None;
+    }
+
+    /// Consumes `self` and returns a new `Diagnostic` with the given `suggestion`.
+    #[inline]
+    #[must_use]
+    pub fn with_suggestion(mut self, suggestion: Option<String>) -> Self {
+        self.suggestion = suggestion;
+        self
+    }
+
+    pub fn range(&self) -> TextRange {
+        self.range
+    }
+
+    /// Returns the name used to represent the diagnostic.
+    pub fn name(&self) -> &str {
+        self.rule.into()
+    }
+
+    /// Returns the message body to display to the user.
+    pub fn body(&self) -> &str {
+        &self.body
+    }
+
+    /// Returns the rule code that was violated.
+    pub fn code(&self) -> &str {
+        &self.code
+    }
+
+    /// Returns the fix suggestion for the violation.
+    pub fn suggestion(&self) -> Option<&str> {
+        self.suggestion.as_deref()
+    }
+
+    /// Returns the [`Fix`] for the message, if there is any.
+    pub fn fix(&self) -> Option<&Fix> {
+        self.fix.as_ref()
+    }
+
+    /// Returns `true` if the message contains a [`Fix`].
+    pub fn fixable(&self) -> bool {
+        self.fix().is_some()
+    }
+
+    /// Returns the [`Rule`] corresponding to the diagnostic message.
+    pub fn rule(&self) -> Rule {
+        self.rule
+    }
+
+    /// Returns the URL for the rule documentation
+    pub fn to_fortitude_url(&self) -> String {
+        format!(
+            "{}/en/stable/rules/{}",
+            env!("CARGO_PKG_HOMEPAGE"),
+            self.rule()
+        )
+    }
 }
 
-impl Ranged for Diagnostic {
-    fn range(&self) -> TextRange {
-        self.range
+#[cfg(test)]
+pub fn test_diagnostic_builder(rule: Rule, body: &str, range: TextRange) -> Diagnostic {
+    Diagnostic {
+        name: rule.name(),
+        body: body.to_string(),
+        suggestion: None,
+        range,
+        fix: None,
+        rule,
+        code: rule.noqa_code().to_string(),
     }
 }

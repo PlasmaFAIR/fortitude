@@ -31,7 +31,6 @@ use ast::FortitudeNode;
 use diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
 use fix::{FixResult, fix_file};
 use locator::Locator;
-use registry::AsRule;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
@@ -330,7 +329,7 @@ pub(crate) fn check_path(
                 path.to_string_lossy()
             );
             // Sort by byte-offset in the file
-            violations.sort_by_key(|diagnostic| diagnostic.range.start());
+            violations.sort_by_key(|diagnostic| diagnostic.range().start());
             // Retain all violations up to the first syntax error, inclusive.
             // Text and path rules can be safely retained.
             let syntax_error_idx = violations
@@ -359,15 +358,15 @@ pub(crate) fn check_path(
         }
         // Disable all fixes
         for diagnostic in &mut violations {
-            diagnostic.fix = None;
+            diagnostic.drop_fix();
         }
     }
 
     // Disable any fixes for unfixable rules
     for diagnostic in &mut violations {
         let rule = diagnostic.rule();
-        if diagnostic.fix.is_some() && !rules.should_fix(rule) {
-            diagnostic.fix = None;
+        if diagnostic.fixable() && !rules.should_fix(rule) {
+            diagnostic.drop_fix();
         }
     }
 

@@ -531,14 +531,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
         }
 
-        impl AsRule for crate::diagnostics::Diagnostic {
-            fn rule(&self) -> Rule {
-                self.name
-                    .parse()
-                    .unwrap_or_else(|_| unreachable!("invalid rule name: {}", self.name))
-            }
-        }
-
         #[derive(
             Debug,
             PartialEq,
