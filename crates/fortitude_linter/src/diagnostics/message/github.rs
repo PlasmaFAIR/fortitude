@@ -27,10 +27,8 @@ impl Emitter for GithubEmitter {
 
             write!(
                 writer,
-                "::error title=Fortitude{code},file={file},line={row},col={column},endLine={end_row},endColumn={end_column}::",
-                code = message
-                    .rule()
-                    .map_or_else(String::new, |rule| format!(" ({})", rule.noqa_code())),
+                "::error title=Fortitude ({code}),file={file},line={row},col={column},endLine={end_row},endColumn={end_column}::",
+                code = message.rule().noqa_code(),
                 file = message.filename(),
                 row = source_location.row,
                 column = source_location.column,
@@ -46,10 +44,7 @@ impl Emitter for GithubEmitter {
                 column = location.column,
             )?;
 
-            if let Some(rule) = message.rule() {
-                write!(writer, " {}", rule.noqa_code())?;
-            }
-
+            write!(writer, " {}", message.rule().noqa_code())?;
             writeln!(writer, " {}", message.body())?;
         }
 

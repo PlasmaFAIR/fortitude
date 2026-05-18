@@ -54,11 +54,7 @@ impl Emitter for JunitEmitter {
                         body = message.body()
                     ));
                     let mut case = TestCase::new(
-                        if let Some(rule) = message.rule() {
-                            format!("org.plasmafair.fortitude.{}", rule.noqa_code())
-                        } else {
-                            "org.plasmafair.fortitude".to_string()
-                        },
+                        format!("org.plasmafair.fortitude.{}", message.rule().noqa_code()),
                         status,
                     );
                     let file_path = Path::new(filename);

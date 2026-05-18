@@ -126,9 +126,11 @@ impl Display for RuleCodeAndBody<'_> {
             if let Some(fix) = self.message.fix() {
                 // Do not display an indicator for inapplicable fixes
                 if fix.applies(self.unsafe_fixes.required_applicability()) {
-                    if let Some(rule) = self.message.rule() {
-                        write!(f, "{} ", rule.noqa_code().to_string().red().bold())?;
-                    }
+                    write!(
+                        f,
+                        "{} ",
+                        self.message.rule().noqa_code().to_string().red().bold()
+                    )?;
                     return write!(
                         f,
                         "{fix}{body}",
@@ -139,16 +141,12 @@ impl Display for RuleCodeAndBody<'_> {
             }
         };
 
-        if let Some(rule) = self.message.rule() {
-            write!(
-                f,
-                "{code} {body}",
-                code = rule.noqa_code().to_string().red().bold(),
-                body = self.message.body(),
-            )
-        } else {
-            f.write_str(self.message.body())
-        }
+        write!(
+            f,
+            "{code} {body}",
+            code = self.message.rule().noqa_code().to_string().red().bold(),
+            body = self.message.body(),
+        )
     }
 }
 

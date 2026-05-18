@@ -27,7 +27,7 @@ impl Emitter for SarifEmitter {
             .map(SarifResult::from_message)
             .collect::<Result<Vec<_>>>()?;
 
-        let unique_rules: HashSet<_> = results.iter().filter_map(|result| result.rule).collect();
+        let unique_rules: HashSet<_> = results.iter().map(|result| result.rule).collect();
         let mut rules: Vec<SarifRule> = unique_rules.into_iter().map(SarifRule::from).collect();
         rules.sort_by(|a, b| a.code.cmp(&b.code));
 
@@ -106,7 +106,7 @@ impl Serialize for SarifRule<'_> {
 
 #[derive(Debug)]
 struct SarifResult {
-    rule: Option<Rule>,
+    rule: Rule,
     level: String,
     message: String,
     uri: String,
@@ -178,7 +178,7 @@ impl Serialize for SarifResult {
                     }
                 }
             }],
-            "ruleId": self.rule.map(|rule| rule.noqa_code().to_string()),
+            "ruleId": self.rule.noqa_code().to_string(),
         })
         .serialize(serializer)
     }

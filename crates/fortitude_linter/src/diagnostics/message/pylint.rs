@@ -21,15 +21,11 @@ impl Emitter for PylintEmitter {
         for message in messages {
             let row = message.compute_start_location().row;
 
-            let body = if let Some(rule) = message.rule() {
-                format!(
-                    "[{code}] {body}",
-                    code = rule.noqa_code(),
-                    body = message.body()
-                )
-            } else {
-                message.body().to_string()
-            };
+            let body = format!(
+                "[{code}] {body}",
+                code = message.rule().noqa_code(),
+                body = message.body()
+            );
 
             writeln!(
                 writer,

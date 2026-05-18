@@ -23,13 +23,11 @@ impl Emitter for AzureEmitter {
             writeln!(
                 writer,
                 "##vso[task.logissue type=error\
-                        ;sourcepath={filename};linenumber={line};columnnumber={col};{code}]{body}",
+                        ;sourcepath={filename};linenumber={line};columnnumber={col};code={code};]{body}",
                 filename = message.filename(),
                 line = location.row,
                 col = location.column,
-                code = message
-                    .rule()
-                    .map_or_else(String::new, |rule| format!("code={};", rule.noqa_code())),
+                code = message.rule().noqa_code(),
                 body = message.body(),
             )?;
         }

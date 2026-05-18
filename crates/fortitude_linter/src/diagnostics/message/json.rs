@@ -64,7 +64,7 @@ pub(crate) fn message_to_json_value(message: &DiagnosticMessage) -> Value {
     let end_location = source_code.source_location(message.end());
 
     json!({
-        "code": message.rule().map(|rule| rule.noqa_code().to_string()),
+        "code": message.rule().noqa_code().to_string(),
         "message": message.body(),
         "fix": fix,
         "location": start_location,
