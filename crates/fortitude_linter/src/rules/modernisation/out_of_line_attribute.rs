@@ -5,7 +5,7 @@ use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,
 };
 use crate::traits::{HasNode, TextRanged};
-use crate::{AstRule, SymbolTables};
+use crate::{AstRule, CheckContext};
 
 use anyhow::{Context, Result};
 use fortitude_macros::ViolationMetadata;
@@ -190,13 +190,8 @@ fn make_fix(var: &Variable, new_attr: &str, extra: String, src: &SourceFile) -> 
 }
 
 impl AstRule for OutOfLineAttribute {
-    fn check(
-        _settings: &crate::settings::CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let code = src.to_source_code();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let code = context.source_file().to_source_code();
 
         if node.kind() == "parameter_statement" {
             // Parameter statements have slightly different syntax, and have
@@ -204,34 +199,42 @@ impl AstRule for OutOfLineAttribute {
             let diagnostics = node
                 .named_children(&mut node.walk())
                 .filter_map(|parameter| {
-                    ParameterStatement::try_from_node(parameter, src.source_text()).ok()
+                    ParameterStatement::try_from_node(parameter, context.source_text()).ok()
                 })
-                .filter_map(|parameter| match symbol_table.get(&parameter.name) {
-                    Some(var) => {
-                        let mut edit =
-                            fix_out_of_line_parameter(node, &parameter, &var, src).unwrap();
-                        Some(
-                            Diagnostic::from_node(
-                                OutOfLineAttribute {
-                                    variable: parameter.name,
-                                    attribute: "parameter".to_string(),
-                                    decl_location: var.textrange(),
-                                    line: code.line_index(var.node().start_textsize()),
-                                },
-                                &parameter.node,
+                .filter_map(
+                    |parameter| match context.symbol_table().get(&parameter.name) {
+                        Some(var) => {
+                            let mut edit = fix_out_of_line_parameter(
+                                node,
+                                &parameter,
+                                &var,
+                                context.source_file(),
                             )
-                            .with_fix(Fix::unsafe_edits(edit.remove(0), edit)),
-                        )
-                    }
-                    None => None,
-                })
+                            .unwrap();
+                            Some(
+                                context
+                                    .create_diagnostic(
+                                        OutOfLineAttribute {
+                                            variable: parameter.name,
+                                            attribute: "parameter".to_string(),
+                                            decl_location: var.textrange(),
+                                            line: code.line_index(var.node().start_textsize()),
+                                        },
+                                        parameter.node,
+                                    )
+                                    .with_fix(Fix::unsafe_edits(edit.remove(0), edit)),
+                            )
+                        }
+                        None => None,
+                    },
+                )
                 .collect_vec();
             return Some(diagnostics);
         }
 
         let attribute_str = node
             .child_with_name("type_qualifier")?
-            .to_text(src.source_text())?;
+            .to_text(context.source_text())?;
 
         if attribute_str.eq_ignore_ascii_case("external")
             || attribute_str.eq_ignore_ascii_case("intrinsic")
@@ -246,25 +249,28 @@ impl AstRule for OutOfLineAttribute {
                     (
                         decl,
                         get_name_node_of_declarator(&decl)
-                            .to_text(src.source_text())
+                            .to_text(context.source_text())
                             .unwrap_or_default()
                             .to_string(),
                     )
                 })
                 .filter_map(|(decl, name)| {
-                    symbol_table.get(&name).map(|var| {
-                        let mut edit = fix_out_of_line_attribute(node, &decl, &var, src).unwrap();
+                    context.symbol_table().get(&name).map(|var| {
+                        let mut edit =
+                            fix_out_of_line_attribute(node, &decl, &var, context.source_file())
+                                .unwrap();
 
-                        Diagnostic::new(
-                            OutOfLineAttribute {
-                                variable: name,
-                                attribute: attribute_str.to_string(),
-                                decl_location: decl.textrange(),
-                                line: code.line_index(var.node().start_textsize()),
-                            },
-                            decl.textrange(),
-                        )
-                        .with_fix(Fix::unsafe_edits(edit.remove(0), edit))
+                        context
+                            .create_diagnostic(
+                                OutOfLineAttribute {
+                                    variable: name,
+                                    attribute: attribute_str.to_string(),
+                                    decl_location: decl.textrange(),
+                                    line: code.line_index(var.node().start_textsize()),
+                                },
+                                decl,
+                            )
+                            .with_fix(Fix::unsafe_edits(edit.remove(0), edit))
                     })
                 })
                 .collect_vec(),

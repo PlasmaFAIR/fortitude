@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::{FortitudeNode, dtype_is_plain_number, strip_line_breaks};
 use crate::diagnostics::{Diagnostic, Fix, FixAvailability, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -49,13 +46,8 @@ impl Violation for StarKind {
 }
 
 impl AstRule for StarKind {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let text = src.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let text = context.source_text();
         let dtype = node.child(0)?.to_text(text)?.to_lowercase();
         // TODO: Handle characters
         if !dtype_is_plain_number(dtype.as_str()) {
@@ -73,8 +65,12 @@ impl AstRule for StarKind {
         let literal = kind_node.child_with_name("number_literal")?;
         let kind = literal.to_text(text)?.to_string();
         let replacement = format!("{dtype}({kind})");
-        let fix = Fix::unsafe_edit(node.edit_replacement(src, replacement));
-        some_vec![Diagnostic::from_node(Self { dtype, size, kind }, &kind_node).with_fix(fix)]
+        let fix = Fix::unsafe_edit(node.edit_replacement(context.source_file(), replacement));
+        some_vec![
+            context
+                .create_diagnostic(Self { dtype, size, kind }, kind_node)
+                .with_fix(fix)
+        ]
     }
 
     fn entrypoints() -> Vec<&'static str> {

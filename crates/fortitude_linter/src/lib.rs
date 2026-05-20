@@ -48,7 +48,7 @@ use stylist::Stylist;
 use traits::TextRanged;
 
 use anyhow::{Context, anyhow};
-use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
+use ast::symbol_table::{BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
 use itertools::Itertools;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
@@ -68,26 +68,22 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait AstRule {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>>;
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints() -> Vec<&'static str>;
 }
 
-pub(crate) struct CheckContext<'a> {
+pub struct CheckContext<'a> {
     file: SourceFile,
     rules: RuleTable,
     settings: &'a CheckSettings,
     stylist: &'a Stylist<'a>,
+    symbols: SymbolTables<'a>,
 }
 
 impl<'a> CheckContext<'a> {
-    pub(crate) fn new(
+    pub fn new(
         path: &Path,
         contents: &str,
         settings: &'a CheckSettings,
@@ -100,58 +96,68 @@ impl<'a> CheckContext<'a> {
         for ignore in crate::fs::ignores_from_path(path, &settings.per_file_ignores) {
             rules.disable(ignore);
         }
+        let symbols = SymbolTables::default();
 
         Self {
             file,
             rules,
             settings,
             stylist,
+            symbols,
         }
     }
 
     #[inline]
-    pub(crate) const fn is_rule_enabled(&self, rule: Rule) -> bool {
+    pub const fn is_rule_enabled(&self, rule: Rule) -> bool {
         self.rules.enabled(rule)
     }
 
     #[inline]
-    pub(crate) const fn any_rule_enabled(&self, rules: &[Rule]) -> bool {
+    pub const fn any_rule_enabled(&self, rules: &[Rule]) -> bool {
         self.rules.any_enabled(rules)
     }
 
     /// Returns the source file.
-    pub(crate) const fn source_file(&self) -> &SourceFile {
+    pub const fn source_file(&self) -> &SourceFile {
         &self.file
     }
 
     /// Returns the source code.
     #[inline]
-    pub(crate) fn source_text(&self) -> &str {
+    pub fn source_text(&self) -> &str {
         self.file.source_text()
     }
 
     /// The [`CheckSettings`] for the current analysis, including the enabled rules.
-    pub(crate) const fn settings(&self) -> &'a CheckSettings {
+    pub const fn settings(&self) -> &'a CheckSettings {
         self.settings
     }
 
     /// The [`Stylist`] for the current file, which detects the current line ending, quote, and
     /// indentation style.
-    pub(crate) const fn stylist(&self) -> &'a Stylist<'a> {
+    pub const fn stylist(&self) -> &'a Stylist<'a> {
         self.stylist
     }
 
+    pub const fn symbol_table(&'a self) -> &'a SymbolTables<'a> {
+        &self.symbols
+    }
+
+    pub fn push_table(&mut self, table: SymbolTable<'a>) {
+        self.symbols.push_table(table);
+    }
+
+    pub fn pop_table(&mut self) {
+        self.symbols.pop_table();
+    }
+
     #[must_use]
-    pub(crate) fn create_diagnostic<T: Violation, R: TextRanged>(
-        &self,
-        kind: T,
-        range: R,
-    ) -> Diagnostic {
+    pub fn create_diagnostic<T: Violation, R: TextRanged>(&self, kind: T, range: R) -> Diagnostic {
         Diagnostic::new(kind, range.textrange())
     }
 
     #[must_use]
-    pub(crate) fn create_diagnostic_if_enabled<T: Violation, R: TextRanged>(
+    pub fn create_diagnostic_if_enabled<T: Violation, R: TextRanged>(
         &self,
         kind: T,
         range: R,
@@ -261,7 +267,7 @@ pub(crate) fn check_path(
     // Detect the current code style (lazily)
     let stylist = Stylist::from_ast(&tree.root_node(), file);
 
-    let context = CheckContext::new(path, file.source_text(), settings, &stylist);
+    let mut context = CheckContext::new(path, file.source_text(), settings, &stylist);
 
     // Check file paths directly
     if context.is_rule_enabled(Rule::NonStandardFileExtension) {
@@ -272,23 +278,22 @@ pub(crate) fn check_path(
 
     // Perform plain text analysis
     if context.is_rule_enabled(Rule::SplitEscapedQuote) {
-        violations.extend(SplitEscapedQuote::check(file));
+        violations.extend(SplitEscapedQuote::check(&context));
     }
     if context.is_rule_enabled(Rule::TrailingWhitespace) {
-        violations.extend(TrailingWhitespace::check(file));
+        violations.extend(TrailingWhitespace::check(&context));
     }
     if context.is_rule_enabled(Rule::MissingNewlineAtEndOfFile)
-        && let Some(violation) = MissingNewlineAtEndOfFile::check(file)
+        && let Some(violation) = MissingNewlineAtEndOfFile::check(&context)
     {
         violations.push(violation);
     }
 
     // Perform AST analysis
     let root = tree.root_node();
-    let mut symbol_table = SymbolTables::default();
     for node in once(root).chain(root.descendants()) {
         if context.is_rule_enabled(Rule::SyntaxError) && node.is_missing() {
-            violations.push(Diagnostic::from_node(SyntaxError {}, &node));
+            violations.push(context.create_diagnostic(SyntaxError {}, node));
         }
 
         if BEGIN_SCOPE_NODES.contains(&node.kind()) {
@@ -306,7 +311,7 @@ pub(crate) fn check_path(
                 }
             }
 
-            symbol_table.push_table(new_table);
+            context.push_table(new_table);
         }
 
         if context.any_rule_enabled(&[
@@ -323,7 +328,7 @@ pub(crate) fn check_path(
 
         if let Some(rules) = context.rules.ast_entrypoints().get(node.kind()) {
             for rule in rules {
-                if let Some(violation) = rule.check(settings, &node, file, &symbol_table) {
+                if let Some(violation) = rule.check(&context, &node) {
                     violations.extend(violation);
                 }
             }
@@ -334,7 +339,7 @@ pub(crate) fn check_path(
         };
 
         if END_SCOPE_NODES.contains(&node.kind()) {
-            symbol_table.pop_table();
+            context.pop_table();
         }
     }
 

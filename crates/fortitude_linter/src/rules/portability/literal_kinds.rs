@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::{FortitudeNode, dtype_is_plain_number};
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex_is_match;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 fn iso_fortran_env_param<S: AsRef<str>>(dtype: S, literal: u8) -> Option<String> {
@@ -106,13 +103,8 @@ impl Violation for LiteralKind {
 }
 
 impl AstRule for LiteralKind {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = src.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
         let dtype = node.child(0)?.to_text(src)?.to_lowercase();
         // TODO: Deal with characters
         if !dtype_is_plain_number(dtype.as_str()) {
@@ -122,10 +114,7 @@ impl AstRule for LiteralKind {
         let kind_node = node.child_by_field_name("kind")?;
         let literal_node = integer_literal_kind(&kind_node, src)?;
         let literal: u8 = literal_node.to_text(src)?.parse().ok()?;
-        some_vec![Diagnostic::from_node(
-            Self { dtype, literal },
-            &literal_node
-        )]
+        some_vec![context.create_diagnostic(Self { dtype, literal }, literal_node)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -198,20 +187,15 @@ impl Violation for LiteralKindSuffix {
 }
 
 impl AstRule for LiteralKindSuffix {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = src.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
             return None;
         }
         let literal = node.to_text(src)?.to_string();
         let suffix: u8 = kind.to_text(src)?.parse().ok()?;
-        some_vec![Diagnostic::from_node(Self { literal, suffix }, &kind)]
+        some_vec![context.create_diagnostic(Self { literal, suffix }, kind)]
     }
 
     fn entrypoints() -> Vec<&'static str> {

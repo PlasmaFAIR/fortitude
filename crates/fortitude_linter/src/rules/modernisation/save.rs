@@ -2,7 +2,9 @@ use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 
-use crate::{AstRule, ast::FortitudeNode, settings::FortranStandard, traits::TextRanged};
+use crate::{
+    AstRule, CheckContext, ast::FortitudeNode, settings::FortranStandard, traits::TextRanged,
+};
 
 /// ## What it does
 /// Checks for unnecessary `save` statements and qualifiers
@@ -49,14 +51,9 @@ impl AlwaysFixableViolation for SuperfluousSave {
 }
 
 impl AstRule for SuperfluousSave {
-    fn check(
-        settings: &crate::settings::CheckSettings,
-        node: &tree_sitter::Node,
-        source: &ruff_source_file::SourceFile,
-        _symbol_table: &crate::ast::symbol_table::SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &tree_sitter::Node) -> Option<Vec<Diagnostic>> {
         // Only F2008 and later made `save` at the module level implicit
-        if settings.target_std < FortranStandard::F2008 {
+        if context.settings().target_std < FortranStandard::F2008 {
             return None;
         }
 
@@ -71,7 +68,7 @@ impl AstRule for SuperfluousSave {
             let save_qualifier = node
                 .named_children(&mut node.walk())
                 .filter(|c| c.grammar_name() == "type_qualifier")
-                .find(|c| c.to_text(source.source_text()) == Some("save"))?;
+                .find(|c| c.to_text(context.source_text()) == Some("save"))?;
 
             let start_node = match save_qualifier.prev_sibling() {
                 None => save_qualifier,
@@ -85,28 +82,32 @@ impl AstRule for SuperfluousSave {
             };
 
             some_vec![
-                Diagnostic::from_node(
-                    Self {
-                        entity: "attribute"
-                    },
-                    &save_qualifier
-                )
-                .with_fix(Fix::safe_edit(Edit::deletion(
-                    start_node.start_textsize(),
-                    save_qualifier.end_textsize()
-                )))
+                context
+                    .create_diagnostic(
+                        Self {
+                            entity: "attribute"
+                        },
+                        save_qualifier
+                    )
+                    .with_fix(Fix::safe_edit(Edit::deletion(
+                        start_node.start_textsize(),
+                        save_qualifier.end_textsize()
+                    )))
             ]
         } else {
             let save_statement = node.child_with_name("save_statement")?;
 
             some_vec![
-                Diagnostic::from_node(
-                    Self {
-                        entity: "statement"
-                    },
-                    &save_statement
-                )
-                .with_fix(Fix::safe_edit(save_statement.edit_delete(source)))
+                context
+                    .create_diagnostic(
+                        Self {
+                            entity: "statement"
+                        },
+                        save_statement
+                    )
+                    .with_fix(Fix::safe_edit(
+                        save_statement.edit_delete(context.source_file())
+                    ))
             ]
         }
     }

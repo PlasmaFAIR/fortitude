@@ -467,7 +467,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             });
 
             ast_rule_check_match_arms.extend(quote! {
-                #(#attrs)* Self::#name => #path::check(settings, node, source, symbol_table),
+                #(#attrs)* Self::#name => #path::check(context, node),
             });
 
             ast_rule_entrypoint_match_arms.extend(quote! {
@@ -480,10 +480,8 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         use std::path::Path;
         use ruff_source_file::SourceFile;
         use tree_sitter::Node;
-        use crate::AstRule;
+        use crate::{AstRule, CheckContext};
         use crate::diagnostics::{Diagnostic, Violation};
-        use crate::settings::CheckSettings;
-        use crate::symbol_table::SymbolTables;
 
         #[derive(
             Debug,
@@ -563,7 +561,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         }
 
         impl AstRuleEnum {
-            pub fn check(&self, settings: &CheckSettings, node: &Node, source: &SourceFile, symbol_table: &SymbolTables) -> Option<Vec<Diagnostic>> {
+            pub fn check(&self, context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
                 match self {
                     #ast_rule_check_match_arms
                 }

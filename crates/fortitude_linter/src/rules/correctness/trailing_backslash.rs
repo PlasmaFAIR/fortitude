@@ -1,12 +1,9 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-/// Defines rules that govern line length.
-use crate::settings::CheckSettings;
-use crate::{AstRule, symbol_table::SymbolTables};
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use tree_sitter::Node;
 
@@ -54,16 +51,11 @@ impl Violation for TrailingBackslash {
 }
 
 impl AstRule for TrailingBackslash {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Preprocessor might ignore trailing whitespace
         let trailing_backslash_re = regex!(r#".*(\\)\s*$"#);
 
-        let comment = node.to_text(src.source_text())?;
+        let comment = node.to_text(context.source_text())?;
         let captures = trailing_backslash_re.captures(comment)?;
 
         let trailing_backslash = captures.get(1)?;
@@ -72,7 +64,7 @@ impl AstRule for TrailingBackslash {
         // Regex start/end are relative to start of comment node
         let comment_start: TextSize = node.start_byte().try_into().unwrap();
         let range = TextRange::new(comment_start + start, comment_start + end);
-        some_vec!(Diagnostic::new(Self {}, range))
+        some_vec!(context.create_diagnostic(Self {}, range))
     }
 
     fn entrypoints() -> Vec<&'static str> {

@@ -143,16 +143,17 @@ pub(crate) fn check_allow_comments(
                     let edit =
                         Edit::replacement(new_name.clone(), code.loc.start(), code.loc.end());
                     diagnostics.push(
-                        Diagnostic::new(
-                            RedirectedAllowComment {
-                                original: code.code.to_string(),
-                                redirect: redirect.to_string(),
-                                new_code,
-                                new_name,
-                            },
-                            code.loc,
-                        )
-                        .with_fix(Fix::safe_edit(edit)),
+                        context
+                            .create_diagnostic(
+                                RedirectedAllowComment {
+                                    original: code.code.to_string(),
+                                    redirect: redirect.to_string(),
+                                    new_code,
+                                    new_name,
+                                },
+                                code,
+                            )
+                            .with_fix(Fix::safe_edit(edit)),
                     );
                 }
             }

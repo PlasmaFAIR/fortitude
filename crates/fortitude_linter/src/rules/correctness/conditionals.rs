@@ -1,9 +1,7 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::{LineEnding, SourceFile, find_newline};
@@ -53,12 +51,7 @@ impl AlwaysFixableViolation for MisleadingInlineIfSemicolon {
     }
 }
 impl AstRule for MisleadingInlineIfSemicolon {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // If this is an `if (...) then` construct, exit early
         if !node.inline_if_statement() {
             return None;
@@ -87,15 +80,16 @@ impl AstRule for MisleadingInlineIfSemicolon {
             // take care to handle indentation and other whitespace.
             let start = semicolon_node.start_textsize();
             let mut end = semicolon_node.end_byte();
-            let text = src.source_text().as_bytes();
+            let text = context.source_text().as_bytes();
             while text[end] == b' ' || text[end] == b'\t' {
                 end += 1;
             }
             let end = TextSize::try_from(end).unwrap();
-            let indentation = node.indentation(src);
+            let indentation = node.indentation(context.source_file());
             let edit = Edit::replacement(format!("\n{indentation}"), start, end);
             return some_vec!(
-                Diagnostic::from_node(MisleadingInlineIfSemicolon {}, &semicolon_node)
+                context
+                    .create_diagnostic(MisleadingInlineIfSemicolon {}, semicolon_node)
                     .with_fix(Fix::safe_edit(edit))
             );
         }
@@ -151,12 +145,7 @@ impl AlwaysFixableViolation for MisleadingInlineIfContinuation {
     }
 }
 impl AstRule for MisleadingInlineIfContinuation {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // If this is an `if (...) then` construct, exit early
         if !node.inline_if_statement() {
             return None;
@@ -167,12 +156,13 @@ impl AstRule for MisleadingInlineIfContinuation {
             .child_with_name("parenthesized_expression")?
             .next_sibling()?;
         if body_start.kind() == "&" {
-            let content = ifthenify(node, src)?;
+            let content = ifthenify(node, context.source_file())?;
             let start_byte = node.start_textsize();
             let end_byte = node.end_textsize();
             let edit = Edit::replacement(content, start_byte, end_byte);
             return some_vec!(
-                Diagnostic::from_node(MisleadingInlineIfContinuation {}, node)
+                context
+                    .create_diagnostic(MisleadingInlineIfContinuation {}, node)
                     .with_fix(Fix::safe_edit(edit))
             );
         }

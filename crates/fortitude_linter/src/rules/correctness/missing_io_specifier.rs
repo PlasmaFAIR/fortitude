@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -31,16 +28,11 @@ impl Violation for MissingActionSpecifier {
 }
 
 impl AstRule for MissingActionSpecifier {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        if node.kwarg_exists("action", src.source_text()) {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        if node.kwarg_exists("action", context.source_text()) {
             return None;
         }
-        some_vec![Diagnostic::from_node(Self {}, node)]
+        some_vec![context.create_diagnostic(Self {}, node)]
     }
 
     fn entrypoints() -> Vec<&'static str> {

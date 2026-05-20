@@ -1,12 +1,10 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::{CheckSettings, FortranStandard};
-use crate::symbol_table::SymbolTables;
+use crate::settings::FortranStandard;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -56,13 +54,8 @@ impl Violation for AssumedSize {
     }
 }
 impl AstRule for AssumedSize {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = src.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
         let declaration = node
             .ancestors()
             .find(|parent| parent.kind() == "variable_declaration")?;
@@ -92,7 +85,7 @@ impl AstRule for AssumedSize {
         {
             let identifier = sized_decl.child_with_name("identifier")?;
             let name = identifier.to_text(src)?.to_string();
-            return some_vec![Diagnostic::from_node(Self { name }, node)];
+            return some_vec![context.create_diagnostic(Self { name }, node)];
         }
 
         // Collect things that look like `dimension(*)` -- this
@@ -108,7 +101,7 @@ impl AstRule for AssumedSize {
                 identifier.to_text(src)
             })
             .map(|name| name.to_string())
-            .map(|name| Diagnostic::from_node(Self { name }, node))
+            .map(|name| context.create_diagnostic(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)
@@ -192,18 +185,13 @@ impl Violation for AssumedSizeCharacterIntent {
     }
 }
 impl AstRule for AssumedSizeCharacterIntent {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // The recommended fix to this is only possible in Fortran 2003 and later.
         // Those still writing Fortran 95 code are on their own!
-        if settings.target_std < FortranStandard::F2003 {
+        if context.settings().target_std < FortranStandard::F2003 {
             return None;
         }
-        let src = src.source_text();
+        let src = context.source_text();
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
 
@@ -255,7 +243,7 @@ impl AstRule for AssumedSizeCharacterIntent {
                 identifier.to_text(src)
             })
             .map(|name| name.to_string())
-            .map(|name| Diagnostic::from_node(Self { name }, node))
+            .map(|name| context.create_diagnostic(Self { name }, node))
             .collect_vec();
 
         Some(all_decls)

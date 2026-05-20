@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Fix, Violation};
 use crate::rules::utilities;
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 fn map_specific_intrinsic_functions(name: &str) -> Option<&'static str> {
@@ -90,28 +87,26 @@ impl Violation for SpecificName {
 }
 
 impl AstRule for SpecificName {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let name_node = node.child_with_name("identifier")?;
-        let func = name_node.to_text(src.source_text())?;
+        let func = name_node.to_text(context.source_text())?;
 
         let new_func = map_specific_intrinsic_functions(func.to_uppercase().as_str())?;
         let matched_case = utilities::match_original_case(func, new_func)?;
 
-        let fix = Fix::unsafe_edit(name_node.edit_replacement(src, matched_case.clone()));
+        let fix = Fix::unsafe_edit(
+            name_node.edit_replacement(context.source_file(), matched_case.clone()),
+        );
         some_vec![
-            Diagnostic::from_node(
-                Self {
-                    func: func.to_string(),
-                    new_func: matched_case
-                },
-                &name_node
-            )
-            .with_fix(fix)
+            context
+                .create_diagnostic(
+                    Self {
+                        func: func.to_string(),
+                        new_func: matched_case
+                    },
+                    name_node
+                )
+                .with_fix(fix)
         ]
     }
 

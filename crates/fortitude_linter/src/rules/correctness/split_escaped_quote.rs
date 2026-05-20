@@ -1,9 +1,9 @@
+use crate::CheckContext;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic};
 use crate::diagnostics::{Edit, Fix};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 
 /// ## What it does
@@ -50,8 +50,8 @@ impl AlwaysFixableViolation for SplitEscapedQuote {
 // text. We're looking for something that spans two lines, so it has to search the whole
 // text at once too.
 impl SplitEscapedQuote {
-    pub fn check(src: &SourceFile) -> Vec<Diagnostic> {
-        let text = src.source_text();
+    pub fn check(context: &CheckContext) -> Vec<Diagnostic> {
+        let text = context.source_text();
         let split_quote_re = regex!(r#"(?m)(['\"])(& *\r?\n *&?)(['\"])"#);
 
         split_quote_re
@@ -71,7 +71,11 @@ impl SplitEscapedQuote {
                 );
 
                 let edit = Edit::range_replacement(continuation.to_string(), range);
-                Some(Diagnostic::new(SplitEscapedQuote, range).with_fix(Fix::safe_edit(edit)))
+                Some(
+                    context
+                        .create_diagnostic(SplitEscapedQuote, range)
+                        .with_fix(Fix::safe_edit(edit)),
+                )
             })
             .collect()
     }

@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
@@ -46,13 +43,8 @@ impl AlwaysFixableViolation for BareDecimal {
 }
 
 impl AstRule for BareDecimal {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let txt = node.to_text(src.source_text())?;
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let txt = node.to_text(context.source_text())?;
         // Three cases to match:
         // 1. Leading decimal point, e.g. `.5`
         // 2. Trailing decimal point, e.g. `2.`
@@ -85,15 +77,16 @@ impl AstRule for BareDecimal {
             (preferred, is_trailing, edit)
         };
         some_vec![
-            Diagnostic::from_node(
-                BareDecimal {
-                    literal: txt.to_string(),
-                    preferred,
-                    is_trailing
-                },
-                node
-            )
-            .with_fix(Fix::safe_edit(edit))
+            context
+                .create_diagnostic(
+                    BareDecimal {
+                        literal: txt.to_string(),
+                        preferred,
+                        is_trailing
+                    },
+                    node
+                )
+                .with_fix(Fix::safe_edit(edit))
         ]
     }
 

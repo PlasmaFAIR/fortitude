@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Fix, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -34,18 +31,24 @@ impl Violation for PauseStatement {
 }
 
 impl AstRule for PauseStatement {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        if node.child(0)?.to_text(src.source_text())?.to_lowercase() != "pause" {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        if node
+            .child(0)?
+            .to_text(context.source_text())?
+            .to_lowercase()
+            != "pause"
+        {
             return None;
         }
 
-        let fix = Fix::unsafe_edit(node.edit_replacement(src, "read(*, *)".to_string()));
-        some_vec![Diagnostic::from_node(PauseStatement {}, node).with_fix(fix)]
+        let fix = Fix::unsafe_edit(
+            node.edit_replacement(context.source_file(), "read(*, *)".to_string()),
+        );
+        some_vec![
+            context
+                .create_diagnostic(PauseStatement {}, node)
+                .with_fix(fix)
+        ]
     }
 
     fn entrypoints() -> Vec<&'static str> {

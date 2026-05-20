@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
@@ -108,23 +105,18 @@ impl Violation for TooComplex {
 }
 
 impl AstRule for TooComplex {
-    fn check<'a>(
-        settings: &CheckSettings,
-        node: &'a Node,
-        _src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         let procedure_stmt = node.named_child(0)?;
         let actual_complexity = cyclomatic_complexity(node);
-        let max_complexity = settings.complexity.max_complexity;
+        let max_complexity = context.settings().complexity.max_complexity;
 
         if actual_complexity > max_complexity {
-            return some_vec![Diagnostic::from_node(
+            return some_vec![context.create_diagnostic(
                 TooComplex {
                     actual_complexity,
                     max_complexity,
                 },
-                &procedure_stmt,
+                procedure_stmt,
             )];
         }
         None
@@ -241,12 +233,7 @@ impl Violation for TooManyArguments {
 }
 
 impl AstRule for TooManyArguments {
-    fn check<'a>(
-        settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         // Do not check procedures in interface blocks
         if node
             .ancestors()
@@ -255,7 +242,7 @@ impl AstRule for TooManyArguments {
             return None;
         }
 
-        let src = src.source_text();
+        let src = context.source_text();
         let procedure_stmt = node.named_child(0)?;
         let procedure_name = procedure_stmt
             .child_with_name("name")?
@@ -281,7 +268,7 @@ impl AstRule for TooManyArguments {
             })
             .collect();
         let arg_count = args.len();
-        let max_args = settings.complexity.max_args;
+        let max_args = context.settings().complexity.max_args;
 
         if arg_count > max_args {
             // arg_count must be at least 1, so args.first() and args.last() are guaranteed to exist
@@ -289,7 +276,7 @@ impl AstRule for TooManyArguments {
                 args.first().unwrap().start_textsize(),
                 args.last().unwrap().end_textsize(),
             );
-            return some_vec![Diagnostic::new(
+            return some_vec![context.create_diagnostic(
                 TooManyArguments {
                     arg_count,
                     max_args,

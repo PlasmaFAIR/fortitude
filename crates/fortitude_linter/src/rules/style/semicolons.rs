@@ -1,14 +1,11 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
-use crate::AstRule;
 use crate::ast::FortitudeNode;
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 
 fn semicolon_is_superfluous(node: &Node) -> bool {
     let line_number = node.start_position().row;
@@ -76,15 +73,14 @@ impl AlwaysFixableViolation for SuperfluousSemicolon {
 }
 
 impl AstRule for SuperfluousSemicolon {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if semicolon_is_superfluous(node) {
-            let edit = node.edit_delete(src);
-            return some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)));
+            let edit = node.edit_delete(context.source_file());
+            return some_vec!(
+                context
+                    .create_diagnostic(Self {}, node)
+                    .with_fix(Fix::safe_edit(edit))
+            );
         }
         None
     }
@@ -114,19 +110,14 @@ impl AlwaysFixableViolation for MultipleStatementsPerLine {
 }
 
 impl AstRule for MultipleStatementsPerLine {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if semicolon_is_superfluous(node) {
             return None;
         }
-        let indentation = node.indentation(src);
+        let indentation = node.indentation(context.source_file());
         let start = node.start_byte();
         let mut end = node.end_byte();
-        let text = src.source_text().as_bytes();
+        let text = context.source_text().as_bytes();
         while text[end] == b' ' || text[end] == b'\t' {
             end += 1;
         }
@@ -136,7 +127,11 @@ impl AstRule for MultipleStatementsPerLine {
             TextSize::try_from(end).unwrap(),
         );
 
-        some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(edit)))
+        some_vec!(
+            context
+                .create_diagnostic(Self {}, node)
+                .with_fix(Fix::safe_edit(edit))
+        )
     }
 
     fn entrypoints() -> Vec<&'static str> {

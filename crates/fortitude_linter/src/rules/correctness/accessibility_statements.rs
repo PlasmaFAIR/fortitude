@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -39,12 +36,7 @@ impl Violation for MissingAccessibilityStatement {
 }
 
 impl AstRule for MissingAccessibilityStatement {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let module = node.parent()?;
 
         let bare_private_statement = match module.child_with_name("private_statement") {
@@ -59,11 +51,13 @@ impl AstRule for MissingAccessibilityStatement {
 
         // No statement whatsoever
         if !bare_private_statement && !bare_public_statement {
-            let name = node.named_child(0)?.to_text(src.source_text())?.to_string();
-            return some_vec![Diagnostic::from_node(
-                MissingAccessibilityStatement { name },
-                node
-            )];
+            let name = node
+                .named_child(0)?
+                .to_text(context.source_text())?
+                .to_string();
+            return some_vec![
+                context.create_diagnostic(MissingAccessibilityStatement { name }, node)
+            ];
         }
 
         None
@@ -96,24 +90,16 @@ impl Violation for DefaultPublicAccessibility {
 }
 
 impl AstRule for DefaultPublicAccessibility {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Bare `public` statement`
         if node.named_child(0).is_none() {
             let module = node.parent()?;
             let statement = module.child_with_name("module_statement")?;
             let name = statement
                 .child_with_name("name")?
-                .to_text(src.source_text())?
+                .to_text(context.source_text())?
                 .to_string();
-            return some_vec![Diagnostic::from_node(
-                DefaultPublicAccessibility { name },
-                node
-            )];
+            return some_vec![context.create_diagnostic(DefaultPublicAccessibility { name }, node)];
         }
 
         None

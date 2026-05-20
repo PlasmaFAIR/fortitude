@@ -78,8 +78,7 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
         fp.write(
             f"""\
 use crate::ast::FortitudeNode;
-use crate::settings::CheckSettings;
-use crate::{{AstRule, SymbolTables}};
+use crate::{{AstRule, CheckContext}};
 use crate::diagnostics::{{Diagnostic, Edit, Fix, FixAvailability, Violation}};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
@@ -109,12 +108,7 @@ impl Violation for {name} {{
 }}
 
 impl AstRule for {name} {{
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables
-    ) -> Option<Vec<Diagnostic>> {{
+    fn check<'a>(context: &CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {{
         None
     }}
 

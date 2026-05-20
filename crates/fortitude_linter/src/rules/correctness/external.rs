@@ -1,10 +1,9 @@
 use crate::diagnostics::{Diagnostic, Violation};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
-use crate::{AstRule, ast::FortitudeNode, settings::CheckSettings, symbol_table::SymbolTables};
+use crate::{AstRule, CheckContext, ast::FortitudeNode};
 
 /// ## What does it do?
 /// Checks for procedures declared with just `external`
@@ -33,15 +32,10 @@ impl Violation for ExternalProcedure {
 }
 
 impl AstRule for ExternalProcedure {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if node
             .child_with_name("type_qualifier")?
-            .to_text(source.source_text())?
+            .to_text(context.source_text())?
             .to_lowercase()
             != "external"
         {
@@ -50,9 +44,9 @@ impl AstRule for ExternalProcedure {
 
         let name = node
             .child_by_field_name("declarator")?
-            .to_text(source.source_text())?
+            .to_text(context.source_text())?
             .to_string();
-        some_vec!(Diagnostic::from_node(Self { name }, node))
+        some_vec!(context.create_diagnostic(Self { name }, node))
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -82,19 +76,13 @@ impl Violation for ProcedureNotInModule {
 }
 
 impl AstRule for ProcedureNotInModule {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        _src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if node.parent()?.kind() == "translation_unit" {
             let procedure_stmt = node.child(0)?;
             let procedure = node.kind().to_string();
-            return some_vec![Diagnostic::from_node(
-                ProcedureNotInModule { procedure },
-                &procedure_stmt
-            )];
+            return some_vec![
+                context.create_diagnostic(ProcedureNotInModule { procedure }, procedure_stmt)
+            ];
         }
         None
     }

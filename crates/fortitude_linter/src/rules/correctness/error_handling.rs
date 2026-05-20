@@ -1,14 +1,11 @@
 use std::iter::once;
 
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use anyhow::{Context, Result, anyhow};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 #[derive(
@@ -118,13 +115,8 @@ impl Violation for UncheckedStat {
 }
 
 impl AstRule for UncheckedStat {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = source.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
 
         // Check this is an error checking statement, and get the stat type
         let stat_type = StatType::from_node(node, src).ok()?;
@@ -183,13 +175,13 @@ impl AstRule for UncheckedStat {
                 }
                 Ok(CheckStatus::Overwritten) => {
                     // Found the variable, but it has been overwritten.
-                    return some_vec!(Diagnostic::from_node(
+                    return some_vec!(context.create_diagnostic(
                         Self {
                             name,
                             stat: stat_type,
                             result: CheckStatus::Overwritten
                         },
-                        &stat_node
+                        stat_node
                     ));
                 }
                 Ok(CheckStatus::Unchecked) => {
@@ -202,13 +194,13 @@ impl AstRule for UncheckedStat {
                 }
             }
         }
-        some_vec!(Diagnostic::from_node(
+        some_vec!(context.create_diagnostic(
             Self {
                 name,
                 stat: stat_type,
                 result: CheckStatus::Unchecked
             },
-            &stat_node
+            stat_node
         ))
     }
 
@@ -356,13 +348,8 @@ impl Violation for MultipleAllocationsWithStat {
 }
 
 impl AstRule for MultipleAllocationsWithStat {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = source.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
 
         // Check this has a stat parameter
         let stat_node = node.kwarg("stat", src)?;
@@ -379,7 +366,7 @@ impl AstRule for MultipleAllocationsWithStat {
 
         let alloc_type = AllocationType::from_node(node).ok()?;
 
-        some_vec!(Diagnostic::from_node(Self { alloc_type }, &stat_node))
+        some_vec!(context.create_diagnostic(Self { alloc_type }, stat_node))
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -434,13 +421,8 @@ impl Violation for StatWithoutMessage {
 }
 
 impl AstRule for StatWithoutMessage {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = source.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
 
         let stat_type = StatType::from_node(node, src).ok()?;
         let stat_name: &'static str = stat_type.into();
@@ -451,7 +433,7 @@ impl AstRule for StatWithoutMessage {
         };
         if let Some(kwarg) = arg_list.kwarg(stat_name, src) {
             if !arg_list.kwarg_exists(stat_type.errmsg(), src) {
-                return some_vec!(Diagnostic::from_node(Self { stat_type }, &kwarg));
+                return some_vec!(context.create_diagnostic(Self { stat_type }, kwarg));
             }
         }
         None

@@ -1,8 +1,7 @@
 use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use crate::settings::CheckSettings;
 use crate::traits::TextRanged;
-use crate::{AstRule, SymbolTables};
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use log::debug;
@@ -347,14 +346,9 @@ fn end_of_replacement(node: &Node, src: &str, base_indentation: &str) -> (TextSi
 }
 
 impl AstRule for ArithmeticIf {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let mut diagnostic = Diagnostic::from_node(ArithmeticIf {}, node);
-        if let Some(fix) = fix_arithmetic_if(node, src) {
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
+        let mut diagnostic = context.create_diagnostic(ArithmeticIf {}, node);
+        if let Some(fix) = fix_arithmetic_if(node, context.source_file()) {
             diagnostic.set_fix(fix);
         }
         some_vec![diagnostic]

@@ -3,15 +3,12 @@ use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
 use crate::fix::edits::redent;
-use crate::settings::CheckSettings;
 use crate::stylist::ToCapitalisation;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use log::debug;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
@@ -63,14 +60,10 @@ impl AlwaysFixableViolation for UselessReturn {
 }
 
 impl AstRule for UselessReturn {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let _ = context;
         if !node
-            .to_text(src.source_text())?
+            .to_text(context.source_text())?
             .eq_ignore_ascii_case("return")
         {
             return None;
@@ -82,8 +75,12 @@ impl AstRule for UselessReturn {
         ) {
             return None;
         }
-        let edit = node.edit_delete(src);
-        some_vec!(Diagnostic::from_node(Self, node).with_fix(Fix::safe_edit(edit)))
+        let edit = node.edit_delete(context.source_file());
+        some_vec!(
+            context
+                .create_diagnostic(Self, node)
+                .with_fix(Fix::safe_edit(edit))
+        )
     }
 
     fn entrypoints() -> Vec<&'static str> {

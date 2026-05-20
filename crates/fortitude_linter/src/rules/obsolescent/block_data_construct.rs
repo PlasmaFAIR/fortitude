@@ -1,10 +1,9 @@
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::{CheckSettings, FortranStandard};
-use crate::{AstRule, SymbolTables};
+use crate::settings::FortranStandard;
+use crate::{AstRule, CheckContext};
 
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -29,18 +28,13 @@ impl Violation for BlockDataConstruct {
 }
 
 impl AstRule for BlockDataConstruct {
-    fn check<'a>(
-        settings: &CheckSettings,
-        node: &'a Node,
-        _src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         // Only made obsolescent in F2018
-        if settings.target_std < FortranStandard::F2018 {
+        if context.settings().target_std < FortranStandard::F2018 {
             return None;
         }
 
-        some_vec![Diagnostic::from_node(BlockDataConstruct {}, node)]
+        some_vec![context.create_diagnostic(BlockDataConstruct {}, node)]
     }
 
     fn entrypoints() -> Vec<&'static str> {

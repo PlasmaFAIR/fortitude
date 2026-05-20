@@ -1,12 +1,10 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Edit, Fix, Violation};
-use crate::settings::{CheckSettings, FortranStandard};
-use crate::symbol_table::SymbolTables;
+use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -76,14 +74,9 @@ impl Violation for MissingDefaultPointerInitalisation {
 }
 
 impl AstRule for MissingDefaultPointerInitalisation {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Feature only available in Fortran 2003 and later
-        if settings.target_std < FortranStandard::F2003 {
+        if context.settings().target_std < FortranStandard::F2003 {
             return None;
         }
         // Only operate on derived types
@@ -97,7 +90,7 @@ impl AstRule for MissingDefaultPointerInitalisation {
         if !node.named_children(&mut node_cursor).any(|node| {
             node.kind() == "type_qualifier"
                 && node
-                    .to_text(src.source_text())
+                    .to_text(context.source_text())
                     .unwrap_or("")
                     .to_lowercase()
                     .starts_with("pointer")
@@ -113,13 +106,18 @@ impl AstRule for MissingDefaultPointerInitalisation {
                 Some(parent) => parent.kind() == "variable_declaration",
             })
             .map(|node| {
-                let var_name = node.to_text(src.source_text()).unwrap_or("").to_string();
+                let var_name = node
+                    .to_text(context.source_text())
+                    .unwrap_or("")
+                    .to_string();
 
                 let init_var = format!(" => null()");
                 let start_pos = node.end_textsize();
                 let fix = Fix::unsafe_edit(Edit::insertion(init_var, start_pos));
 
-                Diagnostic::from_node(Self { var: var_name }, &node).with_fix(fix)
+                context
+                    .create_diagnostic(Self { var: var_name }, node)
+                    .with_fix(fix)
             })
             .collect();
 

@@ -2,15 +2,13 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::{SourceFile, UniversalNewlines};
+use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
 
-use crate::AstRule;
 use crate::ast::FortitudeNode;
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 
 /// ## What does it do?
 /// Checks for trailing whitespace.
@@ -34,10 +32,9 @@ impl AlwaysFixableViolation for TrailingWhitespace {
 }
 
 impl TrailingWhitespace {
-    pub fn check(source_file: &SourceFile) -> Vec<Diagnostic> {
-        let source = source_file.to_source_code();
+    pub fn check(context: &CheckContext) -> Vec<Diagnostic> {
         let mut violations = Vec::new();
-        for line in source.text().universal_newlines() {
+        for line in context.source_text().universal_newlines() {
             let whitespace_bytes: TextSize = line
                 .chars()
                 .rev()
@@ -47,7 +44,11 @@ impl TrailingWhitespace {
             if whitespace_bytes > 0.into() {
                 let range = TextRange::new(line.end() - whitespace_bytes, line.end());
                 let edit = Edit::range_deletion(range);
-                violations.push(Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit)));
+                violations.push(
+                    context
+                        .create_diagnostic(Self {}, range)
+                        .with_fix(Fix::safe_edit(edit)),
+                );
             }
         }
         violations
@@ -77,9 +78,8 @@ impl AlwaysFixableViolation for MissingNewlineAtEndOfFile {
 }
 
 impl MissingNewlineAtEndOfFile {
-    pub fn check(source_file: &SourceFile) -> Option<Diagnostic> {
-        let source = source_file.to_source_code();
-        let text = source.text();
+    pub fn check(context: &CheckContext) -> Option<Diagnostic> {
+        let text = context.source_text();
 
         // Ignore empty and BOM only files.
         if text.is_empty() || text == "\u{feff}" {
@@ -98,7 +98,9 @@ impl MissingNewlineAtEndOfFile {
             };
             let range = TextRange::empty(text.text_len());
             let edit = Edit::insertion(newline.to_string(), range.start());
-            let diagnostic = Diagnostic::new(Self {}, range).with_fix(Fix::safe_edit(edit));
+            let diagnostic = context
+                .create_diagnostic(Self {}, range)
+                .with_fix(Fix::safe_edit(edit));
             Some(diagnostic)
         } else {
             None
@@ -131,13 +133,8 @@ impl AlwaysFixableViolation for IncorrectSpaceBeforeComment {
     }
 }
 impl AstRule for IncorrectSpaceBeforeComment {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let source = src.to_source_code();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let source = context.source_file().to_source_code();
         let comment_start = node.start_textsize();
         // Get the line up to the start of the comment
         let line_index = source.line_index(comment_start);
@@ -159,7 +156,11 @@ impl AstRule for IncorrectSpaceBeforeComment {
                 .unwrap();
 
             let span = TextRange::new(span_start, comment_start);
-            return some_vec!(Diagnostic::new(Self {}, span).with_fix(Fix::safe_edit(edit)));
+            return some_vec!(
+                context
+                    .create_diagnostic(Self {}, span)
+                    .with_fix(Fix::safe_edit(edit))
+            );
         }
         None
     }
@@ -195,16 +196,11 @@ impl AlwaysFixableViolation for IncorrectSpaceAroundDoubleColon {
     }
 }
 impl AstRule for IncorrectSpaceAroundDoubleColon {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let double_colon_start = node.start_byte();
         let double_colon_end = node.end_byte();
 
-        let bytes = src.source_text().as_bytes();
+        let bytes = context.source_text().as_bytes();
         let has_space_before =
             double_colon_start > 0 && bytes[double_colon_start - 1].is_ascii_whitespace();
         let has_space_after =
@@ -215,16 +211,21 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
         if !has_space_before {
             if !has_space_after {
                 return some_vec!(
-                    Diagnostic::from_node(Self {}, node)
+                    context
+                        .create_diagnostic(Self {}, node)
                         .with_fix(Fix::safe_edits(before_edit, [after_edit]))
                 );
             }
             return some_vec!(
-                Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(before_edit))
+                context
+                    .create_diagnostic(Self {}, node)
+                    .with_fix(Fix::safe_edit(before_edit))
             );
         } else if !has_space_after {
             return some_vec!(
-                Diagnostic::from_node(Self {}, node).with_fix(Fix::safe_edit(after_edit))
+                context
+                    .create_diagnostic(Self {}, node)
+                    .with_fix(Fix::safe_edit(after_edit))
             );
         }
         None
@@ -262,15 +263,10 @@ impl AlwaysFixableViolation for IncorrectSpaceBetweenBrackets {
     }
 }
 impl AstRule for IncorrectSpaceBetweenBrackets {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let node_as_str = node.to_text(src.source_text())?;
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let node_as_str = node.to_text(context.source_text())?;
 
-        let source = src.to_source_code();
+        let source = context.source_file().to_source_code();
         let bracket_start = node.start_textsize();
         let bracket_end = node.end_textsize();
         let line_index = source.line_index(bracket_end);
@@ -324,7 +320,8 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
         }
 
         some_vec!(
-            Diagnostic::new(Self { is_open_bracket }, whitespace_range)
+            context
+                .create_diagnostic(Self { is_open_bracket }, whitespace_range)
                 .with_fix(Fix::safe_edit(Edit::range_deletion(whitespace_range)))
         )
     }
