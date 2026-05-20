@@ -17,9 +17,7 @@ pub struct GithubEmitter;
 impl Emitter for GithubEmitter {
     fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         for message in messages {
-            let source_location = message.compute_start_location();
-            let location = source_location.clone();
-
+            let location = message.compute_start_location();
             let end_location = message.compute_end_location();
 
             write!(
@@ -27,9 +25,9 @@ impl Emitter for GithubEmitter {
                 "::error title=Fortitude ({code}),file={file},line={row},col={column},endLine={end_row},endColumn={end_column}::",
                 code = message.rule().noqa_code(),
                 file = message.filename(),
-                row = source_location.row,
-                column = source_location.column,
-                end_row = end_location.row,
+                row = location.line,
+                column = location.column,
+                end_row = end_location.line,
                 end_column = end_location.column,
             )?;
 
@@ -37,7 +35,7 @@ impl Emitter for GithubEmitter {
                 writer,
                 "{path}:{row}:{column}:",
                 path = relativize_path(message.filename()),
-                row = location.row,
+                row = location.line,
                 column = location.column,
             )?;
 

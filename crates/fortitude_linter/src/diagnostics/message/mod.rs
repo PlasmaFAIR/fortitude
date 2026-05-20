@@ -28,7 +28,7 @@ use std::io::Write;
 use std::ops::Deref;
 
 use crate::diagnostics::Diagnostic;
-use ruff_source_file::SourceLocation;
+use ruff_source_file::LineColumn;
 
 /// Display format for a [`Diagnostic`]s.
 ///
@@ -40,7 +40,7 @@ pub trait Emitter {
 
 struct MessageWithLocation<'a> {
     message: &'a Diagnostic,
-    start_location: SourceLocation,
+    start_location: LineColumn,
 }
 
 impl Deref for MessageWithLocation<'_> {

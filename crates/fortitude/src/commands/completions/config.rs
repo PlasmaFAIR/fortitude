@@ -3,7 +3,7 @@ use itertools::Itertools;
 use std::str::FromStr;
 
 use fortitude_workspace::options::Options;
-use fortitude_workspace::options_base::{OptionField, OptionSet, OptionsMetadata, Visit};
+use ruff_options_metadata::{OptionField, OptionSet, OptionsMetadata, Visit};
 
 #[derive(Default)]
 struct CollectOptionsVisitor {

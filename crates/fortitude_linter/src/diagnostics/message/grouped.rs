@@ -57,7 +57,7 @@ impl Emitter for GroupedEmitter {
             let mut max_column_length = OneIndexed::MIN;
 
             for message in &messages {
-                max_row_length = max_row_length.max(message.start_location.row);
+                max_row_length = max_row_length.max(message.start_location.line);
                 max_column_length = max_column_length.max(message.start_location.column);
             }
 
@@ -113,12 +113,12 @@ impl Display for DisplayGroupedMessage<'_> {
         write!(
             f,
             "  {row_padding}",
-            row_padding =
-                " ".repeat(self.row_length.get() - calculate_print_width(start_location.row).get())
+            row_padding = " "
+                .repeat(self.row_length.get() - calculate_print_width(start_location.line).get())
         )?;
 
         // Check if we're working on a jupyter notebook and translate positions with cell accordingly
-        let (row, col) = (start_location.row, start_location.column);
+        let (row, col) = (start_location.line, start_location.column);
 
         writeln!(
             f,

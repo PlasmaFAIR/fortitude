@@ -1,6 +1,7 @@
 ---
-source: crates/fortitude_linter/src/message/json.rs
+source: crates/fortitude_linter/src/diagnostics/message/json.rs
 expression: content
+snapshot_kind: text
 ---
 [
   {
@@ -13,22 +14,22 @@ expression: content
         {
           "content": "",
           "location": {
-            "row": 6,
+            "line": 6,
             "column": 5
           },
           "end_location": {
-            "row": 6,
+            "line": 6,
             "column": 18
           }
         }
       ]
     },
     "location": {
-      "row": 6,
+      "line": 6,
       "column": 5
     },
     "end_location": {
-      "row": 6,
+      "line": 6,
       "column": 18
     },
     "filename": "test.f90"
@@ -38,11 +39,11 @@ expression: content
     "message": "end statement should read 'end subroutine foo'",
     "fix": null,
     "location": {
-      "row": 7,
+      "line": 7,
       "column": 3
     },
     "end_location": {
-      "row": 7,
+      "line": 7,
       "column": 17
     },
     "filename": "test.f90"
@@ -52,11 +53,11 @@ expression: content
     "message": "integer*4 is non-standard, use integer(4)",
     "fix": null,
     "location": {
-      "row": 1,
+      "line": 1,
       "column": 8
     },
     "end_location": {
-      "row": 1,
+      "line": 1,
       "column": 9
     },
     "filename": "star_kind.f90"

@@ -6,7 +6,7 @@
 
 use std::cell::OnceCell;
 
-use ruff_source_file::{LineIndex, LineRanges, OneIndexed, SourceCode, SourceLocation};
+use ruff_source_file::{LineIndex, LineRanges, OneIndexed, SourceCode};
 use ruff_text_size::{Ranged, TextLen, TextRange, TextSize};
 
 #[derive(Debug)]
@@ -37,13 +37,6 @@ impl<'a> Locator<'a> {
     )]
     pub fn compute_line_index(&self, offset: TextSize) -> OneIndexed {
         self.to_index().line_index(offset)
-    }
-
-    #[deprecated(
-        note = "This is expensive, avoid using outside of the diagnostic phase. Prefer the other `Locator` methods instead."
-    )]
-    pub fn compute_source_location(&self, offset: TextSize) -> SourceLocation {
-        self.to_source_code().source_location(offset)
     }
 
     pub fn to_index(&self) -> &LineIndex {

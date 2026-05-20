@@ -29,6 +29,7 @@ path-absolutize = { workspace = true, features = [
 ]}
 path-slash = { workspace = true }
 ruff_macros = { workspace = true }
+ruff_options_metadata = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 strum = { workspace = true }

@@ -11,7 +11,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use fortitude_workspace::options::Options;
-use fortitude_workspace::options_base::{OptionField, OptionSet, OptionsMetadata, Visit};
+use ruff_options_metadata::{OptionField, OptionSet, OptionsMetadata, Visit};
 
 use crate::ROOT_DIR;
 use crate::generate_all::{Mode, REGENERATE_ALL_COMMAND};
