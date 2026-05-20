@@ -12,7 +12,7 @@ use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::{Ranged, TextLen, TextRange, TextSize};
 
 use crate::locator::Locator;
-use crate::registry::{AsRule, Rule};
+use crate::registry::Rule;
 use crate::settings::UnsafeFixes;
 
 pub mod edits;
@@ -43,7 +43,7 @@ pub fn fix_file(
         .iter()
         .filter(|diagnostic| {
             diagnostic
-                .fix
+                .fix()
                 .as_ref()
                 .is_some_and(|fix| fix.applies(required_applicability))
         })
@@ -70,12 +70,7 @@ fn apply_fixes<'a>(
     let mut source_map = SourceMap::default();
 
     for (rule, fix) in diagnostics
-        .filter_map(|diagnostic| {
-            diagnostic
-                .fix
-                .as_ref()
-                .map(|fix| (diagnostic.kind.rule(), fix))
-        })
+        .filter_map(|diagnostic| diagnostic.fix().map(|fix| (diagnostic.rule(), fix)))
         .sorted_by(|(rule1, fix1), (rule2, fix2)| cmp_fix(*rule1, *rule2, fix1, fix2))
     {
         let mut edits = fix
@@ -147,7 +142,10 @@ fn cmp_fix(_rule1: Rule, _rule2: Rule, fix1: &Fix, fix2: &Fix) -> std::cmp::Orde
 
 #[cfg(test)]
 mod tests {
-    use crate::diagnostics::{Diagnostic, Edit, Fix, SourceMarker};
+    use crate::diagnostics::{
+        Diagnostic, Edit, Fix, SourceMarker, Violation, test_diagnostic_builder,
+    };
+    use crate::rules::Rule;
     use ruff_text_size::{Ranged, TextSize};
 
     use crate::fix::{FixResult, apply_fixes};
@@ -156,14 +154,17 @@ mod tests {
 
     #[allow(deprecated)]
     fn create_diagnostics(edit: impl IntoIterator<Item = Edit>) -> Vec<Diagnostic> {
+        let rule = UseAll {};
+
         edit.into_iter()
-            .map(|edit| Diagnostic {
-                // The choice of rule here is arbitrary.
-                kind: UseAll {}.into(),
-                range: edit.range(),
-                fix: Some(Fix::safe_edit(edit)),
-                parent: None,
-            })
+            .map(|edit| // The choice of rule here is arbitrary.
+                 test_diagnostic_builder(
+                     Rule::UseAll,
+                     &rule.message(),
+                     edit.range()
+                 ).with_suggestion(rule.fix_title())
+                 .with_fix(
+                Fix::safe_edit(edit)))
             .collect()
     }
 

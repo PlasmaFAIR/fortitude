@@ -12,17 +12,14 @@ use crate::diagnostics::Edit;
 use ruff_source_file::SourceCode;
 use ruff_text_size::Ranged;
 
-use super::{DiagnosticMessage, Emitter};
+use super::Emitter;
+use crate::Diagnostic;
 
 #[derive(Default)]
 pub struct JsonEmitter;
 
 impl Emitter for JsonEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         serde_json::to_writer_pretty(writer, &ExpandedMessages { messages })?;
 
         Ok(())
@@ -30,7 +27,7 @@ impl Emitter for JsonEmitter {
 }
 
 struct ExpandedMessages<'a> {
-    messages: &'a [DiagnosticMessage],
+    messages: &'a [Diagnostic],
 }
 
 impl Serialize for ExpandedMessages<'_> {
@@ -49,7 +46,7 @@ impl Serialize for ExpandedMessages<'_> {
     }
 }
 
-pub(crate) fn message_to_json_value(message: &DiagnosticMessage) -> Value {
+pub(crate) fn message_to_json_value(message: &Diagnostic) -> Value {
     let source_code = message.source_file().to_source_code();
 
     let fix = message.fix().map(|fix| {
@@ -64,7 +61,7 @@ pub(crate) fn message_to_json_value(message: &DiagnosticMessage) -> Value {
     let end_location = source_code.source_location(message.end());
 
     json!({
-        "code": message.rule().map(|rule| rule.noqa_code().to_string()),
+        "code": message.rule().noqa_code().to_string(),
         "message": message.body(),
         "fix": fix,
         "location": start_location,

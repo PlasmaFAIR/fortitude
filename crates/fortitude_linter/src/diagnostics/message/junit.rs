@@ -7,17 +7,14 @@ use std::path::Path;
 
 use quick_junit::{NonSuccessKind, Report, TestCase, TestCaseStatus, TestSuite, XmlString};
 
-use super::{DiagnosticMessage, Emitter, MessageWithLocation, group_messages_by_filename};
+use super::{Emitter, MessageWithLocation, group_messages_by_filename};
+use crate::Diagnostic;
 
 #[derive(Default)]
 pub struct JunitEmitter;
 
 impl Emitter for JunitEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         let mut report = Report::new("fortitude");
 
         if messages.is_empty() {
@@ -54,11 +51,7 @@ impl Emitter for JunitEmitter {
                         body = message.body()
                     ));
                     let mut case = TestCase::new(
-                        if let Some(rule) = message.rule() {
-                            format!("org.plasmafair.fortitude.{}", rule.noqa_code())
-                        } else {
-                            "org.plasmafair.fortitude".to_string()
-                        },
+                        format!("org.plasmafair.fortitude.{}", message.rule().noqa_code()),
                         status,
                     );
                     let file_path = Path::new(filename);

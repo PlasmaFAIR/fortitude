@@ -27,28 +27,24 @@ use std::collections::BTreeMap;
 use std::io::Write;
 use std::ops::Deref;
 
-use super::diagnostic_message::DiagnosticMessage;
+use crate::diagnostics::Diagnostic;
 use ruff_source_file::SourceLocation;
 
-/// Display format for a [`DiagnosticMessage`]s.
+/// Display format for a [`Diagnostic`]s.
 ///
-/// The emitter serializes a slice of [`DiagnosticMessage`]'s and writes them to a [`Write`].
+/// The emitter serializes a slice of [`Diagnostic`]'s and writes them to a [`Write`].
 pub trait Emitter {
     /// Serializes the `messages` and writes the output to `writer`.
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()>;
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()>;
 }
 
 struct MessageWithLocation<'a> {
-    message: &'a DiagnosticMessage,
+    message: &'a Diagnostic,
     start_location: SourceLocation,
 }
 
 impl Deref for MessageWithLocation<'_> {
-    type Target = DiagnosticMessage;
+    type Target = Diagnostic;
 
     fn deref(&self) -> &Self::Target {
         self.message
@@ -56,7 +52,7 @@ impl Deref for MessageWithLocation<'_> {
 }
 
 fn group_messages_by_filename(
-    messages: &[DiagnosticMessage],
+    messages: &[Diagnostic],
 ) -> BTreeMap<&str, Vec<MessageWithLocation<'_>>> {
     let mut grouped_messages = BTreeMap::default();
     for message in messages {
@@ -73,13 +69,17 @@ fn group_messages_by_filename(
 
 #[cfg(test)]
 mod tests {
-    use crate::diagnostics::{Diagnostic, DiagnosticKind, Edit, Fix};
+    use crate::{
+        diagnostics::{Edit, Fix, test_diagnostic_builder},
+        rules::Rule,
+    };
     use ruff_source_file::SourceFileBuilder;
     use ruff_text_size::{TextRange, TextSize};
 
-    use super::{DiagnosticMessage, Emitter};
+    use super::Emitter;
+    use crate::Diagnostic;
 
-    pub(super) fn create_messages() -> Vec<DiagnosticMessage> {
+    pub(super) fn create_messages() -> Vec<Diagnostic> {
         let test_contents = r#"module test
 implicit none
 
@@ -90,53 +90,43 @@ contains
 end module
 "#;
 
-        let superfluous_implicit_none = Diagnostic::new(
-            DiagnosticKind {
-                name: "SuperfluousImplicitNone".to_string(),
-                body: "'implicit none' set on the enclosing module".to_string(),
-                suggestion: Some("Remove unnecessary 'implicit none'".to_string()),
-            },
+        let test_source = SourceFileBuilder::new("test.f90", test_contents).finish();
+
+        let superfluous_implicit_none = test_diagnostic_builder(
+            Rule::SuperfluousImplicitNone,
+            "'implicit none' set on the enclosing module",
             TextRange::new(TextSize::from(57), TextSize::from(70)),
         )
+        .with_suggestion(Some("Remove unnecessary 'implicit none'".to_string()))
         .with_fix(Fix::unsafe_edit(Edit::range_deletion(TextRange::new(
             TextSize::from(57),
             TextSize::from(70),
-        ))));
+        ))))
+        .with_file(test_source.clone());
 
-        let unnamed_end_statement = Diagnostic::new(
-            DiagnosticKind {
-                name: "UnnamedEndStatement".to_string(),
-                body: "end statement should read 'end subroutine foo'".to_string(),
-                suggestion: None,
-            },
+        let unnamed_end_statement = test_diagnostic_builder(
+            Rule::UnnamedEndStatement,
+            "end statement should read 'end subroutine foo'",
             TextRange::new(TextSize::from(73), TextSize::from(87)),
-        );
-
-        let test_source = SourceFileBuilder::new("test.f90", test_contents).finish();
+        )
+        .with_file(test_source);
 
         let file_2 = r"integer*4 foo; end";
-
-        let star_kind = Diagnostic::new(
-            DiagnosticKind {
-                name: "StarKind".to_string(),
-                body: "integer*4 is non-standard, use integer(4)".to_string(),
-                suggestion: None,
-            },
-            TextRange::new(TextSize::from(7), TextSize::from(8)),
-        );
-
         let file_2_source = SourceFileBuilder::new("star_kind.f90", file_2).finish();
 
-        vec![
-            DiagnosticMessage::from_ruff(&test_source, superfluous_implicit_none),
-            DiagnosticMessage::from_ruff(&test_source, unnamed_end_statement),
-            DiagnosticMessage::from_ruff(&file_2_source, star_kind),
-        ]
+        let star_kind = test_diagnostic_builder(
+            Rule::StarKind,
+            "integer*4 is non-standard, use integer(4)",
+            TextRange::new(TextSize::from(7), TextSize::from(8)),
+        )
+        .with_file(file_2_source);
+
+        vec![superfluous_implicit_none, unnamed_end_statement, star_kind]
     }
 
     pub(super) fn capture_emitter_output(
         emitter: &mut dyn Emitter,
-        messages: &[DiagnosticMessage],
+        messages: &[Diagnostic],
     ) -> String {
         let mut output: Vec<u8> = Vec::new();
         emitter.emit(&mut output, messages).unwrap();

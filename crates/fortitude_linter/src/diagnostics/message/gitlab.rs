@@ -11,7 +11,8 @@ use serde::ser::SerializeSeq;
 use serde::{Serialize, Serializer};
 use serde_json::json;
 
-use super::{DiagnosticMessage, Emitter};
+use super::Emitter;
+use crate::Diagnostic;
 use crate::fs::{relativize_path, relativize_path_to};
 
 /// Generate JSON with violations in GitLab CI format
@@ -29,11 +30,7 @@ impl Default for GitlabEmitter {
 }
 
 impl Emitter for GitlabEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         serde_json::to_writer_pretty(
             writer,
             &SerializedMessages {
@@ -47,7 +44,7 @@ impl Emitter for GitlabEmitter {
 }
 
 struct SerializedMessages<'a> {
-    messages: &'a [DiagnosticMessage],
+    messages: &'a [Diagnostic],
     project_dir: Option<&'a str>,
 }
 
@@ -82,13 +79,12 @@ impl Serialize for SerializedMessages<'_> {
             }
             fingerprints.insert(message_fingerprint);
 
-            let (description, name) = if let Some(rule) = message.rule() {
-                let description = format!("({}) {}", rule.noqa_code(), message.body());
-                let name = format!("{}: {}", rule.noqa_code(), rule.as_ref());
-                (description, name)
-            } else {
-                (message.body().to_string(), String::from("fortitude"))
-            };
+            let description = format!("({}) {}", message.rule().noqa_code(), message.body());
+            let name = format!(
+                "{}: {}",
+                message.rule().noqa_code(),
+                message.rule().as_ref()
+            );
 
             let value = json!({
                 "description": description,
@@ -109,7 +105,7 @@ impl Serialize for SerializedMessages<'_> {
 }
 
 /// Generate a unique fingerprint to identify a violation.
-fn fingerprint(message: &DiagnosticMessage, project_path: &str, salt: u64) -> u64 {
+fn fingerprint(message: &Diagnostic, project_path: &str, salt: u64) -> u64 {
     let mut hasher = DefaultHasher::new();
 
     salt.hash(&mut hasher);

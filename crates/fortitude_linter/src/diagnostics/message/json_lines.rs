@@ -4,18 +4,15 @@
 
 use std::io::Write;
 
+use super::Emitter;
 use super::json::message_to_json_value;
-use super::{DiagnosticMessage, Emitter};
+use crate::Diagnostic;
 
 #[derive(Default)]
 pub struct JsonLinesEmitter;
 
 impl Emitter for JsonLinesEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         for message in messages {
             serde_json::to_writer(&mut *writer, &message_to_json_value(message))?;
             writer.write_all(b"\n")?;

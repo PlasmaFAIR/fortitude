@@ -13,7 +13,7 @@ use fortitude_linter::diagnostics::message::{
     AzureEmitter, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
     JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
 };
-use fortitude_linter::diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
+use fortitude_linter::diagnostics::{Diagnostic, Diagnostics, FixMap};
 use fortitude_linter::fs::relativize_path;
 use fortitude_linter::logging::LogLevel;
 use fortitude_linter::rules::Rule;
@@ -33,7 +33,7 @@ bitflags! {
 
 #[derive(Serialize)]
 struct ExpandedStatistics {
-    code: Option<SerializeRuleAsCode>,
+    code: SerializeRuleAsCode,
     name: SerializeRuleAsTitle,
     count: usize,
     fixable: bool,
@@ -80,15 +80,9 @@ impl Display for SerializeRuleAsTitle {
     }
 }
 
-impl From<Option<Rule>> for SerializeRuleAsTitle {
-    fn from(rule: Option<Rule>) -> Self {
-        match rule {
-            Some(rule) => Self(rule),
-            // This is a bit weird, but it's because `DiagnosticMessage::rule`
-            // returns `Option<Rule>`, leftover from ruff which treats
-            // `SyntaxError` specially and we don't. Should just not return `Option` there
-            None => Self(Rule::SyntaxError),
-        }
+impl From<Rule> for SerializeRuleAsTitle {
+    fn from(rule: Rule) -> Self {
+        Self(rule)
     }
 }
 
@@ -369,22 +363,19 @@ impl Printer {
             .messages
             .iter()
             .sorted_by_key(|message| (message.rule(), message.fixable()))
-            .fold(
-                vec![],
-                |mut acc: Vec<(&DiagnosticMessage, usize)>, message| {
-                    if let Some((prev_message, count)) = acc.last_mut()
-                        && prev_message.rule() == message.rule()
-                    {
-                        *count += 1;
-                        return acc;
-                    }
-                    acc.push((message, 1));
-                    acc
-                },
-            )
+            .fold(vec![], |mut acc: Vec<(&Diagnostic, usize)>, message| {
+                if let Some((prev_message, count)) = acc.last_mut()
+                    && prev_message.rule() == message.rule()
+                {
+                    *count += 1;
+                    return acc;
+                }
+                acc.push((message, 1));
+                acc
+            })
             .iter()
             .map(|&(message, count)| ExpandedStatistics {
-                code: message.rule().map(std::convert::Into::into),
+                code: message.rule().into(),
                 name: message.rule().into(),
                 count,
                 fixable: if let Some(fix) = message.fix() {
@@ -413,12 +404,7 @@ impl Printer {
                 );
                 let code_width = statistics
                     .iter()
-                    .map(|statistic| {
-                        statistic
-                            .code
-                            .map_or_else(String::new, |rule| rule.to_string())
-                            .len()
-                    })
+                    .map(|statistic| statistic.code.to_string().len())
                     .max()
                     .unwrap();
                 let any_fixable = statistics.iter().any(|statistic| statistic.fixable);
@@ -432,11 +418,7 @@ impl Printer {
                         writer,
                         "{:>count_width$}\t{:<code_width$}\t{}{}",
                         statistic.count.to_string().bold(),
-                        statistic
-                            .code
-                            .map_or_else(String::new, |rule| rule.to_string())
-                            .red()
-                            .bold(),
+                        statistic.code.to_string().red().bold(),
                         if any_fixable {
                             if statistic.fixable {
                                 &fixable

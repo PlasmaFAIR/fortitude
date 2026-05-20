@@ -2,7 +2,7 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use crate::{DiagnosticKind, rules::Rule};
+use crate::rules::Rule;
 use std::fmt::{Debug, Display};
 
 #[derive(Debug, Copy, Clone)]
@@ -25,9 +25,6 @@ impl Display for FixAvailability {
 pub trait ViolationMetadata {
     /// Returns the rule for this violation
     fn rule() -> Rule;
-
-    /// Returns the rule name of this violation
-    fn rule_name() -> &'static str;
 
     /// Returns an explanation of what this violation catches,
     /// why it's bad, and what users should do instead.
@@ -84,18 +81,5 @@ impl<V: AlwaysFixableViolation> Violation for V {
 
     fn message_formats() -> &'static [&'static str] {
         <Self as AlwaysFixableViolation>::message_formats()
-    }
-}
-
-impl<T> From<T> for DiagnosticKind
-where
-    T: Violation,
-{
-    fn from(value: T) -> Self {
-        Self {
-            body: Violation::message(&value),
-            suggestion: Violation::fix_title(&value),
-            name: T::rule_name().to_string(),
-        }
     }
 }

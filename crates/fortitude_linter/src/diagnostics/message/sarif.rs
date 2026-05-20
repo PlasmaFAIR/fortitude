@@ -16,18 +16,19 @@ use crate::fs::normalize_path;
 use crate::registry::{Category, RuleNamespace};
 use crate::rules::Rule;
 
-use super::{DiagnosticMessage, Emitter};
+use super::Emitter;
+use crate::Diagnostic;
 
 pub struct SarifEmitter;
 
 impl Emitter for SarifEmitter {
-    fn emit(&mut self, writer: &mut dyn Write, messages: &[DiagnosticMessage]) -> Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> Result<()> {
         let results = messages
             .iter()
             .map(SarifResult::from_message)
             .collect::<Result<Vec<_>>>()?;
 
-        let unique_rules: HashSet<_> = results.iter().filter_map(|result| result.rule).collect();
+        let unique_rules: HashSet<_> = results.iter().map(|result| result.rule).collect();
         let mut rules: Vec<SarifRule> = unique_rules.into_iter().map(SarifRule::from).collect();
         rules.sort_by(|a, b| a.code.cmp(&b.code));
 
@@ -106,7 +107,7 @@ impl Serialize for SarifRule<'_> {
 
 #[derive(Debug)]
 struct SarifResult {
-    rule: Option<Rule>,
+    rule: Rule,
     level: String,
     message: String,
     uri: String,
@@ -118,7 +119,7 @@ struct SarifResult {
 
 impl SarifResult {
     #[cfg(not(target_arch = "wasm32"))]
-    fn from_message(message: &DiagnosticMessage) -> Result<Self> {
+    fn from_message(message: &Diagnostic) -> Result<Self> {
         let start_location = message.compute_start_location();
         let end_location = message.compute_end_location();
         let path = normalize_path(message.filename());
@@ -178,7 +179,7 @@ impl Serialize for SarifResult {
                     }
                 }
             }],
-            "ruleId": self.rule.map(|rule| rule.noqa_code().to_string()),
+            "ruleId": self.rule.noqa_code().to_string(),
         })
         .serialize(serializer)
     }

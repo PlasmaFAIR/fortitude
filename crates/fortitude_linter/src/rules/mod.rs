@@ -13,7 +13,7 @@ pub mod style;
 pub mod testing;
 pub mod utilities;
 
-use crate::registry::{AsRule, Category};
+use crate::registry::Category;
 
 use std::fmt::Formatter;
 

@@ -28,10 +28,9 @@ pub mod traits;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
-use diagnostics::{DiagnosticMessage, Diagnostics, FixMap};
+use diagnostics::{Diagnostic, Diagnostics, FixMap};
 use fix::{FixResult, fix_file};
 use locator::Locator;
-use registry::AsRule;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
@@ -45,7 +44,6 @@ use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 
-use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use anyhow::{Context, anyhow};
 use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
@@ -141,7 +139,7 @@ pub fn check_only_file(
     file: &SourceFile,
     settings: &CheckSettings,
     ignore_allow_comments: settings::IgnoreAllowComments,
-) -> anyhow::Result<Vec<DiagnosticMessage>> {
+) -> anyhow::Result<Vec<Diagnostic>> {
     let mut parser = Parser::new();
     parser
         .set_language(&tree_sitter_fortran::LANGUAGE.into())
@@ -154,7 +152,7 @@ pub fn check_only_file(
 
     Ok(violations
         .into_iter()
-        .map(|v| DiagnosticMessage::from_ruff(file, v))
+        .map(|v| v.with_file(file.clone()))
         .collect_vec())
 }
 
@@ -330,18 +328,18 @@ pub(crate) fn check_path(
                 path.to_string_lossy()
             );
             // Sort by byte-offset in the file
-            violations.sort_by_key(|diagnostic| diagnostic.range.start());
+            violations.sort_by_key(|diagnostic| diagnostic.range().start());
             // Retain all violations up to the first syntax error, inclusive.
             // Text and path rules can be safely retained.
             let syntax_error_idx = violations
                 .iter()
-                .position(|diagnostic| diagnostic.kind.rule() == Rule::SyntaxError);
+                .position(|diagnostic| diagnostic.rule() == Rule::SyntaxError);
             if let Some(syntax_error_idx) = syntax_error_idx {
                 violations = violations
                     .into_iter()
                     .enumerate()
                     .filter_map(|(idx, diagnostic)| {
-                        if idx <= syntax_error_idx || !diagnostic.kind.rule().is_ast_rule() {
+                        if idx <= syntax_error_idx || !diagnostic.rule().is_ast_rule() {
                             Some(diagnostic)
                         } else {
                             None
@@ -359,15 +357,15 @@ pub(crate) fn check_path(
         }
         // Disable all fixes
         for diagnostic in &mut violations {
-            diagnostic.fix = None;
+            diagnostic.drop_fix();
         }
     }
 
     // Disable any fixes for unfixable rules
     for diagnostic in &mut violations {
-        let rule = diagnostic.kind.rule();
-        if diagnostic.fix.is_some() && !rules.should_fix(rule) {
-            diagnostic.fix = None;
+        let rule = diagnostic.rule();
+        if diagnostic.fixable() && !rules.should_fix(rule) {
+            diagnostic.drop_fix();
         }
     }
 
@@ -380,7 +378,7 @@ pub type FixTable = FxHashMap<Rule, usize>;
 
 pub struct FixerResult<'a> {
     /// The result returned by the linter, after applying any fixes.
-    pub result: Vec<DiagnosticMessage>,
+    pub result: Vec<Diagnostic>,
     /// The resulting source code, after applying any fixes.
     pub transformed: Cow<'a, SourceFile>,
     /// The number of fixes applied for each [`Rule`].
@@ -468,7 +466,7 @@ pub fn check_and_fix_file<'a>(
         return Ok(FixerResult {
             result: violations
                 .into_iter()
-                .map(|v| DiagnosticMessage::from_ruff(&transformed, v))
+                .map(|v| v.with_file(transformed.clone().into_owned()))
                 .collect_vec(),
             transformed,
             fixed,
@@ -487,7 +485,7 @@ fn collect_rule_codes(rules: impl IntoIterator<Item = Rule>) -> String {
 
 #[allow(clippy::print_stderr)]
 fn report_failed_to_converge_error(path: &Path, transformed: &str, diagnostics: &[Diagnostic]) {
-    let codes = collect_rule_codes(diagnostics.iter().map(|diagnostic| diagnostic.kind.rule()));
+    let codes = collect_rule_codes(diagnostics.iter().map(|diagnostic| diagnostic.rule()));
     if cfg!(debug_assertions) {
         eprintln!(
             "{}{} Failed to converge after {} iterations in `{}` with rule codes {}:---\n{}\n---",

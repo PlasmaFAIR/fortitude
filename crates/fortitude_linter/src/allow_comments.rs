@@ -1,5 +1,4 @@
 use crate::ast::FortitudeNode;
-use crate::registry::AsRule;
 use crate::rule_redirects::get_redirect_target;
 use crate::rule_table::RuleTable;
 use crate::rules::Rule;
@@ -13,7 +12,7 @@ use crate::diagnostics::{Diagnostic, Edit, Fix};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
 use ruff_source_file::SourceFile;
-use ruff_text_size::{TextRange, TextSize};
+use ruff_text_size::{Ranged, TextRange, TextSize};
 use rustc_hash::FxHashSet;
 use std::str::FromStr;
 use tree_sitter::Node;
@@ -112,9 +111,7 @@ pub fn check_allow_comments(
         for allow in allow_comments {
             for code in &allow.codes {
                 if let Some(rule) = code.rule {
-                    if rule == diagnostic.kind.rule()
-                        && allow.range.contains_range(diagnostic.range)
-                    {
+                    if rule == diagnostic.rule() && allow.range.contains_range(diagnostic.range()) {
                         used_codes.insert(rule);
                         ignored_diagnostics.push(index);
                         // We've ignored this diagnostic, so no point

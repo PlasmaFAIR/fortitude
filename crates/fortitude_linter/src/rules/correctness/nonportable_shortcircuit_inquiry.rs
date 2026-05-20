@@ -79,7 +79,7 @@ use tree_sitter::Node;
 pub(crate) struct NonportableShortcircuitInquiry {
     arg: String,
     function: String,
-    // Useful for when we get multiple notes in DiagnosticMessages
+    // Useful for when we get multiple notes in Diagnostics
     #[allow(dead_code)]
     present: TextRange,
 }

@@ -4,7 +4,8 @@
 
 use std::io::Write;
 
-use super::{DiagnosticMessage, Emitter};
+use super::Emitter;
+use crate::Diagnostic;
 use crate::fs::relativize_path;
 
 /// Generate violations in Pylint format.
@@ -13,23 +14,15 @@ use crate::fs::relativize_path;
 pub struct PylintEmitter;
 
 impl Emitter for PylintEmitter {
-    fn emit(
-        &mut self,
-        writer: &mut dyn Write,
-        messages: &[DiagnosticMessage],
-    ) -> anyhow::Result<()> {
+    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         for message in messages {
             let row = message.compute_start_location().row;
 
-            let body = if let Some(rule) = message.rule() {
-                format!(
-                    "[{code}] {body}",
-                    code = rule.noqa_code(),
-                    body = message.body()
-                )
-            } else {
-                message.body().to_string()
-            };
+            let body = format!(
+                "[{code}] {body}",
+                code = message.rule().noqa_code(),
+                body = message.body()
+            );
 
             writeln!(
                 writer,

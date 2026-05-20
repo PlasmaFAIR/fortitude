@@ -428,8 +428,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_explanation_match_arms = quote!();
     let mut rule_name_match_arms = quote!();
 
-    let mut from_impls_for_diagnostic_kind = quote!();
-
     let mut ast_rule_variants = quote!();
     let mut ast_rule_from_match_arms = quote!();
     let mut ast_rule_check_match_arms = quote!();
@@ -455,10 +453,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         );
         rule_explanation_match_arms.extend(quote! {#(#attrs)* Self::#name => #path::explain(),});
         rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
-
-        // Enable conversion from `DiagnosticKind` to `Rule`.
-        from_impls_for_diagnostic_kind
-            .extend(quote! {#(#attrs)* stringify!(#name) => Rule::#name,});
 
         // Next parts are for an enum for Ast-based rules, so that we
         // can have a consistent interface and some type safety
@@ -487,7 +481,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         use ruff_source_file::SourceFile;
         use tree_sitter::Node;
         use crate::AstRule;
-        use crate::diagnostics::{Diagnostic, DiagnosticKind, Violation};
+        use crate::diagnostics::{Diagnostic, Violation};
         use crate::settings::CheckSettings;
         use crate::symbol_table::SymbolTables;
 
@@ -506,6 +500,8 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             ::strum_macros::EnumIter,
             ::strum_macros::EnumString,
             ::strum_macros::IntoStaticStr,
+            ::serde::Serialize,
+            ::serde::Deserialize,
         )]
         #[repr(u16)]
         #[strum(serialize_all = "kebab-case")]
@@ -533,15 +529,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
                 match self { #rule_fixable_match_arms }
             }
 
-        }
-
-        impl AsRule for DiagnosticKind {
-            fn rule(&self) -> Rule {
-                match self.name.as_str() {
-                    #from_impls_for_diagnostic_kind
-                    _ => unreachable!("invalid rule name: {}", self.name),
-                }
-            }
         }
 
         #[derive(
