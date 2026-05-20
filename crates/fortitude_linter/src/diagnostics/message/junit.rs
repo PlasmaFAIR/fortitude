@@ -46,7 +46,7 @@ impl Emitter for JunitEmitter {
 
                     status.set_description(format!(
                         "line {row}, col {col}, {body}",
-                        row = location.row,
+                        row = location.line,
                         col = location.column,
                         body = message.body()
                     ));
@@ -60,7 +60,7 @@ impl Emitter for JunitEmitter {
                     case.set_classname(classname.to_str().unwrap());
                     case.extra.insert(
                         XmlString::new("line"),
-                        XmlString::new(location.row.to_string()),
+                        XmlString::new(location.line.to_string()),
                     );
                     case.extra.insert(
                         XmlString::new("column"),

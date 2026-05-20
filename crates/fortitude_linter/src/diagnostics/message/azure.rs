@@ -22,7 +22,7 @@ impl Emitter for AzureEmitter {
                 "##vso[task.logissue type=error\
                         ;sourcepath={filename};linenumber={line};columnnumber={col};code={code};]{body}",
                 filename = message.filename(),
-                line = location.row,
+                line = location.line,
                 col = location.column,
                 code = message.rule().noqa_code(),
                 body = message.body(),

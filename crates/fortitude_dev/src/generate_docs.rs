@@ -12,14 +12,12 @@ use std::path::PathBuf;
 use anyhow::{Result, bail};
 use pretty_assertions::StrComparison;
 use regex::{Captures, Regex};
+use ruff_options_metadata::{OptionEntry, OptionsMetadata};
 use strum::IntoEnumIterator;
 
 use fortitude_linter::diagnostics::FixAvailability;
 use fortitude_linter::registry::Rule;
-use fortitude_workspace::{
-    options::Options,
-    options_base::{OptionEntry, OptionsMetadata},
-};
+use fortitude_workspace::options::Options;
 
 use crate::{
     ROOT_DIR,

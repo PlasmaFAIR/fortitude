@@ -10,7 +10,7 @@ use std::{
     ops::{Add, AddAssign},
 };
 
-use ruff_source_file::{SourceFile, SourceLocation};
+use ruff_source_file::{LineColumn, SourceFile};
 use rustc_hash::FxHashMap;
 
 use anyhow::Result;
@@ -237,18 +237,16 @@ impl Diagnostic {
     }
 
     /// Computes the start source location for the message.
-    pub fn compute_start_location(&self) -> SourceLocation {
+    pub fn compute_start_location(&self) -> LineColumn {
         self.source_file()
             .to_source_code()
-            .source_location(self.start())
+            .line_column(self.start())
     }
 
     /// Computes the end source location for the message.
     #[allow(dead_code)]
-    pub fn compute_end_location(&self) -> SourceLocation {
-        self.source_file()
-            .to_source_code()
-            .source_location(self.end())
+    pub fn compute_end_location(&self) -> LineColumn {
+        self.source_file().to_source_code().line_column(self.end())
     }
 
     /// Returns the [`SourceFile`] which the message belongs to.

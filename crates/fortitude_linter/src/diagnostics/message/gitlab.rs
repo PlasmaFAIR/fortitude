@@ -61,8 +61,8 @@ impl Serialize for SerializedMessages<'_> {
             let end_location = message.compute_end_location();
 
             let lines = json!({
-                "begin": start_location.row,
-                "end": end_location.row
+                "begin": start_location.line,
+                "end": end_location.line
             });
 
             let path = self.project_dir.as_ref().map_or_else(

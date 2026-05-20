@@ -28,9 +28,9 @@ fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
 
     // Get the start and end of the line
     let source_code = src.to_source_code();
-    let source_location = source_code.source_location(last_use_statement_range.start());
-    let line_start = source_code.line_start(source_location.row);
-    let line_end = source_code.line_end(source_location.row);
+    let source_location = source_code.line_column(last_use_statement_range.start());
+    let line_start = source_code.line_start(source_location.line);
+    let line_end = source_code.line_end(source_location.line);
 
     // TODO(peter): determine indentation of file using `Stylist` struct
     let indent = (last_use_statement_range.start() - line_start).to_usize();

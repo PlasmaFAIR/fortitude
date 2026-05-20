@@ -3,7 +3,7 @@ use anyhow::{Result, anyhow};
 use crate::cli::HelpFormat;
 
 use fortitude_workspace::options::Options;
-use fortitude_workspace::options_base::OptionsMetadata;
+use ruff_options_metadata::OptionsMetadata;
 
 #[expect(clippy::print_stdout)]
 pub fn config(key: Option<&str>, format: HelpFormat) -> Result<()> {

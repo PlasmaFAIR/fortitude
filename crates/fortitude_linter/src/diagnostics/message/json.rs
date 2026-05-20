@@ -57,8 +57,8 @@ pub(crate) fn message_to_json_value(message: &Diagnostic) -> Value {
         })
     });
 
-    let start_location = source_code.source_location(message.start());
-    let end_location = source_code.source_location(message.end());
+    let start_location = source_code.line_column(message.start());
+    let end_location = source_code.line_column(message.end());
 
     json!({
         "code": message.rule().noqa_code().to_string(),
@@ -83,8 +83,8 @@ impl Serialize for ExpandedEdits<'_> {
         let mut s = serializer.serialize_seq(Some(self.edits.len()))?;
 
         for edit in self.edits {
-            let location = self.source_code.source_location(edit.start());
-            let end_location = self.source_code.source_location(edit.end());
+            let location = self.source_code.line_column(edit.start());
+            let end_location = self.source_code.line_column(edit.end());
 
             let value = json!({
                 "content": edit.content().unwrap_or_default(),

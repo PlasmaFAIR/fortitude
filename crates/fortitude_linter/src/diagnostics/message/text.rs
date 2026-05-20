@@ -83,7 +83,7 @@ impl Emitter for TextEmitter {
             writeln!(
                 writer,
                 "{row}{sep}{col}{sep} {code_and_body}",
-                row = diagnostic_location.row,
+                row = diagnostic_location.line,
                 col = diagnostic_location.column,
                 sep = ":".cyan(),
                 code_and_body = RuleCodeAndBody {

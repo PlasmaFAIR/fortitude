@@ -16,7 +16,7 @@ pub struct PylintEmitter;
 impl Emitter for PylintEmitter {
     fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
         for message in messages {
-            let row = message.compute_start_location().row;
+            let row = message.compute_start_location().line;
 
             let body = format!(
                 "[{code}] {body}",
