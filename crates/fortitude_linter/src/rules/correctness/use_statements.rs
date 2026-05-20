@@ -1,12 +1,10 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Edit, Fix, Violation};
-use crate::settings::{CheckSettings, FortranStandard};
-use crate::symbol_table::SymbolTables;
+use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 // TODO Check that 'used' entity is actually used somewhere
@@ -44,21 +42,17 @@ impl Violation for UseAll {
 }
 
 impl AstRule for UseAll {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let module_name = node.module_name(src.source_text())?.to_lowercase();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let module_name = node.module_name(context.source_text())?.to_lowercase();
 
-        if !settings
+        if !context
+            .settings()
             .use_statements
             .allow_bare_use
             .contains(&module_name)
             && node.child_with_name("included_items").is_none()
         {
-            return some_vec![Diagnostic::from_node(UseAll {}, node)];
+            return some_vec![context.create_diagnostic(UseAll {}, node)];
         }
         None
     }
@@ -113,22 +107,17 @@ impl Violation for MissingIntrinsic {
 }
 
 impl AstRule for MissingIntrinsic {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Feature only available in Fortran 2003 and later
-        if settings.target_std < FortranStandard::F2003 {
+        if context.settings().target_std < FortranStandard::F2003 {
             return None;
         }
-        let module_name = node.module_name(src.source_text())?.to_lowercase();
+        let module_name = node.module_name(context.source_text())?.to_lowercase();
 
         if INTRINSIC_MODULES.iter().any(|&m| m == module_name)
             && node
                 .children(&mut node.walk())
-                .filter_map(|child| child.to_text(src.source_text()))
+                .filter_map(|child| child.to_text(context.source_text()))
                 .all(|child| child != "intrinsic" && child != "non_intrinsic")
         {
             let intrinsic = if node.child(1)?.kind() == "::" {
@@ -139,11 +128,15 @@ impl AstRule for MissingIntrinsic {
 
             let use_field = node
                 .children(&mut node.walk())
-                .find(|&child| child.to_text(src.source_text()) == Some("use"))?;
+                .find(|&child| child.to_text(context.source_text()) == Some("use"))?;
             let start_pos = use_field.end_textsize();
             let fix = Fix::unsafe_edit(Edit::insertion(intrinsic.to_string(), start_pos));
 
-            return some_vec![Diagnostic::from_node(MissingIntrinsic {}, node).with_fix(fix)];
+            return some_vec![
+                context
+                    .create_diagnostic(MissingIntrinsic {}, node)
+                    .with_fix(fix)
+            ];
         }
         None
     }

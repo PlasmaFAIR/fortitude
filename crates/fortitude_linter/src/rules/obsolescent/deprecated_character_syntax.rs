@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -36,13 +33,8 @@ impl AlwaysFixableViolation for DeprecatedCharacterSyntax {
 }
 
 impl AstRule for DeprecatedCharacterSyntax {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        source_file: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = source_file.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
 
         // Rule only applies to `character`.
         // Expect child(0) to always be present.
@@ -78,17 +70,18 @@ impl AstRule for DeprecatedCharacterSyntax {
         let original = node.to_text(src)?.to_string();
         let dtype = dtype.to_text(src)?.to_string();
         let replacement = format!("{dtype}(len={length})");
-        let fix = Fix::safe_edit(node.edit_replacement(source_file, replacement));
+        let fix = Fix::safe_edit(node.edit_replacement(context.source_file(), replacement));
         some_vec![
-            Diagnostic::from_node(
-                Self {
-                    original,
-                    dtype,
-                    length
-                },
-                node
-            )
-            .with_fix(fix)
+            context
+                .create_diagnostic(
+                    Self {
+                        original,
+                        dtype,
+                        length
+                    },
+                    node
+                )
+                .with_fix(fix)
         ]
     }
 

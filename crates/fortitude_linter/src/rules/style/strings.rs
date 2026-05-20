@@ -3,16 +3,13 @@ use crate::diagnostics::{
 };
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::{TextLen, TextSize};
 use tree_sitter::Node;
 
-use crate::AstRule;
 use crate::ast::FortitudeNode;
-use crate::settings::CheckSettings;
 use crate::stylist::Quote;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 
 /// ## What does it do?
 /// Catches use of single- or double-quoted strings, depending on the value of
@@ -64,16 +61,11 @@ impl Violation for BadQuoteString {
 }
 
 impl AstRule for BadQuoteString {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let preferred_quote: Quote = settings.strings.quotes.into();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let preferred_quote: Quote = context.settings().strings.quotes.into();
         let bad_quote = preferred_quote.opposite();
 
-        let text = node.to_text(src.source_text())?;
+        let text = node.to_text(context.source_text())?;
         if text.starts_with(bad_quote.as_char())
             && text.ends_with(bad_quote.as_char())
             && !text.contains(preferred_quote.as_char())
@@ -81,7 +73,7 @@ impl AstRule for BadQuoteString {
             // Search for occurrence of escaped single quotes within the string.
             // These are double single quotes, e.g. "''"
             if text.contains(bad_quote.escaped()) && text.len() > 2 {
-                return Some(vec![Diagnostic::from_node(
+                return Some(vec![context.create_diagnostic(
                     Self {
                         preferred_quote,
                         contains_escaped_quotes: true,
@@ -103,14 +95,15 @@ impl AstRule for BadQuoteString {
                 end_byte,
             );
             return some_vec!(
-                Diagnostic::from_node(
-                    Self {
-                        preferred_quote,
-                        contains_escaped_quotes: false,
-                    },
-                    node,
-                )
-                .with_fix(Fix::safe_edits(edit_start, [edit_end]))
+                context
+                    .create_diagnostic(
+                        Self {
+                            preferred_quote,
+                            contains_escaped_quotes: false,
+                        },
+                        node,
+                    )
+                    .with_fix(Fix::safe_edits(edit_start, [edit_end]))
             );
         }
         None
@@ -153,13 +146,8 @@ impl AlwaysFixableViolation for AvoidableEscapedQuote {
 }
 
 impl AstRule for AvoidableEscapedQuote {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let text = node.to_text(src.source_text())?;
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let text = node.to_text(context.source_text())?;
         if text.len() <= 2 {
             return None;
         }
@@ -173,7 +161,7 @@ impl AstRule for AvoidableEscapedQuote {
         // Because the kind appears as a child node, the interesting
         // literal bit doesn't start at the beginning of the node
         let (start, kind) = if let Some(kind) = node.child_by_field_name("kind") {
-            let kind_text = kind.to_text(src.source_text())?;
+            let kind_text = kind.to_text(context.source_text())?;
             (kind_text.len() + 1, format!("{kind_text}_"))
         } else {
             (0, "".to_string())
@@ -187,12 +175,16 @@ impl AstRule for AvoidableEscapedQuote {
             value = unescape_string(contents, quote_style.as_char())
         );
 
-        let edit = node.edit_replacement(src, fixed);
+        let edit = node.edit_replacement(context.source_file(), fixed);
         // Offset start of node by kind, if any
         let range = node
             .textrange()
             .add_start(TextSize::try_from(start).unwrap());
-        some_vec!(Diagnostic::new(Self, range).with_fix(Fix::safe_edit(edit)))
+        some_vec!(
+            context
+                .create_diagnostic(Self, range)
+                .with_fix(Fix::safe_edit(edit))
+        )
     }
 
     fn entrypoints() -> Vec<&'static str> {

@@ -1,10 +1,9 @@
-use crate::AstRule;
 /// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use crate::settings::{CheckSettings, FortranStandard};
-use crate::symbol_table::SymbolTables;
+use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
@@ -166,12 +165,7 @@ impl Violation for ImplicitTyping {
 }
 
 impl AstRule for ImplicitTyping {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Run on functions and subroutines only if they aren't in a module,
         // program, or submodule. This rule will catch implicit typing in the
         // parent enttity, so we don't need to check it in the children.
@@ -182,12 +176,13 @@ impl AstRule for ImplicitTyping {
         }
 
         let ImplicitTypingEdit { edit, error_type } =
-            ImplicitTypingEdit::try_from_scope(node, src)?;
+            ImplicitTypingEdit::try_from_scope(node, context.source_file())?;
         let entity = node.kind().to_string();
         let block_stmt = node.child(0)?;
 
         some_vec![
-            Diagnostic::from_node(Self { entity, error_type }, &block_stmt)
+            context
+                .create_diagnostic(Self { entity, error_type }, block_stmt)
                 .with_fix(Fix::unsafe_edit(edit))
         ]
     }
@@ -224,12 +219,7 @@ impl Violation for InterfaceImplicitTyping {
 }
 
 impl AstRule for InterfaceImplicitTyping {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Exit early if we're not in an interface.
         let parent = node.parent()?;
         if parent.kind() != "interface" {
@@ -237,12 +227,13 @@ impl AstRule for InterfaceImplicitTyping {
         }
 
         let ImplicitTypingEdit { edit, error_type } =
-            ImplicitTypingEdit::try_from_scope(node, src)?;
+            ImplicitTypingEdit::try_from_scope(node, context.source_file())?;
         let name = node.kind().to_string();
         let interface_stmt = node.child(0)?;
 
         some_vec![
-            Diagnostic::from_node(Self { name, error_type }, &interface_stmt)
+            context
+                .create_diagnostic(Self { name, error_type }, interface_stmt)
                 .with_fix(Fix::unsafe_edit(edit))
         ]
     }
@@ -280,19 +271,14 @@ impl Violation for ImplicitExternalProcedures {
 }
 
 impl AstRule for ImplicitExternalProcedures {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // implicit none (type, external) was added in Fortran 2018, so don't
         // run this rule if we're targeting an older standard.
-        if settings.target_std < FortranStandard::F2018 {
+        if context.settings().target_std < FortranStandard::F2018 {
             return None;
         }
 
-        let stmt = ImplicitStatement::try_from_node(*node, src)?;
+        let stmt = ImplicitStatement::try_from_node(*node, context.source_file())?;
 
         if stmt.is_implicit_none_external() {
             // If `external` is already present, then it's correct.
@@ -306,8 +292,12 @@ impl AstRule for ImplicitExternalProcedures {
 
         // If we get here, it's either `implicit none` or `implicit none
         // (type)`, so we want to add `external` to it.
-        let edit = add_external_to_implicit_none(stmt.node(), src);
-        some_vec!(Diagnostic::from_node(Self {}, node).with_fix(Fix::unsafe_edit(edit)))
+        let edit = add_external_to_implicit_none(stmt.node(), context.source_file());
+        some_vec!(
+            context
+                .create_diagnostic(Self {}, node)
+                .with_fix(Fix::unsafe_edit(edit))
+        )
     }
 
     fn entrypoints() -> Vec<&'static str> {

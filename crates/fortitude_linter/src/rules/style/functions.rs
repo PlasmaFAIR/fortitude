@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -82,18 +79,13 @@ impl Violation for FunctionMissingResult {
 }
 
 impl AstRule for FunctionMissingResult {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        _src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         // Just need to check for the presence of the function_result node
         if node.child_with_name("function_result").is_some() {
             return None;
         }
 
-        some_vec![Diagnostic::from_node(Self {}, node)]
+        some_vec![context.create_diagnostic(Self {}, node)]
     }
 
     fn entrypoints() -> Vec<&'static str> {

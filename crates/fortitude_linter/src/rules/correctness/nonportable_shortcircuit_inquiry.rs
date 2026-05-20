@@ -1,13 +1,10 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
@@ -122,18 +119,12 @@ fn present_call(expr: &Node, src: &str, function: &str) -> Option<PresentCall> {
 }
 
 impl AstRule for NonportableShortcircuitInquiry {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         let expr = node.child(1)?;
-        let text = src.source_text();
 
         let violations = ["present", "allocated", "associated"]
             .iter()
-            .flat_map(|function| find_nonportable_shortcircuits(&expr, text, function))
+            .flat_map(|function| find_nonportable_shortcircuits(context, &expr, function))
             .collect_vec();
 
         Some(violations)
@@ -144,7 +135,13 @@ impl AstRule for NonportableShortcircuitInquiry {
     }
 }
 
-fn find_nonportable_shortcircuits(node: &Node, text: &str, function: &str) -> Vec<Diagnostic> {
+fn find_nonportable_shortcircuits(
+    context: &CheckContext,
+    node: &Node,
+    function: &str,
+) -> Vec<Diagnostic> {
+    let text = context.source_text();
+
     // First find all the `present(foo)` calls
     let calls = node
         .descendants()
@@ -173,13 +170,13 @@ fn find_nonportable_shortcircuits(node: &Node, text: &str, function: &str) -> Ve
             }
         })
         .map(|(node, arg, &present)| {
-            Diagnostic::from_node(
+            context.create_diagnostic(
                 NonportableShortcircuitInquiry {
                     arg,
                     function: function.to_string(),
                     present,
                 },
-                &node,
+                node,
             )
         })
         .collect_vec()

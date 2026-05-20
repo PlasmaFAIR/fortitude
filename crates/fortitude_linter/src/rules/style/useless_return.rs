@@ -3,15 +3,12 @@ use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
 use crate::fix::edits::redent;
-use crate::settings::CheckSettings;
-use crate::stylist::{Stylist, ToCapitalisation};
-use crate::symbol_table::SymbolTables;
+use crate::stylist::ToCapitalisation;
 use crate::traits::TextRanged;
-use crate::{AstRule, Rule};
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use log::debug;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
@@ -63,14 +60,10 @@ impl AlwaysFixableViolation for UselessReturn {
 }
 
 impl AstRule for UselessReturn {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let _ = context;
         if !node
-            .to_text(src.source_text())?
+            .to_text(context.source_text())?
             .eq_ignore_ascii_case("return")
         {
             return None;
@@ -82,8 +75,12 @@ impl AstRule for UselessReturn {
         ) {
             return None;
         }
-        let edit = node.edit_delete(src);
-        some_vec!(Diagnostic::from_node(Self, node).with_fix(Fix::safe_edit(edit)))
+        let edit = node.edit_delete(context.source_file());
+        some_vec!(
+            context
+                .create_diagnostic(Self, node)
+                .with_fix(Fix::safe_edit(edit))
+        )
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -313,11 +310,11 @@ impl Violation for SuperfluousElseStop {
 }
 
 pub(crate) fn check_superfluous_returns<'a>(
-    settings: &CheckSettings,
+    context: &'a CheckContext,
     node: &'a Node,
-    src: &'a SourceFile,
 ) -> Option<Diagnostic> {
-    let text = node.child(0)?.to_text(src.source_text())?;
+    let src = context.source_text();
+    let text = node.child(0)?.to_text(src)?;
     let kind = BlockExit::try_from(text).ok()?;
 
     // Skip this node if it's inside an inline IF, because the rule does not apply
@@ -333,36 +330,23 @@ pub(crate) fn check_superfluous_returns<'a>(
     .to_string();
 
     let mut diagnostic = match kind {
-        BlockExit::Return => Diagnostic::from_node_if_rule_enabled(
-            settings,
-            Rule::SuperfluousElseReturn,
-            SuperfluousElseReturn { branch },
-            node,
-        ),
-        BlockExit::Cycle => Diagnostic::from_node_if_rule_enabled(
-            settings,
-            Rule::SuperfluousElseCycle,
-            SuperfluousElseCycle { branch },
-            node,
-        ),
-        BlockExit::Exit => Diagnostic::from_node_if_rule_enabled(
-            settings,
-            Rule::SuperfluousElseExit,
-            SuperfluousElseExit { branch },
-            node,
-        ),
-        BlockExit::Stop => Diagnostic::from_node_if_rule_enabled(
-            settings,
-            Rule::SuperfluousElseStop,
+        BlockExit::Return => {
+            context.create_diagnostic_if_enabled(SuperfluousElseReturn { branch }, node)
+        }
+        BlockExit::Cycle => {
+            context.create_diagnostic_if_enabled(SuperfluousElseCycle { branch }, node)
+        }
+        BlockExit::Exit => {
+            context.create_diagnostic_if_enabled(SuperfluousElseExit { branch }, node)
+        }
+        BlockExit::Stop => context.create_diagnostic_if_enabled(
             SuperfluousElseStop {
                 branch,
                 stop: "stop".to_string(),
             },
             node,
         ),
-        BlockExit::Error => Diagnostic::from_node_if_rule_enabled(
-            settings,
-            Rule::SuperfluousElseStop,
+        BlockExit::Error => context.create_diagnostic_if_enabled(
             SuperfluousElseStop {
                 branch,
                 stop: "error stop".to_string(),
@@ -372,7 +356,7 @@ pub(crate) fn check_superfluous_returns<'a>(
     };
 
     if let Some(ref mut diagnostic) = diagnostic
-        && let Some(fix) = fix_superfluous_return(&sibling, src)
+        && let Some(fix) = fix_superfluous_return(context, &sibling)
     {
         diagnostic.set_fix(fix);
     }
@@ -380,9 +364,9 @@ pub(crate) fn check_superfluous_returns<'a>(
     diagnostic
 }
 
-fn fix_superfluous_return<'a>(branch: &'a Node, src: &'a SourceFile) -> Option<Fix> {
-    // TODO(peter): use passed-in stylist
-    let stylist = Stylist::from_ast(branch, src);
+fn fix_superfluous_return<'a>(context: &'a CheckContext, branch: &'a Node) -> Option<Fix> {
+    let src = context.source_file();
+    let stylist = context.stylist();
 
     let parent_if = branch.parent()?;
     if let Some(block_label) = parent_if.child_with_name("block_label_start_expression") {

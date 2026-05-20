@@ -1,14 +1,12 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::ast::types::AttributeKind;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::{CheckSettings, FortranStandard};
-use crate::symbol_table::SymbolTables;
+use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -53,19 +51,16 @@ impl Violation for MissingIntent {
 }
 
 impl AstRule for MissingIntent {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let entity = node.parent()?.kind().to_string();
         Some(
             node.child_by_field_name("parameters")?
                 .named_children(&mut node.walk())
                 .filter_map(|param| {
                     // Get variable declaration
-                    symbol_table.get(param.to_text(src.source_text())?)
+                    context
+                        .symbol_table()
+                        .get(param.to_text(context.source_text())?)
                 })
                 .filter(|param| {
                     // Procedures are not allowed intent
@@ -73,7 +68,7 @@ impl AstRule for MissingIntent {
                 })
                 .filter(|param| {
                     // Intent only allowed on pointers after F2003
-                    !(settings.target_std < FortranStandard::F2003
+                    !(context.settings().target_std < FortranStandard::F2003
                         && param.has_attribute(AttributeKind::Pointer))
                 })
                 .filter(|param| {
@@ -84,7 +79,7 @@ impl AstRule for MissingIntent {
                         .any(|attr| attr.kind().is_intent() || attr.kind().is_value())
                 })
                 .map(|param| {
-                    Diagnostic::new(
+                    context.create_diagnostic(
                         Self {
                             entity: entity.clone(),
                             name: param.name().to_string(),

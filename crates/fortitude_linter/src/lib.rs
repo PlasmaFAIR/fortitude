@@ -1,6 +1,7 @@
 use line_filter::FilterSet;
 use ruff_text_size::Ranged;
 pub use rule_selector::RuleSelector;
+use rule_table::RuleTable;
 pub use settings::Settings;
 
 pub mod allow_comments;
@@ -28,7 +29,7 @@ pub mod traits;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
-use diagnostics::{Diagnostic, Diagnostics, FixMap};
+use diagnostics::{Diagnostic, Diagnostics, FixMap, Violation};
 use fix::{FixResult, fix_file};
 use locator::Locator;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
@@ -43,12 +44,14 @@ use rules::style::whitespace::{MissingNewlineAtEndOfFile, TrailingWhitespace};
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
+use stylist::Stylist;
+use traits::TextRanged;
 
 use anyhow::{Context, anyhow};
-use ast::symbol_table::{self, BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
+use ast::symbol_table::{BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
 use itertools::Itertools;
-use ruff_source_file::SourceFile;
+use ruff_source_file::{SourceFile, SourceFileBuilder};
 use rustc_hash::FxHashMap;
 use source_kind::SourceKindDiff;
 use std::borrow::Cow;
@@ -65,15 +68,107 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Implemented by rules that analyse the abstract syntax tree.
 pub trait AstRule {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>>;
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
     fn entrypoints() -> Vec<&'static str>;
+}
+
+pub struct CheckContext<'a> {
+    file: SourceFile,
+    rules: RuleTable,
+    settings: &'a CheckSettings,
+    stylist: &'a Stylist<'a>,
+    symbols: SymbolTables<'a>,
+}
+
+impl<'a> CheckContext<'a> {
+    pub fn new(
+        path: &Path,
+        contents: &str,
+        settings: &'a CheckSettings,
+        stylist: &'a Stylist,
+    ) -> Self {
+        let file = SourceFileBuilder::new(path.to_string_lossy(), contents).finish();
+
+        // Ignore diagnostics based on per-file-ignores.
+        let mut rules = settings.rules.clone();
+        for ignore in crate::fs::ignores_from_path(path, &settings.per_file_ignores) {
+            rules.disable(ignore);
+        }
+        let symbols = SymbolTables::default();
+
+        Self {
+            file,
+            rules,
+            settings,
+            stylist,
+            symbols,
+        }
+    }
+
+    #[inline]
+    pub const fn is_rule_enabled(&self, rule: Rule) -> bool {
+        self.rules.enabled(rule)
+    }
+
+    #[inline]
+    pub const fn any_rule_enabled(&self, rules: &[Rule]) -> bool {
+        self.rules.any_enabled(rules)
+    }
+
+    /// Returns the source file.
+    pub const fn source_file(&self) -> &SourceFile {
+        &self.file
+    }
+
+    /// Returns the source code.
+    #[inline]
+    pub fn source_text(&self) -> &str {
+        self.file.source_text()
+    }
+
+    /// The [`CheckSettings`] for the current analysis, including the enabled rules.
+    pub const fn settings(&self) -> &'a CheckSettings {
+        self.settings
+    }
+
+    /// The [`Stylist`] for the current file, which detects the current line ending, quote, and
+    /// indentation style.
+    pub const fn stylist(&self) -> &'a Stylist<'a> {
+        self.stylist
+    }
+
+    pub const fn symbol_table(&'a self) -> &'a SymbolTables<'a> {
+        &self.symbols
+    }
+
+    pub fn push_table(&mut self, table: SymbolTable<'a>) {
+        self.symbols.push_table(table);
+    }
+
+    pub fn pop_table(&mut self) {
+        self.symbols.pop_table();
+    }
+
+    #[must_use]
+    pub fn create_diagnostic<T: Violation, R: TextRanged>(&self, kind: T, range: R) -> Diagnostic {
+        Diagnostic::new(kind, range.textrange())
+    }
+
+    #[must_use]
+    pub fn create_diagnostic_if_enabled<T: Violation, R: TextRanged>(
+        &self,
+        kind: T,
+        range: R,
+    ) -> Option<Diagnostic> {
+        let rule = T::rule();
+        if self.is_rule_enabled(rule) {
+            Some(self.create_diagnostic(kind, range))
+        } else {
+            None
+        }
+    }
 }
 
 /// Parse a file, check it for issues, and return the report.
@@ -169,38 +264,36 @@ pub(crate) fn check_path(
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
 
-    // Ignore diagnostics based on per-file-ignores.
-    let mut rules = settings.rules.clone();
-    for ignore in crate::fs::ignores_from_path(path, &settings.per_file_ignores) {
-        rules.disable(ignore);
-    }
+    // Detect the current code style (lazily)
+    let stylist = Stylist::from_ast(&tree.root_node(), file);
+
+    let mut context = CheckContext::new(path, file.source_text(), settings, &stylist);
 
     // Check file paths directly
-    if rules.enabled(Rule::NonStandardFileExtension) {
+    if context.is_rule_enabled(Rule::NonStandardFileExtension) {
         if let Some(violation) = NonStandardFileExtension::check(path) {
             violations.push(violation);
         }
     }
 
     // Perform plain text analysis
-    if rules.enabled(Rule::SplitEscapedQuote) {
-        violations.extend(SplitEscapedQuote::check(file));
+    if context.is_rule_enabled(Rule::SplitEscapedQuote) {
+        violations.extend(SplitEscapedQuote::check(&context));
     }
-    if rules.enabled(Rule::TrailingWhitespace) {
-        violations.extend(TrailingWhitespace::check(file));
+    if context.is_rule_enabled(Rule::TrailingWhitespace) {
+        violations.extend(TrailingWhitespace::check(&context));
     }
-    if rules.enabled(Rule::MissingNewlineAtEndOfFile)
-        && let Some(violation) = MissingNewlineAtEndOfFile::check(file)
+    if context.is_rule_enabled(Rule::MissingNewlineAtEndOfFile)
+        && let Some(violation) = MissingNewlineAtEndOfFile::check(&context)
     {
         violations.push(violation);
     }
 
     // Perform AST analysis
     let root = tree.root_node();
-    let mut symbol_table = SymbolTables::default();
     for node in once(root).chain(root.descendants()) {
-        if rules.enabled(Rule::SyntaxError) && node.is_missing() {
-            violations.push(Diagnostic::from_node(SyntaxError {}, &node));
+        if context.is_rule_enabled(Rule::SyntaxError) && node.is_missing() {
+            violations.push(context.create_diagnostic(SyntaxError {}, node));
         }
 
         if BEGIN_SCOPE_NODES.contains(&node.kind()) {
@@ -208,36 +301,34 @@ pub(crate) fn check_path(
 
             // Run rules over variable declarations without needing to reparse
             // them into types
-            if rules.any_enabled(&[
+            if context.any_rule_enabled(&[
                 Rule::InconsistentArrayDeclaration,
                 Rule::MixedScalarArrayDeclaration,
                 Rule::BadArrayDeclaration,
             ]) {
                 for decl_line in new_table.iter_decl_lines() {
-                    violations.extend(check_inconsistent_dimension_rules(
-                        settings, decl_line, file,
-                    ))
+                    violations.extend(check_inconsistent_dimension_rules(&context, decl_line))
                 }
             }
 
-            symbol_table.push_table(new_table);
+            context.push_table(new_table);
         }
 
-        if rules.any_enabled(&[
+        if context.any_rule_enabled(&[
             Rule::SuperfluousElseReturn,
             Rule::SuperfluousElseCycle,
             Rule::SuperfluousElseExit,
             Rule::SuperfluousElseStop,
         ]) && matches!(node.kind(), "keyword_statement" | "stop_statement")
         {
-            if let Some(violation) = check_superfluous_returns(settings, &node, file) {
+            if let Some(violation) = check_superfluous_returns(&context, &node) {
                 violations.push(violation);
             }
         }
 
-        if let Some(rules) = rules.ast_entrypoints().get(node.kind()) {
+        if let Some(rules) = context.rules.ast_entrypoints().get(node.kind()) {
             for rule in rules {
-                if let Some(violation) = rule.check(settings, &node, file, &symbol_table) {
+                if let Some(violation) = rule.check(&context, &node) {
                     violations.extend(violation);
                 }
             }
@@ -248,28 +339,28 @@ pub(crate) fn check_path(
         };
 
         if END_SCOPE_NODES.contains(&node.kind()) {
-            symbol_table.pop_table();
+            context.pop_table();
         }
     }
 
     // ignore line length in comments requires AST
-    if rules.enabled(Rule::LineTooLong) {
-        violations.extend(LineTooLong::check(&root, settings, file));
+    if context.is_rule_enabled(Rule::LineTooLong) {
+        violations.extend(LineTooLong::check(&context, &root));
     }
 
-    if rules.enabled(Rule::InvalidTab) {
-        violations.append(&mut check_invalid_tab(&root, file, settings));
+    if context.is_rule_enabled(Rule::InvalidTab) {
+        violations.append(&mut check_invalid_tab(&context, &root));
     }
 
-    if rules.enabled(Rule::InvalidCharacter) {
-        violations.append(&mut check_invalid_character(&root, file));
+    if context.is_rule_enabled(Rule::InvalidCharacter) {
+        violations.append(&mut check_invalid_character(&context, &root));
     }
 
     // Raise violations for internal test rules
     #[cfg(any(feature = "test-rules", test))]
     {
         for test_rule in TEST_RULES {
-            if !rules.enabled(*test_rule) {
+            if !context.is_rule_enabled(*test_rule) {
                 continue;
             }
             let diagnostic = match test_rule {
@@ -298,7 +389,7 @@ pub(crate) fn check_path(
     }
 
     if (ignore_allow_comments.is_disabled() && !violations.is_empty())
-        || rules.any_enabled(&[
+        || context.any_rule_enabled(&[
             Rule::InvalidRuleCodeOrName,
             Rule::UnusedAllowComment,
             Rule::RedirectedAllowComment,
@@ -306,7 +397,7 @@ pub(crate) fn check_path(
             Rule::DisabledAllowComment,
         ])
     {
-        let ignored = check_allow_comments(&mut violations, &allow_comments, &rules, file);
+        let ignored = check_allow_comments(&mut violations, &allow_comments, &context);
         if ignore_allow_comments.is_disabled() {
             for index in ignored.iter().rev() {
                 violations.swap_remove(*index);
@@ -320,7 +411,7 @@ pub(crate) fn check_path(
         // violations up to the first syntax error. If we aren't tracking syntax
         // errors, we report everything but warn that the results are unreliable.
         // In either case, fixes should be considered too risky to apply.
-        if rules.enabled(Rule::SyntaxError) {
+        if context.is_rule_enabled(Rule::SyntaxError) {
             // Check violations for any remaining syntax errors. If any are found, discard violations
             // after it, as they may be false positives.
             warn_user_once_by_message!(
@@ -364,7 +455,7 @@ pub(crate) fn check_path(
     // Disable any fixes for unfixable rules
     for diagnostic in &mut violations {
         let rule = diagnostic.rule();
-        if diagnostic.fixable() && !rules.should_fix(rule) {
+        if diagnostic.fixable() && !context.rules.should_fix(rule) {
             diagnostic.drop_fix();
         }
     }

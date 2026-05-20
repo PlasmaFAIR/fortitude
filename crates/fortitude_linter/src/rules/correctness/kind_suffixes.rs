@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex_is_match;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -72,17 +69,12 @@ impl Violation for NoRealSuffix {
 }
 
 impl AstRule for NoRealSuffix {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Given a number literal, match anything with one or more of a decimal place or
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with the
         // rule `double_precision_literal`.
-        let txt = node.to_text(src.source_text())?;
+        let txt = node.to_text(context.source_text())?;
         if !regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]-?\d+)$", txt) {
             return None;
         }
@@ -117,7 +109,7 @@ impl AstRule for NoRealSuffix {
         // "argument_list", and the second must be "call_expression".
         if grandparent.kind() == "call_expression" {
             if let Some(identifier) = grandparent.child_with_name("identifier") {
-                let name = identifier.to_text(src.source_text())?.to_lowercase();
+                let name = identifier.to_text(context.source_text())?.to_lowercase();
                 if name == "kind"
                     || (no_loss
                         && matches!(name.as_str(), "real" | "cmplx" | "dbl" | "int" | "logical"))
@@ -128,7 +120,7 @@ impl AstRule for NoRealSuffix {
         }
 
         let literal = txt.to_string();
-        some_vec![Diagnostic::from_node(NoRealSuffix { literal }, node)]
+        some_vec![context.create_diagnostic(NoRealSuffix { literal }, node)]
     }
 
     fn entrypoints() -> Vec<&'static str> {

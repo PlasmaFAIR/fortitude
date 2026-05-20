@@ -1,12 +1,9 @@
-use crate::AstRule;
 /// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -33,12 +30,8 @@ impl AlwaysFixableViolation for SuperfluousImplicitNone {
 }
 
 impl AstRule for SuperfluousImplicitNone {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_file();
         let stmt = ImplicitStatement::try_from_node(*node, src)?;
         // If this isn't an `implicit none` statement, then we don't care about it.
         if stmt.is_not_implicit_none() {
@@ -69,7 +62,9 @@ impl AstRule for SuperfluousImplicitNone {
                                     let entity = kind.to_string();
                                     let fix = Fix::safe_edit(node.edit_delete(src));
                                     return some_vec![
-                                        Diagnostic::from_node(Self { entity }, node).with_fix(fix)
+                                        context
+                                            .create_diagnostic(Self { entity }, node)
+                                            .with_fix(fix)
                                     ];
                                 } else {
                                     break;

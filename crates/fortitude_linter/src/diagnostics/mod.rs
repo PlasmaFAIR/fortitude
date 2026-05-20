@@ -16,9 +16,8 @@ use rustc_hash::FxHashMap;
 use anyhow::Result;
 use log::debug;
 use ruff_text_size::{Ranged, TextRange};
-use tree_sitter::Node;
 
-use crate::{fix::FixTable, rules::Rule, settings::CheckSettings, traits::TextRanged};
+use crate::{fix::FixTable, rules::Rule};
 
 pub use violation::{AlwaysFixableViolation, FixAvailability, Violation, ViolationMetadata};
 
@@ -138,23 +137,6 @@ impl Diagnostic {
             code: T::rule().noqa_code().to_string(),
             rule: T::rule(),
             file: None,
-        }
-    }
-
-    pub fn from_node<T: Violation>(violation: T, node: &Node) -> Self {
-        Self::new(violation, node.textrange())
-    }
-
-    pub fn from_node_if_rule_enabled<T: Violation>(
-        settings: &CheckSettings,
-        rule: Rule,
-        violation: T,
-        node: &Node,
-    ) -> Option<Self> {
-        if settings.rules.enabled(rule) {
-            Some(Diagnostic::from_node(violation, node))
-        } else {
-            None
         }
     }
 

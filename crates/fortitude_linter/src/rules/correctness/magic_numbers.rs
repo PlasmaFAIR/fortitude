@@ -1,13 +1,10 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::rules::utilities::literal_as_io_unit;
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -49,15 +46,15 @@ impl Violation for MagicNumberInArraySize {
 const DEFAULT_ALLOWED_LITERALS: &[i32] = &[0, 1, 2, 3, 4];
 
 impl AstRule for MagicNumberInArraySize {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // We're either looking for `type, dimension(X) :: variable` or `type :: variable(X)`
         let size = if node.kind() == "type_qualifier" {
-            if node.child(0)?.to_text(source.source_text())?.to_lowercase() != "dimension" {
+            if node
+                .child(0)?
+                .to_text(context.source_text())?
+                .to_lowercase()
+                != "dimension"
+            {
                 return None;
             }
             node.child_with_name("argument_list")?
@@ -83,7 +80,7 @@ impl AstRule for MagicNumberInArraySize {
             .flatten()
             .filter_map(|literal| {
                 let value = literal
-                    .to_text(source.source_text())?
+                    .to_text(context.source_text())?
                     .parse::<i32>()
                     .unwrap();
                 if DEFAULT_ALLOWED_LITERALS.contains(&value) {
@@ -92,7 +89,7 @@ impl AstRule for MagicNumberInArraySize {
                     Some((literal, value))
                 }
             })
-            .map(|(child, value)| Diagnostic::from_node(Self { value }, &child))
+            .map(|(child, value)| context.create_diagnostic(Self { value }, child))
             .collect();
 
         Some(violations)
@@ -145,20 +142,15 @@ impl Violation for MagicIoUnit {
 }
 
 impl AstRule for MagicIoUnit {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let unit = literal_as_io_unit(node, src)?;
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let unit = literal_as_io_unit(node, context.source_file())?;
 
         let value = unit
-            .to_text(src.source_text())?
+            .to_text(context.source_text())?
             .parse::<i32>()
             .unwrap_or_default();
 
-        some_vec!(Diagnostic::from_node(Self { value }, &unit))
+        some_vec!(context.create_diagnostic(Self { value }, unit))
     }
 
     fn entrypoints() -> Vec<&'static str> {

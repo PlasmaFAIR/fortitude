@@ -1,10 +1,8 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic};
 use crate::diagnostics::{Edit, Fix};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::{LineRanges, SourceFile};
@@ -50,16 +48,11 @@ impl AlwaysFixableViolation for UnsortedUses {
 }
 
 impl AstRule for UnsortedUses {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let use_statements: Vec<UseStatementData> = node
             .children(&mut node.walk())
             .filter(|child| child.kind() == "use_statement")
-            .map(|child| extract_use_statement_data(&child, src))
+            .map(|child| extract_use_statement_data(&child, context.source_file()))
             .collect();
 
         if use_statements.len() <= 1 {
@@ -87,12 +80,9 @@ impl AstRule for UnsortedUses {
                 continue;
             }
 
-            let block_start = src
-                .source_text()
-                .line_start(block.first()?.text_range.start());
-            let block_end = src
-                .source_text()
-                .full_line_end(block.last()?.text_range.end());
+            let text = context.source_text();
+            let block_start = text.line_start(block.first()?.text_range.start());
+            let block_end = text.full_line_end(block.last()?.text_range.end());
 
             let replacement = sorted.iter().map(|s| s.text.as_str()).collect::<String>();
             let edit = Edit::range_replacement(replacement, TextRange::new(block_start, block_end));
@@ -101,7 +91,9 @@ impl AstRule for UnsortedUses {
             let first = block.first()?;
             let last = block.last()?;
             let range = TextRange::new(first.start_textsize(), last.end_textsize());
-            let diag = Diagnostic::new(UnsortedUses {}, range).with_fix(fix);
+            let diag = context
+                .create_diagnostic(UnsortedUses {}, range)
+                .with_fix(fix);
             diagnostics.push(diag);
         }
 

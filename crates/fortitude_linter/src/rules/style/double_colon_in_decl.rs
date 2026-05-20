@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -29,21 +26,16 @@ impl AlwaysFixableViolation for MissingDoubleColon {
     }
 }
 impl AstRule for MissingDoubleColon {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if node
             .children(&mut node.walk())
-            .filter_map(|child| child.to_text(src.source_text()))
+            .filter_map(|child| child.to_text(context.source_text()))
             .all(|child| child != "::")
         {
             let first_decl = node.child_by_field_name("declarator")?;
             let start_pos = first_decl.start_textsize();
             let fix = Fix::safe_edit(Edit::insertion(":: ".to_string(), start_pos));
-            some_vec!(Diagnostic::from_node(Self {}, node).with_fix(fix))
+            some_vec!(context.create_diagnostic(Self {}, node).with_fix(fix))
         } else {
             None
         }

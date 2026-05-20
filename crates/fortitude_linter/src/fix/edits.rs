@@ -184,7 +184,7 @@ pub fn redent(s: &str, indentation: &str, line_ending: LineEnding) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::symbol_table::SymbolTable;
+    use crate::ast::symbol_table::SymbolTable;
 
     use super::*;
     use anyhow::{Context, Result};

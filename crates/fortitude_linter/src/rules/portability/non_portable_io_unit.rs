@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::rules::utilities::literal_as_io_unit;
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -47,16 +44,11 @@ impl Violation for NonPortableIoUnit {
 }
 
 impl AstRule for NonPortableIoUnit {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let unit = literal_as_io_unit(node, src)?;
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let unit = literal_as_io_unit(node, context.source_file())?;
 
         let value = unit
-            .to_text(src.source_text())?
+            .to_text(context.source_text())?
             .parse::<i32>()
             .unwrap_or_default();
         let is_read = node.kind() == "read_statement";
@@ -68,7 +60,7 @@ impl AstRule for NonPortableIoUnit {
         let mut stdout = vec![6];
         let mut stderr = vec![0];
 
-        if !settings.portability.allow_cray_file_units {
+        if !context.settings().portability.allow_cray_file_units {
             stdin.push(100);
             stdout.push(101);
             stderr.push(102);
@@ -85,13 +77,13 @@ impl AstRule for NonPortableIoUnit {
         }
         .to_string();
 
-        some_vec!(Diagnostic::from_node(
+        some_vec!(context.create_diagnostic(
             Self {
                 value,
                 kind,
                 replacement
             },
-            &unit
+            unit
         ))
     }
 

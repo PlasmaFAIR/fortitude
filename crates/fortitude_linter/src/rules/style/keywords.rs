@@ -1,16 +1,13 @@
-use crate::AstRule;
 /// Defines rules that govern the use of keywords.
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
-use crate::settings::CheckSettings;
 use crate::stylist::ToCapitalisation;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use std::str::FromStr;
 use tree_sitter::Node;
@@ -117,32 +114,31 @@ impl AlwaysFixableViolation for KeywordsMissingSpace {
 }
 
 impl AstRule for KeywordsMissingSpace {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let first_child = if node.kind() == "inout" {
             *node
         } else {
             node.child(0)?
         };
-        let text = first_child.to_text(src.source_text())?;
+        let text = first_child.to_text(context.source_text())?;
         let keywords = DoubleKeyword::from_str(text).ok()?;
 
         // Exit early if the keyword is permitted
-        if matches!(keywords, DoubleKeyword::InOut) && !settings.keyword_whitespace.inout_with_space
-        {
+        let keyword_settings = &context.settings().keyword_whitespace;
+        if matches!(keywords, DoubleKeyword::InOut) && !keyword_settings.inout_with_space {
             return None;
         }
-        if matches!(keywords, DoubleKeyword::GoTo) && !settings.keyword_whitespace.goto_with_space {
+        if matches!(keywords, DoubleKeyword::GoTo) && !keyword_settings.goto_with_space {
             return None;
         }
 
         let space_pos = node.start_textsize() + TextSize::try_from(keywords.offset()).unwrap();
         let fix = Fix::safe_edit(Edit::insertion(" ".to_string(), space_pos));
-        some_vec!(Diagnostic::from_node(Self { keywords }, &first_child).with_fix(fix))
+        some_vec!(
+            context
+                .create_diagnostic(Self { keywords }, first_child)
+                .with_fix(fix)
+        )
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -208,16 +204,13 @@ impl Violation for KeywordHasWhitespace {
 }
 
 impl AstRule for KeywordHasWhitespace {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        if node.kind() == "in" && settings.keyword_whitespace.inout_with_space {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        if node.kind() == "in" && context.settings().keyword_whitespace.inout_with_space {
             return None;
         }
-        if node.kind() == "keyword_statement" && settings.keyword_whitespace.goto_with_space {
+        if node.kind() == "keyword_statement"
+            && context.settings().keyword_whitespace.goto_with_space
+        {
             return None;
         }
         let (first, second, first_child, violation) = if node.kind() == "in" {
@@ -251,21 +244,25 @@ impl AstRule for KeywordHasWhitespace {
             )
         };
         // Verify that the node is 'in' / 'go'
-        if first_child.to_text(src.source_text())?.to_lowercase() != first {
+        if first_child.to_text(context.source_text())?.to_lowercase() != first {
             return None;
         }
         // Check if immediate sibling is 'out'/'to'
         let sibling = first_child.next_sibling()?;
-        if sibling.to_text(src.source_text())?.to_lowercase() == second {
+        if sibling.to_text(context.source_text())?.to_lowercase() == second {
             let start = first_child.start_textsize();
             let end = sibling.end_textsize();
             let fix_start = first_child.end_textsize();
             let fix_end = sibling.start_textsize();
             let fix = Fix::safe_edit(Edit::deletion(fix_start, fix_end));
-            return some_vec!(Diagnostic::new(violation, TextRange::new(start, end)).with_fix(fix));
+            return some_vec!(
+                context
+                    .create_diagnostic(violation, TextRange::new(start, end))
+                    .with_fix(fix)
+            );
         }
         // Can't fix this case, it may contain line continuations, comments, etc.
-        some_vec!(Diagnostic::from_node(violation, &first_child))
+        some_vec!(context.create_diagnostic(violation, first_child))
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -370,12 +367,7 @@ impl AlwaysFixableViolation for IncorrectKeywordCase {
 }
 
 impl AstRule for IncorrectKeywordCase {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if node.child_count() > 0 {
             // Filter node that wrap other nodes, we want only leafs
             return None;
@@ -385,9 +377,10 @@ impl AstRule for IncorrectKeywordCase {
             return None;
         }
 
-        let text = node.to_text(src.source_text())?;
+        let text = node.to_text(context.source_text())?;
 
-        let expected = text.to_capitalisation(settings.incorrect_keyword_case.keyword_case);
+        let expected =
+            text.to_capitalisation(context.settings().incorrect_keyword_case.keyword_case);
         if text == expected {
             return None;
         }
@@ -400,14 +393,15 @@ impl AstRule for IncorrectKeywordCase {
         ));
 
         some_vec!(
-            Diagnostic::from_node(
-                Self {
-                    actual: text.to_string(),
-                    expected
-                },
-                node
-            )
-            .with_fix(fix)
+            context
+                .create_diagnostic(
+                    Self {
+                        actual: text.to_string(),
+                        expected
+                    },
+                    node
+                )
+                .with_fix(fix)
         )
     }
 

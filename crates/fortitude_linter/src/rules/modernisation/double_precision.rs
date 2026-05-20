@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex_captures;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -68,14 +65,9 @@ impl Violation for DoublePrecision {
 }
 
 impl AstRule for DoublePrecision {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let txt = node.to_text(src.source_text())?.to_lowercase();
-        some_vec![Diagnostic::from_node(DoublePrecision::try_new(txt)?, node)]
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let txt = node.to_text(context.source_text())?.to_lowercase();
+        some_vec![context.create_diagnostic(DoublePrecision::try_new(txt)?, node)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -130,13 +122,8 @@ impl Violation for DoublePrecisionLiteral {
 }
 
 impl AstRule for DoublePrecisionLiteral {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let txt = node.to_text(src.source_text())?;
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let txt = node.to_text(context.source_text())?;
         if let Some((original, mantissa, exponent)) =
             regex_captures!(r"^(\d*\.*\d*)[dD](-?\d+)$", txt)
         {
@@ -156,7 +143,7 @@ impl AstRule for DoublePrecisionLiteral {
             // "argument_list", and the second must be "call_expression".
             if grandparent.kind() == "call_expression" {
                 if let Some(identifier) = grandparent.child_with_name("identifier") {
-                    let name = identifier.to_text(src.source_text())?.to_lowercase();
+                    let name = identifier.to_text(context.source_text())?.to_lowercase();
                     if name == "kind"
                         || matches!(name.as_str(), "real" | "cmplx" | "dbl" | "int" | "logical")
                     {
@@ -167,7 +154,7 @@ impl AstRule for DoublePrecisionLiteral {
 
             let original = original.to_string();
             let preferred = format!("{mantissa}e{exponent}_real64");
-            return some_vec![Diagnostic::from_node(
+            return some_vec![context.create_diagnostic(
                 DoublePrecisionLiteral {
                     original,
                     preferred

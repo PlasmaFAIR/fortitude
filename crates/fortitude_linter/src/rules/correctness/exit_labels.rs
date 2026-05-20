@@ -1,14 +1,11 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What does it do?
@@ -46,13 +43,8 @@ impl Violation for MissingExitOrCycleLabel {
     }
 }
 impl AstRule for MissingExitOrCycleLabel {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = src.source_text();
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
         // Skip unlabelled loops
         let label = node
             .child_with_name("block_label_start_expression")?
@@ -69,14 +61,15 @@ impl AstRule for MissingExitOrCycleLabel {
                 let edit = Edit::insertion(label_with_space, stmt.end_textsize());
                 let fix = Fix::unsafe_edit(edit);
 
-                Diagnostic::from_node(
-                    Self {
-                        name: name.to_string(),
-                        label: label.to_string(),
-                    },
-                    &stmt,
-                )
-                .with_fix(fix)
+                context
+                    .create_diagnostic(
+                        Self {
+                            name: name.to_string(),
+                            label: label.to_string(),
+                        },
+                        stmt,
+                    )
+                    .with_fix(fix)
             })
             .collect();
 
@@ -130,13 +123,8 @@ impl Violation for ExitOrCycleInUnlabelledLoop {
 }
 
 impl AstRule for ExitOrCycleInUnlabelledLoop {
-    fn check(
-        settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = source.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
         let name = node.to_text(src)?.to_lowercase();
         // This filters to the keywords we want that _also_ don't have a label
         if !matches!(name.as_str(), "exit" | "cycle") {
@@ -159,14 +147,18 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
 
         // If we're only supposed to check on nested loops, check that there is at least
         // one more level of nesting
-        if settings.exit_unlabelled_loops.allow_unnested_loops {
+        if context
+            .settings()
+            .exit_unlabelled_loops
+            .allow_unnested_loops
+        {
             parent_loop
                 .ancestors()
                 .filter(|ancestor| ancestor.kind() == "do_loop")
                 .nth(0)?;
         }
 
-        some_vec!(Diagnostic::from_node(Self { name }, node))
+        some_vec!(context.create_diagnostic(Self { name }, node))
     }
 
     fn entrypoints() -> Vec<&'static str> {
@@ -222,13 +214,8 @@ fn start_end_names(node_kind: &str) -> (&'static str, &'static str) {
 }
 
 impl AstRule for MissingEndLabel {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = src.source_text();
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
         // Skip unlabelled loops
         let label = node
             .child_with_name("block_label_start_expression")?
@@ -253,15 +240,16 @@ impl AstRule for MissingEndLabel {
 
                 let (start_name, end_name) = start_end_names(node.kind());
 
-                Diagnostic::from_node(
-                    Self {
-                        end_name,
-                        start_name,
-                        label: label.to_string(),
-                    },
-                    &stmt,
-                )
-                .with_fix(fix)
+                context
+                    .create_diagnostic(
+                        Self {
+                            end_name,
+                            start_name,
+                            label: label.to_string(),
+                        },
+                        stmt,
+                    )
+                    .with_fix(fix)
             })?;
 
         Some(vec![violation])

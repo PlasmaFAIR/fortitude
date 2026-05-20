@@ -1,10 +1,7 @@
-use crate::AstRule;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -78,12 +75,7 @@ impl Violation for MissingDefaultCase {
 }
 
 impl AstRule for MissingDefaultCase {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        _src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let has_default = node
             .named_children(&mut node.walk())
             .filter(|child| child.kind() == "case_statement")
@@ -95,7 +87,7 @@ impl AstRule for MissingDefaultCase {
         if has_default {
             None
         } else {
-            some_vec!(Diagnostic::from_node(Self {}, node))
+            some_vec!(context.create_diagnostic(Self {}, node))
         }
     }
 

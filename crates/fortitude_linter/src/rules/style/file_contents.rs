@@ -1,10 +1,7 @@
-use crate::AstRule;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -25,19 +22,14 @@ impl Violation for MultipleModules {
 }
 
 impl AstRule for MultipleModules {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        _src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let violations: Vec<Diagnostic> = node
             .children(&mut node.walk())
             .filter(|node| node.kind() == "module")
             .skip(1)
             .map(|m| -> Diagnostic {
                 let m_first = m.child(0).unwrap_or(m);
-                Diagnostic::from_node(MultipleModules {}, &m_first)
+                context.create_diagnostic(MultipleModules {}, m_first)
             })
             .collect();
 
@@ -67,12 +59,7 @@ impl Violation for ProgramWithModule {
 }
 
 impl AstRule for ProgramWithModule {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        _src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // There must be a program statement to trigger this rule
         if !node
             .children(&mut node.walk())
@@ -88,7 +75,7 @@ impl AstRule for ProgramWithModule {
             .skip(1)
             .map(|m| -> Diagnostic {
                 let m_first = m.child(0).unwrap_or(m);
-                Diagnostic::from_node(ProgramWithModule {}, &m_first)
+                context.create_diagnostic(ProgramWithModule {}, m_first)
             })
             .collect();
 

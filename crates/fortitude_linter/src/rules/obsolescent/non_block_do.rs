@@ -1,8 +1,7 @@
 use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use crate::settings::CheckSettings;
 use crate::traits::TextRanged;
-use crate::{AstRule, SymbolTables};
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use log::debug;
 use ruff_macros::derive_message_formats;
@@ -50,18 +49,13 @@ impl Violation for LabelledDoLoop {
 }
 
 impl AstRule for LabelledDoLoop {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         // `do_label` is the obsolete node that we're trying to catch
         let label = node.child_by_field_name("do_label")?;
         let do_loop = node.parent()?;
 
-        let mut diagnostic = Diagnostic::from_node(LabelledDoLoop {}, &label);
-        if let Some(fix) = fix_labelled_do(&do_loop, &label, src) {
+        let mut diagnostic = context.create_diagnostic(LabelledDoLoop {}, label);
+        if let Some(fix) = fix_labelled_do(&do_loop, &label, context.source_file()) {
             diagnostic.set_fix(fix);
         }
         some_vec![diagnostic]
@@ -112,17 +106,12 @@ impl Violation for SharedDoTermination {
 }
 
 impl AstRule for SharedDoTermination {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         // We only want to give one warning, so pick the node that has the
         // statement label. For multiple shared terminations, only first gets
         // the label, and the others get the following whitespace (something
         // about non-overlapping nodes).
-        if node.to_text(src.source_text())?.is_empty() {
+        if node.to_text(context.source_text())?.is_empty() {
             return None;
         }
 
@@ -131,8 +120,8 @@ impl AstRule for SharedDoTermination {
         let end = node.next_non_comment_statement()?.end_textsize();
         let range = TextRange::new(start, end);
 
-        let mut diagnostic = Diagnostic::new(Self {}, range);
-        if let Some(fix) = fix_shared_termination(node, src) {
+        let mut diagnostic = context.create_diagnostic(Self {}, range);
+        if let Some(fix) = fix_shared_termination(node, context.source_file()) {
             diagnostic.set_fix(fix);
         }
         some_vec![diagnostic]
@@ -179,12 +168,7 @@ impl Violation for BadDoTermination {
 }
 
 impl AstRule for BadDoTermination {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        source: &'a SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let end_do_label = node.child_by_field_name("do_label")?;
         // Don't catch shared termination
         if end_do_label.kind() == "do_label_virtual" {
@@ -194,14 +178,15 @@ impl AstRule for BadDoTermination {
 
         let mut diagnostics = Vec::new();
 
-        let src = source.source_text();
+        let src = context.source_text();
 
         match end_action.kind() {
             "end" | "enddo" => (),
             "keyword_statement" if ControlFlow::maybe_from(&end_action, src)?.is_continue() => (),
             _ => {
-                let mut diagnostic = Diagnostic::from_node(Self {}, &end_action);
-                if let Some(fix) = fix_bad_do_termination(node, &end_action, &end_do_label, source)
+                let mut diagnostic = context.create_diagnostic(Self {}, end_action);
+                if let Some(fix) =
+                    fix_bad_do_termination(node, &end_action, &end_do_label, context.source_file())
                 {
                     diagnostic.set_fix(fix);
                 }
@@ -264,13 +249,8 @@ impl Violation for GotoEndDo {
 }
 
 impl AstRule for GotoEndDo {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        source: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let src = source.source_text();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let src = context.source_text();
 
         let goto = ControlFlowNode::maybe_from(*node, src)?;
         let label_ref = goto.goto_ref()?;
@@ -285,8 +265,8 @@ impl AstRule for GotoEndDo {
             return None;
         }
         // TODO: extra annotation with `goto` target
-        let mut diagnostic = Diagnostic::from_node(Self {}, node);
-        if let Some(fix) = fix_goto_end_do(node, &label_node, source) {
+        let mut diagnostic = context.create_diagnostic(Self {}, node);
+        if let Some(fix) = fix_goto_end_do(node, &label_node, context.source_file()) {
             diagnostic.set_fix(fix);
         }
 

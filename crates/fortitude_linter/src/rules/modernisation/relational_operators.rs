@@ -1,12 +1,9 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 fn map_relational_symbols(name: &str) -> Option<&'static str> {
@@ -47,22 +44,22 @@ impl AlwaysFixableViolation for DeprecatedRelationalOperator {
     }
 }
 impl AstRule for DeprecatedRelationalOperator {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
         let symbol = relation
-            .to_text(src.source_text())?
+            .to_text(context.source_text())?
             .to_lowercase()
             .to_string();
         let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
 
-        let fix = Fix::safe_edit(relation.edit_replacement(src, new_symbol.clone()));
+        let fix =
+            Fix::safe_edit(relation.edit_replacement(context.source_file(), new_symbol.clone()));
 
-        some_vec![Diagnostic::from_node(Self { symbol, new_symbol }, &relation).with_fix(fix)]
+        some_vec![
+            context
+                .create_diagnostic(Self { symbol, new_symbol }, relation)
+                .with_fix(fix)
+        ]
     }
 
     fn entrypoints() -> Vec<&'static str> {

@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use std::path::Path;
 use tree_sitter::Node;
 
@@ -34,22 +31,17 @@ impl Violation for DeprecatedOmpInclude {
 }
 
 impl AstRule for DeprecatedOmpInclude {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        _src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let include_file = node
             .child_with_name("filename")?
-            .to_text(_src.source_text())?
+            .to_text(context.source_text())?
             .to_lowercase();
 
         // Strip quotes from the include file name
         let include_file = include_file.trim_matches('"').trim_matches('\'');
 
         if Path::new(&include_file).file_name() == Some("omp_lib.h".as_ref()) {
-            return some_vec![Diagnostic::from_node(DeprecatedOmpInclude {}, node)];
+            return some_vec![context.create_diagnostic(DeprecatedOmpInclude {}, node)];
         }
         None
     }

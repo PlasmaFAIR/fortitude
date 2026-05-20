@@ -1,10 +1,7 @@
-use crate::AstRule;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -82,12 +79,7 @@ impl Violation for ComputedGoTo {
 }
 
 impl AstRule for ComputedGoTo {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        _src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if matches!(node.child(0)?.kind(), "goto" | "go")
             && node
                 .children(&mut node.walk())
@@ -95,7 +87,7 @@ impl AstRule for ComputedGoTo {
                 .count()
                 > 1
         {
-            return some_vec![Diagnostic::from_node(ComputedGoTo {}, node)];
+            return some_vec![context.create_diagnostic(ComputedGoTo {}, node)];
         }
         None
     }

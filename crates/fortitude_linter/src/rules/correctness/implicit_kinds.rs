@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -55,13 +52,11 @@ impl Violation for ImplicitRealKind {
 }
 
 impl AstRule for ImplicitRealKind {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
-        let dtype = node.child(0)?.to_text(src.source_text())?.to_lowercase();
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let dtype = node
+            .child(0)?
+            .to_text(context.source_text())?
+            .to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
             return None;
@@ -75,7 +70,7 @@ impl AstRule for ImplicitRealKind {
             return None;
         }
 
-        some_vec![Diagnostic::from_node(ImplicitRealKind { dtype }, node)]
+        some_vec![context.create_diagnostic(ImplicitRealKind { dtype }, node)]
     }
 
     fn entrypoints() -> Vec<&'static str> {

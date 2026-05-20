@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::ast::{FortitudeNode, types::BlockExit};
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use tree_sitter::Node;
 
 /// ## What it does
@@ -67,23 +64,18 @@ pub const EXECUTABLE_STATEMENTS: &[&str] = &[
 ];
 
 impl AstRule for UnreachableStatement {
-    fn check<'a>(
-        _settings: &CheckSettings,
-        node: &'a Node,
-        src: &'a SourceFile,
-        _symbol_tables: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // TODO: Not catching returns at the end of block, associate, etc.
         // This will require going up the tree before finding the next statement.
-        let text = node.child(0)?.to_text(src.source_text())?;
+        let text = node.child(0)?.to_text(context.source_text())?;
         let _ = BlockExit::try_from(text).ok()?;
         let sibling = node.next_non_comment_sibling()?;
         if EXECUTABLE_STATEMENTS.contains(&sibling.kind()) {
-            some_vec!(Diagnostic::from_node(
+            some_vec!(context.create_diagnostic(
                 UnreachableStatement {
                     kind: text.to_string(),
                 },
-                &sibling,
+                sibling,
             ))
         } else {
             None

@@ -1,11 +1,8 @@
-use crate::AstRule;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
-use crate::symbol_table::SymbolTables;
 use crate::traits::TextRanged;
+use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
@@ -36,18 +33,13 @@ impl Violation for IncludeStatement {
 }
 
 impl AstRule for IncludeStatement {
-    fn check(
-        _settings: &CheckSettings,
-        node: &Node,
-        _src: &SourceFile,
-        _symbol_table: &SymbolTables,
-    ) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // tree-sitter-fortran 0.5.1 includes the end newline as part
         // of the node, so we discard that here
         let start = node.child(0)?.start_textsize();
         let end = node.child(1)?.end_textsize();
         let range = TextRange::new(start, end);
-        some_vec![Diagnostic::new(IncludeStatement {}, range)]
+        some_vec![context.create_diagnostic(IncludeStatement {}, range)]
     }
 
     fn entrypoints() -> Vec<&'static str> {
