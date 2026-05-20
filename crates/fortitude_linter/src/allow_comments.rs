@@ -1,6 +1,6 @@
+use crate::CheckContext;
 use crate::ast::FortitudeNode;
 use crate::rule_redirects::get_redirect_target;
-use crate::rule_table::RuleTable;
 use crate::rules::Rule;
 use crate::rules::fortitude::allow_comments::{
     DisabledAllowComment, DuplicatedAllowComment, InvalidRuleCodeOrName, RedirectedAllowComment,
@@ -25,6 +25,12 @@ pub struct Code<'a> {
     pub rule: Option<Rule>,
     // The location of the code
     pub loc: TextRange,
+}
+
+impl<'a> TextRanged for &Code<'a> {
+    fn textrange(&self) -> TextRange {
+        self.loc
+    }
 }
 
 /// A single allowed rule and the range it applies to
@@ -95,11 +101,12 @@ pub fn gather_allow_comments<'a, 'b>(
 }
 
 /// Check allow comments, raise applicable violations, and ignore allowed diagnostics
-pub fn check_allow_comments(
+///
+/// Returns list of indices of allowed violations
+pub(crate) fn check_allow_comments(
     diagnostics: &mut Vec<Diagnostic>,
     allow_comments: &[AllowComment],
-    rules: &RuleTable,
-    file: &SourceFile,
+    context: &CheckContext,
 ) -> Vec<usize> {
     // Indices of diagnostics that were ignored by a `noqa` directive.
     let mut ignored_diagnostics = vec![];
@@ -128,7 +135,7 @@ pub fn check_allow_comments(
 
         for code in &comment.codes {
             let redirect = get_redirect_target(code.code);
-            if rules.enabled(Rule::RedirectedAllowComment) {
+            if context.is_rule_enabled(Rule::RedirectedAllowComment) {
                 if let Some(redirect) = redirect {
                     let rule = Rule::from_code(redirect).unwrap();
                     let new_code = rule.noqa_code().to_string();
@@ -150,38 +157,28 @@ pub fn check_allow_comments(
                 }
             }
 
-            let rule_str = code.code.to_string();
-            let edit = remove_code_from_allow_comment(comment, code, file);
+            let rule = code.code.to_string();
+            let edit = remove_code_from_allow_comment(comment, code, context.source_file());
 
-            match code.rule {
-                None => {
-                    if rules.enabled(Rule::InvalidRuleCodeOrName) {
-                        diagnostics.push(
-                            Diagnostic::new(InvalidRuleCodeOrName { rule: rule_str }, code.loc)
-                                .with_fix(Fix::safe_edit(edit)),
-                        );
+            let diagnostic = match code.rule {
+                None => context.create_diagnostic_if_enabled(InvalidRuleCodeOrName { rule }, code),
+                Some(rule_code) => {
+                    let used = used_codes.contains(&rule_code);
+                    let enabled = context.is_rule_enabled(rule_code);
+                    if !seen_codes.insert(rule_code) {
+                        context.create_diagnostic_if_enabled(DuplicatedAllowComment { rule }, code)
+                    } else if !enabled {
+                        context.create_diagnostic_if_enabled(DisabledAllowComment { rule }, code)
+                    } else if !used && enabled {
+                        context.create_diagnostic_if_enabled(UnusedAllowComment { rule }, code)
+                    } else {
+                        None
                     }
                 }
-                Some(rule) => {
-                    let used = used_codes.contains(&rule);
-                    let enabled = rules.enabled(rule);
-                    if !seen_codes.insert(rule) && rules.enabled(Rule::DuplicatedAllowComment) {
-                        diagnostics.push(
-                            Diagnostic::new(DuplicatedAllowComment { rule: rule_str }, code.loc)
-                                .with_fix(Fix::safe_edit(edit)),
-                        );
-                    } else if !enabled && rules.enabled(Rule::DisabledAllowComment) {
-                        diagnostics.push(
-                            Diagnostic::new(DisabledAllowComment { rule: rule_str }, code.loc)
-                                .with_fix(Fix::safe_edit(edit)),
-                        );
-                    } else if !used && enabled && rules.enabled(Rule::UnusedAllowComment) {
-                        diagnostics.push(
-                            Diagnostic::new(UnusedAllowComment { rule: rule_str }, code.loc)
-                                .with_fix(Fix::safe_edit(edit)),
-                        );
-                    }
-                }
+            };
+
+            if let Some(diagnostic) = diagnostic {
+                diagnostics.push(diagnostic.with_fix(Fix::safe_edit(edit)));
             }
         }
     }

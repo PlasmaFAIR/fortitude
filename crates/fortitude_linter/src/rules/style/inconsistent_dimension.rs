@@ -1,10 +1,10 @@
+use crate::CheckContext;
 use crate::Rule;
 use crate::ast::FortitudeNode;
 use crate::ast::types::NameDecl;
 use crate::ast::types::VariableDeclaration;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::remove_variable_decl;
-use crate::settings::CheckSettings;
 use crate::traits::{HasNode, TextRanged};
 use anyhow::{Context, Result};
 use fortitude_macros::ViolationMetadata;
@@ -96,11 +96,13 @@ fn dimension_attribute_and_shape(
 }
 
 fn fix_inconsistent_dimension(
+    context: &CheckContext,
     var: &NameDecl,
     decl: &VariableDeclaration,
-    src: &SourceFile,
-    prefer_attribute: PreferAttribute,
 ) -> Result<Vec<Edit>> {
+    let prefer_attribute = context.settings().inconsistent_dimension.prefer_attribute;
+    let src = context.source_file();
+
     let mut edits = vec![remove_variable_decl(var.node(), decl, src)?];
 
     let (new_attr, var_str) =
@@ -137,9 +139,8 @@ fn fix_inconsistent_dimension(
 }
 
 fn check_inconsistent_dimension(
+    context: &CheckContext,
     decl_line: &VariableDeclaration,
-    src: &SourceFile,
-    prefer_attribute: PreferAttribute,
 ) -> Option<Vec<Diagnostic>> {
     if !decl_line
         .attributes()
@@ -155,10 +156,10 @@ fn check_inconsistent_dimension(
             .iter()
             .filter(|name| name.size().is_some())
             .filter_map(|node| {
-                let mut edits =
-                    fix_inconsistent_dimension(node, decl_line, src, prefer_attribute).ok()?;
+                let mut edits = fix_inconsistent_dimension(context, node, decl_line).ok()?;
                 Some(
-                    Diagnostic::from_node(InconsistentArrayDeclaration, node.node())
+                    context
+                        .create_diagnostic(InconsistentArrayDeclaration, node)
                         .with_fix(Fix::unsafe_edits(edits.remove(0), edits)),
                 )
             })
@@ -211,9 +212,8 @@ impl AlwaysFixableViolation for MixedScalarArrayDeclaration {
 }
 
 fn check_mixed_scalar_array(
+    context: &CheckContext,
     decl_line: &VariableDeclaration,
-    src: &SourceFile,
-    prefer_attribute: PreferAttribute,
 ) -> Option<Vec<Diagnostic>> {
     if decl_line
         .attributes()
@@ -236,10 +236,10 @@ fn check_mixed_scalar_array(
             .filter_map(|node| {
                 // FIXME: use of `.ok()?` means error in fix skips the
                 // diagnostic completely, hiding bugs.
-                let mut edits =
-                    fix_inconsistent_dimension(node, decl_line, src, prefer_attribute).ok()?;
+                let mut edits = fix_inconsistent_dimension(context, node, decl_line).ok()?;
                 Some(
-                    Diagnostic::from_node(MixedScalarArrayDeclaration, node.node())
+                    context
+                        .create_diagnostic(MixedScalarArrayDeclaration, node)
                         .with_fix(Fix::unsafe_edits(edits.remove(0), edits)),
                 )
             })
@@ -295,14 +295,15 @@ impl AlwaysFixableViolation for BadArrayDeclaration {
 }
 
 fn check_bad_array_decl(
+    context: &CheckContext,
     decl_line: &VariableDeclaration,
-    src: &SourceFile,
-    prefer_attribute: PreferAttribute,
 ) -> Option<Vec<Diagnostic>> {
     let has_dim = decl_line
         .attributes()
         .iter()
         .any(|attr| attr.kind().is_dimension());
+
+    let prefer_attribute = context.settings().inconsistent_dimension.prefer_attribute;
 
     if has_dim && prefer_attribute.is_always() {
         // We've got a `dimension` attriute and want one
@@ -322,45 +323,37 @@ fn check_bad_array_decl(
             })
             .map(|node| {
                 // FIXME: use of `ok` hides bugs
-                let mut edits = fix_inconsistent_dimension(node, decl_line, src, prefer_attribute)
+                let mut edits = fix_inconsistent_dimension(context, node, decl_line)
                     .ok()
                     .unwrap();
-                Diagnostic::from_node(BadArrayDeclaration { prefer_attribute }, node.node())
+                context
+                    .create_diagnostic(BadArrayDeclaration { prefer_attribute }, node)
                     .with_fix(Fix::unsafe_edits(edits.remove(0), edits))
             })
             .collect_vec(),
     )
 }
 
-pub fn check_inconsistent_dimension_rules(
-    settings: &CheckSettings,
+pub(crate) fn check_inconsistent_dimension_rules(
+    context: &CheckContext,
     decl_line: &VariableDeclaration,
-    src: &SourceFile,
 ) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
 
-    let rules = &settings.rules;
-    let prefer_attribute = settings.inconsistent_dimension.prefer_attribute;
-
-    if rules.enabled(Rule::InconsistentArrayDeclaration) {
-        if let Some(violation) = check_inconsistent_dimension(decl_line, src, prefer_attribute) {
+    if context.is_rule_enabled(Rule::InconsistentArrayDeclaration) {
+        if let Some(violation) = check_inconsistent_dimension(context, decl_line) {
             violations.extend(violation);
         }
     }
-    if rules.enabled(Rule::MixedScalarArrayDeclaration) {
-        if let Some(violation) = check_mixed_scalar_array(decl_line, src, prefer_attribute) {
+    if context.is_rule_enabled(Rule::MixedScalarArrayDeclaration) {
+        if let Some(violation) = check_mixed_scalar_array(context, decl_line) {
             violations.extend(violation);
         }
     }
-    if rules.enabled(Rule::BadArrayDeclaration) {
-        match prefer_attribute {
-            // Do nothing!
-            PreferAttribute::Keep => (),
-            _ => {
-                if let Some(violation) = check_bad_array_decl(decl_line, src, prefer_attribute) {
-                    violations.extend(violation);
-                }
-            }
+    let prefer_attribute = context.settings().inconsistent_dimension.prefer_attribute;
+    if context.is_rule_enabled(Rule::BadArrayDeclaration) && !prefer_attribute.is_keep() {
+        if let Some(violation) = check_bad_array_decl(context, decl_line) {
+            violations.extend(violation);
         }
     }
     violations

@@ -15,6 +15,12 @@ where
     }
 }
 
+impl<'a> HasNode<'a> for &'a Node<'a> {
+    fn node(&self) -> &Node<'a> {
+        self
+    }
+}
+
 #[macro_export]
 macro_rules! impl_has_node {
     ($ty: ty) => {
@@ -67,5 +73,13 @@ impl<'a> TextRanged for Node<'a> {
     #[inline]
     fn textrange(&self) -> TextRange {
         TextRange::new(self.start_textsize(), self.end_textsize())
+    }
+}
+
+impl TextRanged for TextRange {
+    // This makes a copy, do we really want to do this?
+    #[inline]
+    fn textrange(&self) -> TextRange {
+        *self
     }
 }

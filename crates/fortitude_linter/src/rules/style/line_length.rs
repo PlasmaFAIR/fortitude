@@ -1,9 +1,8 @@
 /// Defines rules that govern line length.
+use crate::CheckContext;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::settings::CheckSettings;
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use std::collections::HashSet;
@@ -77,19 +76,16 @@ impl Violation for LineTooLong {
 }
 
 impl LineTooLong {
-    pub fn check(
-        root: &Node,
-        settings: &CheckSettings,
-        source_file: &SourceFile,
-    ) -> Vec<Diagnostic> {
-        let source = source_file.to_source_code();
+    pub fn check(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
+        let source = context.source_file().to_source_code();
+        let settings = context.settings();
         let limit = settings.line_length;
         let ignore_comments = settings.line_too_long.ignore_comments;
         let mut violations = Vec::new();
 
         let tab_size = settings.invalid_tab.indent_width.as_usize();
 
-        let comment_positions: HashSet<Point> = source_file
+        let comment_positions: HashSet<Point> = context
             .source_text()
             .char_indices()
             .filter(|(index, _)| {
@@ -167,7 +163,7 @@ impl LineTooLong {
                 .map(TextLen::text_len)
                 .sum();
             let range = TextRange::new(line.end() - extra_bytes, line.end());
-            violations.push(Diagnostic::new(
+            violations.push(context.create_diagnostic(
                 Self {
                     max_length: limit,
                     actual_length: width,

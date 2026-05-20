@@ -1,8 +1,10 @@
-use crate::diagnostics::{Diagnostic, FixAvailability, Violation};
+use crate::{
+    CheckContext,
+    diagnostics::{Diagnostic, FixAvailability, Violation},
+};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use tree_sitter::Node;
 
@@ -32,8 +34,9 @@ impl Violation for InvalidCharacter {
     }
 }
 
-pub fn check_invalid_character(root: &Node, src: &SourceFile) -> Vec<Diagnostic> {
-    src.source_text()
+pub(crate) fn check_invalid_character(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
+    context
+        .source_text()
         .char_indices()
         .filter(|(_, c)| !FORTRAN_VALID_CHARACTERS.contains(*c))
         .filter(|(index, _)| {
@@ -46,7 +49,7 @@ pub fn check_invalid_character(root: &Node, src: &SourceFile) -> Vec<Diagnostic>
         .map(|(index, character)| {
             let start = TextSize::try_from(index).unwrap();
             let range = TextRange::new(start, start);
-            Diagnostic::new(InvalidCharacter { character }, range)
+            context.create_diagnostic(InvalidCharacter { character }, range)
         })
         .collect_vec()
 }
