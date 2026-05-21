@@ -274,3 +274,13 @@ expression: diagnostics
 67 |         result = pure + elemental + recursive
 68 |     end function function
    |
+
+./resources/test/fixtures/style/S301_keyword_reuse.f90:63:67: S301 Keyword `result` used as an identifier
+   |
+61 |     end subroutine subroutine
+62 |
+63 |     integer function function(pure,  elemental, recursive) result(result)
+   |                                                                   ^^^^^^ S301
+64 |         integer, intent(in) :: pure
+65 |         integer, intent(in) :: elemental
+   |
