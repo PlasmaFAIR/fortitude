@@ -25,14 +25,14 @@ codebases often use uppercase, inherited from fixed-form Fortran conventions.
 With `keyword-case = "lowercase"`:
 
 ### Incorrect
-```fortran
+```f90
 IMPLICIT NONE
 INTEGER, INTENT(IN) :: x
 END SUBROUTINE foo
 ```
 
 ### Correct
-```fortran
+```f90
 implicit none
 integer, intent(in) :: x
 end subroutine foo
@@ -41,14 +41,14 @@ end subroutine foo
 With `keyword-case = "uppercase"`:
 
 ### Incorrect
-```fortran
+```f90
 implicit none
 integer, intent(in) :: x
 end subroutine foo
 ```
 
 ### Correct
-```fortran
+```f90
 IMPLICIT NONE
 INTEGER, INTENT(IN) :: x
 END SUBROUTINE foo
