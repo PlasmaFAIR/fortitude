@@ -26,6 +26,8 @@ determining whether a line is overlong. Namely, it:
 3. Ignores SPDX license identifiers and copyright notices (for example, `!
    SPDX-License-Identifier: MIT`), which are machine-readable and should
    _not_ wrap over multiple lines.
+4. Ignores pFUnit test directives, as these must be defined on a single
+   line.
 
 Note that the Fortran standard states a maximum line length of 132
 characters[^1], and while most modern compilers will support longer lines[^2],
