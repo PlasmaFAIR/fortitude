@@ -177,7 +177,7 @@ files in the GS2 source code, a turbulence modelling tool used in
 magnetically-confined fusion energy research [@gs2]. Each tool was set up as
 follows:
 
-- Fortitude v0.8.0: Activated all 87 rules.
+- Fortitude v0.9.0: Activated all 101 rules.
 - Stylist v0.5.dev (latest on GitHub): Activated all 11 rules.
 - CamFort v1.3.dev (latest on GitHub): Activated the 5 rules in the
   `basic-checks` command.
@@ -187,8 +187,8 @@ follows:
 The runtime of each tool is shown in \autoref{fig:performance}. In all cases,
 the tests were run on a simple laptop featuring a 4-core 11th generation Intel
 i5 CPU running at 2.60GHz. Despite implementing many more checks than the
-alternatives, Fortitude was found to run between 50 and 100 times as quickly
-than its main competitors.
+alternatives, Fortitude was found to run over 25 times as quickly
+than its fastest competitor.
 
 ![Time taken for Fortran linters to lint 72 files in the GS2 project.\label{fig:performance}](performance_plot.pdf)
 
@@ -224,10 +224,10 @@ physics package cp2k [@cp2k] and the stellar astrophysics package MESA
 [@Paxton:2011].
 
 The number of contributors to Fortitude has grown from the original two authors
-to over 19, and more community members have raised feature requests and bug
+to over 20, and more community members have raised feature requests and bug
 reports. It receives over 4,000 downloads per month via PyPI, and a further
 unknown number of downloads of platform-specific binaries using a provided
-installer script. With over 190 GitHub stars, Fortitude appears to be the most
+installer script. With over 200 GitHub stars, Fortitude appears to be the most
 popular open-source Fortran linting tool currently in use.
 
 # AI usage disclosure

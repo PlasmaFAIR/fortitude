@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import StrMethodFormatter
 
 data = {
-    "Fortitude": 0.241,
+    "Fortitude": 0.4556,
     "Flint": 12.915,
     "Stylist": 14.830,
     "Camfort": 25.135,

@@ -1,9 +1,9 @@
 
 ❯ hyperfine --warmup 3 -i 'fortitude check --select=ALL --preview --file-extensions="f90" src'
 Benchmark 1: fortitude check --select=ALL --preview --file-extensions="f90" src
-  Time (mean ± σ):     241.0 ms ±   7.7 ms    [User: 803.1 ms, System: 35.2 ms]
-  Range (min … max):   230.1 ms … 253.8 ms    12 runs
- 
+  Time (mean ± σ):     455.6 ms ±  21.1 ms    [User: 1986.1 ms, System: 37.4 ms]
+  Range (min … max):   425.6 ms … 486.4 ms    10 runs
+
   Warning: Ignoring non-zero exit code.
 
 ❯ hyperfine --warmup 3 -i 'find src -type f -name "*.f90" | xargs -I {} flint lint -r fortran_rc_default.yaml {}'
