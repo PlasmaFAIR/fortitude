@@ -13,6 +13,17 @@ However, tree-sitter is fairly error tolerant, and `fortitude` should
 still run fine, you might just get spurious syntax errors. You can
 ignore these project wide with `--ignore=E001`.
 
+## Does fortitude handle fixed-form Fortran?
+
+Not currently. Fortitude's parser and rules are intended for free-form
+Fortran source. Fixed-form source files, such as files commonly using
+`.f`, `.for`, or `.ftn` extensions, are not included in Fortitude's
+default file discovery patterns.
+
+You can pass fixed-form files explicitly or add their extensions to the
+[`include`](settings.md#include) setting, but Fortitude will still parse
+them as free-form source. This may produce syntax errors or misleading
+diagnostics, so fixed-form projects are not supported yet.
 
 ## What is "preview"?
 
