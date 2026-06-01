@@ -54,6 +54,19 @@ impl<'a> SymbolTable<'a> {
             .filter_map(|decl| VariableDeclaration::try_from_node(&decl, src).ok())
             .for_each(|line| new_table.insert_from_decl_line(line));
 
+        // The `function` statement itself _may_ also be the declaration line if
+        // it has a type as a procedure attribute. If it doesn't, then it will
+        // either have an explicit decl line, which is handled above, or it's
+        // implicitly typed, which we don't currently handle here at all
+        if scope.is_named() && scope.kind() == "function" {
+            let stmt = scope
+                .child(0)
+                .expect("`function` must have `function_statement` as zeroth child");
+            if let Ok(decl) = VariableDeclaration::try_from_fn_stmt(&stmt, src) {
+                new_table.insert_from_decl_line(decl);
+            }
+        }
+
         new_table
     }
 
@@ -343,6 +356,90 @@ end subroutine foo
             assert!(dim.ranks[1].is_assumed_size());
         }
         assert!(y.has_attribute(AttributeKind::Intent(Intent::InOut)));
+
+        Ok(())
+    }
+
+    #[test]
+    fn function_variable_with_attributes() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+function foo(x)
+  integer, intent(in) :: x
+  integer, allocatable, dimension(:) :: foo
+end function foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
+
+        let foo = symbol_table.get("foo");
+        assert!(foo.is_some());
+        let foo = foo.unwrap();
+        assert!(foo.has_attribute(AttributeKind::Allocatable));
+        assert!(
+            foo.attributes()
+                .iter()
+                .any(|attr| attr.kind().is_dimension())
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn function_variable() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+integer function foo(x)
+  integer, intent(in) :: x
+end function foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
+
+        let foo = symbol_table.get("foo");
+        assert!(foo.is_some());
+        let foo = foo.unwrap();
+        assert!(foo.type_().is_intrinsic());
+
+        Ok(())
+    }
+
+    #[test]
+    fn function_result() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+integer function foo(x) result(y)
+  integer, intent(in) :: x
+end function foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
+
+        let y = symbol_table.get("y");
+        assert!(y.is_some());
+        let y = y.unwrap();
+        assert!(y.type_().is_intrinsic());
 
         Ok(())
     }

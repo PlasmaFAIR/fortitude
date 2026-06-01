@@ -333,9 +333,11 @@ pub struct VariableDeclaration<'a> {
     names: Vec<NameDecl<'a>>,
     node: Node<'a>,
     has_colon: bool,
+    is_function: bool,
 }
 
 impl<'a> VariableDeclaration<'a> {
+    /// Create from `variable_declaration` node
     pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
         if node.kind() != "variable_declaration" {
             return Err(anyhow!("wrong node type"));
@@ -367,6 +369,47 @@ impl<'a> VariableDeclaration<'a> {
             names,
             node: *node,
             has_colon,
+            is_function: false,
+        })
+    }
+
+    /// Create from `function_statement`. Will fail if the statement has no `type`
+    pub fn try_from_fn_stmt(node: &Node<'a>, src: &str) -> Result<Self> {
+        if node.kind() != "function_statement" {
+            return Err(anyhow!("wrong node type"));
+        }
+
+        let type_ = Type::try_from_node(
+            node.child_by_field_name("type").context("expected type")?,
+            src,
+        )?;
+
+        let name = if let Some(result) = node.child_with_name("function_result") {
+            let id = result
+                .child_with_name("identifier")
+                .expect("`function_result` should have `identifier` child");
+            NameDecl::from_node(&id, src)
+        } else {
+            let id = node
+                .child_by_field_name("name")
+                .expect("`function_statement` must have `name` field");
+            NameDecl {
+                name: id
+                    .to_text(src)
+                    .context("`name` must have text")?
+                    .to_string(),
+                node: id,
+            }
+        };
+        let names = vec![name];
+
+        Ok(Self {
+            type_,
+            attributes: vec![],
+            names,
+            node: *node,
+            has_colon: false,
+            is_function: true,
         })
     }
 
@@ -392,8 +435,13 @@ impl<'a> VariableDeclaration<'a> {
             .any(|attr| attrs.contains(&attr.kind))
     }
 
-    pub fn has_colon(&self) -> bool {
+    pub const fn has_colon(&self) -> bool {
         self.has_colon
+    }
+
+    /// Is this variable declaration actually a function statement?
+    pub const fn is_function(&self) -> bool {
+        self.is_function
     }
 }
 
