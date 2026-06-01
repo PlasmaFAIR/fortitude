@@ -1,0 +1,17 @@
+module pfunit_long_line
+    ! allow(C121)
+    use funit
+    implicit none (type, external)
+    private
+
+contains
+    @Test
+    subroutine simple_test_with_long_line_assertion()
+        integer :: long_name_for_first_variable, long_name_for_second_variable
+
+        long_name_for_first_variable = 1
+        long_name_for_second_variable = 1
+
+        @assertEqual(long_name_for_first_variable, long_name_for_second_variable, message="I cannot wrap lines within a pFUnit directive")
+    end subroutine simple_test_with_long_line_assertion
+end module pfunit_long_line

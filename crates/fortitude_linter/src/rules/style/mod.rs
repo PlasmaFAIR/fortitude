@@ -70,6 +70,7 @@ mod tests {
         Ok(())
     }
 
+    #[test_case(Rule::LineTooLong, Path::new("S001_line_length_pfunit_ok.pf"))]
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201_ok.f90"))]
     #[test_case(Rule::UnsortedUses, Path::new("S271_ok.f90"))]
     fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
