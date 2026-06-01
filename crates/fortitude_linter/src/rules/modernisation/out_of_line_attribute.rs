@@ -202,12 +202,12 @@ impl AstRule for OutOfLineAttribute {
                     ParameterStatement::try_from_node(parameter, context.source_text()).ok()
                 })
                 .filter_map(
-                    |parameter| match context.symbol_table().get(&parameter.name) {
+                    |parameter| match context.symbol_table().get_var(&parameter.name) {
                         Some(var) => {
                             let mut edit = fix_out_of_line_parameter(
                                 node,
                                 &parameter,
-                                &var,
+                                var,
                                 context.source_file(),
                             )
                             .unwrap();
@@ -255,9 +255,9 @@ impl AstRule for OutOfLineAttribute {
                     )
                 })
                 .filter_map(|(decl, name)| {
-                    context.symbol_table().get(&name).map(|var| {
+                    context.symbol_table().get_var(&name).map(|var| {
                         let mut edit =
-                            fix_out_of_line_attribute(node, &decl, &var, context.source_file())
+                            fix_out_of_line_attribute(node, &decl, var, context.source_file())
                                 .unwrap();
 
                         context

@@ -83,16 +83,8 @@ impl<'a> SymbolTable<'a> {
     }
 
     /// Return the symbol with the given name if it exists
-    pub fn get(&self, name: &str) -> Option<Variable<'_>> {
-        // TODO(peter): avoid calling to_ascii_lowercase every time. Strong type?
-        let name = name.to_ascii_lowercase();
-        match self.inner.get(&name) {
-            Some(Symbol::Variable(node, index)) => {
-                let decl: &VariableDeclaration = &self.decl_lines[*index];
-                Some(Variable::new(name, *node, decl))
-            }
-            None => None,
-        }
+    pub fn get(&self, name: &str) -> Option<&Symbol<'_>> {
+        self.inner.get(name)
     }
 
     /// Iterator over the variable declaration lines
@@ -119,13 +111,19 @@ impl<'a> SymbolTables<'a> {
         self.inner.pop();
     }
 
-    /// Return the symbol with the given name if it exists
-    pub fn get(&'_ self, name: &str) -> Option<Variable<'_>> {
+    /// Return the symbol with the given name if it exists and is a variable
+    pub fn get_var(&'_ self, name: &str) -> Option<Variable<'_>> {
+        let name = name.to_ascii_lowercase();
+
         // Check the most recently inserted table first
         for table in self.inner.iter().rev() {
-            if let Some(node) = table.get(name) {
-                return Some(node);
-            }
+            match table.get(&name) {
+                Some(Symbol::Variable(node, index)) => {
+                    let decl: &VariableDeclaration = &table.decl_lines[*index];
+                    return Some(Variable::new(name, *node, decl));
+                },
+                None => ()
+        }
         }
         None
     }
@@ -165,12 +163,13 @@ end program foo
         let first_decl_range = TextRange::new(TextSize::new(15), TextSize::new(40));
         let second_decl_range = TextRange::new(TextSize::new(43), TextSize::new(71));
 
-        let symbol_table = SymbolTable::new(&root, code);
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
 
-        let x = symbol_table.get("x");
-        let y = symbol_table.get("y");
-        let z = symbol_table.get("Z");
-        let a = symbol_table.get("a");
+        let x = symbol_table.get_var("x");
+        let y = symbol_table.get_var("y");
+        let z = symbol_table.get_var("Z");
+        let a = symbol_table.get_var("a");
         assert!(x.is_some());
         let x = x.unwrap();
         assert_eq!(
@@ -260,8 +259,10 @@ end program foo
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let root = tree.root_node().child(0).context("Missing child")?;
 
-        let symbol_table = SymbolTable::new(&root, code);
-        let x = symbol_table.get("X");
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
+
+        let x = symbol_table.get_var("X");
         assert!(x.is_some());
         assert_eq!(
             x.unwrap().textrange(),
@@ -297,14 +298,14 @@ end program foo
             .context("Missing block")?;
         symbol_table.push_table(SymbolTable::new(&block, code));
 
-        let x = symbol_table.get("X");
+        let x = symbol_table.get_var("X");
         assert!(x.is_some());
         assert_eq!(
             x.unwrap().textrange(),
             TextRange::new(TextSize::new(26), TextSize::new(27))
         );
 
-        let a = symbol_table.get("a");
+        let a = symbol_table.get_var("a");
         assert!(a.is_some());
         assert_eq!(
             a.unwrap().textrange(),
@@ -312,7 +313,7 @@ end program foo
         );
 
         symbol_table.pop_table();
-        assert!(symbol_table.get("a").is_none());
+        assert!(symbol_table.get_var("a").is_none());
 
         Ok(())
     }
@@ -336,13 +337,13 @@ end subroutine foo
         let mut symbol_table = SymbolTables::default();
         symbol_table.push_table(SymbolTable::new(&root, code));
 
-        let x = symbol_table.get("x");
+        let x = symbol_table.get_var("x");
         assert!(x.is_some());
         let x = x.unwrap();
         assert!(x.attributes().iter().any(|attr| attr.kind().is_dimension()));
         assert!(x.has_attribute(AttributeKind::Intent(Intent::In)));
 
-        let y = symbol_table.get("y");
+        let y = symbol_table.get_var("y");
         assert!(y.is_some());
         let y = y.unwrap();
         let y_dim = y
@@ -379,7 +380,7 @@ end function foo
         let mut symbol_table = SymbolTables::default();
         symbol_table.push_table(SymbolTable::new(&root, code));
 
-        let foo = symbol_table.get("foo");
+        let foo = symbol_table.get_var("foo");
         assert!(foo.is_some());
         let foo = foo.unwrap();
         assert!(foo.has_attribute(AttributeKind::Allocatable));
@@ -410,7 +411,7 @@ end function foo
         let mut symbol_table = SymbolTables::default();
         symbol_table.push_table(SymbolTable::new(&root, code));
 
-        let foo = symbol_table.get("foo");
+        let foo = symbol_table.get_var("foo");
         assert!(foo.is_some());
         let foo = foo.unwrap();
         assert!(foo.type_().is_intrinsic());
@@ -436,7 +437,7 @@ end function foo
         let mut symbol_table = SymbolTables::default();
         symbol_table.push_table(SymbolTable::new(&root, code));
 
-        let y = symbol_table.get("y");
+        let y = symbol_table.get_var("y");
         assert!(y.is_some());
         let y = y.unwrap();
         assert!(y.type_().is_intrinsic());
