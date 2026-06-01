@@ -2,8 +2,13 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
+use ruff_source_file::SourceFile;
+use ruff_text_size::TextRange;
+
 use crate::rules::Rule;
 use std::fmt::{Debug, Display};
+
+use super::{Diagnostic, create_lint_diagnostic};
 
 #[derive(Debug, Copy, Clone)]
 pub enum FixAvailability {
@@ -31,7 +36,7 @@ pub trait ViolationMetadata {
     fn explain() -> Option<&'static str>;
 }
 
-pub trait Violation: ViolationMetadata {
+pub trait Violation: ViolationMetadata + Sized {
     /// `None` in the case a fix is never available or otherwise Some
     /// [`FixAvailability`] describing the available fix.
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
@@ -51,6 +56,18 @@ pub trait Violation: ViolationMetadata {
 
     /// Returns the format strings used by [`message`](Violation::message).
     fn message_formats() -> &'static [&'static str];
+
+    /// Convert the violation into a [`Diagnostic`].
+    fn into_diagnostic(self, range: TextRange, file: &SourceFile) -> Diagnostic {
+        create_lint_diagnostic(
+            self.message(),
+            self.fix_title(),
+            range,
+            None,
+            file.clone(),
+            Self::rule(),
+        )
+    }
 }
 
 /// This trait exists just to make implementing the [`Violation`] trait more

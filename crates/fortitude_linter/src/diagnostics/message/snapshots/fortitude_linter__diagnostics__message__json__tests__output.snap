@@ -1,65 +1,87 @@
 ---
 source: crates/fortitude_linter/src/diagnostics/message/json.rs
-expression: content
+expression: env.render_diagnostics(&diagnostics)
 snapshot_kind: text
 ---
 [
   {
     "code": "S201",
-    "message": "'implicit none' set on the enclosing module",
+    "severity": "error",
+    "end_location": {
+      "column": 18,
+      "row": 6
+    },
+    "filename": "test.f90",
     "fix": {
       "applicability": "unsafe",
-      "message": "Remove unnecessary 'implicit none'",
       "edits": [
         {
           "content": "",
-          "location": {
-            "line": 6,
-            "column": 5
-          },
           "end_location": {
-            "line": 6,
-            "column": 18
+            "column": 18,
+            "row": 6
+          },
+          "location": {
+            "column": 5,
+            "row": 6
           }
         }
-      ]
+      ],
+      "message": "Remove unnecessary 'implicit none'"
     },
     "location": {
-      "line": 6,
-      "column": 5
+      "column": 5,
+      "row": 6
     },
-    "end_location": {
-      "line": 6,
-      "column": 18
-    },
-    "filename": "test.f90"
+    "message": "'implicit none' set on the enclosing module",
+    "url": "https://fortitude.readthedocs.io/rules/superfluous-implicit-none"
   },
   {
     "code": "S061",
-    "message": "end statement should read 'end subroutine foo'",
-    "fix": null,
-    "location": {
-      "line": 7,
-      "column": 3
-    },
+    "severity": "error",
     "end_location": {
-      "line": 7,
-      "column": 17
+      "column": 17,
+      "row": 7
     },
-    "filename": "test.f90"
+    "filename": "test.f90",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 9
+          },
+          "location": {
+            "column": 7,
+            "row": 8
+          }
+        }
+      ],
+      "message": "Write as 'end subroutine foo'"
+    },
+    "location": {
+      "column": 3,
+      "row": 7
+    },
+    "message": "end statement should read 'end subroutine foo'",
+    "url": "https://fortitude.readthedocs.io/rules/unnamed-end-statement"
   },
   {
     "code": "PORT021",
-    "message": "integer*4 is non-standard, use integer(4)",
+    "severity": "error",
+    "end_location": {
+      "column": 9,
+      "row": 1
+    },
+    "filename": "star_kind.f90",
     "fix": null,
     "location": {
-      "line": 1,
-      "column": 8
+      "column": 8,
+      "row": 1
     },
-    "end_location": {
-      "line": 1,
-      "column": 9
-    },
-    "filename": "star_kind.f90"
+    "message": "integer*4 is non-standard, use integer(4)",
+    "url": "https://fortitude.readthedocs.io/rules/star-kind"
   }
 ]

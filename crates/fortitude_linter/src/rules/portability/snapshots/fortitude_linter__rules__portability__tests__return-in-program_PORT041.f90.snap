@@ -1,18 +1,19 @@
 ---
 source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
+snapshot_kind: text
 ---
-./resources/test/fixtures/portability/PORT041.f90:51:17: PORT041 [*] 'return' statement in program body
+PORT041 [*] 'return' statement in program body
+  --> ./resources/test/fixtures/portability/PORT041.f90:51:17
    |
 49 |     integer :: z = 10
 50 |
 51 |     if (y == 6) return  ! not OK.
-   |                 ^^^^^^ PORT041
+   |                 ^^^^^^
 52 |
 53 |     do i=1,10
    |
-   = help: Replace 'return' with 'stop'
-
+help: Replace 'return' with 'stop'
 48 |     integer :: y = add_one(5)
 49 |     integer :: z = 10
 50 |
@@ -22,15 +23,15 @@ expression: diagnostics
 53 |     do i=1,10
 54 |         if (i > y) return  ! not OK.
 
-./resources/test/fixtures/portability/PORT041.f90:54:20: PORT041 [*] 'return' statement in program body
+PORT041 [*] 'return' statement in program body
+  --> ./resources/test/fixtures/portability/PORT041.f90:54:20
    |
 53 |     do i=1,10
 54 |         if (i > y) return  ! not OK.
-   |                    ^^^^^^ PORT041
+   |                    ^^^^^^
 55 |     end do
    |
-   = help: Replace 'return' with 'stop'
-
+help: Replace 'return' with 'stop'
 51 |     if (y == 6) return  ! not OK.
 52 |
 53 |     do i=1,10
@@ -40,17 +41,17 @@ expression: diagnostics
 56 |
 57 |     call minus_one(z)
 
-./resources/test/fixtures/portability/PORT041.f90:59:5: PORT041 [*] 'return' statement in program body
+PORT041 [*] 'return' statement in program body
+  --> ./resources/test/fixtures/portability/PORT041.f90:59:5
    |
 57 |     call minus_one(z)
 58 |
 59 |     return  ! not OK.
-   |     ^^^^^^ PORT041
+   |     ^^^^^^
 60 |
 61 | contains
    |
-   = help: Replace 'return' with 'stop'
-
+help: Replace 'return' with 'stop'
 56 |
 57 |     call minus_one(z)
 58 |

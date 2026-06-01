@@ -16,54 +16,78 @@ exit_code: 1
 ----- stdout -----
 [
   {
-    "description": "(C001) program uses implicit typing",
-    "check_name": "C001: implicit-typing",
+    "check_name": "C001",
+    "description": "C001: program uses implicit typing",
     "severity": "major",
     "fingerprint": "fcf683c4c4180fca",
     "location": {
       "path": "test.f90",
-      "lines": {
-        "begin": 1,
-        "end": 2
+      "positions": {
+        "begin": {
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "line": 2,
+          "column": 1
+        }
       }
     }
   },
   {
-    "description": "(PORT021) 'logical*4' uses non-standard syntax",
-    "check_name": "PORT021: star-kind",
+    "check_name": "PORT021",
+    "description": "PORT021: 'logical*4' uses non-standard syntax",
     "severity": "major",
     "fingerprint": "f0998ab8f95894d5",
     "location": {
       "path": "test.f90",
-      "lines": {
-        "begin": 2,
-        "end": 2
+      "positions": {
+        "begin": {
+          "line": 2,
+          "column": 10
+        },
+        "end": {
+          "line": 2,
+          "column": 12
+        }
       }
     }
   },
   {
-    "description": "(PORT011) logical kind set with number literal '4'",
-    "check_name": "PORT011: literal-kind",
+    "check_name": "PORT011",
+    "description": "PORT011: logical kind set with number literal '4'",
     "severity": "major",
     "fingerprint": "44859b9691ebd330",
     "location": {
       "path": "test.f90",
-      "lines": {
-        "begin": 2,
-        "end": 2
+      "positions": {
+        "begin": {
+          "line": 2,
+          "column": 11
+        },
+        "end": {
+          "line": 2,
+          "column": 12
+        }
       }
     }
   },
   {
-    "description": "(S061) end statement should be named.",
-    "check_name": "S061: unnamed-end-statement",
+    "check_name": "S061",
+    "description": "S061: end statement should be named.",
     "severity": "major",
     "fingerprint": "651af5ac2fec5481",
     "location": {
       "path": "test.f90",
-      "lines": {
-        "begin": 3,
-        "end": 3
+      "positions": {
+        "begin": {
+          "line": 3,
+          "column": 1
+        },
+        "end": {
+          "line": 3,
+          "column": 12
+        }
       }
     }
   }

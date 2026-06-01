@@ -265,10 +265,10 @@ pub fn redent(s: &str, indentation: &str, line_ending: LineEnding) -> String {
 mod tests {
     use crate::{
         ast::symbol_table::{SymbolTable, SymbolTables},
-        diagnostics::test_diagnostic_builder,
+        diagnostics::Violation,
         fix::apply_fixes,
         locator::Locator,
-        rules::Rule,
+        rules::style::whitespace::TrailingWhitespace,
     };
 
     use super::*;
@@ -592,7 +592,11 @@ end program foo"#,
         let diag = {
             let mut iter = edits.into_iter();
             // Choice of rule doesn't matter
-            test_diagnostic_builder(Rule::TrailingWhitespace, "test", TextRange::default())
+            TrailingWhitespace {}
+                .into_diagnostic(
+                    TextRange::default(),
+                    &SourceFileBuilder::new("<filename>", code.clone()).finish(),
+                )
                 .with_fix(Fix::safe_edits(
                     iter.next().ok_or(anyhow!("expected edits nonempty"))?,
                     iter,

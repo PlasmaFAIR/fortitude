@@ -1,6 +1,6 @@
 ---
-source: fortitude/src/message/azure.rs
-expression: content
+source: crates/fortitude_linter/src/diagnostics/message/azure.rs
+expression: env.render_diagnostics(&diagnostics)
 snapshot_kind: text
 ---
 ##vso[task.logissue type=error;sourcepath=test.f90;linenumber=6;columnnumber=5;code=S201;]'implicit none' set on the enclosing module

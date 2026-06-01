@@ -3,16 +3,16 @@ source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/modernisation/MOD011.f90:2:21: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+ --> ./resources/test/fixtures/modernisation/MOD011.f90:2:21
   |
 1 | program test
 2 |   integer :: a(3) = (/1, 2, 3/)
-  |                     ^^^^^^^^^^^ MOD011
+  |                     ^^^^^^^^^^^
 3 |   integer :: b(3) = (/ &
 4 |        1, &
   |
-  = help: Change `(/.../)` to `[...]`
-
+help: Change `(/.../)` to `[...]`
 1 | program test
   -   integer :: a(3) = (/1, 2, 3/)
 2 +   integer :: a(3) = [1, 2, 3]
@@ -20,7 +20,8 @@ snapshot_kind: text
 4 |        1, &
 5 |        2, &
 
-./resources/test/fixtures/modernisation/MOD011.f90:3:21: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+ --> ./resources/test/fixtures/modernisation/MOD011.f90:3:21
   |
 1 |   program test
 2 |     integer :: a(3) = (/1, 2, 3/)
@@ -30,12 +31,11 @@ snapshot_kind: text
 5 | |        2, &
 6 | |        3 &
 7 | |        /)
-  | |_________^ MOD011
+  | |_________^
 8 |     if (.true.) a = (/4, 5, 6/)
 9 |     b(1:3) = (/ &
   |
-  = help: Change `(/.../)` to `[...]`
-
+help: Change `(/.../)` to `[...]`
 1  | program test
 2  |   integer :: a(3) = (/1, 2, 3/)
    -   integer :: b(3) = (/ &
@@ -49,17 +49,17 @@ snapshot_kind: text
 9  |   b(1:3) = (/ &
 10 |        4, &
 
-./resources/test/fixtures/modernisation/MOD011.f90:8:19: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+  --> ./resources/test/fixtures/modernisation/MOD011.f90:8:19
    |
  6 |        3 &
  7 |        /)
  8 |   if (.true.) a = (/4, 5, 6/)
-   |                   ^^^^^^^^^^^ MOD011
+   |                   ^^^^^^^^^^^
  9 |   b(1:3) = (/ &
 10 |        4, &
    |
-   = help: Change `(/.../)` to `[...]`
-
+help: Change `(/.../)` to `[...]`
 5  |        2, &
 6  |        3 &
 7  |        /)
@@ -69,7 +69,8 @@ snapshot_kind: text
 10 |        4, &
 11 |        5, &
 
-./resources/test/fixtures/modernisation/MOD011.f90:9:12: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
+  --> ./resources/test/fixtures/modernisation/MOD011.f90:9:12
    |
  7 |          /)
  8 |     if (.true.) a = (/4, 5, 6/)
@@ -79,11 +80,10 @@ snapshot_kind: text
 11 | |        5, &
 12 | |        6 &
 13 | |        /)
-   | |_________^ MOD011
+   | |_________^
 14 |   end program test
    |
-   = help: Change `(/.../)` to `[...]`
-
+help: Change `(/.../)` to `[...]`
 6  |        3 &
 7  |        /)
 8  |   if (.true.) a = (/4, 5, 6/)

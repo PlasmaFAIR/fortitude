@@ -3,15 +3,15 @@ source: crates/fortitude_linter/src/rules/fortitude/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/fortitude/FORT005.f90:1:9: FORT005 [*] Disabled rule `unnamed-end-statement` in allow comment
+FORT005 [*] Disabled rule `unnamed-end-statement` in allow comment
+ --> ./resources/test/fixtures/fortitude/FORT005.f90:1:9
   |
 1 | ! allow(unnamed-end-statement)
-  |         ^^^^^^^^^^^^^^^^^^^^^ FORT005
+  |         ^^^^^^^^^^^^^^^^^^^^^
 2 | program foo
 3 |   implicit none
   |
-  = help: Remove disabled allow comment
-
+help: Remove disabled allow comment
   - ! allow(unnamed-end-statement)
 1 | program foo
 2 |   implicit none

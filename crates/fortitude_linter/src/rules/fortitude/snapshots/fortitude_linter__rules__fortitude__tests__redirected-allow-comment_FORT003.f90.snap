@@ -3,15 +3,15 @@ source: crates/fortitude_linter/src/rules/fortitude/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/fortitude/FORT003.f90:1:9: FORT003 [*] `T001` has been redirected to 'C001'
+FORT003 [*] `T001` has been redirected to 'C001'
+ --> ./resources/test/fixtures/fortitude/FORT003.f90:1:9
   |
 1 | ! allow(T001)
-  |         ^^^^ FORT003
+  |         ^^^^
 2 | program foo
 3 | end program foo
   |
-  = help: Replace with `C001` or `implicit-typing`
-
+help: Replace with `C001` or `implicit-typing`
   - ! allow(T001)
 1 + ! allow(implicit-typing)
 2 | program foo

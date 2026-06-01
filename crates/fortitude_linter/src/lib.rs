@@ -1,5 +1,4 @@
 use line_filter::FilterSet;
-use ruff_text_size::Ranged;
 pub use rule_selector::RuleSelector;
 use rule_table::RuleTable;
 pub use settings::Settings;
@@ -14,6 +13,7 @@ pub mod line_width;
 pub mod locator;
 #[macro_use]
 pub mod logging;
+pub mod preview;
 pub mod registry;
 pub mod rule_redirects;
 pub mod rule_selector;
@@ -155,7 +155,7 @@ impl<'a> CheckContext<'a> {
 
     #[must_use]
     pub fn create_diagnostic<T: Violation, R: TextRanged>(&self, kind: T, range: R) -> Diagnostic {
-        Diagnostic::new(kind, range.textrange())
+        kind.into_diagnostic(range.textrange(), &self.file)
     }
 
     #[must_use]
@@ -221,7 +221,15 @@ pub fn check_file(
     };
 
     if let Some(line_filter) = line_filter {
-        messages.retain(|message| line_filter.contains(message.start()));
+        messages.retain(|message| {
+            line_filter.contains(
+                message
+                    .primary_span()
+                    .and_then(|span| span.range())
+                    .map(|range| range.start())
+                    .unwrap_or_default(),
+            )
+        });
     }
 
     Ok(Diagnostics {
@@ -245,12 +253,13 @@ pub fn check_only_file(
         .parse(file.source_text(), None)
         .context("Failed to parse")?;
 
-    let violations = check_path(path, file, settings, &tree, ignore_allow_comments);
-
-    Ok(violations
-        .into_iter()
-        .map(|v| v.with_file(file.clone()))
-        .collect_vec())
+    Ok(check_path(
+        path,
+        file,
+        settings,
+        &tree,
+        ignore_allow_comments,
+    ))
 }
 
 /// Check an already parsed file. This actually does all the checking,
@@ -429,18 +438,23 @@ pub(crate) fn check_path(
                 path.to_string_lossy()
             );
             // Sort by byte-offset in the file
-            violations.sort_by_key(|diagnostic| diagnostic.range().start());
+            violations.sort_by_key(|diagnostic| diagnostic.range().unwrap_or_default().start());
             // Retain all violations up to the first syntax error, inclusive.
             // Text and path rules can be safely retained.
             let syntax_error_idx = violations
                 .iter()
-                .position(|diagnostic| diagnostic.rule() == Rule::SyntaxError);
+                .position(|diagnostic| diagnostic.rule() == Some(Rule::SyntaxError));
             if let Some(syntax_error_idx) = syntax_error_idx {
                 violations = violations
                     .into_iter()
                     .enumerate()
                     .filter_map(|(idx, diagnostic)| {
-                        if idx <= syntax_error_idx || !diagnostic.rule().is_ast_rule() {
+                        if idx <= syntax_error_idx
+                            || !diagnostic
+                                .rule()
+                                .map(|rule| rule.is_ast_rule())
+                                .unwrap_or_default()
+                        {
                             Some(diagnostic)
                         } else {
                             None
@@ -458,15 +472,17 @@ pub(crate) fn check_path(
         }
         // Disable all fixes
         for diagnostic in &mut violations {
-            diagnostic.drop_fix();
+            diagnostic.remove_fix();
         }
     }
 
     // Disable any fixes for unfixable rules
     for diagnostic in &mut violations {
-        let rule = diagnostic.rule();
-        if diagnostic.fixable() && !context.rules.should_fix(rule) {
-            diagnostic.drop_fix();
+        if let Some(rule) = diagnostic.rule()
+            && diagnostic.fixable()
+            && !context.rules.should_fix(rule)
+        {
+            diagnostic.remove_fix();
         }
     }
 
@@ -565,10 +581,7 @@ pub fn check_and_fix_file<'a>(
         };
 
         return Ok(FixerResult {
-            result: violations
-                .into_iter()
-                .map(|v| v.with_file(transformed.clone().into_owned()))
-                .collect_vec(),
+            result: violations,
             transformed,
             fixed,
         });
@@ -586,7 +599,11 @@ fn collect_rule_codes(rules: impl IntoIterator<Item = Rule>) -> String {
 
 #[allow(clippy::print_stderr)]
 fn report_failed_to_converge_error(path: &Path, transformed: &str, diagnostics: &[Diagnostic]) {
-    let codes = collect_rule_codes(diagnostics.iter().map(|diagnostic| diagnostic.rule()));
+    let codes = collect_rule_codes(
+        diagnostics
+            .iter()
+            .filter_map(|diagnostic| diagnostic.rule()),
+    );
     if cfg!(debug_assertions) {
         eprintln!(
             "{}{} Failed to converge after {} iterations in `{}` with rule codes {}:---\n{}\n---",

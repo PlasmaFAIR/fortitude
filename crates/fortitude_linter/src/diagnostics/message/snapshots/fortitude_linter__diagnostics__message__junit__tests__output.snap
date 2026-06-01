@@ -1,6 +1,6 @@
 ---
-source: fortitude/src/message/junit.rs
-expression: content
+source: crates/fortitude_linter/src/diagnostics/message/junit.rs
+expression: env.render_diagnostics(&diagnostics)
 snapshot_kind: text
 ---
 <?xml version="1.0" encoding="UTF-8"?>

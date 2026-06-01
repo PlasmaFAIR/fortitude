@@ -496,7 +496,8 @@ pub(crate) fn check_keyword_reuse(
             ));
         }
     }
-    diagnostics.sort_by(|a, b| a.range().ordering(b.range()));
+    // Unwrap ok here because we know all diagnostics have a range
+    diagnostics.sort_by(|a, b| a.range().unwrap().ordering(b.range().unwrap()));
     diagnostics
 }
 

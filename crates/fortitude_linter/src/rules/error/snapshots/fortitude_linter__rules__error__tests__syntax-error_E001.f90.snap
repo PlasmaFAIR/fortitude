@@ -1,14 +1,15 @@
 ---
-source: fortitude/src/rules/error/mod.rs
+source: crates/fortitude_linter/src/rules/error/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/error/E001.f90:4:23: E001 Syntax error
+E001 Syntax error
+ --> ./resources/test/fixtures/error/E001.f90:4:23
   |
 2 |   implicit none
 3 | contains
 4 |   subroutine bar(x, y, )
-  |                       ^ E001
+  |                       ^
 5 |     integer, intent(in) :: x, y
 6 |   end subroutine bar
   |

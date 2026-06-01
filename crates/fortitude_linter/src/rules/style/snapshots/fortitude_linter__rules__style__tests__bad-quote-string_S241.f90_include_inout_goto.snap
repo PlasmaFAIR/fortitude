@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S241.f90:4:12: S241 [*] String uses double quotes but single quotes preferred
+S241 [*] String uses double quotes but single quotes preferred
+ --> ./resources/test/fixtures/style/S241.f90:4:12
   |
 2 |   implicit none (type, external)
 3 |
 4 |   print *, "Hello, World!"
-  |            ^^^^^^^^^^^^^^^ S241
+  |            ^^^^^^^^^^^^^^^
 5 |   print *, 'Hello, World!'
 6 |   print *, 'Hello, "World"!'
   |
-  = help: Replace double quotes with single quotes
-
+help: Replace double quotes with single quotes
 1 | program p
 2 |   implicit none (type, external)
 3 |
@@ -24,29 +24,30 @@ snapshot_kind: text
 7 |   print *, "Hello, ""World""!"
 8 |   print *, 'Hello, ''World''!'
 
-./resources/test/fixtures/style/S241.f90:7:12: S241 String uses double quotes but single quotes preferred
+S241 String uses double quotes but single quotes preferred
+ --> ./resources/test/fixtures/style/S241.f90:7:12
   |
 5 |   print *, 'Hello, World!'
 6 |   print *, 'Hello, "World"!'
 7 |   print *, "Hello, ""World""!"
-  |            ^^^^^^^^^^^^^^^^^^^ S241
+  |            ^^^^^^^^^^^^^^^^^^^
 8 |   print *, 'Hello, ''World''!'
 9 |   print *, "Hello, &
   |
 
-./resources/test/fixtures/style/S241.f90:9:12: S241 [*] String uses double quotes but single quotes preferred
+S241 [*] String uses double quotes but single quotes preferred
+  --> ./resources/test/fixtures/style/S241.f90:9:12
    |
  7 |     print *, "Hello, ""World""!"
  8 |     print *, 'Hello, ''World''!'
  9 |     print *, "Hello, &
    |  ____________^
 10 | |             & World!"
-   | |_____________________^ S241
+   | |_____________________^
 11 |     print *, 'Hello, &
 12 |               & World!'
    |
-   = help: Replace double quotes with single quotes
-
+help: Replace double quotes with single quotes
 6  |   print *, 'Hello, "World"!'
 7  |   print *, "Hello, ""World""!"
 8  |   print *, 'Hello, ''World''!'
@@ -61,14 +62,15 @@ snapshot_kind: text
 15 |   print *, "Hello, &
 16 |             & ""World""!"
 
-./resources/test/fixtures/style/S241.f90:15:12: S241 String uses double quotes but single quotes preferred
+S241 String uses double quotes but single quotes preferred
+  --> ./resources/test/fixtures/style/S241.f90:15:12
    |
 13 |     print *, 'Hello, &
 14 |               & "World"!'
 15 |     print *, "Hello, &
    |  ____________^
 16 | |             & ""World""!"
-   | |_________________________^ S241
+   | |_________________________^
 17 |     print *, 'Hello, &
 18 |               & ''World''!'
    |

@@ -1,42 +1,39 @@
 ---
-source: crates/fortitude_linter/src/message/rdjson.rs
-expression: content
+source: crates/fortitude_linter/src/diagnostics/message/rdjson.rs
+expression: env.render_diagnostics(&diagnostics)
+snapshot_kind: text
 ---
 {
-  "source": {
-    "name": "fortitude",
-    "url": "https://github.com/PlasmaFAIR/fortitude"
-  },
-  "severity": "warning",
   "diagnostics": [
     {
-      "message": "'implicit none' set on the enclosing module",
+      "code": {
+        "url": "https://fortitude.readthedocs.io/rules/superfluous-implicit-none",
+        "value": "S201"
+      },
       "location": {
         "path": "test.f90",
         "range": {
-          "start": {
-            "line": 6,
-            "column": 5
-          },
           "end": {
             "line": 6,
             "column": 18
+          },
+          "start": {
+            "line": 6,
+            "column": 5
           }
         }
       },
-      "code": {
-        "value": "S201"
-      },
+      "message": "'implicit none' set on the enclosing module",
       "suggestions": [
         {
           "range": {
-            "start": {
-              "line": 6,
-              "column": 5
-            },
             "end": {
               "line": 6,
               "column": 18
+            },
+            "start": {
+              "line": 6,
+              "column": 5
             }
           },
           "text": ""
@@ -44,42 +41,64 @@ expression: content
       ]
     },
     {
-      "message": "end statement should read 'end subroutine foo'",
+      "code": {
+        "url": "https://fortitude.readthedocs.io/rules/unnamed-end-statement",
+        "value": "S061"
+      },
       "location": {
         "path": "test.f90",
         "range": {
-          "start": {
-            "line": 7,
-            "column": 3
-          },
           "end": {
             "line": 7,
             "column": 17
+          },
+          "start": {
+            "line": 7,
+            "column": 3
           }
         }
       },
-      "code": {
-        "value": "S061"
-      }
+      "message": "end statement should read 'end subroutine foo'",
+      "suggestions": [
+        {
+          "range": {
+            "end": {
+              "line": 9,
+              "column": 1
+            },
+            "start": {
+              "line": 8,
+              "column": 7
+            }
+          },
+          "text": ""
+        }
+      ]
     },
     {
-      "message": "integer*4 is non-standard, use integer(4)",
+      "code": {
+        "url": "https://fortitude.readthedocs.io/rules/star-kind",
+        "value": "PORT021"
+      },
       "location": {
         "path": "star_kind.f90",
         "range": {
-          "start": {
-            "line": 1,
-            "column": 8
-          },
           "end": {
             "line": 1,
             "column": 9
+          },
+          "start": {
+            "line": 1,
+            "column": 8
           }
         }
       },
-      "code": {
-        "value": "PORT021"
-      }
+      "message": "integer*4 is non-standard, use integer(4)"
     }
-  ]
+  ],
+  "severity": "WARNING",
+  "source": {
+    "name": "fortitude",
+    "url": "https://fortitude.readthedocs.io/"
+  }
 }

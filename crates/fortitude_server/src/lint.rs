@@ -125,12 +125,12 @@ fn to_lsp_diagnostic(
     index: &LineIndex,
     encoding: PositionEncoding,
 ) -> lsp_types::Diagnostic {
-    let diagnostic_range = diagnostic.range();
+    let diagnostic_range = diagnostic.range().unwrap_or_default();
     let name = diagnostic.name();
-    let body = diagnostic.body().to_string();
+    let body = diagnostic.concise_message().to_string();
     let fix = diagnostic.fix();
-    let suggestion = diagnostic.suggestion();
-    let code = diagnostic.code().to_string();
+    let suggestion = diagnostic.first_help_text();
+    let code = diagnostic.secondary_code();
 
     let fix = fix.and_then(|fix| fix.applies(Applicability::Unsafe).then_some(fix));
 
@@ -148,7 +148,7 @@ fn to_lsp_diagnostic(
             serde_json::to_value(AssociatedDiagnosticData {
                 title: suggestion.unwrap_or(name).to_string(),
                 edits,
-                code: code.clone(),
+                code: code?.to_string(),
             })
             .ok()
         })
@@ -156,20 +156,38 @@ fn to_lsp_diagnostic(
 
     let range = diagnostic_range.to_range(source, index, encoding);
 
-    let (severity, tags, code) = (
-        Some(severity(&code)),
-        tags(&code),
-        Some(lsp_types::NumberOrString::String(code)),
-    );
+    let (severity, code) = if let Some(code) = code {
+        (severity(code), code.to_string())
+    } else {
+        (
+            match diagnostic.severity() {
+                fortitude_linter::diagnostics::Severity::Info => {
+                    lsp_types::DiagnosticSeverity::INFORMATION
+                }
+                fortitude_linter::diagnostics::Severity::Warning => {
+                    lsp_types::DiagnosticSeverity::WARNING
+                }
+                fortitude_linter::diagnostics::Severity::Error => {
+                    lsp_types::DiagnosticSeverity::ERROR
+                }
+                fortitude_linter::diagnostics::Severity::Fatal => {
+                    lsp_types::DiagnosticSeverity::ERROR
+                }
+            },
+            diagnostic.secondary_code_or_id().to_string(),
+        )
+    };
 
     lsp_types::Diagnostic {
         range,
-        severity,
-        tags,
-        code,
-        code_description: lsp_types::Url::parse(&diagnostic.to_fortitude_url())
-            .ok()
-            .map(|url| lsp_types::CodeDescription { href: url }),
+        severity: Some(severity),
+        tags: tags(diagnostic),
+        code: Some(lsp_types::NumberOrString::String(code)),
+        code_description: diagnostic.documentation_url().and_then(|url| {
+            Some(lsp_types::CodeDescription {
+                href: lsp_types::Url::parse(url).ok()?,
+            })
+        }),
         source: Some(DIAGNOSTIC_NAME.into()),
         message: body,
         related_information: None,
@@ -198,9 +216,17 @@ fn severity(code: &str) -> lsp_types::DiagnosticSeverity {
 }
 
 /// Map from rule code to LSP "unnecessary" or "deprecated"
-fn tags(code: &str) -> Option<Vec<lsp_types::DiagnosticTag>> {
-    #[allow(clippy::match_single_binding)]
-    match code {
-        _ => None,
-    }
+fn tags(diagnostic: &Diagnostic) -> Option<Vec<lsp_types::DiagnosticTag>> {
+    diagnostic.primary_tags().map(|tags| {
+        tags.iter()
+            .map(|tag| match tag {
+                fortitude_linter::diagnostics::DiagnosticTag::Unnecessary => {
+                    lsp_types::DiagnosticTag::UNNECESSARY
+                }
+                fortitude_linter::diagnostics::DiagnosticTag::Deprecated => {
+                    lsp_types::DiagnosticTag::DEPRECATED
+                }
+            })
+            .collect()
+    })
 }
