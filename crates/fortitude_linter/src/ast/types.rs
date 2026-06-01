@@ -1,6 +1,6 @@
 //! Strong types for working with the tree-sitter AST
 
-use std::str::FromStr;
+use std::{rc::Rc, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use bitflags::bitflags;
@@ -483,11 +483,11 @@ pub struct Variable<'a> {
     name: String,
     node: Node<'a>,
     /// Reference to the statement in which the variable is declared
-    decl: &'a VariableDeclaration<'a>,
+    decl: Rc<VariableDeclaration<'a>>,
 }
 
 impl<'a> Variable<'a> {
-    pub fn new(name: String, node: Node<'a>, decl: &'a VariableDeclaration<'a>) -> Self {
+    pub fn new(name: String, node: Node<'a>, decl: Rc<VariableDeclaration<'a>>) -> Self {
         Self { name, node, decl }
     }
 
@@ -496,7 +496,7 @@ impl<'a> Variable<'a> {
     }
 
     pub fn decl_statement(&'a self) -> &'a VariableDeclaration<'a> {
-        self.decl
+        self.decl.as_ref()
     }
 
     pub fn type_(&self) -> &Type<'_> {

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use tree_sitter::Node;
 
@@ -26,7 +26,7 @@ pub const END_SCOPE_NODES: &[&str] = &[
 /// A named symbol
 #[derive(Clone, Debug)]
 pub enum Symbol<'a> {
-    Variable(Node<'a>, usize),
+    Variable(Variable<'a>),
 }
 
 /// A table of symbols in a given scope
@@ -39,7 +39,7 @@ pub enum Symbol<'a> {
 #[derive(Clone, Debug, Default)]
 pub struct SymbolTable<'a> {
     inner: HashMap<String, Symbol<'a>>,
-    decl_lines: Vec<VariableDeclaration<'a>>,
+    decl_lines: Vec<Rc<VariableDeclaration<'a>>>,
 }
 
 impl<'a> SymbolTable<'a> {
@@ -72,11 +72,13 @@ impl<'a> SymbolTable<'a> {
 
     /// Insert all symbols found in a single variable declaration statement
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
-        let index = self.decl_lines.len();
+        let decl = Rc::new(decl);
         for name in decl.names().iter() {
+            let node = *name.node();
+            let name = name.name().to_ascii_lowercase();
             self.inner.insert(
-                name.name().to_ascii_lowercase(),
-                Symbol::Variable(*name.node(), index),
+                name.clone(),
+                Symbol::Variable(Variable::new(name, node, decl.clone())),
             );
         }
         self.decl_lines.push(decl);
@@ -88,7 +90,7 @@ impl<'a> SymbolTable<'a> {
     }
 
     /// Iterator over the variable declaration lines
-    pub fn iter_decl_lines(&self) -> impl Iterator<Item = &VariableDeclaration<'a>> {
+    pub fn iter_decl_lines(&self) -> impl Iterator<Item = &Rc<VariableDeclaration<'a>>> {
         self.decl_lines.iter()
     }
 }
@@ -112,18 +114,17 @@ impl<'a> SymbolTables<'a> {
     }
 
     /// Return the symbol with the given name if it exists and is a variable
-    pub fn get_var(&'_ self, name: &str) -> Option<Variable<'_>> {
+    pub fn get_var(&'_ self, name: &str) -> Option<&Variable<'_>> {
         let name = name.to_ascii_lowercase();
 
         // Check the most recently inserted table first
         for table in self.inner.iter().rev() {
             match table.get(&name) {
-                Some(Symbol::Variable(node, index)) => {
-                    let decl: &VariableDeclaration = &table.decl_lines[*index];
-                    return Some(Variable::new(name, *node, decl));
-                },
-                None => ()
-        }
+                Some(Symbol::Variable(var)) => {
+                    return Some(var);
+                }
+                None => (),
+            }
         }
         None
     }
