@@ -21,18 +21,6 @@ impl<'a> HasNode<'a> for &'a Node<'a> {
     }
 }
 
-#[macro_export]
-macro_rules! impl_has_node {
-    ($ty: ty) => {
-        impl<'a> HasNode<'a> for $ty {
-            #[inline]
-            fn node(&self) -> &Node<'a> {
-                &self.node
-            }
-        }
-    };
-}
-
 /// A ranged item in the source text.
 ///
 /// A kind of shim for [`ruff_text_size::Ranged`] for compatibility with

@@ -4,12 +4,13 @@ use std::str::FromStr;
 
 use anyhow::{Context, Result, anyhow};
 use bitflags::bitflags;
+use fortitude_macros::HasNode;
 use itertools::Itertools;
 use ruff_source_file::SourceFile;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
 
-use crate::{ast::FortitudeNode, impl_has_node, traits::HasNode};
+use crate::{ast::FortitudeNode, traits::HasNode};
 
 #[derive(Clone, Debug)]
 pub struct ParameterStatement<'a> {
@@ -39,7 +40,7 @@ impl<'a> ParameterStatement<'a> {
 }
 
 /// A declaration of a single variable
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub struct NameDecl<'a> {
     name: String,
     node: Node<'a>,
@@ -72,8 +73,6 @@ impl<'a> NameDecl<'a> {
     }
 }
 
-impl_has_node!(NameDecl<'a>);
-
 #[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
 pub enum ExtentSize<'a> {
     Expression(Node<'a>),
@@ -99,7 +98,7 @@ impl<'a> HasNode<'a> for ExtentSize<'a> {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, HasNode)]
 pub struct Extent<'a> {
     start: Option<Node<'a>>,
     stop: Option<ExtentSize<'a>>,
@@ -127,8 +126,6 @@ impl<'a> Extent<'a> {
         })
     }
 }
-
-impl_has_node!(Extent<'a>);
 
 /// One rank of a dimension's array-spec
 #[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
@@ -256,7 +253,7 @@ impl<'a> AttributeKind<'a> {
 }
 
 /// A variable attribute and where it is
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub struct Attribute<'a> {
     kind: AttributeKind<'a>,
     node: Node<'a>,
@@ -274,8 +271,6 @@ impl<'a> Attribute<'a> {
         &self.kind
     }
 }
-
-impl_has_node!(Attribute<'a>);
 
 #[derive(Clone, Debug)]
 pub struct TypeInner<'a> {
@@ -326,7 +321,7 @@ impl<'a> HasNode<'a> for Type<'a> {
 }
 
 /// A variable declaration line
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub struct VariableDeclaration<'a> {
     type_: Type<'a>,
     attributes: Vec<Attribute<'a>>,
@@ -445,8 +440,6 @@ impl<'a> VariableDeclaration<'a> {
     }
 }
 
-impl_has_node!(VariableDeclaration<'a>);
-
 /// Returns the tree-sitter node corresponding to the actual name of a
 /// declarator node, and not, say, the initialiser
 pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
@@ -485,7 +478,7 @@ pub fn get_init_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
 }
 
 /// A single Fortran variable
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub struct Variable<'a> {
     name: String,
     node: Node<'a>,
@@ -522,8 +515,6 @@ impl<'a> Variable<'a> {
         self.decl.has_any_attributes(attrs)
     }
 }
-
-impl_has_node!(Variable<'a>);
 
 #[derive(EnumString, Display)]
 #[strum(ascii_case_insensitive)]
