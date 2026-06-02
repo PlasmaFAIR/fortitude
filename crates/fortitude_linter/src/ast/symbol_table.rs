@@ -1,10 +1,14 @@
 use std::{collections::HashMap, rc::Rc};
 
+use strum_macros::EnumIs;
 use tree_sitter::Node;
 
-use crate::traits::HasNode;
+use crate::{ast::types::ProcedureKind, traits::HasNode};
 
-use super::types::{Variable, VariableDeclaration};
+use super::{
+    FortitudeNode,
+    types::{Procedure, Variable, VariableDeclaration},
+};
 
 pub const BEGIN_SCOPE_NODES: &[&str] = &[
     "program",
@@ -24,9 +28,11 @@ pub const END_SCOPE_NODES: &[&str] = &[
 ];
 
 /// A named symbol
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, EnumIs)]
 pub enum Symbol<'a> {
     Variable(Variable<'a>),
+    Function(Procedure<'a>),
+    Subroutine(Procedure<'a>),
 }
 
 /// A table of symbols in a given scope
@@ -65,6 +71,26 @@ impl<'a> SymbolTable<'a> {
             if let Ok(decl) = VariableDeclaration::try_from_fn_stmt(&stmt, src) {
                 new_table.insert_from_decl_line(decl);
             }
+        }
+
+        if let Some(procs) = scope.child_with_name("internal_procedures") {
+            procs
+                .named_children(&mut procs.walk())
+                .filter_map(|proc| match proc.kind() {
+                    "function" | "subroutine" => Procedure::try_from_node(&proc, src).ok(),
+                    _ => None,
+                })
+                .for_each(|proc| {
+                    let name = proc.name().to_owned();
+                    match proc.kind() {
+                        ProcedureKind::Function => {
+                            new_table.inner.insert(name, Symbol::Function(proc))
+                        }
+                        ProcedureKind::Subroutine => {
+                            new_table.inner.insert(name, Symbol::Subroutine(proc))
+                        }
+                    };
+                })
         }
 
         new_table
@@ -123,7 +149,27 @@ impl<'a> SymbolTables<'a> {
                 Some(Symbol::Variable(var)) => {
                     return Some(var);
                 }
+                // We found a name, but it isn't a variable and will shadow any
+                // variables with the same name further up the stack, so quit
+                // now so we don't find them
+                Some(_) => {
+                    return None;
+                }
+                // Nothing in this scope, keep looking
                 None => (),
+            }
+        }
+        None
+    }
+
+    /// Return the symbol with the given name if it exists
+    pub fn get(&'_ self, name: &str) -> Option<&Symbol<'_>> {
+        let name = name.to_ascii_lowercase();
+
+        // Check the most recently inserted table first
+        for table in self.inner.iter().rev() {
+            if let Some(var) = table.get(&name) {
+                return Some(var);
             }
         }
         None
@@ -442,6 +488,43 @@ end function foo
         assert!(y.is_some());
         let y = y.unwrap();
         assert!(y.type_().is_intrinsic());
+
+        Ok(())
+    }
+
+    #[test]
+    fn internal_procedures() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+program foo
+contains
+  integer function bar(x) result(y)
+    integer, intent(in) :: x
+  end function bar
+
+  subroutine zing()
+  end subroutine zing
+end program foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
+
+        let bar = symbol_table.get("bar");
+        assert!(bar.is_some());
+        let bar = bar.unwrap();
+        assert!(bar.is_function());
+
+        let zing = symbol_table.get("zing");
+        assert!(zing.is_some());
+        let zing = zing.unwrap();
+        assert!(zing.is_subroutine());
 
         Ok(())
     }

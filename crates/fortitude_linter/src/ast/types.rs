@@ -598,3 +598,130 @@ impl<'a> ImplicitStatement<'a> {
         self.none_type.contains(ImplicitNoneType::EXTERNAL)
     }
 }
+
+#[derive(Clone, Debug, EnumIs, EnumString, IntoStaticStr, PartialEq)]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
+pub enum ProcedureAttributeKind {
+    Elemental,
+    Impure,
+    Module,
+    NonRecursive,
+    Pure,
+    Recursive,
+    Simple,
+}
+
+/// A procedure attribute and where it is
+#[derive(Clone, Debug, HasNode)]
+pub struct ProcedureAttribute<'a> {
+    kind: ProcedureAttributeKind,
+    node: Node<'a>,
+}
+
+impl<'a> ProcedureAttribute<'a> {
+    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
+        let kind = ProcedureAttributeKind::from_str(node.to_text(src).context("expected text")?)?;
+        Ok(Self { kind, node })
+    }
+
+    pub fn kind(&self) -> &ProcedureAttributeKind {
+        &self.kind
+    }
+}
+
+#[derive(Copy, Clone, Debug, EnumIs, EnumString, PartialEq)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
+pub enum ProcedureKind {
+    Function,
+    Subroutine,
+}
+
+#[derive(Clone, Debug, HasNode)]
+pub struct Procedure<'a> {
+    type_: Option<Type<'a>>,
+    attributes: Vec<ProcedureAttribute<'a>>,
+    name: String,
+    args: Vec<String>,
+    kind: ProcedureKind,
+    node: Node<'a>,
+}
+
+impl<'a> Procedure<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if !node.is_named() || !matches!(node.kind(), "function" | "subroutine") {
+            return Err(anyhow!("not a procedure"));
+        }
+
+        let kind = ProcedureKind::from_str(node.kind()).unwrap();
+
+        let stmt = node.child(0).context("expected child")?;
+
+        let type_ = if let Some(child) = stmt.child_by_field_name("type") {
+            Some(Type::try_from_node(child, src)?)
+        } else {
+            None
+        };
+
+        let attributes: Result<Vec<_>> = stmt
+            .named_children(&mut stmt.walk())
+            .filter(|attr| attr.kind() == "procedure_qualifier")
+            .map(|attr| ProcedureAttribute::try_from_node(attr, src))
+            .collect();
+        let attributes = attributes?;
+
+        let name = stmt
+            .child_by_field_name("name")
+            .context("procedure should have `name` field")?
+            .to_text(src)
+            .context("name should have text")?
+            .to_ascii_lowercase();
+
+        let args = stmt
+            .child_with_name("parameters")
+            .map(|params| {
+                params
+                    .named_children(&mut params.walk())
+                    .flat_map(|param| param.to_text(src))
+                    .map(|param| param.to_ascii_lowercase())
+                    .collect_vec()
+            })
+            .unwrap_or_default();
+
+        Ok(Self {
+            type_,
+            attributes,
+            name,
+            args,
+            kind,
+            node: *node,
+        })
+    }
+
+    pub const fn type_(&self) -> &Option<Type<'_>> {
+        &self.type_
+    }
+
+    pub const fn attributes(&self) -> &Vec<ProcedureAttribute<'_>> {
+        &self.attributes
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub const fn args(&self) -> &Vec<String> {
+        &self.args
+    }
+
+    pub const fn kind(&self) -> ProcedureKind {
+        self.kind
+    }
+
+    pub const fn is_function(&self) -> bool {
+        self.kind.is_function()
+    }
+
+    pub const fn is_subroutine(&self) -> bool {
+        self.kind.is_subroutine()
+    }
+}
