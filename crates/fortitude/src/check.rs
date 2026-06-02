@@ -202,6 +202,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
         unsafe_fixes,
         show_fixes,
         output_format,
+        ref non_zero_on,
         ..
     } = file_configuration.settings.check;
 
@@ -273,11 +274,20 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     }
 
     let diagnostics = results.diagnostics;
+    let has_blocking_diagnostics = diagnostics
+        .messages
+        .iter()
+        .any(|message| non_zero_on.contains(message.rule()));
+    let has_blocking_fixes = diagnostics
+        .fixed
+        .values()
+        .any(|fix_table| fix_table.keys().any(|rule| non_zero_on.contains(*rule)));
+
     if !cli.exit_zero {
         if fix_only {
             // If we're only fixing, we want to exit zero (since we've fixed all fixable
             // violations), unless we're explicitly asked to exit non-zero on fix.
-            if cli.exit_non_zero_on_fix && !diagnostics.fixed.is_empty() {
+            if cli.exit_non_zero_on_fix && has_blocking_fixes {
                 return Ok(ExitCode::FAILURE);
             }
         } else {
@@ -285,10 +295,10 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
             // there are any violations, unless we're explicitly asked to exit zero on
             // fix.
             if cli.exit_non_zero_on_fix {
-                if !diagnostics.fixed.is_empty() || !diagnostics.messages.is_empty() {
+                if has_blocking_fixes || has_blocking_diagnostics {
                     return Ok(ExitCode::FAILURE);
                 }
-            } else if !diagnostics.messages.is_empty() {
+            } else if has_blocking_diagnostics {
                 return Ok(ExitCode::FAILURE);
             }
         }

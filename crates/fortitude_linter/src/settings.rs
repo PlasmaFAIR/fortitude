@@ -16,7 +16,7 @@ use strum::IntoEnumIterator;
 
 use crate::display_settings;
 use crate::fs::{EXCLUDE_BUILTINS, FilePatternSet, INCLUDE};
-use crate::registry::Rule;
+use crate::registry::{Rule, RuleSet};
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
 use crate::rules::correctness::{exit_labels, use_statements};
@@ -58,6 +58,7 @@ pub struct CheckSettings {
     pub project_root: PathBuf,
 
     pub rules: RuleTable,
+    pub non_zero_on: RuleSet,
     pub per_file_ignores: CompiledPerFileIgnoreList,
 
     pub line_length: usize,
@@ -98,6 +99,7 @@ impl CheckSettings {
                 .iter()
                 .flat_map(|selector| selector.rules(&PreviewOptions::default()))
                 .collect(),
+            non_zero_on: RuleSet::from_iter(Rule::iter()),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
             fix: false,

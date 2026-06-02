@@ -228,6 +228,42 @@ pub struct CheckOptions {
     )]
     pub extend_select: Option<Vec<RuleSelector>>,
 
+    /// A list of rule codes or prefixes whose violations should not cause a
+    /// non-zero exit status.
+    ///
+    /// This only affects the exit code. Diagnostics are still shown normally.
+    /// Prefixes can specify exact rules (like `S201` or
+    /// `superfluous-implicit-none`), entire categories (like `C` or
+    /// `correctness`), or anything in between. More-specific selectors in
+    /// [`exit-non-zero-on`](#check_exit_non_zero_on) override broader matches
+    /// here.
+    #[option(
+        default = "[]",
+        value_type = "list[RuleSelector]",
+        example = r#"
+            exit-zero-on = ["ALL"]
+        "#
+    )]
+    pub exit_zero_on: Option<Vec<RuleSelector>>,
+
+    /// A list of rule codes or prefixes whose violations should still cause a
+    /// non-zero exit status, even if they were matched by
+    /// [`exit-zero-on`](#check_exit_zero_on).
+    ///
+    /// This only affects the exit code. Diagnostics are still shown normally.
+    /// Use this with `["ALL"]` in [`exit-zero-on`](#check_exit_zero_on) to make
+    /// only a small subset of rules blocking while you adopt Fortitude
+    /// gradually.
+    #[option(
+        default = "[]",
+        value_type = "list[RuleSelector]",
+        example = r#"
+            exit-zero-on = ["ALL"]
+            exit-non-zero-on = ["C001"]
+        "#
+    )]
+    pub exit_non_zero_on: Option<Vec<RuleSelector>>,
+
     /// A list of rule codes or prefixes to consider fixable, in addition to those
     /// specified by [`fixable`](#check_fixable).
     #[option(
