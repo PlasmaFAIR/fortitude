@@ -173,6 +173,11 @@ including `.f90`, `.F90`, `.f95`. You can change the default selection using the
 
 !!! info "Introduced in Fortitude 0.8.0"
 
+Fortitude currently supports free-form Fortran source. Fixed-form source files
+such as `.f`, `.for`, or `.ftn` are not included by default, and adding them to
+`include` will not make Fortitude parse them as fixed-form source. See the
+[FAQ](faq.md#does-fortitude-handle-fixed-form-fortran) for details.
+
 ## Command-line interface
 
 Some settings can be given or overidden explicitly on the command line, particularly those
