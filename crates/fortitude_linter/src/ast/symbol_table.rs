@@ -35,6 +35,24 @@ pub enum Symbol<'a> {
     Subroutine(Procedure<'a>),
 }
 
+impl<'a> Symbol<'a> {
+    pub fn name(&self) -> &str {
+        match self {
+            Self::Variable(var) => var.name(),
+            Self::Function(proc) | Self::Subroutine(proc) => proc.name(),
+        }
+    }
+}
+
+impl<'a> HasNode<'a> for Symbol<'a> {
+    fn node(&self) -> &Node<'a> {
+        match self {
+            Self::Variable(var) => var.node(),
+            Self::Function(proc) | Self::Subroutine(proc) => proc.node(),
+        }
+    }
+}
+
 /// A table of symbols in a given scope
 ///
 /// Variables are not stored directly in the hashmap because we want to be able
@@ -118,6 +136,21 @@ impl<'a> SymbolTable<'a> {
     /// Iterator over the variable declaration lines
     pub fn iter_decl_lines(&self) -> impl Iterator<Item = &Rc<VariableDeclaration<'a>>> {
         self.decl_lines.iter()
+    }
+
+    /// Iterator over symbols in this scope
+    pub fn iter_symbols(&self) -> impl Iterator<Item = &Symbol<'_>> {
+        self.inner.values()
+    }
+
+    /// Iterator over names in this scope
+    pub fn iter_names(&self) -> impl Iterator<Item = &String> {
+        self.inner.keys()
+    }
+
+    /// Iterator over symbol names and values
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Symbol<'_>)> {
+        self.inner.iter()
     }
 }
 
@@ -525,6 +558,36 @@ end program foo
         assert!(zing.is_some());
         let zing = zing.unwrap();
         assert!(zing.is_subroutine());
+
+        Ok(())
+    }
+
+    #[test]
+    fn all_symbols() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+program foo
+  integer :: a, b
+contains
+  integer function bar(x) result(y)
+    integer, intent(in) :: x
+  end function bar
+
+  subroutine zing()
+  end subroutine zing
+end program foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let symbol_table = SymbolTable::new(&root, code);
+
+        let count = symbol_table.iter_symbols().count();
+        assert_eq!(count, 4);
 
         Ok(())
     }
