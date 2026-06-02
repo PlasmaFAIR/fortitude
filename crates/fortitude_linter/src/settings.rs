@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use crate::diagnostics::Applicability;
+use colored::Color;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_macros::CacheKey;
@@ -67,6 +68,7 @@ pub struct CheckSettings {
     pub show_fixes: bool,
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
+    pub severity_default: Severity,
     pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
@@ -105,6 +107,7 @@ impl CheckSettings {
             show_fixes: false,
             unsafe_fixes: UnsafeFixes::default(),
             output_format: OutputFormat::default(),
+            severity_default: Severity::default(),
             target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
@@ -493,6 +496,39 @@ impl fmt::Display for OutputFormat {
             Self::Rdjson => write!(f, "rdjson"),
             Self::Azure => write!(f, "azure"),
             Self::Sarif => write!(f, "sarif"),
+        }
+    }
+}
+
+#[derive(
+    Clone, Copy, Hash, Default, Serialize, Deserialize, Debug, Eq, clap::ValueEnum, PartialEq,
+)]
+pub enum Severity {
+    None,
+    Error,
+    #[default]
+    Warning,
+    Info,
+}
+
+impl fmt::Display for Severity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::None => write!(f, "none"),
+            Self::Error => write!(f, "error"),
+            Self::Warning => write!(f, "warning"),
+            Self::Info => write!(f, "info"),
+        }
+    }
+}
+
+impl From<Severity> for Color {
+    fn from(value: Severity) -> Self {
+        match value {
+            Severity::None => Color::White,
+            Severity::Error => Color::Red,
+            Severity::Warning => Color::Yellow,
+            Severity::Info => Color::Blue,
         }
     }
 }

@@ -21,7 +21,7 @@ use fortitude_linter::{
             strings::{self, settings::Quote},
         },
     },
-    settings::{FortranStandard, OutputFormat, ProgressBar},
+    settings::{FortranStandard, OutputFormat, ProgressBar, Severity},
     stylist::Capitalisation,
 };
 
@@ -120,6 +120,19 @@ pub struct CheckOptions {
         "#
     )]
     pub output_format: Option<OutputFormat>,
+
+    /// The default severity for violations. `"warning"` (default) will report
+    /// violations as warnings, `"info"` will report them as informational
+    /// messages, and `"error"` will report them as errors.
+    #[option(
+        default = r#""warning""#,
+        value_type = r#""info" | "warning" | "error""#,
+        example = r#"
+            # Treat all violations as errors.
+            severity-default = "error"
+         "#
+    )]
+    pub severity_default: Option<Severity>,
 
     /// Whether to enable preview mode. When preview mode is enabled, Fortitude will
     /// use unstable rules, fixes, and formatting.

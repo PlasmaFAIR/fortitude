@@ -15,7 +15,7 @@ use fortitude_linter::rule_table::RuleTable;
 use fortitude_linter::rules::Rule;
 use fortitude_linter::settings::{
     CheckSettings, DEFAULT_SELECTORS, ExcludeMode, FileResolverSettings, FortranStandard,
-    GitignoreMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes,
+    GitignoreMode, OutputFormat, PreviewMode, ProgressBar, Settings, Severity, UnsafeFixes,
 };
 use fortitude_linter::{fs, warn_user_once_by_id, warn_user_once_by_message};
 
@@ -236,6 +236,7 @@ pub struct Configuration {
     pub show_fixes: Option<bool>,
     pub unsafe_fixes: Option<UnsafeFixes>,
     pub output_format: Option<OutputFormat>,
+    pub severity_default: Option<Severity>,
     pub target_std: Option<FortranStandard>,
     pub progress_bar: Option<ProgressBar>,
     pub preview: Option<PreviewMode>,
@@ -290,6 +291,7 @@ impl Configuration {
             show_fixes: check.show_fixes,
             unsafe_fixes: check.unsafe_fixes.map(UnsafeFixes::from),
             output_format: check.output_format,
+            severity_default: check.severity_default,
             target_std: check.target_std,
             progress_bar: check.progress_bar,
             preview: check.preview.map(PreviewMode::from),
@@ -375,6 +377,7 @@ impl Configuration {
                 target_std: self.target_std.unwrap_or_default(),
                 progress_bar,
                 output_format: self.output_format.unwrap_or_default(),
+                severity_default: self.severity_default.unwrap_or_default(),
                 show_fixes: self.show_fixes.unwrap_or_default(),
                 per_file_ignores: CompiledPerFileIgnoreList::resolve(
                     self.per_file_ignores
@@ -479,6 +482,7 @@ impl Configuration {
             show_fixes: self.show_fixes.or(config.show_fixes),
             unsafe_fixes: self.unsafe_fixes.or(config.unsafe_fixes),
             output_format: self.output_format.or(config.output_format),
+            severity_default: self.severity_default.or(config.severity_default),
             progress_bar: self.progress_bar.or(config.progress_bar),
             preview: self.preview.or(config.preview),
             exclude: self.exclude.or(config.exclude),

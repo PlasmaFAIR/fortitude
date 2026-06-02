@@ -17,7 +17,7 @@ use anyhow::Result;
 use log::debug;
 use ruff_text_size::{Ranged, TextRange};
 
-use crate::{fix::FixTable, rules::Rule};
+use crate::{fix::FixTable, rules::Rule, settings::Severity};
 
 pub use violation::{AlwaysFixableViolation, FixAvailability, Violation, ViolationMetadata};
 
@@ -120,6 +120,8 @@ pub struct Diagnostic {
     rule: Rule,
     /// The rule code that was violated, expressed as a string.
     code: String,
+    /// Severity level of the diagnostic.
+    pub severity: Severity,
     /// The file where an error was reported.
     ///
     /// Optional so we can delay setting it for now
@@ -132,6 +134,7 @@ impl Diagnostic {
             name: T::rule().into(),
             body: Violation::message(&kind),
             suggestion: Violation::fix_title(&kind),
+            severity: T::severity(),
             range,
             fix: None,
             code: T::rule().noqa_code().to_string(),
@@ -144,6 +147,14 @@ impl Diagnostic {
     #[must_use]
     pub fn with_file(mut self, file: SourceFile) -> Self {
         self.file = Some(file);
+        self
+    }
+
+    /// Consumes `self` and returns a new `Diagnostic` with the given severity.
+    #[inline]
+    #[must_use]
+    pub fn with_severity(mut self, severity: Severity) -> Self {
+        self.severity = severity;
         self
     }
 
@@ -288,6 +299,7 @@ pub fn test_diagnostic_builder(rule: Rule, body: &str, range: TextRange) -> Diag
         name: rule.name(),
         body: body.to_string(),
         suggestion: None,
+        severity: Severity::default(),
         range,
         fix: None,
         rule,

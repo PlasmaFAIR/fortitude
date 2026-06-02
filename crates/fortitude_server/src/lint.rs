@@ -11,6 +11,7 @@ use fortitude_linter::{
     check_only_file,
     diagnostics::{Applicability, Diagnostic, Fix},
     locator::Locator,
+    settings::Severity,
 };
 use ruff_source_file::{LineIndex, SourceFileBuilder};
 use ruff_text_size::{Ranged, TextRange};
@@ -157,7 +158,12 @@ fn to_lsp_diagnostic(
     let range = diagnostic_range.to_range(source, index, encoding);
 
     let (severity, tags, code) = (
-        Some(severity(&code)),
+        Some(match diagnostic.severity {
+            Severity::Error => lsp_types::DiagnosticSeverity::ERROR,
+            Severity::Warning => lsp_types::DiagnosticSeverity::WARNING,
+            Severity::Info => lsp_types::DiagnosticSeverity::INFORMATION,
+            Severity::None => lsp_types::DiagnosticSeverity::HINT,
+        }),
         tags(&code),
         Some(lsp_types::NumberOrString::String(code)),
     );
@@ -184,17 +190,6 @@ fn diagnostic_edit_range(
     encoding: PositionEncoding,
 ) -> lsp_types::Range {
     range.to_range(source, index, encoding)
-}
-
-/// Map from rule code to LSP severity
-fn severity(code: &str) -> lsp_types::DiagnosticSeverity {
-    match code {
-        // E000: io-error
-        // E001: syntax-error
-        // E011: invalid-character
-        "E000" | "E001" | "E011" => lsp_types::DiagnosticSeverity::ERROR,
-        _ => lsp_types::DiagnosticSeverity::WARNING,
-    }
 }
 
 /// Map from rule code to LSP "unnecessary" or "deprecated"

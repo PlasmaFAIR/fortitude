@@ -5,7 +5,7 @@
 use std::io::Write;
 
 use super::Emitter;
-use crate::Diagnostic;
+use crate::{Diagnostic, settings::Severity};
 
 /// Generate error logging commands for Azure Pipelines format.
 /// See [documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#logissue-log-an-error-or-warning)
@@ -17,9 +17,15 @@ impl Emitter for AzureEmitter {
         for message in messages {
             let location = message.compute_start_location();
 
+            let severity = match message.severity {
+                Severity::Error => "error",
+                Severity::Warning => "warning",
+                Severity::Info | Severity::None => "debug",
+            };
+
             writeln!(
                 writer,
-                "##vso[task.logissue type=error\
+                "##vso[task.logissue type={severity}\
                         ;sourcepath={filename};linenumber={line};columnnumber={col};code={code};]{body}",
                 filename = message.filename(),
                 line = location.line,
@@ -37,7 +43,10 @@ impl Emitter for AzureEmitter {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
+    use crate::{
+        diagnostics::message::tests::{capture_emitter_output, create_messages},
+        settings::Severity,
+    };
 
     use super::AzureEmitter;
 
@@ -45,6 +54,70 @@ mod tests {
     fn output() {
         let mut emitter = AzureEmitter;
         let content = capture_emitter_output(&mut emitter, &create_messages());
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_none() {
+        let mut emitter = AzureEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::None;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_info() {
+        let mut emitter = AzureEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Info;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_warning() {
+        let mut emitter = AzureEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Warning;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_error() {
+        let mut emitter = AzureEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Error;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
 
         assert_snapshot!(content);
     }

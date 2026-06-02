@@ -9,7 +9,7 @@ use fortitude_linter::fs::{self, read_to_string};
 use fortitude_linter::line_filter::{FilterMap, git_since, git_staged_files};
 use fortitude_linter::rules::Rule;
 use fortitude_linter::rules::error::ioerror::IoError;
-use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
+use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings, Severity};
 use fortitude_linter::source_kind::SourceKindDiff;
 use fortitude_linter::warn_user_once;
 use fortitude_linter::{FixerResult, check_and_fix_file, check_file, check_only_file};
@@ -202,6 +202,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
         unsafe_fixes,
         show_fixes,
         output_format,
+        severity_default,
         ..
     } = file_configuration.settings.check;
 
@@ -260,6 +261,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
 
     let printer = Printer::new(
         output_format,
+        severity_default,
         config_arguments.log_level,
         printer_flags,
         fix_mode,
@@ -353,6 +355,7 @@ fn check_files(
                                 let filename = resolved_file.file_name().to_string_lossy();
                                 let diagnostics = vec![
                                     Diagnostic::new(IoError { message }, TextRange::default())
+                                        .with_severity(Severity::Error)
                                         .with_file(
                                             SourceFileBuilder::new(filename.as_ref(), "").finish(),
                                         ),
@@ -424,6 +427,7 @@ fn check_files(
                             let filename = path.to_string_lossy();
                             let diagnostics = vec![
                                 Diagnostic::new(IoError { message }, TextRange::default())
+                                    .with_severity(Severity::Error)
                                     .with_file(
                                         SourceFileBuilder::new(filename.as_ref(), "").finish(),
                                     ),

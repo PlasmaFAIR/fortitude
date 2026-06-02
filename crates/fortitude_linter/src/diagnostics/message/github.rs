@@ -4,7 +4,7 @@
 
 use std::io::Write;
 
-use crate::fs::relativize_path;
+use crate::{fs::relativize_path, settings::Severity};
 
 use super::Emitter;
 use crate::Diagnostic;
@@ -20,9 +20,15 @@ impl Emitter for GithubEmitter {
             let location = message.compute_start_location();
             let end_location = message.compute_end_location();
 
+            let severity = match message.severity {
+                Severity::Error => "error",
+                Severity::Warning => "warning",
+                Severity::Info | Severity::None => "notice",
+            };
+
             write!(
                 writer,
-                "::error title=Fortitude ({code}),file={file},line={row},col={column},endLine={end_row},endColumn={end_column}::",
+                "::{severity} title=Fortitude ({code}),file={file},line={row},col={column},endLine={end_row},endColumn={end_column}::",
                 code = message.rule().noqa_code(),
                 file = message.filename(),
                 row = location.line,
@@ -52,12 +58,79 @@ mod tests {
     use insta::assert_snapshot;
 
     use super::GithubEmitter;
-    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
+    use crate::{
+        diagnostics::message::tests::{capture_emitter_output, create_messages},
+        settings::Severity,
+    };
 
     #[test]
     fn output() {
         let mut emitter = GithubEmitter;
         let content = capture_emitter_output(&mut emitter, &create_messages());
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_none() {
+        let mut emitter = GithubEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::None;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_info() {
+        let mut emitter = GithubEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Info;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_warning() {
+        let mut emitter = GithubEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Warning;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_error() {
+        let mut emitter = GithubEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Error;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
 
         assert_snapshot!(content);
     }
