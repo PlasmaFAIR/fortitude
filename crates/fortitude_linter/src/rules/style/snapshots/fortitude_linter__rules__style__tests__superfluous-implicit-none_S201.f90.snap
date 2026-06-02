@@ -7,7 +7,7 @@ expression: diagnostics
 3 | contains
 4 |   integer function myfunc(x)
 5 |     implicit none
-  |     ^^^^^^^^^^^^^ S201
+  |     ------------- S201
 6 |     integer, intent(in) :: x
 7 |     myfunc = x * 2
   |
@@ -27,7 +27,7 @@ expression: diagnostics
  8 |   end function myfunc
  9 |   subroutine mysub(x)
 10 |     implicit none (type)
-   |     ^^^^^^^^^^^^^^^^^^^^ S201
+   |     -------------------- S201
 11 |     integer, intent(inout) :: x
 12 |     x = x * 2
    |
@@ -47,14 +47,14 @@ expression: diagnostics
 21 | contains
 22 |   integer function myfunc2(x)
 23 |     implicit none
-   |     ^^^^^^^^^^^^^ S201
+   |     ------------- S201
 24 |     integer, intent(in) :: x
 25 |     myfunc2 = x * 2
    |
    = help: Remove unnecessary 'implicit none'
 
 ℹ Safe fix
-20 20 | 
+20 20 |
 21 21 | contains
 22 22 |   integer function myfunc2(x)
 23    |-    implicit none
@@ -67,7 +67,7 @@ expression: diagnostics
 26 |   end function myfunc2
 27 |   subroutine mysub2(x)
 28 |     implicit none
-   |     ^^^^^^^^^^^^^ S201
+   |     ------------- S201
 29 |     integer, intent(inout) :: x
 30 |     x = x * 2
    |

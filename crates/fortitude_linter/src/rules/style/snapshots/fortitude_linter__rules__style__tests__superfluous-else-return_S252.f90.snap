@@ -1,14 +1,13 @@
 ---
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S252.f90:19:7: S252 [*] Unnecessary else-if after `return` statement
    |
 17 |     if ((a - b) < 0) then
 18 |       capped_sub = 0
 19 |       return
-   |       ^^^^^^ S252
+   |       ------ S252
 20 |     else if ((a - b) > 10) then
 21 |       capped_sub = 10
    |
@@ -30,7 +29,7 @@ snapshot_kind: text
 20 |     else if ((a - b) > 10) then
 21 |       capped_sub = 10
 22 |       return
-   |       ^^^^^^ S252
+   |       ------ S252
 23 |     ELSEIF (.false.) then
 24 |       capped_sub = -1
    |
@@ -52,7 +51,7 @@ snapshot_kind: text
 23 |     ELSEIF (.false.) then
 24 |       capped_sub = -1
 25 |       return
-   |       ^^^^^^ S252
+   |       ------ S252
 26 |     else
 27 |       capped_sub = a - b
    |
@@ -68,7 +67,7 @@ snapshot_kind: text
    27 |+
    28 |+    capped_sub = a - b
 29 29 |   end function capped_sub
-30 30 | 
+30 30 |
 31 31 |   integer function capped_mult(a, b)
 
 ./resources/test/fixtures/style/S252.f90:35:7: S252 [*] Unnecessary else after `return` statement
@@ -76,7 +75,7 @@ snapshot_kind: text
 33 |     if ((a * b) > 100) then
 34 |       capped_mult = 100
 35 |       return
-   |       ^^^^^^ S252
+   |       ------ S252
 36 |     else  ! This comment should be moved onto next line
 37 |       ! And some other bits that
    |
@@ -98,7 +97,7 @@ snapshot_kind: text
 41    |-    end if
    41 |+    capped_mult = a * b
 42 42 |   end function capped_mult
-43 43 | 
+43 43 |
 44 44 |   integer function capped_div(a, b)
 
 ./resources/test/fixtures/style/S252.f90:68:7: S252 Unnecessary else after `return` statement
@@ -106,7 +105,7 @@ snapshot_kind: text
 66 |     something: if ((a + b + b) > 100) then
 67 |       capped_double_add = 100
 68 |       return
-   |       ^^^^^^ S252
+   |       ------ S252
 69 |     else
 70 |       ! Can't auto-fix due to label
    |

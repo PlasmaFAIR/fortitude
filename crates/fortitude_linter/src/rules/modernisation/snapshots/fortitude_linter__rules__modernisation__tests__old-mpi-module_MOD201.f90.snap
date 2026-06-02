@@ -6,7 +6,7 @@ expression: diagnostics
   |
 6 |     ! Not technically deprecated, but discouraged
 7 |     use mpi
-  |     ^^^^^^^ MOD201
+  |     ------- MOD201
 8 |
 9 |     ! This is fine
   |

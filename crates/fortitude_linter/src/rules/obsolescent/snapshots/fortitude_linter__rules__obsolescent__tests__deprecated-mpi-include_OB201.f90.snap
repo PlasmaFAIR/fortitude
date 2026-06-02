@@ -6,7 +6,7 @@ expression: diagnostics
    |
 12 |     ! Discouraged since MPI 3.0, deprecated since MPI 4.1
 13 |     include "mpif.h"
-   |     ^^^^^^^^^^^^^^^^ OB201
+   |     ---------------- OB201
 14 |
 15 | end module obsolete_mpi
    |

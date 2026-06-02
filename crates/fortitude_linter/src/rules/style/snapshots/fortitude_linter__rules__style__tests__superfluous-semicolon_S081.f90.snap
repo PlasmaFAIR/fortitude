@@ -1,13 +1,12 @@
 ---
-source: fortitude/src/rules/style/mod.rs
+source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S081.f90:2:3: S081 [*] unnecessary semicolon
   |
 1 | module m
 2 |   ;
-  |   ^ S081
+  |   - S081
 3 | end module m
   |
   = help: Remove this character
@@ -16,13 +15,13 @@ snapshot_kind: text
 1 1 | module m
 2   |-  ;
 3 2 | end module m
-4 3 | 
-5 4 | 
+4 3 |
+5 4 |
 
 ./resources/test/fixtures/style/S081.f90:6:10: S081 [*] unnecessary semicolon
   |
 6 | program p;
-  |          ^ S081
+  |          - S081
 7 |   ;
 8 |   implicit none;
   |
@@ -30,8 +29,8 @@ snapshot_kind: text
 
 ℹ Safe fix
 3 3 | end module m
-4 4 | 
-5 5 | 
+4 4 |
+5 5 |
 6   |-program p;
   6 |+program p
 7 7 |   ;
@@ -42,15 +41,15 @@ snapshot_kind: text
   |
 6 | program p;
 7 |   ;
-  |   ^ S081
+  |   - S081
 8 |   implicit none;
 9 |   integer :: i;
   |
   = help: Remove this character
 
 ℹ Safe fix
-4 4 | 
-5 5 | 
+4 4 |
+5 5 |
 6 6 | program p;
 7   |-  ;
 8 7 |   implicit none;
@@ -62,14 +61,14 @@ snapshot_kind: text
  6 | program p;
  7 |   ;
  8 |   implicit none;
-   |                ^ S081
+   |                - S081
  9 |   integer :: i;
 10 |   integer :: j;
    |
    = help: Remove this character
 
 ℹ Safe fix
-5 5 | 
+5 5 |
 6 6 | program p;
 7 7 |   ;
 8   |-  implicit none;
@@ -83,7 +82,7 @@ snapshot_kind: text
  7 |   ;
  8 |   implicit none;
  9 |   integer :: i;
-   |               ^ S081
+   |               - S081
 10 |   integer :: j;
 11 |   i = 1;; j = 2;
    |
@@ -104,7 +103,7 @@ snapshot_kind: text
  8 |   implicit none;
  9 |   integer :: i;
 10 |   integer :: j;
-   |               ^ S081
+   |               - S081
 11 |   i = 1;; j = 2;
 12 |   i = i + j; write (*, *) i;;
    |
@@ -125,7 +124,7 @@ snapshot_kind: text
  9 |   integer :: i;
 10 |   integer :: j;
 11 |   i = 1;; j = 2;
-   |         ^ S081
+   |         - S081
 12 |   i = i + j; write (*, *) i;;
 13 | end program p;
    |
@@ -145,7 +144,7 @@ snapshot_kind: text
  9 |   integer :: i;
 10 |   integer :: j;
 11 |   i = 1;; j = 2;
-   |                ^ S081
+   |                - S081
 12 |   i = i + j; write (*, *) i;;
 13 | end program p;
    |
@@ -165,7 +164,7 @@ snapshot_kind: text
 10 |   integer :: j;
 11 |   i = 1;; j = 2;
 12 |   i = i + j; write (*, *) i;;
-   |                             ^ S081
+   |                             - S081
 13 | end program p;
    |
    = help: Remove this character
@@ -183,7 +182,7 @@ snapshot_kind: text
 11 |   i = 1;; j = 2;
 12 |   i = i + j; write (*, *) i;;
 13 | end program p;
-   |              ^ S081
+   |              - S081
    |
    = help: Remove this character
 

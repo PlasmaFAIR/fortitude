@@ -1,13 +1,12 @@
 ---
-source: fortitude/src/rules/obsolescent/mod.rs
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/OB011.f90:2:3: OB011 common blocks are obsolescent, prefer modules or derived types
   |
 1 | subroutine s1()
 2 |   common /mydata/ i, j
-  |   ^^^^^^^^^^^^^^^^^^^^ OB011
+  |   -------------------- OB011
 3 |   integer(4) :: i, j
 4 |   i = 1
   |
@@ -16,7 +15,7 @@ snapshot_kind: text
    |
  7 | function f()
  8 |   common /mydata/ x
-   |   ^^^^^^^^^^^^^^^^^ OB011
+   |   ----------------- OB011
  9 |   real(8) :: x
 10 |   real(8) :: f
    |
@@ -25,7 +24,7 @@ snapshot_kind: text
    |
 15 | subroutine s2()
 16 |   common i, j ! unnamed common block
-   |   ^^^^^^^^^^^ OB011
+   |   ----------- OB011
 17 |   integer :: i, j
 18 |   write (*, *) i, j
    |
@@ -34,7 +33,7 @@ snapshot_kind: text
    |
 21 | subroutine s3()
 22 |   common /c1/ i, j, k /c2/ x, y, z /c1/ p, q , r ! Combined names common block
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ OB011
+   |   ---------------------------------------------- OB011
 23 |   integer :: i, j, k, p, q, r
 24 |   real :: x, y, z
    |

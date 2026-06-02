@@ -1,17 +1,16 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/correctness/C171.f90:3:37: C171 [*] line continuation in split escaped quote looks like implicit concatenation
   |
 1 |   program test
 2 |     implicit none (type, external)
 3 |     print*, "this looks like implicit "&
-  |  _____________________________________^
+  |  _____________________________________-
 4 | |        &"concatenation but isn't"
-  | |_________^ C171
-5 |     print*, "this looks like implicit "&  
+  | |_________- C171
+5 |     print*, "this looks like implicit "&
 6 |          "concatenation but isn't"
   |
   = help: remove escaped quote
@@ -23,7 +22,7 @@ snapshot_kind: text
 4   |-       &"concatenation but isn't"
   3 |+  print*, "this looks like implicit &
   4 |+       &concatenation but isn't"
-5 5 |   print*, "this looks like implicit "&  
+5 5 |   print*, "this looks like implicit "&
 6 6 |        "concatenation but isn't"
 7 7 |   print*, 'this looks like implicit '&
 
@@ -31,10 +30,10 @@ snapshot_kind: text
   |
 3 |     print*, "this looks like implicit "&
 4 |          &"concatenation but isn't"
-5 |     print*, "this looks like implicit "&  
-  |  _____________________________________^
+5 |     print*, "this looks like implicit "&
+  |  _____________________________________-
 6 | |        "concatenation but isn't"
-  | |________^ C171
+  | |________- C171
 7 |     print*, 'this looks like implicit '&
 8 |          &'concatenation but isn''t'
   |
@@ -44,9 +43,9 @@ snapshot_kind: text
 2 2 |   implicit none (type, external)
 3 3 |   print*, "this looks like implicit "&
 4 4 |        &"concatenation but isn't"
-5   |-  print*, "this looks like implicit "&  
+5   |-  print*, "this looks like implicit "&
 6   |-       "concatenation but isn't"
-  5 |+  print*, "this looks like implicit &  
+  5 |+  print*, "this looks like implicit &
   6 |+       concatenation but isn't"
 7 7 |   print*, 'this looks like implicit '&
 8 8 |        &'concatenation but isn''t'
@@ -54,12 +53,12 @@ snapshot_kind: text
 
 ./resources/test/fixtures/correctness/C171.f90:7:37: C171 [*] line continuation in split escaped quote looks like implicit concatenation
    |
- 5 |     print*, "this looks like implicit "&  
+ 5 |     print*, "this looks like implicit "&
  6 |          "concatenation but isn't"
  7 |     print*, 'this looks like implicit '&
-   |  _____________________________________^
+   |  _____________________________________-
  8 | |        &'concatenation but isn''t'
-   | |_________^ C171
+   | |_________- C171
  9 |     print*, 'this looks like implicit '&
 10 |          'concatenation but isn''t'
    |
@@ -67,7 +66,7 @@ snapshot_kind: text
 
 ℹ Safe fix
 4 4 |        &"concatenation but isn't"
-5 5 |   print*, "this looks like implicit "&  
+5 5 |   print*, "this looks like implicit "&
 6 6 |        "concatenation but isn't"
 7   |-  print*, 'this looks like implicit '&
 8   |-       &'concatenation but isn''t'
@@ -82,9 +81,9 @@ snapshot_kind: text
  7 |     print*, 'this looks like implicit '&
  8 |          &'concatenation but isn''t'
  9 |     print*, 'this looks like implicit '&
-   |  _____________________________________^
+   |  _____________________________________-
 10 | |        'concatenation but isn''t'
-   | |________^ C171
+   | |________- C171
 11 |     print*, "this explicit concatenation "&
 12 |          // "is intended"
    |

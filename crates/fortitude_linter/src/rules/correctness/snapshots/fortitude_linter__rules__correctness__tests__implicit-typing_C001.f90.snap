@@ -5,7 +5,7 @@ expression: diagnostics
 ./resources/test/fixtures/correctness/C001.f90:1:1: C001 [*] module uses implicit typing
   |
 1 | module my_module
-  | ^^^^^^^^^^^^^^^^ C001
+  | ---------------- C001
 2 |   parameter(N = 1)
 3 | end module my_module
   |
@@ -16,14 +16,14 @@ expression: diagnostics
   2 |+implicit none
 2 3 |   parameter(N = 1)
 3 4 | end module my_module
-4 5 | 
+4 5 |
 
 ./resources/test/fixtures/correctness/C001.f90:5:1: C001 [*] module uses implicit typing
   |
 3 | end module my_module
 4 |
 5 | module safe_fix
-  | ^^^^^^^^^^^^^^^ C001
+  | --------------- C001
 6 |   use, intrinsic :: iso_fortran_env, only: int32
 7 |   integer(int32) :: foo
 8 | contains
@@ -31,7 +31,7 @@ expression: diagnostics
   = help: Insert `implicit none`
 
 ℹ Unsafe fix
-4 4 | 
+4 4 |
 5 5 | module safe_fix
 6 6 |   use, intrinsic :: iso_fortran_env, only: int32
   7 |+  implicit none
@@ -44,7 +44,7 @@ expression: diagnostics
 13 | end module safe_fix
 14 |
 15 | program my_program
-   | ^^^^^^^^^^^^^^^^^^ C001
+   | ------------------ C001
 16 |   use, intrinsic :: iso_fortran_env, only: int32
 17 |   ! Fix should be applied after next line
 18 |   use safe_fix
@@ -65,7 +65,7 @@ expression: diagnostics
 21 | end program my_program
 22 |
 23 | subroutine external_sub(x)
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^ C001
+   | -------------------------- C001
 24 |   print*, x
 25 | end subroutine external_sub
    |
@@ -73,19 +73,19 @@ expression: diagnostics
 
 ℹ Unsafe fix
 21 21 | end program my_program
-22 22 | 
+22 22 |
 23 23 | subroutine external_sub(x)
    24 |+implicit none
 24 25 |   print*, x
 25 26 | end subroutine external_sub
-26 27 | 
+26 27 |
 
 ./resources/test/fixtures/correctness/C001.f90:27:1: C001 [*] module uses implicit typing
    |
 25 | end subroutine external_sub
 26 |
 27 | module my_module_external
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^ C001
+   | ------------------------- C001
 28 |   implicit none (external)
 29 |   parameter(N = 1)
 30 | end module my_module_external
@@ -94,20 +94,20 @@ expression: diagnostics
 
 ℹ Unsafe fix
 25 25 | end subroutine external_sub
-26 26 | 
+26 26 |
 27 27 | module my_module_external
 28    |-  implicit none (external)
    28 |+  implicit none (type, external)
 29 29 |   parameter(N = 1)
 30 30 | end module my_module_external
-31 31 | 
+31 31 |
 
 ./resources/test/fixtures/correctness/C001.f90:32:1: C001 [*] function uses implicit typing
    |
 30 | end module my_module_external
 31 |
 32 | real function external_func() result(x)
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ C001
+   | --------------------------------------- C001
 33 |   implicit real (a-z)
 34 |   x = 3.14
 35 | end function external_func
@@ -116,7 +116,7 @@ expression: diagnostics
 
 ℹ Unsafe fix
 30 30 | end module my_module_external
-31 31 | 
+31 31 |
 32 32 | real function external_func() result(x)
 33    |-  implicit real (a-z)
    33 |+  implicit none

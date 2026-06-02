@@ -1,14 +1,13 @@
 ---
-source: fortitude/src/rules/portability/mod.rs
+source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/portability/PORT001.f90:5:10: PORT001 Non-portable unit '6' in 'write' statement
   |
 3 |   integer :: i, named_unit
 4 |
 5 |   write (6,*) "enter an integer"
-  |          ^ PORT001
+  |          - PORT001
 6 |   read (unit=5,fmt=*) i
 7 |   write(fmt=*, unit=6) "thanks"
   |
@@ -18,7 +17,7 @@ snapshot_kind: text
   |
 5 |   write (6,*) "enter an integer"
 6 |   read (unit=5,fmt=*) i
-  |              ^ PORT001
+  |              - PORT001
 7 |   write(fmt=*, unit=6) "thanks"
   |
   = help: Use `input_unit` from `iso_fortran_env`
@@ -28,7 +27,7 @@ snapshot_kind: text
 5 |   write (6,*) "enter an integer"
 6 |   read (unit=5,fmt=*) i
 7 |   write(fmt=*, unit=6) "thanks"
-  |                     ^ PORT001
+  |                     - PORT001
 8 |
 9 |   open(newunit=named_unit, file="test.txt", action="write")
   |
@@ -39,7 +38,7 @@ snapshot_kind: text
 15 |   close(17)
 16 |
 17 |   write(0, *) "this is stderr"
-   |         ^ PORT001
+   |         - PORT001
 18 |
 19 |   ! Cray file units
    |

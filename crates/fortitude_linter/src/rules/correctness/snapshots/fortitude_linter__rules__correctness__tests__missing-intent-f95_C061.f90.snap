@@ -7,7 +7,7 @@ expression: diagnostics
  9 |   integer function foo(a, b, c, p)
 10 |     use mod
 11 |     integer :: a, c(2), f
-   |                ^ C061
+   |                - C061
 12 |     integer, dimension(:), intent(in) :: b
 13 |     procedure(sub) :: p         ! must not have `intent`
    |
@@ -17,7 +17,7 @@ expression: diagnostics
  9 |   integer function foo(a, b, c, p)
 10 |     use mod
 11 |     integer :: a, c(2), f
-   |                   ^^^^ C061
+   |                   ---- C061
 12 |     integer, dimension(:), intent(in) :: b
 13 |     procedure(sub) :: p         ! must not have `intent`
    |
@@ -27,7 +27,7 @@ expression: diagnostics
 16 |   subroutine bar(d, e, f)
 17 |     integer, pointer :: d
 18 |     integer, allocatable :: e(:, :)
-   |                             ^^^^^^^ C061
+   |                             ------- C061
 19 |     type(integer(kind=int64)), intent(inout) :: f
 20 |     integer :: g
    |

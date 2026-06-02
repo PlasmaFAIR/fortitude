@@ -1,14 +1,13 @@
 ---
-source: fortitude/src/message/text.rs
+source: crates/fortitude_linter/src/diagnostics/message/text.rs
 expression: content
-snapshot_kind: text
 ---
 test.f90:6:5: S201 [*] 'implicit none' set on the enclosing module
   |
 4 | contains
 5 |   subroutine foo
 6 |     implicit none
-  |     ^^^^^^^^^^^^^ S201
+  |     ------------- S201
 7 |   end subroutine
 8 | end module
   |
@@ -19,12 +18,12 @@ test.f90:7:3: S061 end statement should read 'end subroutine foo'
 5 |   subroutine foo
 6 |     implicit none
 7 |   end subroutine
-  |   ^^^^^^^^^^^^^^ S061
+  |   -------------- S061
 8 | end module
   |
 
 star_kind.f90:1:8: PORT021 integer*4 is non-standard, use integer(4)
   |
 1 | integer*4 foo; end
-  |        ^ PORT021
+  |        - PORT021
   |

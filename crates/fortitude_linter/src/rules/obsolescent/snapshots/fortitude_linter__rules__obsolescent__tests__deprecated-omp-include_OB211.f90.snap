@@ -6,7 +6,7 @@ expression: diagnostics
   |
 6 |     ! Deprecated since OpenMP 6.0
 7 |     include "omp_lib.h"
-  |     ^^^^^^^^^^^^^^^^^^^ OB211
+  |     ------------------- OB211
 8 |
 9 | end module obsolete_openmp
   |

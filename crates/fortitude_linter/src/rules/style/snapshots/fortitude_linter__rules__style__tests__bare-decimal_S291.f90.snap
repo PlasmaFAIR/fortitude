@@ -6,7 +6,7 @@ expression: diagnostics
   |
 6 |     real(dp) :: a = 6.0
 7 |     real(dp) :: b = 6.
-  |                     ^^ S291
+  |                     -- S291
 8 |     real(dp) :: c = .6
 9 |     real(dp) :: d = 12.45
   |
@@ -14,7 +14,7 @@ expression: diagnostics
 
 ℹ Safe fix
 4 4 |     implicit none (type, external)
-5 5 | 
+5 5 |
 6 6 |     real(dp) :: a = 6.0
 7   |-    real(dp) :: b = 6.
   7 |+    real(dp) :: b = 6.0
@@ -27,14 +27,14 @@ expression: diagnostics
  6 |     real(dp) :: a = 6.0
  7 |     real(dp) :: b = 6.
  8 |     real(dp) :: c = .6
-   |                     ^^ S291
+   |                     -- S291
  9 |     real(dp) :: d = 12.45
 10 |     real(dp) :: e = .45
    |
    = help: Prefer `0.6`
 
 ℹ Safe fix
-5 5 | 
+5 5 |
 6 6 |     real(dp) :: a = 6.0
 7 7 |     real(dp) :: b = 6.
 8   |-    real(dp) :: c = .6
@@ -48,7 +48,7 @@ expression: diagnostics
  8 |     real(dp) :: c = .6
  9 |     real(dp) :: d = 12.45
 10 |     real(dp) :: e = .45
-   |                     ^^^ S291
+   |                     --- S291
 11 |     real(dp) :: f = 45.
 12 |     real(dp) :: g = 1.0e+10
    |
@@ -69,7 +69,7 @@ expression: diagnostics
  9 |     real(dp) :: d = 12.45
 10 |     real(dp) :: e = .45
 11 |     real(dp) :: f = 45.
-   |                     ^^^ S291
+   |                     --- S291
 12 |     real(dp) :: g = 1.0e+10
 13 |     real(dp) :: h = 3.e+10
    |
@@ -90,7 +90,7 @@ expression: diagnostics
 11 |     real(dp) :: f = 45.
 12 |     real(dp) :: g = 1.0e+10
 13 |     real(dp) :: h = 3.e+10
-   |                     ^^^^^^ S291
+   |                     ------ S291
 14 |     real(dp) :: i = .5e10
 15 |     real(dp) :: j = 11.0d+10
    |
@@ -111,7 +111,7 @@ expression: diagnostics
 12 |     real(dp) :: g = 1.0e+10
 13 |     real(dp) :: h = 3.e+10
 14 |     real(dp) :: i = .5e10
-   |                     ^^^^^ S291
+   |                     ----- S291
 15 |     real(dp) :: j = 11.0d+10
 16 |     real(dp) :: k = 53.d+10
    |
@@ -132,7 +132,7 @@ expression: diagnostics
 14 |     real(dp) :: i = .5e10
 15 |     real(dp) :: j = 11.0d+10
 16 |     real(dp) :: k = 53.d+10
-   |                     ^^^^^^^ S291
+   |                     ------- S291
 17 |     real(dp) :: l = .75d10
 18 |     real(dp) :: m = .5_dp
    |
@@ -153,7 +153,7 @@ expression: diagnostics
 15 |     real(dp) :: j = 11.0d+10
 16 |     real(dp) :: k = 53.d+10
 17 |     real(dp) :: l = .75d10
-   |                     ^^^^^^ S291
+   |                     ------ S291
 18 |     real(dp) :: m = .5_dp
 19 |     real(dp) :: n = 5._dp
    |
@@ -174,7 +174,7 @@ expression: diagnostics
 16 |     real(dp) :: k = 53.d+10
 17 |     real(dp) :: l = .75d10
 18 |     real(dp) :: m = .5_dp
-   |                     ^^^^^ S291
+   |                     ----- S291
 19 |     real(dp) :: n = 5._dp
 20 |     real(dp) :: o = 0.5_dp
    |
@@ -188,14 +188,14 @@ expression: diagnostics
    18 |+    real(dp) :: m = 0.5_dp
 19 19 |     real(dp) :: n = 5._dp
 20 20 |     real(dp) :: o = 0.5_dp
-21 21 | 
+21 21 |
 
 ./resources/test/fixtures/style/S291.f90:19:21: S291 [*] trailing decimal point in `real` literal `5._dp`
    |
 17 |     real(dp) :: l = .75d10
 18 |     real(dp) :: m = .5_dp
 19 |     real(dp) :: n = 5._dp
-   |                     ^^^^^ S291
+   |                     ----- S291
 20 |     real(dp) :: o = 0.5_dp
    |
    = help: Prefer `5.0_dp`
@@ -207,5 +207,5 @@ expression: diagnostics
 19    |-    real(dp) :: n = 5._dp
    19 |+    real(dp) :: n = 5.0_dp
 20 20 |     real(dp) :: o = 0.5_dp
-21 21 | 
+21 21 |
 22 22 | end program p

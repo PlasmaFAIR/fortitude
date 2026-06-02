@@ -1,12 +1,12 @@
 ---
-source: fortitude/src/rules/obsolescent/mod.rs
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
 ---
 ./resources/test/fixtures/obsolescent/OB041.f90:2:5: OB041 computed go to statements are obsolescent, use a select case statement
   |
 1 | program test
 2 |     goto (10, 20, 30) M
-  |     ^^^^^^^^^^^^^^^^^^^ OB041
+  |     ------------------- OB041
 3 |     go to (10, 20, 30) M
 4 |     goto (10, 20, 30) ISAVE(1)
   |
@@ -16,7 +16,7 @@ expression: diagnostics
 1 | program test
 2 |     goto (10, 20, 30) M
 3 |     go to (10, 20, 30) M
-  |     ^^^^^^^^^^^^^^^^^^^^ OB041
+  |     -------------------- OB041
 4 |     goto (10, 20, 30) ISAVE(1)
 5 |     go to (10, 20, 30) ISAVE(1)
   |
@@ -26,7 +26,7 @@ expression: diagnostics
 2 |     goto (10, 20, 30) M
 3 |     go to (10, 20, 30) M
 4 |     goto (10, 20, 30) ISAVE(1)
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ OB041
+  |     -------------------------- OB041
 5 |     go to (10, 20, 30) ISAVE(1)
 6 |     goto (10) ISAVE(1)
   |
@@ -36,7 +36,7 @@ expression: diagnostics
 3 |     go to (10, 20, 30) M
 4 |     goto (10, 20, 30) ISAVE(1)
 5 |     go to (10, 20, 30) ISAVE(1)
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ OB041
+  |     --------------------------- OB041
 6 |     goto (10) ISAVE(1)
 7 |     go to (10) ISAVE(1)
   |
@@ -46,7 +46,7 @@ expression: diagnostics
 4 |     goto (10, 20, 30) ISAVE(1)
 5 |     go to (10, 20, 30) ISAVE(1)
 6 |     goto (10) ISAVE(1)
-  |     ^^^^^^^^^^^^^^^^^^ OB041
+  |     ------------------ OB041
 7 |     go to (10) ISAVE(1)
 8 |     goto 4
   |
@@ -56,7 +56,7 @@ expression: diagnostics
 5 |     go to (10, 20, 30) ISAVE(1)
 6 |     goto (10) ISAVE(1)
 7 |     go to (10) ISAVE(1)
-  |     ^^^^^^^^^^^^^^^^^^^ OB041
+  |     ------------------- OB041
 8 |     goto 4
 9 |     go to 4
   |

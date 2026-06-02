@@ -1,14 +1,13 @@
 ---
-source: fortitude/src/rules/obsolescent/mod.rs
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/OB051.f90:4:3: OB051 [*] `pause` statements are a deleted feature
   |
 2 |   implicit none
 3 |   print*,"hello"
 4 |   pause
-  |   ^^^^^ OB051
+  |   ----- OB051
 5 |   print*,"bye"
 6 | end program
   |
