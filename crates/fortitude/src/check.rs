@@ -355,7 +355,11 @@ fn check_files(
                                 let filename = resolved_file.file_name().to_string_lossy();
                                 let diagnostics = vec![
                                     Diagnostic::new(IoError { message }, TextRange::default())
-                                        .with_severity(Severity::Error)
+                                        .with_severity(
+                                            settings
+                                                .check
+                                                .resolve_severity(Rule::IoError, Severity::Error),
+                                        )
                                         .with_file(
                                             SourceFileBuilder::new(filename.as_ref(), "").finish(),
                                         ),
@@ -427,7 +431,11 @@ fn check_files(
                             let filename = path.to_string_lossy();
                             let diagnostics = vec![
                                 Diagnostic::new(IoError { message }, TextRange::default())
-                                    .with_severity(Severity::Error)
+                                    .with_severity(
+                                        settings
+                                            .check
+                                            .resolve_severity(Rule::IoError, Severity::Error),
+                                    )
                                     .with_file(
                                         SourceFileBuilder::new(filename.as_ref(), "").finish(),
                                     ),

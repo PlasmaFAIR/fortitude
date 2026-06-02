@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use crate::diagnostics::Applicability;
+use clap::builder::{TypedValueParser, ValueParserFactory};
 use colored::Color;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
@@ -69,6 +70,7 @@ pub struct CheckSettings {
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
     pub severity_default: Severity,
+    pub severity_overrides: Vec<RuleSeverityOverride>,
     pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
@@ -108,6 +110,7 @@ impl CheckSettings {
             unsafe_fixes: UnsafeFixes::default(),
             output_format: OutputFormat::default(),
             severity_default: Severity::default(),
+            severity_overrides: Vec::new(),
             target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
@@ -121,6 +124,26 @@ impl CheckSettings {
             line_too_long: line_length::settings::Settings::default(),
             use_statements: use_statements::settings::Settings::default(),
             complexity: complexity::settings::Settings::default(),
+        }
+    }
+
+    pub fn resolve_severity(&self, rule: Rule, severity: Severity) -> Severity {
+        if let Some(override_severity) = self
+            .severity_overrides
+            .iter()
+            .rev() // Last override takes precedence
+            .find(|override_| override_.matches(rule))
+            .map(|override_| override_.severity)
+        {
+            return match override_severity {
+                Severity::None => self.severity_default,
+                other => other,
+            };
+        }
+
+        match severity {
+            Severity::None => self.severity_default,
+            other => other,
         }
     }
 
@@ -522,6 +545,20 @@ impl fmt::Display for Severity {
     }
 }
 
+impl FromStr for Severity {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "none" => Ok(Self::None),
+            "error" => Ok(Self::Error),
+            "warning" => Ok(Self::Warning),
+            "info" => Ok(Self::Info),
+            _ => anyhow::bail!("Unknown severity: {s}"),
+        }
+    }
+}
+
 impl From<Severity> for Color {
     fn from(value: Severity) -> Self {
         match value {
@@ -530,6 +567,106 @@ impl From<Severity> for Color {
             Severity::Warning => Color::Yellow,
             Severity::Info => Color::Blue,
         }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RuleSeverityOverride {
+    pub selector: RuleSelector,
+    pub severity: Severity,
+}
+
+impl RuleSeverityOverride {
+    const EXPECTED_PATTERN: &'static str = "<RuleSelector>:<Severity> pair";
+
+    pub fn matches(&self, rule: Rule) -> bool {
+        self.selector.all_rules().any(|selected| selected == rule)
+    }
+}
+
+impl fmt::Display for RuleSeverityOverride {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (prefix, code) = self.selector.prefix_and_code();
+        write!(f, "{prefix}{code}:{}", self.severity)
+    }
+}
+
+impl FromStr for RuleSeverityOverride {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (selector, severity) = s
+            .split_once(':')
+            .ok_or_else(|| anyhow::anyhow!("Expected {}", Self::EXPECTED_PATTERN))?;
+        Ok(Self {
+            selector: RuleSelector::from_str(selector.trim())?,
+            severity: Severity::from_str(severity.trim())?,
+        })
+    }
+}
+
+impl Serialize for RuleSeverityOverride {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for RuleSeverityOverride {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let str_result = String::deserialize(deserializer)?;
+        Self::from_str(str_result.as_str()).map_err(|_| {
+            de::Error::invalid_value(
+                de::Unexpected::Str(str_result.as_str()),
+                &Self::EXPECTED_PATTERN,
+            )
+        })
+    }
+}
+
+#[derive(Clone)]
+pub struct RuleSeverityOverrideParser;
+
+impl ValueParserFactory for RuleSeverityOverride {
+    type Parser = RuleSeverityOverrideParser;
+
+    fn value_parser() -> Self::Parser {
+        RuleSeverityOverrideParser
+    }
+}
+
+impl TypedValueParser for RuleSeverityOverrideParser {
+    type Value = RuleSeverityOverride;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        let value = value
+            .to_str()
+            .ok_or_else(|| clap::Error::new(clap::error::ErrorKind::InvalidUtf8))?;
+
+        value.parse().map_err(|_| {
+            let mut error = clap::Error::new(clap::error::ErrorKind::ValueValidation).with_cmd(cmd);
+            if let Some(arg) = arg {
+                error.insert(
+                    clap::error::ContextKind::InvalidArg,
+                    clap::error::ContextValue::String(arg.to_string()),
+                );
+            }
+            error.insert(
+                clap::error::ContextKind::InvalidValue,
+                clap::error::ContextValue::String(value.to_string()),
+            );
+            error
+        })
     }
 }
 
