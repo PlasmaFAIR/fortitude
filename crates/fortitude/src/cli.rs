@@ -200,7 +200,7 @@ pub struct CheckCommand {
     pub output_format: Option<OutputFormat>,
 
     /// Set the default severity for violations.
-    /// The default severity is "warning".
+    /// The default severity is "error".
     #[arg(long, value_enum, env = "FORTITUDE_SEVERITY_DEFAULT")]
     pub severity_default: Option<Severity>,
 

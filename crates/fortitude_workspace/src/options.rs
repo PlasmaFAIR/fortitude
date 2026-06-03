@@ -121,15 +121,15 @@ pub struct CheckOptions {
     )]
     pub output_format: Option<OutputFormat>,
 
-    /// The default severity for violations. `"warning"` (default) will report
-    /// violations as warnings, `"info"` will report them as informational
-    /// messages, and `"error"` will report them as errors.
+    /// The default severity for violations. `"error"` (default) will report
+    /// violations as errors. `"warning"` will report them as warnings, and
+    /// `"info"` will report them as informational messages.
     #[option(
-        default = r#""warning""#,
+        default = r#""error""#,
         value_type = r#""info" | "warning" | "error""#,
         example = r#"
-            # Treat all violations as errors.
-            severity-default = "error"
+            # Treat all violations only as informational messages.
+            severity-default = "info"
          "#
     )]
     pub severity_default: Option<Severity>,

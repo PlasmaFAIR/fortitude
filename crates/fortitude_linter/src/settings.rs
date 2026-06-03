@@ -528,8 +528,8 @@ impl fmt::Display for OutputFormat {
 )]
 pub enum Severity {
     None,
-    Error,
     #[default]
+    Error,
     Warning,
     Info,
 }
