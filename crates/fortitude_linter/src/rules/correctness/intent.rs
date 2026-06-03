@@ -60,7 +60,7 @@ impl AstRule for MissingIntent {
                     // Get variable declaration
                     context
                         .symbol_table()
-                        .get(param.to_text(context.source_text())?)
+                        .get_var(param.to_text(context.source_text())?)
                 })
                 .filter(|param| {
                     // Procedures are not allowed intent

@@ -1,15 +1,16 @@
 //! Strong types for working with the tree-sitter AST
 
-use std::str::FromStr;
+use std::{rc::Rc, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use bitflags::bitflags;
+use fortitude_macros::HasNode;
 use itertools::Itertools;
 use ruff_source_file::SourceFile;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
 
-use crate::{ast::FortitudeNode, impl_has_node, traits::HasNode};
+use crate::{ast::FortitudeNode, traits::HasNode};
 
 #[derive(Clone, Debug)]
 pub struct ParameterStatement<'a> {
@@ -39,7 +40,7 @@ impl<'a> ParameterStatement<'a> {
 }
 
 /// A declaration of a single variable
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub struct NameDecl<'a> {
     name: String,
     node: Node<'a>,
@@ -72,8 +73,6 @@ impl<'a> NameDecl<'a> {
     }
 }
 
-impl_has_node!(NameDecl<'a>);
-
 #[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
 pub enum ExtentSize<'a> {
     Expression(Node<'a>),
@@ -99,7 +98,7 @@ impl<'a> HasNode<'a> for ExtentSize<'a> {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, HasNode)]
 pub struct Extent<'a> {
     start: Option<Node<'a>>,
     stop: Option<ExtentSize<'a>>,
@@ -127,8 +126,6 @@ impl<'a> Extent<'a> {
         })
     }
 }
-
-impl_has_node!(Extent<'a>);
 
 /// One rank of a dimension's array-spec
 #[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
@@ -256,7 +253,7 @@ impl<'a> AttributeKind<'a> {
 }
 
 /// A variable attribute and where it is
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub struct Attribute<'a> {
     kind: AttributeKind<'a>,
     node: Node<'a>,
@@ -274,8 +271,6 @@ impl<'a> Attribute<'a> {
         &self.kind
     }
 }
-
-impl_has_node!(Attribute<'a>);
 
 #[derive(Clone, Debug)]
 pub struct TypeInner<'a> {
@@ -326,16 +321,18 @@ impl<'a> HasNode<'a> for Type<'a> {
 }
 
 /// A variable declaration line
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub struct VariableDeclaration<'a> {
     type_: Type<'a>,
     attributes: Vec<Attribute<'a>>,
     names: Vec<NameDecl<'a>>,
     node: Node<'a>,
     has_colon: bool,
+    is_function: bool,
 }
 
 impl<'a> VariableDeclaration<'a> {
+    /// Create from `variable_declaration` node
     pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
         if node.kind() != "variable_declaration" {
             return Err(anyhow!("wrong node type"));
@@ -367,6 +364,47 @@ impl<'a> VariableDeclaration<'a> {
             names,
             node: *node,
             has_colon,
+            is_function: false,
+        })
+    }
+
+    /// Create from `function_statement`. Will fail if the statement has no `type`
+    pub fn try_from_fn_stmt(node: &Node<'a>, src: &str) -> Result<Self> {
+        if node.kind() != "function_statement" {
+            return Err(anyhow!("wrong node type"));
+        }
+
+        let type_ = Type::try_from_node(
+            node.child_by_field_name("type").context("expected type")?,
+            src,
+        )?;
+
+        let name = if let Some(result) = node.child_with_name("function_result") {
+            let id = result
+                .child_with_name("identifier")
+                .expect("`function_result` should have `identifier` child");
+            NameDecl::from_node(&id, src)
+        } else {
+            let id = node
+                .child_by_field_name("name")
+                .expect("`function_statement` must have `name` field");
+            NameDecl {
+                name: id
+                    .to_text(src)
+                    .context("`name` must have text")?
+                    .to_string(),
+                node: id,
+            }
+        };
+        let names = vec![name];
+
+        Ok(Self {
+            type_,
+            attributes: vec![],
+            names,
+            node: *node,
+            has_colon: false,
+            is_function: true,
         })
     }
 
@@ -392,12 +430,15 @@ impl<'a> VariableDeclaration<'a> {
             .any(|attr| attrs.contains(&attr.kind))
     }
 
-    pub fn has_colon(&self) -> bool {
+    pub const fn has_colon(&self) -> bool {
         self.has_colon
     }
-}
 
-impl_has_node!(VariableDeclaration<'a>);
+    /// Is this variable declaration actually a function statement?
+    pub const fn is_function(&self) -> bool {
+        self.is_function
+    }
+}
 
 /// Returns the tree-sitter node corresponding to the actual name of a
 /// declarator node, and not, say, the initialiser
@@ -437,16 +478,16 @@ pub fn get_init_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
 }
 
 /// A single Fortran variable
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub struct Variable<'a> {
     name: String,
     node: Node<'a>,
     /// Reference to the statement in which the variable is declared
-    decl: &'a VariableDeclaration<'a>,
+    decl: Rc<VariableDeclaration<'a>>,
 }
 
 impl<'a> Variable<'a> {
-    pub fn new(name: String, node: Node<'a>, decl: &'a VariableDeclaration<'a>) -> Self {
+    pub fn new(name: String, node: Node<'a>, decl: Rc<VariableDeclaration<'a>>) -> Self {
         Self { name, node, decl }
     }
 
@@ -455,7 +496,7 @@ impl<'a> Variable<'a> {
     }
 
     pub fn decl_statement(&'a self) -> &'a VariableDeclaration<'a> {
-        self.decl
+        self.decl.as_ref()
     }
 
     pub fn type_(&self) -> &Type<'_> {
@@ -474,8 +515,6 @@ impl<'a> Variable<'a> {
         self.decl.has_any_attributes(attrs)
     }
 }
-
-impl_has_node!(Variable<'a>);
 
 #[derive(EnumString, Display)]
 #[strum(ascii_case_insensitive)]
@@ -557,5 +596,132 @@ impl<'a> ImplicitStatement<'a> {
 
     pub fn is_implicit_none_external(&self) -> bool {
         self.none_type.contains(ImplicitNoneType::EXTERNAL)
+    }
+}
+
+#[derive(Clone, Debug, EnumIs, EnumString, IntoStaticStr, PartialEq)]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
+pub enum ProcedureAttributeKind {
+    Elemental,
+    Impure,
+    Module,
+    NonRecursive,
+    Pure,
+    Recursive,
+    Simple,
+}
+
+/// A procedure attribute and where it is
+#[derive(Clone, Debug, HasNode)]
+pub struct ProcedureAttribute<'a> {
+    kind: ProcedureAttributeKind,
+    node: Node<'a>,
+}
+
+impl<'a> ProcedureAttribute<'a> {
+    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
+        let kind = ProcedureAttributeKind::from_str(node.to_text(src).context("expected text")?)?;
+        Ok(Self { kind, node })
+    }
+
+    pub fn kind(&self) -> &ProcedureAttributeKind {
+        &self.kind
+    }
+}
+
+#[derive(Copy, Clone, Debug, EnumIs, EnumString, PartialEq)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
+pub enum ProcedureKind {
+    Function,
+    Subroutine,
+}
+
+#[derive(Clone, Debug, HasNode)]
+pub struct Procedure<'a> {
+    type_: Option<Type<'a>>,
+    attributes: Vec<ProcedureAttribute<'a>>,
+    name: String,
+    args: Vec<String>,
+    kind: ProcedureKind,
+    node: Node<'a>,
+}
+
+impl<'a> Procedure<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if !node.is_named() || !matches!(node.kind(), "function" | "subroutine") {
+            return Err(anyhow!("not a procedure"));
+        }
+
+        let kind = ProcedureKind::from_str(node.kind()).unwrap();
+
+        let stmt = node.child(0).context("expected child")?;
+
+        let type_ = if let Some(child) = stmt.child_by_field_name("type") {
+            Some(Type::try_from_node(child, src)?)
+        } else {
+            None
+        };
+
+        let attributes: Result<Vec<_>> = stmt
+            .named_children(&mut stmt.walk())
+            .filter(|attr| attr.kind() == "procedure_qualifier")
+            .map(|attr| ProcedureAttribute::try_from_node(attr, src))
+            .collect();
+        let attributes = attributes?;
+
+        let name = stmt
+            .child_by_field_name("name")
+            .context("procedure should have `name` field")?
+            .to_text(src)
+            .context("name should have text")?
+            .to_ascii_lowercase();
+
+        let args = stmt
+            .child_with_name("parameters")
+            .map(|params| {
+                params
+                    .named_children(&mut params.walk())
+                    .flat_map(|param| param.to_text(src))
+                    .map(|param| param.to_ascii_lowercase())
+                    .collect_vec()
+            })
+            .unwrap_or_default();
+
+        Ok(Self {
+            type_,
+            attributes,
+            name,
+            args,
+            kind,
+            node: *node,
+        })
+    }
+
+    pub const fn type_(&self) -> &Option<Type<'_>> {
+        &self.type_
+    }
+
+    pub const fn attributes(&self) -> &Vec<ProcedureAttribute<'_>> {
+        &self.attributes
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub const fn args(&self) -> &Vec<String> {
+        &self.args
+    }
+
+    pub const fn kind(&self) -> ProcedureKind {
+        self.kind
+    }
+
+    pub const fn is_function(&self) -> bool {
+        self.kind.is_function()
+    }
+
+    pub const fn is_subroutine(&self) -> bool {
+        self.kind.is_subroutine()
     }
 }

@@ -184,7 +184,7 @@ pub fn redent(s: &str, indentation: &str, line_ending: LineEnding) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::symbol_table::SymbolTable;
+    use crate::ast::symbol_table::{SymbolTable, SymbolTables};
 
     use super::*;
     use anyhow::{Context, Result};
@@ -211,14 +211,16 @@ end program foo
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let root = tree.root_node().child(0).context("Missing child")?;
 
-        let symbol_table = SymbolTable::new(&root, code);
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
+
         let test_source = SourceFileBuilder::new("test.f90", code).finish();
 
-        let x = symbol_table.get("x").unwrap();
-        let y = symbol_table.get("y").unwrap();
-        let z = symbol_table.get("Z").unwrap();
-        let a = symbol_table.get("a").unwrap();
-        let e = symbol_table.get("e").unwrap();
+        let x = symbol_table.get_var("x").unwrap();
+        let y = symbol_table.get_var("y").unwrap();
+        let z = symbol_table.get_var("Z").unwrap();
+        let a = symbol_table.get_var("a").unwrap();
+        let e = symbol_table.get_var("e").unwrap();
 
         let remove_x = remove_variable_decl(x.node(), x.decl_statement(), &test_source)?;
         assert_eq!(
@@ -270,11 +272,12 @@ end program foo
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let root = tree.root_node().child(0).context("Missing child")?;
 
-        let symbol_table = SymbolTable::new(&root, code);
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
 
-        let x = symbol_table.get("x").unwrap();
-        let y = symbol_table.get("y").unwrap();
-        let z = symbol_table.get("z").unwrap();
+        let x = symbol_table.get_var("x").unwrap();
+        let y = symbol_table.get_var("y").unwrap();
+        let z = symbol_table.get_var("z").unwrap();
 
         let add_x = add_attribute_to_var_decl(x.decl_statement(), "parameter");
         assert_eq!(

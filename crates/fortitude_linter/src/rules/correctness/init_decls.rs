@@ -89,7 +89,7 @@ impl AstRule for InitialisationInDeclaration {
         })?;
 
         let name = get_name_node_of_declarator(node).to_text(src)?.to_string();
-        let decl = context.symbol_table().get(name.as_str())?;
+        let decl = context.symbol_table().get_var(name.as_str())?;
         if decl.has_any_attributes(&[AttributeKind::Save, AttributeKind::Parameter]) {
             return None;
         }
@@ -209,7 +209,7 @@ impl AstRule for PointerInitialisationInDeclaration {
 
         let var = get_name_node_of_declarator(node);
         let name = var.to_text(src)?.to_string();
-        let decl = context.symbol_table().get(name.as_str())?;
+        let decl = context.symbol_table().get_var(name.as_str())?;
         if decl.has_attribute(AttributeKind::Save) {
             return None;
         }
