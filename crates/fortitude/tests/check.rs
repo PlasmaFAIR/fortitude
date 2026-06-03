@@ -160,7 +160,7 @@ end program test
     3 |     implicit none
     4 |     integer :: i
     5 |     i = 1  ! Comment ending with backslash\
-      |                                           - C051
+      |                                           ^ C051
     6 |     select case (i)  ! Select without default
     7 |         case(1)
       |
@@ -173,7 +173,7 @@ end program test
      7 | |         case(1)
      8 | |             print *, "one"
      9 | |     end select
-       | |______________- C011
+       | |______________^ C011
     10 |   end program test
        |
        = help: Add 'case default'
@@ -256,14 +256,14 @@ end program
                          .args(["--select=S061,C001,PORT011,PORT021"])
                          .file(&test_file)
                          .build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -273,7 +273,7 @@ end program
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
-      |          -- PORT021
+      |          ^^ PORT021
     4 | end program
       |
       = help: Replace with 'logical(4)'
@@ -282,7 +282,7 @@ end program
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
-      |           - PORT011
+      |           ^ PORT011
     4 | end program
       |
       = help: Use the parameter 'int32' from 'iso_fortran_env'
@@ -292,7 +292,7 @@ end program
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
-      | ----------- S061
+      | ^^^^^^^^^^^ S061
       |
       = help: Write as 'end program test'.
 
@@ -327,14 +327,14 @@ end program
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args(["--select=C001,style"]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -345,7 +345,7 @@ end program
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
-      | ----------- S061
+      | ^^^^^^^^^^^ S061
       |
       = help: Write as 'end program test'.
 
@@ -389,14 +389,14 @@ select = ["C001", "style"]
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .config(&config_file)
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -407,7 +407,7 @@ select = ["C001", "style"]
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
-      | ----------- S061
+      | ^^^^^^^^^^^ S061
       |
       = help: Write as 'end program test'.
 
@@ -452,14 +452,14 @@ select = ["C001"]
                          .config(&config_file)
                          .file(&test_file)
                          .args(["--extend-select", "style"]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -470,7 +470,7 @@ select = ["C001"]
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
-      | ----------- S061
+      | ^^^^^^^^^^^ S061
       |
       = help: Write as 'end program test'.
 
@@ -514,14 +514,14 @@ select = ["C001", "style"]
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .config(&config_file)
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -532,7 +532,7 @@ select = ["C001", "style"]
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
-      | ----------- S061
+      | ^^^^^^^^^^^ S061
       |
       = help: Write as 'end program test'.
 
@@ -576,14 +576,14 @@ select = ["C001", "style"]
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .config(&config_file)
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program test
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     3 |   logical*4, parameter :: true = .true.
     4 | end program
       |
@@ -594,7 +594,7 @@ select = ["C001", "style"]
     2 | program test
     3 |   logical*4, parameter :: true = .true.
     4 | end program
-      | ----------- S061
+      | ^^^^^^^^^^^ S061
       |
       = help: Write as 'end program test'.
 
@@ -635,7 +635,7 @@ end program foo
                          .args(["--select=S071,C022,S201,C003", "--preview", "--fix"])
                          .file(&test_file)
                          .build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -643,7 +643,7 @@ end program foo
       |
     2 | program foo
     3 |   implicit none
-      |   ------------- C003
+      |   ^^^^^^^^^^^^^ C003
     4 |   real :: i
     5 |   i = 4.0
       |
@@ -654,7 +654,7 @@ end program foo
     2 | program foo
     3 |   implicit none
     4 |   real :: i
-      |   ---- C022
+      |   ^^^^ C022
     5 |   i = 4.0
     6 | contains
       |
@@ -711,7 +711,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=S071,C022,S201,C003", "--preview", "--fix", "--unsafe-fixes"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -720,7 +720,7 @@ end program foo
     2 | program foo
     3 |   implicit none (type, external)
     4 |   real :: i
-      |   ---- C022
+      |   ^^^^ C022
     5 |   i = 4.0
     6 | contains
       |
@@ -821,7 +821,7 @@ endprogram
                          .arg("--fix")
                          .arg("--fixable=S061")
                          .arg(&test_file),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -829,7 +829,7 @@ endprogram
       |
     2 | program foo
     3 |   implicit none
-      |   ------------- C003
+      |   ^^^^^^^^^^^^^ C003
     4 | end program foo
       |
       = help: Add `(external)` to 'implicit none'
@@ -878,7 +878,7 @@ endprogram
                          .arg("--fix")
                          .arg("--unfixable=C003")
                          .arg(&test_file),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -886,7 +886,7 @@ endprogram
       |
     2 | program foo
     3 |   implicit none
-      |   ------------- C003
+      |   ^^^^^^^^^^^^^ C003
     4 | end program foo
       |
       = help: Add `(external)` to 'implicit none'
@@ -992,7 +992,7 @@ fixable = ["C003"]
                          .arg("--fix")
                          .arg("--fixable=S061")
                          .arg(&test_file),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1000,7 +1000,7 @@ fixable = ["C003"]
       |
     2 | program test
     3 |   implicit none
-      |   ------------- C003
+      |   ^^^^^^^^^^^^^ C003
     4 | end program test
       |
       = help: Add `(external)` to 'implicit none'
@@ -1049,7 +1049,7 @@ fixable = ["S061"]
                          .arg("--unfixable=S061")
                          .arg("--extend-fixable=C003")
                          .arg(&test_file),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1058,7 +1058,7 @@ fixable = ["S061"]
     2 | program test
     3 |   implicit none (type, external)
     4 | end program
-      | ----------- S061
+      | ^^^^^^^^^^^ S061
       |
       = help: Write as 'end program test'.
 
@@ -1102,7 +1102,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=syntax-error,superfluous-semicolon,line-too-long", "--line-length=50", "--preview"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1111,7 +1111,7 @@ end program foo
     4 |   integer :: i
     5 |   integer :: j
     6 |   i = 2;
-      |        - S081
+      |        ^ S081
     7 |   j = i ^ 2  ! This is a syntax error
     8 |   print *, j;
       |
@@ -1122,7 +1122,7 @@ end program foo
     5 |   integer :: j
     6 |   i = 2;
     7 |   j = i ^ 2  ! This is a syntax error
-      |         --- E001
+      |         ^^^ E001
     8 |   print *, j;
     9 |   print *, i + i + i + i + i + i + i + i + i + i + i
       |
@@ -1132,7 +1132,7 @@ end program foo
      7 |   j = i ^ 2  ! This is a syntax error
      8 |   print *, j;
      9 |   print *, i + i + i + i + i + i + i + i + i + i + i
-       |                                                   -- S001
+       |                                                   ^^ S001
     10 | end program foo
        |
 
@@ -1172,7 +1172,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=superfluous-semicolon", "--preview"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1181,7 +1181,7 @@ end program foo
     4 |   integer :: i
     5 |   integer :: j
     6 |   i = 2;
-      |        - S081
+      |        ^ S081
     7 |   j = i ^ 2  ! This is a syntax error
     8 |   print *, j;
       |
@@ -1192,7 +1192,7 @@ end program foo
     6 |   i = 2;
     7 |   j = i ^ 2  ! This is a syntax error
     8 |   print *, j;
-      |             - S081
+      |             ^ S081
     9 | end program foo
       |
       = help: Remove this character
@@ -1234,7 +1234,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=syntax-error,superfluous-semicolon", "--preview"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1243,7 +1243,7 @@ end program foo
     4 |   integer :: i
     5 |   integer :: j
     6 |   i = 2;
-      |        - S081
+      |        ^ S081
     7 |   ! allow(syntax-error)
     8 |   j = i ^ 2  ! This is a syntax error
       |
@@ -1254,7 +1254,7 @@ end program foo
      7 |   ! allow(syntax-error)
      8 |   j = i ^ 2  ! This is a syntax error
      9 |   print *, j;
-       |             - S081
+       |             ^ S081
     10 | end program foo
        |
        = help: Remove this character
@@ -1295,7 +1295,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=superfluous-semicolon", "--preview", "--fix"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1304,7 +1304,7 @@ end program foo
     6 |   i = 2
     7 |   j = i ^ 2  ! This is a syntax error
     8 |   print *, j;  ! superfluous-semicolon
-      |             - S081
+      |             ^ S081
     9 | end program foo
       |
       = help: Remove this character
@@ -1339,9 +1339,9 @@ program test
   write (*, '("╔════════════════════════════════════════════╗")')
   write (*, '("║  UTF-8 LOGO BOX                            ║")')
   write (*, '("╚════════════════════════════════════════════╝")')
-  !-- transform into g/cm³
+  !-- transform into g/cm³   
   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-  !-- transform³ into³ g/cm³
+  !-- transform³ into³ g/cm³   
   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
 end program test
 "#,
@@ -1358,7 +1358,7 @@ end program test
       |
     2 | ...
     3 | ...ly_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_long_module_name, only : integer_working_precision
-      |       ------------------------------------------------------------------------------------------------------------------------------------------------------------------ S001
+      |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
     4 | ...
     5 | ...n(1) :: a = [1]
       |
@@ -1368,7 +1368,7 @@ end program test
     3 |   use some_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_rea...
     4 |   implicit none
     5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
-      |                                                             ------------ S001
+      |                                                             ^^^^^^^^^^^^ S001
     6 |   write (*, '("╔════════════════════════════════════════════╗")')
     7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
       |
@@ -1378,7 +1378,7 @@ end program test
     4 |   implicit none
     5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
     6 |   write (*, '("╔════════════════════════════════════════════╗")')
-      |                                                             ----- S001
+      |                                                             ^^^^^ S001
     7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
     8 |   write (*, '("╚════════════════════════════════════════════╝")')
       |
@@ -1388,9 +1388,9 @@ end program test
     5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
     6 |   write (*, '("╔════════════════════════════════════════════╗")')
     7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
-      |                                                             ----- S001
+      |                                                             ^^^^^ S001
     8 |   write (*, '("╚════════════════════════════════════════════╝")')
-    9 |   !-- transform into g/cm³
+    9 |   !-- transform into g/cm³   
       |
 
     [TEMP_FILE] S001 line length of 65, exceeds maximum 60
@@ -1398,8 +1398,8 @@ end program test
      6 |   write (*, '("╔════════════════════════════════════════════╗")')
      7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
      8 |   write (*, '("╚════════════════════════════════════════════╝")')
-       |                                                             ----- S001
-     9 |   !-- transform into g/cm³
+       |                                                             ^^^^^ S001
+     9 |   !-- transform into g/cm³   
     10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
        |
 
@@ -1407,19 +1407,19 @@ end program test
        |
      7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
      8 |   write (*, '("╚════════════════════════════════════════════╝")')
-     9 |   !-- transform into g/cm³
-       |                           --- S101
+     9 |   !-- transform into g/cm³   
+       |                           ^^^ S101
     10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    11 |   !-- transform³ into³ g/cm³
+    11 |   !-- transform³ into³ g/cm³   
        |
        = help: Remove trailing whitespace
 
     [TEMP_FILE] S101 [*] trailing whitespace
        |
-     9 |   !-- transform into g/cm³
+     9 |   !-- transform into g/cm³   
     10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    11 |   !-- transform³ into³ g/cm³
-       |                             --- S101
+    11 |   !-- transform³ into³ g/cm³   
+       |                             ^^^ S101
     12 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
     13 | end program test
        |
@@ -1481,14 +1481,14 @@ end module {file}{idx}
                          .arg("--select=implicit-typing")
                          .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     bar0.f90:2:1: C001 module uses implicit typing
       |
     2 | module bar0
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1498,7 +1498,7 @@ end module {file}{idx}
     baz0.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz0
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1508,7 +1508,7 @@ end module {file}{idx}
     foo0.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo0
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1518,7 +1518,7 @@ end module {file}{idx}
     nested/bar1.f90:2:1: C001 module uses implicit typing
       |
     2 | module bar1
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1528,7 +1528,7 @@ end module {file}{idx}
     nested/baz1.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz1
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1538,7 +1538,7 @@ end module {file}{idx}
     nested/foo1.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo1
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1601,14 +1601,14 @@ end module {file}{idx}
                          .arg("--select=implicit-typing")
                          .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     baz0.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz0
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1618,7 +1618,7 @@ end module {file}{idx}
     foo0.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo0
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1628,7 +1628,7 @@ end module {file}{idx}
     nested/baz1.f90:2:1: C001 module uses implicit typing
       |
     2 | module baz1
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1638,7 +1638,7 @@ end module {file}{idx}
     nested/foo1.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo1
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1707,14 +1707,14 @@ fn check_exclude() -> anyhow::Result<()> {
                          .filename(".")
                          .build()
                          .current_dir(exclude_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module uses implicit typing
       |
     2 | module numpy
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1724,7 +1724,7 @@ fn check_exclude() -> anyhow::Result<()> {
     base.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1734,7 +1734,7 @@ fn check_exclude() -> anyhow::Result<()> {
     foo/foo.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo
-      | ---------- C001
+      | ^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1767,14 +1767,14 @@ fn check_extend_exclude() -> anyhow::Result<()> {
                          .arg("--select=implicit-typing")
                          .arg("--extend-exclude=bar")
                          .current_dir(exclude_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     base.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1807,14 +1807,14 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
                          .filename("foo/foo.f90")
                          .build()
                          .current_dir(exclude_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     foo/foo.f90:2:1: C001 module uses implicit typing
       |
     2 | module foo
-      | ---------- C001
+      | ^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1871,14 +1871,14 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
                          .filename(".venv/lib/site-packages/")
                          .build()
                          .current_dir(exclude_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module uses implicit typing
       |
     2 | module numpy
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -1935,7 +1935,7 @@ program test
   ! allow(star-kind)
   logical*4, parameter :: true = .true.
   ! allow(trailing-whitespace)
-  logical*4, parameter :: false = .false.
+  logical*4, parameter :: false = .false.  
 end program
 "#,
     )?;
@@ -1944,7 +1944,7 @@ end program
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args(["--select=C001,S061,PORT011,PORT021,S101"]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1952,8 +1952,8 @@ end program
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.
-      |          -- PORT021
+    7 |   logical*4, parameter :: false = .false.  
+      |          ^^ PORT021
     8 | end program
       |
       = help: Replace with 'logical(4)'
@@ -1985,7 +1985,7 @@ program test
   ! allow(star-kind)
   logical*4, parameter :: true = .true.
   ! allow(trailing-whitespace)
-  logical*4, parameter :: false = .false.
+  logical*4, parameter :: false = .false.  
 end program
 "#,
     )?;
@@ -1994,7 +1994,7 @@ end program
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args(["--select=C001,S061,PORT011,PORT021,S101", "--ignore-allow-comments"]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2002,7 +2002,7 @@ end program
       |
     2 | ! allow(C001, unnamed-end-statement, literal-kind)
     3 | program test
-      | ------------ C001
+      | ^^^^^^^^^^^^ C001
     4 |   ! allow(star-kind)
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
@@ -2014,9 +2014,9 @@ end program
     3 | program test
     4 |   ! allow(star-kind)
     5 |   logical*4, parameter :: true = .true.
-      |          -- PORT021
+      |          ^^ PORT021
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.
+    7 |   logical*4, parameter :: false = .false.  
       |
       = help: Replace with 'logical(4)'
 
@@ -2025,9 +2025,9 @@ end program
     3 | program test
     4 |   ! allow(star-kind)
     5 |   logical*4, parameter :: true = .true.
-      |           - PORT011
+      |           ^ PORT011
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.
+    7 |   logical*4, parameter :: false = .false.  
       |
       = help: Use the parameter 'int32' from 'iso_fortran_env'
 
@@ -2035,8 +2035,8 @@ end program
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.
-      |          -- PORT021
+    7 |   logical*4, parameter :: false = .false.  
+      |          ^^ PORT021
     8 | end program
       |
       = help: Replace with 'logical(4)'
@@ -2045,8 +2045,8 @@ end program
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.
-      |           - PORT011
+    7 |   logical*4, parameter :: false = .false.  
+      |           ^ PORT011
     8 | end program
       |
       = help: Use the parameter 'int32' from 'iso_fortran_env'
@@ -2055,8 +2055,8 @@ end program
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.
-      |                                          -- S101
+    7 |   logical*4, parameter :: false = .false.  
+      |                                          ^^ S101
     8 | end program
       |
       = help: Remove trailing whitespace
@@ -2064,9 +2064,9 @@ end program
     [TEMP_FILE] S061 [*] end statement should be named.
       |
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.
+    7 |   logical*4, parameter :: false = .false.  
     8 | end program
-      | ----------- S061
+      | ^^^^^^^^^^^ S061
       |
       = help: Write as 'end program test'.
 
@@ -2165,7 +2165,7 @@ end program myprogram
                          .config(&config_file)
                          .file(&fortran_file)
                          .build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2173,7 +2173,7 @@ end program myprogram
     [TEMP_FILE] C001 program uses implicit typing
       |
     2 | program myprogram
-      | ----------------- C001
+      | ^^^^^^^^^^^^^^^^^ C001
     3 | end program myprogram
       |
       = help: Insert `implicit none`
@@ -2181,7 +2181,7 @@ end program myprogram
     [TEMP_FILE] S001 line length of 17, exceeds maximum 10
       |
     2 | program myprogram
-      |           ------- S001
+      |           ^^^^^^^ S001
     3 | end program myprogram
       |
 
@@ -2189,7 +2189,7 @@ end program myprogram
       |
     2 | program myprogram
     3 | end program myprogram
-      |           ----------- S001
+      |           ^^^^^^^^^^^ S001
       |
 
     fortitude: 1 files scanned.
@@ -2254,14 +2254,14 @@ fn check_gitignore() -> anyhow::Result<()> {
                          .filename(".")
                          .build()
                          .current_dir(gitignore_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     include.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2271,7 +2271,7 @@ fn check_gitignore() -> anyhow::Result<()> {
     include/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
-      | -------------- C001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2303,14 +2303,14 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
                          .arg("--select=implicit-typing")
                          .arg("--no-respect-gitignore")
                          .current_dir(gitignore_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2320,7 +2320,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     exclude/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
-      | -------------- C001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2330,7 +2330,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     exclude/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
-      | -------------- C001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2340,7 +2340,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     include.f90:2:1: C001 module uses implicit typing
       |
     2 | module base
-      | ----------- C001
+      | ^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2350,7 +2350,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     include/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
-      | -------------- C001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2360,7 +2360,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     include/exclude/exclude.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
-      | -------------- C001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2370,7 +2370,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     include/exclude/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module exclude
-      | -------------- C001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2380,7 +2380,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     include/include.f90:2:1: C001 module uses implicit typing
       |
     2 | module include
-      | -------------- C001
+      | ^^^^^^^^^^^^^^ C001
     3 | ! missing implicit none
     4 | contains
     5 |   integer function f()
@@ -2459,7 +2459,7 @@ fn show_statistics() -> anyhow::Result<()> {
         r#"
 program test
   logical*4, parameter :: true = .true.
-  logical*4, parameter :: false = .false.
+  logical*4, parameter :: false = .false.  
 end program test
 "#,
     )?;
@@ -2500,7 +2500,7 @@ fn show_statistics_unsafe_fixes() -> anyhow::Result<()> {
         r#"
 program test
   logical*4, parameter :: true = .true.
-  logical*4, parameter :: false = .false.
+  logical*4, parameter :: false = .false.  
 end program test
 "#,
     )?;
@@ -2541,7 +2541,7 @@ fn show_statistics_json() -> anyhow::Result<()> {
         r#"
 program test
   logical*4, parameter :: true = .true.
-  logical*4, parameter :: false = .false.
+  logical*4, parameter :: false = .false.  
 end program test
 "#,
     )?;
@@ -2740,14 +2740,14 @@ end program foo
                          .args(["--select=C", "--diff", "--unsafe-fixes"])
                          .file(&test_file)
                          .build(),
-                         @r"
+                         @"
     success: true
     exit_code: 0
     ----- stdout -----
     --- [TEMP_FILE]
     +++ [TEMP_FILE]
     @@ -1,5 +1,5 @@
-
+     
      program foo
     -  implicit none
     +  implicit none (type, external)
@@ -2810,7 +2810,7 @@ end program test
                              &filter_arg,
                              "--select=PORT011",
                          ]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2818,7 +2818,7 @@ end program test
       |
     2 | program test
     3 |   logical*4, parameter :: true = .true.
-      |           - PORT011
+      |           ^ PORT011
     4 |   logical*4, parameter :: false = .false.
     5 |   ! more lines
       |
@@ -2829,7 +2829,7 @@ end program test
     6 |   !
     7 |   !
     8 |   logical*4 :: maybe
-      |           - PORT011
+      |           ^ PORT011
     9 | end program test
       |
       = help: Use the parameter 'int32' from 'iso_fortran_env'
@@ -2933,7 +2933,7 @@ fn git_staged() -> anyhow::Result<()> {
                              "--select=PORT011",
                          ]).build()
                          .current_dir(tempdir.path()),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2941,7 +2941,7 @@ fn git_staged() -> anyhow::Result<()> {
        |
     12 |   ! new line, only this should get flagged
     13 |   logical*4 :: maybe
-       |           - PORT011
+       |           ^ PORT011
     14 | end program test
        |
        = help: Use the parameter 'int32' from 'iso_fortran_env'
@@ -2994,7 +2994,7 @@ fn git_since() -> anyhow::Result<()> {
                              "--select=PORT011",
                          ]).build()
                          .current_dir(tempdir.path()),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -3002,7 +3002,7 @@ fn git_since() -> anyhow::Result<()> {
        |
     12 |   ! new line, only this should get flagged
     13 |   logical*4 :: maybe
-       |           - PORT011
+       |           ^ PORT011
     14 | end program test
        |
        = help: Use the parameter 'int32' from 'iso_fortran_env'
