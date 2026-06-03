@@ -1,4 +1,4 @@
-module program  ! Couldn't call this 'module', syntax error
+module module
 
     implicit none (type, external)
     private
@@ -17,8 +17,8 @@ contains
     subroutine sub()
         integer :: i
         integer :: j
-        if: do i = 1, 10  ! Couldn't call this 'do', syntax error
-            cycle: do j = 1, 10  ! Couldn't call this 'do', syntax error
+        do: do i = 1, 10
+            cycle: do j = 1, 10
                 print *, i, j
                 if (j == 5) then
                     cycle cycle
@@ -30,9 +30,9 @@ contains
         end do if
     end subroutine sub
 
-end module program
+end module module
 
-program module
+program program
 
     implicit none (type, external)
 
@@ -67,4 +67,4 @@ contains
         result = pure + elemental + recursive
     end function function
 
-end program module
+end program program
