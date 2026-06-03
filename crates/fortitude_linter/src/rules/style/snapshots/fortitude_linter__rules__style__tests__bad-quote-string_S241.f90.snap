@@ -6,7 +6,7 @@ expression: diagnostics
   |
 4 |   print *, "Hello, World!"
 5 |   print *, 'Hello, World!'
-  |            --------------- S241
+  |            ^^^^^^^^^^^^^^^ S241
 6 |   print *, 'Hello, "World"!'
 7 |   print *, "Hello, ""World""!"
   |
@@ -14,7 +14,7 @@ expression: diagnostics
 
 ℹ Safe fix
 2 2 |   implicit none (type, external)
-3 3 |
+3 3 | 
 4 4 |   print *, "Hello, World!"
 5   |-  print *, 'Hello, World!'
   5 |+  print *, "Hello, World!"
@@ -27,7 +27,7 @@ expression: diagnostics
  6 |   print *, 'Hello, "World"!'
  7 |   print *, "Hello, ""World""!"
  8 |   print *, 'Hello, ''World''!'
-   |            ------------------- S241
+   |            ^^^^^^^^^^^^^^^^^^^ S241
  9 |   print *, "Hello, &
 10 |             & World!"
    |
@@ -37,9 +37,9 @@ expression: diagnostics
  9 |     print *, "Hello, &
 10 |               & World!"
 11 |     print *, 'Hello, &
-   |  ____________-
+   |  ____________^
 12 | |             & World!'
-   | |_____________________- S241
+   | |_____________________^ S241
 13 |     print *, 'Hello, &
 14 |               & "World"!'
    |
@@ -62,9 +62,9 @@ expression: diagnostics
 15 |     print *, "Hello, &
 16 |               & ""World""!"
 17 |     print *, 'Hello, &
-   |  ____________-
+   |  ____________^
 18 | |             & ''World''!'
-   | |_________________________- S241
+   | |_________________________^ S241
 19 |
 20 |     ! TODO: Add tests for multiline strings with a comment line in the middle
    |

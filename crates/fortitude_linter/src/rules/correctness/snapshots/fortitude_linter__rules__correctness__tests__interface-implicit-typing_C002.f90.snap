@@ -7,7 +7,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   interface
 4 |     integer function myfunc(x)
-  |     -------------------------- C002
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ C002
 5 |       integer, intent(in) :: x
 6 |     end function myfunc
   |
@@ -20,14 +20,14 @@ expression: diagnostics
   5 |+    implicit none
 5 6 |       integer, intent(in) :: x
 6 7 |     end function myfunc
-7 8 |
+7 8 | 
 
 ./resources/test/fixtures/correctness/C002.f90:8:5: C002 [*] interface 'subroutine' uses implicit typing
    |
  6 |     end function myfunc
  7 |
  8 |     subroutine mysub(x)
-   |     ------------------- C002
+   |     ^^^^^^^^^^^^^^^^^^^ C002
  9 |       implicit none (external)
 10 |       integer, intent(in) :: x
 11 |     end subroutine mysub
@@ -36,7 +36,7 @@ expression: diagnostics
 
 ℹ Unsafe fix
 6  6  |     end function myfunc
-7  7  |
+7  7  | 
 8  8  |     subroutine mysub(x)
 9     |-      implicit none (external)
    9  |+      implicit none (type, external)
@@ -49,7 +49,7 @@ expression: diagnostics
 16 |   implicit none
 17 |   interface
 18 |     real function myfunc2(x)
-   |     ------------------------ C002
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^ C002
 19 |       implicit real (a,z)
 20 |     end function myfunc2
    |
@@ -62,7 +62,7 @@ expression: diagnostics
 19    |-      implicit real (a,z)
    19 |+      implicit none
 20 20 |     end function myfunc2
-21 21 |
+21 21 | 
 22 22 |     subroutine mysub2(x)
 
 ./resources/test/fixtures/correctness/C002.f90:22:5: C002 [*] interface 'subroutine' uses implicit typing
@@ -70,7 +70,7 @@ expression: diagnostics
 20 |     end function myfunc2
 21 |
 22 |     subroutine mysub2(x)
-   |     -------------------- C002
+   |     ^^^^^^^^^^^^^^^^^^^^ C002
 23 |       integer, intent(inout) :: x
 24 |     end subroutine mysub2
 25 |   end interface
@@ -79,7 +79,7 @@ expression: diagnostics
 
 ℹ Unsafe fix
 20 20 |     end function myfunc2
-21 21 |
+21 21 | 
 22 22 |     subroutine mysub2(x)
    23 |+    implicit none
 23 24 |       integer, intent(inout) :: x

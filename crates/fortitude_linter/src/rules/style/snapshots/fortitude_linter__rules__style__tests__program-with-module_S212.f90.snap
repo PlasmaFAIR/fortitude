@@ -7,7 +7,7 @@ expression: diagnostics
  6 | end module mod1
  7 |
  8 | program main
-   | ------------ S212
+   | ^^^^^^^^^^^^ S212
  9 |     use :: mod1, only: test1
 10 |
 11 | end program main

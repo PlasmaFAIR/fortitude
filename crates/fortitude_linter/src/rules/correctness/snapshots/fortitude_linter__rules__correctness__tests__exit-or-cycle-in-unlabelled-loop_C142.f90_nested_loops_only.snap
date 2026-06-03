@@ -7,7 +7,7 @@ expression: diagnostics
 25 |     ! should warn
 26 |     do j = 1, 2
 27 |       cycle
-   |       ----- C142
+   |       ^^^^^ C142
 28 |     end do
 29 |   end do label5
    |
@@ -17,7 +17,7 @@ expression: diagnostics
 54 |     do
 55 |       ! should warn
 56 |       exit
-   |       ---- C142
+   |       ^^^^ C142
 57 |     end do
 58 |   end do
    |

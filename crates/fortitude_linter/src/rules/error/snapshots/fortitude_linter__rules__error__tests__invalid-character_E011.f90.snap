@@ -7,7 +7,7 @@ expression: diagnostics
 1 | program invalid_tab
 2 |   implicit none
 3 |   logical :: français = .true.
-  |                  - E011
+  |                  ^ E011
 4 |   print*, "Don't flag this: é"
 5 |   ! Or this:|é|
   |

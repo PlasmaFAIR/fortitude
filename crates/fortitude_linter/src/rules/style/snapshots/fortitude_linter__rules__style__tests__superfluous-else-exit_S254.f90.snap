@@ -7,7 +7,7 @@ expression: diagnostics
 20 |     do i = 1, a
 21 |       if ((i - b) < 0) then
 22 |         exit
-   |         ---- S254
+   |         ^^^^ S254
 23 |       else if ((i - b) > 10) then
 24 |         exit
    |
@@ -29,7 +29,7 @@ expression: diagnostics
 22 |         exit
 23 |       else if ((i - b) > 10) then
 24 |         exit
-   |         ---- S254
+   |         ^^^^ S254
 25 |       else
 26 |         capped_sub = capped_sub - b
    |
@@ -46,14 +46,14 @@ expression: diagnostics
    27 |+      capped_sub = capped_sub - b
 28 28 |     end do
 29 29 |   end function capped_sub
-30 30 |
+30 30 |       
 
 ./resources/test/fixtures/style/S254.f90:38:9: S254 [*] Unnecessary else after `exit` statement
    |
 36 |     label: do i = 1, a
 37 |       if ((a * b) > 100) then
 38 |         exit label
-   |         ---------- S254
+   |         ^^^^^^^^^^ S254
 39 |       else
 40 |         capped_mult = capped_mult * b
    |

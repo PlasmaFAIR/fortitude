@@ -7,7 +7,7 @@ expression: diagnostics
 2 |   integer, intent(in) :: x
 3 |   y = x
 4 | endfunction f
-  | ----------- S231
+  | ^^^^^^^^^^^ S231
 5 |
 6 | module m
   |
@@ -19,7 +19,7 @@ expression: diagnostics
 3 3 |   y = x
 4   |-endfunction f
   4 |+end function f
-5 5 |
+5 5 | 
 6 6 | module m
 7 7 |   implicit none
 
@@ -28,19 +28,19 @@ expression: diagnostics
 29 |   type, extends(point_2d) :: point_3d
 30 |     real :: z
 31 |   endtype point_3d
-   |   ------- S231
+   |   ^^^^^^^ S231
 32 |
 33 |   enum, bind(c)
    |
    = help: Replace with 'end type'
 
 ℹ Safe fix
-28 28 |
+28 28 | 
 29 29 |   type, extends(point_2d) :: point_3d
 30 30 |     real :: z
 31    |-  endtype point_3d
    31 |+  end type point_3d
-32 32 |
+32 32 | 
 33 33 |   enum, bind(c)
 34 34 |     enumerator :: a = 1
 
@@ -49,19 +49,19 @@ expression: diagnostics
 37 |   enum, bind(c)
 38 |     enumerator :: b = 2
 39 |   EndEnum
-   |   ------- S231
+   |   ^^^^^^^ S231
 40 |
 41 | contains
    |
    = help: Replace with 'end enum'
 
 ℹ Safe fix
-36 36 |
+36 36 | 
 37 37 |   enum, bind(c)
 38 38 |     enumerator :: b = 2
 39    |-  EndEnum
    39 |+  End Enum
-40 40 |
+40 40 | 
 41 41 | contains
 42 42 |   integer function f1(x, y)
 
@@ -70,7 +70,7 @@ expression: diagnostics
 49 |         print *, y
 50 |     end select
 51 |     selectcase (y)
-   |     ---------- S231
+   |     ^^^^^^^^^^ S231
 52 |       case(1)
 53 |         f1 = y
    |
@@ -91,7 +91,7 @@ expression: diagnostics
 54 |       case default
 55 |         f1 = x
 56 |     endselect
-   |     --------- S231
+   |     ^^^^^^^^^ S231
 57 |   end function f1
    |
    = help: Replace with 'end select'
@@ -103,7 +103,7 @@ expression: diagnostics
 56    |-    endselect
    56 |+    end select
 57 57 |   end function f1
-58 58 |
+58 58 | 
 59 59 |   integer function f2(x)
 
 ./resources/test/fixtures/style/S231.f90:67:5: S231 [*] Missing space in 'endblock'
@@ -111,7 +111,7 @@ expression: diagnostics
 65 |     block_name: block
 66 |       integer :: k
 67 |     endblock block_name
-   |     -------- S231
+   |     ^^^^^^^^ S231
 68 |     print *, "x"
 69 |     f2 = x
    |
@@ -132,7 +132,7 @@ expression: diagnostics
 68 |     print *, "x"
 69 |     f2 = x
 70 |   endfunction f2
-   |   ----------- S231
+   |   ^^^^^^^^^^^ S231
 71 |
 72 |   subroutine s1()
    |
@@ -144,7 +144,7 @@ expression: diagnostics
 69 69 |     f2 = x
 70    |-  endfunction f2
    70 |+  end function f2
-71 71 |
+71 71 | 
 72 72 |   subroutine s1()
 73 73 |     integer, parameter :: N = 3
 
@@ -153,7 +153,7 @@ expression: diagnostics
 82 |       forall(i = 1:N, j = 1:N, i /= j)
 83 |         A(i, j) = 0.0
 84 |       endforall
-   |       --------- S231
+   |       ^^^^^^^^^ S231
 85 |     endassociate named_associate
 86 |     print *, A
    |
@@ -174,7 +174,7 @@ expression: diagnostics
 83 |         A(i, j) = 0.0
 84 |       endforall
 85 |     endassociate named_associate
-   |     ------------ S231
+   |     ^^^^^^^^^^^^ S231
 86 |     print *, A
 87 |   end subroutine s1
    |
@@ -188,14 +188,14 @@ expression: diagnostics
    85 |+    end associate named_associate
 86 86 |     print *, A
 87 87 |   end subroutine s1
-88 88 |
+88 88 | 
 
 ./resources/test/fixtures/style/S231.f90:98:5: S231 [*] Missing space in 'selecttype'
     |
  96 |         print *, ptr%x, ptr%y
  97 |     end select
  98 |     selecttype(ptr)
-    |     ---------- S231
+    |     ^^^^^^^^^^ S231
  99 |       type is(point_3d) ! only trigger for 3d
 100 |         print *, ptr%x, ptr%y, ptr%z
     |
@@ -216,7 +216,7 @@ expression: diagnostics
  99 |       type is(point_3d) ! only trigger for 3d
 100 |         print *, ptr%x, ptr%y, ptr%z
 101 |     endselect
-    |     --------- S231
+    |     ^^^^^^^^^ S231
 102 |   endsubroutine s2
     |
     = help: Replace with 'end select'
@@ -228,7 +228,7 @@ expression: diagnostics
 101     |-    endselect
     101 |+    end select
 102 102 |   endsubroutine s2
-103 103 |
+103 103 | 
 104 104 | end module m
 
 ./resources/test/fixtures/style/S231.f90:102:3: S231 [*] Missing space in 'endsubroutine'
@@ -236,7 +236,7 @@ expression: diagnostics
 100 |         print *, ptr%x, ptr%y, ptr%z
 101 |     endselect
 102 |   endsubroutine s2
-    |   ------------- S231
+    |   ^^^^^^^^^^^^^ S231
 103 |
 104 | end module m
     |
@@ -248,16 +248,16 @@ expression: diagnostics
 101 101 |     endselect
 102     |-  endsubroutine s2
     102 |+  end subroutine s2
-103 103 |
+103 103 | 
 104 104 | end module m
-105 105 |
+105 105 | 
 
 ./resources/test/fixtures/style/S231.f90:125:7: S231 [*] Missing space in 'endcritical'
     |
 123 |       critical
 124 |         total = total + this
 125 |       endcritical
-    |       ----------- S231
+    |       ^^^^^^^^^^^ S231
 126 |       sync all
 127 |     endteam
     |
@@ -278,7 +278,7 @@ expression: diagnostics
 125 |       endcritical
 126 |       sync all
 127 |     endteam
-    |     ------- S231
+    |     ^^^^^^^ S231
 128 |   end function coarray_stuff
 129 | endmodule m2
     |
@@ -292,14 +292,14 @@ expression: diagnostics
     127 |+    end team
 128 128 |   end function coarray_stuff
 129 129 | endmodule m2
-130 130 |
+130 130 | 
 
 ./resources/test/fixtures/style/S231.f90:129:1: S231 [*] Missing space in 'endmodule'
     |
 127 |     endteam
 128 |   end function coarray_stuff
 129 | endmodule m2
-    | --------- S231
+    | ^^^^^^^^^ S231
 130 |
 131 | submodule (m) s1
     |
@@ -311,7 +311,7 @@ expression: diagnostics
 128 128 |   end function coarray_stuff
 129     |-endmodule m2
     129 |+end module m2
-130 130 |
+130 130 | 
 131 131 | submodule (m) s1
 132 132 |   implicit none
 
@@ -320,7 +320,7 @@ expression: diagnostics
 133 | contains
 134 |   module procedure procedure_1
 135 |   endprocedure procedure_1
-    |   ------------ S231
+    |   ^^^^^^^^^^^^ S231
 136 |   integer function submodule_f1(x)
 137 |     integer, intent(in) :: x
     |
@@ -341,7 +341,7 @@ expression: diagnostics
 149 |     submodule_f2 = x
 150 |   end function submodule_f2
 151 | endSubmodule s2
-    | ------------ S231
+    | ^^^^^^^^^^^^ S231
 152 |
 153 | program p
     |
@@ -353,7 +353,7 @@ expression: diagnostics
 150 150 |   end function submodule_f2
 151     |-endSubmodule s2
     151 |+end Submodule s2
-152 152 |
+152 152 | 
 153 153 | program p
 154 154 |   use :: m, only: s1, s2, point_2d, point_3d
 
@@ -362,7 +362,7 @@ expression: diagnostics
 157 |   double precision :: A(n)
 158 |   double complex :: b
 159 |   DoublePrecision :: c
-    |   --------------- S231
+    |   ^^^^^^^^^^^^^^^ S231
 160 |   DoubleComplex :: d
 161 |   integer :: i, j, k
     |
@@ -383,7 +383,7 @@ expression: diagnostics
 158 |   double complex :: b
 159 |   DoublePrecision :: c
 160 |   DoubleComplex :: d
-    |   ------------- S231
+    |   ^^^^^^^^^^^^^ S231
 161 |   integer :: i, j, k
 162 |   type(point_2d) :: p2d
     |
@@ -404,7 +404,7 @@ expression: diagnostics
 168 |       integer, intent(in) :: x
 169 |     end function f
 170 |   endinterface
-    |   ------------ S231
+    |   ^^^^^^^^^^^^ S231
 171 |
 172 |   do i = 1, n
     |
@@ -416,7 +416,7 @@ expression: diagnostics
 169 169 |     end function f
 170     |-  endinterface
     170 |+  end interface
-171 171 |
+171 171 | 
 172 172 |   do i = 1, n
 173 173 |     A(i) = real(i)
 
@@ -425,19 +425,19 @@ expression: diagnostics
 176 |   do_name: do i = 1, n
 177 |     A(i) = A(i) + 1
 178 |   enddo do_name
-    |   ----- S231
+    |   ^^^^^ S231
 179 |
 180 |   where (A > 5.0)
     |
     = help: Replace with 'end do'
 
 ℹ Safe fix
-175 175 |
+175 175 | 
 176 176 |   do_name: do i = 1, n
 177 177 |     A(i) = A(i) + 1
 178     |-  enddo do_name
     178 |+  end do do_name
-179 179 |
+179 179 | 
 180 180 |   where (A > 5.0)
 181 181 |     A = A * 2.0
 
@@ -446,28 +446,28 @@ expression: diagnostics
 180 |   where (A > 5.0)
 181 |     A = A * 2.0
 182 |   eLseWHere
-    |   --------- S231
+    |   ^^^^^^^^^ S231
 183 |     A = A + 10.0
 184 |   endwheRe
     |
     = help: Replace with 'else where'
 
 ℹ Safe fix
-179 179 |
+179 179 | 
 180 180 |   where (A > 5.0)
 181 181 |     A = A * 2.0
 182     |-  eLseWHere
     182 |+  eLse WHere
 183 183 |     A = A + 10.0
 184 184 |   endwheRe
-185 185 |
+185 185 | 
 
 ./resources/test/fixtures/style/S231.f90:184:3: S231 [*] Missing space in 'endwhere'
     |
 182 |   eLseWHere
 183 |     A = A + 10.0
 184 |   endwheRe
-    |   -------- S231
+    |   ^^^^^^^^ S231
 185 |
 186 |   where (A > 15.0)
     |
@@ -479,7 +479,7 @@ expression: diagnostics
 183 183 |     A = A + 10.0
 184     |-  endwheRe
     184 |+  end wheRe
-185 185 |
+185 185 | 
 186 186 |   where (A > 15.0)
 187 187 |     A = A + 3.0
 
@@ -488,14 +488,14 @@ expression: diagnostics
 192 |   if (A(1) == 11.0) then
 193 |     print *, "foo"
 194 |   eLsEIf (A(1) == 12.0) then
-    |   ------ S231
+    |   ^^^^^^ S231
 195 |     print *, "bar"
 196 |   else if (A(2) == 12.0) then
     |
     = help: Replace with 'else if'
 
 ℹ Safe fix
-191 191 |
+191 191 | 
 192 192 |   if (A(1) == 11.0) then
 193 193 |     print *, "foo"
 194     |-  eLsEIf (A(1) == 12.0) then
@@ -509,28 +509,28 @@ expression: diagnostics
 202 |   if (A(1) == 11.0) then
 203 |     print *, "foo"
 204 |   EndIf
-    |   ----- S231
+    |   ^^^^^ S231
 205 |
 206 |   call s1()
     |
     = help: Replace with 'end if'
 
 ℹ Safe fix
-201 201 |
+201 201 | 
 202 202 |   if (A(1) == 11.0) then
 203 203 |     print *, "foo"
 204     |-  EndIf
     204 |+  End If
-205 205 |
+205 205 | 
 206 206 |   call s1()
-207 207 |
+207 207 | 
 
 ./resources/test/fixtures/style/S231.f90:229:1: S231 [*] Missing space in 'endprogram'
     |
 227 |     fff = x
 228 |   end function fff
 229 | endprogram p
-    | ---------- S231
+    | ^^^^^^^^^^ S231
     |
     = help: Replace with 'end program'
 

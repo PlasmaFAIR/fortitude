@@ -7,7 +7,7 @@ expression: diagnostics
 3 |   implicit none (type, external)
 4 |
 5 |   print*, 'This isn''t necessary'
-  |           ----------------------- S242
+  |           ^^^^^^^^^^^^^^^^^^^^^^^ S242
 6 |   print*, "This ""is not"" necessary"
 7 |   print*, 'This "isn''t" unnecessary'
   |
@@ -16,7 +16,7 @@ expression: diagnostics
 ℹ Safe fix
 2 2 |   use, intrinsic :: iso_c_binding, only: c_char
 3 3 |   implicit none (type, external)
-4 4 |
+4 4 | 
 5   |-  print*, 'This isn''t necessary'
   5 |+  print*, "This isn't necessary"
 6 6 |   print*, "This ""is not"" necessary"
@@ -27,7 +27,7 @@ expression: diagnostics
   |
 5 |   print*, 'This isn''t necessary'
 6 |   print*, "This ""is not"" necessary"
-  |           --------------------------- S242
+  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ S242
 7 |   print*, 'This "isn''t" unnecessary'
 8 |   print*, "This ""isn't"" unnecessary"
   |
@@ -35,7 +35,7 @@ expression: diagnostics
 
 ℹ Safe fix
 3 3 |   implicit none (type, external)
-4 4 |
+4 4 | 
 5 5 |   print*, 'This isn''t necessary'
 6   |-  print*, "This ""is not"" necessary"
   6 |+  print*, 'This "is not" necessary'
@@ -48,7 +48,7 @@ expression: diagnostics
  7 |   print*, 'This "isn''t" unnecessary'
  8 |   print*, "This ""isn't"" unnecessary"
  9 |   print*, 4_"Does this ""break""?"
-   |             ---------------------- S242
+   |             ^^^^^^^^^^^^^^^^^^^^^^ S242
 10 |   print*, c_char_'Does this ''break''?'
 11 |   print*, 'This &
    |
@@ -69,7 +69,7 @@ expression: diagnostics
  8 |   print*, "This ""isn't"" unnecessary"
  9 |   print*, 4_"Does this ""break""?"
 10 |   print*, c_char_'Does this ''break''?'
-   |                  ---------------------- S242
+   |                  ^^^^^^^^^^^^^^^^^^^^^^ S242
 11 |   print*, 'This &
 12 |        &isn''t &
    |
@@ -90,10 +90,10 @@ expression: diagnostics
  9 |     print*, 4_"Does this ""break""?"
 10 |     print*, c_char_'Does this ''break''?'
 11 |     print*, 'This &
-   |  ___________-
+   |  ___________^
 12 | |        &isn''t &
 13 | |        &necessary'
-   | |__________________- S242
+   | |__________________^ S242
 14 |     print*, 'This &
 15 |          &""isn''t"" &
    |
@@ -118,7 +118,7 @@ expression: diagnostics
 19 |   print*, ''                    ! empty
 20 |   print*, ""                    ! empty
 21 |   print*, ''''                  ! '
-   |           ---- S242
+   |           ^^^^ S242
 22 |   print*, """"                  ! "
 23 |   print*, ''''''                ! ''
    |
@@ -139,7 +139,7 @@ expression: diagnostics
 20 |   print*, ""                    ! empty
 21 |   print*, ''''                  ! '
 22 |   print*, """"                  ! "
-   |           ---- S242
+   |           ^^^^ S242
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
    |
@@ -160,7 +160,7 @@ expression: diagnostics
 21 |   print*, ''''                  ! '
 22 |   print*, """"                  ! "
 23 |   print*, ''''''                ! ''
-   |           ------ S242
+   |           ^^^^^^ S242
 24 |   print*, ''''''''              ! '''
 25 |   print*, """"""                ! ""
    |
@@ -181,7 +181,7 @@ expression: diagnostics
 22 |   print*, """"                  ! "
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
-   |           -------- S242
+   |           ^^^^^^^^ S242
 25 |   print*, """"""                ! ""
 26 |   print*, """"""""              ! """
    |
@@ -195,14 +195,14 @@ expression: diagnostics
    24 |+  print*, "'''"              ! '''
 25 25 |   print*, """"""                ! ""
 26 26 |   print*, """"""""              ! """
-27 27 |
+27 27 | 
 
 ./resources/test/fixtures/style/S242.f90:25:11: S242 [*] Avoidable escaped quotes
    |
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
 25 |   print*, """"""                ! ""
-   |           ------ S242
+   |           ^^^^^^ S242
 26 |   print*, """"""""              ! """
    |
    = help: Change outer quotes to avoid escaping inner quotes
@@ -214,7 +214,7 @@ expression: diagnostics
 25    |-  print*, """"""                ! ""
    25 |+  print*, '""'                ! ""
 26 26 |   print*, """"""""              ! """
-27 27 |
+27 27 | 
 28 28 | end program test
 
 ./resources/test/fixtures/style/S242.f90:26:11: S242 [*] Avoidable escaped quotes
@@ -222,7 +222,7 @@ expression: diagnostics
 24 |   print*, ''''''''              ! '''
 25 |   print*, """"""                ! ""
 26 |   print*, """"""""              ! """
-   |           -------- S242
+   |           ^^^^^^^^ S242
 27 |
 28 | end program test
    |
@@ -234,5 +234,5 @@ expression: diagnostics
 25 25 |   print*, """"""                ! ""
 26    |-  print*, """"""""              ! """
    26 |+  print*, '"""'              ! """
-27 27 |
+27 27 | 
 28 28 | end program test

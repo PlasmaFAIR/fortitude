@@ -7,7 +7,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   integer, parameter :: NUM_POINTS = 54
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
-  |                --- C031
+  |                ^^^ C031
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
@@ -17,7 +17,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   integer, parameter :: NUM_POINTS = 54
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
-  |                           --- C031
+  |                           ^^^ C031
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
@@ -27,7 +27,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   integer, parameter :: NUM_POINTS = 54
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
-  |                                     --- C031
+  |                                     ^^^ C031
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
@@ -37,7 +37,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   integer, parameter :: NUM_POINTS = 54
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
-  |                                                     -- C031
+  |                                                     ^^ C031
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
@@ -47,7 +47,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   integer, parameter :: NUM_POINTS = 54
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
-  |                                                        -- C031
+  |                                                        ^^ C031
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
@@ -57,7 +57,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   integer, parameter :: NUM_POINTS = 54
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
-  |                                                            - C031
+  |                                                            ^ C031
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
@@ -67,7 +67,7 @@ expression: diagnostics
 3 |   integer, parameter :: NUM_POINTS = 54
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
 5 |   integer, dimension(57) :: E
-  |                      -- C031
+  |                      ^^ C031
 6 |   integer, dimension(57, 64) :: F
 7 |   integer, dimension(NUM_POINTS) :: G
   |
@@ -77,7 +77,7 @@ expression: diagnostics
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
-  |                      -- C031
+  |                      ^^ C031
 7 |   integer, dimension(NUM_POINTS) :: G
 8 |   integer :: H(NUM_POINTS)
   |
@@ -87,7 +87,7 @@ expression: diagnostics
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
-  |                          -- C031
+  |                          ^^ C031
 7 |   integer, dimension(NUM_POINTS) :: G
 8 |   integer :: H(NUM_POINTS)
   |
@@ -97,7 +97,7 @@ expression: diagnostics
 11 | contains
 12 |   subroutine foo(L, M)
 13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
-   |                        - C031
+   |                        ^ C031
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
@@ -107,7 +107,7 @@ expression: diagnostics
 11 | contains
 12 |   subroutine foo(L, M)
 13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
-   |                          - C031
+   |                          ^ C031
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
@@ -117,7 +117,7 @@ expression: diagnostics
 11 | contains
 12 |   subroutine foo(L, M)
 13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
-   |                             -- C031
+   |                             ^^ C031
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
@@ -127,7 +127,7 @@ expression: diagnostics
 11 | contains
 12 |   subroutine foo(L, M)
 13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
-   |                                 -- C031
+   |                                 ^^ C031
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
@@ -137,7 +137,7 @@ expression: diagnostics
 11 | contains
 12 |   subroutine foo(L, M)
 13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
-   |                                    -- C031
+   |                                    ^^ C031
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
@@ -147,7 +147,7 @@ expression: diagnostics
 12 |   subroutine foo(L, M)
 13 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
 14 |     integer, intent(out) :: M(57)
-   |                               -- C031
+   |                               ^^ C031
 15 |   end subroutine foo
 16 | end module test
    |

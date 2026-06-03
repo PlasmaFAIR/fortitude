@@ -7,7 +7,7 @@ expression: diagnostics
 13 |     ! While this is technically correct, as a style rule we want the
 14 |     ! result() clause on here
 15 |     function length(b, c)
-   |     --------------------- S221
+   |     ^^^^^^^^^^^^^^^^^^^^^ S221
 16 |         real :: b, c
 17 |
 18 |         length = sqrt( b**2 + c**2 )

@@ -12,8 +12,8 @@ expression: diagnostics
  7 | |   case(2)
  8 | |     print*, "two"
  9 | |   end select
-   | |____________- C011
-10 |
+   | |____________^ C011
+10 |     
 11 |     select case(foo)
    |
    = help: Add 'case default'

@@ -7,7 +7,7 @@ expression: diagnostics
 18 | end module ok_module2
 19 |
 20 | module bad_module
-   | ----------------- C131
+   | ^^^^^^^^^^^^^^^^^ C131
 21 |   ! This is bad
 22 | end module bad_module
    |
@@ -17,7 +17,7 @@ expression: diagnostics
 22 | end module bad_module
 23 |
 24 | module only_some_private_module
-   | ------------------------------- C131
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ C131
 25 |   ! This is bad
 26 |   private :: foo
 27 |   public :: bar

@@ -72,7 +72,7 @@ expression: content
       },
       "results": [
         {
-          "level": "warning",
+          "level": "note",
           "message": {
             "text": "'implicit none' set on the enclosing module"
           },
@@ -94,7 +94,7 @@ expression: content
           "ruleId": "S201"
         },
         {
-          "level": "warning",
+          "level": "note",
           "message": {
             "text": "end statement should read 'end subroutine foo'"
           },
@@ -116,7 +116,7 @@ expression: content
           "ruleId": "S061"
         },
         {
-          "level": "warning",
+          "level": "note",
           "message": {
             "text": "integer*4 is non-standard, use integer(4)"
           },

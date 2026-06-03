@@ -6,7 +6,7 @@ expression: diagnostics
   |
 1 | program p
 2 | end program p ! Missing newline, be careful with tools that might add one!
-  |                                                                           - S002
+  |                                                                           ^ S002
   |
   = help: Add newline at end of file
 

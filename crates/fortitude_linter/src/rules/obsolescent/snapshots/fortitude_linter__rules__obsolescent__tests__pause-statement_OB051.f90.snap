@@ -7,7 +7,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   print*,"hello"
 4 |   pause
-  |   ----- OB051
+  |   ^^^^^ OB051
 5 |   print*,"bye"
 6 | end program
   |

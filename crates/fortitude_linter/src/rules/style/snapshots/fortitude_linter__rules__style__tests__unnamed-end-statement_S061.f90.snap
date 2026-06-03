@@ -7,7 +7,7 @@ expression: diagnostics
 4 |     integer :: x
 5 |     ! catch this
 6 |   end type
-  |   -------- S061
+  |   ^^^^^^^^ S061
 7 | contains
 8 |   subroutine mysub1()
   |
@@ -28,7 +28,7 @@ expression: diagnostics
  9 |     write (*,*) 'hello world'
 10 |     ! catch this
 11 |   end subroutine
-   |   -------------- S061
+   |   ^^^^^^^^^^^^^^ S061
 12 |   subroutine mysub2()
 13 |     write (*,*) 'hello world'
    |
@@ -49,7 +49,7 @@ expression: diagnostics
 15 |   end subroutine mysub2
 16 |   ! catch this
 17 | end
-   | --- S061
+   | ^^^ S061
 18 | module mymod2
 19 |   implicit none
    |
@@ -70,7 +70,7 @@ expression: diagnostics
 26 |     myfunc1 = 1
 27 |     ! catch this
 28 |   end function
-   |   ------------ S061
+   |   ^^^^^^^^^^^^ S061
 29 |   integer function myfunc2()
 30 |     myfunc2 = 1
    |
@@ -91,7 +91,7 @@ expression: diagnostics
 32 |   end function myfunc2
 33 |   ! catch this
 34 | end module
-   | ---------- S061
+   | ^^^^^^^^^^ S061
 35 | module mymod3
 36 |   interface
    |
@@ -112,7 +112,7 @@ expression: diagnostics
 54 |     x = 1
 55 |     ! catch this
 56 |   end procedure
-   |   ------------- S061
+   |   ^^^^^^^^^^^^^ S061
 57 |   ! catch this
 58 | end
    |
@@ -133,7 +133,7 @@ expression: diagnostics
 56 |   end procedure
 57 |   ! catch this
 58 | end
-   | --- S061
+   | ^^^ S061
 59 | submodule (mymod3) mysub2
 60 | contains
    |
@@ -154,7 +154,7 @@ expression: diagnostics
 64 |   end procedure bar
 65 |   ! catch this
 66 | end submodule
-   | ------------- S061
+   | ^^^^^^^^^^^^^ S061
 67 | submodule (mymod3) mysub3
 68 | contains
    |
@@ -175,7 +175,7 @@ expression: diagnostics
 77 |   write (*,*) 'hello world'
 78 |   ! catch this
 79 | end
-   | --- S061
+   | ^^^ S061
 80 |
 81 | ! uppercase versions, check preserve case
    |
@@ -187,7 +187,7 @@ expression: diagnostics
 78 78 |   ! catch this
 79    |-end
    79 |+end program myprog
-80 80 |
+80 80 | 
 81 81 | ! uppercase versions, check preserve case
 82 82 | MODULE MYMOD1_UPPER
 
@@ -196,7 +196,7 @@ expression: diagnostics
 85 |     INTEGER :: X
 86 |     ! CATCH THIS
 87 |   END TYPE
-   |   -------- S061
+   |   ^^^^^^^^ S061
 88 | CONTAINS
 89 |   SUBROUTINE MYSUB1()
    |
@@ -217,7 +217,7 @@ expression: diagnostics
 90 |     WRITE (*,*) 'HELLO WORLD'
 91 |     ! CATCH THIS
 92 |   END SUBROUTINE
-   |   -------------- S061
+   |   ^^^^^^^^^^^^^^ S061
 93 |   SUBROUTINE MYSUB2()
 94 |     WRITE (*,*) 'HELLO WORLD'
    |
@@ -238,7 +238,7 @@ expression: diagnostics
  96 |   END SUBROUTINE MYSUB2
  97 |   ! CATCH THIS
  98 | END
-    | --- S061
+    | ^^^ S061
  99 | MODULE MYMOD2_UPPER
 100 |   IMPLICIT NONE
     |
@@ -259,7 +259,7 @@ expression: diagnostics
 107 |     MYFUNC1 = 1
 108 |     ! CATCH THIS
 109 |   END FUNCTION
-    |   ------------ S061
+    |   ^^^^^^^^^^^^ S061
 110 |   INTEGER FUNCTION MYFUNC2()
 111 |     MYFUNC2 = 1
     |
@@ -280,7 +280,7 @@ expression: diagnostics
 113 |   END FUNCTION MYFUNC2
 114 |   ! CATCH THIS
 115 | END MODULE
-    | ---------- S061
+    | ^^^^^^^^^^ S061
     |
     = help: Write as 'END MODULE MYMOD2_UPPER'.
 

@@ -7,7 +7,7 @@ expression: diagnostics
 2 |   implicit none
 3 | contains
 4 |   subroutine bar(x, y, )
-  |                       - E001
+  |                       ^ E001
 5 |     integer, intent(in) :: x, y
 6 |   end subroutine bar
   |

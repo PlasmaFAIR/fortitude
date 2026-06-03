@@ -7,6 +7,6 @@ expression: diagnostics
 2 |   DOUBLE PRECISION DVAR
 3 |   INTEGER(KIND=2) IARR(4)
 4 |   EQUIVALENCE(DVAR, IARR(1))
-  |   -------------------------- OB012
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^ OB012
 5 | END PROGRAM test
   |

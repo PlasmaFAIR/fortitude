@@ -7,6 +7,6 @@ expression: diagnostics
  8 | module bad_module
  9 |   ! This is bad
 10 |   public
-   |   ------ C132
+   |   ^^^^^^ C132
 11 | end module bad_module
    |

@@ -7,7 +7,7 @@ expression: diagnostics
 4 |   real, dimension(1) :: x, y(2), z(3, 4)
 5 |   ! these are bad
 6 |   real :: a, b(5), c, d(2) = [1, 2]
-  |              ---- S262
+  |              ^^^^ S262
 7 |   ! shouldn't complain if all arrays
 8 |   real :: e(2), f(2)
   |
@@ -29,7 +29,7 @@ expression: diagnostics
 4 |   real, dimension(1) :: x, y(2), z(3, 4)
 5 |   ! these are bad
 6 |   real :: a, b(5), c, d(2) = [1, 2]
-  |                       ------------- S262
+  |                       ^^^^^^^^^^^^^ S262
 7 |   ! shouldn't complain if all arrays
 8 |   real :: e(2), f(2)
   |

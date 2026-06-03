@@ -7,7 +7,7 @@ expression: diagnostics
 2 |   implicit none (external, type)
 3 |   ! y and z are inconsistent with decl
 4 |   real, dimension(1) :: x, y(2), z(3, 4)
-  |                            ---- S261
+  |                            ^^^^ S261
 5 |   ! these are ok
 6 |   real :: a, b(5), c(6, 7)
   |
@@ -29,7 +29,7 @@ expression: diagnostics
 2 |   implicit none (external, type)
 3 |   ! y and z are inconsistent with decl
 4 |   real, dimension(1) :: x, y(2), z(3, 4)
-  |                                  ------- S261
+  |                                  ^^^^^^^ S261
 5 |   ! these are ok
 6 |   real :: a, b(5), c(6, 7)
   |
@@ -51,7 +51,7 @@ expression: diagnostics
 5 |   ! these are ok
 6 |   real :: a, b(5), c(6, 7)
 7 |   real, dimension(1) :: alpha = [0], beta(2) = [1, 2] ! more complicated
-  |                                      ---------------- S261
+  |                                      ^^^^^^^^^^^^^^^^ S261
 8 | end program test
   |
   = help: Move variable declaration to separate statement

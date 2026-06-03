@@ -7,7 +7,7 @@ expression: diagnostics
 2 | ! the horrible whitespace!
 3 | program invalid_tab
 4 |     implicit none
-  | ---- PORT031
+  | ^^^^ PORT031
 5 |     print*, "Don't flag this:    "
 6 |     ! Or this:|    |
   |
@@ -28,7 +28,7 @@ expression: diagnostics
 5 |     print*, "Don't flag this:    "
 6 |     ! Or this:|    |
 7 |     if    (.true.)    then
-  |       ---- PORT031
+  |       ^^^^ PORT031
 8 |         print*, "Mixed tab/space"
 9 |     else
   |
@@ -49,7 +49,7 @@ expression: diagnostics
 5 |     print*, "Don't flag this:    "
 6 |     ! Or this:|    |
 7 |     if    (.true.)    then
-  |                   ---- PORT031
+  |                   ^^^^ PORT031
 8 |         print*, "Mixed tab/space"
 9 |     else
   |
@@ -70,7 +70,7 @@ expression: diagnostics
  6 |     ! Or this:|    |
  7 |     if    (.true.)    then
  8 |         print*, "Mixed tab/space"
-   |     ---- PORT031
+   |     ^^^^ PORT031
  9 |     else
 10 |         print*, "Two tabs"
    |
@@ -91,7 +91,7 @@ expression: diagnostics
  8 |         print*, "Mixed tab/space"
  9 |     else
 10 |         print*, "Two tabs"
-   | ---- PORT031
+   | ^^^^ PORT031
 11 |     end if
 12 | end program invalid_tab
    |
@@ -111,7 +111,7 @@ expression: diagnostics
  8 |         print*, "Mixed tab/space"
  9 |     else
 10 |         print*, "Two tabs"
-   |     ---- PORT031
+   |     ^^^^ PORT031
 11 |     end if
 12 | end program invalid_tab
    |

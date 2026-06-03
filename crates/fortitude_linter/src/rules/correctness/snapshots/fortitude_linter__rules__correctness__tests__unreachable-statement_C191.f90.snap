@@ -7,7 +7,7 @@ expression: diagnostics
 11 |     ! Ignore this comment
 12 |
 13 |     x = 2
-   |     ----- C191
+   |     ^^^^^ C191
 14 |     do i=1,10
 15 |       if (i == 5) then
    |
@@ -17,7 +17,7 @@ expression: diagnostics
 16 |         cycle  ! Error
 17 |         ! Ignore this comment
 18 |         call some_routine()
-   |         ------------------- C191
+   |         ^^^^^^^^^^^^^^^^^^^ C191
 19 |         stop  ! Error
 20 |         print *, "hello world"
    |
@@ -27,7 +27,7 @@ expression: diagnostics
 18 |         call some_routine()
 19 |         stop  ! Error
 20 |         print *, "hello world"
-   |         ---------------------- C191
+   |         ^^^^^^^^^^^^^^^^^^^^^^ C191
 21 |         return  ! Okay
 22 |       else if (i == 7) then
    |
@@ -38,18 +38,18 @@ expression: diagnostics
 23 |           error stop  ! Error
 24 | /         if (i == 7) then
 25 | |           write (*, *) "foo bar"
-26 | |         end if
-   | |______________- C191
+26 | |         end if 
+   | |______________^ C191
 27 |           exit  ! Error
 28 |           x = 5
    |
 
 ./resources/test/fixtures/correctness/C191.f90:28:9: C191 code following `exit` is unreachable
    |
-26 |         end if
+26 |         end if 
 27 |         exit  ! Error
 28 |         x = 5
-   |         ----- C191
+   |         ^^^^^ C191
 29 |         exit  ! Okay
 30 |       end if
    |

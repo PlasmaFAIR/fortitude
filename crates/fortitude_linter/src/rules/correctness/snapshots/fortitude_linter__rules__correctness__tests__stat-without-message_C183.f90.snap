@@ -6,7 +6,7 @@ expression: diagnostics
    |
 19 |   ! stat params, no message
 20 |   allocate (x(10), Stat=status)
-   |                    ----------- C183
+   |                    ^^^^^^^^^^^ C183
 21 |   deallocate (x, &
 22 |     stat=STATUS)
    |
@@ -16,7 +16,7 @@ expression: diagnostics
 20 |   allocate (x(10), Stat=status)
 21 |   deallocate (x, &
 22 |     stat=STATUS)
-   |     ----------- C183
+   |     ^^^^^^^^^^^ C183
 23 |   open (10, file="test.txt", iostat=status)
 24 |   write (10,*,iosTAT=Status) "Allocation and deallocation without stat parameters completed successfully."
    |
@@ -26,7 +26,7 @@ expression: diagnostics
 21 |   deallocate (x, &
 22 |     stat=STATUS)
 23 |   open (10, file="test.txt", iostat=status)
-   |                              ------------- C183
+   |                              ^^^^^^^^^^^^^ C183
 24 |   write (10,*,iosTAT=Status) "Allocation and deallocation without stat parameters completed successfully."
 25 |   inquire(unit=10, &
    |
@@ -36,7 +36,7 @@ expression: diagnostics
 22 |     stat=STATUS)
 23 |   open (10, file="test.txt", iostat=status)
 24 |   write (10,*,iosTAT=Status) "Allocation and deallocation without stat parameters completed successfully."
-   |               ------------- C183
+   |               ^^^^^^^^^^^^^ C183
 25 |   inquire(unit=10, &
 26 |     iostat=status, exist=file_exist)
    |
@@ -46,7 +46,7 @@ expression: diagnostics
 24 |   write (10,*,iosTAT=Status) "Allocation and deallocation without stat parameters completed successfully."
 25 |   inquire(unit=10, &
 26 |     iostat=status, exist=file_exist)
-   |     ------------- C183
+   |     ^^^^^^^^^^^^^ C183
 27 |   wait (10, iostat=status)
 28 |   flush(10, IOSTAT=&
    |
@@ -56,7 +56,7 @@ expression: diagnostics
 25 |   inquire(unit=10, &
 26 |     iostat=status, exist=file_exist)
 27 |   wait (10, iostat=status)
-   |             ------------- C183
+   |             ^^^^^^^^^^^^^ C183
 28 |   flush(10, IOSTAT=&
 29 |     STATUS)
    |
@@ -66,9 +66,9 @@ expression: diagnostics
 26 |       iostat=status, exist=file_exist)
 27 |     wait (10, iostat=status)
 28 |     flush(10, IOSTAT=&
-   |  _____________-
+   |  _____________^
 29 | |     STATUS)
-   | |__________- C183
+   | |__________^ C183
 30 |     close (10, Iostat=Status)
 31 |     call execute_command_line("ls", cmdstat=Status)
    |
@@ -78,7 +78,7 @@ expression: diagnostics
 28 |   flush(10, IOSTAT=&
 29 |     STATUS)
 30 |   close (10, Iostat=Status)
-   |              ------------- C183
+   |              ^^^^^^^^^^^^^ C183
 31 |   call execute_command_line("ls", cmdstat=Status)
    |
 
@@ -87,7 +87,7 @@ expression: diagnostics
 29 |     STATUS)
 30 |   close (10, Iostat=Status)
 31 |   call execute_command_line("ls", cmdstat=Status)
-   |                                   -------------- C183
+   |                                   ^^^^^^^^^^^^^^ C183
 32 |
 33 |   ! stat params, with message
    |

@@ -6,7 +6,7 @@ expression: diagnostics
    |
 16 |   ! stat params, combined in one statement
 17 |   allocate (x(10), y(10), stat=status)
-   |                           ----------- C182
+   |                           ^^^^^^^^^^^ C182
 18 |   deallocate (x, y, stat=status)
    |
 
@@ -15,7 +15,7 @@ expression: diagnostics
 16 |   ! stat params, combined in one statement
 17 |   allocate (x(10), y(10), stat=status)
 18 |   deallocate (x, y, stat=status)
-   |                     ----------- C182
+   |                     ^^^^^^^^^^^ C182
 19 |
 20 | end program p
    |

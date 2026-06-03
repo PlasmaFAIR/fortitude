@@ -7,7 +7,7 @@ expression: diagnostics
 1 | program test
 2 |   implicit none (external, type)
 3 |   real, dimension(2) :: x, y = [4, 2], z(3)
-  |                         - S263
+  |                         ^ S263
 4 |   real :: a(1), b(2) = [4, 2], c(3, 4)
 5 |   integer, dimension(2), parameter :: p = [1, 2]
   |
@@ -28,7 +28,7 @@ expression: diagnostics
 1 | program test
 2 |   implicit none (external, type)
 3 |   real, dimension(2) :: x, y = [4, 2], z(3)
-  |                            ---------- S263
+  |                            ^^^^^^^^^^ S263
 4 |   real :: a(1), b(2) = [4, 2], c(3, 4)
 5 |   integer, dimension(2), parameter :: p = [1, 2]
   |
@@ -49,7 +49,7 @@ expression: diagnostics
 3 |   real, dimension(2) :: x, y = [4, 2], z(3)
 4 |   real :: a(1), b(2) = [4, 2], c(3, 4)
 5 |   integer, dimension(2), parameter :: p = [1, 2]
-  |                                       ---------- S263
+  |                                       ^^^^^^^^^^ S263
 6 |   integer, parameter :: q(2) = [1, 2]
 7 | end program test
   |

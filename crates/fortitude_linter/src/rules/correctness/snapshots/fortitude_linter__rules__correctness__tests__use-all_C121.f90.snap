@@ -7,7 +7,7 @@ expression: diagnostics
 1 | module my_module
 2 |   use, intrinsic :: iso_fortran_env, only: real32
 3 |   use, intrinsic :: iso_c_binding
-  |   ------------------------------- C121
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ C121
 4 |   use :: my_other_module
 5 | end module my_module
   |
@@ -17,6 +17,6 @@ expression: diagnostics
 2 |   use, intrinsic :: iso_fortran_env, only: real32
 3 |   use, intrinsic :: iso_c_binding
 4 |   use :: my_other_module
-  |   ---------------------- C121
+  |   ^^^^^^^^^^^^^^^^^^^^^^ C121
 5 | end module my_module
   |

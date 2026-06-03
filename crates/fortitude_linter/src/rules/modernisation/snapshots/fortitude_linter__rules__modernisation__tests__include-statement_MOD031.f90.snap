@@ -7,7 +7,7 @@ expression: diagnostics
 1 | module test
 2 |
 3 | include "common_variables"
-  | -------------------------- MOD031
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^ MOD031
 4 |
 5 | contains
   |
@@ -16,7 +16,7 @@ expression: diagnostics
    |
  7 | integer function func1()
  8 |     include "variable_declaration"
-   |     ------------------------------ MOD031
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ MOD031
  9 |
 10 |     func1 = i + 3
    |

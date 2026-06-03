@@ -7,7 +7,7 @@ expression: diagnostics
 2 |   implicit none (type, external)
 3 |
 4 |   print *, "Hello, World!"
-  |            --------------- S241
+  |            ^^^^^^^^^^^^^^^ S241
 5 |   print *, 'Hello, World!'
 6 |   print *, 'Hello, "World"!'
   |
@@ -16,7 +16,7 @@ expression: diagnostics
 ℹ Safe fix
 1 1 | program p
 2 2 |   implicit none (type, external)
-3 3 |
+3 3 | 
 4   |-  print *, "Hello, World!"
 5 4 |   print *, 'Hello, World!'
   5 |+  print *, 'Hello, World!'
@@ -29,7 +29,7 @@ expression: diagnostics
 5 |   print *, 'Hello, World!'
 6 |   print *, 'Hello, "World"!'
 7 |   print *, "Hello, ""World""!"
-  |            ------------------- S241
+  |            ^^^^^^^^^^^^^^^^^^^ S241
 8 |   print *, 'Hello, ''World''!'
 9 |   print *, "Hello, &
   |
@@ -39,9 +39,9 @@ expression: diagnostics
  7 |     print *, "Hello, ""World""!"
  8 |     print *, 'Hello, ''World''!'
  9 |     print *, "Hello, &
-   |  ____________-
+   |  ____________^
 10 | |             & World!"
-   | |_____________________- S241
+   | |_____________________^ S241
 11 |     print *, 'Hello, &
 12 |               & World!'
    |
@@ -67,9 +67,9 @@ expression: diagnostics
 13 |     print *, 'Hello, &
 14 |               & "World"!'
 15 |     print *, "Hello, &
-   |  ____________-
+   |  ____________^
 16 | |             & ""World""!"
-   | |_________________________- S241
+   | |_________________________^ S241
 17 |     print *, 'Hello, &
 18 |               & ''World''!'
    |

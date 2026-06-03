@@ -7,7 +7,7 @@ expression: diagnostics
 5 |     real :: A
 6 |
 7 |     ! Just a comment \
-  |                      - C051
+  |                      ^ C051
 8 |     A = 2.0
 9 |     print *, A
   |

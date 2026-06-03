@@ -5,7 +5,7 @@ expression: diagnostics
 ./resources/test/fixtures/correctness/C092.f90:1:1: C092 function not contained within (sub)module or program
   |
 1 | integer function double(x)
-  | -------------------------- C092
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^ C092
 2 |   integer, intent(in) :: x
 3 |   double = 2 * x
 4 | end function double
@@ -16,7 +16,7 @@ expression: diagnostics
 4 | end function double
 5 |
 6 | subroutine triple(x)
-  | -------------------- C092
+  | ^^^^^^^^^^^^^^^^^^^^ C092
 7 |   integer, intent(inout) :: x
 8 |   x = 3 * x
 9 | end subroutine triple

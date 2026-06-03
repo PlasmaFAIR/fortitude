@@ -6,7 +6,7 @@ expression: diagnostics
    |
  9 |   subroutine init_decl1()
 10 |     integer :: foo = 1
-   |                ------- C081
+   |                ^^^^^^^ C081
 11 |   end subroutine init_decl1
    |
 
@@ -14,7 +14,7 @@ expression: diagnostics
    |
 18 |   subroutine init_decl3()
 19 |     integer :: foo, bar = 1, quazz, zapp = 2
-   |                     ------- C081
+   |                     ^^^^^^^ C081
 20 |   end subroutine init_decl3
    |
 
@@ -22,6 +22,6 @@ expression: diagnostics
    |
 18 |   subroutine init_decl3()
 19 |     integer :: foo, bar = 1, quazz, zapp = 2
-   |                                     -------- C081
+   |                                     ^^^^^^^^ C081
 20 |   end subroutine init_decl3
    |

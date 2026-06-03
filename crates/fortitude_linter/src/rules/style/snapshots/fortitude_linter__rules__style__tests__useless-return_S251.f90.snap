@@ -7,7 +7,7 @@ expression: diagnostics
  9 |     end if
 10 |     capped_add = a + b
 11 |     return
-   |     ------ S251
+   |     ^^^^^^ S251
 12 |   end function capped_add
    |
    = help: remove `return` statement
@@ -18,7 +18,7 @@ expression: diagnostics
 10 10 |     capped_add = a + b
 11    |-    return
 12 11 |   end function capped_add
-13 12 |
+13 12 | 
 14 13 |   integer function capped_sub(a, b)
 
 ./resources/test/fixtures/style/S251.f90:21:5: S251 [*] useless `return` statement`
@@ -26,7 +26,7 @@ expression: diagnostics
 19 |     end if
 20 |     capped_sub = a - b
 21 |     return
-   |     ------ S251
+   |     ^^^^^^ S251
 22 |     ! but with comments
    |
    = help: remove `return` statement
@@ -37,5 +37,5 @@ expression: diagnostics
 20 20 |     capped_sub = a - b
 21    |-    return
 22 21 |     ! but with comments
-23 22 |
+23 22 | 
 24 23 |     ! and whitespace after

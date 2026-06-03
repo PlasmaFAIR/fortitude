@@ -7,7 +7,7 @@ expression: diagnostics
  9 |   integer :: i;
 10 |   integer :: j;
 11 |   i = 1;; j = 2;
-   |        - S082
+   |        ^ S082
 12 |   i = i + j; write (*, *) i;;
 13 | end program p;
    |
@@ -28,7 +28,7 @@ expression: diagnostics
 10 |   integer :: j;
 11 |   i = 1;; j = 2;
 12 |   i = i + j; write (*, *) i;;
-   |            - S082
+   |            ^ S082
 13 | end program p;
    |
    = help: Separate over two lines
@@ -47,7 +47,7 @@ expression: diagnostics
 10 |   integer :: j;
 11 |   i = 1;; j = 2;
 12 |   i = i + j; write (*, *) i;;
-   |                            - S082
+   |                            ^ S082
 13 | end program p;
    |
    = help: Separate over two lines

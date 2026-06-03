@@ -6,7 +6,7 @@ expression: diagnostics
   |
 1 | program test
 2 |   if (0 .gt. 1) error stop
-  |         ---- MOD021
+  |         ^^^^ MOD021
 3 |   if (1 .le. 0) error stop
 4 |   if (a.eq.b.and.a.ne.b) error stop
   |
@@ -25,7 +25,7 @@ expression: diagnostics
 1 | program test
 2 |   if (0 .gt. 1) error stop
 3 |   if (1 .le. 0) error stop
-  |         ---- MOD021
+  |         ^^^^ MOD021
 4 |   if (a.eq.b.and.a.ne.b) error stop
 5 |   if (1 == 2) error stop  ! OK
   |
@@ -45,7 +45,7 @@ expression: diagnostics
 2 |   if (0 .gt. 1) error stop
 3 |   if (1 .le. 0) error stop
 4 |   if (a.eq.b.and.a.ne.b) error stop
-  |        ---- MOD021
+  |        ^^^^ MOD021
 5 |   if (1 == 2) error stop  ! OK
 6 |   if (2 /= 2) error stop  ! OK
   |
@@ -66,7 +66,7 @@ expression: diagnostics
 2 |   if (0 .gt. 1) error stop
 3 |   if (1 .le. 0) error stop
 4 |   if (a.eq.b.and.a.ne.b) error stop
-  |                   ---- MOD021
+  |                   ^^^^ MOD021
 5 |   if (1 == 2) error stop  ! OK
 6 |   if (2 /= 2) error stop  ! OK
   |

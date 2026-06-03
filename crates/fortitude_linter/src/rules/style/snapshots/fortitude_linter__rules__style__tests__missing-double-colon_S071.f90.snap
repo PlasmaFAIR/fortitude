@@ -7,7 +7,7 @@ expression: diagnostics
 1 | program test
 2 |   implicit none
 3 |   real these, are
-  |   --------------- S071
+  |   ^^^^^^^^^^^^^^^ S071
 4 |   type(real(kind=kind(1.0d0))) all(42), bad
 5 |   integer :: but, these_ones, are_fine
   |
@@ -27,7 +27,7 @@ expression: diagnostics
 2 |   implicit none
 3 |   real these, are
 4 |   type(real(kind=kind(1.0d0))) all(42), bad
-  |   ----------------------------------------- S071
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S071
 5 |   integer :: but, these_ones, are_fine
 6 | end program test
   |

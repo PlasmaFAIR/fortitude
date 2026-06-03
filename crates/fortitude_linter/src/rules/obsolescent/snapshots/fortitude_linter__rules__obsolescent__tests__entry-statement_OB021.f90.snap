@@ -7,7 +7,7 @@ expression: diagnostics
 5 |        RETURN
 6 |
 7 |        ENTRY SUB2(A, B, C)
-  |        ------------------- OB021
+  |        ^^^^^^^^^^^^^^^^^^^ OB021
 8 |        RETURN
   |
 
@@ -16,7 +16,7 @@ expression: diagnostics
  8 |        RETURN
  9 |
 10 |        ENTRY SUB3
-   |        ---------- OB021
+   |        ^^^^^^^^^^ OB021
 11 |        RETURN
 12 |        END
    |

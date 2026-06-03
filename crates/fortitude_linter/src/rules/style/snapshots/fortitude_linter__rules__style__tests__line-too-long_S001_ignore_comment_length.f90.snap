@@ -7,7 +7,7 @@ expression: diagnostics
 1 | ...xceeds the line length setting is ignored
 2 | ...
 3 | ...lly_really_really_long_module_name, only : integer_working_precision ! This code is not ignored
-  |                                  ----------------------------------------------------------------- S001
+  |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
 4 | ...                            !This comment is ignored
 5 | ...1]                               ! This comment is ignored
   |
@@ -17,6 +17,6 @@ expression: diagnostics
 4 | ...                             !This comment is ignored
 5 | ...[1]                               ! This comment is ignored
 6 | ...lly_really_really_really_really_really_really_really_really_really_really_long string literal'
-  |                                   --------------------------------------------------------------- S001
+  |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
 7 | ...
   |

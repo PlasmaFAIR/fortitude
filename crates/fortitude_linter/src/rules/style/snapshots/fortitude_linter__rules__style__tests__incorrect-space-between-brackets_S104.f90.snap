@@ -7,7 +7,7 @@ expression: diagnostics
 3 |   integer :: a(3)
 4 |   a = [1, 2, 3] ! This should be unchanged
 5 |   call mysub( a) ! This should remove the space after the (
-  |              - S104
+  |              ^ S104
 6 | contains
 7 |   subroutine mysub( a) ! This should remove the space after the (
   |
@@ -28,7 +28,7 @@ expression: diagnostics
 5 |   call mysub( a) ! This should remove the space after the (
 6 | contains
 7 |   subroutine mysub( a) ! This should remove the space after the (
-  |                    - S104
+  |                    ^ S104
 8 |     implicit none
 9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
   |
@@ -49,7 +49,7 @@ expression: diagnostics
  7 |   subroutine mysub( a) ! This should remove the space after the (
  8 |     implicit none
  9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
-   |                     - S104
+   |                     ^ S104
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
    |
@@ -70,7 +70,7 @@ expression: diagnostics
  7 |   subroutine mysub( a) ! This should remove the space after the (
  8 |     implicit none
  9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
-   |                               - S104
+   |                               ^ S104
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
    |
@@ -91,7 +91,7 @@ expression: diagnostics
  9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
-   |                        --- S104
+   |                        ^^^ S104
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
    |
@@ -112,7 +112,7 @@ expression: diagnostics
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
-   |          - S104
+   |          ^ S104
 13 |           5 ] ! This should remove the space before the ]
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
    |
@@ -133,7 +133,7 @@ expression: diagnostics
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
-   |            - S104
+   |            ^ S104
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
 15 |   end subroutine mysub
    |
@@ -154,7 +154,7 @@ expression: diagnostics
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
-   |           - S104
+   |           ^ S104
 15 |   end subroutine mysub
 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
    |
@@ -175,7 +175,7 @@ expression: diagnostics
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
-   |               - S104
+   |               ^ S104
 15 |   end subroutine mysub
 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
    |
@@ -196,7 +196,7 @@ expression: diagnostics
 22 |     & ) ! This should be unchanged
 23 |   end subroutine myothersub
 24 |   subroutine emptyparantesessub( ) ! This should remove the space between the brackets
-   |                                 - S104
+   |                                 ^ S104
 25 |   end subroutine emptyparantesessub
 26 | end program myprog
    |

@@ -7,7 +7,7 @@ expression: diagnostics
  7 |   real(dp), parameter :: b = 1.34e-4 ! Okay: default real kind
  8 |   real(dp), parameter :: c = .25E1 ! Okay: default real kind
  9 |   real(dp), parameter :: d = 1.23456d1
-   |                              --------- MOD002
+   |                              ^^^^^^^^^ MOD002
 10 |   real(dp), parameter :: e = 1.23456D-32
 11 |   real(dp), parameter :: f = 3d11
    |
@@ -18,7 +18,7 @@ expression: diagnostics
  8 |   real(dp), parameter :: c = .25E1 ! Okay: default real kind
  9 |   real(dp), parameter :: d = 1.23456d1
 10 |   real(dp), parameter :: e = 1.23456D-32
-   |                              ----------- MOD002
+   |                              ^^^^^^^^^^^ MOD002
 11 |   real(dp), parameter :: f = 3d11
 12 |   real(dp), parameter :: g = .23456D-45
    |
@@ -29,7 +29,7 @@ expression: diagnostics
  9 |   real(dp), parameter :: d = 1.23456d1
 10 |   real(dp), parameter :: e = 1.23456D-32
 11 |   real(dp), parameter :: f = 3d11
-   |                              ---- MOD002
+   |                              ^^^^ MOD002
 12 |   real(dp), parameter :: g = .23456D-45
 13 |   real(dp), parameter :: h = 23456.D21
    |
@@ -40,7 +40,7 @@ expression: diagnostics
 10 |   real(dp), parameter :: e = 1.23456D-32
 11 |   real(dp), parameter :: f = 3d11
 12 |   real(dp), parameter :: g = .23456D-45
-   |                              ---------- MOD002
+   |                              ^^^^^^^^^^ MOD002
 13 |   real(dp), parameter :: h = 23456.D21
    |
    = help: Prefer '.23456e-45_real64' (see 'iso_fortran_env')
@@ -50,7 +50,7 @@ expression: diagnostics
 11 |   real(dp), parameter :: f = 3d11
 12 |   real(dp), parameter :: g = .23456D-45
 13 |   real(dp), parameter :: h = 23456.D21
-   |                              --------- MOD002
+   |                              ^^^^^^^^^ MOD002
 14 |
 15 |   ! Okay if in a type cast
    |

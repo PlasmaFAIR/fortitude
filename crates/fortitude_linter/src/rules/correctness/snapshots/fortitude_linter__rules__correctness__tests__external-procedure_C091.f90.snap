@@ -7,7 +7,7 @@ expression: diagnostics
 10 |   end interface
 11 |
 12 |   external :: g
-   |   ------------- C091
+   |   ^^^^^^^^^^^^^ C091
 13 |
 14 | end program test
    |

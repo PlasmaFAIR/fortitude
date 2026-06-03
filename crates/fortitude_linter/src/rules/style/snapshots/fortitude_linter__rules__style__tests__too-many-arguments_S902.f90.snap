@@ -6,7 +6,7 @@ expression: diagnostics
    |
 73 |     ! Should raise
 74 |     subroutine s5(a, b, c, d, e)
-   |                   ------------- S902
+   |                   ^^^^^^^^^^^^^ S902
 75 |         integer, intent(in) :: a, b, c, d, e
 76 |         print *, a, b, c, d, e
    |
@@ -15,7 +15,7 @@ expression: diagnostics
    |
 79 |     ! Should raise
 80 |     integer function f5(a, b, c, d, e) result(f)
-   |                         ------------- S902
+   |                         ^^^^^^^^^^^^^ S902
 81 |         integer, intent(in) :: a, b, c, d, e
 82 |         f = a + b + c + d + e
    |
@@ -24,7 +24,7 @@ expression: diagnostics
     |
  99 |     ! Should raise
 100 |     subroutine s6_bound(this, a, b, c, d, e)
-    |                               ------------- S902
+    |                               ^^^^^^^^^^^^^ S902
 101 |         class(vector), intent(in) :: this
 102 |         integer, intent(in) :: a, b, c, d, e
     |
@@ -33,7 +33,7 @@ expression: diagnostics
     |
 106 |     ! Should raise
 107 |     integer function f6_bound(self, a, b, c, d, e) result(f)
-    |                                     ------------- S902
+    |                                     ^^^^^^^^^^^^^ S902
 108 |         class(vector), intent(in) :: self
 109 |         integer, intent(in) :: a, b, c, d, e
     |

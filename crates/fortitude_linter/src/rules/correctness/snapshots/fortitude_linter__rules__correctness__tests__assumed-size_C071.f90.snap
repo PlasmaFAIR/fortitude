@@ -7,7 +7,7 @@ expression: diagnostics
 1 | subroutine assumed_size_dimension(array, n, m, l, o, p, options, thing, q)
 2 |   integer, intent(in) :: n, m
 3 |   integer, dimension(n, m, *), intent(in) :: array
-  |                            - C071
+  |                            ^ C071
 4 |   integer, intent(in) :: l(*), o, p(*)
 5 |   ! warning must be on the array part for characters
   |
@@ -17,7 +17,7 @@ expression: diagnostics
 2 |   integer, intent(in) :: n, m
 3 |   integer, dimension(n, m, *), intent(in) :: array
 4 |   integer, intent(in) :: l(*), o, p(*)
-  |                            - C071
+  |                            ^ C071
 5 |   ! warning must be on the array part for characters
 6 |   character(len=*), dimension(*) :: options
   |
@@ -27,7 +27,7 @@ expression: diagnostics
 2 |   integer, intent(in) :: n, m
 3 |   integer, dimension(n, m, *), intent(in) :: array
 4 |   integer, intent(in) :: l(*), o, p(*)
-  |                                     - C071
+  |                                     ^ C071
 5 |   ! warning must be on the array part for characters
 6 |   character(len=*), dimension(*) :: options
   |
@@ -37,7 +37,7 @@ expression: diagnostics
 4 |   integer, intent(in) :: l(*), o, p(*)
 5 |   ! warning must be on the array part for characters
 6 |   character(len=*), dimension(*) :: options
-  |                               - C071
+  |                               ^ C071
 7 |   character(*) :: thing(*)
 8 |   ! this is ok
   |
@@ -47,7 +47,7 @@ expression: diagnostics
 5 |   ! warning must be on the array part for characters
 6 |   character(len=*), dimension(*) :: options
 7 |   character(*) :: thing(*)
-  |                         - C071
+  |                         ^ C071
 8 |   ! this is ok
 9 |   character(*), intent(in) :: q
   |
