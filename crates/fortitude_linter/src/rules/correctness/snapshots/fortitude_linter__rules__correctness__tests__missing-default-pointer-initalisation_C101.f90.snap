@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/correctness/C101.f90:16:39: C101 [*] pointer component 'pReal1' does not have a default initialiser
    |

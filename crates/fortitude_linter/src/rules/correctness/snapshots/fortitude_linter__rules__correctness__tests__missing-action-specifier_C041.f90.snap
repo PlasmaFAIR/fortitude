@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/correctness/C041.f90:7:3: C043 file opened without action specifier
   |

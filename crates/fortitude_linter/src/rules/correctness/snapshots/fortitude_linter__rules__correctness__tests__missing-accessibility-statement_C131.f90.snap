@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/correctness/C131.f90:20:1: C131 module 'bad_module' missing default accessibility statement
    |

@@ -13,7 +13,7 @@ use fortitude_linter::{
     rule_selector::{RuleSelector, clap_completion::RuleSelectorParser, collect_per_file_ignores},
     settings::{
         FortranStandard, IgnoreAllowComments, OutputFormat, PatternPrefixPair, PreviewMode,
-        ProgressBar, UnsafeFixes,
+        ProgressBar, RuleSeverityOverride, RuleSeverityOverrideParser, Severity, UnsafeFixes,
     },
 };
 use fortitude_workspace::configuration::{Configuration, ConfigurationTransformer};
@@ -198,6 +198,21 @@ pub struct CheckCommand {
     /// The default serialization format is "full".
     #[arg(long, value_enum, env = "FORTITUDE_OUTPUT_FORMAT")]
     pub output_format: Option<OutputFormat>,
+
+    /// Set the default severity for violations.
+    /// The default severity is "error".
+    #[arg(long, value_enum, env = "FORTITUDE_SEVERITY_DEFAULT")]
+    pub severity_default: Option<Severity>,
+
+    /// Override the severity for the specified rules.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_SELECTOR:SEVERITY",
+        value_parser = RuleSeverityOverrideParser,
+        help_heading = "Rule selection"
+    )]
+    pub severity_overrides: Vec<RuleSeverityOverride>,
 
     /// Specify file to write the linter output to (default: stdout).
     #[arg(short, long, env = "FORTITUDE_OUTPUT_FILE")]
@@ -532,6 +547,8 @@ impl CheckCommand {
             respect_gitignore: resolve_bool_arg(self.respect_gitignore, self.no_respect_gitignore),
             preview: resolve_bool_arg(self.preview, self.no_preview).map(PreviewMode::from),
             output_format: self.output_format,
+            severity_default: self.severity_default,
+            severity_overrides: Some(self.severity_overrides),
             select: self.select,
             ignore: self.ignore,
             extend_select: self.extend_select,
@@ -565,6 +582,8 @@ struct ExplicitConfigOverrides {
     respect_gitignore: Option<bool>,
     preview: Option<PreviewMode>,
     output_format: Option<OutputFormat>,
+    severity_default: Option<Severity>,
+    severity_overrides: Option<Vec<RuleSeverityOverride>>,
     select: Option<Vec<RuleSelector>>,
     extend_select: Option<Vec<RuleSelector>>,
     ignore: Option<Vec<RuleSelector>>,
@@ -629,6 +648,18 @@ impl ConfigurationTransformer for ExplicitConfigOverrides {
         }
         if self.output_format.is_some() {
             config.output_format = self.output_format;
+        }
+        if self.severity_default.is_some() {
+            config.severity_default = self.severity_default;
+        }
+        if let Some(severity_overrides) = &self.severity_overrides {
+            config.severity_overrides = Some(match config.severity_overrides {
+                Some(mut existing) => {
+                    existing.extend(severity_overrides.clone());
+                    existing
+                }
+                None => severity_overrides.clone(),
+            });
         }
         if let Some(select) = &self.select {
             config.select = Some(select.clone());

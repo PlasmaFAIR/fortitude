@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/correctness/C011.f90:4:3: C011 Missing default case may not handle all values
    |

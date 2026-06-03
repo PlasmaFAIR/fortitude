@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/modernisation/mod.rs
+source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/modernisation/MOD011.f90:2:21: MOD011 [*] Array literal uses old-style syntax: prefer `[...]`
   |

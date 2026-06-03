@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/correctness/C141.f90:4:7: C141 [*] 'exit' statement in named 'do' loop missing label 'label1'
   |

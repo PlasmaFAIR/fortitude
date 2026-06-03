@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/OB013.f90:1:7: OB013 `block data` is obsolescent, use a `module` instead
   |

@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/modernisation/MOD051.f90:2:3: MOD051 [*] save statement is superfluous at the module level
   |

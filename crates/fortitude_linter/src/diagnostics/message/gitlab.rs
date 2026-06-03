@@ -14,6 +14,7 @@ use serde_json::json;
 use super::Emitter;
 use crate::Diagnostic;
 use crate::fs::{relativize_path, relativize_path_to};
+use crate::settings::Severity;
 
 /// Generate JSON with violations in GitLab CI format
 //  https://docs.gitlab.com/ee/ci/testing/code_quality.html#implement-a-custom-tool
@@ -86,10 +87,16 @@ impl Serialize for SerializedMessages<'_> {
                 message.rule().as_ref()
             );
 
+            let severity = match message.severity {
+                Severity::Error => "critical",
+                Severity::Warning => "major",
+                Severity::Info | Severity::None => "info",
+            };
+
             let value = json!({
                 "description": description,
                 "check_name": name,
-                "severity": "major",
+                "severity": severity,
                 "fingerprint": format!("{:x}", message_fingerprint),
                 "location": {
                     "path": path,
@@ -120,12 +127,79 @@ mod tests {
     use insta::assert_snapshot;
 
     use super::GitlabEmitter;
-    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
+    use crate::{
+        diagnostics::message::tests::{capture_emitter_output, create_messages},
+        settings::Severity,
+    };
 
     #[test]
     fn output() {
         let mut emitter = GitlabEmitter::default();
         let content = capture_emitter_output(&mut emitter, &create_messages());
+
+        assert_snapshot!(redact_fingerprint(&content));
+    }
+
+    #[test]
+    fn output_as_severity_none() {
+        let mut emitter = GitlabEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::None;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(redact_fingerprint(&content));
+    }
+
+    #[test]
+    fn output_as_severity_info() {
+        let mut emitter = GitlabEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Info;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(redact_fingerprint(&content));
+    }
+
+    #[test]
+    fn output_as_severity_warning() {
+        let mut emitter = GitlabEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Warning;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(redact_fingerprint(&content));
+    }
+
+    #[test]
+    fn output_as_severity_error() {
+        let mut emitter = GitlabEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Error;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
 
         assert_snapshot!(redact_fingerprint(&content));
     }

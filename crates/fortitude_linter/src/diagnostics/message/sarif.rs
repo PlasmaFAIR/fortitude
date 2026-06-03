@@ -15,6 +15,7 @@ use crate::VERSION;
 use crate::fs::normalize_path;
 use crate::registry::{Category, RuleNamespace};
 use crate::rules::Rule;
+use crate::settings::Severity;
 
 use super::Emitter;
 use crate::Diagnostic;
@@ -59,6 +60,7 @@ struct SarifRule<'a> {
     linter: &'a str,
     summary: &'a str,
     explanation: Option<&'a str>,
+    level: &'a str,
     // url: Option<String>,
 }
 
@@ -66,12 +68,18 @@ impl From<Rule> for SarifRule<'_> {
     fn from(rule: Rule) -> Self {
         let code = rule.noqa_code().to_string();
         let (linter, _) = Category::parse_code(&code).unwrap();
+        let level = match rule.severity() {
+            Severity::Error => "error",
+            Severity::Warning => "warning",
+            Severity::Info | Severity::None => "note",
+        };
         Self {
             name: rule.into(),
             code,
             linter: linter.name(),
             summary: rule.message_formats()[0],
             explanation: rule.explanation(),
+            level,
             // url: rule.url(),
         }
     }
@@ -98,7 +106,7 @@ impl Serialize for SarifRule<'_> {
                 "id": self.code,
                 "kind": self.linter,
                 "name": self.name,
-                "problem.severity": "error".to_string(),
+                "problem.severity": self.level,
             },
         })
         .serialize(serializer)
@@ -120,12 +128,19 @@ struct SarifResult {
 impl SarifResult {
     #[cfg(not(target_arch = "wasm32"))]
     fn from_message(message: &Diagnostic) -> Result<Self> {
+        use crate::settings::Severity;
+
         let start_location = message.compute_start_location();
         let end_location = message.compute_end_location();
         let path = normalize_path(message.filename());
+        let level = match message.severity {
+            Severity::Error => "error",
+            Severity::Warning => "warning",
+            Severity::Info | Severity::None => "note",
+        };
         Ok(Self {
             rule: message.rule(),
-            level: "error".to_string(),
+            level: level.to_string(),
             message: message.body().to_string(),
             uri: url::Url::from_file_path(&path)
                 .map_err(|()| anyhow::anyhow!("Failed to convert path to URL: {}", path.display()))?
@@ -187,14 +202,82 @@ impl Serialize for SarifResult {
 
 #[cfg(test)]
 mod tests {
+    use insta::assert_snapshot;
+
     use super::SarifEmitter;
-    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
+    use crate::{
+        diagnostics::message::tests::{capture_emitter_output, create_messages},
+        settings::Severity,
+    };
 
     fn get_output() -> String {
         let mut emitter = SarifEmitter {};
         capture_emitter_output(&mut emitter, &create_messages())
     }
 
+    #[test]
+    fn output_as_severity_none() {
+        let mut emitter = SarifEmitter {};
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::None;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_info() {
+        let mut emitter = SarifEmitter {};
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Info;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_warning() {
+        let mut emitter = SarifEmitter {};
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Warning;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_error() {
+        let mut emitter = SarifEmitter {};
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Error;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
     #[test]
     fn valid_json() {
         let content = get_output();

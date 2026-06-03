@@ -13,7 +13,7 @@ use ruff_source_file::OneIndexed;
 use ruff_text_size::{Ranged, TextRange};
 
 use crate::fs::relativize_path;
-use crate::settings::UnsafeFixes;
+use crate::settings::{Severity, UnsafeFixes};
 // use crate::line_width::{IndentWidth, LineWidthBuilder};
 use crate::text_helpers::ShowNonprinting;
 
@@ -141,7 +141,13 @@ impl Display for RuleCodeAndBody<'_> {
         write!(
             f,
             "{code} {body}",
-            code = self.message.rule().noqa_code().to_string().red().bold(),
+            code = self
+                .message
+                .rule()
+                .noqa_code()
+                .to_string()
+                .color(self.message.severity)
+                .bold(),
             body = self.message.body(),
         )
     }
@@ -195,7 +201,7 @@ impl Display for MessageCodeFrame<'_> {
             .map(|c| c.len_utf8())
             .sum();
 
-        let mut code = self.message.code().bold().bright_red();
+        let mut code = self.message.code().bold().color(self.message.severity);
 
         // Disable colours for tests, if the user requests it via env var, or non-tty
         if cfg!(test) || !colored::control::SHOULD_COLORIZE.should_colorize() {
@@ -204,10 +210,16 @@ impl Display for MessageCodeFrame<'_> {
 
         let source_text = source.show_nonprinting();
 
+        let annotation_level = match self.message.severity {
+            Severity::Error => Level::Error,
+            Severity::Warning => Level::Warning,
+            Severity::Info | Severity::None => Level::Info,
+        };
+
         let snippet = Level::None.title("").snippet(
             Snippet::source(&source_text)
                 .line_start(start_index.get())
-                .annotation(Level::Error.span(start_byte..end_byte).label(&code)),
+                .annotation(annotation_level.span(start_byte..end_byte).label(&code)),
         );
 
         let snippet_with_footer = if let Some(s) = self.message.suggestion() {
@@ -233,7 +245,7 @@ mod tests {
 
     use super::TextEmitter;
     use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
-    use crate::settings::UnsafeFixes;
+    use crate::settings::{Severity, UnsafeFixes};
 
     #[test]
     fn default() {
@@ -243,6 +255,69 @@ mod tests {
         assert_snapshot!(content);
     }
 
+    #[test]
+    fn output_as_severity_none() {
+        let mut emitter = TextEmitter::default().with_show_source(true);
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::None;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_info() {
+        let mut emitter = TextEmitter::default().with_show_source(true);
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Info;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_warning() {
+        let mut emitter = TextEmitter::default().with_show_source(true);
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Warning;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_error() {
+        let mut emitter = TextEmitter::default().with_show_source(true);
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Error;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
     #[test]
     fn fix_status() {
         let mut emitter = TextEmitter::default()

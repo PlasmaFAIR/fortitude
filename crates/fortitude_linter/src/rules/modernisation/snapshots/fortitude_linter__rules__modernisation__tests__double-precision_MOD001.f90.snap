@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/modernisation/mod.rs
+source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/modernisation/MOD001.f90:1:1: MOD001 Use of 'double precision' is discouraged
   |

@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 ---
 ./resources/test/fixtures/correctness/C082.f90:10:25: C082 Pointer 'foo' is initialized in its declaration and has no explicit `save` attribute

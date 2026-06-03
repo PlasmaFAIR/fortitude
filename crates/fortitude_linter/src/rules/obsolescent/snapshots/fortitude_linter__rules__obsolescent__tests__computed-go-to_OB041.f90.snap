@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/rules/obsolescent/mod.rs
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
 ---
 ./resources/test/fixtures/obsolescent/OB041.f90:2:5: OB041 computed go to statements are obsolescent, use a select case statement

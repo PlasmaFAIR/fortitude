@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/obsolescent/mod.rs
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/OB061.f90:13:5: OB061 [*] 'character * ( * )' uses deprecated syntax
    |

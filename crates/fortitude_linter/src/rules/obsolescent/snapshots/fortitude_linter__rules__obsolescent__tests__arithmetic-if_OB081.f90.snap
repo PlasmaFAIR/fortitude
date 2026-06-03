@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/OB081.f90:6:5: OB081 [*] Obsolete arithmetic `if`
   |

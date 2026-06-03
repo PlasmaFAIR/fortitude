@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/message/text.rs
+source: crates/fortitude_linter/src/diagnostics/message/text.rs
 expression: content
-snapshot_kind: text
 ---
 test.f90:6:5: S201 'implicit none' set on the enclosing module
   |

@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/modernisation/mod.rs
+source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/modernisation/MOD002.f90:9:30: MOD002 Use of 'd' exponentiation in '1.23456d1' is discouraged
    |

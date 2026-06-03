@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/portability/mod.rs
+source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/portability/PORT012.f90:4:38: PORT012 '1_1' has literal kind suffix '1'
   |

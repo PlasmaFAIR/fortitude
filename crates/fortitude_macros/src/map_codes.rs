@@ -427,6 +427,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_fixable_match_arms = quote!();
     let mut rule_explanation_match_arms = quote!();
     let mut rule_name_match_arms = quote!();
+    let mut rule_severity_match_arms = quote!();
 
     let mut ast_rule_variants = quote!();
     let mut ast_rule_from_match_arms = quote!();
@@ -435,6 +436,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
     for RuleMeta {
         name,
+        category,
         attrs,
         path,
         kind,
@@ -451,6 +453,13 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         rule_fixable_match_arms.extend(
             quote! {#(#attrs)* Self::#name => <#path as crate::diagnostics::Violation>::FIX_AVAILABILITY,},
         );
+        rule_severity_match_arms.extend(quote! {
+            #(#attrs)*
+            Self::#name => match Category::#category {
+                Category::Error => Severity::Error,
+                _ => Severity::None,
+            },
+        });
         rule_explanation_match_arms.extend(quote! {#(#attrs)* Self::#name => #path::explain(),});
         rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
 
@@ -525,6 +534,10 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             /// Returns the fix status of this rule.
             pub const fn fixable(&self) -> crate::diagnostics::FixAvailability {
                 match self { #rule_fixable_match_arms }
+            }
+
+            pub fn severity(&self) -> Severity {
+                match self { #rule_severity_match_arms }
             }
 
         }

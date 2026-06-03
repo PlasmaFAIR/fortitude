@@ -1,5 +1,5 @@
 ---
-source: crates/fortitude_linter/src/message/sarif.rs
+source: crates/fortitude_linter/src/diagnostics/message/sarif.rs
 expression: value
 ---
 {
@@ -27,7 +27,7 @@ expression: value
                 "id": "PORT021",
                 "kind": "Portability",
                 "name": "star-kind",
-                "problem.severity": "error"
+                "problem.severity": "note"
               }
             },
             {
@@ -45,7 +45,7 @@ expression: value
                 "id": "S061",
                 "kind": "Style",
                 "name": "unnamed-end-statement",
-                "problem.severity": "error"
+                "problem.severity": "note"
               }
             },
             {
@@ -63,7 +63,7 @@ expression: value
                 "id": "S201",
                 "kind": "Style",
                 "name": "superfluous-implicit-none",
-                "problem.severity": "error"
+                "problem.severity": "note"
               }
             }
           ],

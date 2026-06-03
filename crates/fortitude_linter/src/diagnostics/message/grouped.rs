@@ -130,7 +130,7 @@ impl Display for DisplayGroupedMessage<'_> {
             code_and_body = RuleCodeAndBody {
                 message,
                 show_fix_status: self.show_fix_status,
-                unsafe_fixes: self.unsafe_fixes
+                unsafe_fixes: self.unsafe_fixes,
             },
         )?;
 
@@ -181,7 +181,7 @@ mod tests {
 
     use super::GroupedEmitter;
     use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
-    use crate::settings::UnsafeFixes;
+    use crate::settings::{Severity, UnsafeFixes};
 
     #[test]
     fn default() {
@@ -191,6 +191,69 @@ mod tests {
         assert_snapshot!(content);
     }
 
+    #[test]
+    fn output_as_severity_none() {
+        let mut emitter = GroupedEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::None;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_info() {
+        let mut emitter = GroupedEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Info;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_warning() {
+        let mut emitter = GroupedEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Warning;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
+
+    #[test]
+    fn output_as_severity_error() {
+        let mut emitter = GroupedEmitter::default();
+        let messages = create_messages()
+            .iter_mut()
+            .map(|message| {
+                message.severity = Severity::Error;
+                message.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let content = capture_emitter_output(&mut emitter, &messages);
+
+        assert_snapshot!(content);
+    }
     #[test]
     fn show_source() {
         let mut emitter = GroupedEmitter::default().with_show_source(true);

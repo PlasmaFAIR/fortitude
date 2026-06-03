@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/OB071.f90:7:1: OB071 `forall` statements are obsolescent in F2018, prefer `do concurrent` instead
   |

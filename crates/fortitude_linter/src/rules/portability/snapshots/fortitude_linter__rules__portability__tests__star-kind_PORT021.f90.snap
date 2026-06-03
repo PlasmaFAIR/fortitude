@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/portability/mod.rs
+source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/portability/PORT021.f90:1:8: PORT021 [*] 'integer*8' uses non-standard syntax
   |

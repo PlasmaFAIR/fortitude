@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/error/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/error/E011.f90:3:18: E011 Invalid character 'ç'
   |

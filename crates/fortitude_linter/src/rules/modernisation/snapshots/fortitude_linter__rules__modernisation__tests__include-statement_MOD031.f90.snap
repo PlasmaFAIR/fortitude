@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/modernisation/mod.rs
+source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/modernisation/MOD031.f90:3:1: MOD031 Include statement is deprecated, use modules instead
   |

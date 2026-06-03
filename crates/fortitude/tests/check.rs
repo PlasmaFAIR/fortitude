@@ -256,7 +256,7 @@ end program
                          .args(["--select=S061,C001,PORT011,PORT021"])
                          .file(&test_file)
                          .build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -327,7 +327,7 @@ end program
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args(["--select=C001,style"]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -389,7 +389,7 @@ select = ["C001", "style"]
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .config(&config_file)
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -452,7 +452,7 @@ select = ["C001"]
                          .config(&config_file)
                          .file(&test_file)
                          .args(["--extend-select", "style"]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -514,7 +514,7 @@ select = ["C001", "style"]
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .config(&config_file)
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -576,7 +576,7 @@ select = ["C001", "style"]
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .config(&config_file)
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -635,7 +635,7 @@ end program foo
                          .args(["--select=S071,C022,S201,C003", "--preview", "--fix"])
                          .file(&test_file)
                          .build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -711,7 +711,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=S071,C022,S201,C003", "--preview", "--fix", "--unsafe-fixes"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -821,7 +821,7 @@ endprogram
                          .arg("--fix")
                          .arg("--fixable=S061")
                          .arg(&test_file),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -878,7 +878,7 @@ endprogram
                          .arg("--fix")
                          .arg("--unfixable=C003")
                          .arg(&test_file),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -992,7 +992,7 @@ fixable = ["C003"]
                          .arg("--fix")
                          .arg("--fixable=S061")
                          .arg(&test_file),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1049,7 +1049,7 @@ fixable = ["S061"]
                          .arg("--unfixable=S061")
                          .arg("--extend-fixable=C003")
                          .arg(&test_file),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1102,7 +1102,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=syntax-error,superfluous-semicolon,line-too-long", "--line-length=50", "--preview"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1172,7 +1172,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=superfluous-semicolon", "--preview"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1234,7 +1234,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=syntax-error,superfluous-semicolon", "--preview"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1295,7 +1295,7 @@ end program foo
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .args(["--select=superfluous-semicolon", "--preview", "--fix"])
                          .file(&test_file).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1481,7 +1481,7 @@ end module {file}{idx}
                          .arg("--select=implicit-typing")
                          .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1601,7 +1601,7 @@ end module {file}{idx}
                          .arg("--select=implicit-typing")
                          .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1707,7 +1707,7 @@ fn check_exclude() -> anyhow::Result<()> {
                          .filename(".")
                          .build()
                          .current_dir(exclude_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1767,7 +1767,7 @@ fn check_extend_exclude() -> anyhow::Result<()> {
                          .arg("--select=implicit-typing")
                          .arg("--extend-exclude=bar")
                          .current_dir(exclude_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1807,7 +1807,7 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
                          .filename("foo/foo.f90")
                          .build()
                          .current_dir(exclude_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1871,7 +1871,7 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
                          .filename(".venv/lib/site-packages/")
                          .build()
                          .current_dir(exclude_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1944,7 +1944,7 @@ end program
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args(["--select=C001,S061,PORT011,PORT021,S101"]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1994,7 +1994,7 @@ end program
     assert_cmd_snapshot!(FortitudeCheck::default()
                          .file(&test_file)
                          .args(["--select=C001,S061,PORT011,PORT021,S101", "--ignore-allow-comments"]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2165,7 +2165,7 @@ end program myprogram
                          .config(&config_file)
                          .file(&fortran_file)
                          .build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2254,7 +2254,7 @@ fn check_gitignore() -> anyhow::Result<()> {
                          .filename(".")
                          .build()
                          .current_dir(gitignore_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2303,7 +2303,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
                          .arg("--select=implicit-typing")
                          .arg("--no-respect-gitignore")
                          .current_dir(gitignore_test_path(tempdir.path())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2740,7 +2740,7 @@ end program foo
                          .args(["--select=C", "--diff", "--unsafe-fixes"])
                          .file(&test_file)
                          .build(),
-                         @r"
+                         @"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -2810,7 +2810,7 @@ end program test
                              &filter_arg,
                              "--select=PORT011",
                          ]).build(),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2933,7 +2933,7 @@ fn git_staged() -> anyhow::Result<()> {
                              "--select=PORT011",
                          ]).build()
                          .current_dir(tempdir.path()),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2994,7 +2994,7 @@ fn git_since() -> anyhow::Result<()> {
                              "--select=PORT011",
                          ]).build()
                          .current_dir(tempdir.path()),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----

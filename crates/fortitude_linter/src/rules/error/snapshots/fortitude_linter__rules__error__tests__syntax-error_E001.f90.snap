@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/error/mod.rs
+source: crates/fortitude_linter/src/rules/error/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/error/E001.f90:4:23: E001 Syntax error
   |

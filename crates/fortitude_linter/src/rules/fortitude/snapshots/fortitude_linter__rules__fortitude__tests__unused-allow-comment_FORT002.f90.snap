@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/fortitude/mod.rs
+source: crates/fortitude_linter/src/rules/fortitude/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/fortitude/FORT002.f90:1:9: FORT002 [*] Unused rule `implicit-typing` in allow comment
   |

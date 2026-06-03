@@ -2,7 +2,7 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use crate::rules::Rule;
+use crate::{rules::Rule, settings::Severity};
 use std::fmt::{Debug, Display};
 
 #[derive(Debug, Copy, Clone)]
@@ -29,6 +29,11 @@ pub trait ViolationMetadata {
     /// Returns an explanation of what this violation catches,
     /// why it's bad, and what users should do instead.
     fn explain() -> Option<&'static str>;
+
+    /// Returns the severity level for this violation.
+    fn severity() -> Severity {
+        Severity::None
+    }
 }
 
 pub trait Violation: ViolationMetadata {

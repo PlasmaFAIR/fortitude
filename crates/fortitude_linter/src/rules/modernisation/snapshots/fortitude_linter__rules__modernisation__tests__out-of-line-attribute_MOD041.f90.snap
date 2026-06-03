@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/modernisation/MOD041.f90:5:13: MOD041 [*] Out of line 'dimension' attribute for variable 'y'
   |

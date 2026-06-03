@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/portability/mod.rs
+source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/portability/PORT001.f90:5:10: PORT001 Non-portable unit '6' in 'write' statement
   |

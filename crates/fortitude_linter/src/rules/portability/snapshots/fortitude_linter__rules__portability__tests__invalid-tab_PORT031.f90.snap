@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/portability/PORT031.f90:4:1: PORT031 [*] Invalid tab character
   |

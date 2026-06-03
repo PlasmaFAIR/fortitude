@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/labelled_do.f90:11:20: OB094 [*] `goto` points to `end do`
    |

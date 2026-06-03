@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/labelled_do.f90:24:5: OB093 [*] `do` termination is not `end do` or `continue`
    |

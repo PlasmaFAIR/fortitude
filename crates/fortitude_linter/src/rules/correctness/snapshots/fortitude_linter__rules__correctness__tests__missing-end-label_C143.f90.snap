@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/correctness/C143.f90:9:3: C143 [*] 'end associate' statement in named 'associate' block missing label
    |

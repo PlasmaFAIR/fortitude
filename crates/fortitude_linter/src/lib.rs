@@ -153,7 +153,10 @@ impl<'a> CheckContext<'a> {
 
     #[must_use]
     pub fn create_diagnostic<T: Violation, R: TextRanged>(&self, kind: T, range: R) -> Diagnostic {
-        Diagnostic::new(kind, range.textrange())
+        let diagnostic = Diagnostic::new(kind, range.textrange());
+        let rule = diagnostic.rule();
+        let severity = diagnostic.severity;
+        diagnostic.with_severity(self.settings.resolve_severity(rule, severity))
     }
 
     #[must_use]

@@ -1,6 +1,5 @@
 ---
 source: crates/fortitude_linter/src/rules/style/mod.rs
-assertion_line: 104
 expression: diagnostics
 ---
 ./resources/test/fixtures/style/S001_ignore_comment_length.f90:3:101: S001 line length of 165, exceeds maximum 100

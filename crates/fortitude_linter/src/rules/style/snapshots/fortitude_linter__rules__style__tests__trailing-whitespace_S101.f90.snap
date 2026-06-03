@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/style/mod.rs
+source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S101.f90:1:13: S101 [*] trailing whitespace
   |

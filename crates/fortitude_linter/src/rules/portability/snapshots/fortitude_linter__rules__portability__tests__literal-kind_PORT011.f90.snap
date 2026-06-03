@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/portability/mod.rs
+source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/portability/PORT011.f90:1:9: PORT011 integer kind set with number literal '8'
   |

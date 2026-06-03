@@ -1,7 +1,6 @@
 ---
-source: fortitude/src/rules/obsolescent/mod.rs
+source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 ./resources/test/fixtures/obsolescent/OB011.f90:2:3: OB011 common blocks are obsolescent, prefer modules or derived types
   |
