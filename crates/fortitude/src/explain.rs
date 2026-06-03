@@ -137,7 +137,7 @@ fn print_rule_list(rules: &[Rule]) {
 
     for rule in rules {
         let name = rule.as_ref().color(name_colour).bold();
-        let code = rule.noqa_code().to_string().bright_green().bold();
+        let code = rule.noqa_code().to_string().bright_red().bold();
         let summary = rule.message_formats()[0];
         let status = match rule.group() {
             RuleGroup::Removed => "Rule has been removed".red(),
