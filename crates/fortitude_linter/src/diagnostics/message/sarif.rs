@@ -134,10 +134,9 @@ impl SarifResult {
         let end_location = message.compute_end_location();
         let path = normalize_path(message.filename());
         let level = match message.severity {
-            Severity::None => "warning",
             Severity::Error => "error",
             Severity::Warning => "warning",
-            Severity::Info => "note",
+            Severity::Info | Severity::None => "note",
         };
         Ok(Self {
             rule: message.rule(),
