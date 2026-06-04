@@ -51,7 +51,7 @@ common style guides, use of outdated features, and, generally, suggestions to
 improve the code in some way.
 
 Fortitude is a linter targeting Fortran, which has hitherto lacked a standard
-open-source solution. It is two orders of magnitude faster than its open-source
+open-source solution. It is over an order of magnitude faster than its open-source
 counterparts, is highly customisable, has robust parsing capabilities, can
 automatically fix many linting issues, and can integrate either into a CI/CD
 pipeline or directly into a user’s editor or IDE.
