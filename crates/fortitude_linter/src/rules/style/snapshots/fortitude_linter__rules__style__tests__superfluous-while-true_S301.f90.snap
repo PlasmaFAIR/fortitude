@@ -1,0 +1,179 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/style/S301.f90:88:12: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+   |
+86 |     ! FAIL 1 -> standard.
+87 |     subroutine fail_1()
+88 |         do while (.true.)
+   |            ^^^^^^^^^^^^^^ S301
+89 |             x = x + 1
+90 |             if (x > 10) exit
+   |
+   = help: Remove 'while' statement
+
+ℹ Safe fix
+85 85 | 
+86 86 |     ! FAIL 1 -> standard.
+87 87 |     subroutine fail_1()
+88    |-        do while (.true.)
+   88 |+        do 
+89 89 |             x = x + 1
+90 90 |             if (x > 10) exit
+91 91 |         end do
+
+./resources/test/fixtures/style/S301.f90:96:12: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+   |
+94 |     ! FAIL 2 -> case insensitive.
+95 |     subroutine fail_2()
+96 |         do while (.TRUE.)
+   |            ^^^^^^^^^^^^^^ S301
+97 |             x = x + 1
+98 |             if (x > 10) exit
+   |
+   = help: Remove 'while' statement
+
+ℹ Safe fix
+93 93 | 
+94 94 |     ! FAIL 2 -> case insensitive.
+95 95 |     subroutine fail_2()
+96    |-        do while (.TRUE.)
+   96 |+        do 
+97 97 |             x = x + 1
+98 98 |             if (x > 10) exit
+99 99 |         end do
+
+./resources/test/fixtures/style/S301.f90:104:12: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+    |
+102 |     ! FAIL 3 -> extra whitespace.
+103 |     subroutine fail_3()
+104 |         do while (  .true.  )
+    |            ^^^^^^^^^^^^^^^^^^ S301
+105 |             x = x + 1
+106 |             if (x > 10) exit
+    |
+    = help: Remove 'while' statement
+
+ℹ Safe fix
+101 101 | 
+102 102 |     ! FAIL 3 -> extra whitespace.
+103 103 |     subroutine fail_3()
+104     |-        do while (  .true.  )
+    104 |+        do 
+105 105 |             x = x + 1
+106 106 |             if (x > 10) exit
+107 107 |         end do
+
+./resources/test/fixtures/style/S301.f90:112:20: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+    |
+110 |     ! FAIL 4 -> do loop name.
+111 |     subroutine fail_4()
+112 |         a_name: do while (.true.)
+    |                    ^^^^^^^^^^^^^^ S301
+113 |             x = x + 1
+114 |             if (x > 10) exit
+    |
+    = help: Remove 'while' statement
+
+ℹ Safe fix
+109 109 | 
+110 110 |     ! FAIL 4 -> do loop name.
+111 111 |     subroutine fail_4()
+112     |-        a_name: do while (.true.)
+    112 |+        a_name: do 
+113 113 |             x = x + 1
+114 114 |             if (x > 10) exit
+115 115 |         end do a_name
+
+./resources/test/fixtures/style/S301.f90:120:12: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+    |
+118 |     ! FAIL 5 -> with extra parentheses.
+119 |     subroutine fail_5()
+120 |         do while ((.true.))
+    |            ^^^^^^^^^^^^^^^^ S301
+121 |             x = x + 1
+122 |             if (x > 10) exit
+    |
+    = help: Remove 'while' statement
+
+ℹ Safe fix
+117 117 | 
+118 118 |     ! FAIL 5 -> with extra parentheses.
+119 119 |     subroutine fail_5()
+120     |-        do while ((.true.))
+    120 |+        do 
+121 121 |             x = x + 1
+122 122 |             if (x > 10) exit
+123 123 |         end do
+
+./resources/test/fixtures/style/S301.f90:128:12: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+    |
+126 |     ! FAIL 6 -> with lots of extra parentheses.
+127 |     subroutine fail_6()
+128 |         do while (((((((.true.)))))))
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^ S301
+129 |             x = x + 1
+130 |             if (x > 10) exit
+    |
+    = help: Remove 'while' statement
+
+ℹ Safe fix
+125 125 | 
+126 126 |     ! FAIL 6 -> with lots of extra parentheses.
+127 127 |     subroutine fail_6()
+128     |-        do while (((((((.true.)))))))
+    128 |+        do 
+129 129 |             x = x + 1
+130 130 |             if (x > 10) exit
+131 131 |         end do
+
+./resources/test/fixtures/style/S301.f90:136:12: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+    |
+134 |       ! FAIL 7 -> line continuation in logical expression.
+135 |       subroutine fail_7()
+136 |           do while (&
+    |  ____________^
+137 | |                 .true.&
+138 | |                 )
+    | |_________________^ S301
+139 |               x = x + 1
+140 |               if (x > 10) some_logical = .false.
+    |
+    = help: Remove 'while' statement
+
+ℹ Safe fix
+133 133 | 
+134 134 |     ! FAIL 7 -> line continuation in logical expression.
+135 135 |     subroutine fail_7()
+136     |-        do while (&
+137     |-                .true.&
+138     |-                )
+    136 |+        do 
+139 137 |             x = x + 1
+140 138 |             if (x > 10) some_logical = .false.
+141 139 |         end do
+
+./resources/test/fixtures/style/S301.f90:146:12: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+    |
+144 |       ! FAIL 8 -> line continuation between "while" and logical expression.
+145 |       subroutine fail_8()
+146 |           do while &
+    |  ____________^
+147 | |                 (.true.)
+    | |________________________^ S301
+148 |               x = x + 1
+149 |               if (x > 10) some_logical = .false.
+    |
+    = help: Remove 'while' statement
+
+ℹ Safe fix
+143 143 | 
+144 144 |     ! FAIL 8 -> line continuation between "while" and logical expression.
+145 145 |     subroutine fail_8()
+146     |-        do while &
+147     |-                (.true.)
+    146 |+        do 
+148 147 |             x = x + 1
+149 148 |             if (x > 10) some_logical = .false.
+150 149 |         end do

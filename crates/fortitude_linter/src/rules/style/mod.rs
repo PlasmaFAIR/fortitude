@@ -11,6 +11,7 @@ pub mod line_length;
 pub mod literals;
 pub(crate) mod semicolons;
 pub mod strings;
+pub mod superfluous_while_true;
 pub(crate) mod use_statement;
 pub mod useless_return;
 pub(crate) mod whitespace;
@@ -59,6 +60,7 @@ mod tests {
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
     #[test_case(Rule::UnsortedUses, Path::new("S271.f90"))]
     #[test_case(Rule::BareDecimal, Path::new("S291.f90"))]
+    #[test_case(Rule::SuperfluousWhileTrue, Path::new("S301.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
