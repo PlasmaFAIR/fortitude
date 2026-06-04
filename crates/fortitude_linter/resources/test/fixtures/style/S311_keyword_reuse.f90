@@ -29,10 +29,10 @@ contains
                     cycle cycle
                 end if
                 if (i == 6) then
-                    exit if
+                    exit do
                 end if
             end do cycle
-        end do if
+        end do do
     end subroutine sub
 
 end module module
