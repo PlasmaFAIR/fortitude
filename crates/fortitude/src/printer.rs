@@ -1,5 +1,4 @@
 use std::cmp::Reverse;
-use std::fmt::Display;
 use std::io::Write;
 
 use anyhow::Result;
@@ -16,7 +15,6 @@ use fortitude_linter::diagnostics::message::{
 use fortitude_linter::diagnostics::{Diagnostic, Diagnostics, FixMap};
 use fortitude_linter::fs::relativize_path;
 use fortitude_linter::logging::LogLevel;
-use fortitude_linter::rules::Rule;
 use fortitude_linter::settings::{FixMode, OutputFormat, UnsafeFixes};
 
 bitflags! {
@@ -32,59 +30,24 @@ bitflags! {
 }
 
 #[derive(Serialize)]
-struct ExpandedStatistics {
-    code: SerializeRuleAsCode,
-    name: SerializeRuleAsTitle,
+struct ExpandedStatistics<'a> {
+    code: &'a str,
+    name: &'static str,
     count: usize,
-    fixable: bool,
+    #[serde(rename = "fixable")]
+    all_fixable: bool,
+    fixable_count: usize,
 }
 
-#[derive(Copy, Clone)]
-struct SerializeRuleAsCode(Rule);
-
-impl Serialize for SerializeRuleAsCode {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.0.noqa_code().to_string())
+impl ExpandedStatistics<'_> {
+    fn any_fixable(&self) -> bool {
+        self.fixable_count > 0
     }
 }
 
-impl Display for SerializeRuleAsCode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.noqa_code())
-    }
-}
-
-impl From<Rule> for SerializeRuleAsCode {
-    fn from(rule: Rule) -> Self {
-        Self(rule)
-    }
-}
-
-struct SerializeRuleAsTitle(Rule);
-
-impl Serialize for SerializeRuleAsTitle {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(self.0.as_ref())
-    }
-}
-
-impl Display for SerializeRuleAsTitle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.0.as_ref())
-    }
-}
-
-impl From<Rule> for SerializeRuleAsTitle {
-    fn from(rule: Rule) -> Self {
-        Self(rule)
-    }
-}
+/// Accumulator type for grouping diagnostics by code.
+/// Format: (`code`, `representative_diagnostic`, `total_count`, `fixable_count`)
+type DiagnosticGroup<'a> = (&'a str, &'a Diagnostic, usize, usize);
 
 pub(crate) struct Printer {
     format: OutputFormat,
@@ -358,32 +321,42 @@ impl Printer {
         diagnostics: &CheckResults,
         writer: &mut dyn Write,
     ) -> Result<()> {
+        let required_applicability = self.unsafe_fixes.required_applicability();
         let statistics: Vec<ExpandedStatistics> = diagnostics
             .diagnostics
             .messages
             .iter()
-            .sorted_by_key(|message| (message.rule(), message.fixable()))
-            .fold(vec![], |mut acc: Vec<(&Diagnostic, usize)>, message| {
-                if let Some((prev_message, count)) = acc.last_mut()
-                    && prev_message.rule() == message.rule()
+            .sorted_by_key(|diagnostic| diagnostic.code())
+            .fold(vec![], |mut acc: Vec<DiagnosticGroup>, diagnostic| {
+                let is_fixable = diagnostic
+                    .fix()
+                    .is_some_and(|fix| fix.applies(required_applicability));
+                let code = diagnostic.code();
+
+                if let Some((prev_code, _prev_message, count, fixable_count)) = acc.last_mut()
+                    && *prev_code == code
                 {
                     *count += 1;
+                    if is_fixable {
+                        *fixable_count += 1;
+                    }
                     return acc;
                 }
-                acc.push((message, 1));
+                acc.push((code, diagnostic, 1, usize::from(is_fixable)));
                 acc
             })
             .iter()
-            .map(|&(message, count)| ExpandedStatistics {
-                code: message.rule().into(),
-                name: message.rule().into(),
-                count,
-                fixable: if let Some(fix) = message.fix() {
-                    fix.applies(self.unsafe_fixes.required_applicability())
-                } else {
-                    false
+            .map(
+                |&(code, message, count, fixable_count)| ExpandedStatistics {
+                    code,
+                    name: message.name(),
+                    count,
+                    // Backward compatibility: `fixable` is true only when all violations are fixable.
+                    // See: https://github.com/astral-sh/ruff/pull/21513
+                    all_fixable: fixable_count == count,
+                    fixable_count,
                 },
-            })
+            )
             .sorted_by_key(|statistic| Reverse(statistic.count))
             .collect();
 
@@ -404,24 +377,27 @@ impl Printer {
                 );
                 let code_width = statistics
                     .iter()
-                    .map(|statistic| statistic.code.to_string().len())
+                    .map(|statistic| statistic.code.len())
                     .max()
                     .unwrap();
-                let any_fixable = statistics.iter().any(|statistic| statistic.fixable);
+                let any_fixable = statistics.iter().any(ExpandedStatistics::any_fixable);
 
-                let fixable = format!("[{}] ", "*".cyan());
+                let all_fixable = format!("[{}] ", "*".cyan());
+                let partially_fixable = format!("[{}] ", "-".cyan());
                 let unfixable = "[ ] ";
 
                 // By default, we mimic Flake8's `--statistics` format.
-                for statistic in statistics {
+                for statistic in &statistics {
                     writeln!(
                         writer,
                         "{:>count_width$}\t{:<code_width$}\t{}{}",
                         statistic.count.to_string().bold(),
-                        statistic.code.to_string().red().bold(),
+                        statistic.code.red().bold(),
                         if any_fixable {
-                            if statistic.fixable {
-                                &fixable
+                            if statistic.all_fixable {
+                                &all_fixable
+                            } else if statistic.any_fixable() {
+                                &partially_fixable
                             } else {
                                 unfixable
                             }
