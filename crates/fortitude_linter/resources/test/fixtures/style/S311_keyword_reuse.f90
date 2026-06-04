@@ -9,8 +9,13 @@ module module
     real, allocatable :: allocatable
     real, pointer :: pointer
     real, target :: target
+    integer, parameter :: parameter = 3
 
     public :: public  ! Shouldn't trigger here, only on the declaration above
+
+    type type
+        integer :: extends
+    end type type
 
 contains
 

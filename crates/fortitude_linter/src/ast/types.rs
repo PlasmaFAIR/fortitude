@@ -725,3 +725,29 @@ impl<'a> Procedure<'a> {
         self.kind.is_subroutine()
     }
 }
+
+/// Type representing a derived type definition.
+/// Not yet fleshed out!
+#[derive(Clone, Debug, HasNode)]
+pub struct TypeDefinition<'a> {
+    name: String,
+    node: Node<'a>,
+}
+
+impl<'a> TypeDefinition<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if !node.is_named() || node.kind() != "derived_type_definition" {
+            return Err(anyhow!("not a derived type"));
+        }
+
+        let stmt = node.child_with_name("derived_type_statement").context("expected dervied_type_statement")?;
+        let name_node = stmt.child_with_name("type_name").context("expected type_name")?;
+        let name = name_node.to_text(src).context("should have text")?.to_ascii_lowercase();
+
+        Ok(Self {name, node: *node})
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+}

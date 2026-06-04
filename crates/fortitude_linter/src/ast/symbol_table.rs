@@ -7,7 +7,7 @@ use crate::{ast::types::ProcedureKind, traits::HasNode};
 
 use super::{
     FortitudeNode,
-    types::{Procedure, Variable, VariableDeclaration},
+    types::{Procedure, TypeDefinition, Variable, VariableDeclaration},
 };
 
 pub const BEGIN_SCOPE_NODES: &[&str] = &[
@@ -33,6 +33,7 @@ pub enum Symbol<'a> {
     Variable(Variable<'a>),
     Function(Procedure<'a>),
     Subroutine(Procedure<'a>),
+    Type(TypeDefinition<'a>),
 }
 
 impl<'a> Symbol<'a> {
@@ -40,6 +41,7 @@ impl<'a> Symbol<'a> {
         match self {
             Self::Variable(var) => var.name(),
             Self::Function(proc) | Self::Subroutine(proc) => proc.name(),
+            Self::Type(typedef)=> typedef.name(),
         }
     }
 }
@@ -49,6 +51,7 @@ impl<'a> HasNode<'a> for Symbol<'a> {
         match self {
             Self::Variable(var) => var.node(),
             Self::Function(proc) | Self::Subroutine(proc) => proc.node(),
+            Self::Type(typedef)=> typedef.node(),
         }
     }
 }
@@ -91,6 +94,7 @@ impl<'a> SymbolTable<'a> {
             }
         }
 
+        // Add procedure definitions
         if let Some(procs) = scope.child_with_name("internal_procedures") {
             procs
                 .named_children(&mut procs.walk())
@@ -110,6 +114,17 @@ impl<'a> SymbolTable<'a> {
                     };
                 })
         }
+        
+        // Add derived type definitions
+        scope
+            .named_children(&mut scope.walk())
+            .filter(|child| child.kind() == "derived_type_definition")
+            .filter_map(|typedef| TypeDefinition::try_from_node(&typedef, src).ok())
+            .for_each(|typedef| {
+                let name = typedef.name().to_owned();
+                new_table.inner.insert(name, Symbol::Type(typedef));
+            });
+        
 
         new_table
     }
