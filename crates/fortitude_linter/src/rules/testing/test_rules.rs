@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 /// Fake rules for testing fortitude's behaviour
-use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
+use crate::{
+    CheckContext,
+    diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation},
+};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::{TextRange, TextSize};
@@ -26,7 +29,7 @@ pub const TEST_RULES: &[Rule] = &[
 ];
 
 pub trait TestRule {
-    fn check() -> Option<Diagnostic>;
+    fn check(context: &CheckContext) -> Option<Diagnostic>;
 }
 
 /// ## What it does
@@ -57,8 +60,8 @@ impl Violation for StableTestRule {
 }
 
 impl TestRule for StableTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }
 
@@ -90,11 +93,12 @@ impl Violation for StableTestRuleSafeFix {
 }
 
 impl TestRule for StableTestRuleSafeFix {
-    fn check() -> Option<Diagnostic> {
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
         let comment = "! fix from stable-test-rule-safe-fix\n".to_string();
 
         Some(
-            Diagnostic::new(Self {}, TextRange::default())
+            context
+                .create_diagnostic(Self {}, TextRange::default())
                 .with_fix(Fix::safe_edit(Edit::insertion(comment, TextSize::new(0)))),
         )
     }
@@ -128,10 +132,11 @@ impl Violation for StableTestRuleUnsafeFix {
 }
 
 impl TestRule for StableTestRuleUnsafeFix {
-    fn check() -> Option<Diagnostic> {
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
         let comment = "! fix from stable-test-rule-unsafe-fix\n".to_string();
         Some(
-            Diagnostic::new(Self {}, TextRange::default())
+            context
+                .create_diagnostic(Self {}, TextRange::default())
                 .with_fix(Fix::unsafe_edit(Edit::insertion(comment, TextSize::new(0)))),
         )
     }
@@ -165,12 +170,15 @@ impl Violation for StableTestRuleDisplayOnlyFix {
 }
 
 impl TestRule for StableTestRuleDisplayOnlyFix {
-    fn check() -> Option<Diagnostic> {
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
         let comment = "! fix from stable-test-rule-display-only-fix\n".to_string();
         Some(
-            Diagnostic::new(Self {}, TextRange::default()).with_fix(Fix::display_only_edit(
-                Edit::insertion(comment, TextSize::new(0)),
-            )),
+            context
+                .create_diagnostic(Self {}, TextRange::default())
+                .with_fix(Fix::display_only_edit(Edit::insertion(
+                    comment,
+                    TextSize::new(0),
+                ))),
         )
     }
 }
@@ -203,8 +211,8 @@ impl Violation for PreviewTestRule {
 }
 
 impl TestRule for PreviewTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }
 
@@ -236,8 +244,8 @@ impl Violation for DeprecatedTestRule {
 }
 
 impl TestRule for DeprecatedTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }
 
@@ -269,8 +277,8 @@ impl Violation for AnotherDeprecatedTestRule {
 }
 
 impl TestRule for AnotherDeprecatedTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }
 
@@ -302,8 +310,8 @@ impl Violation for RemovedTestRule {
 }
 
 impl TestRule for RemovedTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }
 
@@ -335,8 +343,8 @@ impl Violation for AnotherRemovedTestRule {
 }
 
 impl TestRule for AnotherRemovedTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }
 
@@ -368,8 +376,8 @@ impl Violation for RedirectedFromTestRule {
 }
 
 impl TestRule for RedirectedFromTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }
 
@@ -401,8 +409,8 @@ impl Violation for RedirectedToTestRule {
 }
 
 impl TestRule for RedirectedToTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }
 
@@ -434,7 +442,7 @@ impl Violation for RedirectedFromPrefixTestRule {
 }
 
 impl TestRule for RedirectedFromPrefixTestRule {
-    fn check() -> Option<Diagnostic> {
-        Some(Diagnostic::new(Self {}, TextRange::default()))
+    fn check(context: &CheckContext) -> Option<Diagnostic> {
+        Some(context.create_diagnostic(Self {}, TextRange::default()))
     }
 }

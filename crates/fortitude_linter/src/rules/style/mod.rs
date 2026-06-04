@@ -22,6 +22,7 @@ mod tests {
 
     use anyhow::Result;
     use insta::assert_snapshot;
+    use ruff_source_file::SourceFileBuilder;
     use test_case::test_case;
 
     use crate::apply_common_filters;
@@ -29,7 +30,7 @@ mod tests {
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
     use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
     use crate::settings::CheckSettings;
-    use crate::test::test_path;
+    use crate::test::{test_contents, test_path};
 
     use super::strings::settings::Quote;
 
@@ -257,6 +258,33 @@ mod tests {
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Path::new("my/dir/to/file.f95"))]
+    #[test_case(Path::new("my/dir/to/file"))]
+    fn file_extensions(path: &Path) -> Result<()> {
+        let rule_code = Rule::NonStandardFileExtension;
+        let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+
+        let file = SourceFileBuilder::new(path.to_string_lossy(), "").finish();
+        let diagnostics = test_contents(path, &file, &CheckSettings::for_rule(rule_code));
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test_case(Path::new("my/dir/to/file.f90"); "lowercase f90")]
+    #[test_case(Path::new("my/dir/to/file.F90"); "uppercase F90")]
+    #[test_case(Path::new("my/dir/to/file.pf"); "pfunit")]
+    fn ok_file_extensions(path: &Path) -> Result<()> {
+        let rule_code = Rule::NonStandardFileExtension;
+        let file = SourceFileBuilder::new(path.to_string_lossy(), "").finish();
+        let diagnostics = test_contents(path, &file, &CheckSettings::for_rule(rule_code));
+        assert!(
+            diagnostics.is_empty(),
+            "Test source has no warnings, but some were raised:\n{diagnostics}"
+        );
         Ok(())
     }
 }

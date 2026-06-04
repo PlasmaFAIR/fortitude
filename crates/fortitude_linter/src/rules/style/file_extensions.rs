@@ -1,4 +1,7 @@
-use crate::diagnostics::{Diagnostic, Violation};
+use crate::{
+    CheckContext,
+    diagnostics::{Diagnostic, Violation},
+};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
@@ -25,56 +28,18 @@ impl Violation for NonStandardFileExtension {
 }
 
 impl NonStandardFileExtension {
-    pub fn check(path: &Path) -> Option<Diagnostic> {
+    pub fn check(context: &CheckContext) -> Option<Diagnostic> {
+        let path = Path::new(context.file.name());
         match path.extension() {
             Some(ext) => {
                 // Must check like this as ext is an OsStr
                 if ["f90", "F90", "pf"].iter().any(|&x| x == ext) {
                     None
                 } else {
-                    Some(Diagnostic::new(Self {}, TextRange::default()))
+                    Some(context.create_diagnostic(Self {}, TextRange::default()))
                 }
             }
-            None => Some(Diagnostic::new(Self {}, TextRange::default())),
+            None => Some(context.create_diagnostic(Self {}, TextRange::default())),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_bad_file_extension() {
-        let path = Path::new("my/dir/to/file.f95");
-        assert_eq!(
-            NonStandardFileExtension::check(path),
-            Some(Diagnostic::new(
-                NonStandardFileExtension {},
-                TextRange::default()
-            )),
-        );
-    }
-
-    #[test]
-    fn test_missing_file_extension() {
-        let path = Path::new("my/dir/to/file");
-        assert_eq!(
-            NonStandardFileExtension::check(path),
-            Some(Diagnostic::new(
-                NonStandardFileExtension {},
-                TextRange::default()
-            )),
-        );
-    }
-
-    #[test]
-    fn test_correct_file_extensions() {
-        let path1 = Path::new("my/dir/to/file.f90");
-        let path2 = Path::new("my/dir/to/file.F90");
-        let path3 = Path::new("my/dir/to/file.pf");
-        assert_eq!(NonStandardFileExtension::check(path1), None);
-        assert_eq!(NonStandardFileExtension::check(path2), None);
-        assert_eq!(NonStandardFileExtension::check(path3), None);
     }
 }
