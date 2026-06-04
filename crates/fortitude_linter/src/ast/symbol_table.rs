@@ -41,7 +41,7 @@ impl<'a> Symbol<'a> {
         match self {
             Self::Variable(var) => var.name(),
             Self::Function(proc) | Self::Subroutine(proc) => proc.name(),
-            Self::Type(typedef)=> typedef.name(),
+            Self::Type(typedef) => typedef.name(),
         }
     }
 }
@@ -51,7 +51,7 @@ impl<'a> HasNode<'a> for Symbol<'a> {
         match self {
             Self::Variable(var) => var.node(),
             Self::Function(proc) | Self::Subroutine(proc) => proc.node(),
-            Self::Type(typedef)=> typedef.node(),
+            Self::Type(typedef) => typedef.node(),
         }
     }
 }
@@ -114,7 +114,7 @@ impl<'a> SymbolTable<'a> {
                     };
                 })
         }
-        
+
         // Add derived type definitions
         scope
             .named_children(&mut scope.walk())
@@ -124,7 +124,6 @@ impl<'a> SymbolTable<'a> {
                 let name = typedef.name().to_owned();
                 new_table.inner.insert(name, Symbol::Type(typedef));
             });
-        
 
         new_table
     }

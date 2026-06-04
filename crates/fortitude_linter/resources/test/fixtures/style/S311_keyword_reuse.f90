@@ -53,6 +53,10 @@ program program
         print *, allocate, deallocate, write
     end block block
 
+    block
+        integer :: namelist
+    end block
+
 contains
 
     subroutine subroutine(print, in, out, inout)

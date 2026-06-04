@@ -740,11 +740,18 @@ impl<'a> TypeDefinition<'a> {
             return Err(anyhow!("not a derived type"));
         }
 
-        let stmt = node.child_with_name("derived_type_statement").context("expected dervied_type_statement")?;
-        let name_node = stmt.child_with_name("type_name").context("expected type_name")?;
-        let name = name_node.to_text(src).context("should have text")?.to_ascii_lowercase();
+        let stmt = node
+            .child_with_name("derived_type_statement")
+            .context("expected dervied_type_statement")?;
+        let name_node = stmt
+            .child_with_name("type_name")
+            .context("expected type_name")?;
+        let name = name_node
+            .to_text(src)
+            .context("should have text")?
+            .to_ascii_lowercase();
 
-        Ok(Self {name, node: *node})
+        Ok(Self { name, node: *node })
     }
 
     pub fn name(&self) -> &str {
