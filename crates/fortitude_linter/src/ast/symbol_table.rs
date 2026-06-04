@@ -72,7 +72,7 @@ pub struct SymbolTable<'a> {
 impl<'a> SymbolTable<'a> {
     /// Create a new [`SymbolTable`] for a node which is a scope (that is,
     /// contains variable declarations)
-    pub fn new(scope: &Node<'a>, src: &'a str) -> Self {
+    pub fn new(scope: &Node<'a>, src: &str) -> Self {
         let mut new_table = Self::default();
 
         scope
