@@ -490,6 +490,7 @@ pub(crate) fn check_keyword_reuse(
             ));
         }
     }
+    diagnostics.sort_by(|a, b| a.range().ordering(b.range()));
     diagnostics
 }
 
