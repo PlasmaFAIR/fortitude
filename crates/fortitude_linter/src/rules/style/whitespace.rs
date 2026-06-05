@@ -330,3 +330,109 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
         kind_ids!["(" | kw, "[" | kw, ")" | kw, "]" | kw]
     }
 }
+
+
+/// ## What it does
+/// Checks that the correct indentation has been used
+///
+/// ## Why is this bad?
+///
+/// ## Options
+#[derive(ViolationMetadata)]
+pub(crate) struct IncorrectIndent;
+
+impl AlwaysFixableViolation for IncorrectIndent {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Invalid indentation".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "Replace with correct spaces".to_string()
+    }
+}
+
+pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
+    let mut violations = Vec::new();
+    
+    const TAB_SIZE: usize = 2;
+    let mut expected_leading_spaces = 0;
+    let mut i = -1;
+
+    for line in context.source_text().universal_newlines() {
+        // Skip empty lines and lines with only whitespace
+        if line.trim().is_empty() {
+            continue;
+        }
+        i = i + 1;
+        
+        // Count leading spaces
+        let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
+        
+        // Get indentation range
+        let start = line.start();
+        let end = start + TextSize::try_from(leading_spaces).unwrap();
+
+        let range = TextRange::new(start, end);
+        println!("{}, {}, {} | {}", i, leading_spaces, expected_leading_spaces, line.to_string());
+        // println!("Expected Leading spaces: {}", expected_leading_spaces);
+
+        const BEGIN_SCOPE_NODES: &[&str] = &[
+            "program",
+            "module_statement",
+            "subroutine_statement",
+            "function",
+            "derived_type_definition",
+            "block_construct",
+        ];
+        const END_SCOPE_NODES: &[&str] = &[
+            "end_program_statement",
+            "end_module_statement",
+            "end_subroutine_statement",
+            "end_function_statement",
+            "end_type_statement",
+            "end_block_construct_statement",
+        ];
+        
+        let content_start = start + TextSize::try_from(leading_spaces as u32).unwrap();
+        // Determine what the indentation should be for the next line using the first node for this line
+        if let Some(line_node) = root.named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize()) {
+            let node_kind = &line_node.kind();
+            // println!("Node string: {}", line_node.to_string());
+
+            // TODO: expected_leading_spaces for the current line should decrease if we are at a begin scope and then remain the same for the next line
+            
+            // Compare with the expected number of leading spaces
+            if !matches!(node_kind, &"contains_statement") {
+                if leading_spaces != expected_leading_spaces {
+                    let edit = Edit::range_replacement(" ".repeat(expected_leading_spaces), range);
+                    let visual_end = if leading_spaces > 0 {
+                        start + TextSize::try_from(leading_spaces).unwrap()
+                    } else {
+                        start + TextSize::try_from(1usize).unwrap()
+                    };
+                    violations.push(
+                        context
+                            .create_diagnostic(IncorrectIndent, TextRange::new(start, visual_end))
+                            .with_fix(Fix::safe_edit(edit)),
+                    );
+                }
+            }
+
+            // println!("Node kind  : {}", node_kind);
+            if BEGIN_SCOPE_NODES.contains(node_kind) {
+                // println!("Is begin node");
+                expected_leading_spaces = expected_leading_spaces + TAB_SIZE;
+            } else if END_SCOPE_NODES.contains(node_kind) {
+                // println!("Is end node");
+                if expected_leading_spaces < TAB_SIZE {
+                    expected_leading_spaces = 0
+                } else {
+                    expected_leading_spaces = expected_leading_spaces - TAB_SIZE;
+                }
+            }
+        }
+    }
+    
+    violations
+}
