@@ -2559,25 +2559,29 @@ end program test
         "code": "PORT011",
         "name": "literal-kind",
         "count": 2,
-        "fixable": false
+        "fixable": false,
+        "fixable_count": 0
       },
       {
         "code": "PORT021",
         "name": "star-kind",
         "count": 2,
-        "fixable": false
+        "fixable": false,
+        "fixable_count": 0
       },
       {
         "code": "C001",
         "name": "implicit-typing",
         "count": 1,
-        "fixable": false
+        "fixable": false,
+        "fixable_count": 0
       },
       {
         "code": "S101",
         "name": "trailing-whitespace",
         "count": 1,
-        "fixable": true
+        "fixable": true,
+        "fixable_count": 1
       }
     ]
 

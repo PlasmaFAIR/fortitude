@@ -197,7 +197,7 @@ impl Diagnostic {
     }
 
     /// Returns the name used to represent the diagnostic.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &'static str {
         self.rule.into()
     }
 
