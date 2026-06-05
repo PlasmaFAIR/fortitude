@@ -98,8 +98,9 @@ so on.
 
 ## Configuration
 
-We can control Fortitude's behaviour with a configuration file, one of `fpm.toml`,
-`fortitude.toml`, or `.fortitude.toml`. Let's add a new file:
+We can control Fortitude's behaviour with a configuration file, one of
+`fortitude.toml`, `.fortitude.toml`, `fpm.toml`, or `pyproject.toml`. Let's add
+a new file:
 
 
 === "`fpm.toml`"
@@ -114,6 +115,14 @@ We can control Fortitude's behaviour with a configuration file, one of `fpm.toml
 
     ```toml
     [check]
+    # Add check for implicit kinds on real variables
+    extend-select = ["implicit-real-kind"]
+    ```
+
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
     # Add check for implicit kinds on real variables
     extend-select = ["implicit-real-kind"]
     ```
@@ -140,6 +149,7 @@ For more information about specific rules, run:
     fortitude explain X001,Y002,...
 ```
 
+For more information on configuration files, see [_Configuration_](configuration.md).
 For a complete description of supported settings, see [_Settings_](settings.md).
 
 ### Rule Selection
