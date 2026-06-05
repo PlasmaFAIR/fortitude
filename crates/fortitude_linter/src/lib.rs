@@ -271,7 +271,7 @@ pub(crate) fn check_path(
 
     // Check file paths directly
     if context.is_rule_enabled(Rule::NonStandardFileExtension) {
-        if let Some(violation) = NonStandardFileExtension::check(path) {
+        if let Some(violation) = NonStandardFileExtension::check(&context) {
             violations.push(violation);
         }
     }
@@ -364,21 +364,25 @@ pub(crate) fn check_path(
                 continue;
             }
             let diagnostic = match test_rule {
-                Rule::StableTestRule => test_rules::StableTestRule::check(),
-                Rule::StableTestRuleSafeFix => test_rules::StableTestRuleSafeFix::check(),
-                Rule::StableTestRuleUnsafeFix => test_rules::StableTestRuleUnsafeFix::check(),
-                Rule::StableTestRuleDisplayOnlyFix => {
-                    test_rules::StableTestRuleDisplayOnlyFix::check()
+                Rule::StableTestRule => test_rules::StableTestRule::check(&context),
+                Rule::StableTestRuleSafeFix => test_rules::StableTestRuleSafeFix::check(&context),
+                Rule::StableTestRuleUnsafeFix => {
+                    test_rules::StableTestRuleUnsafeFix::check(&context)
                 }
-                Rule::PreviewTestRule => test_rules::PreviewTestRule::check(),
-                Rule::DeprecatedTestRule => test_rules::DeprecatedTestRule::check(),
-                Rule::AnotherDeprecatedTestRule => test_rules::AnotherDeprecatedTestRule::check(),
-                Rule::RemovedTestRule => test_rules::RemovedTestRule::check(),
-                Rule::AnotherRemovedTestRule => test_rules::AnotherRemovedTestRule::check(),
-                Rule::RedirectedToTestRule => test_rules::RedirectedToTestRule::check(),
-                Rule::RedirectedFromTestRule => test_rules::RedirectedFromTestRule::check(),
+                Rule::StableTestRuleDisplayOnlyFix => {
+                    test_rules::StableTestRuleDisplayOnlyFix::check(&context)
+                }
+                Rule::PreviewTestRule => test_rules::PreviewTestRule::check(&context),
+                Rule::DeprecatedTestRule => test_rules::DeprecatedTestRule::check(&context),
+                Rule::AnotherDeprecatedTestRule => {
+                    test_rules::AnotherDeprecatedTestRule::check(&context)
+                }
+                Rule::RemovedTestRule => test_rules::RemovedTestRule::check(&context),
+                Rule::AnotherRemovedTestRule => test_rules::AnotherRemovedTestRule::check(&context),
+                Rule::RedirectedToTestRule => test_rules::RedirectedToTestRule::check(&context),
+                Rule::RedirectedFromTestRule => test_rules::RedirectedFromTestRule::check(&context),
                 Rule::RedirectedFromPrefixTestRule => {
-                    test_rules::RedirectedFromPrefixTestRule::check()
+                    test_rules::RedirectedFromPrefixTestRule::check(&context)
                 }
                 _ => unreachable!("All test rules must have an implementation"),
             };
