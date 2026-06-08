@@ -354,7 +354,7 @@ impl AlwaysFixableViolation for IncorrectIndent {
 pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
 
-    const TAB_SIZE: usize = 4;
+    let indent_width: usize = context.settings().incorrect_indent.indent_width.as_usize();
     let mut current_expected_indent;
     let mut next_expected_indent = 0;
     let mut i = -1;
@@ -414,26 +414,26 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             // Determine expected indent bases on tree-sitter node kind
             current_expected_indent = next_expected_indent;
             if BEGIN_SCOPE_NODES.contains(node_kind) {
-                next_expected_indent = current_expected_indent + TAB_SIZE;
+                next_expected_indent = current_expected_indent + indent_width;
             } else if END_SCOPE_NODES.contains(node_kind) {
-                if next_expected_indent < TAB_SIZE {
+                if next_expected_indent < indent_width {
                     current_expected_indent = 0;
                     next_expected_indent = 0;
                 } else {
-                    current_expected_indent = current_expected_indent - TAB_SIZE;
+                    current_expected_indent = current_expected_indent - indent_width;
                     next_expected_indent = current_expected_indent;
                 }
             } else if ZERO_INDENT_NODES.contains(node_kind) {
                 current_expected_indent = 0;
             } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
-                current_expected_indent = current_expected_indent - TAB_SIZE;
+                current_expected_indent = current_expected_indent - indent_width;
             } else {
                 // Determine indent change based on line continuation char "&"
                 if !in_line_continuation && line.trim().ends_with("&") {
-                    next_expected_indent = current_expected_indent + TAB_SIZE;
+                    next_expected_indent = current_expected_indent + indent_width;
                     in_line_continuation = true;
                 } else if in_line_continuation && !line.trim().ends_with("&") {
-                    next_expected_indent = current_expected_indent - TAB_SIZE;
+                    next_expected_indent = current_expected_indent - indent_width;
                     in_line_continuation = false;
                 }
             }
@@ -460,4 +460,26 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     }
 
     violations
+}
+
+pub mod settings {
+    use crate::{display_settings, line_width::IndentWidth};
+    use ruff_macros::CacheKey;
+    use std::fmt::Display;
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct IncorrectIndentSettings {
+        pub indent_width: IndentWidth,
+    }
+
+    impl Display for IncorrectIndentSettings {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.incorrect_indent",
+                fields = [self.indent_width]
+            }
+            Ok(())
+        }
+    }
 }
