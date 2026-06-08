@@ -43,7 +43,9 @@ use rules::style::inconsistent_dimension::check_inconsistent_dimension_rules;
 use rules::style::keywords::check_keyword_reuse;
 use rules::style::line_length::LineTooLong;
 use rules::style::useless_return::check_superfluous_returns;
-use rules::style::whitespace::{MissingNewlineAtEndOfFile, TrailingWhitespace, check_incorrect_indent};
+use rules::style::whitespace::{
+    MissingNewlineAtEndOfFile, TrailingWhitespace, check_incorrect_indent,
+};
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
