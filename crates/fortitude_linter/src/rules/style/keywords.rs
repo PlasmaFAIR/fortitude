@@ -495,14 +495,13 @@ pub(crate) fn check_keyword_reuse(
 }
 
 impl AstRule for KeywordReuse {
-    /// Check for keyword reuse for block labels and module/program names, which
-    /// are not currently findable via the symbol table.
+    /// Check for keyword reuse for block labels, which are not currently
+    /// findable via the symbol table.
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let name_node = match node.kind() {
-            "block_label_start_expression" => node.child(0)?,
-            "module_statement" | "program_statement" => node.child_with_name("name")?,
-            _ => return None,
-        };
+        if node.kind() != "block_label_start_expression" {
+            return None;
+        }
+        let name_node = node.child(0)?;
         let name = name_node.to_text(context.source_text())?;
         if tree_sitter_fortran::KEYWORDS.contains(&name) {
             return some_vec![context.create_diagnostic(
@@ -515,14 +514,9 @@ impl AstRule for KeywordReuse {
         None
     }
 
-    /// Entry point only on `block_label_start_expression`, `module_statement`,
-    /// and `program_statement, as other cases of keyword reuse should be caught
-    /// by `check_keyword_reuse`.
+    /// Entry point only on `block_label_start_expression`, as other cases of
+    /// keyword reuse should be caught by `check_keyword_reuse`.
     fn entrypoints() -> Vec<&'static str> {
-        vec![
-            "block_label_start_expression",
-            "module_statement",
-            "program_statement",
-        ]
+        vec!["block_label_start_expression"]
     }
 }

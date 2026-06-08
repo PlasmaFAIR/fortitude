@@ -719,7 +719,7 @@ impl<'a> Procedure<'a> {
     }
 
     pub fn name(&self) -> &str {
-        &self.name.name()
+        self.name.name()
     }
 
     pub fn name_node(&self) -> Node<'a> {
@@ -744,7 +744,8 @@ impl<'a> Procedure<'a> {
 }
 
 /// Type representing a derived type definition.
-/// Not yet fleshed out!
+/// Not yet fleshed out! Should add type attributes,
+/// list of type-bound procedures, etc.
 #[derive(Clone, Debug, HasNode)]
 pub struct TypeDefinition<'a> {
     name: NameDecl<'a>,
@@ -769,11 +770,76 @@ impl<'a> TypeDefinition<'a> {
     }
 
     pub fn name(&self) -> &str {
-        &self.name.name()
+        self.name.name()
     }
 
     pub fn name_node(&self) -> Node<'a> {
         self.name.name_node()
     }
+}
 
+/// Type representing a module.
+/// Not yet fleshed out! Should add implicit statement, list of used modules,
+/// default accessibility, etc.
+#[derive(Clone, Debug, HasNode)]
+pub struct Module<'a> {
+    name: NameDecl<'a>,
+    node: Node<'a>,
+}
+
+impl<'a> Module<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if !node.is_named() || node.kind() != "module" {
+            return Err(anyhow!("not a module"));
+        }
+
+        let stmt = node
+            .child_with_name("module_statement")
+            .context("expected module_statement")?;
+        let name_node = stmt.child_with_name("name").context("expected name")?;
+        let name = NameDecl::from_node(&name_node, src);
+
+        Ok(Self { name, node: *node })
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.name()
+    }
+
+    pub fn name_node(&self) -> Node<'a> {
+        self.name.name_node()
+    }
+}
+
+/// Type representing a program.
+/// Not yet fleshed out! Should add implicit statement, list of used modules,
+/// etc.
+#[derive(Clone, Debug, HasNode)]
+pub struct Program<'a> {
+    name: NameDecl<'a>,
+    node: Node<'a>,
+}
+
+impl<'a> Program<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if !node.is_named() || node.kind() != "program" {
+            return Err(anyhow!("not a program"));
+        }
+
+        let stmt = node
+            .child_with_name("program_statement")
+            .context("expected program_statement")?;
+        let name_node = stmt.child_with_name("name").context("expected name")?;
+        let name = NameDecl::from_node(&name_node, src);
+
+        Ok(Self { name, node: *node })
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.name()
+    }
+
+    pub fn name_node(&self) -> Node<'a> {
+        self.name.name_node()
+    }
 }

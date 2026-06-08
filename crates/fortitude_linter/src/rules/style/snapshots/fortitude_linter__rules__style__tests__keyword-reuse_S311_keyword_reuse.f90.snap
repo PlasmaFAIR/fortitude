@@ -2,6 +2,24 @@
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 ---
+./resources/test/fixtures/style/S311_keyword_reuse.f90:1:8: S311 Keyword `module` used as an identifier
+  |
+1 | module module
+  |        ^^^^^^ S311
+2 |
+3 |     implicit none (type, external)
+  |
+
+./resources/test/fixtures/style/S311_keyword_reuse.f90:40:9: S311 Keyword `program` used as an identifier
+   |
+38 | end module module
+39 |
+40 | program program
+   |         ^^^^^^^ S311
+41 |
+42 |     implicit none (type, external)
+   |
+
 ./resources/test/fixtures/style/S311_keyword_reuse.f90:6:13: S311 Keyword `private` used as an identifier
   |
 4 |     private
@@ -79,14 +97,6 @@ expression: diagnostics
 17 |         integer :: extends
 18 |     end type type
    |
-
-./resources/test/fixtures/style/S311_keyword_reuse.f90:1:8: S311 Keyword `module` used as an identifier
-  |
-1 | module module
-  |        ^^^^^^ S311
-2 |
-3 |     implicit none (type, external)
-  |
 
 ./resources/test/fixtures/style/S311_keyword_reuse.f90:17:20: S311 Keyword `extends` used as an identifier
    |
@@ -180,16 +190,6 @@ expression: diagnostics
    |                      ^^^^^^^^ S311
 73 |         integer, intent(in) :: pure
 74 |         integer, intent(in) :: elemental
-   |
-
-./resources/test/fixtures/style/S311_keyword_reuse.f90:40:9: S311 Keyword `program` used as an identifier
-   |
-38 | end module module
-39 |
-40 | program program
-   |         ^^^^^^^ S311
-41 |
-42 |     implicit none (type, external)
    |
 
 ./resources/test/fixtures/style/S311_keyword_reuse.f90:52:20: S311 Keyword `allocate` used as an identifier

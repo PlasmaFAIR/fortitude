@@ -7,10 +7,11 @@ use crate::{ast::types::ProcedureKind, traits::HasNode};
 
 use super::{
     FortitudeNode,
-    types::{Procedure, TypeDefinition, Variable, VariableDeclaration},
+    types::{Module, Procedure, Program, TypeDefinition, Variable, VariableDeclaration},
 };
 
 pub const BEGIN_SCOPE_NODES: &[&str] = &[
+    "translation_unit",
     "program",
     "module",
     "subroutine",
@@ -34,6 +35,8 @@ pub enum Symbol<'a> {
     Function(Procedure<'a>),
     Subroutine(Procedure<'a>),
     Type(TypeDefinition<'a>),
+    Module(Module<'a>),
+    Program(Program<'a>),
 }
 
 impl<'a> Symbol<'a> {
@@ -42,6 +45,8 @@ impl<'a> Symbol<'a> {
             Self::Variable(var) => var.name(),
             Self::Function(proc) | Self::Subroutine(proc) => proc.name(),
             Self::Type(typedef) => typedef.name(),
+            Self::Module(module) => module.name(),
+            Self::Program(program) => program.name(),
         }
     }
 
@@ -50,6 +55,8 @@ impl<'a> Symbol<'a> {
             Self::Variable(var) => var.name_node(),
             Self::Function(proc) | Self::Subroutine(proc) => proc.name_node(),
             Self::Type(typedef) => typedef.name_node(),
+            Self::Module(module) => module.name_node(),
+            Self::Program(program) => program.name_node(),
         }
     }
 }
@@ -60,6 +67,8 @@ impl<'a> HasNode<'a> for Symbol<'a> {
             Self::Variable(var) => var.node(),
             Self::Function(proc) | Self::Subroutine(proc) => proc.node(),
             Self::Type(typedef) => typedef.node(),
+            Self::Module(module) => module.node(),
+            Self::Program(program) => program.node(),
         }
     }
 }
@@ -123,14 +132,22 @@ impl<'a> SymbolTable<'a> {
                 })
         }
 
-        // Add derived type definitions
+        // Add modules, programs, and derived type definitions
         scope
             .named_children(&mut scope.walk())
-            .filter(|child| child.kind() == "derived_type_definition")
-            .filter_map(|typedef| TypeDefinition::try_from_node(&typedef, src).ok())
-            .for_each(|typedef| {
-                let name = typedef.name().to_owned();
-                new_table.inner.insert(name, Symbol::Type(typedef));
+            .filter_map(|child| match child.kind() {
+                "derived_type_definition" => TypeDefinition::try_from_node(&child, src)
+                    .ok()
+                    .map(Symbol::Type),
+                "module" => Module::try_from_node(&child, src).ok().map(Symbol::Module),
+                "program" => Program::try_from_node(&child, src)
+                    .ok()
+                    .map(Symbol::Program),
+                _ => None,
+            })
+            .for_each(|symbol| {
+                let name = symbol.name().to_owned();
+                new_table.inner.insert(name, symbol);
             });
 
         new_table
