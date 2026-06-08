@@ -9,6 +9,8 @@ implicit none
 type :: my_type
     integer :: i
   real :: y
+contains
+  procedure :: toString
         end type my_type
 
   contains
