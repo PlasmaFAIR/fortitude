@@ -355,7 +355,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     let mut violations = Vec::new();
 
     const TAB_SIZE: usize = 4;
-    let mut current_expected_indent = 0;
+    let mut current_expected_indent;
     let mut next_expected_indent = 0;
     let mut i = -1;
     let mut in_line_continuation = false;
@@ -412,22 +412,9 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             let node_kind = &line_node.kind();
 
             // Determine expected indent bases on tree-sitter node kind
-            println!(
-                "Start: {}, {} | {}",
-                current_expected_indent,
-                next_expected_indent,
-                line.to_string()
-            );
             current_expected_indent = next_expected_indent;
             if BEGIN_SCOPE_NODES.contains(node_kind) {
                 next_expected_indent = current_expected_indent + TAB_SIZE;
-                println!(
-                    "Begin node: {}, {}, {} | {}",
-                    node_kind,
-                    current_expected_indent,
-                    next_expected_indent,
-                    line.to_string()
-                );
             } else if END_SCOPE_NODES.contains(node_kind) {
                 if next_expected_indent < TAB_SIZE {
                     current_expected_indent = 0;
@@ -436,22 +423,8 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     current_expected_indent = current_expected_indent - TAB_SIZE;
                     next_expected_indent = current_expected_indent;
                 }
-                println!(
-                    "End node: {}, {}, {} | {}",
-                    node_kind,
-                    current_expected_indent,
-                    next_expected_indent,
-                    line.to_string()
-                )
             } else if ZERO_INDENT_NODES.contains(node_kind) {
                 current_expected_indent = 0;
-                println!(
-                    "Zero node: {}, {}, {} | {}",
-                    node_kind,
-                    current_expected_indent,
-                    next_expected_indent,
-                    line.to_string()
-                );
             } else {
                 // Determine indent change based on line continuation char "&"
                 if !in_line_continuation && line.trim().ends_with("&") {
@@ -461,13 +434,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     next_expected_indent = current_expected_indent - TAB_SIZE;
                     in_line_continuation = false;
                 }
-                println!(
-                    "Regular node: {}, {}, {} | {}",
-                    node_kind,
-                    current_expected_indent,
-                    next_expected_indent,
-                    line.to_string()
-                );
             }
 
             // Compare with the expected number of leading spaces
