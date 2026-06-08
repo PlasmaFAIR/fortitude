@@ -14,7 +14,7 @@ pub mod strings;
 pub mod superfluous_while_true;
 pub(crate) mod use_statement;
 pub mod useless_return;
-pub(crate) mod whitespace;
+pub mod whitespace;
 
 #[cfg(test)]
 mod tests {
