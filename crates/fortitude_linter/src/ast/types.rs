@@ -62,6 +62,10 @@ impl<'a> NameDecl<'a> {
         self.name.as_str()
     }
 
+    pub fn name_node(&self) -> Node<'a> {
+        get_name_node_of_declarator(&self.node)
+    }
+
     /// Get size node, if there is one
     pub fn size(&'a self) -> Option<Node<'a>> {
         get_size_node_of_declarator(&self.node)
@@ -70,6 +74,12 @@ impl<'a> NameDecl<'a> {
     /// Get initialiser node, if there is one
     pub fn init(&'a self) -> Option<Node<'a>> {
         get_init_node_of_declarator(&self.node)
+    }
+}
+
+impl<'a> std::fmt::Display for NameDecl<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 
@@ -444,7 +454,7 @@ impl<'a> VariableDeclaration<'a> {
 /// declarator node, and not, say, the initialiser
 pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
     match node.kind() {
-        "identifier" | "method_name" => *node,
+        "identifier" | "method_name" | "type_name" | "name" => *node,
         "sized_declarator" => node
             .named_child(0)
             .expect("sized_declarator should have named child"),
@@ -478,21 +488,24 @@ pub fn get_init_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
 }
 
 /// A single Fortran variable
-#[derive(Clone, Debug, HasNode)]
+#[derive(Clone, Debug)]
 pub struct Variable<'a> {
-    name: String,
-    node: Node<'a>,
+    name: NameDecl<'a>,
     /// Reference to the statement in which the variable is declared
     decl: Rc<VariableDeclaration<'a>>,
 }
 
 impl<'a> Variable<'a> {
-    pub fn new(name: String, node: Node<'a>, decl: Rc<VariableDeclaration<'a>>) -> Self {
-        Self { name, node, decl }
+    pub fn new(name: NameDecl<'a>, decl: Rc<VariableDeclaration<'a>>) -> Self {
+        Self { name, decl }
     }
 
     pub fn name(&self) -> &str {
-        self.name.as_str()
+        self.name.name()
+    }
+
+    pub fn name_node(&self) -> Node<'a> {
+        self.name.name_node()
     }
 
     pub fn decl_statement(&'a self) -> &'a VariableDeclaration<'a> {
@@ -516,6 +529,12 @@ impl<'a> Variable<'a> {
     }
 }
 
+impl<'a> HasNode<'a> for Variable<'a> {
+    fn node(&self) -> &Node<'a> {
+        self.name.node()
+    }
+}
+
 #[derive(EnumString, Display)]
 #[strum(ascii_case_insensitive)]
 pub(crate) enum BlockExit {
@@ -534,7 +553,7 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub(crate) struct ImplicitStatement<'a> {
     node: Node<'a>,
     none_type: ImplicitNoneType,
@@ -576,10 +595,6 @@ impl<'a> ImplicitStatement<'a> {
             return None;
         }
         None
-    }
-
-    pub fn node(&self) -> &Node<'a> {
-        &self.node
     }
 
     pub fn is_equivalent_to(&self, other: &Self) -> bool {
@@ -640,7 +655,7 @@ pub enum ProcedureKind {
 pub struct Procedure<'a> {
     type_: Option<Type<'a>>,
     attributes: Vec<ProcedureAttribute<'a>>,
-    name: String,
+    name: NameDecl<'a>,
     args: Vec<String>,
     kind: ProcedureKind,
     node: Node<'a>,
@@ -671,10 +686,8 @@ impl<'a> Procedure<'a> {
 
         let name = stmt
             .child_by_field_name("name")
-            .context("procedure should have `name` field")?
-            .to_text(src)
-            .context("name should have text")?
-            .to_ascii_lowercase();
+            .context("procedure should have `name` field")?;
+        let name = NameDecl::from_node(&name, src);
 
         let args = stmt
             .child_with_name("parameters")
@@ -706,7 +719,11 @@ impl<'a> Procedure<'a> {
     }
 
     pub fn name(&self) -> &str {
-        &self.name
+        &self.name.name()
+    }
+
+    pub fn name_node(&self) -> Node<'a> {
+        self.name.name_node()
     }
 
     pub const fn args(&self) -> &Vec<String> {
@@ -730,7 +747,7 @@ impl<'a> Procedure<'a> {
 /// Not yet fleshed out!
 #[derive(Clone, Debug, HasNode)]
 pub struct TypeDefinition<'a> {
-    name: String,
+    name: NameDecl<'a>,
     node: Node<'a>,
 }
 
@@ -746,15 +763,17 @@ impl<'a> TypeDefinition<'a> {
         let name_node = stmt
             .child_with_name("type_name")
             .context("expected type_name")?;
-        let name = name_node
-            .to_text(src)
-            .context("should have text")?
-            .to_ascii_lowercase();
+        let name = NameDecl::from_node(&name_node, src);
 
         Ok(Self { name, node: *node })
     }
 
     pub fn name(&self) -> &str {
-        &self.name
+        &self.name.name()
     }
+
+    pub fn name_node(&self) -> Node<'a> {
+        self.name.name_node()
+    }
+
 }

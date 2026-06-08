@@ -65,21 +65,19 @@ expression: diagnostics
 10 |     real, pointer :: pointer
 11 |     real, target :: target
 12 |     integer, parameter :: parameter = 3
-   |                           ^^^^^^^^^^^^^ S311
+   |                           ^^^^^^^^^ S311
 13 |
 14 |     public :: public  ! Shouldn't trigger here, only on the declaration above
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:16:5: S311 Keyword `type` used as an identifier
+./resources/test/fixtures/style/S311_keyword_reuse.f90:16:10: S311 Keyword `type` used as an identifier
    |
-14 |       public :: public  ! Shouldn't trigger here, only on the declaration above
+14 |     public :: public  ! Shouldn't trigger here, only on the declaration above
 15 |
-16 | /     type type
-17 | |         integer :: extends
-18 | |     end type type
-   | |__________________^ S311
-19 |
-20 |   contains
+16 |     type type
+   |          ^^^^ S311
+17 |         integer :: extends
+18 |     end type type
    |
 
 ./resources/test/fixtures/style/S311_keyword_reuse.f90:1:8: S311 Keyword `module` used as an identifier
@@ -164,38 +162,24 @@ expression: diagnostics
 51 |     block: block
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:62:5: S311 Keyword `subroutine` used as an identifier
+./resources/test/fixtures/style/S311_keyword_reuse.f90:62:16: S311 Keyword `subroutine` used as an identifier
    |
-60 |   contains
+60 | contains
 61 |
-62 | /     subroutine subroutine(print, in, out, inout)
-63 | |         integer, intent(inout) :: print
-64 | |         integer, intent(in) :: in
-65 | |         integer, intent(out) :: out
-66 | |         integer, intent(inout) :: inout
-67 | |         print *, print, in, inout
-68 | |         out = in + inout
-69 | |         inout = in + 1
-70 | |     end subroutine subroutine
-   | |______________________________^ S311
-71 |
-72 |       integer function function(pure,  elemental, recursive) result(result)
-73 |           integer, intent(in) :: pure
+62 |     subroutine subroutine(print, in, out, inout)
+   |                ^^^^^^^^^^ S311
+63 |         integer, intent(inout) :: print
+64 |         integer, intent(in) :: in
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:72:5: S311 Keyword `function` used as an identifier
+./resources/test/fixtures/style/S311_keyword_reuse.f90:72:22: S311 Keyword `function` used as an identifier
    |
-70 |       end subroutine subroutine
+70 |     end subroutine subroutine
 71 |
-72 | /     integer function function(pure,  elemental, recursive) result(result)
-73 | |         integer, intent(in) :: pure
-74 | |         integer, intent(in) :: elemental
-75 | |         integer, intent(in) :: recursive
-76 | |         result = pure + elemental + recursive
-77 | |     end function function
-   | |__________________________^ S311
-78 |
-79 |   end program program
+72 |     integer function function(pure,  elemental, recursive) result(result)
+   |                      ^^^^^^^^ S311
+73 |         integer, intent(in) :: pure
+74 |         integer, intent(in) :: elemental
    |
 
 ./resources/test/fixtures/style/S311_keyword_reuse.f90:40:9: S311 Keyword `program` used as an identifier

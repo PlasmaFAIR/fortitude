@@ -486,7 +486,7 @@ pub(crate) fn check_keyword_reuse(
                 KeywordReuse {
                     keyword: name.to_string(),
                 },
-                symbol,
+                symbol.name_node(),
             ));
         }
     }

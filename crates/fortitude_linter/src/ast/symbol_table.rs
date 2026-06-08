@@ -44,6 +44,14 @@ impl<'a> Symbol<'a> {
             Self::Type(typedef) => typedef.name(),
         }
     }
+
+    pub fn name_node(&self) -> Node<'a> {
+        match self {
+            Self::Variable(var) => var.name_node(),
+            Self::Function(proc) | Self::Subroutine(proc) => proc.name_node(),
+            Self::Type(typedef) => typedef.name_node(),
+        }
+    }
 }
 
 impl<'a> HasNode<'a> for Symbol<'a> {
@@ -132,11 +140,10 @@ impl<'a> SymbolTable<'a> {
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
         let decl = Rc::new(decl);
         for name in decl.names().iter() {
-            let node = *name.node();
-            let name = name.name().to_ascii_lowercase();
+            let name_lower = name.name().to_ascii_lowercase();
             self.inner.insert(
-                name.clone(),
-                Symbol::Variable(Variable::new(name, node, decl.clone())),
+                name_lower.clone(),
+                Symbol::Variable(Variable::new(name.clone(), decl.clone())),
             );
         }
         self.decl_lines.push(decl);
@@ -280,7 +287,7 @@ end program foo
             y.textrange(),
             TextRange::new(TextSize::new(29), TextSize::new(33))
         );
-        assert_eq!(y.name(), "y");
+        assert_eq!(y.name(), "Y");
         assert_eq!(y.decl_statement().textrange(), first_decl_range);
 
         assert!(z.is_some());
