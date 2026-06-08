@@ -331,7 +331,6 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
     }
 }
 
-
 /// ## What it does
 /// Checks that the correct indentation has been used
 ///
@@ -354,10 +353,12 @@ impl AlwaysFixableViolation for IncorrectIndent {
 
 pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
-    
-    const TAB_SIZE: usize = 2;
-    let mut expected_leading_spaces = 0;
+
+    const TAB_SIZE: usize = 4;
+    let mut current_expected_indent = 0;
+    let mut next_expected_indent = 0;
     let mut i = -1;
+    let mut in_line_continuation = false;
 
     for line in context.source_text().universal_newlines() {
         // Skip empty lines and lines with only whitespace
@@ -365,25 +366,34 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             continue;
         }
         i = i + 1;
-        
+
         // Count leading spaces
         let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
-        
+
         // Get indentation range
         let start = line.start();
         let end = start + TextSize::try_from(leading_spaces).unwrap();
 
         let range = TextRange::new(start, end);
-        println!("{}, {}, {} | {}", i, leading_spaces, expected_leading_spaces, line.to_string());
-        // println!("Expected Leading spaces: {}", expected_leading_spaces);
 
         const BEGIN_SCOPE_NODES: &[&str] = &[
-            "program",
+            "program_statement",
             "module_statement",
             "subroutine_statement",
-            "function",
-            "derived_type_definition",
+            "function_statement",
+            "derived_type_statement",
             "block_construct",
+            "block_label_start_expression",
+        ];
+        const ZERO_INDENT_NODES: &[&str] = &[
+            "contains_statement",
+            "preproc_if",
+            "preproc_ifdef",
+            "preproc_elifdef",
+            "preproc_else",
+            "preproc_include",
+            "preproc_def",
+            "preproc_function_def",
         ];
         const END_SCOPE_NODES: &[&str] = &[
             "end_program_statement",
@@ -393,46 +403,93 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             "end_type_statement",
             "end_block_construct_statement",
         ];
-        
+
         let content_start = start + TextSize::try_from(leading_spaces as u32).unwrap();
         // Determine what the indentation should be for the next line using the first node for this line
-        if let Some(line_node) = root.named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize()) {
+        if let Some(line_node) =
+            root.named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
+        {
             let node_kind = &line_node.kind();
-            // println!("Node string: {}", line_node.to_string());
 
-            // TODO: expected_leading_spaces for the current line should decrease if we are at a begin scope and then remain the same for the next line
-            
-            // Compare with the expected number of leading spaces
-            if !matches!(node_kind, &"contains_statement") {
-                if leading_spaces != expected_leading_spaces {
-                    let edit = Edit::range_replacement(" ".repeat(expected_leading_spaces), range);
-                    let visual_end = if leading_spaces > 0 {
-                        start + TextSize::try_from(leading_spaces).unwrap()
-                    } else {
-                        start + TextSize::try_from(1usize).unwrap()
-                    };
-                    violations.push(
-                        context
-                            .create_diagnostic(IncorrectIndent, TextRange::new(start, visual_end))
-                            .with_fix(Fix::safe_edit(edit)),
-                    );
+            // Determine expected indent bases on tree-sitter node kind
+            println!(
+                "Start: {}, {} | {}",
+                current_expected_indent,
+                next_expected_indent,
+                line.to_string()
+            );
+            current_expected_indent = next_expected_indent;
+            if BEGIN_SCOPE_NODES.contains(node_kind) {
+                next_expected_indent = current_expected_indent + TAB_SIZE;
+                println!(
+                    "Begin node: {}, {}, {} | {}",
+                    node_kind,
+                    current_expected_indent,
+                    next_expected_indent,
+                    line.to_string()
+                );
+            } else if END_SCOPE_NODES.contains(node_kind) {
+                if next_expected_indent < TAB_SIZE {
+                    current_expected_indent = 0;
+                    next_expected_indent = 0;
+                } else {
+                    current_expected_indent = current_expected_indent - TAB_SIZE;
+                    next_expected_indent = current_expected_indent;
                 }
+                println!(
+                    "End node: {}, {}, {} | {}",
+                    node_kind,
+                    current_expected_indent,
+                    next_expected_indent,
+                    line.to_string()
+                )
+            } else if ZERO_INDENT_NODES.contains(node_kind) {
+                current_expected_indent = 0;
+                println!(
+                    "Zero node: {}, {}, {} | {}",
+                    node_kind,
+                    current_expected_indent,
+                    next_expected_indent,
+                    line.to_string()
+                );
+            } else {
+                // Determine indent change based on line continuation char "&"
+                if !in_line_continuation && line.trim().ends_with("&") {
+                    next_expected_indent = current_expected_indent + TAB_SIZE;
+                    in_line_continuation = true;
+                } else if in_line_continuation && !line.trim().ends_with("&") {
+                    next_expected_indent = current_expected_indent - TAB_SIZE;
+                    in_line_continuation = false;
+                }
+                println!(
+                    "Regular node: {}, {}, {} | {}",
+                    node_kind,
+                    current_expected_indent,
+                    next_expected_indent,
+                    line.to_string()
+                );
             }
 
-            // println!("Node kind  : {}", node_kind);
-            if BEGIN_SCOPE_NODES.contains(node_kind) {
-                // println!("Is begin node");
-                expected_leading_spaces = expected_leading_spaces + TAB_SIZE;
-            } else if END_SCOPE_NODES.contains(node_kind) {
-                // println!("Is end node");
-                if expected_leading_spaces < TAB_SIZE {
-                    expected_leading_spaces = 0
+            // Compare with the expected number of leading spaces
+            if leading_spaces != current_expected_indent {
+                let edit = if current_expected_indent > 0 {
+                    Edit::range_replacement(" ".repeat(current_expected_indent), range)
                 } else {
-                    expected_leading_spaces = expected_leading_spaces - TAB_SIZE;
-                }
+                    Edit::deletion(start, end)
+                };
+                let visual_end = if leading_spaces > 0 {
+                    start + TextSize::try_from(leading_spaces).unwrap()
+                } else {
+                    start + TextSize::try_from(1usize).unwrap()
+                };
+                violations.push(
+                    context
+                        .create_diagnostic(IncorrectIndent, TextRange::new(start, visual_end))
+                        .with_fix(Fix::safe_edit(edit)),
+                );
             }
         }
     }
-    
+
     violations
 }
