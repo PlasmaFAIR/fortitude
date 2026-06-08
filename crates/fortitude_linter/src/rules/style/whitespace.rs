@@ -386,7 +386,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             "block_label_start_expression",
         ];
         const ZERO_INDENT_NODES: &[&str] = &[
-            "contains_statement",
             "preproc_if",
             "preproc_ifdef",
             "preproc_elifdef",
@@ -395,6 +394,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             "preproc_def",
             "preproc_function_def",
         ];
+        const SCOPED_ZERO_INDENT_NODES: &[&str] = &["contains_statement"];
         const END_SCOPE_NODES: &[&str] = &[
             "end_program_statement",
             "end_module_statement",
@@ -425,6 +425,8 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 }
             } else if ZERO_INDENT_NODES.contains(node_kind) {
                 current_expected_indent = 0;
+            } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
+                current_expected_indent = current_expected_indent - TAB_SIZE;
             } else {
                 // Determine indent change based on line continuation char "&"
                 if !in_line_continuation && line.trim().ends_with("&") {
