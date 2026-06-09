@@ -7,7 +7,9 @@ use crate::{ast::types::ProcedureKind, traits::HasNode};
 
 use super::{
     FortitudeNode,
-    types::{Module, Procedure, Program, TypeDefinition, Variable, VariableDeclaration},
+    types::{
+        HasName, Module, Name, Procedure, Program, TypeDefinition, Variable, VariableDeclaration,
+    },
 };
 
 pub const BEGIN_SCOPE_NODES: &[&str] = &[
@@ -40,23 +42,13 @@ pub enum Symbol<'a> {
 }
 
 impl<'a> Symbol<'a> {
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &Name<'a> {
         match self {
             Self::Variable(var) => var.name(),
             Self::Function(proc) | Self::Subroutine(proc) => proc.name(),
             Self::Type(typedef) => typedef.name(),
             Self::Module(module) => module.name(),
             Self::Program(program) => program.name(),
-        }
-    }
-
-    pub fn name_node(&self) -> Node<'a> {
-        match self {
-            Self::Variable(var) => var.name_node(),
-            Self::Function(proc) | Self::Subroutine(proc) => proc.name_node(),
-            Self::Type(typedef) => typedef.name_node(),
-            Self::Module(module) => module.name_node(),
-            Self::Program(program) => program.name_node(),
         }
     }
 }
@@ -120,14 +112,14 @@ impl<'a> SymbolTable<'a> {
                     _ => None,
                 })
                 .for_each(|proc| {
-                    let name = proc.name().to_owned();
+                    let name = proc.name();
                     match proc.kind() {
-                        ProcedureKind::Function => {
-                            new_table.inner.insert(name, Symbol::Function(proc))
-                        }
-                        ProcedureKind::Subroutine => {
-                            new_table.inner.insert(name, Symbol::Subroutine(proc))
-                        }
+                        ProcedureKind::Function => new_table
+                            .inner
+                            .insert(name.to_string(), Symbol::Function(proc)),
+                        ProcedureKind::Subroutine => new_table
+                            .inner
+                            .insert(name.to_string(), Symbol::Subroutine(proc)),
                     };
                 })
         }
@@ -146,8 +138,8 @@ impl<'a> SymbolTable<'a> {
                 _ => None,
             })
             .for_each(|symbol| {
-                let name = symbol.name().to_owned();
-                new_table.inner.insert(name, symbol);
+                let name = symbol.name();
+                new_table.inner.insert(name.to_string(), symbol);
             });
 
         new_table
@@ -157,9 +149,9 @@ impl<'a> SymbolTable<'a> {
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
         let decl = Rc::new(decl);
         for name in decl.names().iter() {
-            let name_lower = name.name().to_ascii_lowercase();
+            let name_lower = name.name().as_str().to_ascii_lowercase();
             self.inner.insert(
-                name_lower.clone(),
+                name_lower,
                 Symbol::Variable(Variable::new(name.clone(), decl.clone())),
             );
         }
@@ -294,7 +286,7 @@ end program foo
             x.textrange(),
             TextRange::new(TextSize::new(26), TextSize::new(27))
         );
-        assert_eq!(x.name(), "x");
+        assert_eq!(x.name().as_str(), "x");
         assert_eq!(x.type_().as_str(), "integer");
         assert_eq!(x.decl_statement().textrange(), first_decl_range);
 
@@ -304,7 +296,7 @@ end program foo
             y.textrange(),
             TextRange::new(TextSize::new(29), TextSize::new(33))
         );
-        assert_eq!(y.name(), "Y");
+        assert_eq!(y.name().as_str(), "Y");
         assert_eq!(y.decl_statement().textrange(), first_decl_range);
 
         assert!(z.is_some());
@@ -313,7 +305,7 @@ end program foo
             z.textrange(),
             TextRange::new(TextSize::new(35), TextSize::new(40))
         );
-        assert_eq!(z.name(), "z");
+        assert_eq!(z.name().as_str(), "z");
         assert_eq!(z.decl_statement().textrange(), first_decl_range);
 
         assert!(a.is_some());
@@ -322,7 +314,7 @@ end program foo
             a.textrange(),
             TextRange::new(TextSize::new(60), TextSize::new(71))
         );
-        assert_eq!(a.name(), "a");
+        assert_eq!(a.name().as_str(), "a");
         assert_eq!(a.type_().as_str(), "real");
         let a_attrs: Vec<&'static str> = a
             .attributes()

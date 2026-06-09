@@ -1,5 +1,5 @@
-use crate::ast::FortitudeNode;
 use crate::ast::types::{ParameterStatement, Variable, get_name_node_of_declarator};
+use crate::ast::{FortitudeNode, types::HasName};
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,

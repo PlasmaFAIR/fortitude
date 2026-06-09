@@ -1,5 +1,5 @@
-use crate::ast::FortitudeNode;
 use crate::ast::types::AttributeKind;
+use crate::ast::{FortitudeNode, types::HasName};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
