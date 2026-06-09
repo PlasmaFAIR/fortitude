@@ -187,7 +187,7 @@ follows:
 The runtime of each tool is shown in \autoref{fig:performance}. In all cases,
 the tests were run on a simple laptop featuring a 4-core 11th generation Intel
 i5 CPU running at 2.60GHz. Despite implementing many more checks than the
-alternatives, Fortitude was found to run over 25 times as quickly
+alternatives, Fortitude was found to run over 25 times more quickly
 than its fastest competitor.
 
 ![Time taken for Fortran linters to lint 72 files in the GS2 project.\label{fig:performance}](performance_plot.pdf)
