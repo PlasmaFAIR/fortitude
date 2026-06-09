@@ -157,6 +157,15 @@ pub trait FortitudeNode<'tree> {
     /// Get the next matching statement label
     fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree>>;
 
+    /// Get the preceding line continuation, if there is one
+    ///
+    /// Finds the previous *real* line-continuation character, as tree-sitter
+    /// may have inserted an implied one on the continued line
+    fn prev_line_continuation(&self) -> Option<Node<'tree>>;
+
+    /// Get the following line continuation, if there is one
+    fn next_line_continuation(&self) -> Option<Node<'tree>>;
+
     /// Get the module name from a use statement node.
     /// Returns None if the node is not a use statement or has no module_name child.
     fn module_name(&self, src: &str) -> Option<String>;
@@ -396,6 +405,28 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     fn try_to_controlflow(self, source_file: &SourceFile) -> Option<ControlFlowNode<'tree1>> {
         ControlFlowNode::maybe_from(self, source_file.source_text())
     }
+
+    fn prev_line_continuation(&self) -> Option<Node<'tree1>> {
+        let mut sibling = self.prev_sibling();
+        while let Some(prev_sibling) = sibling {
+            if prev_sibling.kind() == "&" && !prev_sibling.textrange().is_empty() {
+                return Some(prev_sibling);
+            }
+            sibling = prev_sibling.prev_sibling();
+        }
+        None
+    }
+
+    fn next_line_continuation(&self) -> Option<Node<'tree1>> {
+        let mut sibling = self.next_sibling();
+        while let Some(next_sibling) = sibling {
+            if next_sibling.kind() == "&" {
+                return Some(next_sibling);
+            }
+            sibling = next_sibling.next_sibling();
+        }
+        None
+    }
 }
 
 /// Strip line breaks from a string of Fortran code.
@@ -553,7 +584,7 @@ mod tests {
     use super::*;
     use anyhow::{Context, Result};
     use textwrap::dedent;
-    use tree_sitter::Parser;
+    use tree_sitter::{Parser, Point};
 
     #[test]
     fn test_comment_block() -> Result<()> {
@@ -620,6 +651,68 @@ mod tests {
             .child_with_name("module")
             .context("Missing module node")?;
         assert!(module_node.prev_attached_comment_block(&code).is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn prev_line_continuation() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            do &
+              while (.true.)
+            end do
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "while_statement")
+            .context("missing 'while'")?;
+
+        let ampersand = node.prev_line_continuation();
+        assert!(ampersand.is_some());
+        assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
+
+        Ok(())
+    }
+
+    #[test]
+    fn next_line_continuation() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            do &
+              while (.true.)
+            end do
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "do")
+            .context("missing 'do'")?;
+
+        let ampersand = node.next_line_continuation();
+        assert!(ampersand.is_some());
+        assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
 
         Ok(())
     }
