@@ -6,7 +6,7 @@ use crate::options::{
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
 };
-use fortitude_linter::registry::RuleNamespace;
+use fortitude_linter::registry::{RuleNamespace, RuleSet};
 use fortitude_linter::rule_redirects::get_redirect;
 use fortitude_linter::rule_selector::{
     CompiledPerFileIgnoreList, PerFileIgnore, PreviewOptions, RuleSelector, Specificity,
@@ -225,6 +225,8 @@ pub struct Configuration {
     pub ignore: Vec<RuleSelector>,
     pub select: Option<Vec<RuleSelector>>,
     pub extend_select: Vec<RuleSelector>,
+    pub exit_zero_on: Vec<RuleSelector>,
+    pub exit_non_zero_on: Vec<RuleSelector>,
     pub fixable: Option<Vec<RuleSelector>>,
     pub unfixable: Vec<RuleSelector>,
     pub extend_fixable: Vec<RuleSelector>,
@@ -272,6 +274,8 @@ impl Configuration {
             ignore: check.ignore.into_iter().flatten().collect(),
             select: check.select,
             extend_select: check.extend_select.unwrap_or_default(),
+            exit_zero_on: check.exit_zero_on.unwrap_or_default(),
+            exit_non_zero_on: check.exit_non_zero_on.unwrap_or_default(),
             fixable: check.fixable,
             unfixable: check.unfixable.unwrap_or_default(),
             extend_fixable: check.extend_fixable.unwrap_or_default(),
@@ -365,6 +369,11 @@ impl Configuration {
             check: CheckSettings {
                 project_root: project_root.to_path_buf(),
                 rules,
+                non_zero_on: to_non_zero_rule_set(
+                    &self.exit_zero_on,
+                    &self.exit_non_zero_on,
+                    &preview,
+                ),
                 fix: self.fix.unwrap_or_default(),
                 fix_only: self.fix_only.unwrap_or_default(),
                 line_length: self
@@ -459,6 +468,16 @@ impl Configuration {
                 .extend_select
                 .into_iter()
                 .chain(config.extend_select)
+                .collect(),
+            exit_zero_on: self
+                .exit_zero_on
+                .into_iter()
+                .chain(config.exit_zero_on)
+                .collect(),
+            exit_non_zero_on: self
+                .exit_non_zero_on
+                .into_iter()
+                .chain(config.exit_non_zero_on)
                 .collect(),
             fixable: self.fixable.or(config.fixable),
             unfixable: self.unfixable.into_iter().chain(config.unfixable).collect(),
@@ -743,6 +762,41 @@ pub fn to_rule_table(args: RuleSelection, preview: &PreviewMode) -> anyhow::Resu
     }
 
     Ok(rules)
+}
+
+fn to_non_zero_rule_set(
+    exit_zero_on: &[RuleSelector],
+    exit_non_zero_on: &[RuleSelector],
+    preview: &PreviewMode,
+) -> RuleSet {
+    let preview = PreviewOptions {
+        mode: *preview,
+        require_explicit: false,
+    };
+
+    let mut non_zero_on: BTreeSet<Rule> = Rule::iter().collect();
+
+    for spec in Specificity::iter() {
+        for selector in exit_zero_on
+            .iter()
+            .filter(|selector| selector.specificity() == spec)
+        {
+            for rule in selector.rules(&preview) {
+                non_zero_on.remove(&rule);
+            }
+        }
+
+        for selector in exit_non_zero_on
+            .iter()
+            .filter(|selector| selector.specificity() == spec)
+        {
+            for rule in selector.rules(&preview) {
+                non_zero_on.insert(rule);
+            }
+        }
+    }
+
+    RuleSet::from_iter(non_zero_on)
 }
 
 // Taken from Ruff

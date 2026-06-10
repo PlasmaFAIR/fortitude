@@ -413,11 +413,41 @@ pub struct CheckCommand {
         short,
         long,
         help_heading = "Miscellaneous",
+        conflicts_with = "exit_zero_on",
+        conflicts_with = "exit_non_zero_on",
         conflicts_with = "exit_non_zero_on_fix",
         conflicts_with = "statistics"
     )]
     pub exit_zero: bool,
-    /// Exit with a non-zero status code if any files were modified via fix, even if no lint violations remain.
+
+    /// Rule codes or prefixes whose violations should not cause a non-zero exit status.
+    ///
+    /// Diagnostics are still shown normally. More-specific selectors passed to
+    /// `--exit-non-zero-on` override broader matches here.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Miscellaneous",
+        hide_possible_values = true
+    )]
+    pub exit_zero_on: Option<Vec<RuleSelector>>,
+
+    /// Rule codes or prefixes whose violations should still cause a non-zero
+    /// exit status, even if they were matched by `--exit-zero-on`.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "RULE_CODE",
+        value_parser = RuleSelectorParser,
+        help_heading = "Miscellaneous",
+        hide_possible_values = true
+    )]
+    pub exit_non_zero_on: Option<Vec<RuleSelector>>,
+
+    /// Exit with a non-zero status code if any files were modified via fix,
+    /// even if no blocking lint violations remain.
     #[arg(
         long,
         help_heading = "Miscellaneous",
@@ -535,6 +565,8 @@ impl CheckCommand {
             select: self.select,
             ignore: self.ignore,
             extend_select: self.extend_select,
+            exit_zero_on: self.exit_zero_on,
+            exit_non_zero_on: self.exit_non_zero_on,
             fixable: self.fixable,
             unfixable: self.unfixable,
             extend_fixable: self.extend_fixable,
@@ -568,6 +600,8 @@ struct ExplicitConfigOverrides {
     select: Option<Vec<RuleSelector>>,
     extend_select: Option<Vec<RuleSelector>>,
     ignore: Option<Vec<RuleSelector>>,
+    exit_zero_on: Option<Vec<RuleSelector>>,
+    exit_non_zero_on: Option<Vec<RuleSelector>>,
     fixable: Option<Vec<RuleSelector>>,
     unfixable: Option<Vec<RuleSelector>>,
     extend_fixable: Option<Vec<RuleSelector>>,
@@ -638,6 +672,12 @@ impl ConfigurationTransformer for ExplicitConfigOverrides {
         }
         if let Some(ignore) = &self.ignore {
             config.ignore.extend(ignore.clone());
+        }
+        if let Some(exit_zero_on) = &self.exit_zero_on {
+            config.exit_zero_on = exit_zero_on.clone();
+        }
+        if let Some(exit_non_zero_on) = &self.exit_non_zero_on {
+            config.exit_non_zero_on = exit_non_zero_on.clone();
         }
         if let Some(fixable) = &self.fixable {
             config.fixable = Some(fixable.clone());

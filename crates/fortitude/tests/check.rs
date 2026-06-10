@@ -613,6 +613,176 @@ select = ["C001", "style"]
 }
 
 #[test]
+fn check_exit_zero_on_cli() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+end program
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args(["--select=C001,S061", "--exit-zero-on=ALL"]).build(),
+                         @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    [TEMP_FILE] C001 program uses implicit typing
+      |
+    2 | program test
+      | ^^^^^^^^^^^^ C001
+    3 |   logical*4, parameter :: true = .true.
+    4 | end program
+      |
+      = help: Insert `implicit none`
+
+    [TEMP_FILE] S061 [*] end statement should be named.
+      |
+    2 | program test
+    3 |   logical*4, parameter :: true = .true.
+    4 | end program
+      | ^^^^^^^^^^^ S061
+      |
+      = help: Write as 'end program test'.
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_exit_non_zero_on_cli() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+end program
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .file(&test_file)
+                         .args(["--select=C001,S061", "--exit-zero-on=ALL", "--exit-non-zero-on=S061"]).build(),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C001 program uses implicit typing
+      |
+    2 | program test
+      | ^^^^^^^^^^^^ C001
+    3 |   logical*4, parameter :: true = .true.
+    4 | end program
+      |
+      = help: Insert `implicit none`
+
+    [TEMP_FILE] S061 [*] end statement should be named.
+      |
+    2 | program test
+    3 |   logical*4, parameter :: true = .true.
+    4 | end program
+      | ^^^^^^^^^^^ S061
+      |
+      = help: Write as 'end program test'.
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn check_exit_non_zero_on_file() -> anyhow::Result<()> {
+    let tempdir = TempDir::new()?;
+    let test_file = tempdir.path().join("test.f90");
+    fs::write(
+        &test_file,
+        r#"
+program test
+  logical*4, parameter :: true = .true.
+end program
+"#,
+    )?;
+
+    let config_file = tempdir.path().join("fortitude.toml");
+    fs::write(
+        &config_file,
+        r#"
+[check]
+select = ["C001", "S061"]
+exit-zero-on = ["ALL"]
+exit-non-zero-on = ["S061"]
+"#,
+    )?;
+
+    apply_common_filters!();
+    assert_cmd_snapshot!(FortitudeCheck::default()
+                         .config(&config_file)
+                         .file(&test_file).build(),
+                         @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    [TEMP_FILE] C001 program uses implicit typing
+      |
+    2 | program test
+      | ^^^^^^^^^^^^ C001
+    3 |   logical*4, parameter :: true = .true.
+    4 | end program
+      |
+      = help: Insert `implicit none`
+
+    [TEMP_FILE] S061 [*] end statement should be named.
+      |
+    2 | program test
+    3 |   logical*4, parameter :: true = .true.
+    4 | end program
+      | ^^^^^^^^^^^ S061
+      |
+      = help: Write as 'end program test'.
+
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
 fn apply_fixes() -> anyhow::Result<()> {
     let tempdir = TempDir::new()?;
     let test_file = tempdir.path().join("test.f90");
@@ -1339,9 +1509,9 @@ program test
   write (*, '("╔════════════════════════════════════════════╗")')
   write (*, '("║  UTF-8 LOGO BOX                            ║")')
   write (*, '("╚════════════════════════════════════════════╝")')
-  !-- transform into g/cm³   
+  !-- transform into g/cm³
   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-  !-- transform³ into³ g/cm³   
+  !-- transform³ into³ g/cm³
   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
 end program test
 "#,
@@ -1390,7 +1560,7 @@ end program test
     7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
       |                                                             ^^^^^ S001
     8 |   write (*, '("╚════════════════════════════════════════════╝")')
-    9 |   !-- transform into g/cm³   
+    9 |   !-- transform into g/cm³
       |
 
     [TEMP_FILE] S001 line length of 65, exceeds maximum 60
@@ -1399,7 +1569,7 @@ end program test
      7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
      8 |   write (*, '("╚════════════════════════════════════════════╝")')
        |                                                             ^^^^^ S001
-     9 |   !-- transform into g/cm³   
+     9 |   !-- transform into g/cm³
     10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
        |
 
@@ -1407,18 +1577,18 @@ end program test
        |
      7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
      8 |   write (*, '("╚════════════════════════════════════════════╝")')
-     9 |   !-- transform into g/cm³   
+     9 |   !-- transform into g/cm³
        |                           ^^^ S101
     10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    11 |   !-- transform³ into³ g/cm³   
+    11 |   !-- transform³ into³ g/cm³
        |
        = help: Remove trailing whitespace
 
     [TEMP_FILE] S101 [*] trailing whitespace
        |
-     9 |   !-- transform into g/cm³   
+     9 |   !-- transform into g/cm³
     10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    11 |   !-- transform³ into³ g/cm³   
+    11 |   !-- transform³ into³ g/cm³
        |                             ^^^ S101
     12 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
     13 | end program test
@@ -1935,7 +2105,7 @@ program test
   ! allow(star-kind)
   logical*4, parameter :: true = .true.
   ! allow(trailing-whitespace)
-  logical*4, parameter :: false = .false.  
+  logical*4, parameter :: false = .false.
 end program
 "#,
     )?;
@@ -1952,7 +2122,7 @@ end program
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
+    7 |   logical*4, parameter :: false = .false.
       |          ^^ PORT021
     8 | end program
       |
@@ -1985,7 +2155,7 @@ program test
   ! allow(star-kind)
   logical*4, parameter :: true = .true.
   ! allow(trailing-whitespace)
-  logical*4, parameter :: false = .false.  
+  logical*4, parameter :: false = .false.
 end program
 "#,
     )?;
@@ -2016,7 +2186,7 @@ end program
     5 |   logical*4, parameter :: true = .true.
       |          ^^ PORT021
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
+    7 |   logical*4, parameter :: false = .false.
       |
       = help: Replace with 'logical(4)'
 
@@ -2027,7 +2197,7 @@ end program
     5 |   logical*4, parameter :: true = .true.
       |           ^ PORT011
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
+    7 |   logical*4, parameter :: false = .false.
       |
       = help: Use the parameter 'int32' from 'iso_fortran_env'
 
@@ -2035,7 +2205,7 @@ end program
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
+    7 |   logical*4, parameter :: false = .false.
       |          ^^ PORT021
     8 | end program
       |
@@ -2045,7 +2215,7 @@ end program
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
+    7 |   logical*4, parameter :: false = .false.
       |           ^ PORT011
     8 | end program
       |
@@ -2055,7 +2225,7 @@ end program
       |
     5 |   logical*4, parameter :: true = .true.
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
+    7 |   logical*4, parameter :: false = .false.
       |                                          ^^ S101
     8 | end program
       |
@@ -2064,7 +2234,7 @@ end program
     [TEMP_FILE] S061 [*] end statement should be named.
       |
     6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
+    7 |   logical*4, parameter :: false = .false.
     8 | end program
       | ^^^^^^^^^^^ S061
       |
@@ -2459,7 +2629,7 @@ fn show_statistics() -> anyhow::Result<()> {
         r#"
 program test
   logical*4, parameter :: true = .true.
-  logical*4, parameter :: false = .false.  
+  logical*4, parameter :: false = .false.
 end program test
 "#,
     )?;
@@ -2500,7 +2670,7 @@ fn show_statistics_unsafe_fixes() -> anyhow::Result<()> {
         r#"
 program test
   logical*4, parameter :: true = .true.
-  logical*4, parameter :: false = .false.  
+  logical*4, parameter :: false = .false.
 end program test
 "#,
     )?;
@@ -2541,7 +2711,7 @@ fn show_statistics_json() -> anyhow::Result<()> {
         r#"
 program test
   logical*4, parameter :: true = .true.
-  logical*4, parameter :: false = .false.  
+  logical*4, parameter :: false = .false.
 end program test
 "#,
     )?;
@@ -2751,7 +2921,7 @@ end program foo
     --- [TEMP_FILE]
     +++ [TEMP_FILE]
     @@ -1,5 +1,5 @@
-     
+
      program foo
     -  implicit none
     +  implicit none (type, external)
