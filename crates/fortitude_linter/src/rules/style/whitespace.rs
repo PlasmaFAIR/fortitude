@@ -357,7 +357,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     let indent_width: usize = context.settings().incorrect_indent.indent_width.as_usize();
     let mut current_expected_indent;
     let mut next_expected_indent = 0;
-    let mut i = -1;
     let mut in_line_continuation = false;
 
     for line in context.source_text().universal_newlines() {
@@ -365,7 +364,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         if line.trim().is_empty() {
             continue;
         }
-        i = i + 1;
 
         // Count leading spaces
         let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
@@ -373,7 +371,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         // Get indentation range
         let start = line.start();
         let end = start + TextSize::try_from(leading_spaces).unwrap();
-
         let range = TextRange::new(start, end);
 
         const BEGIN_SCOPE_NODES: &[&str] = &[
