@@ -10,7 +10,7 @@ use colored::{Color, ColoredString, Colorize, Styles};
 use ruff_text_size::{Ranged, TextRange, TextSize};
 use similar::{ChangeTag, TextDiff};
 
-use crate::diagnostics::{Applicability, Fix};
+use crate::diagnostics::Fix;
 use ruff_source_file::{OneIndexed, SourceFile};
 
 use crate::Diagnostic;
@@ -57,22 +57,14 @@ impl Display for Diff<'_> {
 
         let diff = TextDiff::from_lines(self.source_code.source_text(), &output);
 
-        let message = match self.fix.applicability() {
-            // TODO(zanieb): Adjust this messaging once it's user-facing
-            Applicability::Safe => "Safe fix",
-            Applicability::Unsafe => "Unsafe fix",
-            Applicability::DisplayOnly => "Display-only fix",
-        };
-        writeln!(f, "ℹ {}", message.blue())?;
+        let grouped_ops = diff.grouped_ops(3);
 
-        let (largest_old, largest_new) = diff
-            .ops()
-            .last()
-            .map(|op| (op.old_range().start, op.new_range().start))
-            .unwrap_or_default();
+        // Find the new line number with the largest number of digits to align all of the line
+        // number separators.
+        let last_op = grouped_ops.last().and_then(|group| group.last());
+        let largest_new = last_op.map(|op| op.new_range().end).unwrap_or_default();
 
-        let digit_with =
-            calculate_print_width(OneIndexed::from_zero_indexed(largest_new.max(largest_old)));
+        let digit_with = OneIndexed::new(largest_new).unwrap_or_default().digits();
 
         for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
             if idx > 0 {
@@ -80,37 +72,34 @@ impl Display for Diff<'_> {
             }
             for op in group {
                 for change in diff.iter_inline_changes(op) {
-                    let sign = match change.tag() {
-                        ChangeTag::Delete => "-",
-                        ChangeTag::Insert => "+",
-                        ChangeTag::Equal => " ",
+                    let (sign, index) = match change.tag() {
+                        ChangeTag::Delete => ("-", None),
+                        ChangeTag::Insert => ("+", change.new_index()),
+                        ChangeTag::Equal => ("|", change.new_index()),
                     };
 
                     let line_style = LineStyle::from(change.tag());
 
-                    let old_index = change.old_index().map(OneIndexed::from_zero_indexed);
-                    let new_index = change.new_index().map(OneIndexed::from_zero_indexed);
+                    let line = Line {
+                        index: index.map(OneIndexed::from_zero_indexed),
+                        width: digit_with,
+                    };
 
-                    write!(
-                        f,
-                        "{} {} |{}",
-                        Line {
-                            index: old_index,
-                            width: digit_with
-                        },
-                        Line {
-                            index: new_index,
-                            width: digit_with
-                        },
-                        line_style.apply_to(sign).bold()
-                    )?;
+                    write!(f, "{line} {sign}", sign = line_style.apply_to(sign).bold())?;
 
+                    let mut needs_separator = true;
                     for (emphasized, value) in change.iter_strings_lossy() {
+                        if needs_separator && !value.trim_end_matches(['\n', '\r']).is_empty() {
+                            f.write_str(" ")?;
+                            needs_separator = false;
+                        }
+
                         let value = value.show_nonprinting();
+                        let styled = line_style.apply_to(&value);
                         if emphasized {
-                            write!(f, "{}", line_style.apply_to(&value).underline().on_black())?;
+                            write!(f, "{}", styled.underline().on_black())?;
                         } else {
-                            write!(f, "{}", line_style.apply_to(&value))?;
+                            write!(f, "{styled}",)?;
                         }
                     }
                     if change.missing_newline() {

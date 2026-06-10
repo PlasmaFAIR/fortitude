@@ -14,14 +14,13 @@ snapshot_kind: text
   |
   = help: Add extra whitespace
 
-ℹ Safe fix
-1 1 | ! This is fine
-2 2 |  ! This isn't but we'll let it pass
-3   |-module mymod! This should be given two extra spaces
-  3 |+module mymod  ! This should be given two extra spaces
-4 4 |   implicit none ! This should be given one extra space
-5 5 |   private  ! This is fine
-6 6 |   ! This is fine
+1 | ! This is fine
+2 |  ! This isn't but we'll let it pass
+  - module mymod! This should be given two extra spaces
+3 + module mymod  ! This should be given two extra spaces
+4 |   implicit none ! This should be given one extra space
+5 |   private  ! This is fine
+6 |   ! This is fine
 
 ./resources/test/fixtures/style/S102.f90:4:16: S102 [*] need at least 2 spaces before inline comment
   |
@@ -34,12 +33,11 @@ snapshot_kind: text
   |
   = help: Add extra whitespace
 
-ℹ Safe fix
-1 1 | ! This is fine
-2 2 |  ! This isn't but we'll let it pass
-3 3 | module mymod! This should be given two extra spaces
-4   |-  implicit none ! This should be given one extra space
-  4 |+  implicit none  ! This should be given one extra space
-5 5 |   private  ! This is fine
-6 6 |   ! This is fine
-7 7 | ! As is this
+1 | ! This is fine
+2 |  ! This isn't but we'll let it pass
+3 | module mymod! This should be given two extra spaces
+  -   implicit none ! This should be given one extra space
+4 +   implicit none  ! This should be given one extra space
+5 |   private  ! This is fine
+6 |   ! This is fine
+7 | ! As is this

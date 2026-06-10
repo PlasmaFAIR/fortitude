@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/rules/fortitude/mod.rs
+source: crates/fortitude_linter/src/rules/fortitude/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
@@ -12,8 +12,7 @@ snapshot_kind: text
   |
   = help: Remove unused allow comment
 
-ℹ Safe fix
-1   |-! allow(implicit-typing)
-2 1 | program foo
-3 2 |   implicit none
-4 3 | end program foo
+  - ! allow(implicit-typing)
+1 | program foo
+2 |   implicit none
+3 | end program foo

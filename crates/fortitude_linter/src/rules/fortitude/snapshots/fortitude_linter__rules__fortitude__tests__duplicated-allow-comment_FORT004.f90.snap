@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/rules/fortitude/mod.rs
+source: crates/fortitude_linter/src/rules/fortitude/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
@@ -12,8 +12,7 @@ snapshot_kind: text
   |
   = help: Remove duplicated allow comment
 
-ℹ Safe fix
-1   |-! allow(implicit-typing, implicit-typing)
-  1 |+! allow(implicit-typing)
-2 2 | program foo
-3 3 | end program foo
+  - ! allow(implicit-typing, implicit-typing)
+1 + ! allow(implicit-typing)
+2 | program foo
+3 | end program foo
