@@ -162,6 +162,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "263") => (RuleGroup::Stable, None, Optional, style::inconsistent_dimension::BadArrayDeclaration),
         (Style, "271") => (RuleGroup::Preview, Ast, Default, style::use_statement::UnsortedUses),
         (Style, "291") => (RuleGroup::Preview, Ast, Default, style::literals::BareDecimal),
+        (Style, "301") => (RuleGroup::Preview, Ast, Optional, style::superfluous_while_true::SuperfluousWhileTrue),
         (Style, "901") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooComplex),
         (Style, "902") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooManyArguments),
 
