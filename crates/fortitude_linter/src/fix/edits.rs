@@ -1,11 +1,14 @@
 //! Interface for generating fix edits from higher-level actions (e.g., "remove an argument").
 
-use crate::diagnostics::Edit;
+use crate::{
+    diagnostics::Edit,
+    whitespace::{has_leading_content, has_trailing_content},
+};
 use anyhow::{Result, anyhow};
 use itertools::Itertools;
 use lazy_regex::lazy_regex;
-use ruff_source_file::{LineEnding, SourceFile};
-use ruff_text_size::Ranged;
+use ruff_source_file::{LineEnding, LineRanges, SourceFile};
+use ruff_text_size::{Ranged, TextSize};
 use tree_sitter::Node;
 
 use crate::{
@@ -80,6 +83,82 @@ pub(crate) fn add_attribute_to_var_decl(decl: &VariableDeclaration, attribute: &
 
     let colon = if decl.has_colon() { "" } else { " ::" };
     Edit::insertion(format!(", {attribute}{colon}"), start)
+}
+
+/// Remove part of a statement, handling line continuation characters at the
+/// start of the part correctly
+pub(crate) fn delete_stmt_part(node: &Node, src: &str) -> Vec<Edit> {
+    if let Some(mut start) = node.prev_line_continuation() {
+        // There's a preceding line continuation
+
+        let edit = delete_range(node.textrange().with_start(start.start_textsize()), src);
+
+        // If it's an explicit '&' on the same line, get the one before that
+        if start.start_position().row == node.start_position().row {
+            start = start.prev_line_continuation().expect(
+                "line continuation on continued line should have preceeding continuation character",
+            );
+        }
+
+        if let Some(next) = start.next_named_sibling()
+            && next.kind() == "comment"
+        {
+            // Preserve the comment by separately removing the first `&`
+            vec![delete_from_end_of_prev_node(&start), edit]
+        } else {
+            // Can't use `delete_range` here because it will eat the trailing
+            // newline
+            let end = if !has_trailing_content(node.end_textsize(), src) {
+                src.line_end(node.end_textsize())
+            } else {
+                node.end_textsize()
+            };
+
+            vec![Edit::deletion(start_from_end_of_prev_node(&start), end)]
+        }
+    } else if has_leading_content(node.start_textsize(), src) {
+        // There's something else on the line, so just delete this node
+        vec![delete_from_end_of_prev_node(node)]
+    } else {
+        // Nothing else on the line, we can delete the whole line(s)
+        let range = src.full_lines_range(node.textrange());
+        vec![Edit::range_deletion(range)]
+    }
+}
+
+/// Get the offset starting from the end of the previous node if it exists,
+/// otherwise use the start of this node
+pub(crate) fn start_from_end_of_prev_node(node: &Node) -> TextSize {
+    node.prev_sibling()
+        .map_or(node.start_textsize(), |prev| prev.end_textsize())
+}
+
+/// Create an edit deleting this node starting from the end of the previous node
+/// (if it exists)
+pub(crate) fn delete_from_end_of_prev_node(node: &Node) -> Edit {
+    Edit::deletion(start_from_end_of_prev_node(node), node.end_textsize())
+}
+
+/// Create an edit deleting a range, possibly including removing whitespace at
+/// the start/end of the range
+pub(crate) fn delete_range<T: TextRanged>(range: T, src: &str) -> Edit {
+    let start = range.start_textsize();
+    let end = range.end_textsize();
+
+    let leading = has_leading_content(start, src);
+    let trailing = has_trailing_content(end, src);
+
+    let range = match (leading, trailing) {
+        // Nothing in front or behind, delete the whole line(s)
+        (false, false) => src.full_lines_range(range.textrange()),
+        // Something in front/behind, delete to the beginning/end of the line
+        (true, false) => range.textrange().with_end(src.full_line_end(end)),
+        (false, true) => range.textrange().with_start(src.line_start(start)),
+        // Something in front AND behind, just delete the initial range
+        (true, true) => range.textrange(),
+    };
+
+    Edit::range_deletion(range)
 }
 
 /// Unindent and then indent each line, ignoring under-indented comments and
@@ -184,12 +263,20 @@ pub fn redent(s: &str, indentation: &str, line_ending: LineEnding) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::symbol_table::{SymbolTable, SymbolTables};
+    use crate::{
+        ast::symbol_table::{SymbolTable, SymbolTables},
+        diagnostics::test_diagnostic_builder,
+        fix::apply_fixes,
+        locator::Locator,
+        rules::Rule,
+    };
 
     use super::*;
     use anyhow::{Context, Result};
+    use ruff_diagnostics::Fix;
     use ruff_source_file::SourceFileBuilder;
-    use ruff_text_size::TextSize;
+    use ruff_text_size::{TextRange, TextSize};
+    use test_case::test_case;
     use tree_sitter::Parser;
 
     #[test]
@@ -471,5 +558,62 @@ end program foo
             "      baz",
         ].join("\n");
         assert_eq!(redent(&x, "  ", LineEnding::Lf), y);
+    }
+
+    #[test_case(" while(.true.)", ""; "single line")]
+    #[test_case("&\n  while(.true.)", ""; "implicit continuation")]
+    #[test_case("&\n  & while(.true.)", ""; "explicit continuation")]
+    #[test_case(" &\n  & while(.true.) ", ""; "surrounding whitespace")]
+    #[test_case("& ! comment\n  & while(.true.)", " ! comment"; "comment after continuation")]
+    #[test_case("&\n  & while(.true.) ! comment", " ! comment"; "trailing comment")]
+    #[test_case("& ! first\n  & while(.true.) ! second", " ! first\n ! second"; "two comments")]
+    fn edit_delete(snippet: &str, replacement: &str) -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = &format!(
+            r#"program foo
+  do{snippet}
+  end do
+end program foo"#,
+        );
+
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "while_statement")
+            .context("missing 'while'")?;
+
+        let edits = delete_stmt_part(&node, code);
+
+        let diag = {
+            let mut iter = edits.into_iter();
+            // Choice of rule doesn't matter
+            test_diagnostic_builder(Rule::TrailingWhitespace, "test", TextRange::default())
+                .with_fix(Fix::safe_edits(
+                    iter.next().ok_or(anyhow!("expected edits nonempty"))?,
+                    iter,
+                ))
+        };
+        let locator = Locator::new(code);
+
+        let expected = &format!(
+            r#"program foo
+  do{replacement}
+  end do
+end program foo"#,
+        );
+
+        assert_eq!(
+            apply_fixes([diag].iter(), &locator, "<filename>")
+                .code
+                .source_text(),
+            expected
+        );
+
+        Ok(())
     }
 }
