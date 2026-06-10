@@ -18,7 +18,7 @@ snapshot_kind: text
 86 |     ! FAIL 1 -> standard.
 87 |     subroutine fail_1()
    -         do while (.true.)
-88 +         do 
+88 +         do
 89 |             x = x + 1
 90 |             if (x > 10) exit
 91 |         end do
@@ -38,7 +38,7 @@ snapshot_kind: text
 94 |     ! FAIL 2 -> case insensitive.
 95 |     subroutine fail_2()
    -         do while (.TRUE.)
-96 +         do 
+96 +         do
 97 |             x = x + 1
 98 |             if (x > 10) exit
 99 |         end do
@@ -58,7 +58,7 @@ snapshot_kind: text
 102 |     ! FAIL 3 -> extra whitespace.
 103 |     subroutine fail_3()
     -         do while (  .true.  )
-104 +         do 
+104 +         do
 105 |             x = x + 1
 106 |             if (x > 10) exit
 107 |         end do
@@ -78,7 +78,7 @@ snapshot_kind: text
 110 |     ! FAIL 4 -> do loop name.
 111 |     subroutine fail_4()
     -         a_name: do while (.true.)
-112 +         a_name: do 
+112 +         a_name: do
 113 |             x = x + 1
 114 |             if (x > 10) exit
 115 |         end do a_name
@@ -98,7 +98,7 @@ snapshot_kind: text
 118 |     ! FAIL 5 -> with extra parentheses.
 119 |     subroutine fail_5()
     -         do while ((.true.))
-120 +         do 
+120 +         do
 121 |             x = x + 1
 122 |             if (x > 10) exit
 123 |         end do
@@ -118,7 +118,7 @@ snapshot_kind: text
 126 |     ! FAIL 6 -> with lots of extra parentheses.
 127 |     subroutine fail_6()
     -         do while (((((((.true.)))))))
-128 +         do 
+128 +         do
 129 |             x = x + 1
 130 |             if (x > 10) exit
 131 |         end do
@@ -143,7 +143,7 @@ snapshot_kind: text
     -         do while (&
     -                 .true.&
     -                 )
-136 +         do 
+136 +         do
 137 |             x = x + 1
 138 |             if (x > 10) some_logical = .false.
 139 |         end do
@@ -166,7 +166,28 @@ snapshot_kind: text
 145 |     subroutine fail_8()
     -         do while &
     -                 (.true.)
-146 +         do 
+146 +         do
 147 |             x = x + 1
 148 |             if (x > 10) some_logical = .false.
 149 |         end do
+
+./resources/test/fixtures/style/S301.f90:156:16: S301 [*] Superfluous boolean literal '.true.' in 'do while' statement
+    |
+154 |     subroutine fail_X()
+155 |        do &
+156 |                while (.true.)
+    |                ^^^^^^^^^^^^^^ S301
+157 |            x = x + 1
+158 |            if (x > 10) exit
+    |
+    = help: Remove 'while' statement
+
+152 |
+153 |     ! FAIL X -> line continuation inbetween "do" and "while".
+154 |     subroutine fail_X()
+    -        do &
+    -                while (.true.)
+155 +        do
+156 |            x = x + 1
+157 |            if (x > 10) exit
+158 |        end do

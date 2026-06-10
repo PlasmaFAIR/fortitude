@@ -150,14 +150,13 @@ contains
         end do
     end subroutine fail_8
 
-    ! ** auto-fix not currently implemented **
     ! FAIL X -> line continuation inbetween "do" and "while".
-    ! subroutine fail_X()
-    !    do &
-    !            while (.true.)
-    !        x = x + 1
-    !        if (x > 10) exit
-    !    end do
-    !end subroutine fail_X
+    subroutine fail_X()
+       do &
+               while (.true.)
+           x = x + 1
+           if (x > 10) exit
+       end do
+    end subroutine fail_X
 
 end program test_program_superfluous_while_true
