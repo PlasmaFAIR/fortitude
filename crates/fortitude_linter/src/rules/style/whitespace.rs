@@ -335,8 +335,11 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// Checks that the correct indentation has been used
 ///
 /// ## Why is this bad?
+/// Inconsistent indentation makes Fortran less readable and difficult to
+/// understand the scoping of logic.
 ///
 /// ## Options
+/// - `check.incorrect-indent.indent-width`
 #[derive(ViolationMetadata)]
 pub(crate) struct IncorrectIndent;
 
