@@ -254,12 +254,12 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
     // We expect false negatives if stat is passed to a user function or
     // subroutine and overwritten/ignored there.
 
-    if ancestor.kind() == "assignment_statement" {
-        if let Some(lhs) = ancestor.child_by_field_name("left") {
-            let lhs_text = lhs.to_text(src).context("to_text error")?;
-            if lhs_text.to_lowercase().as_str() == stat_name {
-                return Ok(CheckStatus::Overwritten);
-            }
+    if ancestor.kind() == "assignment_statement"
+        && let Some(lhs) = ancestor.child_by_field_name("left")
+    {
+        let lhs_text = lhs.to_text(src).context("to_text error")?;
+        if lhs_text.to_lowercase().as_str() == stat_name {
+            return Ok(CheckStatus::Overwritten);
         }
     }
     if ancestor.kind() == "keyword_argument" {
@@ -431,10 +431,10 @@ impl AstRule for StatWithoutMessage {
         } else {
             *node
         };
-        if let Some(kwarg) = arg_list.kwarg(stat_name, src) {
-            if !arg_list.kwarg_exists(stat_type.errmsg(), src) {
-                return some_vec!(context.create_diagnostic(Self { stat_type }, kwarg));
-            }
+        if let Some(kwarg) = arg_list.kwarg(stat_name, src)
+            && !arg_list.kwarg_exists(stat_type.errmsg(), src)
+        {
+            return some_vec!(context.create_diagnostic(Self { stat_type }, kwarg));
         }
         None
     }

@@ -340,21 +340,22 @@ pub(crate) fn check_inconsistent_dimension_rules(
 ) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
 
-    if context.is_rule_enabled(Rule::InconsistentArrayDeclaration) {
-        if let Some(violation) = check_inconsistent_dimension(context, decl_line) {
-            violations.extend(violation);
-        }
+    if context.is_rule_enabled(Rule::InconsistentArrayDeclaration)
+        && let Some(violation) = check_inconsistent_dimension(context, decl_line)
+    {
+        violations.extend(violation);
     }
-    if context.is_rule_enabled(Rule::MixedScalarArrayDeclaration) {
-        if let Some(violation) = check_mixed_scalar_array(context, decl_line) {
-            violations.extend(violation);
-        }
+    if context.is_rule_enabled(Rule::MixedScalarArrayDeclaration)
+        && let Some(violation) = check_mixed_scalar_array(context, decl_line)
+    {
+        violations.extend(violation);
     }
     let prefer_attribute = context.settings().inconsistent_dimension.prefer_attribute;
-    if context.is_rule_enabled(Rule::BadArrayDeclaration) && !prefer_attribute.is_keep() {
-        if let Some(violation) = check_bad_array_decl(context, decl_line) {
-            violations.extend(violation);
-        }
+    if context.is_rule_enabled(Rule::BadArrayDeclaration)
+        && !prefer_attribute.is_keep()
+        && let Some(violation) = check_bad_array_decl(context, decl_line)
+    {
+        violations.extend(violation);
     }
     violations
 }

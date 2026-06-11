@@ -117,15 +117,16 @@ pub(crate) fn check_allow_comments(
     'outer: for (index, diagnostic) in diagnostics.iter().enumerate() {
         for allow in allow_comments {
             for code in &allow.codes {
-                if let Some(rule) = code.rule {
-                    if rule == diagnostic.rule() && allow.range.contains_range(diagnostic.range()) {
-                        used_codes.insert(rule);
-                        ignored_diagnostics.push(index);
-                        // We've ignored this diagnostic, so no point
-                        // checking the other allow comments!
-                        continue 'outer;
-                    };
-                }
+                if let Some(rule) = code.rule
+                    && rule == diagnostic.rule()
+                    && allow.range.contains_range(diagnostic.range())
+                {
+                    used_codes.insert(rule);
+                    ignored_diagnostics.push(index);
+                    // We've ignored this diagnostic, so no point
+                    // checking the other allow comments!
+                    continue 'outer;
+                };
             }
         }
     }
@@ -135,27 +136,26 @@ pub(crate) fn check_allow_comments(
 
         for code in &comment.codes {
             let redirect = get_redirect_target(code.code);
-            if context.is_rule_enabled(Rule::RedirectedAllowComment) {
-                if let Some(redirect) = redirect {
-                    let rule = Rule::from_code(redirect).unwrap();
-                    let new_code = rule.noqa_code().to_string();
-                    let new_name = rule.as_ref().to_string();
-                    let edit =
-                        Edit::replacement(new_name.clone(), code.loc.start(), code.loc.end());
-                    diagnostics.push(
-                        context
-                            .create_diagnostic(
-                                RedirectedAllowComment {
-                                    original: code.code.to_string(),
-                                    redirect: redirect.to_string(),
-                                    new_code,
-                                    new_name,
-                                },
-                                code,
-                            )
-                            .with_fix(Fix::safe_edit(edit)),
-                    );
-                }
+            if context.is_rule_enabled(Rule::RedirectedAllowComment)
+                && let Some(redirect) = redirect
+            {
+                let rule = Rule::from_code(redirect).unwrap();
+                let new_code = rule.noqa_code().to_string();
+                let new_name = rule.as_ref().to_string();
+                let edit = Edit::replacement(new_name.clone(), code.loc.start(), code.loc.end());
+                diagnostics.push(
+                    context
+                        .create_diagnostic(
+                            RedirectedAllowComment {
+                                original: code.code.to_string(),
+                                redirect: redirect.to_string(),
+                                new_code,
+                                new_name,
+                            },
+                            code,
+                        )
+                        .with_fix(Fix::safe_edit(edit)),
+                );
             }
 
             let rule = code.code.to_string();

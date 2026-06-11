@@ -430,64 +430,62 @@ where
 impl ParallelVisitor for FortranFilesVisitor<'_, '_> {
     fn visit(&mut self, result: std::result::Result<DirEntry, Error>) -> WalkState {
         // Respect our own exclusion behavior.
-        if let Ok(entry) = &result {
-            if entry.depth() > 0 {
-                let path = entry.path();
-                let resolver = self.global.resolver.read().unwrap();
-                let settings = resolver.resolve(path);
-                if let Some(file_name) = path.file_name() {
-                    let file_path = Candidate::new(path);
-                    let file_basename = Candidate::new(file_name);
-                    if match_candidate_exclusion(
-                        &file_path,
-                        &file_basename,
-                        &settings.file_resolver.exclude,
-                    ) {
-                        debug!("Ignored path via `exclude`: {path:?}");
-                        return WalkState::Skip;
-                    } else if match_candidate_exclusion(
-                        &file_path,
-                        &file_basename,
-                        &settings.file_resolver.extend_exclude,
-                    ) {
-                        debug!("Ignored path via `extend-exclude`: {path:?}");
-                        return WalkState::Skip;
-                    }
-                } else {
-                    debug!("Ignored path due to error in parsing: {path:?}");
+        if let Ok(entry) = &result
+            && entry.depth() > 0
+        {
+            let path = entry.path();
+            let resolver = self.global.resolver.read().unwrap();
+            let settings = resolver.resolve(path);
+            if let Some(file_name) = path.file_name() {
+                let file_path = Candidate::new(path);
+                let file_basename = Candidate::new(file_name);
+                if match_candidate_exclusion(
+                    &file_path,
+                    &file_basename,
+                    &settings.file_resolver.exclude,
+                ) {
+                    debug!("Ignored path via `exclude`: {path:?}");
+                    return WalkState::Skip;
+                } else if match_candidate_exclusion(
+                    &file_path,
+                    &file_basename,
+                    &settings.file_resolver.extend_exclude,
+                ) {
+                    debug!("Ignored path via `extend-exclude`: {path:?}");
                     return WalkState::Skip;
                 }
+            } else {
+                debug!("Ignored path due to error in parsing: {path:?}");
+                return WalkState::Skip;
             }
         }
 
         // Search for the `fortitude.toml` file in this directory, before we visit any
         // of its contents.
-        if self.global.is_hierarchical {
-            if let Ok(entry) = &result {
-                if entry
-                    .file_type()
-                    .is_some_and(|file_type| file_type.is_dir())
-                {
-                    match settings_toml(entry.path()) {
-                        Ok(Some(fortitude)) => match resolve_scoped_settings(
-                            &fortitude,
-                            self.transformer,
-                            ConfigurationOrigin::Ancestor,
-                        ) {
-                            Ok((root, settings)) => {
-                                self.global.resolver.write().unwrap().add(root, settings);
-                            }
-                            Err(err) => {
-                                self.local_error = Err(err);
-                                return WalkState::Quit;
-                            }
-                        },
-                        Ok(None) => {}
-                        Err(err) => {
-                            self.local_error = Err(err);
-                            return WalkState::Quit;
-                        }
+        if self.global.is_hierarchical
+            && let Ok(entry) = &result
+            && entry
+                .file_type()
+                .is_some_and(|file_type| file_type.is_dir())
+        {
+            match settings_toml(entry.path()) {
+                Ok(Some(fortitude)) => match resolve_scoped_settings(
+                    &fortitude,
+                    self.transformer,
+                    ConfigurationOrigin::Ancestor,
+                ) {
+                    Ok((root, settings)) => {
+                        self.global.resolver.write().unwrap().add(root, settings);
                     }
+                    Err(err) => {
+                        self.local_error = Err(err);
+                        return WalkState::Quit;
+                    }
+                },
+                Ok(None) => {}
+                Err(err) => {
+                    self.local_error = Err(err);
+                    return WalkState::Quit;
                 }
             }
         }
@@ -747,15 +745,15 @@ pub fn match_any_exclusion(
             }
             // These two bits are currently useless until we get the format
             // command in, and want separate exclude options
-            if let Some(lint_exclude) = lint_exclude {
-                if match_candidate_exclusion(&path, &basename, lint_exclude) {
-                    return Some(ExclusionKind::LintExclude);
-                }
+            if let Some(lint_exclude) = lint_exclude
+                && match_candidate_exclusion(&path, &basename, lint_exclude)
+            {
+                return Some(ExclusionKind::LintExclude);
             }
-            if let Some(format_exclude) = format_exclude {
-                if match_candidate_exclusion(&path, &basename, format_exclude) {
-                    return Some(ExclusionKind::FormatExclude);
-                }
+            if let Some(format_exclude) = format_exclude
+                && match_candidate_exclusion(&path, &basename, format_exclude)
+            {
+                return Some(ExclusionKind::FormatExclude);
             }
         }
         if path == resolver_settings.project_root {

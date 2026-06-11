@@ -169,29 +169,27 @@ fn process_documentation(documentation: &str, out: &mut String, rule_name: &str)
     for line in documentation.split_inclusive('\n') {
         if line.starts_with("## ") {
             in_options = line == "## Options\n";
-        } else if in_options {
-            if let Some(rest) = line.strip_prefix("- `") {
-                let option = rest.trim_end().trim_end_matches('`');
+        } else if in_options && let Some(rest) = line.strip_prefix("- `") {
+            let option = rest.trim_end().trim_end_matches('`');
 
-                match Options::metadata().find(option) {
-                    Some(OptionEntry::Field(field)) => {
-                        if field.deprecated.is_some() {
-                            eprintln!("Rule {rule_name} references deprecated option {option}.");
-                        }
-                    }
-                    Some(_) => {}
-                    None => {
-                        panic!("Unknown option {option} referenced by rule {rule_name}");
+            match Options::metadata().find(option) {
+                Some(OptionEntry::Field(field)) => {
+                    if field.deprecated.is_some() {
+                        eprintln!("Rule {rule_name} references deprecated option {option}.");
                     }
                 }
-
-                let anchor = option.replace('.', "_");
-                out.push_str(&format!("- [`{option}`][{option}]\n"));
-                after.push_str(&format!("[{option}]: ../settings.md#{anchor}\n"));
-                referenced_options.insert(option);
-
-                continue;
+                Some(_) => {}
+                None => {
+                    panic!("Unknown option {option} referenced by rule {rule_name}");
+                }
             }
+
+            let anchor = option.replace('.', "_");
+            out.push_str(&format!("- [`{option}`][{option}]\n"));
+            after.push_str(&format!("[{option}]: ../settings.md#{anchor}\n"));
+            referenced_options.insert(option);
+
+            continue;
         }
 
         out.push_str(line);

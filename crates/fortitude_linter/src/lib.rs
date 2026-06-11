@@ -270,10 +270,10 @@ pub(crate) fn check_path(
     let mut context = CheckContext::new(path, file.source_text(), settings, &stylist);
 
     // Check file paths directly
-    if context.is_rule_enabled(Rule::NonStandardFileExtension) {
-        if let Some(violation) = NonStandardFileExtension::check(&context) {
-            violations.push(violation);
-        }
+    if context.is_rule_enabled(Rule::NonStandardFileExtension)
+        && let Some(violation) = NonStandardFileExtension::check(&context)
+    {
+        violations.push(violation);
     }
 
     // Perform plain text analysis
@@ -320,10 +320,9 @@ pub(crate) fn check_path(
             Rule::SuperfluousElseExit,
             Rule::SuperfluousElseStop,
         ]) && matches!(node.kind(), "keyword_statement" | "stop_statement")
+            && let Some(violation) = check_superfluous_returns(&context, &node)
         {
-            if let Some(violation) = check_superfluous_returns(&context, &node) {
-                violations.push(violation);
-            }
+            violations.push(violation);
         }
 
         if let Some(rules) = context.rules.ast_entrypoints().get(node.kind()) {

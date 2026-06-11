@@ -100,10 +100,10 @@ impl Emitter for TextEmitter {
                 }
             }
 
-            if self.flags.intersects(EmitterFlags::SHOW_FIX_DIFF) {
-                if let Some(diff) = Diff::from_message(message) {
-                    writeln!(writer, "{diff}")?;
-                }
+            if self.flags.intersects(EmitterFlags::SHOW_FIX_DIFF)
+                && let Some(diff) = Diff::from_message(message)
+            {
+                writeln!(writer, "{diff}")?;
             }
         }
 
@@ -119,22 +119,22 @@ pub(super) struct RuleCodeAndBody<'a> {
 
 impl Display for RuleCodeAndBody<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if self.show_fix_status {
-            if let Some(fix) = self.message.fix() {
-                // Do not display an indicator for inapplicable fixes
-                if fix.applies(self.unsafe_fixes.required_applicability()) {
-                    write!(
-                        f,
-                        "{} ",
-                        self.message.rule().noqa_code().to_string().red().bold()
-                    )?;
-                    return write!(
-                        f,
-                        "{fix}{body}",
-                        fix = format_args!("[{}] ", "*".cyan()),
-                        body = self.message.body(),
-                    );
-                }
+        if self.show_fix_status
+            && let Some(fix) = self.message.fix()
+        {
+            // Do not display an indicator for inapplicable fixes
+            if fix.applies(self.unsafe_fixes.required_applicability()) {
+                write!(
+                    f,
+                    "{} ",
+                    self.message.rule().noqa_code().to_string().red().bold()
+                )?;
+                return write!(
+                    f,
+                    "{fix}{body}",
+                    fix = format_args!("[{}] ", "*".cyan()),
+                    body = self.message.body(),
+                );
             }
         };
 

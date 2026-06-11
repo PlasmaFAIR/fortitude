@@ -107,15 +107,15 @@ impl AstRule for NoRealSuffix {
         // lost.
         // If it's the sole argument in a function call, the first parent must be
         // "argument_list", and the second must be "call_expression".
-        if grandparent.kind() == "call_expression" {
-            if let Some(identifier) = grandparent.child_with_name("identifier") {
-                let name = identifier.to_text(context.source_text())?.to_lowercase();
-                if name == "kind"
-                    || (no_loss
-                        && matches!(name.as_str(), "real" | "cmplx" | "dbl" | "int" | "logical"))
-                {
-                    return None;
-                }
+        if grandparent.kind() == "call_expression"
+            && let Some(identifier) = grandparent.child_with_name("identifier")
+        {
+            let name = identifier.to_text(context.source_text())?.to_lowercase();
+            if name == "kind"
+                || (no_loss
+                    && matches!(name.as_str(), "real" | "cmplx" | "dbl" | "int" | "logical"))
+            {
+                return None;
             }
         }
 

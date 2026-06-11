@@ -206,10 +206,10 @@ impl AstRule for AssumedSizeCharacterIntent {
 
         // Handle `character*(*)` elsewhere -- note this just skips emitting a warning
         // for the first `*`, we'll still get one for the second `*`, but this is desired
-        if let Some(sibling) = node.next_named_sibling() {
-            if sibling.kind() == "assumed_size" {
-                return None;
-            }
+        if let Some(sibling) = node.next_named_sibling()
+            && sibling.kind() == "assumed_size"
+        {
+            return None;
         }
 
         let attrs_as_text = declaration
