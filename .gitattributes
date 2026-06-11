@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+crates/fortitude_linter/resources/test/fixtures/style/S101_crlf.f90 text eol=crlf
+
+*.md.snap linguist-language=Markdown
