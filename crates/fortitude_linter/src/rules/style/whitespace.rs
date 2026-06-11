@@ -1,8 +1,9 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use crate::line_width::IndentWidth;
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::UniversalNewlines;
+use ruff_source_file::{Line, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
 
@@ -362,6 +363,67 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     let mut next_expected_indent = 0;
     let mut in_line_continuation = false;
 
+    for line in context.source_text().universal_newlines() {
+        // Skip empty lines and lines with only whitespace
+        if line.trim().is_empty() {
+            continue;
+        }
+
+        // Count leading spaces
+        let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
+
+        // Get indentation range
+        let start = line.start();
+        let end = start + TextSize::try_from(leading_spaces).unwrap();
+        let range = TextRange::new(start, end);
+
+        let content_start = start + TextSize::try_from(leading_spaces as u32).unwrap();
+
+        // Determine what the indentation should be for the next line using the first node for this line
+        (
+            current_expected_indent,
+            next_expected_indent,
+            in_line_continuation,
+        ) = _updated_expected_indentation(
+            next_expected_indent,
+            in_line_continuation,
+            root,
+            line,
+            content_start,
+            indent_width,
+        );
+
+        // Compare with the expected number of leading spaces
+        if leading_spaces != current_expected_indent {
+            let edit = if current_expected_indent > 0 {
+                Edit::range_replacement(" ".repeat(current_expected_indent), range)
+            } else {
+                Edit::deletion(start, end)
+            };
+            let visual_end = if leading_spaces > 0 {
+                start + TextSize::try_from(leading_spaces).unwrap()
+            } else {
+                start + TextSize::try_from(1usize).unwrap()
+            };
+            violations.push(
+                context
+                    .create_diagnostic(IncorrectIndent, TextRange::new(start, visual_end))
+                    .with_fix(Fix::safe_edit(edit)),
+            );
+        }
+    }
+
+    violations
+}
+
+fn _updated_expected_indentation(
+    mut next_expected_indent: usize,
+    mut in_line_continuation: bool,
+    root: &Node,
+    line: Line<'_>,
+    content_start: TextSize,
+    indent_width: usize,
+) -> (usize, usize, bool) {
     const BEGIN_SCOPE_NODES: &[&str] = &[
         "program_statement",
         "module_statement",
@@ -390,77 +452,45 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         "end_block_construct_statement",
     ];
 
-    for line in context.source_text().universal_newlines() {
-        // Skip empty lines and lines with only whitespace
-        if line.trim().is_empty() {
-            continue;
-        }
+    // Determine what the indentation should be for the next line using the first node for this line
+    let mut current_expected_indent = next_expected_indent;
+    if let Some(line_node) =
+        root.named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
+    {
+        let node_kind = &line_node.kind();
 
-        // Count leading spaces
-        let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
-
-        // Get indentation range
-        let start = line.start();
-        let end = start + TextSize::try_from(leading_spaces).unwrap();
-        let range = TextRange::new(start, end);
-
-        let content_start = start + TextSize::try_from(leading_spaces as u32).unwrap();
-
-        // Determine what the indentation should be for the next line using the first node for this line
-        current_expected_indent = next_expected_indent;
-        if let Some(line_node) =
-            root.named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
-        {
-            let node_kind = &line_node.kind();
-
-            // Determine expected indent bases on tree-sitter node kind
-            if BEGIN_SCOPE_NODES.contains(node_kind) {
-                next_expected_indent = current_expected_indent + indent_width;
-            } else if END_SCOPE_NODES.contains(node_kind) {
-                if next_expected_indent < indent_width {
-                    current_expected_indent = 0;
-                    next_expected_indent = 0;
-                } else {
-                    current_expected_indent = current_expected_indent - indent_width;
-                    next_expected_indent = current_expected_indent;
-                }
-            } else if ZERO_INDENT_NODES.contains(node_kind) {
+        // Determine expected indent bases on tree-sitter node kind
+        if BEGIN_SCOPE_NODES.contains(node_kind) {
+            next_expected_indent = current_expected_indent + indent_width;
+        } else if END_SCOPE_NODES.contains(node_kind) {
+            if next_expected_indent < indent_width {
                 current_expected_indent = 0;
-            } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
+                next_expected_indent = 0;
+            } else {
                 current_expected_indent = current_expected_indent - indent_width;
-            } else {
-                // Determine indent change based on line continuation char "&"
-                if !in_line_continuation && line.trim().ends_with("&") {
-                    next_expected_indent = current_expected_indent + indent_width;
-                    in_line_continuation = true;
-                } else if in_line_continuation && !line.trim().ends_with("&") {
-                    next_expected_indent = current_expected_indent - indent_width;
-                    in_line_continuation = false;
-                }
+                next_expected_indent = current_expected_indent;
             }
-        }
-
-        // Compare with the expected number of leading spaces
-        if leading_spaces != current_expected_indent {
-            let edit = if current_expected_indent > 0 {
-                Edit::range_replacement(" ".repeat(current_expected_indent), range)
-            } else {
-                Edit::deletion(start, end)
-            };
-            let visual_end = if leading_spaces > 0 {
-                start + TextSize::try_from(leading_spaces).unwrap()
-            } else {
-                start + TextSize::try_from(1usize).unwrap()
-            };
-            violations.push(
-                context
-                    .create_diagnostic(IncorrectIndent, TextRange::new(start, visual_end))
-                    .with_fix(Fix::safe_edit(edit)),
-            );
+        } else if ZERO_INDENT_NODES.contains(node_kind) {
+            current_expected_indent = 0;
+        } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
+            current_expected_indent = current_expected_indent - indent_width;
+        } else {
+            // Determine indent change based on line continuation char "&"
+            if !in_line_continuation && line.trim().ends_with("&") {
+                next_expected_indent = current_expected_indent + indent_width;
+                in_line_continuation = true;
+            } else if in_line_continuation && !line.trim().ends_with("&") {
+                next_expected_indent = current_expected_indent - indent_width;
+                in_line_continuation = false;
+            }
         }
     }
 
-    violations
+    (
+        current_expected_indent,
+        next_expected_indent,
+        in_line_continuation,
+    )
 }
 
 pub mod settings {
