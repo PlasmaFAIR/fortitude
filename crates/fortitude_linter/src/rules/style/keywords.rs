@@ -460,6 +460,7 @@ pub mod settings_keyword_case {
 #[derive(ViolationMetadata)]
 pub struct KeywordReuse {
     keyword: String,
+    is_block_label: bool,
 }
 
 impl Violation for KeywordReuse {
@@ -468,7 +469,11 @@ impl Violation for KeywordReuse {
     #[derive_message_formats]
     fn message(&self) -> String {
         let keyword = &self.keyword;
-        format!("Keyword `{keyword}` used as a label")
+        if self.is_block_label {
+            format!("Keyword `{keyword}` used as a label")
+        } else {
+            format!("Keyword `{keyword}` used as an identifier")
+        }
     }
 }
 
@@ -485,6 +490,7 @@ pub(crate) fn check_keyword_reuse(
             diagnostics.push(context.create_diagnostic(
                 KeywordReuse {
                     keyword: name.to_string(),
+                    is_block_label: false,
                 },
                 symbol.name(),
             ));
@@ -507,6 +513,7 @@ impl AstRule for KeywordReuse {
             return some_vec![context.create_diagnostic(
                 KeywordReuse {
                     keyword: name.to_string(),
+                    is_block_label: true,
                 },
                 name_node,
             )];
