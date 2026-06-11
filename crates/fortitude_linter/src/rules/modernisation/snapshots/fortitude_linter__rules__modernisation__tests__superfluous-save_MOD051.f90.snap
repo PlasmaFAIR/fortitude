@@ -13,12 +13,11 @@ snapshot_kind: text
   |
   = help: Remove `save`
 
-ℹ Safe fix
-1 1 | module test
-2   |-  save
-3 2 | 
-4 3 |   integer :: a
-5 4 | 
+1 | module test
+  -   save
+2 |
+3 |   integer :: a
+4 |
 
 ./resources/test/fixtures/modernisation/MOD051.f90:13:12: MOD051 [*] save attribute is superfluous at the module level
    |
@@ -29,10 +28,9 @@ snapshot_kind: text
    |
    = help: Remove `save`
 
-ℹ Safe fix
-10 10 | end module test
-11 11 | 
-12 12 | module test
-13    |-  integer, save :: a
-   13 |+  integer :: a
-14 14 | end module test
+10 | end module test
+11 |
+12 | module test
+   -   integer, save :: a
+13 +   integer :: a
+14 | end module test

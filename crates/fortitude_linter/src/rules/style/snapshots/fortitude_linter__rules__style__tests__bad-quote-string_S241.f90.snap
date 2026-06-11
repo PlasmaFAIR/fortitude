@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/rules/style/mod.rs
+source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
@@ -13,15 +13,14 @@ snapshot_kind: text
   |
   = help: Replace single quotes with double quotes
 
-ℹ Safe fix
-2 2 |   implicit none (type, external)
-3 3 | 
-4 4 |   print *, "Hello, World!"
-5   |-  print *, 'Hello, World!'
-  5 |+  print *, "Hello, World!"
-6 6 |   print *, 'Hello, "World"!'
-7 7 |   print *, "Hello, ""World""!"
-8 8 |   print *, 'Hello, ''World''!'
+2 |   implicit none (type, external)
+3 |
+4 |   print *, "Hello, World!"
+  -   print *, 'Hello, World!'
+5 +   print *, "Hello, World!"
+6 |   print *, 'Hello, "World"!'
+7 |   print *, "Hello, ""World""!"
+8 |   print *, 'Hello, ''World''!'
 
 ./resources/test/fixtures/style/S241.f90:8:12: S241 String uses single quotes but double quotes preferred
    |
@@ -46,17 +45,16 @@ snapshot_kind: text
    |
    = help: Replace single quotes with double quotes
 
-ℹ Safe fix
-8  8  |   print *, 'Hello, ''World''!'
-9  9  |   print *, "Hello, &
-10 10 |             & World!"
-11    |-  print *, 'Hello, &
-12    |-            & World!'
-   11 |+  print *, "Hello, &
-   12 |+            & World!"
-13 13 |   print *, 'Hello, &
-14 14 |             & "World"!'
-15 15 |   print *, "Hello, &
+8  |   print *, 'Hello, ''World''!'
+9  |   print *, "Hello, &
+10 |             & World!"
+   -   print *, 'Hello, &
+   -             & World!'
+11 +   print *, "Hello, &
+12 +             & World!"
+13 |   print *, 'Hello, &
+14 |             & "World"!'
+15 |   print *, "Hello, &
 
 ./resources/test/fixtures/style/S241.f90:17:12: S241 String uses single quotes but double quotes preferred
    |

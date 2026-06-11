@@ -13,14 +13,13 @@ snapshot_kind: text
    |
    = help: remove `return` statement
 
-ℹ Safe fix
-8  8  |       return
-9  9  |     end if
-10 10 |     capped_add = a + b
-11    |-    return
-12 11 |   end function capped_add
-13 12 | 
-14 13 |   integer function capped_sub(a, b)
+8  |       return
+9  |     end if
+10 |     capped_add = a + b
+   -     return
+11 |   end function capped_add
+12 |
+13 |   integer function capped_sub(a, b)
 
 ./resources/test/fixtures/style/S251.f90:21:5: S251 [*] useless `return` statement`
    |
@@ -32,11 +31,10 @@ snapshot_kind: text
    |
    = help: remove `return` statement
 
-ℹ Safe fix
-18 18 |       return
-19 19 |     end if
-20 20 |     capped_sub = a - b
-21    |-    return
-22 21 |     ! but with comments
-23 22 | 
-24 23 |     ! and whitespace after
+18 |       return
+19 |     end if
+20 |     capped_sub = a - b
+   -     return
+21 |     ! but with comments
+22 |
+23 |     ! and whitespace after

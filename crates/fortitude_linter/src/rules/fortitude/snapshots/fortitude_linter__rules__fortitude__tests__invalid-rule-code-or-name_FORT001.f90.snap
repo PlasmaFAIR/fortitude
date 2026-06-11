@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/rules/fortitude/mod.rs
+source: crates/fortitude_linter/src/rules/fortitude/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
@@ -11,11 +11,10 @@ snapshot_kind: text
 3 | end program test
   |
 
-ℹ Safe fix
-1   |-! allow(badbad, notgood, implicit-typing)
-  1 |+! allow(badbad, implicit-typing)
-2 2 | program test
-3 3 | end program test
+  - ! allow(badbad, notgood, implicit-typing)
+1 + ! allow(badbad, implicit-typing)
+2 | program test
+3 | end program test
 
 ./resources/test/fixtures/fortitude/FORT001.f90:1:9: FORT001 [*] Unknown rule or code `badbad` in allow comment
   |
@@ -25,8 +24,7 @@ snapshot_kind: text
 3 | end program test
   |
 
-ℹ Safe fix
-1   |-! allow(badbad, notgood, implicit-typing)
-  1 |+! allow(notgood, implicit-typing)
-2 2 | program test
-3 3 | end program test
+  - ! allow(badbad, notgood, implicit-typing)
+1 + ! allow(notgood, implicit-typing)
+2 | program test
+3 | end program test

@@ -1,6 +1,7 @@
 ---
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
+snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S233.f90:1:1: S233 [*] Keyword 'MODULE' should be 'module'
   |
@@ -11,12 +12,11 @@ expression: diagnostics
   |
   = help: Change to 'module'
 
-ℹ Safe fix
-1   |-MODULE MY_MODULE
-  1 |+module MY_MODULE
-2 2 | IMPLICIT NONE
-3 3 | PRIVATE
-4 4 | PUBLIC :: TEST_TYPE, TEST_PROC
+  - MODULE MY_MODULE
+1 + module MY_MODULE
+2 | IMPLICIT NONE
+3 | PRIVATE
+4 | PUBLIC :: TEST_TYPE, TEST_PROC
 
 ./resources/test/fixtures/style/S233.f90:2:1: S233 [*] Keyword 'IMPLICIT' should be 'implicit'
   |
@@ -28,13 +28,12 @@ expression: diagnostics
   |
   = help: Change to 'implicit'
 
-ℹ Safe fix
-1 1 | MODULE MY_MODULE
-2   |-IMPLICIT NONE
-  2 |+implicit NONE
-3 3 | PRIVATE
-4 4 | PUBLIC :: TEST_TYPE, TEST_PROC
-5 5 | 
+1 | MODULE MY_MODULE
+  - IMPLICIT NONE
+2 + implicit NONE
+3 | PRIVATE
+4 | PUBLIC :: TEST_TYPE, TEST_PROC
+5 |
 
 ./resources/test/fixtures/style/S233.f90:2:10: S233 [*] Keyword 'NONE' should be 'none'
   |
@@ -46,13 +45,12 @@ expression: diagnostics
   |
   = help: Change to 'none'
 
-ℹ Safe fix
-1 1 | MODULE MY_MODULE
-2   |-IMPLICIT NONE
-  2 |+IMPLICIT none
-3 3 | PRIVATE
-4 4 | PUBLIC :: TEST_TYPE, TEST_PROC
-5 5 | 
+1 | MODULE MY_MODULE
+  - IMPLICIT NONE
+2 + IMPLICIT none
+3 | PRIVATE
+4 | PUBLIC :: TEST_TYPE, TEST_PROC
+5 |
 
 ./resources/test/fixtures/style/S233.f90:3:1: S233 [*] Keyword 'PRIVATE' should be 'private'
   |
@@ -64,14 +62,13 @@ expression: diagnostics
   |
   = help: Change to 'private'
 
-ℹ Safe fix
-1 1 | MODULE MY_MODULE
-2 2 | IMPLICIT NONE
-3   |-PRIVATE
-  3 |+private
-4 4 | PUBLIC :: TEST_TYPE, TEST_PROC
-5 5 | 
-6 6 | TYPE, ABSTRACT :: BASE_TYPE
+1 | MODULE MY_MODULE
+2 | IMPLICIT NONE
+  - PRIVATE
+3 + private
+4 | PUBLIC :: TEST_TYPE, TEST_PROC
+5 |
+6 | TYPE, ABSTRACT :: BASE_TYPE
 
 ./resources/test/fixtures/style/S233.f90:4:1: S233 [*] Keyword 'PUBLIC' should be 'public'
   |
@@ -84,15 +81,14 @@ expression: diagnostics
   |
   = help: Change to 'public'
 
-ℹ Safe fix
-1 1 | MODULE MY_MODULE
-2 2 | IMPLICIT NONE
-3 3 | PRIVATE
-4   |-PUBLIC :: TEST_TYPE, TEST_PROC
-  4 |+public :: TEST_TYPE, TEST_PROC
-5 5 | 
-6 6 | TYPE, ABSTRACT :: BASE_TYPE
-7 7 | CONTAINS
+1 | MODULE MY_MODULE
+2 | IMPLICIT NONE
+3 | PRIVATE
+  - PUBLIC :: TEST_TYPE, TEST_PROC
+4 + public :: TEST_TYPE, TEST_PROC
+5 |
+6 | TYPE, ABSTRACT :: BASE_TYPE
+7 | CONTAINS
 
 ./resources/test/fixtures/style/S233.f90:6:1: S233 [*] Keyword 'TYPE' should be 'type'
   |
@@ -105,15 +101,14 @@ expression: diagnostics
   |
   = help: Change to 'type'
 
-ℹ Safe fix
-3 3 | PRIVATE
-4 4 | PUBLIC :: TEST_TYPE, TEST_PROC
-5 5 | 
-6   |-TYPE, ABSTRACT :: BASE_TYPE
-  6 |+type, ABSTRACT :: BASE_TYPE
-7 7 | CONTAINS
-8 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-9 9 | END TYPE BASE_TYPE
+3 | PRIVATE
+4 | PUBLIC :: TEST_TYPE, TEST_PROC
+5 |
+  - TYPE, ABSTRACT :: BASE_TYPE
+6 + type, ABSTRACT :: BASE_TYPE
+7 | CONTAINS
+8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+9 | END TYPE BASE_TYPE
 
 ./resources/test/fixtures/style/S233.f90:6:7: S233 [*] Keyword 'ABSTRACT' should be 'abstract'
   |
@@ -126,15 +121,14 @@ expression: diagnostics
   |
   = help: Change to 'abstract'
 
-ℹ Safe fix
-3 3 | PRIVATE
-4 4 | PUBLIC :: TEST_TYPE, TEST_PROC
-5 5 | 
-6   |-TYPE, ABSTRACT :: BASE_TYPE
-  6 |+TYPE, abstract :: BASE_TYPE
-7 7 | CONTAINS
-8 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-9 9 | END TYPE BASE_TYPE
+3 | PRIVATE
+4 | PUBLIC :: TEST_TYPE, TEST_PROC
+5 |
+  - TYPE, ABSTRACT :: BASE_TYPE
+6 + TYPE, abstract :: BASE_TYPE
+7 | CONTAINS
+8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+9 | END TYPE BASE_TYPE
 
 ./resources/test/fixtures/style/S233.f90:7:1: S233 [*] Keyword 'CONTAINS' should be 'contains'
   |
@@ -146,15 +140,14 @@ expression: diagnostics
   |
   = help: Change to 'contains'
 
-ℹ Safe fix
-4 4 | PUBLIC :: TEST_TYPE, TEST_PROC
-5 5 | 
-6 6 | TYPE, ABSTRACT :: BASE_TYPE
-7   |-CONTAINS
-  7 |+contains
-8 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-9 9 | END TYPE BASE_TYPE
-10 10 | 
+4  | PUBLIC :: TEST_TYPE, TEST_PROC
+5  |
+6  | TYPE, ABSTRACT :: BASE_TYPE
+   - CONTAINS
+7  + contains
+8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+9  | END TYPE BASE_TYPE
+10 |
 
 ./resources/test/fixtures/style/S233.f90:8:5: S233 [*] Keyword 'PROCEDURE' should be 'procedure'
   |
@@ -166,15 +159,14 @@ expression: diagnostics
   |
   = help: Change to 'procedure'
 
-ℹ Safe fix
-5 5 | 
-6 6 | TYPE, ABSTRACT :: BASE_TYPE
-7 7 | CONTAINS
-8   |-    PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-  8 |+    procedure(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-9 9 | END TYPE BASE_TYPE
-10 10 | 
-11 11 | ABSTRACT INTERFACE
+5  |
+6  | TYPE, ABSTRACT :: BASE_TYPE
+7  | CONTAINS
+   -     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+8  +     procedure(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+9  | END TYPE BASE_TYPE
+10 |
+11 | ABSTRACT INTERFACE
 
 ./resources/test/fixtures/style/S233.f90:8:31: S233 [*] Keyword 'DEFERRED' should be 'deferred'
   |
@@ -186,15 +178,14 @@ expression: diagnostics
   |
   = help: Change to 'deferred'
 
-ℹ Safe fix
-5 5 | 
-6 6 | TYPE, ABSTRACT :: BASE_TYPE
-7 7 | CONTAINS
-8   |-    PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-  8 |+    PROCEDURE(DEFERRED_PROC), deferred :: DO_SOMETHING
-9 9 | END TYPE BASE_TYPE
-10 10 | 
-11 11 | ABSTRACT INTERFACE
+5  |
+6  | TYPE, ABSTRACT :: BASE_TYPE
+7  | CONTAINS
+   -     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+8  +     PROCEDURE(DEFERRED_PROC), deferred :: DO_SOMETHING
+9  | END TYPE BASE_TYPE
+10 |
+11 | ABSTRACT INTERFACE
 
 ./resources/test/fixtures/style/S233.f90:9:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -207,15 +198,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-6  6  | TYPE, ABSTRACT :: BASE_TYPE
-7  7  | CONTAINS
-8  8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-9     |-END TYPE BASE_TYPE
-   9  |+end TYPE BASE_TYPE
-10 10 | 
-11 11 | ABSTRACT INTERFACE
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
+6  | TYPE, ABSTRACT :: BASE_TYPE
+7  | CONTAINS
+8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+   - END TYPE BASE_TYPE
+9  + end TYPE BASE_TYPE
+10 |
+11 | ABSTRACT INTERFACE
+12 |     SUBROUTINE DEFERRED_PROC(X)
 
 ./resources/test/fixtures/style/S233.f90:9:5: S233 [*] Keyword 'TYPE' should be 'type'
    |
@@ -228,15 +218,14 @@ expression: diagnostics
    |
    = help: Change to 'type'
 
-ℹ Safe fix
-6  6  | TYPE, ABSTRACT :: BASE_TYPE
-7  7  | CONTAINS
-8  8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-9     |-END TYPE BASE_TYPE
-   9  |+END type BASE_TYPE
-10 10 | 
-11 11 | ABSTRACT INTERFACE
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
+6  | TYPE, ABSTRACT :: BASE_TYPE
+7  | CONTAINS
+8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+   - END TYPE BASE_TYPE
+9  + END type BASE_TYPE
+10 |
+11 | ABSTRACT INTERFACE
+12 |     SUBROUTINE DEFERRED_PROC(X)
 
 ./resources/test/fixtures/style/S233.f90:11:1: S233 [*] Keyword 'ABSTRACT' should be 'abstract'
    |
@@ -249,15 +238,14 @@ expression: diagnostics
    |
    = help: Change to 'abstract'
 
-ℹ Safe fix
-8  8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-9  9  | END TYPE BASE_TYPE
-10 10 | 
-11    |-ABSTRACT INTERFACE
-   11 |+abstract INTERFACE
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13 13 |         INTEGER, INTENT(INOUT) :: X
-14 14 |     END SUBROUTINE DEFERRED_PROC
+8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+9  | END TYPE BASE_TYPE
+10 |
+   - ABSTRACT INTERFACE
+11 + abstract INTERFACE
+12 |     SUBROUTINE DEFERRED_PROC(X)
+13 |         INTEGER, INTENT(INOUT) :: X
+14 |     END SUBROUTINE DEFERRED_PROC
 
 ./resources/test/fixtures/style/S233.f90:11:10: S233 [*] Keyword 'INTERFACE' should be 'interface'
    |
@@ -270,15 +258,14 @@ expression: diagnostics
    |
    = help: Change to 'interface'
 
-ℹ Safe fix
-8  8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-9  9  | END TYPE BASE_TYPE
-10 10 | 
-11    |-ABSTRACT INTERFACE
-   11 |+ABSTRACT interface
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13 13 |         INTEGER, INTENT(INOUT) :: X
-14 14 |     END SUBROUTINE DEFERRED_PROC
+8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
+9  | END TYPE BASE_TYPE
+10 |
+   - ABSTRACT INTERFACE
+11 + ABSTRACT interface
+12 |     SUBROUTINE DEFERRED_PROC(X)
+13 |         INTEGER, INTENT(INOUT) :: X
+14 |     END SUBROUTINE DEFERRED_PROC
 
 ./resources/test/fixtures/style/S233.f90:12:5: S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
    |
@@ -290,15 +277,14 @@ expression: diagnostics
    |
    = help: Change to 'subroutine'
 
-ℹ Safe fix
-9  9  | END TYPE BASE_TYPE
-10 10 | 
-11 11 | ABSTRACT INTERFACE
-12    |-    SUBROUTINE DEFERRED_PROC(X)
-   12 |+    subroutine DEFERRED_PROC(X)
-13 13 |         INTEGER, INTENT(INOUT) :: X
-14 14 |     END SUBROUTINE DEFERRED_PROC
-15 15 | END INTERFACE
+9  | END TYPE BASE_TYPE
+10 |
+11 | ABSTRACT INTERFACE
+   -     SUBROUTINE DEFERRED_PROC(X)
+12 +     subroutine DEFERRED_PROC(X)
+13 |         INTEGER, INTENT(INOUT) :: X
+14 |     END SUBROUTINE DEFERRED_PROC
+15 | END INTERFACE
 
 ./resources/test/fixtures/style/S233.f90:13:9: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -311,15 +297,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-10 10 | 
-11 11 | ABSTRACT INTERFACE
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13    |-        INTEGER, INTENT(INOUT) :: X
-   13 |+        integer, INTENT(INOUT) :: X
-14 14 |     END SUBROUTINE DEFERRED_PROC
-15 15 | END INTERFACE
-16 16 | 
+10 |
+11 | ABSTRACT INTERFACE
+12 |     SUBROUTINE DEFERRED_PROC(X)
+   -         INTEGER, INTENT(INOUT) :: X
+13 +         integer, INTENT(INOUT) :: X
+14 |     END SUBROUTINE DEFERRED_PROC
+15 | END INTERFACE
+16 |
 
 ./resources/test/fixtures/style/S233.f90:13:18: S233 [*] Keyword 'INTENT' should be 'intent'
    |
@@ -332,15 +317,14 @@ expression: diagnostics
    |
    = help: Change to 'intent'
 
-ℹ Safe fix
-10 10 | 
-11 11 | ABSTRACT INTERFACE
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13    |-        INTEGER, INTENT(INOUT) :: X
-   13 |+        INTEGER, intent(INOUT) :: X
-14 14 |     END SUBROUTINE DEFERRED_PROC
-15 15 | END INTERFACE
-16 16 | 
+10 |
+11 | ABSTRACT INTERFACE
+12 |     SUBROUTINE DEFERRED_PROC(X)
+   -         INTEGER, INTENT(INOUT) :: X
+13 +         INTEGER, intent(INOUT) :: X
+14 |     END SUBROUTINE DEFERRED_PROC
+15 | END INTERFACE
+16 |
 
 ./resources/test/fixtures/style/S233.f90:13:25: S233 [*] Keyword 'INOUT' should be 'inout'
    |
@@ -353,15 +337,14 @@ expression: diagnostics
    |
    = help: Change to 'inout'
 
-ℹ Safe fix
-10 10 | 
-11 11 | ABSTRACT INTERFACE
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13    |-        INTEGER, INTENT(INOUT) :: X
-   13 |+        INTEGER, INTENT(inout) :: X
-14 14 |     END SUBROUTINE DEFERRED_PROC
-15 15 | END INTERFACE
-16 16 | 
+10 |
+11 | ABSTRACT INTERFACE
+12 |     SUBROUTINE DEFERRED_PROC(X)
+   -         INTEGER, INTENT(INOUT) :: X
+13 +         INTEGER, INTENT(inout) :: X
+14 |     END SUBROUTINE DEFERRED_PROC
+15 | END INTERFACE
+16 |
 
 ./resources/test/fixtures/style/S233.f90:14:5: S233 [*] Keyword 'END' should be 'end'
    |
@@ -373,15 +356,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-11 11 | ABSTRACT INTERFACE
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13 13 |         INTEGER, INTENT(INOUT) :: X
-14    |-    END SUBROUTINE DEFERRED_PROC
-   14 |+    end SUBROUTINE DEFERRED_PROC
-15 15 | END INTERFACE
-16 16 | 
-17 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+11 | ABSTRACT INTERFACE
+12 |     SUBROUTINE DEFERRED_PROC(X)
+13 |         INTEGER, INTENT(INOUT) :: X
+   -     END SUBROUTINE DEFERRED_PROC
+14 +     end SUBROUTINE DEFERRED_PROC
+15 | END INTERFACE
+16 |
+17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 
 ./resources/test/fixtures/style/S233.f90:14:9: S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
    |
@@ -393,15 +375,14 @@ expression: diagnostics
    |
    = help: Change to 'subroutine'
 
-ℹ Safe fix
-11 11 | ABSTRACT INTERFACE
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13 13 |         INTEGER, INTENT(INOUT) :: X
-14    |-    END SUBROUTINE DEFERRED_PROC
-   14 |+    END subroutine DEFERRED_PROC
-15 15 | END INTERFACE
-16 16 | 
-17 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+11 | ABSTRACT INTERFACE
+12 |     SUBROUTINE DEFERRED_PROC(X)
+13 |         INTEGER, INTENT(INOUT) :: X
+   -     END SUBROUTINE DEFERRED_PROC
+14 +     END subroutine DEFERRED_PROC
+15 | END INTERFACE
+16 |
+17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 
 ./resources/test/fixtures/style/S233.f90:15:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -414,15 +395,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13 13 |         INTEGER, INTENT(INOUT) :: X
-14 14 |     END SUBROUTINE DEFERRED_PROC
-15    |-END INTERFACE
-   15 |+end INTERFACE
-16 16 | 
-17 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-18 18 |     INTEGER :: VALUE
+12 |     SUBROUTINE DEFERRED_PROC(X)
+13 |         INTEGER, INTENT(INOUT) :: X
+14 |     END SUBROUTINE DEFERRED_PROC
+   - END INTERFACE
+15 + end INTERFACE
+16 |
+17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+18 |     INTEGER :: VALUE
 
 ./resources/test/fixtures/style/S233.f90:15:5: S233 [*] Keyword 'INTERFACE' should be 'interface'
    |
@@ -435,15 +415,14 @@ expression: diagnostics
    |
    = help: Change to 'interface'
 
-ℹ Safe fix
-12 12 |     SUBROUTINE DEFERRED_PROC(X)
-13 13 |         INTEGER, INTENT(INOUT) :: X
-14 14 |     END SUBROUTINE DEFERRED_PROC
-15    |-END INTERFACE
-   15 |+END interface
-16 16 | 
-17 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-18 18 |     INTEGER :: VALUE
+12 |     SUBROUTINE DEFERRED_PROC(X)
+13 |         INTEGER, INTENT(INOUT) :: X
+14 |     END SUBROUTINE DEFERRED_PROC
+   - END INTERFACE
+15 + END interface
+16 |
+17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+18 |     INTEGER :: VALUE
 
 ./resources/test/fixtures/style/S233.f90:17:1: S233 [*] Keyword 'TYPE' should be 'type'
    |
@@ -456,15 +435,14 @@ expression: diagnostics
    |
    = help: Change to 'type'
 
-ℹ Safe fix
-14 14 |     END SUBROUTINE DEFERRED_PROC
-15 15 | END INTERFACE
-16 16 | 
-17    |-TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-   17 |+type, EXTENDS(BASE_TYPE) :: TEST_TYPE
-18 18 |     INTEGER :: VALUE
-19 19 | CONTAINS
-20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
+14 |     END SUBROUTINE DEFERRED_PROC
+15 | END INTERFACE
+16 |
+   - TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+17 + type, EXTENDS(BASE_TYPE) :: TEST_TYPE
+18 |     INTEGER :: VALUE
+19 | CONTAINS
+20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 
 ./resources/test/fixtures/style/S233.f90:17:7: S233 [*] Keyword 'EXTENDS' should be 'extends'
    |
@@ -477,15 +455,14 @@ expression: diagnostics
    |
    = help: Change to 'extends'
 
-ℹ Safe fix
-14 14 |     END SUBROUTINE DEFERRED_PROC
-15 15 | END INTERFACE
-16 16 | 
-17    |-TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-   17 |+TYPE, extends(BASE_TYPE) :: TEST_TYPE
-18 18 |     INTEGER :: VALUE
-19 19 | CONTAINS
-20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
+14 |     END SUBROUTINE DEFERRED_PROC
+15 | END INTERFACE
+16 |
+   - TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+17 + TYPE, extends(BASE_TYPE) :: TEST_TYPE
+18 |     INTEGER :: VALUE
+19 | CONTAINS
+20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 
 ./resources/test/fixtures/style/S233.f90:18:5: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -497,15 +474,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-15 15 | END INTERFACE
-16 16 | 
-17 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-18    |-    INTEGER :: VALUE
-   18 |+    integer :: VALUE
-19 19 | CONTAINS
-20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
-21 21 |     FINAL :: FINALIZE_TEST
+15 | END INTERFACE
+16 |
+17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+   -     INTEGER :: VALUE
+18 +     integer :: VALUE
+19 | CONTAINS
+20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
+21 |     FINAL :: FINALIZE_TEST
 
 ./resources/test/fixtures/style/S233.f90:19:1: S233 [*] Keyword 'CONTAINS' should be 'contains'
    |
@@ -518,15 +494,14 @@ expression: diagnostics
    |
    = help: Change to 'contains'
 
-ℹ Safe fix
-16 16 | 
-17 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-18 18 |     INTEGER :: VALUE
-19    |-CONTAINS
-   19 |+contains
-20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
-21 21 |     FINAL :: FINALIZE_TEST
-22 22 | END TYPE TEST_TYPE
+16 |
+17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+18 |     INTEGER :: VALUE
+   - CONTAINS
+19 + contains
+20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
+21 |     FINAL :: FINALIZE_TEST
+22 | END TYPE TEST_TYPE
 
 ./resources/test/fixtures/style/S233.f90:20:5: S233 [*] Keyword 'PROCEDURE' should be 'procedure'
    |
@@ -539,15 +514,14 @@ expression: diagnostics
    |
    = help: Change to 'procedure'
 
-ℹ Safe fix
-17 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-18 18 |     INTEGER :: VALUE
-19 19 | CONTAINS
-20    |-    PROCEDURE :: DO_SOMETHING => IMPL_PROC
-   20 |+    procedure :: DO_SOMETHING => IMPL_PROC
-21 21 |     FINAL :: FINALIZE_TEST
-22 22 | END TYPE TEST_TYPE
-23 23 | 
+17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
+18 |     INTEGER :: VALUE
+19 | CONTAINS
+   -     PROCEDURE :: DO_SOMETHING => IMPL_PROC
+20 +     procedure :: DO_SOMETHING => IMPL_PROC
+21 |     FINAL :: FINALIZE_TEST
+22 | END TYPE TEST_TYPE
+23 |
 
 ./resources/test/fixtures/style/S233.f90:21:5: S233 [*] Keyword 'FINAL' should be 'final'
    |
@@ -559,15 +533,14 @@ expression: diagnostics
    |
    = help: Change to 'final'
 
-ℹ Safe fix
-18 18 |     INTEGER :: VALUE
-19 19 | CONTAINS
-20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
-21    |-    FINAL :: FINALIZE_TEST
-   21 |+    final :: FINALIZE_TEST
-22 22 | END TYPE TEST_TYPE
-23 23 | 
-24 24 | INTERFACE TEST_PROC
+18 |     INTEGER :: VALUE
+19 | CONTAINS
+20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
+   -     FINAL :: FINALIZE_TEST
+21 +     final :: FINALIZE_TEST
+22 | END TYPE TEST_TYPE
+23 |
+24 | INTERFACE TEST_PROC
 
 ./resources/test/fixtures/style/S233.f90:22:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -580,15 +553,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-19 19 | CONTAINS
-20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
-21 21 |     FINAL :: FINALIZE_TEST
-22    |-END TYPE TEST_TYPE
-   22 |+end TYPE TEST_TYPE
-23 23 | 
-24 24 | INTERFACE TEST_PROC
-25 25 |     MODULE PROCEDURE IMPL_PROC
+19 | CONTAINS
+20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
+21 |     FINAL :: FINALIZE_TEST
+   - END TYPE TEST_TYPE
+22 + end TYPE TEST_TYPE
+23 |
+24 | INTERFACE TEST_PROC
+25 |     MODULE PROCEDURE IMPL_PROC
 
 ./resources/test/fixtures/style/S233.f90:22:5: S233 [*] Keyword 'TYPE' should be 'type'
    |
@@ -601,15 +573,14 @@ expression: diagnostics
    |
    = help: Change to 'type'
 
-ℹ Safe fix
-19 19 | CONTAINS
-20 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
-21 21 |     FINAL :: FINALIZE_TEST
-22    |-END TYPE TEST_TYPE
-   22 |+END type TEST_TYPE
-23 23 | 
-24 24 | INTERFACE TEST_PROC
-25 25 |     MODULE PROCEDURE IMPL_PROC
+19 | CONTAINS
+20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
+21 |     FINAL :: FINALIZE_TEST
+   - END TYPE TEST_TYPE
+22 + END type TEST_TYPE
+23 |
+24 | INTERFACE TEST_PROC
+25 |     MODULE PROCEDURE IMPL_PROC
 
 ./resources/test/fixtures/style/S233.f90:24:1: S233 [*] Keyword 'INTERFACE' should be 'interface'
    |
@@ -622,15 +593,14 @@ expression: diagnostics
    |
    = help: Change to 'interface'
 
-ℹ Safe fix
-21 21 |     FINAL :: FINALIZE_TEST
-22 22 | END TYPE TEST_TYPE
-23 23 | 
-24    |-INTERFACE TEST_PROC
-   24 |+interface TEST_PROC
-25 25 |     MODULE PROCEDURE IMPL_PROC
-26 26 | END INTERFACE
-27 27 | 
+21 |     FINAL :: FINALIZE_TEST
+22 | END TYPE TEST_TYPE
+23 |
+   - INTERFACE TEST_PROC
+24 + interface TEST_PROC
+25 |     MODULE PROCEDURE IMPL_PROC
+26 | END INTERFACE
+27 |
 
 ./resources/test/fixtures/style/S233.f90:25:5: S233 [*] Keyword 'MODULE' should be 'module'
    |
@@ -641,15 +611,14 @@ expression: diagnostics
    |
    = help: Change to 'module'
 
-ℹ Safe fix
-22 22 | END TYPE TEST_TYPE
-23 23 | 
-24 24 | INTERFACE TEST_PROC
-25    |-    MODULE PROCEDURE IMPL_PROC
-   25 |+    module PROCEDURE IMPL_PROC
-26 26 | END INTERFACE
-27 27 | 
-28 28 | CONTAINS
+22 | END TYPE TEST_TYPE
+23 |
+24 | INTERFACE TEST_PROC
+   -     MODULE PROCEDURE IMPL_PROC
+25 +     module PROCEDURE IMPL_PROC
+26 | END INTERFACE
+27 |
+28 | CONTAINS
 
 ./resources/test/fixtures/style/S233.f90:25:12: S233 [*] Keyword 'PROCEDURE' should be 'procedure'
    |
@@ -660,15 +629,14 @@ expression: diagnostics
    |
    = help: Change to 'procedure'
 
-ℹ Safe fix
-22 22 | END TYPE TEST_TYPE
-23 23 | 
-24 24 | INTERFACE TEST_PROC
-25    |-    MODULE PROCEDURE IMPL_PROC
-   25 |+    MODULE procedure IMPL_PROC
-26 26 | END INTERFACE
-27 27 | 
-28 28 | CONTAINS
+22 | END TYPE TEST_TYPE
+23 |
+24 | INTERFACE TEST_PROC
+   -     MODULE PROCEDURE IMPL_PROC
+25 +     MODULE procedure IMPL_PROC
+26 | END INTERFACE
+27 |
+28 | CONTAINS
 
 ./resources/test/fixtures/style/S233.f90:26:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -681,15 +649,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-23 23 | 
-24 24 | INTERFACE TEST_PROC
-25 25 |     MODULE PROCEDURE IMPL_PROC
-26    |-END INTERFACE
-   26 |+end INTERFACE
-27 27 | 
-28 28 | CONTAINS
-29 29 | 
+23 |
+24 | INTERFACE TEST_PROC
+25 |     MODULE PROCEDURE IMPL_PROC
+   - END INTERFACE
+26 + end INTERFACE
+27 |
+28 | CONTAINS
+29 |
 
 ./resources/test/fixtures/style/S233.f90:26:5: S233 [*] Keyword 'INTERFACE' should be 'interface'
    |
@@ -702,15 +669,14 @@ expression: diagnostics
    |
    = help: Change to 'interface'
 
-ℹ Safe fix
-23 23 | 
-24 24 | INTERFACE TEST_PROC
-25 25 |     MODULE PROCEDURE IMPL_PROC
-26    |-END INTERFACE
-   26 |+END interface
-27 27 | 
-28 28 | CONTAINS
-29 29 | 
+23 |
+24 | INTERFACE TEST_PROC
+25 |     MODULE PROCEDURE IMPL_PROC
+   - END INTERFACE
+26 + END interface
+27 |
+28 | CONTAINS
+29 |
 
 ./resources/test/fixtures/style/S233.f90:28:1: S233 [*] Keyword 'CONTAINS' should be 'contains'
    |
@@ -723,15 +689,14 @@ expression: diagnostics
    |
    = help: Change to 'contains'
 
-ℹ Safe fix
-25 25 |     MODULE PROCEDURE IMPL_PROC
-26 26 | END INTERFACE
-27 27 | 
-28    |-CONTAINS
-   28 |+contains
-29 29 | 
-30 30 | PURE SUBROUTINE IMPL_PROC(X)
-31 31 |     INTEGER, INTENT(INOUT) :: X
+25 |     MODULE PROCEDURE IMPL_PROC
+26 | END INTERFACE
+27 |
+   - CONTAINS
+28 + contains
+29 |
+30 | PURE SUBROUTINE IMPL_PROC(X)
+31 |     INTEGER, INTENT(INOUT) :: X
 
 ./resources/test/fixtures/style/S233.f90:30:1: S233 [*] Keyword 'PURE' should be 'pure'
    |
@@ -744,15 +709,14 @@ expression: diagnostics
    |
    = help: Change to 'pure'
 
-ℹ Safe fix
-27 27 | 
-28 28 | CONTAINS
-29 29 | 
-30    |-PURE SUBROUTINE IMPL_PROC(X)
-   30 |+pure SUBROUTINE IMPL_PROC(X)
-31 31 |     INTEGER, INTENT(INOUT) :: X
-32 32 |     X = X + 1
-33 33 | END SUBROUTINE IMPL_PROC
+27 |
+28 | CONTAINS
+29 |
+   - PURE SUBROUTINE IMPL_PROC(X)
+30 + pure SUBROUTINE IMPL_PROC(X)
+31 |     INTEGER, INTENT(INOUT) :: X
+32 |     X = X + 1
+33 | END SUBROUTINE IMPL_PROC
 
 ./resources/test/fixtures/style/S233.f90:30:6: S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
    |
@@ -765,15 +729,14 @@ expression: diagnostics
    |
    = help: Change to 'subroutine'
 
-ℹ Safe fix
-27 27 | 
-28 28 | CONTAINS
-29 29 | 
-30    |-PURE SUBROUTINE IMPL_PROC(X)
-   30 |+PURE subroutine IMPL_PROC(X)
-31 31 |     INTEGER, INTENT(INOUT) :: X
-32 32 |     X = X + 1
-33 33 | END SUBROUTINE IMPL_PROC
+27 |
+28 | CONTAINS
+29 |
+   - PURE SUBROUTINE IMPL_PROC(X)
+30 + PURE subroutine IMPL_PROC(X)
+31 |     INTEGER, INTENT(INOUT) :: X
+32 |     X = X + 1
+33 | END SUBROUTINE IMPL_PROC
 
 ./resources/test/fixtures/style/S233.f90:31:5: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -785,15 +748,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-28 28 | CONTAINS
-29 29 | 
-30 30 | PURE SUBROUTINE IMPL_PROC(X)
-31    |-    INTEGER, INTENT(INOUT) :: X
-   31 |+    integer, INTENT(INOUT) :: X
-32 32 |     X = X + 1
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
+28 | CONTAINS
+29 |
+30 | PURE SUBROUTINE IMPL_PROC(X)
+   -     INTEGER, INTENT(INOUT) :: X
+31 +     integer, INTENT(INOUT) :: X
+32 |     X = X + 1
+33 | END SUBROUTINE IMPL_PROC
+34 |
 
 ./resources/test/fixtures/style/S233.f90:31:14: S233 [*] Keyword 'INTENT' should be 'intent'
    |
@@ -805,15 +767,14 @@ expression: diagnostics
    |
    = help: Change to 'intent'
 
-ℹ Safe fix
-28 28 | CONTAINS
-29 29 | 
-30 30 | PURE SUBROUTINE IMPL_PROC(X)
-31    |-    INTEGER, INTENT(INOUT) :: X
-   31 |+    INTEGER, intent(INOUT) :: X
-32 32 |     X = X + 1
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
+28 | CONTAINS
+29 |
+30 | PURE SUBROUTINE IMPL_PROC(X)
+   -     INTEGER, INTENT(INOUT) :: X
+31 +     INTEGER, intent(INOUT) :: X
+32 |     X = X + 1
+33 | END SUBROUTINE IMPL_PROC
+34 |
 
 ./resources/test/fixtures/style/S233.f90:31:21: S233 [*] Keyword 'INOUT' should be 'inout'
    |
@@ -825,15 +786,14 @@ expression: diagnostics
    |
    = help: Change to 'inout'
 
-ℹ Safe fix
-28 28 | CONTAINS
-29 29 | 
-30 30 | PURE SUBROUTINE IMPL_PROC(X)
-31    |-    INTEGER, INTENT(INOUT) :: X
-   31 |+    INTEGER, INTENT(inout) :: X
-32 32 |     X = X + 1
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
+28 | CONTAINS
+29 |
+30 | PURE SUBROUTINE IMPL_PROC(X)
+   -     INTEGER, INTENT(INOUT) :: X
+31 +     INTEGER, INTENT(inout) :: X
+32 |     X = X + 1
+33 | END SUBROUTINE IMPL_PROC
+34 |
 
 ./resources/test/fixtures/style/S233.f90:33:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -846,15 +806,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-30 30 | PURE SUBROUTINE IMPL_PROC(X)
-31 31 |     INTEGER, INTENT(INOUT) :: X
-32 32 |     X = X + 1
-33    |-END SUBROUTINE IMPL_PROC
-   33 |+end SUBROUTINE IMPL_PROC
-34 34 | 
-35 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-36 36 |     INTEGER, INTENT(IN) :: Y
+30 | PURE SUBROUTINE IMPL_PROC(X)
+31 |     INTEGER, INTENT(INOUT) :: X
+32 |     X = X + 1
+   - END SUBROUTINE IMPL_PROC
+33 + end SUBROUTINE IMPL_PROC
+34 |
+35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+36 |     INTEGER, INTENT(IN) :: Y
 
 ./resources/test/fixtures/style/S233.f90:33:5: S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
    |
@@ -867,15 +826,14 @@ expression: diagnostics
    |
    = help: Change to 'subroutine'
 
-ℹ Safe fix
-30 30 | PURE SUBROUTINE IMPL_PROC(X)
-31 31 |     INTEGER, INTENT(INOUT) :: X
-32 32 |     X = X + 1
-33    |-END SUBROUTINE IMPL_PROC
-   33 |+END subroutine IMPL_PROC
-34 34 | 
-35 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-36 36 |     INTEGER, INTENT(IN) :: Y
+30 | PURE SUBROUTINE IMPL_PROC(X)
+31 |     INTEGER, INTENT(INOUT) :: X
+32 |     X = X + 1
+   - END SUBROUTINE IMPL_PROC
+33 + END subroutine IMPL_PROC
+34 |
+35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+36 |     INTEGER, INTENT(IN) :: Y
 
 ./resources/test/fixtures/style/S233.f90:35:1: S233 [*] Keyword 'ELEMENTAL' should be 'elemental'
    |
@@ -888,15 +846,14 @@ expression: diagnostics
    |
    = help: Change to 'elemental'
 
-ℹ Safe fix
-32 32 |     X = X + 1
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
-35    |-ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-   35 |+elemental FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-36 36 |     INTEGER, INTENT(IN) :: Y
-37 37 |     INTEGER :: RES
-38 38 |     RES = Y * 2
+32 |     X = X + 1
+33 | END SUBROUTINE IMPL_PROC
+34 |
+   - ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+35 + elemental FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+36 |     INTEGER, INTENT(IN) :: Y
+37 |     INTEGER :: RES
+38 |     RES = Y * 2
 
 ./resources/test/fixtures/style/S233.f90:35:11: S233 [*] Keyword 'FUNCTION' should be 'function'
    |
@@ -909,15 +866,14 @@ expression: diagnostics
    |
    = help: Change to 'function'
 
-ℹ Safe fix
-32 32 |     X = X + 1
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
-35    |-ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-   35 |+ELEMENTAL function DOUBLE_VAL(Y) RESULT(RES)
-36 36 |     INTEGER, INTENT(IN) :: Y
-37 37 |     INTEGER :: RES
-38 38 |     RES = Y * 2
+32 |     X = X + 1
+33 | END SUBROUTINE IMPL_PROC
+34 |
+   - ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+35 + ELEMENTAL function DOUBLE_VAL(Y) RESULT(RES)
+36 |     INTEGER, INTENT(IN) :: Y
+37 |     INTEGER :: RES
+38 |     RES = Y * 2
 
 ./resources/test/fixtures/style/S233.f90:35:34: S233 [*] Keyword 'RESULT' should be 'result'
    |
@@ -930,15 +886,14 @@ expression: diagnostics
    |
    = help: Change to 'result'
 
-ℹ Safe fix
-32 32 |     X = X + 1
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
-35    |-ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-   35 |+ELEMENTAL FUNCTION DOUBLE_VAL(Y) result(RES)
-36 36 |     INTEGER, INTENT(IN) :: Y
-37 37 |     INTEGER :: RES
-38 38 |     RES = Y * 2
+32 |     X = X + 1
+33 | END SUBROUTINE IMPL_PROC
+34 |
+   - ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+35 + ELEMENTAL FUNCTION DOUBLE_VAL(Y) result(RES)
+36 |     INTEGER, INTENT(IN) :: Y
+37 |     INTEGER :: RES
+38 |     RES = Y * 2
 
 ./resources/test/fixtures/style/S233.f90:36:5: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -950,15 +905,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
-35 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-36    |-    INTEGER, INTENT(IN) :: Y
-   36 |+    integer, INTENT(IN) :: Y
-37 37 |     INTEGER :: RES
-38 38 |     RES = Y * 2
-39 39 | END FUNCTION DOUBLE_VAL
+33 | END SUBROUTINE IMPL_PROC
+34 |
+35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+   -     INTEGER, INTENT(IN) :: Y
+36 +     integer, INTENT(IN) :: Y
+37 |     INTEGER :: RES
+38 |     RES = Y * 2
+39 | END FUNCTION DOUBLE_VAL
 
 ./resources/test/fixtures/style/S233.f90:36:14: S233 [*] Keyword 'INTENT' should be 'intent'
    |
@@ -970,15 +924,14 @@ expression: diagnostics
    |
    = help: Change to 'intent'
 
-ℹ Safe fix
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
-35 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-36    |-    INTEGER, INTENT(IN) :: Y
-   36 |+    INTEGER, intent(IN) :: Y
-37 37 |     INTEGER :: RES
-38 38 |     RES = Y * 2
-39 39 | END FUNCTION DOUBLE_VAL
+33 | END SUBROUTINE IMPL_PROC
+34 |
+35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+   -     INTEGER, INTENT(IN) :: Y
+36 +     INTEGER, intent(IN) :: Y
+37 |     INTEGER :: RES
+38 |     RES = Y * 2
+39 | END FUNCTION DOUBLE_VAL
 
 ./resources/test/fixtures/style/S233.f90:36:21: S233 [*] Keyword 'IN' should be 'in'
    |
@@ -990,15 +943,14 @@ expression: diagnostics
    |
    = help: Change to 'in'
 
-ℹ Safe fix
-33 33 | END SUBROUTINE IMPL_PROC
-34 34 | 
-35 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-36    |-    INTEGER, INTENT(IN) :: Y
-   36 |+    INTEGER, INTENT(in) :: Y
-37 37 |     INTEGER :: RES
-38 38 |     RES = Y * 2
-39 39 | END FUNCTION DOUBLE_VAL
+33 | END SUBROUTINE IMPL_PROC
+34 |
+35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+   -     INTEGER, INTENT(IN) :: Y
+36 +     INTEGER, INTENT(in) :: Y
+37 |     INTEGER :: RES
+38 |     RES = Y * 2
+39 | END FUNCTION DOUBLE_VAL
 
 ./resources/test/fixtures/style/S233.f90:37:5: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -1011,15 +963,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-34 34 | 
-35 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-36 36 |     INTEGER, INTENT(IN) :: Y
-37    |-    INTEGER :: RES
-   37 |+    integer :: RES
-38 38 |     RES = Y * 2
-39 39 | END FUNCTION DOUBLE_VAL
-40 40 | 
+34 |
+35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
+36 |     INTEGER, INTENT(IN) :: Y
+   -     INTEGER :: RES
+37 +     integer :: RES
+38 |     RES = Y * 2
+39 | END FUNCTION DOUBLE_VAL
+40 |
 
 ./resources/test/fixtures/style/S233.f90:39:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -1032,15 +983,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-36 36 |     INTEGER, INTENT(IN) :: Y
-37 37 |     INTEGER :: RES
-38 38 |     RES = Y * 2
-39    |-END FUNCTION DOUBLE_VAL
-   39 |+end FUNCTION DOUBLE_VAL
-40 40 | 
-41 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-42 42 |     INTEGER, INTENT(IN) :: N
+36 |     INTEGER, INTENT(IN) :: Y
+37 |     INTEGER :: RES
+38 |     RES = Y * 2
+   - END FUNCTION DOUBLE_VAL
+39 + end FUNCTION DOUBLE_VAL
+40 |
+41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
+42 |     INTEGER, INTENT(IN) :: N
 
 ./resources/test/fixtures/style/S233.f90:39:5: S233 [*] Keyword 'FUNCTION' should be 'function'
    |
@@ -1053,15 +1003,14 @@ expression: diagnostics
    |
    = help: Change to 'function'
 
-ℹ Safe fix
-36 36 |     INTEGER, INTENT(IN) :: Y
-37 37 |     INTEGER :: RES
-38 38 |     RES = Y * 2
-39    |-END FUNCTION DOUBLE_VAL
-   39 |+END function DOUBLE_VAL
-40 40 | 
-41 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-42 42 |     INTEGER, INTENT(IN) :: N
+36 |     INTEGER, INTENT(IN) :: Y
+37 |     INTEGER :: RES
+38 |     RES = Y * 2
+   - END FUNCTION DOUBLE_VAL
+39 + END function DOUBLE_VAL
+40 |
+41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
+42 |     INTEGER, INTENT(IN) :: N
 
 ./resources/test/fixtures/style/S233.f90:41:1: S233 [*] Keyword 'RECURSIVE' should be 'recursive'
    |
@@ -1074,15 +1023,14 @@ expression: diagnostics
    |
    = help: Change to 'recursive'
 
-ℹ Safe fix
-38 38 |     RES = Y * 2
-39 39 | END FUNCTION DOUBLE_VAL
-40 40 | 
-41    |-RECURSIVE FUNCTION FACT(N) RESULT(RES)
-   41 |+recursive FUNCTION FACT(N) RESULT(RES)
-42 42 |     INTEGER, INTENT(IN) :: N
-43 43 |     INTEGER :: RES
-44 44 |     IF (N <= 1) THEN
+38 |     RES = Y * 2
+39 | END FUNCTION DOUBLE_VAL
+40 |
+   - RECURSIVE FUNCTION FACT(N) RESULT(RES)
+41 + recursive FUNCTION FACT(N) RESULT(RES)
+42 |     INTEGER, INTENT(IN) :: N
+43 |     INTEGER :: RES
+44 |     IF (N <= 1) THEN
 
 ./resources/test/fixtures/style/S233.f90:41:11: S233 [*] Keyword 'FUNCTION' should be 'function'
    |
@@ -1095,15 +1043,14 @@ expression: diagnostics
    |
    = help: Change to 'function'
 
-ℹ Safe fix
-38 38 |     RES = Y * 2
-39 39 | END FUNCTION DOUBLE_VAL
-40 40 | 
-41    |-RECURSIVE FUNCTION FACT(N) RESULT(RES)
-   41 |+RECURSIVE function FACT(N) RESULT(RES)
-42 42 |     INTEGER, INTENT(IN) :: N
-43 43 |     INTEGER :: RES
-44 44 |     IF (N <= 1) THEN
+38 |     RES = Y * 2
+39 | END FUNCTION DOUBLE_VAL
+40 |
+   - RECURSIVE FUNCTION FACT(N) RESULT(RES)
+41 + RECURSIVE function FACT(N) RESULT(RES)
+42 |     INTEGER, INTENT(IN) :: N
+43 |     INTEGER :: RES
+44 |     IF (N <= 1) THEN
 
 ./resources/test/fixtures/style/S233.f90:41:28: S233 [*] Keyword 'RESULT' should be 'result'
    |
@@ -1116,15 +1063,14 @@ expression: diagnostics
    |
    = help: Change to 'result'
 
-ℹ Safe fix
-38 38 |     RES = Y * 2
-39 39 | END FUNCTION DOUBLE_VAL
-40 40 | 
-41    |-RECURSIVE FUNCTION FACT(N) RESULT(RES)
-   41 |+RECURSIVE FUNCTION FACT(N) result(RES)
-42 42 |     INTEGER, INTENT(IN) :: N
-43 43 |     INTEGER :: RES
-44 44 |     IF (N <= 1) THEN
+38 |     RES = Y * 2
+39 | END FUNCTION DOUBLE_VAL
+40 |
+   - RECURSIVE FUNCTION FACT(N) RESULT(RES)
+41 + RECURSIVE FUNCTION FACT(N) result(RES)
+42 |     INTEGER, INTENT(IN) :: N
+43 |     INTEGER :: RES
+44 |     IF (N <= 1) THEN
 
 ./resources/test/fixtures/style/S233.f90:42:5: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -1136,15 +1082,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-39 39 | END FUNCTION DOUBLE_VAL
-40 40 | 
-41 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-42    |-    INTEGER, INTENT(IN) :: N
-   42 |+    integer, INTENT(IN) :: N
-43 43 |     INTEGER :: RES
-44 44 |     IF (N <= 1) THEN
-45 45 |         RES = 1
+39 | END FUNCTION DOUBLE_VAL
+40 |
+41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
+   -     INTEGER, INTENT(IN) :: N
+42 +     integer, INTENT(IN) :: N
+43 |     INTEGER :: RES
+44 |     IF (N <= 1) THEN
+45 |         RES = 1
 
 ./resources/test/fixtures/style/S233.f90:42:14: S233 [*] Keyword 'INTENT' should be 'intent'
    |
@@ -1156,15 +1101,14 @@ expression: diagnostics
    |
    = help: Change to 'intent'
 
-ℹ Safe fix
-39 39 | END FUNCTION DOUBLE_VAL
-40 40 | 
-41 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-42    |-    INTEGER, INTENT(IN) :: N
-   42 |+    INTEGER, intent(IN) :: N
-43 43 |     INTEGER :: RES
-44 44 |     IF (N <= 1) THEN
-45 45 |         RES = 1
+39 | END FUNCTION DOUBLE_VAL
+40 |
+41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
+   -     INTEGER, INTENT(IN) :: N
+42 +     INTEGER, intent(IN) :: N
+43 |     INTEGER :: RES
+44 |     IF (N <= 1) THEN
+45 |         RES = 1
 
 ./resources/test/fixtures/style/S233.f90:42:21: S233 [*] Keyword 'IN' should be 'in'
    |
@@ -1176,15 +1120,14 @@ expression: diagnostics
    |
    = help: Change to 'in'
 
-ℹ Safe fix
-39 39 | END FUNCTION DOUBLE_VAL
-40 40 | 
-41 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-42    |-    INTEGER, INTENT(IN) :: N
-   42 |+    INTEGER, INTENT(in) :: N
-43 43 |     INTEGER :: RES
-44 44 |     IF (N <= 1) THEN
-45 45 |         RES = 1
+39 | END FUNCTION DOUBLE_VAL
+40 |
+41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
+   -     INTEGER, INTENT(IN) :: N
+42 +     INTEGER, INTENT(in) :: N
+43 |     INTEGER :: RES
+44 |     IF (N <= 1) THEN
+45 |         RES = 1
 
 ./resources/test/fixtures/style/S233.f90:43:5: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -1197,15 +1140,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-40 40 | 
-41 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-42 42 |     INTEGER, INTENT(IN) :: N
-43    |-    INTEGER :: RES
-   43 |+    integer :: RES
-44 44 |     IF (N <= 1) THEN
-45 45 |         RES = 1
-46 46 |     ELSE
+40 |
+41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
+42 |     INTEGER, INTENT(IN) :: N
+   -     INTEGER :: RES
+43 +     integer :: RES
+44 |     IF (N <= 1) THEN
+45 |         RES = 1
+46 |     ELSE
 
 ./resources/test/fixtures/style/S233.f90:44:5: S233 [*] Keyword 'IF' should be 'if'
    |
@@ -1218,15 +1160,14 @@ expression: diagnostics
    |
    = help: Change to 'if'
 
-ℹ Safe fix
-41 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-42 42 |     INTEGER, INTENT(IN) :: N
-43 43 |     INTEGER :: RES
-44    |-    IF (N <= 1) THEN
-   44 |+    if (N <= 1) THEN
-45 45 |         RES = 1
-46 46 |     ELSE
-47 47 |         RES = N * FACT(N-1)
+41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
+42 |     INTEGER, INTENT(IN) :: N
+43 |     INTEGER :: RES
+   -     IF (N <= 1) THEN
+44 +     if (N <= 1) THEN
+45 |         RES = 1
+46 |     ELSE
+47 |         RES = N * FACT(N-1)
 
 ./resources/test/fixtures/style/S233.f90:44:17: S233 [*] Keyword 'THEN' should be 'then'
    |
@@ -1239,15 +1180,14 @@ expression: diagnostics
    |
    = help: Change to 'then'
 
-ℹ Safe fix
-41 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-42 42 |     INTEGER, INTENT(IN) :: N
-43 43 |     INTEGER :: RES
-44    |-    IF (N <= 1) THEN
-   44 |+    IF (N <= 1) then
-45 45 |         RES = 1
-46 46 |     ELSE
-47 47 |         RES = N * FACT(N-1)
+41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
+42 |     INTEGER, INTENT(IN) :: N
+43 |     INTEGER :: RES
+   -     IF (N <= 1) THEN
+44 +     IF (N <= 1) then
+45 |         RES = 1
+46 |     ELSE
+47 |         RES = N * FACT(N-1)
 
 ./resources/test/fixtures/style/S233.f90:46:5: S233 [*] Keyword 'ELSE' should be 'else'
    |
@@ -1260,15 +1200,14 @@ expression: diagnostics
    |
    = help: Change to 'else'
 
-ℹ Safe fix
-43 43 |     INTEGER :: RES
-44 44 |     IF (N <= 1) THEN
-45 45 |         RES = 1
-46    |-    ELSE
-   46 |+    else
-47 47 |         RES = N * FACT(N-1)
-48 48 |     END IF
-49 49 | END FUNCTION FACT
+43 |     INTEGER :: RES
+44 |     IF (N <= 1) THEN
+45 |         RES = 1
+   -     ELSE
+46 +     else
+47 |         RES = N * FACT(N-1)
+48 |     END IF
+49 | END FUNCTION FACT
 
 ./resources/test/fixtures/style/S233.f90:48:5: S233 [*] Keyword 'END' should be 'end'
    |
@@ -1280,15 +1219,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-45 45 |         RES = 1
-46 46 |     ELSE
-47 47 |         RES = N * FACT(N-1)
-48    |-    END IF
-   48 |+    end IF
-49 49 | END FUNCTION FACT
-50 50 | 
-51 51 | END MODULE MY_MODULE
+45 |         RES = 1
+46 |     ELSE
+47 |         RES = N * FACT(N-1)
+   -     END IF
+48 +     end IF
+49 | END FUNCTION FACT
+50 |
+51 | END MODULE MY_MODULE
 
 ./resources/test/fixtures/style/S233.f90:48:9: S233 [*] Keyword 'IF' should be 'if'
    |
@@ -1300,15 +1238,14 @@ expression: diagnostics
    |
    = help: Change to 'if'
 
-ℹ Safe fix
-45 45 |         RES = 1
-46 46 |     ELSE
-47 47 |         RES = N * FACT(N-1)
-48    |-    END IF
-   48 |+    END if
-49 49 | END FUNCTION FACT
-50 50 | 
-51 51 | END MODULE MY_MODULE
+45 |         RES = 1
+46 |     ELSE
+47 |         RES = N * FACT(N-1)
+   -     END IF
+48 +     END if
+49 | END FUNCTION FACT
+50 |
+51 | END MODULE MY_MODULE
 
 ./resources/test/fixtures/style/S233.f90:49:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -1321,15 +1258,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-46 46 |     ELSE
-47 47 |         RES = N * FACT(N-1)
-48 48 |     END IF
-49    |-END FUNCTION FACT
-   49 |+end FUNCTION FACT
-50 50 | 
-51 51 | END MODULE MY_MODULE
-52 52 | 
+46 |     ELSE
+47 |         RES = N * FACT(N-1)
+48 |     END IF
+   - END FUNCTION FACT
+49 + end FUNCTION FACT
+50 |
+51 | END MODULE MY_MODULE
+52 |
 
 ./resources/test/fixtures/style/S233.f90:49:5: S233 [*] Keyword 'FUNCTION' should be 'function'
    |
@@ -1342,15 +1278,14 @@ expression: diagnostics
    |
    = help: Change to 'function'
 
-ℹ Safe fix
-46 46 |     ELSE
-47 47 |         RES = N * FACT(N-1)
-48 48 |     END IF
-49    |-END FUNCTION FACT
-   49 |+END function FACT
-50 50 | 
-51 51 | END MODULE MY_MODULE
-52 52 | 
+46 |     ELSE
+47 |         RES = N * FACT(N-1)
+48 |     END IF
+   - END FUNCTION FACT
+49 + END function FACT
+50 |
+51 | END MODULE MY_MODULE
+52 |
 
 ./resources/test/fixtures/style/S233.f90:51:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -1361,15 +1296,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-48 48 |     END IF
-49 49 | END FUNCTION FACT
-50 50 | 
-51    |-END MODULE MY_MODULE
-   51 |+end MODULE MY_MODULE
-52 52 | 
-53 53 | 
-54 54 | PROGRAM KEYWORD_ZOO
+48 |     END IF
+49 | END FUNCTION FACT
+50 |
+   - END MODULE MY_MODULE
+51 + end MODULE MY_MODULE
+52 |
+53 |
+54 | PROGRAM KEYWORD_ZOO
 
 ./resources/test/fixtures/style/S233.f90:51:5: S233 [*] Keyword 'MODULE' should be 'module'
    |
@@ -1380,15 +1314,14 @@ expression: diagnostics
    |
    = help: Change to 'module'
 
-ℹ Safe fix
-48 48 |     END IF
-49 49 | END FUNCTION FACT
-50 50 | 
-51    |-END MODULE MY_MODULE
-   51 |+END module MY_MODULE
-52 52 | 
-53 53 | 
-54 54 | PROGRAM KEYWORD_ZOO
+48 |     END IF
+49 | END FUNCTION FACT
+50 |
+   - END MODULE MY_MODULE
+51 + END module MY_MODULE
+52 |
+53 |
+54 | PROGRAM KEYWORD_ZOO
 
 ./resources/test/fixtures/style/S233.f90:54:1: S233 [*] Keyword 'PROGRAM' should be 'program'
    |
@@ -1399,15 +1332,14 @@ expression: diagnostics
    |
    = help: Change to 'program'
 
-ℹ Safe fix
-51 51 | END MODULE MY_MODULE
-52 52 | 
-53 53 | 
-54    |-PROGRAM KEYWORD_ZOO
-   54 |+program KEYWORD_ZOO
-55 55 | USE MY_MODULE, ONLY: FACT
-56 56 | USE, INTRINSIC :: ISO_C_BINDING
-57 57 | IMPLICIT NONE
+51 | END MODULE MY_MODULE
+52 |
+53 |
+   - PROGRAM KEYWORD_ZOO
+54 + program KEYWORD_ZOO
+55 | USE MY_MODULE, ONLY: FACT
+56 | USE, INTRINSIC :: ISO_C_BINDING
+57 | IMPLICIT NONE
 
 ./resources/test/fixtures/style/S233.f90:55:1: S233 [*] Keyword 'USE' should be 'use'
    |
@@ -1419,15 +1351,14 @@ expression: diagnostics
    |
    = help: Change to 'use'
 
-ℹ Safe fix
-52 52 | 
-53 53 | 
-54 54 | PROGRAM KEYWORD_ZOO
-55    |-USE MY_MODULE, ONLY: FACT
-   55 |+use MY_MODULE, ONLY: FACT
-56 56 | USE, INTRINSIC :: ISO_C_BINDING
-57 57 | IMPLICIT NONE
-58 58 | 
+52 |
+53 |
+54 | PROGRAM KEYWORD_ZOO
+   - USE MY_MODULE, ONLY: FACT
+55 + use MY_MODULE, ONLY: FACT
+56 | USE, INTRINSIC :: ISO_C_BINDING
+57 | IMPLICIT NONE
+58 |
 
 ./resources/test/fixtures/style/S233.f90:55:16: S233 [*] Keyword 'ONLY' should be 'only'
    |
@@ -1439,15 +1370,14 @@ expression: diagnostics
    |
    = help: Change to 'only'
 
-ℹ Safe fix
-52 52 | 
-53 53 | 
-54 54 | PROGRAM KEYWORD_ZOO
-55    |-USE MY_MODULE, ONLY: FACT
-   55 |+USE MY_MODULE, only: FACT
-56 56 | USE, INTRINSIC :: ISO_C_BINDING
-57 57 | IMPLICIT NONE
-58 58 | 
+52 |
+53 |
+54 | PROGRAM KEYWORD_ZOO
+   - USE MY_MODULE, ONLY: FACT
+55 + USE MY_MODULE, only: FACT
+56 | USE, INTRINSIC :: ISO_C_BINDING
+57 | IMPLICIT NONE
+58 |
 
 ./resources/test/fixtures/style/S233.f90:56:1: S233 [*] Keyword 'USE' should be 'use'
    |
@@ -1459,15 +1389,14 @@ expression: diagnostics
    |
    = help: Change to 'use'
 
-ℹ Safe fix
-53 53 | 
-54 54 | PROGRAM KEYWORD_ZOO
-55 55 | USE MY_MODULE, ONLY: FACT
-56    |-USE, INTRINSIC :: ISO_C_BINDING
-   56 |+use, INTRINSIC :: ISO_C_BINDING
-57 57 | IMPLICIT NONE
-58 58 | 
-59 59 | INTEGER, PARAMETER :: N = 5
+53 |
+54 | PROGRAM KEYWORD_ZOO
+55 | USE MY_MODULE, ONLY: FACT
+   - USE, INTRINSIC :: ISO_C_BINDING
+56 + use, INTRINSIC :: ISO_C_BINDING
+57 | IMPLICIT NONE
+58 |
+59 | INTEGER, PARAMETER :: N = 5
 
 ./resources/test/fixtures/style/S233.f90:56:6: S233 [*] Keyword 'INTRINSIC' should be 'intrinsic'
    |
@@ -1479,15 +1408,14 @@ expression: diagnostics
    |
    = help: Change to 'intrinsic'
 
-ℹ Safe fix
-53 53 | 
-54 54 | PROGRAM KEYWORD_ZOO
-55 55 | USE MY_MODULE, ONLY: FACT
-56    |-USE, INTRINSIC :: ISO_C_BINDING
-   56 |+USE, intrinsic :: ISO_C_BINDING
-57 57 | IMPLICIT NONE
-58 58 | 
-59 59 | INTEGER, PARAMETER :: N = 5
+53 |
+54 | PROGRAM KEYWORD_ZOO
+55 | USE MY_MODULE, ONLY: FACT
+   - USE, INTRINSIC :: ISO_C_BINDING
+56 + USE, intrinsic :: ISO_C_BINDING
+57 | IMPLICIT NONE
+58 |
+59 | INTEGER, PARAMETER :: N = 5
 
 ./resources/test/fixtures/style/S233.f90:57:1: S233 [*] Keyword 'IMPLICIT' should be 'implicit'
    |
@@ -1500,15 +1428,14 @@ expression: diagnostics
    |
    = help: Change to 'implicit'
 
-ℹ Safe fix
-54 54 | PROGRAM KEYWORD_ZOO
-55 55 | USE MY_MODULE, ONLY: FACT
-56 56 | USE, INTRINSIC :: ISO_C_BINDING
-57    |-IMPLICIT NONE
-   57 |+implicit NONE
-58 58 | 
-59 59 | INTEGER, PARAMETER :: N = 5
-60 60 | INTEGER :: I, J
+54 | PROGRAM KEYWORD_ZOO
+55 | USE MY_MODULE, ONLY: FACT
+56 | USE, INTRINSIC :: ISO_C_BINDING
+   - IMPLICIT NONE
+57 + implicit NONE
+58 |
+59 | INTEGER, PARAMETER :: N = 5
+60 | INTEGER :: I, J
 
 ./resources/test/fixtures/style/S233.f90:57:10: S233 [*] Keyword 'NONE' should be 'none'
    |
@@ -1521,15 +1448,14 @@ expression: diagnostics
    |
    = help: Change to 'none'
 
-ℹ Safe fix
-54 54 | PROGRAM KEYWORD_ZOO
-55 55 | USE MY_MODULE, ONLY: FACT
-56 56 | USE, INTRINSIC :: ISO_C_BINDING
-57    |-IMPLICIT NONE
-   57 |+IMPLICIT none
-58 58 | 
-59 59 | INTEGER, PARAMETER :: N = 5
-60 60 | INTEGER :: I, J
+54 | PROGRAM KEYWORD_ZOO
+55 | USE MY_MODULE, ONLY: FACT
+56 | USE, INTRINSIC :: ISO_C_BINDING
+   - IMPLICIT NONE
+57 + IMPLICIT none
+58 |
+59 | INTEGER, PARAMETER :: N = 5
+60 | INTEGER :: I, J
 
 ./resources/test/fixtures/style/S233.f90:59:1: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -1542,15 +1468,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-56 56 | USE, INTRINSIC :: ISO_C_BINDING
-57 57 | IMPLICIT NONE
-58 58 | 
-59    |-INTEGER, PARAMETER :: N = 5
-   59 |+integer, PARAMETER :: N = 5
-60 60 | INTEGER :: I, J
-61 61 | REAL, ALLOCATABLE :: ARR(:)
-62 62 | LOGICAL :: FLAG
+56 | USE, INTRINSIC :: ISO_C_BINDING
+57 | IMPLICIT NONE
+58 |
+   - INTEGER, PARAMETER :: N = 5
+59 + integer, PARAMETER :: N = 5
+60 | INTEGER :: I, J
+61 | REAL, ALLOCATABLE :: ARR(:)
+62 | LOGICAL :: FLAG
 
 ./resources/test/fixtures/style/S233.f90:59:10: S233 [*] Keyword 'PARAMETER' should be 'parameter'
    |
@@ -1563,15 +1488,14 @@ expression: diagnostics
    |
    = help: Change to 'parameter'
 
-ℹ Safe fix
-56 56 | USE, INTRINSIC :: ISO_C_BINDING
-57 57 | IMPLICIT NONE
-58 58 | 
-59    |-INTEGER, PARAMETER :: N = 5
-   59 |+INTEGER, parameter :: N = 5
-60 60 | INTEGER :: I, J
-61 61 | REAL, ALLOCATABLE :: ARR(:)
-62 62 | LOGICAL :: FLAG
+56 | USE, INTRINSIC :: ISO_C_BINDING
+57 | IMPLICIT NONE
+58 |
+   - INTEGER, PARAMETER :: N = 5
+59 + INTEGER, parameter :: N = 5
+60 | INTEGER :: I, J
+61 | REAL, ALLOCATABLE :: ARR(:)
+62 | LOGICAL :: FLAG
 
 ./resources/test/fixtures/style/S233.f90:60:1: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -1583,15 +1507,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-57 57 | IMPLICIT NONE
-58 58 | 
-59 59 | INTEGER, PARAMETER :: N = 5
-60    |-INTEGER :: I, J
-   60 |+integer :: I, J
-61 61 | REAL, ALLOCATABLE :: ARR(:)
-62 62 | LOGICAL :: FLAG
-63 63 | CHARACTER(LEN=10) :: STR
+57 | IMPLICIT NONE
+58 |
+59 | INTEGER, PARAMETER :: N = 5
+   - INTEGER :: I, J
+60 + integer :: I, J
+61 | REAL, ALLOCATABLE :: ARR(:)
+62 | LOGICAL :: FLAG
+63 | CHARACTER(LEN=10) :: STR
 
 ./resources/test/fixtures/style/S233.f90:61:1: S233 [*] Keyword 'REAL' should be 'real'
    |
@@ -1604,15 +1527,14 @@ expression: diagnostics
    |
    = help: Change to 'real'
 
-ℹ Safe fix
-58 58 | 
-59 59 | INTEGER, PARAMETER :: N = 5
-60 60 | INTEGER :: I, J
-61    |-REAL, ALLOCATABLE :: ARR(:)
-   61 |+real, ALLOCATABLE :: ARR(:)
-62 62 | LOGICAL :: FLAG
-63 63 | CHARACTER(LEN=10) :: STR
-64 64 | COMPLEX :: CMPLX
+58 |
+59 | INTEGER, PARAMETER :: N = 5
+60 | INTEGER :: I, J
+   - REAL, ALLOCATABLE :: ARR(:)
+61 + real, ALLOCATABLE :: ARR(:)
+62 | LOGICAL :: FLAG
+63 | CHARACTER(LEN=10) :: STR
+64 | COMPLEX :: CMPLX
 
 ./resources/test/fixtures/style/S233.f90:61:7: S233 [*] Keyword 'ALLOCATABLE' should be 'allocatable'
    |
@@ -1625,15 +1547,14 @@ expression: diagnostics
    |
    = help: Change to 'allocatable'
 
-ℹ Safe fix
-58 58 | 
-59 59 | INTEGER, PARAMETER :: N = 5
-60 60 | INTEGER :: I, J
-61    |-REAL, ALLOCATABLE :: ARR(:)
-   61 |+REAL, allocatable :: ARR(:)
-62 62 | LOGICAL :: FLAG
-63 63 | CHARACTER(LEN=10) :: STR
-64 64 | COMPLEX :: CMPLX
+58 |
+59 | INTEGER, PARAMETER :: N = 5
+60 | INTEGER :: I, J
+   - REAL, ALLOCATABLE :: ARR(:)
+61 + REAL, allocatable :: ARR(:)
+62 | LOGICAL :: FLAG
+63 | CHARACTER(LEN=10) :: STR
+64 | COMPLEX :: CMPLX
 
 ./resources/test/fixtures/style/S233.f90:62:1: S233 [*] Keyword 'LOGICAL' should be 'logical'
    |
@@ -1646,15 +1567,14 @@ expression: diagnostics
    |
    = help: Change to 'logical'
 
-ℹ Safe fix
-59 59 | INTEGER, PARAMETER :: N = 5
-60 60 | INTEGER :: I, J
-61 61 | REAL, ALLOCATABLE :: ARR(:)
-62    |-LOGICAL :: FLAG
-   62 |+logical :: FLAG
-63 63 | CHARACTER(LEN=10) :: STR
-64 64 | COMPLEX :: CMPLX
-65 65 | 
+59 | INTEGER, PARAMETER :: N = 5
+60 | INTEGER :: I, J
+61 | REAL, ALLOCATABLE :: ARR(:)
+   - LOGICAL :: FLAG
+62 + logical :: FLAG
+63 | CHARACTER(LEN=10) :: STR
+64 | COMPLEX :: CMPLX
+65 |
 
 ./resources/test/fixtures/style/S233.f90:63:1: S233 [*] Keyword 'CHARACTER' should be 'character'
    |
@@ -1666,15 +1586,14 @@ expression: diagnostics
    |
    = help: Change to 'character'
 
-ℹ Safe fix
-60 60 | INTEGER :: I, J
-61 61 | REAL, ALLOCATABLE :: ARR(:)
-62 62 | LOGICAL :: FLAG
-63    |-CHARACTER(LEN=10) :: STR
-   63 |+character(LEN=10) :: STR
-64 64 | COMPLEX :: CMPLX
-65 65 | 
-66 66 | INTEGER :: ENDIF, IF, ELSEIF
+60 | INTEGER :: I, J
+61 | REAL, ALLOCATABLE :: ARR(:)
+62 | LOGICAL :: FLAG
+   - CHARACTER(LEN=10) :: STR
+63 + character(LEN=10) :: STR
+64 | COMPLEX :: CMPLX
+65 |
+66 | INTEGER :: ENDIF, IF, ELSEIF
 
 ./resources/test/fixtures/style/S233.f90:64:1: S233 [*] Keyword 'COMPLEX' should be 'complex'
    |
@@ -1687,15 +1606,14 @@ expression: diagnostics
    |
    = help: Change to 'complex'
 
-ℹ Safe fix
-61 61 | REAL, ALLOCATABLE :: ARR(:)
-62 62 | LOGICAL :: FLAG
-63 63 | CHARACTER(LEN=10) :: STR
-64    |-COMPLEX :: CMPLX
-   64 |+complex :: CMPLX
-65 65 | 
-66 66 | INTEGER :: ENDIF, IF, ELSEIF
-67 67 | INTEGER, DIMENSION(2) :: FUNCTION
+61 | REAL, ALLOCATABLE :: ARR(:)
+62 | LOGICAL :: FLAG
+63 | CHARACTER(LEN=10) :: STR
+   - COMPLEX :: CMPLX
+64 + complex :: CMPLX
+65 |
+66 | INTEGER :: ENDIF, IF, ELSEIF
+67 | INTEGER, DIMENSION(2) :: FUNCTION
 
 ./resources/test/fixtures/style/S233.f90:66:1: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -1708,15 +1626,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-63 63 | CHARACTER(LEN=10) :: STR
-64 64 | COMPLEX :: CMPLX
-65 65 | 
-66    |-INTEGER :: ENDIF, IF, ELSEIF
-   66 |+integer :: ENDIF, IF, ELSEIF
-67 67 | INTEGER, DIMENSION(2) :: FUNCTION
-68 68 | ENDIF = 3; IF = 2
-69 69 | 
+63 | CHARACTER(LEN=10) :: STR
+64 | COMPLEX :: CMPLX
+65 |
+   - INTEGER :: ENDIF, IF, ELSEIF
+66 + integer :: ENDIF, IF, ELSEIF
+67 | INTEGER, DIMENSION(2) :: FUNCTION
+68 | ENDIF = 3; IF = 2
+69 |
 
 ./resources/test/fixtures/style/S233.f90:67:1: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -1727,15 +1644,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-64 64 | COMPLEX :: CMPLX
-65 65 | 
-66 66 | INTEGER :: ENDIF, IF, ELSEIF
-67    |-INTEGER, DIMENSION(2) :: FUNCTION
-   67 |+integer, DIMENSION(2) :: FUNCTION
-68 68 | ENDIF = 3; IF = 2
-69 69 | 
-70 70 | TYPE(TEST_TYPE) :: OBJ
+64 | COMPLEX :: CMPLX
+65 |
+66 | INTEGER :: ENDIF, IF, ELSEIF
+   - INTEGER, DIMENSION(2) :: FUNCTION
+67 + integer, DIMENSION(2) :: FUNCTION
+68 | ENDIF = 3; IF = 2
+69 |
+70 | TYPE(TEST_TYPE) :: OBJ
 
 ./resources/test/fixtures/style/S233.f90:67:10: S233 [*] Keyword 'DIMENSION' should be 'dimension'
    |
@@ -1746,15 +1662,14 @@ expression: diagnostics
    |
    = help: Change to 'dimension'
 
-ℹ Safe fix
-64 64 | COMPLEX :: CMPLX
-65 65 | 
-66 66 | INTEGER :: ENDIF, IF, ELSEIF
-67    |-INTEGER, DIMENSION(2) :: FUNCTION
-   67 |+INTEGER, dimension(2) :: FUNCTION
-68 68 | ENDIF = 3; IF = 2
-69 69 | 
-70 70 | TYPE(TEST_TYPE) :: OBJ
+64 | COMPLEX :: CMPLX
+65 |
+66 | INTEGER :: ENDIF, IF, ELSEIF
+   - INTEGER, DIMENSION(2) :: FUNCTION
+67 + INTEGER, dimension(2) :: FUNCTION
+68 | ENDIF = 3; IF = 2
+69 |
+70 | TYPE(TEST_TYPE) :: OBJ
 
 ./resources/test/fixtures/style/S233.f90:70:1: S233 [*] Keyword 'TYPE' should be 'type'
    |
@@ -1766,15 +1681,14 @@ expression: diagnostics
    |
    = help: Change to 'type'
 
-ℹ Safe fix
-67 67 | INTEGER, DIMENSION(2) :: FUNCTION
-68 68 | ENDIF = 3; IF = 2
-69 69 | 
-70    |-TYPE(TEST_TYPE) :: OBJ
-   70 |+type(TEST_TYPE) :: OBJ
-71 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-72 72 | 
-73 73 | ENUM, BIND(C)
+67 | INTEGER, DIMENSION(2) :: FUNCTION
+68 | ENDIF = 3; IF = 2
+69 |
+   - TYPE(TEST_TYPE) :: OBJ
+70 + type(TEST_TYPE) :: OBJ
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 |
+73 | ENUM, BIND(C)
 
 ./resources/test/fixtures/style/S233.f90:71:1: S233 [*] Keyword 'CLASS' should be 'class'
    |
@@ -1786,15 +1700,14 @@ expression: diagnostics
    |
    = help: Change to 'class'
 
-ℹ Safe fix
-68 68 | ENDIF = 3; IF = 2
-69 69 | 
-70 70 | TYPE(TEST_TYPE) :: OBJ
-71    |-CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-   71 |+class(BASE_TYPE), ALLOCATABLE :: POLY
-72 72 | 
-73 73 | ENUM, BIND(C)
-74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+68 | ENDIF = 3; IF = 2
+69 |
+70 | TYPE(TEST_TYPE) :: OBJ
+   - CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+71 + class(BASE_TYPE), ALLOCATABLE :: POLY
+72 |
+73 | ENUM, BIND(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 
 ./resources/test/fixtures/style/S233.f90:71:19: S233 [*] Keyword 'ALLOCATABLE' should be 'allocatable'
    |
@@ -1806,15 +1719,14 @@ expression: diagnostics
    |
    = help: Change to 'allocatable'
 
-ℹ Safe fix
-68 68 | ENDIF = 3; IF = 2
-69 69 | 
-70 70 | TYPE(TEST_TYPE) :: OBJ
-71    |-CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-   71 |+CLASS(BASE_TYPE), allocatable :: POLY
-72 72 | 
-73 73 | ENUM, BIND(C)
-74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+68 | ENDIF = 3; IF = 2
+69 |
+70 | TYPE(TEST_TYPE) :: OBJ
+   - CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+71 + CLASS(BASE_TYPE), allocatable :: POLY
+72 |
+73 | ENUM, BIND(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 
 ./resources/test/fixtures/style/S233.f90:73:1: S233 [*] Keyword 'ENUM' should be 'enum'
    |
@@ -1827,15 +1739,14 @@ expression: diagnostics
    |
    = help: Change to 'enum'
 
-ℹ Safe fix
-70 70 | TYPE(TEST_TYPE) :: OBJ
-71 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-72 72 | 
-73    |-ENUM, BIND(C)
-   73 |+enum, BIND(C)
-74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-75 75 | END ENUM
-76 76 | 
+70 | TYPE(TEST_TYPE) :: OBJ
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 |
+   - ENUM, BIND(C)
+73 + enum, BIND(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 | END ENUM
+76 |
 
 ./resources/test/fixtures/style/S233.f90:73:7: S233 [*] Keyword 'BIND' should be 'bind'
    |
@@ -1848,15 +1759,14 @@ expression: diagnostics
    |
    = help: Change to 'bind'
 
-ℹ Safe fix
-70 70 | TYPE(TEST_TYPE) :: OBJ
-71 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-72 72 | 
-73    |-ENUM, BIND(C)
-   73 |+ENUM, bind(C)
-74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-75 75 | END ENUM
-76 76 | 
+70 | TYPE(TEST_TYPE) :: OBJ
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 |
+   - ENUM, BIND(C)
+73 + ENUM, bind(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 | END ENUM
+76 |
 
 ./resources/test/fixtures/style/S233.f90:74:5: S233 [*] Keyword 'ENUMERATOR' should be 'enumerator'
    |
@@ -1867,15 +1777,14 @@ expression: diagnostics
    |
    = help: Change to 'enumerator'
 
-ℹ Safe fix
-71 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-72 72 | 
-73 73 | ENUM, BIND(C)
-74    |-    ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-   74 |+    enumerator :: RED = 1, GREEN = 2, BLUE = 3
-75 75 | END ENUM
-76 76 | 
-77 77 | IF (ENDIF == 2) then
+71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
+72 |
+73 | ENUM, BIND(C)
+   -     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+74 +     enumerator :: RED = 1, GREEN = 2, BLUE = 3
+75 | END ENUM
+76 |
+77 | IF (ENDIF == 2) then
 
 ./resources/test/fixtures/style/S233.f90:75:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -1888,15 +1797,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-72 72 | 
-73 73 | ENUM, BIND(C)
-74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-75    |-END ENUM
-   75 |+end ENUM
-76 76 | 
-77 77 | IF (ENDIF == 2) then
-78 78 |     ENDIF = 5
+72 |
+73 | ENUM, BIND(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+   - END ENUM
+75 + end ENUM
+76 |
+77 | IF (ENDIF == 2) then
+78 |     ENDIF = 5
 
 ./resources/test/fixtures/style/S233.f90:75:5: S233 [*] Keyword 'ENUM' should be 'enum'
    |
@@ -1909,15 +1817,14 @@ expression: diagnostics
    |
    = help: Change to 'enum'
 
-ℹ Safe fix
-72 72 | 
-73 73 | ENUM, BIND(C)
-74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-75    |-END ENUM
-   75 |+END enum
-76 76 | 
-77 77 | IF (ENDIF == 2) then
-78 78 |     ENDIF = 5
+72 |
+73 | ENUM, BIND(C)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+   - END ENUM
+75 + END enum
+76 |
+77 | IF (ENDIF == 2) then
+78 |     ENDIF = 5
 
 ./resources/test/fixtures/style/S233.f90:77:1: S233 [*] Keyword 'IF' should be 'if'
    |
@@ -1930,15 +1837,14 @@ expression: diagnostics
    |
    = help: Change to 'if'
 
-ℹ Safe fix
-74 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-75 75 | END ENUM
-76 76 | 
-77    |-IF (ENDIF == 2) then
-   77 |+if (ENDIF == 2) then
-78 78 |     ENDIF = 5
-79 79 |     ELSEIF = IF + 4*(ENDIF + &
-80 80 |                     2**10)
+74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
+75 | END ENUM
+76 |
+   - IF (ENDIF == 2) then
+77 + if (ENDIF == 2) then
+78 |     ENDIF = 5
+79 |     ELSEIF = IF + 4*(ENDIF + &
+80 |                     2**10)
 
 ./resources/test/fixtures/style/S233.f90:81:5: S233 [*] Keyword 'ELSEIF' should be 'elseif'
    |
@@ -1951,15 +1857,14 @@ expression: diagnostics
    |
    = help: Change to 'elseif'
 
-ℹ Safe fix
-78 78 |     ENDIF = 5
-79 79 |     ELSEIF = IF + 4*(ENDIF + &
-80 80 |                     2**10)
-81    |-    ELSEIF (ENDIF == 3) THEN
-   81 |+    elseif (ENDIF == 3) THEN
-82 82 |     FUNCTION(IF) = ENDIF/ELSEIF
-83 83 |     PRINT *, ENDIF
-84 84 | ENDIF
+78 |     ENDIF = 5
+79 |     ELSEIF = IF + 4*(ENDIF + &
+80 |                     2**10)
+   -     ELSEIF (ENDIF == 3) THEN
+81 +     elseif (ENDIF == 3) THEN
+82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 |     PRINT *, ENDIF
+84 | ENDIF
 
 ./resources/test/fixtures/style/S233.f90:81:25: S233 [*] Keyword 'THEN' should be 'then'
    |
@@ -1972,15 +1877,14 @@ expression: diagnostics
    |
    = help: Change to 'then'
 
-ℹ Safe fix
-78 78 |     ENDIF = 5
-79 79 |     ELSEIF = IF + 4*(ENDIF + &
-80 80 |                     2**10)
-81    |-    ELSEIF (ENDIF == 3) THEN
-   81 |+    ELSEIF (ENDIF == 3) then
-82 82 |     FUNCTION(IF) = ENDIF/ELSEIF
-83 83 |     PRINT *, ENDIF
-84 84 | ENDIF
+78 |     ENDIF = 5
+79 |     ELSEIF = IF + 4*(ENDIF + &
+80 |                     2**10)
+   -     ELSEIF (ENDIF == 3) THEN
+81 +     ELSEIF (ENDIF == 3) then
+82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 |     PRINT *, ENDIF
+84 | ENDIF
 
 ./resources/test/fixtures/style/S233.f90:83:5: S233 [*] Keyword 'PRINT' should be 'print'
    |
@@ -1992,15 +1896,14 @@ expression: diagnostics
    |
    = help: Change to 'print'
 
-ℹ Safe fix
-80 80 |                     2**10)
-81 81 |     ELSEIF (ENDIF == 3) THEN
-82 82 |     FUNCTION(IF) = ENDIF/ELSEIF
-83    |-    PRINT *, ENDIF
-   83 |+    print *, ENDIF
-84 84 | ENDIF
-85 85 | 
-86 86 | ALLOCATE(ARR(N))
+80 |                     2**10)
+81 |     ELSEIF (ENDIF == 3) THEN
+82 |     FUNCTION(IF) = ENDIF/ELSEIF
+   -     PRINT *, ENDIF
+83 +     print *, ENDIF
+84 | ENDIF
+85 |
+86 | ALLOCATE(ARR(N))
 
 ./resources/test/fixtures/style/S233.f90:84:1: S233 [*] Keyword 'ENDIF' should be 'endif'
    |
@@ -2013,15 +1916,14 @@ expression: diagnostics
    |
    = help: Change to 'endif'
 
-ℹ Safe fix
-81 81 |     ELSEIF (ENDIF == 3) THEN
-82 82 |     FUNCTION(IF) = ENDIF/ELSEIF
-83 83 |     PRINT *, ENDIF
-84    |-ENDIF
-   84 |+endif
-85 85 | 
-86 86 | ALLOCATE(ARR(N))
-87 87 | ARR = 0.0
+81 |     ELSEIF (ENDIF == 3) THEN
+82 |     FUNCTION(IF) = ENDIF/ELSEIF
+83 |     PRINT *, ENDIF
+   - ENDIF
+84 + endif
+85 |
+86 | ALLOCATE(ARR(N))
+87 | ARR = 0.0
 
 ./resources/test/fixtures/style/S233.f90:86:1: S233 [*] Keyword 'ALLOCATE' should be 'allocate'
    |
@@ -2033,15 +1935,14 @@ expression: diagnostics
    |
    = help: Change to 'allocate'
 
-ℹ Safe fix
-83 83 |     PRINT *, ENDIF
-84 84 | ENDIF
-85 85 | 
-86    |-ALLOCATE(ARR(N))
-   86 |+allocate(ARR(N))
-87 87 | ARR = 0.0
-88 88 | 
-89 89 | ALLOCATE(TEST_TYPE :: POLY)
+83 |     PRINT *, ENDIF
+84 | ENDIF
+85 |
+   - ALLOCATE(ARR(N))
+86 + allocate(ARR(N))
+87 | ARR = 0.0
+88 |
+89 | ALLOCATE(TEST_TYPE :: POLY)
 
 ./resources/test/fixtures/style/S233.f90:89:1: S233 [*] Keyword 'ALLOCATE' should be 'allocate'
    |
@@ -2054,15 +1955,14 @@ expression: diagnostics
    |
    = help: Change to 'allocate'
 
-ℹ Safe fix
-86 86 | ALLOCATE(ARR(N))
-87 87 | ARR = 0.0
-88 88 | 
-89    |-ALLOCATE(TEST_TYPE :: POLY)
-   89 |+allocate(TEST_TYPE :: POLY)
-90 90 | 
-91 91 | ASSOCIATE (TMP => ARR)
-92 92 |     TMP = 1.0
+86 | ALLOCATE(ARR(N))
+87 | ARR = 0.0
+88 |
+   - ALLOCATE(TEST_TYPE :: POLY)
+89 + allocate(TEST_TYPE :: POLY)
+90 |
+91 | ASSOCIATE (TMP => ARR)
+92 |     TMP = 1.0
 
 ./resources/test/fixtures/style/S233.f90:91:1: S233 [*] Keyword 'ASSOCIATE' should be 'associate'
    |
@@ -2075,15 +1975,14 @@ expression: diagnostics
    |
    = help: Change to 'associate'
 
-ℹ Safe fix
-88 88 | 
-89 89 | ALLOCATE(TEST_TYPE :: POLY)
-90 90 | 
-91    |-ASSOCIATE (TMP => ARR)
-   91 |+associate (TMP => ARR)
-92 92 |     TMP = 1.0
-93 93 | END ASSOCIATE
-94 94 | 
+88 |
+89 | ALLOCATE(TEST_TYPE :: POLY)
+90 |
+   - ASSOCIATE (TMP => ARR)
+91 + associate (TMP => ARR)
+92 |     TMP = 1.0
+93 | END ASSOCIATE
+94 |
 
 ./resources/test/fixtures/style/S233.f90:93:1: S233 [*] Keyword 'END' should be 'end'
    |
@@ -2096,15 +1995,14 @@ expression: diagnostics
    |
    = help: Change to 'end'
 
-ℹ Safe fix
-90 90 | 
-91 91 | ASSOCIATE (TMP => ARR)
-92 92 |     TMP = 1.0
-93    |-END ASSOCIATE
-   93 |+end ASSOCIATE
-94 94 | 
-95 95 | BLOCK
-96 96 |     INTEGER :: LOCAL
+90 |
+91 | ASSOCIATE (TMP => ARR)
+92 |     TMP = 1.0
+   - END ASSOCIATE
+93 + end ASSOCIATE
+94 |
+95 | BLOCK
+96 |     INTEGER :: LOCAL
 
 ./resources/test/fixtures/style/S233.f90:93:5: S233 [*] Keyword 'ASSOCIATE' should be 'associate'
    |
@@ -2117,15 +2015,14 @@ expression: diagnostics
    |
    = help: Change to 'associate'
 
-ℹ Safe fix
-90 90 | 
-91 91 | ASSOCIATE (TMP => ARR)
-92 92 |     TMP = 1.0
-93    |-END ASSOCIATE
-   93 |+END associate
-94 94 | 
-95 95 | BLOCK
-96 96 |     INTEGER :: LOCAL
+90 |
+91 | ASSOCIATE (TMP => ARR)
+92 |     TMP = 1.0
+   - END ASSOCIATE
+93 + END associate
+94 |
+95 | BLOCK
+96 |     INTEGER :: LOCAL
 
 ./resources/test/fixtures/style/S233.f90:95:1: S233 [*] Keyword 'BLOCK' should be 'block'
    |
@@ -2138,15 +2035,14 @@ expression: diagnostics
    |
    = help: Change to 'block'
 
-ℹ Safe fix
-92 92 |     TMP = 1.0
-93 93 | END ASSOCIATE
-94 94 | 
-95    |-BLOCK
-   95 |+block
-96 96 |     INTEGER :: LOCAL
-97 97 |     LOCAL = 42
-98 98 | END BLOCK
+92 |     TMP = 1.0
+93 | END ASSOCIATE
+94 |
+   - BLOCK
+95 + block
+96 |     INTEGER :: LOCAL
+97 |     LOCAL = 42
+98 | END BLOCK
 
 ./resources/test/fixtures/style/S233.f90:96:5: S233 [*] Keyword 'INTEGER' should be 'integer'
    |
@@ -2158,15 +2054,14 @@ expression: diagnostics
    |
    = help: Change to 'integer'
 
-ℹ Safe fix
-93 93 | END ASSOCIATE
-94 94 | 
-95 95 | BLOCK
-96    |-    INTEGER :: LOCAL
-   96 |+    integer :: LOCAL
-97 97 |     LOCAL = 42
-98 98 | END BLOCK
-99 99 | 
+93 | END ASSOCIATE
+94 |
+95 | BLOCK
+   -     INTEGER :: LOCAL
+96 +     integer :: LOCAL
+97 |     LOCAL = 42
+98 | END BLOCK
+99 |
 
 ./resources/test/fixtures/style/S233.f90:98:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -2179,15 +2074,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-95 95 | BLOCK
-96 96 |     INTEGER :: LOCAL
-97 97 |     LOCAL = 42
-98    |-END BLOCK
-   98 |+end BLOCK
-99 99 | 
-100 100 | CRITICAL
-101 101 |     PRINT *, "CRITICAL SECTION"
+95  | BLOCK
+96  |     INTEGER :: LOCAL
+97  |     LOCAL = 42
+    - END BLOCK
+98  + end BLOCK
+99  |
+100 | CRITICAL
+101 |     PRINT *, "CRITICAL SECTION"
 
 ./resources/test/fixtures/style/S233.f90:98:5: S233 [*] Keyword 'BLOCK' should be 'block'
     |
@@ -2200,15 +2094,14 @@ expression: diagnostics
     |
     = help: Change to 'block'
 
-ℹ Safe fix
-95 95 | BLOCK
-96 96 |     INTEGER :: LOCAL
-97 97 |     LOCAL = 42
-98    |-END BLOCK
-   98 |+END block
-99 99 | 
-100 100 | CRITICAL
-101 101 |     PRINT *, "CRITICAL SECTION"
+95  | BLOCK
+96  |     INTEGER :: LOCAL
+97  |     LOCAL = 42
+    - END BLOCK
+98  + END block
+99  |
+100 | CRITICAL
+101 |     PRINT *, "CRITICAL SECTION"
 
 ./resources/test/fixtures/style/S233.f90:100:1: S233 [*] Keyword 'CRITICAL' should be 'critical'
     |
@@ -2221,15 +2114,14 @@ expression: diagnostics
     |
     = help: Change to 'critical'
 
-ℹ Safe fix
-97  97  |     LOCAL = 42
-98  98  | END BLOCK
-99  99  | 
-100     |-CRITICAL
-    100 |+critical
-101 101 |     PRINT *, "CRITICAL SECTION"
-102 102 | END CRITICAL
-103 103 | 
+97  |     LOCAL = 42
+98  | END BLOCK
+99  |
+    - CRITICAL
+100 + critical
+101 |     PRINT *, "CRITICAL SECTION"
+102 | END CRITICAL
+103 |
 
 ./resources/test/fixtures/style/S233.f90:101:5: S233 [*] Keyword 'PRINT' should be 'print'
     |
@@ -2240,15 +2132,14 @@ expression: diagnostics
     |
     = help: Change to 'print'
 
-ℹ Safe fix
-98  98  | END BLOCK
-99  99  | 
-100 100 | CRITICAL
-101     |-    PRINT *, "CRITICAL SECTION"
-    101 |+    print *, "CRITICAL SECTION"
-102 102 | END CRITICAL
-103 103 | 
-104 104 | DO CONCURRENT (I = 1:N)
+98  | END BLOCK
+99  |
+100 | CRITICAL
+    -     PRINT *, "CRITICAL SECTION"
+101 +     print *, "CRITICAL SECTION"
+102 | END CRITICAL
+103 |
+104 | DO CONCURRENT (I = 1:N)
 
 ./resources/test/fixtures/style/S233.f90:102:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -2261,15 +2152,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-99  99  | 
-100 100 | CRITICAL
-101 101 |     PRINT *, "CRITICAL SECTION"
-102     |-END CRITICAL
-    102 |+end CRITICAL
-103 103 | 
-104 104 | DO CONCURRENT (I = 1:N)
-105 105 |     ARR(I) = I
+99  |
+100 | CRITICAL
+101 |     PRINT *, "CRITICAL SECTION"
+    - END CRITICAL
+102 + end CRITICAL
+103 |
+104 | DO CONCURRENT (I = 1:N)
+105 |     ARR(I) = I
 
 ./resources/test/fixtures/style/S233.f90:102:5: S233 [*] Keyword 'CRITICAL' should be 'critical'
     |
@@ -2282,15 +2172,14 @@ expression: diagnostics
     |
     = help: Change to 'critical'
 
-ℹ Safe fix
-99  99  | 
-100 100 | CRITICAL
-101 101 |     PRINT *, "CRITICAL SECTION"
-102     |-END CRITICAL
-    102 |+END critical
-103 103 | 
-104 104 | DO CONCURRENT (I = 1:N)
-105 105 |     ARR(I) = I
+99  |
+100 | CRITICAL
+101 |     PRINT *, "CRITICAL SECTION"
+    - END CRITICAL
+102 + END critical
+103 |
+104 | DO CONCURRENT (I = 1:N)
+105 |     ARR(I) = I
 
 ./resources/test/fixtures/style/S233.f90:104:1: S233 [*] Keyword 'DO' should be 'do'
     |
@@ -2303,15 +2192,14 @@ expression: diagnostics
     |
     = help: Change to 'do'
 
-ℹ Safe fix
-101 101 |     PRINT *, "CRITICAL SECTION"
-102 102 | END CRITICAL
-103 103 | 
-104     |-DO CONCURRENT (I = 1:N)
-    104 |+do CONCURRENT (I = 1:N)
-105 105 |     ARR(I) = I
-106 106 | END DO
-107 107 | 
+101 |     PRINT *, "CRITICAL SECTION"
+102 | END CRITICAL
+103 |
+    - DO CONCURRENT (I = 1:N)
+104 + do CONCURRENT (I = 1:N)
+105 |     ARR(I) = I
+106 | END DO
+107 |
 
 ./resources/test/fixtures/style/S233.f90:104:4: S233 [*] Keyword 'CONCURRENT' should be 'concurrent'
     |
@@ -2324,15 +2212,14 @@ expression: diagnostics
     |
     = help: Change to 'concurrent'
 
-ℹ Safe fix
-101 101 |     PRINT *, "CRITICAL SECTION"
-102 102 | END CRITICAL
-103 103 | 
-104     |-DO CONCURRENT (I = 1:N)
-    104 |+DO concurrent (I = 1:N)
-105 105 |     ARR(I) = I
-106 106 | END DO
-107 107 | 
+101 |     PRINT *, "CRITICAL SECTION"
+102 | END CRITICAL
+103 |
+    - DO CONCURRENT (I = 1:N)
+104 + DO concurrent (I = 1:N)
+105 |     ARR(I) = I
+106 | END DO
+107 |
 
 ./resources/test/fixtures/style/S233.f90:106:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -2345,15 +2232,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-103 103 | 
-104 104 | DO CONCURRENT (I = 1:N)
-105 105 |     ARR(I) = I
-106     |-END DO
-    106 |+end DO
-107 107 | 
-108 108 | FORALL (J = 1:N)
-109 109 |     ARR(J) = ARR(J) * 2
+103 |
+104 | DO CONCURRENT (I = 1:N)
+105 |     ARR(I) = I
+    - END DO
+106 + end DO
+107 |
+108 | FORALL (J = 1:N)
+109 |     ARR(J) = ARR(J) * 2
 
 ./resources/test/fixtures/style/S233.f90:106:5: S233 [*] Keyword 'DO' should be 'do'
     |
@@ -2366,15 +2252,14 @@ expression: diagnostics
     |
     = help: Change to 'do'
 
-ℹ Safe fix
-103 103 | 
-104 104 | DO CONCURRENT (I = 1:N)
-105 105 |     ARR(I) = I
-106     |-END DO
-    106 |+END do
-107 107 | 
-108 108 | FORALL (J = 1:N)
-109 109 |     ARR(J) = ARR(J) * 2
+103 |
+104 | DO CONCURRENT (I = 1:N)
+105 |     ARR(I) = I
+    - END DO
+106 + END do
+107 |
+108 | FORALL (J = 1:N)
+109 |     ARR(J) = ARR(J) * 2
 
 ./resources/test/fixtures/style/S233.f90:108:1: S233 [*] Keyword 'FORALL' should be 'forall'
     |
@@ -2387,15 +2272,14 @@ expression: diagnostics
     |
     = help: Change to 'forall'
 
-ℹ Safe fix
-105 105 |     ARR(I) = I
-106 106 | END DO
-107 107 | 
-108     |-FORALL (J = 1:N)
-    108 |+forall (J = 1:N)
-109 109 |     ARR(J) = ARR(J) * 2
-110 110 | END FORALL
-111 111 | 
+105 |     ARR(I) = I
+106 | END DO
+107 |
+    - FORALL (J = 1:N)
+108 + forall (J = 1:N)
+109 |     ARR(J) = ARR(J) * 2
+110 | END FORALL
+111 |
 
 ./resources/test/fixtures/style/S233.f90:110:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -2408,15 +2292,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-107 107 | 
-108 108 | FORALL (J = 1:N)
-109 109 |     ARR(J) = ARR(J) * 2
-110     |-END FORALL
-    110 |+end FORALL
-111 111 | 
-112 112 | WHERE (ARR > 2.0)
-113 113 |     ARR = ARR + 1.0
+107 |
+108 | FORALL (J = 1:N)
+109 |     ARR(J) = ARR(J) * 2
+    - END FORALL
+110 + end FORALL
+111 |
+112 | WHERE (ARR > 2.0)
+113 |     ARR = ARR + 1.0
 
 ./resources/test/fixtures/style/S233.f90:110:5: S233 [*] Keyword 'FORALL' should be 'forall'
     |
@@ -2429,15 +2312,14 @@ expression: diagnostics
     |
     = help: Change to 'forall'
 
-ℹ Safe fix
-107 107 | 
-108 108 | FORALL (J = 1:N)
-109 109 |     ARR(J) = ARR(J) * 2
-110     |-END FORALL
-    110 |+END forall
-111 111 | 
-112 112 | WHERE (ARR > 2.0)
-113 113 |     ARR = ARR + 1.0
+107 |
+108 | FORALL (J = 1:N)
+109 |     ARR(J) = ARR(J) * 2
+    - END FORALL
+110 + END forall
+111 |
+112 | WHERE (ARR > 2.0)
+113 |     ARR = ARR + 1.0
 
 ./resources/test/fixtures/style/S233.f90:112:1: S233 [*] Keyword 'WHERE' should be 'where'
     |
@@ -2450,15 +2332,14 @@ expression: diagnostics
     |
     = help: Change to 'where'
 
-ℹ Safe fix
-109 109 |     ARR(J) = ARR(J) * 2
-110 110 | END FORALL
-111 111 | 
-112     |-WHERE (ARR > 2.0)
-    112 |+where (ARR > 2.0)
-113 113 |     ARR = ARR + 1.0
-114 114 | ELSEWHERE
-115 115 |     ARR = 0.0
+109 |     ARR(J) = ARR(J) * 2
+110 | END FORALL
+111 |
+    - WHERE (ARR > 2.0)
+112 + where (ARR > 2.0)
+113 |     ARR = ARR + 1.0
+114 | ELSEWHERE
+115 |     ARR = 0.0
 
 ./resources/test/fixtures/style/S233.f90:114:1: S233 [*] Keyword 'ELSEWHERE' should be 'elsewhere'
     |
@@ -2471,15 +2352,14 @@ expression: diagnostics
     |
     = help: Change to 'elsewhere'
 
-ℹ Safe fix
-111 111 | 
-112 112 | WHERE (ARR > 2.0)
-113 113 |     ARR = ARR + 1.0
-114     |-ELSEWHERE
-    114 |+elsewhere
-115 115 |     ARR = 0.0
-116 116 | END WHERE
-117 117 | 
+111 |
+112 | WHERE (ARR > 2.0)
+113 |     ARR = ARR + 1.0
+    - ELSEWHERE
+114 + elsewhere
+115 |     ARR = 0.0
+116 | END WHERE
+117 |
 
 ./resources/test/fixtures/style/S233.f90:116:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -2492,15 +2372,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-113 113 |     ARR = ARR + 1.0
-114 114 | ELSEWHERE
-115 115 |     ARR = 0.0
-116     |-END WHERE
-    116 |+end WHERE
-117 117 | 
-118 118 | SELECT CASE (N)
-119 119 | CASE (1)
+113 |     ARR = ARR + 1.0
+114 | ELSEWHERE
+115 |     ARR = 0.0
+    - END WHERE
+116 + end WHERE
+117 |
+118 | SELECT CASE (N)
+119 | CASE (1)
 
 ./resources/test/fixtures/style/S233.f90:116:5: S233 [*] Keyword 'WHERE' should be 'where'
     |
@@ -2513,15 +2392,14 @@ expression: diagnostics
     |
     = help: Change to 'where'
 
-ℹ Safe fix
-113 113 |     ARR = ARR + 1.0
-114 114 | ELSEWHERE
-115 115 |     ARR = 0.0
-116     |-END WHERE
-    116 |+END where
-117 117 | 
-118 118 | SELECT CASE (N)
-119 119 | CASE (1)
+113 |     ARR = ARR + 1.0
+114 | ELSEWHERE
+115 |     ARR = 0.0
+    - END WHERE
+116 + END where
+117 |
+118 | SELECT CASE (N)
+119 | CASE (1)
 
 ./resources/test/fixtures/style/S233.f90:118:1: S233 [*] Keyword 'SELECT' should be 'select'
     |
@@ -2534,15 +2412,14 @@ expression: diagnostics
     |
     = help: Change to 'select'
 
-ℹ Safe fix
-115 115 |     ARR = 0.0
-116 116 | END WHERE
-117 117 | 
-118     |-SELECT CASE (N)
-    118 |+select CASE (N)
-119 119 | CASE (1)
-120 120 |     PRINT *, "ONE"
-121 121 | CASE DEFAULT
+115 |     ARR = 0.0
+116 | END WHERE
+117 |
+    - SELECT CASE (N)
+118 + select CASE (N)
+119 | CASE (1)
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
 
 ./resources/test/fixtures/style/S233.f90:118:8: S233 [*] Keyword 'CASE' should be 'case'
     |
@@ -2555,15 +2432,14 @@ expression: diagnostics
     |
     = help: Change to 'case'
 
-ℹ Safe fix
-115 115 |     ARR = 0.0
-116 116 | END WHERE
-117 117 | 
-118     |-SELECT CASE (N)
-    118 |+SELECT case (N)
-119 119 | CASE (1)
-120 120 |     PRINT *, "ONE"
-121 121 | CASE DEFAULT
+115 |     ARR = 0.0
+116 | END WHERE
+117 |
+    - SELECT CASE (N)
+118 + SELECT case (N)
+119 | CASE (1)
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
 
 ./resources/test/fixtures/style/S233.f90:119:1: S233 [*] Keyword 'CASE' should be 'case'
     |
@@ -2575,15 +2451,14 @@ expression: diagnostics
     |
     = help: Change to 'case'
 
-ℹ Safe fix
-116 116 | END WHERE
-117 117 | 
-118 118 | SELECT CASE (N)
-119     |-CASE (1)
-    119 |+case (1)
-120 120 |     PRINT *, "ONE"
-121 121 | CASE DEFAULT
-122 122 |     PRINT *, "OTHER"
+116 | END WHERE
+117 |
+118 | SELECT CASE (N)
+    - CASE (1)
+119 + case (1)
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
+122 |     PRINT *, "OTHER"
 
 ./resources/test/fixtures/style/S233.f90:120:5: S233 [*] Keyword 'PRINT' should be 'print'
     |
@@ -2596,15 +2471,14 @@ expression: diagnostics
     |
     = help: Change to 'print'
 
-ℹ Safe fix
-117 117 | 
-118 118 | SELECT CASE (N)
-119 119 | CASE (1)
-120     |-    PRINT *, "ONE"
-    120 |+    print *, "ONE"
-121 121 | CASE DEFAULT
-122 122 |     PRINT *, "OTHER"
-123 123 | END SELECT
+117 |
+118 | SELECT CASE (N)
+119 | CASE (1)
+    -     PRINT *, "ONE"
+120 +     print *, "ONE"
+121 | CASE DEFAULT
+122 |     PRINT *, "OTHER"
+123 | END SELECT
 
 ./resources/test/fixtures/style/S233.f90:121:1: S233 [*] Keyword 'CASE' should be 'case'
     |
@@ -2617,15 +2491,14 @@ expression: diagnostics
     |
     = help: Change to 'case'
 
-ℹ Safe fix
-118 118 | SELECT CASE (N)
-119 119 | CASE (1)
-120 120 |     PRINT *, "ONE"
-121     |-CASE DEFAULT
-    121 |+case DEFAULT
-122 122 |     PRINT *, "OTHER"
-123 123 | END SELECT
-124 124 | 
+118 | SELECT CASE (N)
+119 | CASE (1)
+120 |     PRINT *, "ONE"
+    - CASE DEFAULT
+121 + case DEFAULT
+122 |     PRINT *, "OTHER"
+123 | END SELECT
+124 |
 
 ./resources/test/fixtures/style/S233.f90:121:6: S233 [*] Keyword 'DEFAULT' should be 'default'
     |
@@ -2638,15 +2511,14 @@ expression: diagnostics
     |
     = help: Change to 'default'
 
-ℹ Safe fix
-118 118 | SELECT CASE (N)
-119 119 | CASE (1)
-120 120 |     PRINT *, "ONE"
-121     |-CASE DEFAULT
-    121 |+CASE default
-122 122 |     PRINT *, "OTHER"
-123 123 | END SELECT
-124 124 | 
+118 | SELECT CASE (N)
+119 | CASE (1)
+120 |     PRINT *, "ONE"
+    - CASE DEFAULT
+121 + CASE default
+122 |     PRINT *, "OTHER"
+123 | END SELECT
+124 |
 
 ./resources/test/fixtures/style/S233.f90:122:5: S233 [*] Keyword 'PRINT' should be 'print'
     |
@@ -2658,15 +2530,14 @@ expression: diagnostics
     |
     = help: Change to 'print'
 
-ℹ Safe fix
-119 119 | CASE (1)
-120 120 |     PRINT *, "ONE"
-121 121 | CASE DEFAULT
-122     |-    PRINT *, "OTHER"
-    122 |+    print *, "OTHER"
-123 123 | END SELECT
-124 124 | 
-125 125 | SELECT TYPE (POLY)
+119 | CASE (1)
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
+    -     PRINT *, "OTHER"
+122 +     print *, "OTHER"
+123 | END SELECT
+124 |
+125 | SELECT TYPE (POLY)
 
 ./resources/test/fixtures/style/S233.f90:123:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -2679,15 +2550,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-120 120 |     PRINT *, "ONE"
-121 121 | CASE DEFAULT
-122 122 |     PRINT *, "OTHER"
-123     |-END SELECT
-    123 |+end SELECT
-124 124 | 
-125 125 | SELECT TYPE (POLY)
-126 126 | TYPE IS (TEST_TYPE)
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
+122 |     PRINT *, "OTHER"
+    - END SELECT
+123 + end SELECT
+124 |
+125 | SELECT TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
 
 ./resources/test/fixtures/style/S233.f90:123:5: S233 [*] Keyword 'SELECT' should be 'select'
     |
@@ -2700,15 +2570,14 @@ expression: diagnostics
     |
     = help: Change to 'select'
 
-ℹ Safe fix
-120 120 |     PRINT *, "ONE"
-121 121 | CASE DEFAULT
-122 122 |     PRINT *, "OTHER"
-123     |-END SELECT
-    123 |+END select
-124 124 | 
-125 125 | SELECT TYPE (POLY)
-126 126 | TYPE IS (TEST_TYPE)
+120 |     PRINT *, "ONE"
+121 | CASE DEFAULT
+122 |     PRINT *, "OTHER"
+    - END SELECT
+123 + END select
+124 |
+125 | SELECT TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
 
 ./resources/test/fixtures/style/S233.f90:125:1: S233 [*] Keyword 'SELECT' should be 'select'
     |
@@ -2721,15 +2590,14 @@ expression: diagnostics
     |
     = help: Change to 'select'
 
-ℹ Safe fix
-122 122 |     PRINT *, "OTHER"
-123 123 | END SELECT
-124 124 | 
-125     |-SELECT TYPE (POLY)
-    125 |+select TYPE (POLY)
-126 126 | TYPE IS (TEST_TYPE)
-127 127 |     PRINT *, "TEST_TYPE"
-128 128 | CLASS DEFAULT
+122 |     PRINT *, "OTHER"
+123 | END SELECT
+124 |
+    - SELECT TYPE (POLY)
+125 + select TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
 
 ./resources/test/fixtures/style/S233.f90:125:8: S233 [*] Keyword 'TYPE' should be 'type'
     |
@@ -2742,15 +2610,14 @@ expression: diagnostics
     |
     = help: Change to 'type'
 
-ℹ Safe fix
-122 122 |     PRINT *, "OTHER"
-123 123 | END SELECT
-124 124 | 
-125     |-SELECT TYPE (POLY)
-    125 |+SELECT type (POLY)
-126 126 | TYPE IS (TEST_TYPE)
-127 127 |     PRINT *, "TEST_TYPE"
-128 128 | CLASS DEFAULT
+122 |     PRINT *, "OTHER"
+123 | END SELECT
+124 |
+    - SELECT TYPE (POLY)
+125 + SELECT type (POLY)
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
 
 ./resources/test/fixtures/style/S233.f90:126:1: S233 [*] Keyword 'TYPE' should be 'type'
     |
@@ -2762,15 +2629,14 @@ expression: diagnostics
     |
     = help: Change to 'type'
 
-ℹ Safe fix
-123 123 | END SELECT
-124 124 | 
-125 125 | SELECT TYPE (POLY)
-126     |-TYPE IS (TEST_TYPE)
-    126 |+type IS (TEST_TYPE)
-127 127 |     PRINT *, "TEST_TYPE"
-128 128 | CLASS DEFAULT
-129 129 |     PRINT *, "UNKNOWN"
+123 | END SELECT
+124 |
+125 | SELECT TYPE (POLY)
+    - TYPE IS (TEST_TYPE)
+126 + type IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
 
 ./resources/test/fixtures/style/S233.f90:126:6: S233 [*] Keyword 'IS' should be 'is'
     |
@@ -2782,15 +2648,14 @@ expression: diagnostics
     |
     = help: Change to 'is'
 
-ℹ Safe fix
-123 123 | END SELECT
-124 124 | 
-125 125 | SELECT TYPE (POLY)
-126     |-TYPE IS (TEST_TYPE)
-    126 |+TYPE is (TEST_TYPE)
-127 127 |     PRINT *, "TEST_TYPE"
-128 128 | CLASS DEFAULT
-129 129 |     PRINT *, "UNKNOWN"
+123 | END SELECT
+124 |
+125 | SELECT TYPE (POLY)
+    - TYPE IS (TEST_TYPE)
+126 + TYPE is (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
 
 ./resources/test/fixtures/style/S233.f90:127:5: S233 [*] Keyword 'PRINT' should be 'print'
     |
@@ -2803,15 +2668,14 @@ expression: diagnostics
     |
     = help: Change to 'print'
 
-ℹ Safe fix
-124 124 | 
-125 125 | SELECT TYPE (POLY)
-126 126 | TYPE IS (TEST_TYPE)
-127     |-    PRINT *, "TEST_TYPE"
-    127 |+    print *, "TEST_TYPE"
-128 128 | CLASS DEFAULT
-129 129 |     PRINT *, "UNKNOWN"
-130 130 | END SELECT
+124 |
+125 | SELECT TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
+    -     PRINT *, "TEST_TYPE"
+127 +     print *, "TEST_TYPE"
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
 
 ./resources/test/fixtures/style/S233.f90:128:1: S233 [*] Keyword 'CLASS' should be 'class'
     |
@@ -2824,15 +2688,14 @@ expression: diagnostics
     |
     = help: Change to 'class'
 
-ℹ Safe fix
-125 125 | SELECT TYPE (POLY)
-126 126 | TYPE IS (TEST_TYPE)
-127 127 |     PRINT *, "TEST_TYPE"
-128     |-CLASS DEFAULT
-    128 |+class DEFAULT
-129 129 |     PRINT *, "UNKNOWN"
-130 130 | END SELECT
-131 131 | 
+125 | SELECT TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+    - CLASS DEFAULT
+128 + class DEFAULT
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
+131 |
 
 ./resources/test/fixtures/style/S233.f90:128:7: S233 [*] Keyword 'DEFAULT' should be 'default'
     |
@@ -2845,15 +2708,14 @@ expression: diagnostics
     |
     = help: Change to 'default'
 
-ℹ Safe fix
-125 125 | SELECT TYPE (POLY)
-126 126 | TYPE IS (TEST_TYPE)
-127 127 |     PRINT *, "TEST_TYPE"
-128     |-CLASS DEFAULT
-    128 |+CLASS default
-129 129 |     PRINT *, "UNKNOWN"
-130 130 | END SELECT
-131 131 | 
+125 | SELECT TYPE (POLY)
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+    - CLASS DEFAULT
+128 + CLASS default
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
+131 |
 
 ./resources/test/fixtures/style/S233.f90:129:5: S233 [*] Keyword 'PRINT' should be 'print'
     |
@@ -2865,15 +2727,14 @@ expression: diagnostics
     |
     = help: Change to 'print'
 
-ℹ Safe fix
-126 126 | TYPE IS (TEST_TYPE)
-127 127 |     PRINT *, "TEST_TYPE"
-128 128 | CLASS DEFAULT
-129     |-    PRINT *, "UNKNOWN"
-    129 |+    print *, "UNKNOWN"
-130 130 | END SELECT
-131 131 | 
-132 132 | IF (N > 0) THEN
+126 | TYPE IS (TEST_TYPE)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
+    -     PRINT *, "UNKNOWN"
+129 +     print *, "UNKNOWN"
+130 | END SELECT
+131 |
+132 | IF (N > 0) THEN
 
 ./resources/test/fixtures/style/S233.f90:130:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -2886,15 +2747,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-127 127 |     PRINT *, "TEST_TYPE"
-128 128 | CLASS DEFAULT
-129 129 |     PRINT *, "UNKNOWN"
-130     |-END SELECT
-    130 |+end SELECT
-131 131 | 
-132 132 | IF (N > 0) THEN
-133 133 |     CALL TEST_PROC(I)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
+    - END SELECT
+130 + end SELECT
+131 |
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
 
 ./resources/test/fixtures/style/S233.f90:130:5: S233 [*] Keyword 'SELECT' should be 'select'
     |
@@ -2907,15 +2767,14 @@ expression: diagnostics
     |
     = help: Change to 'select'
 
-ℹ Safe fix
-127 127 |     PRINT *, "TEST_TYPE"
-128 128 | CLASS DEFAULT
-129 129 |     PRINT *, "UNKNOWN"
-130     |-END SELECT
-    130 |+END select
-131 131 | 
-132 132 | IF (N > 0) THEN
-133 133 |     CALL TEST_PROC(I)
+127 |     PRINT *, "TEST_TYPE"
+128 | CLASS DEFAULT
+129 |     PRINT *, "UNKNOWN"
+    - END SELECT
+130 + END select
+131 |
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
 
 ./resources/test/fixtures/style/S233.f90:132:1: S233 [*] Keyword 'IF' should be 'if'
     |
@@ -2928,15 +2787,14 @@ expression: diagnostics
     |
     = help: Change to 'if'
 
-ℹ Safe fix
-129 129 |     PRINT *, "UNKNOWN"
-130 130 | END SELECT
-131 131 | 
-132     |-IF (N > 0) THEN
-    132 |+if (N > 0) THEN
-133 133 |     CALL TEST_PROC(I)
-134 134 | ELSE IF (N == 0) THEN
-135 135 |     STOP
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
+131 |
+    - IF (N > 0) THEN
+132 + if (N > 0) THEN
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
 
 ./resources/test/fixtures/style/S233.f90:132:12: S233 [*] Keyword 'THEN' should be 'then'
     |
@@ -2949,15 +2807,14 @@ expression: diagnostics
     |
     = help: Change to 'then'
 
-ℹ Safe fix
-129 129 |     PRINT *, "UNKNOWN"
-130 130 | END SELECT
-131 131 | 
-132     |-IF (N > 0) THEN
-    132 |+IF (N > 0) then
-133 133 |     CALL TEST_PROC(I)
-134 134 | ELSE IF (N == 0) THEN
-135 135 |     STOP
+129 |     PRINT *, "UNKNOWN"
+130 | END SELECT
+131 |
+    - IF (N > 0) THEN
+132 + IF (N > 0) then
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
 
 ./resources/test/fixtures/style/S233.f90:133:5: S233 [*] Keyword 'CALL' should be 'call'
     |
@@ -2969,15 +2826,14 @@ expression: diagnostics
     |
     = help: Change to 'call'
 
-ℹ Safe fix
-130 130 | END SELECT
-131 131 | 
-132 132 | IF (N > 0) THEN
-133     |-    CALL TEST_PROC(I)
-    133 |+    call TEST_PROC(I)
-134 134 | ELSE IF (N == 0) THEN
-135 135 |     STOP
-136 136 | ELSE
+130 | END SELECT
+131 |
+132 | IF (N > 0) THEN
+    -     CALL TEST_PROC(I)
+133 +     call TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
+136 | ELSE
 
 ./resources/test/fixtures/style/S233.f90:134:1: S233 [*] Keyword 'ELSE' should be 'else'
     |
@@ -2990,15 +2846,14 @@ expression: diagnostics
     |
     = help: Change to 'else'
 
-ℹ Safe fix
-131 131 | 
-132 132 | IF (N > 0) THEN
-133 133 |     CALL TEST_PROC(I)
-134     |-ELSE IF (N == 0) THEN
-    134 |+else IF (N == 0) THEN
-135 135 |     STOP
-136 136 | ELSE
-137 137 |     ERROR STOP "NEGATIVE"
+131 |
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
+    - ELSE IF (N == 0) THEN
+134 + else IF (N == 0) THEN
+135 |     STOP
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
 
 ./resources/test/fixtures/style/S233.f90:134:6: S233 [*] Keyword 'IF' should be 'if'
     |
@@ -3011,15 +2866,14 @@ expression: diagnostics
     |
     = help: Change to 'if'
 
-ℹ Safe fix
-131 131 | 
-132 132 | IF (N > 0) THEN
-133 133 |     CALL TEST_PROC(I)
-134     |-ELSE IF (N == 0) THEN
-    134 |+ELSE if (N == 0) THEN
-135 135 |     STOP
-136 136 | ELSE
-137 137 |     ERROR STOP "NEGATIVE"
+131 |
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
+    - ELSE IF (N == 0) THEN
+134 + ELSE if (N == 0) THEN
+135 |     STOP
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
 
 ./resources/test/fixtures/style/S233.f90:134:18: S233 [*] Keyword 'THEN' should be 'then'
     |
@@ -3032,15 +2886,14 @@ expression: diagnostics
     |
     = help: Change to 'then'
 
-ℹ Safe fix
-131 131 | 
-132 132 | IF (N > 0) THEN
-133 133 |     CALL TEST_PROC(I)
-134     |-ELSE IF (N == 0) THEN
-    134 |+ELSE IF (N == 0) then
-135 135 |     STOP
-136 136 | ELSE
-137 137 |     ERROR STOP "NEGATIVE"
+131 |
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
+    - ELSE IF (N == 0) THEN
+134 + ELSE IF (N == 0) then
+135 |     STOP
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
 
 ./resources/test/fixtures/style/S233.f90:135:5: S233 [*] Keyword 'STOP' should be 'stop'
     |
@@ -3053,15 +2906,14 @@ expression: diagnostics
     |
     = help: Change to 'stop'
 
-ℹ Safe fix
-132 132 | IF (N > 0) THEN
-133 133 |     CALL TEST_PROC(I)
-134 134 | ELSE IF (N == 0) THEN
-135     |-    STOP
-    135 |+    stop
-136 136 | ELSE
-137 137 |     ERROR STOP "NEGATIVE"
-138 138 | END IF
+132 | IF (N > 0) THEN
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
+    -     STOP
+135 +     stop
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
+138 | END IF
 
 ./resources/test/fixtures/style/S233.f90:136:1: S233 [*] Keyword 'ELSE' should be 'else'
     |
@@ -3074,15 +2926,14 @@ expression: diagnostics
     |
     = help: Change to 'else'
 
-ℹ Safe fix
-133 133 |     CALL TEST_PROC(I)
-134 134 | ELSE IF (N == 0) THEN
-135 135 |     STOP
-136     |-ELSE
-    136 |+else
-137 137 |     ERROR STOP "NEGATIVE"
-138 138 | END IF
-139 139 | 
+133 |     CALL TEST_PROC(I)
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
+    - ELSE
+136 + else
+137 |     ERROR STOP "NEGATIVE"
+138 | END IF
+139 |
 
 ./resources/test/fixtures/style/S233.f90:137:5: S233 [*] Keyword 'ERROR' should be 'error'
     |
@@ -3094,15 +2945,14 @@ expression: diagnostics
     |
     = help: Change to 'error'
 
-ℹ Safe fix
-134 134 | ELSE IF (N == 0) THEN
-135 135 |     STOP
-136 136 | ELSE
-137     |-    ERROR STOP "NEGATIVE"
-    137 |+    error STOP "NEGATIVE"
-138 138 | END IF
-139 139 | 
-140 140 | DO I = 1, N
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
+136 | ELSE
+    -     ERROR STOP "NEGATIVE"
+137 +     error STOP "NEGATIVE"
+138 | END IF
+139 |
+140 | DO I = 1, N
 
 ./resources/test/fixtures/style/S233.f90:137:11: S233 [*] Keyword 'STOP' should be 'stop'
     |
@@ -3114,15 +2964,14 @@ expression: diagnostics
     |
     = help: Change to 'stop'
 
-ℹ Safe fix
-134 134 | ELSE IF (N == 0) THEN
-135 135 |     STOP
-136 136 | ELSE
-137     |-    ERROR STOP "NEGATIVE"
-    137 |+    ERROR stop "NEGATIVE"
-138 138 | END IF
-139 139 | 
-140 140 | DO I = 1, N
+134 | ELSE IF (N == 0) THEN
+135 |     STOP
+136 | ELSE
+    -     ERROR STOP "NEGATIVE"
+137 +     ERROR stop "NEGATIVE"
+138 | END IF
+139 |
+140 | DO I = 1, N
 
 ./resources/test/fixtures/style/S233.f90:138:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -3135,15 +2984,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-135 135 |     STOP
-136 136 | ELSE
-137 137 |     ERROR STOP "NEGATIVE"
-138     |-END IF
-    138 |+end IF
-139 139 | 
-140 140 | DO I = 1, N
-141 141 |     IF (I == 3) CYCLE
+135 |     STOP
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
+    - END IF
+138 + end IF
+139 |
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
 
 ./resources/test/fixtures/style/S233.f90:138:5: S233 [*] Keyword 'IF' should be 'if'
     |
@@ -3156,15 +3004,14 @@ expression: diagnostics
     |
     = help: Change to 'if'
 
-ℹ Safe fix
-135 135 |     STOP
-136 136 | ELSE
-137 137 |     ERROR STOP "NEGATIVE"
-138     |-END IF
-    138 |+END if
-139 139 | 
-140 140 | DO I = 1, N
-141 141 |     IF (I == 3) CYCLE
+135 |     STOP
+136 | ELSE
+137 |     ERROR STOP "NEGATIVE"
+    - END IF
+138 + END if
+139 |
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
 
 ./resources/test/fixtures/style/S233.f90:140:1: S233 [*] Keyword 'DO' should be 'do'
     |
@@ -3177,15 +3024,14 @@ expression: diagnostics
     |
     = help: Change to 'do'
 
-ℹ Safe fix
-137 137 |     ERROR STOP "NEGATIVE"
-138 138 | END IF
-139 139 | 
-140     |-DO I = 1, N
-    140 |+do I = 1, N
-141 141 |     IF (I == 3) CYCLE
-142 142 |     IF (I == 4) EXIT
-143 143 | END DO
+137 |     ERROR STOP "NEGATIVE"
+138 | END IF
+139 |
+    - DO I = 1, N
+140 + do I = 1, N
+141 |     IF (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
+143 | END DO
 
 ./resources/test/fixtures/style/S233.f90:141:5: S233 [*] Keyword 'IF' should be 'if'
     |
@@ -3197,15 +3043,14 @@ expression: diagnostics
     |
     = help: Change to 'if'
 
-ℹ Safe fix
-138 138 | END IF
-139 139 | 
-140 140 | DO I = 1, N
-141     |-    IF (I == 3) CYCLE
-    141 |+    if (I == 3) CYCLE
-142 142 |     IF (I == 4) EXIT
-143 143 | END DO
-144 144 | 
+138 | END IF
+139 |
+140 | DO I = 1, N
+    -     IF (I == 3) CYCLE
+141 +     if (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
+143 | END DO
+144 |
 
 ./resources/test/fixtures/style/S233.f90:141:17: S233 [*] Keyword 'CYCLE' should be 'cycle'
     |
@@ -3217,15 +3062,14 @@ expression: diagnostics
     |
     = help: Change to 'cycle'
 
-ℹ Safe fix
-138 138 | END IF
-139 139 | 
-140 140 | DO I = 1, N
-141     |-    IF (I == 3) CYCLE
-    141 |+    IF (I == 3) cycle
-142 142 |     IF (I == 4) EXIT
-143 143 | END DO
-144 144 | 
+138 | END IF
+139 |
+140 | DO I = 1, N
+    -     IF (I == 3) CYCLE
+141 +     IF (I == 3) cycle
+142 |     IF (I == 4) EXIT
+143 | END DO
+144 |
 
 ./resources/test/fixtures/style/S233.f90:142:5: S233 [*] Keyword 'IF' should be 'if'
     |
@@ -3237,15 +3081,14 @@ expression: diagnostics
     |
     = help: Change to 'if'
 
-ℹ Safe fix
-139 139 | 
-140 140 | DO I = 1, N
-141 141 |     IF (I == 3) CYCLE
-142     |-    IF (I == 4) EXIT
-    142 |+    if (I == 4) EXIT
-143 143 | END DO
-144 144 | 
-145 145 | GOTO 100
+139 |
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
+    -     IF (I == 4) EXIT
+142 +     if (I == 4) EXIT
+143 | END DO
+144 |
+145 | GOTO 100
 
 ./resources/test/fixtures/style/S233.f90:142:17: S233 [*] Keyword 'EXIT' should be 'exit'
     |
@@ -3257,15 +3100,14 @@ expression: diagnostics
     |
     = help: Change to 'exit'
 
-ℹ Safe fix
-139 139 | 
-140 140 | DO I = 1, N
-141 141 |     IF (I == 3) CYCLE
-142     |-    IF (I == 4) EXIT
-    142 |+    IF (I == 4) exit
-143 143 | END DO
-144 144 | 
-145 145 | GOTO 100
+139 |
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
+    -     IF (I == 4) EXIT
+142 +     IF (I == 4) exit
+143 | END DO
+144 |
+145 | GOTO 100
 
 ./resources/test/fixtures/style/S233.f90:143:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -3278,15 +3120,14 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-140 140 | DO I = 1, N
-141 141 |     IF (I == 3) CYCLE
-142 142 |     IF (I == 4) EXIT
-143     |-END DO
-    143 |+end DO
-144 144 | 
-145 145 | GOTO 100
-146 146 | GO TO 100
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
+    - END DO
+143 + end DO
+144 |
+145 | GOTO 100
+146 | GO TO 100
 
 ./resources/test/fixtures/style/S233.f90:143:5: S233 [*] Keyword 'DO' should be 'do'
     |
@@ -3299,15 +3140,14 @@ expression: diagnostics
     |
     = help: Change to 'do'
 
-ℹ Safe fix
-140 140 | DO I = 1, N
-141 141 |     IF (I == 3) CYCLE
-142 142 |     IF (I == 4) EXIT
-143     |-END DO
-    143 |+END do
-144 144 | 
-145 145 | GOTO 100
-146 146 | GO TO 100
+140 | DO I = 1, N
+141 |     IF (I == 3) CYCLE
+142 |     IF (I == 4) EXIT
+    - END DO
+143 + END do
+144 |
+145 | GOTO 100
+146 | GO TO 100
 
 ./resources/test/fixtures/style/S233.f90:145:1: S233 [*] Keyword 'GOTO' should be 'goto'
     |
@@ -3320,15 +3160,14 @@ expression: diagnostics
     |
     = help: Change to 'goto'
 
-ℹ Safe fix
-142 142 |     IF (I == 4) EXIT
-143 143 | END DO
-144 144 | 
-145     |-GOTO 100
-    145 |+goto 100
-146 146 | GO TO 100
-147 147 | PRINT *, "SHOULD NOT PRINT"
-148 148 | 100 CONTINUE
+142 |     IF (I == 4) EXIT
+143 | END DO
+144 |
+    - GOTO 100
+145 + goto 100
+146 | GO TO 100
+147 | PRINT *, "SHOULD NOT PRINT"
+148 | 100 CONTINUE
 
 ./resources/test/fixtures/style/S233.f90:146:1: S233 [*] Keyword 'GO' should be 'go'
     |
@@ -3340,15 +3179,14 @@ expression: diagnostics
     |
     = help: Change to 'go'
 
-ℹ Safe fix
-143 143 | END DO
-144 144 | 
-145 145 | GOTO 100
-146     |-GO TO 100
-    146 |+go TO 100
-147 147 | PRINT *, "SHOULD NOT PRINT"
-148 148 | 100 CONTINUE
-149 149 | 
+143 | END DO
+144 |
+145 | GOTO 100
+    - GO TO 100
+146 + go TO 100
+147 | PRINT *, "SHOULD NOT PRINT"
+148 | 100 CONTINUE
+149 |
 
 ./resources/test/fixtures/style/S233.f90:146:4: S233 [*] Keyword 'TO' should be 'to'
     |
@@ -3360,15 +3198,14 @@ expression: diagnostics
     |
     = help: Change to 'to'
 
-ℹ Safe fix
-143 143 | END DO
-144 144 | 
-145 145 | GOTO 100
-146     |-GO TO 100
-    146 |+GO to 100
-147 147 | PRINT *, "SHOULD NOT PRINT"
-148 148 | 100 CONTINUE
-149 149 | 
+143 | END DO
+144 |
+145 | GOTO 100
+    - GO TO 100
+146 + GO to 100
+147 | PRINT *, "SHOULD NOT PRINT"
+148 | 100 CONTINUE
+149 |
 
 ./resources/test/fixtures/style/S233.f90:147:1: S233 [*] Keyword 'PRINT' should be 'print'
     |
@@ -3380,15 +3217,14 @@ expression: diagnostics
     |
     = help: Change to 'print'
 
-ℹ Safe fix
-144 144 | 
-145 145 | GOTO 100
-146 146 | GO TO 100
-147     |-PRINT *, "SHOULD NOT PRINT"
-    147 |+print *, "SHOULD NOT PRINT"
-148 148 | 100 CONTINUE
-149 149 | 
-150 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+144 |
+145 | GOTO 100
+146 | GO TO 100
+    - PRINT *, "SHOULD NOT PRINT"
+147 + print *, "SHOULD NOT PRINT"
+148 | 100 CONTINUE
+149 |
+150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
 
 ./resources/test/fixtures/style/S233.f90:148:5: S233 [*] Keyword 'CONTINUE' should be 'continue'
     |
@@ -3401,15 +3237,14 @@ expression: diagnostics
     |
     = help: Change to 'continue'
 
-ℹ Safe fix
-145 145 | GOTO 100
-146 146 | GO TO 100
-147 147 | PRINT *, "SHOULD NOT PRINT"
-148     |-100 CONTINUE
-    148 |+100 continue
-149 149 | 
-150 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
-151 151 | 
+145 | GOTO 100
+146 | GO TO 100
+147 | PRINT *, "SHOULD NOT PRINT"
+    - 100 CONTINUE
+148 + 100 continue
+149 |
+150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+151 |
 
 ./resources/test/fixtures/style/S233.f90:150:1: S233 [*] Keyword 'CALL' should be 'call'
     |
@@ -3422,15 +3257,14 @@ expression: diagnostics
     |
     = help: Change to 'call'
 
-ℹ Safe fix
-147 147 | PRINT *, "SHOULD NOT PRINT"
-148 148 | 100 CONTINUE
-149 149 | 
-150     |-CALL C_F_POINTER(C_NULL_PTR, ARR)
-    150 |+call C_F_POINTER(C_NULL_PTR, ARR)
-151 151 | 
-152 152 | SYNC ALL
-153 153 | 
+147 | PRINT *, "SHOULD NOT PRINT"
+148 | 100 CONTINUE
+149 |
+    - CALL C_F_POINTER(C_NULL_PTR, ARR)
+150 + call C_F_POINTER(C_NULL_PTR, ARR)
+151 |
+152 | SYNC ALL
+153 |
 
 ./resources/test/fixtures/style/S233.f90:152:1: S233 [*] Keyword 'SYNC' should be 'sync'
     |
@@ -3443,15 +3277,14 @@ expression: diagnostics
     |
     = help: Change to 'sync'
 
-ℹ Safe fix
-149 149 | 
-150 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
-151 151 | 
-152     |-SYNC ALL
-    152 |+sync ALL
-153 153 | 
-154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-155 155 | WRITE(10,*) "HELLO"
+149 |
+150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+151 |
+    - SYNC ALL
+152 + sync ALL
+153 |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 | WRITE(10,*) "HELLO"
 
 ./resources/test/fixtures/style/S233.f90:152:6: S233 [*] Keyword 'ALL' should be 'all'
     |
@@ -3464,15 +3297,14 @@ expression: diagnostics
     |
     = help: Change to 'all'
 
-ℹ Safe fix
-149 149 | 
-150 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
-151 151 | 
-152     |-SYNC ALL
-    152 |+SYNC all
-153 153 | 
-154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-155 155 | WRITE(10,*) "HELLO"
+149 |
+150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
+151 |
+    - SYNC ALL
+152 + SYNC all
+153 |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 | WRITE(10,*) "HELLO"
 
 ./resources/test/fixtures/style/S233.f90:154:1: S233 [*] Keyword 'OPEN' should be 'open'
     |
@@ -3485,15 +3317,14 @@ expression: diagnostics
     |
     = help: Change to 'open'
 
-ℹ Safe fix
-151 151 | 
-152 152 | SYNC ALL
-153 153 | 
-154     |-OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-    154 |+open(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-155 155 | WRITE(10,*) "HELLO"
-156 156 | READ(10,*) STR
-157 157 | CLOSE(10)
+151 |
+152 | SYNC ALL
+153 |
+    - OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+154 + open(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 | WRITE(10,*) "HELLO"
+156 | READ(10,*) STR
+157 | CLOSE(10)
 
 ./resources/test/fixtures/style/S233.f90:154:6: S233 [*] Keyword 'UNIT' should be 'unit'
     |
@@ -3506,15 +3337,14 @@ expression: diagnostics
     |
     = help: Change to 'unit'
 
-ℹ Safe fix
-151 151 | 
-152 152 | SYNC ALL
-153 153 | 
-154     |-OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-    154 |+OPEN(unit=10, FILE="test.txt", STATUS="UNKNOWN")
-155 155 | WRITE(10,*) "HELLO"
-156 156 | READ(10,*) STR
-157 157 | CLOSE(10)
+151 |
+152 | SYNC ALL
+153 |
+    - OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+154 + OPEN(unit=10, FILE="test.txt", STATUS="UNKNOWN")
+155 | WRITE(10,*) "HELLO"
+156 | READ(10,*) STR
+157 | CLOSE(10)
 
 ./resources/test/fixtures/style/S233.f90:155:1: S233 [*] Keyword 'WRITE' should be 'write'
     |
@@ -3526,15 +3356,14 @@ expression: diagnostics
     |
     = help: Change to 'write'
 
-ℹ Safe fix
-152 152 | SYNC ALL
-153 153 | 
-154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-155     |-WRITE(10,*) "HELLO"
-    155 |+write(10,*) "HELLO"
-156 156 | READ(10,*) STR
-157 157 | CLOSE(10)
-158 158 | 
+152 | SYNC ALL
+153 |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+    - WRITE(10,*) "HELLO"
+155 + write(10,*) "HELLO"
+156 | READ(10,*) STR
+157 | CLOSE(10)
+158 |
 
 ./resources/test/fixtures/style/S233.f90:156:1: S233 [*] Keyword 'READ' should be 'read'
     |
@@ -3546,15 +3375,14 @@ expression: diagnostics
     |
     = help: Change to 'read'
 
-ℹ Safe fix
-153 153 | 
-154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-155 155 | WRITE(10,*) "HELLO"
-156     |-READ(10,*) STR
-    156 |+read(10,*) STR
-157 157 | CLOSE(10)
-158 158 | 
-159 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+153 |
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 | WRITE(10,*) "HELLO"
+    - READ(10,*) STR
+156 + read(10,*) STR
+157 | CLOSE(10)
+158 |
+159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
 
 ./resources/test/fixtures/style/S233.f90:157:1: S233 [*] Keyword 'CLOSE' should be 'close'
     |
@@ -3567,15 +3395,14 @@ expression: diagnostics
     |
     = help: Change to 'close'
 
-ℹ Safe fix
-154 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-155 155 | WRITE(10,*) "HELLO"
-156 156 | READ(10,*) STR
-157     |-CLOSE(10)
-    157 |+close(10)
-158 158 | 
-159 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
-160 160 | 
+154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
+155 | WRITE(10,*) "HELLO"
+156 | READ(10,*) STR
+    - CLOSE(10)
+157 + close(10)
+158 |
+159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+160 |
 
 ./resources/test/fixtures/style/S233.f90:159:1: S233 [*] Keyword 'INQUIRE' should be 'inquire'
     |
@@ -3588,15 +3415,14 @@ expression: diagnostics
     |
     = help: Change to 'inquire'
 
-ℹ Safe fix
-156 156 | READ(10,*) STR
-157 157 | CLOSE(10)
-158 158 | 
-159     |-INQUIRE(FILE="test.txt", EXIST=FLAG)
-    159 |+inquire(FILE="test.txt", EXIST=FLAG)
-160 160 | 
-161 161 | NULLIFY(POLY)
-162 162 | 
+156 | READ(10,*) STR
+157 | CLOSE(10)
+158 |
+    - INQUIRE(FILE="test.txt", EXIST=FLAG)
+159 + inquire(FILE="test.txt", EXIST=FLAG)
+160 |
+161 | NULLIFY(POLY)
+162 |
 
 ./resources/test/fixtures/style/S233.f90:161:1: S233 [*] Keyword 'NULLIFY' should be 'nullify'
     |
@@ -3609,15 +3435,14 @@ expression: diagnostics
     |
     = help: Change to 'nullify'
 
-ℹ Safe fix
-158 158 | 
-159 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
-160 160 | 
-161     |-NULLIFY(POLY)
-    161 |+nullify(POLY)
-162 162 | 
-163 163 | DEALLOCATE(ARR)
-164 164 | 
+158 |
+159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
+160 |
+    - NULLIFY(POLY)
+161 + nullify(POLY)
+162 |
+163 | DEALLOCATE(ARR)
+164 |
 
 ./resources/test/fixtures/style/S233.f90:163:1: S233 [*] Keyword 'DEALLOCATE' should be 'deallocate'
     |
@@ -3630,15 +3455,14 @@ expression: diagnostics
     |
     = help: Change to 'deallocate'
 
-ℹ Safe fix
-160 160 | 
-161 161 | NULLIFY(POLY)
-162 162 | 
-163     |-DEALLOCATE(ARR)
-    163 |+deallocate(ARR)
-164 164 | 
-165 165 | STOP
-166 166 | END PROGRAM KEYWORD_ZOO
+160 |
+161 | NULLIFY(POLY)
+162 |
+    - DEALLOCATE(ARR)
+163 + deallocate(ARR)
+164 |
+165 | STOP
+166 | END PROGRAM KEYWORD_ZOO
 
 ./resources/test/fixtures/style/S233.f90:165:1: S233 [*] Keyword 'STOP' should be 'stop'
     |
@@ -3650,13 +3474,12 @@ expression: diagnostics
     |
     = help: Change to 'stop'
 
-ℹ Safe fix
-162 162 | 
-163 163 | DEALLOCATE(ARR)
-164 164 | 
-165     |-STOP
-    165 |+stop
-166 166 | END PROGRAM KEYWORD_ZOO
+162 |
+163 | DEALLOCATE(ARR)
+164 |
+    - STOP
+165 + stop
+166 | END PROGRAM KEYWORD_ZOO
 
 ./resources/test/fixtures/style/S233.f90:166:1: S233 [*] Keyword 'END' should be 'end'
     |
@@ -3666,12 +3489,11 @@ expression: diagnostics
     |
     = help: Change to 'end'
 
-ℹ Safe fix
-163 163 | DEALLOCATE(ARR)
-164 164 | 
-165 165 | STOP
-166     |-END PROGRAM KEYWORD_ZOO
-    166 |+end PROGRAM KEYWORD_ZOO
+163 | DEALLOCATE(ARR)
+164 |
+165 | STOP
+    - END PROGRAM KEYWORD_ZOO
+166 + end PROGRAM KEYWORD_ZOO
 
 ./resources/test/fixtures/style/S233.f90:166:5: S233 [*] Keyword 'PROGRAM' should be 'program'
     |
@@ -3681,9 +3503,8 @@ expression: diagnostics
     |
     = help: Change to 'program'
 
-ℹ Safe fix
-163 163 | DEALLOCATE(ARR)
-164 164 | 
-165 165 | STOP
-166     |-END PROGRAM KEYWORD_ZOO
-    166 |+END program KEYWORD_ZOO
+163 | DEALLOCATE(ARR)
+164 |
+165 | STOP
+    - END PROGRAM KEYWORD_ZOO
+166 + END program KEYWORD_ZOO

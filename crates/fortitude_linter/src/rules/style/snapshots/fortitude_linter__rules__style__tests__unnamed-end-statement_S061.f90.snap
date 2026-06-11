@@ -14,15 +14,14 @@ snapshot_kind: text
   |
   = help: Write as 'end type mytype'.
 
-ℹ Safe fix
-3 3 |   type mytype
-4 4 |     integer :: x
-5 5 |     ! catch this
-6   |-  end type
-  6 |+  end type mytype
-7 7 | contains
-8 8 |   subroutine mysub1()
-9 9 |     write (*,*) 'hello world'
+3 |   type mytype
+4 |     integer :: x
+5 |     ! catch this
+  -   end type
+6 +   end type mytype
+7 | contains
+8 |   subroutine mysub1()
+9 |     write (*,*) 'hello world'
 
 ./resources/test/fixtures/style/S061.f90:11:3: S061 [*] end statement should be named.
    |
@@ -35,15 +34,14 @@ snapshot_kind: text
    |
    = help: Write as 'end subroutine mysub1'.
 
-ℹ Safe fix
-8  8  |   subroutine mysub1()
-9  9  |     write (*,*) 'hello world'
-10 10 |     ! catch this
-11    |-  end subroutine
-   11 |+  end subroutine mysub1
-12 12 |   subroutine mysub2()
-13 13 |     write (*,*) 'hello world'
-14 14 |     ! ignore this
+8  |   subroutine mysub1()
+9  |     write (*,*) 'hello world'
+10 |     ! catch this
+   -   end subroutine
+11 +   end subroutine mysub1
+12 |   subroutine mysub2()
+13 |     write (*,*) 'hello world'
+14 |     ! ignore this
 
 ./resources/test/fixtures/style/S061.f90:17:1: S061 [*] end statement should be named.
    |
@@ -56,15 +54,14 @@ snapshot_kind: text
    |
    = help: Write as 'end module mymod1'.
 
-ℹ Safe fix
-14 14 |     ! ignore this
-15 15 |   end subroutine mysub2
-16 16 |   ! catch this
-17    |-end
-   17 |+end module mymod1
-18 18 | module mymod2
-19 19 |   implicit none
-20 20 |   type mytype
+14 |     ! ignore this
+15 |   end subroutine mysub2
+16 |   ! catch this
+   - end
+17 + end module mymod1
+18 | module mymod2
+19 |   implicit none
+20 |   type mytype
 
 ./resources/test/fixtures/style/S061.f90:28:3: S061 [*] end statement should be named.
    |
@@ -77,15 +74,14 @@ snapshot_kind: text
    |
    = help: Write as 'end function myfunc1'.
 
-ℹ Safe fix
-25 25 |   integer function myfunc1()
-26 26 |     myfunc1 = 1
-27 27 |     ! catch this
-28    |-  end function
-   28 |+  end function myfunc1
-29 29 |   integer function myfunc2()
-30 30 |     myfunc2 = 1
-31 31 |     ! ignore this
+25 |   integer function myfunc1()
+26 |     myfunc1 = 1
+27 |     ! catch this
+   -   end function
+28 +   end function myfunc1
+29 |   integer function myfunc2()
+30 |     myfunc2 = 1
+31 |     ! ignore this
 
 ./resources/test/fixtures/style/S061.f90:34:1: S061 [*] end statement should be named.
    |
@@ -98,15 +94,14 @@ snapshot_kind: text
    |
    = help: Write as 'end module mymod2'.
 
-ℹ Safe fix
-31 31 |     ! ignore this
-32 32 |   end function myfunc2
-33 33 |   ! catch this
-34    |-end module
-   34 |+end module mymod2
-35 35 | module mymod3
-36 36 |   interface
-37 37 |     module function foo() result(x)
+31 |     ! ignore this
+32 |   end function myfunc2
+33 |   ! catch this
+   - end module
+34 + end module mymod2
+35 | module mymod3
+36 |   interface
+37 |     module function foo() result(x)
 
 ./resources/test/fixtures/style/S061.f90:56:3: S061 [*] end statement should be named.
    |
@@ -119,15 +114,14 @@ snapshot_kind: text
    |
    = help: Write as 'end procedure foo'.
 
-ℹ Safe fix
-53 53 |   module procedure foo
-54 54 |     x = 1
-55 55 |     ! catch this
-56    |-  end procedure
-   56 |+  end procedure foo
-57 57 |   ! catch this
-58 58 | end
-59 59 | submodule (mymod3) mysub2
+53 |   module procedure foo
+54 |     x = 1
+55 |     ! catch this
+   -   end procedure
+56 +   end procedure foo
+57 |   ! catch this
+58 | end
+59 | submodule (mymod3) mysub2
 
 ./resources/test/fixtures/style/S061.f90:58:1: S061 [*] end statement should be named.
    |
@@ -140,15 +134,14 @@ snapshot_kind: text
    |
    = help: Write as 'end submodule mysub1'.
 
-ℹ Safe fix
-55 55 |     ! catch this
-56 56 |   end procedure
-57 57 |   ! catch this
-58    |-end
-   58 |+end submodule mysub1
-59 59 | submodule (mymod3) mysub2
-60 60 | contains
-61 61 |   module procedure bar
+55 |     ! catch this
+56 |   end procedure
+57 |   ! catch this
+   - end
+58 + end submodule mysub1
+59 | submodule (mymod3) mysub2
+60 | contains
+61 |   module procedure bar
 
 ./resources/test/fixtures/style/S061.f90:66:1: S061 [*] end statement should be named.
    |
@@ -161,15 +154,14 @@ snapshot_kind: text
    |
    = help: Write as 'end submodule mysub2'.
 
-ℹ Safe fix
-63 63 |     ! ignore this
-64 64 |   end procedure bar
-65 65 |   ! catch this
-66    |-end submodule
-   66 |+end submodule mysub2
-67 67 | submodule (mymod3) mysub3
-68 68 | contains
-69 69 |   module procedure baz
+63 |     ! ignore this
+64 |   end procedure bar
+65 |   ! catch this
+   - end submodule
+66 + end submodule mysub2
+67 | submodule (mymod3) mysub3
+68 | contains
+69 |   module procedure baz
 
 ./resources/test/fixtures/style/S061.f90:79:1: S061 [*] end statement should be named.
    |
@@ -182,15 +174,14 @@ snapshot_kind: text
    |
    = help: Write as 'end program myprog'.
 
-ℹ Safe fix
-76 76 |   implicit none
-77 77 |   write (*,*) 'hello world'
-78 78 |   ! catch this
-79    |-end
-   79 |+end program myprog
-80 80 | 
-81 81 | ! uppercase versions, check preserve case
-82 82 | MODULE MYMOD1_UPPER
+76 |   implicit none
+77 |   write (*,*) 'hello world'
+78 |   ! catch this
+   - end
+79 + end program myprog
+80 |
+81 | ! uppercase versions, check preserve case
+82 | MODULE MYMOD1_UPPER
 
 ./resources/test/fixtures/style/S061.f90:87:3: S061 [*] end statement should be named.
    |
@@ -203,15 +194,14 @@ snapshot_kind: text
    |
    = help: Write as 'END TYPE MYTYPE'.
 
-ℹ Safe fix
-84 84 |   TYPE MYTYPE
-85 85 |     INTEGER :: X
-86 86 |     ! CATCH THIS
-87    |-  END TYPE
-   87 |+  END TYPE MYTYPE
-88 88 | CONTAINS
-89 89 |   SUBROUTINE MYSUB1()
-90 90 |     WRITE (*,*) 'HELLO WORLD'
+84 |   TYPE MYTYPE
+85 |     INTEGER :: X
+86 |     ! CATCH THIS
+   -   END TYPE
+87 +   END TYPE MYTYPE
+88 | CONTAINS
+89 |   SUBROUTINE MYSUB1()
+90 |     WRITE (*,*) 'HELLO WORLD'
 
 ./resources/test/fixtures/style/S061.f90:92:3: S061 [*] end statement should be named.
    |
@@ -224,15 +214,14 @@ snapshot_kind: text
    |
    = help: Write as 'END SUBROUTINE MYSUB1'.
 
-ℹ Safe fix
-89 89 |   SUBROUTINE MYSUB1()
-90 90 |     WRITE (*,*) 'HELLO WORLD'
-91 91 |     ! CATCH THIS
-92    |-  END SUBROUTINE
-   92 |+  END SUBROUTINE MYSUB1
-93 93 |   SUBROUTINE MYSUB2()
-94 94 |     WRITE (*,*) 'HELLO WORLD'
-95 95 |     ! IGNORE THIS
+89 |   SUBROUTINE MYSUB1()
+90 |     WRITE (*,*) 'HELLO WORLD'
+91 |     ! CATCH THIS
+   -   END SUBROUTINE
+92 +   END SUBROUTINE MYSUB1
+93 |   SUBROUTINE MYSUB2()
+94 |     WRITE (*,*) 'HELLO WORLD'
+95 |     ! IGNORE THIS
 
 ./resources/test/fixtures/style/S061.f90:98:1: S061 [*] end statement should be named.
     |
@@ -245,15 +234,14 @@ snapshot_kind: text
     |
     = help: Write as 'END MODULE MYMOD1_UPPER'.
 
-ℹ Safe fix
-95 95 |     ! IGNORE THIS
-96 96 |   END SUBROUTINE MYSUB2
-97 97 |   ! CATCH THIS
-98    |-END
-   98 |+END MODULE MYMOD1_UPPER
-99 99 | MODULE MYMOD2_UPPER
-100 100 |   IMPLICIT NONE
-101 101 |   TYPE MYTYPE
+95  |     ! IGNORE THIS
+96  |   END SUBROUTINE MYSUB2
+97  |   ! CATCH THIS
+    - END
+98  + END MODULE MYMOD1_UPPER
+99  | MODULE MYMOD2_UPPER
+100 |   IMPLICIT NONE
+101 |   TYPE MYTYPE
 
 ./resources/test/fixtures/style/S061.f90:109:3: S061 [*] end statement should be named.
     |
@@ -266,15 +254,14 @@ snapshot_kind: text
     |
     = help: Write as 'END FUNCTION MYFUNC1'.
 
-ℹ Safe fix
-106 106 |   INTEGER FUNCTION MYFUNC1()
-107 107 |     MYFUNC1 = 1
-108 108 |     ! CATCH THIS
-109     |-  END FUNCTION
-    109 |+  END FUNCTION MYFUNC1
-110 110 |   INTEGER FUNCTION MYFUNC2()
-111 111 |     MYFUNC2 = 1
-112 112 |     ! IGNORE THIS
+106 |   INTEGER FUNCTION MYFUNC1()
+107 |     MYFUNC1 = 1
+108 |     ! CATCH THIS
+    -   END FUNCTION
+109 +   END FUNCTION MYFUNC1
+110 |   INTEGER FUNCTION MYFUNC2()
+111 |     MYFUNC2 = 1
+112 |     ! IGNORE THIS
 
 ./resources/test/fixtures/style/S061.f90:115:1: S061 [*] end statement should be named.
     |
@@ -285,9 +272,8 @@ snapshot_kind: text
     |
     = help: Write as 'END MODULE MYMOD2_UPPER'.
 
-ℹ Safe fix
-112 112 |     ! IGNORE THIS
-113 113 |   END FUNCTION MYFUNC2
-114 114 |   ! CATCH THIS
-115     |-END MODULE
-    115 |+END MODULE MYMOD2_UPPER
+112 |     ! IGNORE THIS
+113 |   END FUNCTION MYFUNC2
+114 |   ! CATCH THIS
+    - END MODULE
+115 + END MODULE MYMOD2_UPPER

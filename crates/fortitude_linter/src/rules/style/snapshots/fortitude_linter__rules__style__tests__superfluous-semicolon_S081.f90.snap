@@ -1,5 +1,5 @@
 ---
-source: fortitude/src/rules/style/mod.rs
+source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
@@ -12,12 +12,11 @@ snapshot_kind: text
   |
   = help: Remove this character
 
-ℹ Safe fix
-1 1 | module m
-2   |-  ;
-3 2 | end module m
-4 3 | 
-5 4 | 
+1 | module m
+  -   ;
+2 | end module m
+3 |
+4 |
 
 ./resources/test/fixtures/style/S081.f90:6:10: S081 [*] unnecessary semicolon
   |
@@ -28,15 +27,14 @@ snapshot_kind: text
   |
   = help: Remove this character
 
-ℹ Safe fix
-3 3 | end module m
-4 4 | 
-5 5 | 
-6   |-program p;
-  6 |+program p
-7 7 |   ;
-8 8 |   implicit none;
-9 9 |   integer :: i;
+3 | end module m
+4 |
+5 |
+  - program p;
+6 + program p
+7 |   ;
+8 |   implicit none;
+9 |   integer :: i;
 
 ./resources/test/fixtures/style/S081.f90:7:3: S081 [*] unnecessary semicolon
   |
@@ -48,14 +46,13 @@ snapshot_kind: text
   |
   = help: Remove this character
 
-ℹ Safe fix
-4 4 | 
-5 5 | 
-6 6 | program p;
-7   |-  ;
-8 7 |   implicit none;
-9 8 |   integer :: i;
-10 9 |   integer :: j;
+4 |
+5 |
+6 | program p;
+  -   ;
+7 |   implicit none;
+8 |   integer :: i;
+9 |   integer :: j;
 
 ./resources/test/fixtures/style/S081.f90:8:16: S081 [*] unnecessary semicolon
    |
@@ -68,15 +65,14 @@ snapshot_kind: text
    |
    = help: Remove this character
 
-ℹ Safe fix
-5 5 | 
-6 6 | program p;
-7 7 |   ;
-8   |-  implicit none;
-  8 |+  implicit none
-9 9 |   integer :: i;
-10 10 |   integer :: j;
-11 11 |   i = 1;; j = 2;
+5  |
+6  | program p;
+7  |   ;
+   -   implicit none;
+8  +   implicit none
+9  |   integer :: i;
+10 |   integer :: j;
+11 |   i = 1;; j = 2;
 
 ./resources/test/fixtures/style/S081.f90:9:15: S081 [*] unnecessary semicolon
    |
@@ -89,15 +85,14 @@ snapshot_kind: text
    |
    = help: Remove this character
 
-ℹ Safe fix
-6  6  | program p;
-7  7  |   ;
-8  8  |   implicit none;
-9     |-  integer :: i;
-   9  |+  integer :: i
-10 10 |   integer :: j;
-11 11 |   i = 1;; j = 2;
-12 12 |   i = i + j; write (*, *) i;;
+6  | program p;
+7  |   ;
+8  |   implicit none;
+   -   integer :: i;
+9  +   integer :: i
+10 |   integer :: j;
+11 |   i = 1;; j = 2;
+12 |   i = i + j; write (*, *) i;;
 
 ./resources/test/fixtures/style/S081.f90:10:15: S081 [*] unnecessary semicolon
    |
@@ -110,15 +105,14 @@ snapshot_kind: text
    |
    = help: Remove this character
 
-ℹ Safe fix
-7  7  |   ;
-8  8  |   implicit none;
-9  9  |   integer :: i;
-10    |-  integer :: j;
-   10 |+  integer :: j
-11 11 |   i = 1;; j = 2;
-12 12 |   i = i + j; write (*, *) i;;
-13 13 | end program p;
+7  |   ;
+8  |   implicit none;
+9  |   integer :: i;
+   -   integer :: j;
+10 +   integer :: j
+11 |   i = 1;; j = 2;
+12 |   i = i + j; write (*, *) i;;
+13 | end program p;
 
 ./resources/test/fixtures/style/S081.f90:11:9: S081 [*] unnecessary semicolon
    |
@@ -131,14 +125,13 @@ snapshot_kind: text
    |
    = help: Remove this character
 
-ℹ Safe fix
-8  8  |   implicit none;
-9  9  |   integer :: i;
-10 10 |   integer :: j;
-11    |-  i = 1;; j = 2;
-   11 |+  i = 1; j = 2;
-12 12 |   i = i + j; write (*, *) i;;
-13 13 | end program p;
+8  |   implicit none;
+9  |   integer :: i;
+10 |   integer :: j;
+   -   i = 1;; j = 2;
+11 +   i = 1; j = 2;
+12 |   i = i + j; write (*, *) i;;
+13 | end program p;
 
 ./resources/test/fixtures/style/S081.f90:11:16: S081 [*] unnecessary semicolon
    |
@@ -151,14 +144,13 @@ snapshot_kind: text
    |
    = help: Remove this character
 
-ℹ Safe fix
-8  8  |   implicit none;
-9  9  |   integer :: i;
-10 10 |   integer :: j;
-11    |-  i = 1;; j = 2;
-   11 |+  i = 1;; j = 2
-12 12 |   i = i + j; write (*, *) i;;
-13 13 | end program p;
+8  |   implicit none;
+9  |   integer :: i;
+10 |   integer :: j;
+   -   i = 1;; j = 2;
+11 +   i = 1;; j = 2
+12 |   i = i + j; write (*, *) i;;
+13 | end program p;
 
 ./resources/test/fixtures/style/S081.f90:12:29: S081 [*] unnecessary semicolon
    |
@@ -170,13 +162,12 @@ snapshot_kind: text
    |
    = help: Remove this character
 
-ℹ Safe fix
-9  9  |   integer :: i;
-10 10 |   integer :: j;
-11 11 |   i = 1;; j = 2;
-12    |-  i = i + j; write (*, *) i;;
-   12 |+  i = i + j; write (*, *) i;
-13 13 | end program p;
+9  |   integer :: i;
+10 |   integer :: j;
+11 |   i = 1;; j = 2;
+   -   i = i + j; write (*, *) i;;
+12 +   i = i + j; write (*, *) i;
+13 | end program p;
 
 ./resources/test/fixtures/style/S081.f90:13:14: S081 [*] unnecessary semicolon
    |
@@ -187,9 +178,8 @@ snapshot_kind: text
    |
    = help: Remove this character
 
-ℹ Safe fix
-10 10 |   integer :: j;
-11 11 |   i = 1;; j = 2;
-12 12 |   i = i + j; write (*, *) i;;
-13    |-end program p;
-   13 |+end program p
+10 |   integer :: j;
+11 |   i = 1;; j = 2;
+12 |   i = i + j; write (*, *) i;;
+   - end program p;
+13 + end program p

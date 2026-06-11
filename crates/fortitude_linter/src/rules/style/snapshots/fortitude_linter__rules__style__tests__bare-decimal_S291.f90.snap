@@ -1,6 +1,7 @@
 ---
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
+snapshot_kind: text
 ---
 ./resources/test/fixtures/style/S291.f90:7:21: S291 [*] trailing decimal point in `real` literal `6.`
   |
@@ -12,15 +13,14 @@ expression: diagnostics
   |
   = help: Prefer `6.0`
 
-ℹ Safe fix
-4 4 |     implicit none (type, external)
-5 5 | 
-6 6 |     real(dp) :: a = 6.0
-7   |-    real(dp) :: b = 6.
-  7 |+    real(dp) :: b = 6.0
-8 8 |     real(dp) :: c = .6
-9 9 |     real(dp) :: d = 12.45
-10 10 |     real(dp) :: e = .45
+4  |     implicit none (type, external)
+5  |
+6  |     real(dp) :: a = 6.0
+   -     real(dp) :: b = 6.
+7  +     real(dp) :: b = 6.0
+8  |     real(dp) :: c = .6
+9  |     real(dp) :: d = 12.45
+10 |     real(dp) :: e = .45
 
 ./resources/test/fixtures/style/S291.f90:8:21: S291 [*] leading decimal point in `real` literal `.6`
    |
@@ -33,15 +33,14 @@ expression: diagnostics
    |
    = help: Prefer `0.6`
 
-ℹ Safe fix
-5 5 | 
-6 6 |     real(dp) :: a = 6.0
-7 7 |     real(dp) :: b = 6.
-8   |-    real(dp) :: c = .6
-  8 |+    real(dp) :: c = 0.6
-9 9 |     real(dp) :: d = 12.45
-10 10 |     real(dp) :: e = .45
-11 11 |     real(dp) :: f = 45.
+5  |
+6  |     real(dp) :: a = 6.0
+7  |     real(dp) :: b = 6.
+   -     real(dp) :: c = .6
+8  +     real(dp) :: c = 0.6
+9  |     real(dp) :: d = 12.45
+10 |     real(dp) :: e = .45
+11 |     real(dp) :: f = 45.
 
 ./resources/test/fixtures/style/S291.f90:10:21: S291 [*] leading decimal point in `real` literal `.45`
    |
@@ -54,15 +53,14 @@ expression: diagnostics
    |
    = help: Prefer `0.45`
 
-ℹ Safe fix
-7  7  |     real(dp) :: b = 6.
-8  8  |     real(dp) :: c = .6
-9  9  |     real(dp) :: d = 12.45
-10    |-    real(dp) :: e = .45
-   10 |+    real(dp) :: e = 0.45
-11 11 |     real(dp) :: f = 45.
-12 12 |     real(dp) :: g = 1.0e+10
-13 13 |     real(dp) :: h = 3.e+10
+7  |     real(dp) :: b = 6.
+8  |     real(dp) :: c = .6
+9  |     real(dp) :: d = 12.45
+   -     real(dp) :: e = .45
+10 +     real(dp) :: e = 0.45
+11 |     real(dp) :: f = 45.
+12 |     real(dp) :: g = 1.0e+10
+13 |     real(dp) :: h = 3.e+10
 
 ./resources/test/fixtures/style/S291.f90:11:21: S291 [*] trailing decimal point in `real` literal `45.`
    |
@@ -75,15 +73,14 @@ expression: diagnostics
    |
    = help: Prefer `45.0`
 
-ℹ Safe fix
-8  8  |     real(dp) :: c = .6
-9  9  |     real(dp) :: d = 12.45
-10 10 |     real(dp) :: e = .45
-11    |-    real(dp) :: f = 45.
-   11 |+    real(dp) :: f = 45.0
-12 12 |     real(dp) :: g = 1.0e+10
-13 13 |     real(dp) :: h = 3.e+10
-14 14 |     real(dp) :: i = .5e10
+8  |     real(dp) :: c = .6
+9  |     real(dp) :: d = 12.45
+10 |     real(dp) :: e = .45
+   -     real(dp) :: f = 45.
+11 +     real(dp) :: f = 45.0
+12 |     real(dp) :: g = 1.0e+10
+13 |     real(dp) :: h = 3.e+10
+14 |     real(dp) :: i = .5e10
 
 ./resources/test/fixtures/style/S291.f90:13:21: S291 [*] trailing decimal point in `real` literal `3.e+10`
    |
@@ -96,15 +93,14 @@ expression: diagnostics
    |
    = help: Prefer `3.0e+10`
 
-ℹ Safe fix
-10 10 |     real(dp) :: e = .45
-11 11 |     real(dp) :: f = 45.
-12 12 |     real(dp) :: g = 1.0e+10
-13    |-    real(dp) :: h = 3.e+10
-   13 |+    real(dp) :: h = 3.0e+10
-14 14 |     real(dp) :: i = .5e10
-15 15 |     real(dp) :: j = 11.0d+10
-16 16 |     real(dp) :: k = 53.d+10
+10 |     real(dp) :: e = .45
+11 |     real(dp) :: f = 45.
+12 |     real(dp) :: g = 1.0e+10
+   -     real(dp) :: h = 3.e+10
+13 +     real(dp) :: h = 3.0e+10
+14 |     real(dp) :: i = .5e10
+15 |     real(dp) :: j = 11.0d+10
+16 |     real(dp) :: k = 53.d+10
 
 ./resources/test/fixtures/style/S291.f90:14:21: S291 [*] leading decimal point in `real` literal `.5e10`
    |
@@ -117,15 +113,14 @@ expression: diagnostics
    |
    = help: Prefer `0.5e10`
 
-ℹ Safe fix
-11 11 |     real(dp) :: f = 45.
-12 12 |     real(dp) :: g = 1.0e+10
-13 13 |     real(dp) :: h = 3.e+10
-14    |-    real(dp) :: i = .5e10
-   14 |+    real(dp) :: i = 0.5e10
-15 15 |     real(dp) :: j = 11.0d+10
-16 16 |     real(dp) :: k = 53.d+10
-17 17 |     real(dp) :: l = .75d10
+11 |     real(dp) :: f = 45.
+12 |     real(dp) :: g = 1.0e+10
+13 |     real(dp) :: h = 3.e+10
+   -     real(dp) :: i = .5e10
+14 +     real(dp) :: i = 0.5e10
+15 |     real(dp) :: j = 11.0d+10
+16 |     real(dp) :: k = 53.d+10
+17 |     real(dp) :: l = .75d10
 
 ./resources/test/fixtures/style/S291.f90:16:21: S291 [*] trailing decimal point in `real` literal `53.d+10`
    |
@@ -138,15 +133,14 @@ expression: diagnostics
    |
    = help: Prefer `53.0d+10`
 
-ℹ Safe fix
-13 13 |     real(dp) :: h = 3.e+10
-14 14 |     real(dp) :: i = .5e10
-15 15 |     real(dp) :: j = 11.0d+10
-16    |-    real(dp) :: k = 53.d+10
-   16 |+    real(dp) :: k = 53.0d+10
-17 17 |     real(dp) :: l = .75d10
-18 18 |     real(dp) :: m = .5_dp
-19 19 |     real(dp) :: n = 5._dp
+13 |     real(dp) :: h = 3.e+10
+14 |     real(dp) :: i = .5e10
+15 |     real(dp) :: j = 11.0d+10
+   -     real(dp) :: k = 53.d+10
+16 +     real(dp) :: k = 53.0d+10
+17 |     real(dp) :: l = .75d10
+18 |     real(dp) :: m = .5_dp
+19 |     real(dp) :: n = 5._dp
 
 ./resources/test/fixtures/style/S291.f90:17:21: S291 [*] leading decimal point in `real` literal `.75d10`
    |
@@ -159,15 +153,14 @@ expression: diagnostics
    |
    = help: Prefer `0.75d10`
 
-ℹ Safe fix
-14 14 |     real(dp) :: i = .5e10
-15 15 |     real(dp) :: j = 11.0d+10
-16 16 |     real(dp) :: k = 53.d+10
-17    |-    real(dp) :: l = .75d10
-   17 |+    real(dp) :: l = 0.75d10
-18 18 |     real(dp) :: m = .5_dp
-19 19 |     real(dp) :: n = 5._dp
-20 20 |     real(dp) :: o = 0.5_dp
+14 |     real(dp) :: i = .5e10
+15 |     real(dp) :: j = 11.0d+10
+16 |     real(dp) :: k = 53.d+10
+   -     real(dp) :: l = .75d10
+17 +     real(dp) :: l = 0.75d10
+18 |     real(dp) :: m = .5_dp
+19 |     real(dp) :: n = 5._dp
+20 |     real(dp) :: o = 0.5_dp
 
 ./resources/test/fixtures/style/S291.f90:18:21: S291 [*] leading decimal point in `real` literal `.5_dp`
    |
@@ -180,15 +173,14 @@ expression: diagnostics
    |
    = help: Prefer `0.5_dp`
 
-ℹ Safe fix
-15 15 |     real(dp) :: j = 11.0d+10
-16 16 |     real(dp) :: k = 53.d+10
-17 17 |     real(dp) :: l = .75d10
-18    |-    real(dp) :: m = .5_dp
-   18 |+    real(dp) :: m = 0.5_dp
-19 19 |     real(dp) :: n = 5._dp
-20 20 |     real(dp) :: o = 0.5_dp
-21 21 | 
+15 |     real(dp) :: j = 11.0d+10
+16 |     real(dp) :: k = 53.d+10
+17 |     real(dp) :: l = .75d10
+   -     real(dp) :: m = .5_dp
+18 +     real(dp) :: m = 0.5_dp
+19 |     real(dp) :: n = 5._dp
+20 |     real(dp) :: o = 0.5_dp
+21 |
 
 ./resources/test/fixtures/style/S291.f90:19:21: S291 [*] trailing decimal point in `real` literal `5._dp`
    |
@@ -200,12 +192,11 @@ expression: diagnostics
    |
    = help: Prefer `5.0_dp`
 
-ℹ Safe fix
-16 16 |     real(dp) :: k = 53.d+10
-17 17 |     real(dp) :: l = .75d10
-18 18 |     real(dp) :: m = .5_dp
-19    |-    real(dp) :: n = 5._dp
-   19 |+    real(dp) :: n = 5.0_dp
-20 20 |     real(dp) :: o = 0.5_dp
-21 21 | 
-22 22 | end program p
+16 |     real(dp) :: k = 53.d+10
+17 |     real(dp) :: l = .75d10
+18 |     real(dp) :: m = .5_dp
+   -     real(dp) :: n = 5._dp
+19 +     real(dp) :: n = 5.0_dp
+20 |     real(dp) :: o = 0.5_dp
+21 |
+22 | end program p
