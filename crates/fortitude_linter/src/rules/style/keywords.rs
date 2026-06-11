@@ -468,7 +468,7 @@ impl Violation for KeywordReuse {
     #[derive_message_formats]
     fn message(&self) -> String {
         let keyword = &self.keyword;
-        format!("Keyword `{keyword}` used as an identifier")
+        format!("Keyword `{keyword}` used as a label")
     }
 }
 
