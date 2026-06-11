@@ -362,6 +362,34 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     let mut next_expected_indent = 0;
     let mut in_line_continuation = false;
 
+    const BEGIN_SCOPE_NODES: &[&str] = &[
+        "program_statement",
+        "module_statement",
+        "subroutine_statement",
+        "function_statement",
+        "derived_type_statement",
+        "block_construct",
+        "block_label_start_expression",
+    ];
+    const ZERO_INDENT_NODES: &[&str] = &[
+        "preproc_if",
+        "preproc_ifdef",
+        "preproc_elifdef",
+        "preproc_else",
+        "preproc_include",
+        "preproc_def",
+        "preproc_function_def",
+    ];
+    const SCOPED_ZERO_INDENT_NODES: &[&str] = &["contains_statement"];
+    const END_SCOPE_NODES: &[&str] = &[
+        "end_program_statement",
+        "end_module_statement",
+        "end_subroutine_statement",
+        "end_function_statement",
+        "end_type_statement",
+        "end_block_construct_statement",
+    ];
+
     for line in context.source_text().universal_newlines() {
         // Skip empty lines and lines with only whitespace
         if line.trim().is_empty() {
@@ -376,43 +404,16 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         let end = start + TextSize::try_from(leading_spaces).unwrap();
         let range = TextRange::new(start, end);
 
-        const BEGIN_SCOPE_NODES: &[&str] = &[
-            "program_statement",
-            "module_statement",
-            "subroutine_statement",
-            "function_statement",
-            "derived_type_statement",
-            "block_construct",
-            "block_label_start_expression",
-        ];
-        const ZERO_INDENT_NODES: &[&str] = &[
-            "preproc_if",
-            "preproc_ifdef",
-            "preproc_elifdef",
-            "preproc_else",
-            "preproc_include",
-            "preproc_def",
-            "preproc_function_def",
-        ];
-        const SCOPED_ZERO_INDENT_NODES: &[&str] = &["contains_statement"];
-        const END_SCOPE_NODES: &[&str] = &[
-            "end_program_statement",
-            "end_module_statement",
-            "end_subroutine_statement",
-            "end_function_statement",
-            "end_type_statement",
-            "end_block_construct_statement",
-        ];
-
         let content_start = start + TextSize::try_from(leading_spaces as u32).unwrap();
+
         // Determine what the indentation should be for the next line using the first node for this line
+        current_expected_indent = next_expected_indent;
         if let Some(line_node) =
             root.named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
         {
             let node_kind = &line_node.kind();
 
             // Determine expected indent bases on tree-sitter node kind
-            current_expected_indent = next_expected_indent;
             if BEGIN_SCOPE_NODES.contains(node_kind) {
                 next_expected_indent = current_expected_indent + indent_width;
             } else if END_SCOPE_NODES.contains(node_kind) {
@@ -437,25 +438,25 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     in_line_continuation = false;
                 }
             }
+        }
 
-            // Compare with the expected number of leading spaces
-            if leading_spaces != current_expected_indent {
-                let edit = if current_expected_indent > 0 {
-                    Edit::range_replacement(" ".repeat(current_expected_indent), range)
-                } else {
-                    Edit::deletion(start, end)
-                };
-                let visual_end = if leading_spaces > 0 {
-                    start + TextSize::try_from(leading_spaces).unwrap()
-                } else {
-                    start + TextSize::try_from(1usize).unwrap()
-                };
-                violations.push(
-                    context
-                        .create_diagnostic(IncorrectIndent, TextRange::new(start, visual_end))
-                        .with_fix(Fix::safe_edit(edit)),
-                );
-            }
+        // Compare with the expected number of leading spaces
+        if leading_spaces != current_expected_indent {
+            let edit = if current_expected_indent > 0 {
+                Edit::range_replacement(" ".repeat(current_expected_indent), range)
+            } else {
+                Edit::deletion(start, end)
+            };
+            let visual_end = if leading_spaces > 0 {
+                start + TextSize::try_from(leading_spaces).unwrap()
+            } else {
+                start + TextSize::try_from(1usize).unwrap()
+            };
+            violations.push(
+                context
+                    .create_diagnostic(IncorrectIndent, TextRange::new(start, visual_end))
+                    .with_fix(Fix::safe_edit(edit)),
+            );
         }
     }
 
