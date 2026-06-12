@@ -823,6 +823,7 @@ dependencies = [
  "tempfile",
  "termimad",
  "terminal-light",
+ "test-case",
  "textwrap",
 ]
 

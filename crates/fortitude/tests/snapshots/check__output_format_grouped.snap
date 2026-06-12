@@ -1,0 +1,32 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - grouped
+    - "--select"
+    - "S061,C001,PORT011,PORT021"
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+test.f90:
+  1:1  C001 program uses implicit typing
+  2:10 PORT021 'logical*4' uses non-standard syntax
+  2:11 PORT011 logical kind set with number literal '4'
+  3:1  S061 [*] end statement should be named.
+
+fortitude: 1 files scanned.
+Number of errors: 4
+
+For more information about specific rules, run:
+
+    fortitude explain X001,Y002,...
+
+[*] 1 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
+
+----- stderr -----

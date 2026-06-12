@@ -1,0 +1,22 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - pylint
+    - "--select"
+    - "S061,C001,PORT011,PORT021"
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+test.f90:1: [C001] program uses implicit typing
+test.f90:2: [PORT021] 'logical*4' uses non-standard syntax
+test.f90:2: [PORT011] logical kind set with number literal '4'
+test.f90:3: [S061] end statement should be named.
+
+----- stderr -----

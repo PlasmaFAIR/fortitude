@@ -1,0 +1,35 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - junit
+    - "--select"
+    - "S061,C001,PORT011,PORT021"
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="fortitude" tests="4" failures="4" errors="0">
+    <testsuite name="[TMP]/test.f90" tests="4" disabled="0" errors="0" failures="4" package="org.plasmafair.fortitude">
+        <testcase name="org.plasmafair.fortitude.C001" classname="[TMP]/test" line="1" column="1">
+            <failure message="program uses implicit typing">line 1, col 1, program uses implicit typing</failure>
+        </testcase>
+        <testcase name="org.plasmafair.fortitude.PORT021" classname="[TMP]/test" line="2" column="10">
+            <failure message="&apos;logical*4&apos; uses non-standard syntax">line 2, col 10, &apos;logical*4&apos; uses non-standard syntax</failure>
+        </testcase>
+        <testcase name="org.plasmafair.fortitude.PORT011" classname="[TMP]/test" line="2" column="11">
+            <failure message="logical kind set with number literal &apos;4&apos;">line 2, col 11, logical kind set with number literal &apos;4&apos;</failure>
+        </testcase>
+        <testcase name="org.plasmafair.fortitude.S061" classname="[TMP]/test" line="3" column="1">
+            <failure message="end statement should be named.">line 3, col 1, end statement should be named.</failure>
+        </testcase>
+    </testsuite>
+</testsuites>
+
+----- stderr -----

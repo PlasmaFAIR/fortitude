@@ -2318,3 +2318,71 @@ fn git_since() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[test_case::test_case("concise")]
+#[test_case::test_case("full")]
+#[test_case::test_case("json")]
+#[test_case::test_case("json-lines")]
+#[test_case::test_case("junit")]
+#[test_case::test_case("grouped")]
+#[test_case::test_case("github")]
+#[test_case::test_case("gitlab")]
+#[test_case::test_case("pylint")]
+#[test_case::test_case("rdjson")]
+#[test_case::test_case("azure")]
+#[test_case::test_case("sarif")]
+fn output_format(output_format: &str) -> Result<()> {
+    const CONTENT: &str = "\
+program test
+  logical*4, parameter :: true = .true.
+end program
+";
+
+    let cmd = FortitudeCheck::with_settings(|_project_dir, mut settings| {
+        // JSON double escapes backslashes
+        settings.add_filter(r#""[^"]+\\?/?test.f90"#, r#""[TMP]/test.f90"#);
+
+        settings
+    })?;
+
+    cmd.write_file("test.f90", CONTENT)?;
+
+    let snapshot = format!("output_format_{output_format}");
+
+    assert_cmd_snapshot!(
+        snapshot,
+        cmd.check_command_plain().args([
+            "--output-format",
+            output_format,
+            "--select",
+            "S061,C001,PORT011,PORT021",
+            "test.f90",
+        ])
+    );
+
+    Ok(())
+}
+
+#[test_case::test_case("concise"; "concise_show_fixes")]
+#[test_case::test_case("full"; "full_show_fixes")]
+#[test_case::test_case("grouped"; "grouped_show_fixes")]
+fn output_format_show_fixes(output_format: &str) -> Result<()> {
+    let fixture = FortitudeCheck::with_file("test.f90", "program foo\nend program foo")?;
+    let snapshot = format!("output_format_show_fixes_{output_format}");
+
+    assert_cmd_snapshot!(
+        snapshot,
+        fixture.check_command_plain().args([
+            "--output-format",
+            output_format,
+            "--select",
+            "implicit-typing",
+            "--fix",
+            "--unsafe-fixes",
+            "--show-fixes",
+            "test.f90",
+        ])
+    );
+
+    Ok(())
+}

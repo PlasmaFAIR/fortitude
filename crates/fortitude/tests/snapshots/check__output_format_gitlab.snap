@@ -1,0 +1,71 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - gitlab
+    - "--select"
+    - "S061,C001,PORT011,PORT021"
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+[
+  {
+    "description": "(C001) program uses implicit typing",
+    "check_name": "C001: implicit-typing",
+    "severity": "major",
+    "fingerprint": "fcf683c4c4180fca",
+    "location": {
+      "path": "test.f90",
+      "lines": {
+        "begin": 1,
+        "end": 2
+      }
+    }
+  },
+  {
+    "description": "(PORT021) 'logical*4' uses non-standard syntax",
+    "check_name": "PORT021: star-kind",
+    "severity": "major",
+    "fingerprint": "f0998ab8f95894d5",
+    "location": {
+      "path": "test.f90",
+      "lines": {
+        "begin": 2,
+        "end": 2
+      }
+    }
+  },
+  {
+    "description": "(PORT011) logical kind set with number literal '4'",
+    "check_name": "PORT011: literal-kind",
+    "severity": "major",
+    "fingerprint": "44859b9691ebd330",
+    "location": {
+      "path": "test.f90",
+      "lines": {
+        "begin": 2,
+        "end": 2
+      }
+    }
+  },
+  {
+    "description": "(S061) end statement should be named.",
+    "check_name": "S061: unnamed-end-statement",
+    "severity": "major",
+    "fingerprint": "651af5ac2fec5481",
+    "location": {
+      "path": "test.f90",
+      "lines": {
+        "begin": 3,
+        "end": 3
+      }
+    }
+  }
+]
+----- stderr -----
