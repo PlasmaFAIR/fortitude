@@ -1,7 +1,7 @@
 name: Draft PDF
 on:
     push:
-        branches: [joss]
+        branches: [joss, joss_review_1, joss_review_2]
 
 jobs:
   paper:

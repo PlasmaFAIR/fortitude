@@ -8,7 +8,7 @@ data = {
     "Fortitude": 0.4556,
     "Flint": 12.915,
     "Stylist": 14.830,
-    "Camfort": 25.135,
+    "CamFort": 25.135,
 }
 data = dict(sorted(data.items(), key=lambda item: item[1]))
 
