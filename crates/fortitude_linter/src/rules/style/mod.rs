@@ -42,6 +42,7 @@ mod tests {
     #[test_case(Rule::SuperfluousSemicolon, Path::new("S081.f90"))]
     #[test_case(Rule::MultipleStatementsPerLine, Path::new("S082.f90"))]
     #[test_case(Rule::TrailingWhitespace, Path::new("S101.f90"))]
+    #[test_case(Rule::TrailingWhitespace, Path::new("S101_crlf.f90"))]
     #[test_case(Rule::IncorrectSpaceBeforeComment, Path::new("S102.f90"))]
     #[test_case(Rule::IncorrectSpaceAroundDoubleColon, Path::new("S103.f90"))]
     #[test_case(Rule::IncorrectSpaceBetweenBrackets, Path::new("S104.f90"))]
