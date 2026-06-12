@@ -131,6 +131,7 @@
 | PORT012 | [literal-kind-suffix](rules/literal-kind-suffix.md) | '{literal}' has literal kind suffix '{suffix}' | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | PORT021 | [star-kind](rules/star-kind.md) | '{dtype}{size}' uses non-standard syntax | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | PORT031 | [invalid-tab](rules/invalid-tab.md) | Invalid tab character | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
+| PORT041 | [return-in-program](rules/return-in-program.md) | 'return' statement in program body | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Fortitude (FORT)
 
