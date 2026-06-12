@@ -1,10 +1,13 @@
 pub mod symbol_table;
 pub mod types;
 
-use crate::diagnostics::Edit;
+use crate::{
+    diagnostics::Edit,
+    whitespace::{has_leading_content, has_trailing_content},
+};
 use anyhow::{Result, anyhow};
 use itertools::Itertools;
-use ruff_source_file::SourceFile;
+use ruff_source_file::{LineRanges, SourceFile};
 use ruff_text_size::{TextRange, TextSize};
 use strum_macros::EnumIs;
 /// Contains methods to parse Fortran code into a tree-sitter Tree and utilities to simplify the
@@ -157,6 +160,15 @@ pub trait FortitudeNode<'tree> {
     /// Get the next matching statement label
     fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree>>;
 
+    /// Get the preceding line continuation, if there is one
+    ///
+    /// Finds the previous *real* line-continuation character, as tree-sitter
+    /// may have inserted an implied one on the continued line
+    fn prev_line_continuation(&self) -> Option<Node<'tree>>;
+
+    /// Get the following line continuation, if there is one
+    fn next_line_continuation(&self) -> Option<Node<'tree>>;
+
     /// Get the module name from a use statement node.
     /// Returns None if the node is not a use statement or has no module_name child.
     fn module_name(&self, src: &str) -> Option<String>;
@@ -240,44 +252,30 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     }
 
     fn indentation(&self, source_file: &SourceFile) -> String {
-        let src = source_file.to_source_code();
-        let start_byte = self.start_textsize();
-        let start_index = src.line_index(start_byte);
-        let start_line = src.line_start(start_index);
-        let start_offset = start_byte - start_line;
-        let line = src
-            .slice(TextRange::new(start_line, start_line + start_offset))
-            .to_string();
+        let src = source_file.source_text();
+        let offset = self.start_textsize();
+        let line_start = src.line_start(offset);
+        let line = &src[TextRange::new(line_start, offset)];
         line.chars().take_while(|&c| c.is_whitespace()).collect()
     }
 
     fn indentation_ignore_stmt_label(&self, source_file: &SourceFile) -> String {
-        let src = source_file.to_source_code();
+        let src = source_file.source_text();
         let start_byte = self.start_textsize();
-        let start_index = src.line_index(start_byte);
-        let start_line = src.line_start(start_index);
+        let start_line = src.line_start(start_byte);
         let width = (start_byte - start_line).to_usize();
         format!("{:width$}", " ")
     }
 
     fn edit_delete(&self, source_file: &SourceFile) -> Edit {
-        // If deletion results in an empty line (or multiple), remove it
-        // TODO handle case where removal should also remove a preceding comma
-        let src = source_file.to_source_code();
-        let start_byte = self.start_textsize();
-        let end_byte = self.end_textsize();
-        let start_index = src.line_index(start_byte);
-        let end_index = src.line_index(end_byte);
-        let start_line = src.line_start(start_index);
-        let end_line = src.line_end(end_index);
-        let mut text = src.slice(TextRange::new(start_line, end_line)).to_string();
-        let start_offset = start_byte - start_line;
-        let end_offset = end_byte - start_line;
-        text.replace_range(usize::from(start_offset)..usize::from(end_offset), "");
-        if text.trim().is_empty() {
-            Edit::range_deletion(TextRange::new(start_line, end_line))
+        let src = source_file.source_text();
+        if has_leading_content(self.start_textsize(), src)
+            || has_trailing_content(self.end_textsize(), src)
+        {
+            Edit::range_deletion(self.textrange())
         } else {
-            Edit::range_deletion(TextRange::new(start_byte, end_byte))
+            // If deletion results in an empty line (or multiple), remove it
+            Edit::range_deletion(src.full_lines_range(self.textrange()))
         }
     }
 
@@ -395,6 +393,28 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
 
     fn try_to_controlflow(self, source_file: &SourceFile) -> Option<ControlFlowNode<'tree1>> {
         ControlFlowNode::maybe_from(self, source_file.source_text())
+    }
+
+    fn prev_line_continuation(&self) -> Option<Node<'tree1>> {
+        let mut sibling = self.prev_sibling();
+        while let Some(prev_sibling) = sibling {
+            if prev_sibling.kind() == "&" && !prev_sibling.textrange().is_empty() {
+                return Some(prev_sibling);
+            }
+            sibling = prev_sibling.prev_sibling();
+        }
+        None
+    }
+
+    fn next_line_continuation(&self) -> Option<Node<'tree1>> {
+        let mut sibling = self.next_sibling();
+        while let Some(next_sibling) = sibling {
+            if next_sibling.kind() == "&" {
+                return Some(next_sibling);
+            }
+            sibling = next_sibling.next_sibling();
+        }
+        None
     }
 }
 
@@ -553,7 +573,7 @@ mod tests {
     use super::*;
     use anyhow::{Context, Result};
     use textwrap::dedent;
-    use tree_sitter::Parser;
+    use tree_sitter::{Parser, Point};
 
     #[test]
     fn test_comment_block() -> Result<()> {
@@ -620,6 +640,68 @@ mod tests {
             .child_with_name("module")
             .context("Missing module node")?;
         assert!(module_node.prev_attached_comment_block(&code).is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn prev_line_continuation() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            do &
+              while (.true.)
+            end do
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "while_statement")
+            .context("missing 'while'")?;
+
+        let ampersand = node.prev_line_continuation();
+        assert!(ampersand.is_some());
+        assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
+
+        Ok(())
+    }
+
+    #[test]
+    fn next_line_continuation() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            do &
+              while (.true.)
+            end do
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "do")
+            .context("missing 'do'")?;
+
+        let ampersand = node.next_line_continuation();
+        assert!(ampersand.is_some());
+        assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
 
         Ok(())
     }

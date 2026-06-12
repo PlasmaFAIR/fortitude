@@ -1,5 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
+use crate::fix::edits::delete_stmt_part;
 use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
@@ -60,7 +61,9 @@ impl AstRule for SuperfluousWhileTrue {
         {
             return None;
         }
-        let fix = Fix::safe_edit(node.edit_delete(context.source_file()));
+        let edits = delete_stmt_part(node, context.source_text());
+        let mut iter = edits.into_iter();
+        let fix = Fix::safe_edits(iter.next().expect("edits should be nonempty"), iter);
         some_vec!(context.create_diagnostic(Self {}, node).with_fix(fix))
     }
 

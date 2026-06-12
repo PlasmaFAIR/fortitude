@@ -26,6 +26,7 @@ pub mod stylist;
 mod test;
 pub mod text_helpers;
 pub mod traits;
+pub mod whitespace;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use ast::FortitudeNode;
