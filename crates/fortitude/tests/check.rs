@@ -1,115 +1,203 @@
+use anyhow::{Context, Result};
+use insta::internals::SettingsBindDropGuard;
 use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
 use std::path::{Path, PathBuf};
 use std::{fs, process::Command};
 use tempfile::TempDir;
+use textwrap::dedent;
 
 const BIN_NAME: &str = "fortitude";
+const STDIN_BASE_OPTIONS: &[&str] = &["--output-format", "concise"];
 
 fn fortitude_cmd() -> Command {
     Command::new(get_cargo_bin(BIN_NAME))
 }
 
-/// Builder for `fortitude check` commands
-///
-/// This is used to ensure we always set either:
-///   a) `--isolated`, or
-///   b) `--config-file`
-/// to make sure we don't get any interference from user-specific config files
-#[derive(Debug, Default)]
-struct FortitudeCheck<'a> {
-    config: Option<&'a Path>,
-    /// If not set, defaults to '-', stdin
-    filename: Option<&'a str>,
-    args: Vec<&'a str>,
+/// Creates a regex filter for replacing temporary directory paths in snapshots
+pub(crate) fn tempdir_filter(path: impl AsRef<str>) -> String {
+    format!(r"{}[\\/]?", regex::escape(path.as_ref()))
 }
 
-impl<'a> FortitudeCheck<'a> {
-    /// Set the `--config` option.
-    #[must_use]
-    fn config(mut self, config: &'a Path) -> Self {
-        self.config = Some(config);
-        self
+/// Builder for `fortitude check` commands
+struct FortitudeCheck {
+    _temp_dir: TempDir,
+    _settings_scope: SettingsBindDropGuard,
+    project_dir: PathBuf,
+}
+
+impl FortitudeCheck {
+    /// Creates a new test fixture with an empty temporary directory.
+    ///
+    /// This sets up:
+    /// - A temporary directory that's automatically cleaned up
+    /// - Insta snapshot filters for cross-platform path compatibility
+    /// - Environment isolation for consistent test behavior
+    pub(crate) fn new() -> Result<Self> {
+        Self::with_settings(|_, settings| settings)
     }
 
-    /// Set the input file to pass to `fortitude check`.
-    #[must_use]
-    fn filename(mut self, filename: &'a str) -> Self {
-        self.filename = Some(filename);
-        self
-    }
-
-    /// Set the input file to pass to `fortitude check`.
-    #[must_use]
-    fn file(mut self, filename: &'a Path) -> Self {
-        self.filename = filename.to_str();
-        self
-    }
-
-    /// Set the list of positional arguments.
-    #[must_use]
-    fn args(mut self, args: impl IntoIterator<Item = &'a str>) -> Self {
-        self.args = args.into_iter().collect();
-        self
-    }
-
-    /// Generate a [`Command`] for the `fortitude check` command.
-    fn build(self) -> Command {
-        let mut cmd = fortitude_cmd();
-        cmd.arg("check");
-
-        if let Some(path) = self.config {
-            cmd.arg("--config-file");
-            cmd.arg(path);
-        } else {
-            cmd.arg("--isolated");
-        }
-        if let Some(filename) = self.filename {
-            cmd.arg(filename);
-        } else {
-            cmd.arg("-");
-        }
-        cmd.args(self.args);
+    /// Generate a [`Command`] for the `fortitude check` command with some
+    /// default options.
+    ///
+    /// The command is set up with:
+    /// - The correct fortitude binary path
+    /// - Working directory set to the test directory
+    /// - Clean environment variables for consistent behavior
+    /// - The `check` subcommand
+    ///
+    /// You can chain additional arguments and options as needed.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// let output = fixture
+    ///     .check_command()
+    ///     .args(["--select", "E"])
+    ///     .arg(".")
+    ///     .output()?;
+    /// ```
+    fn check_command(&self) -> Command {
+        let mut cmd = self.check_command_plain();
+        cmd.args(STDIN_BASE_OPTIONS);
         cmd
     }
-}
 
-macro_rules! apply_common_filters {
-    {} => {
-        let mut settings = insta::Settings::clone_current();
-        // Macos Temp Folder
-        settings.add_filter(r"/var/folders/\S+?/T/\S+", "[TEMP_FILE]");
-        // Linux Temp Folder
-        settings.add_filter(r"/tmp/\.tmp\S+", "[TEMP_FILE]");
-        // Nix build Temp Folder
-        settings.add_filter(r"/build/\.tmp\S+", "[TEMP_FILE]");
-        settings.add_filter(r"/tmp/nix-shell\S+\.tmp\S+", "[TEMP_FILE]");
-        // Windows Temp folder
-        settings.add_filter(r"\b[A-Z]:\\.*\\Local\\Temp\\\S+", "[TEMP_FILE]");
-        // Convert windows paths to Unix Paths.
-        settings.add_filter(r"\\\\?([\w\d.])", "/$1");
-        // Ignore specific os errors
-        settings.add_filter(r"E000 Error opening file: .*", "E000 Error opening file: [OS_ERROR]");
-        // Ignore absolute paths into the repo (including Windows drive letter)
-        settings.add_filter(r"[A-Z]?:?/.*(fortitude/crates/.*)", "$1");
-        let _bound = settings.bind_to_scope();
+    /// Like [`check_command`], but without the other arguments
+    fn check_command_plain(&self) -> Command {
+        let mut cmd = fortitude_cmd();
+        cmd.current_dir(&self.project_dir);
+
+        // Unset all environment variables because they can affect test behavior.
+        cmd.env_clear();
+
+        // Use the `check` subcommand
+        cmd.arg("check");
+        cmd
     }
-}
 
-macro_rules! apply_git_repo_filters {
-    () => {
-        // We need to additionally filter relative paths, because macs get an
-        // absolute path which the common filters filter
-        let mut settings = insta::Settings::clone_current();
-        settings.add_filter(r"test\.f90:\d+:\d+:", "[TEMP_FILE]");
-        let _bound = settings.bind_to_scope();
-    };
+    pub(crate) fn with_settings(
+        setup_settings: impl FnOnce(&Path, insta::Settings) -> insta::Settings,
+    ) -> Result<Self> {
+        let temp_dir = TempDir::new()?;
+
+        // Canonicalize the tempdir path because macOS uses symlinks for tempdirs
+        // and that doesn't play well with our snapshot filtering.
+        // Simplify with dunce because otherwise we get UNC paths on Windows.
+        let project_dir = dunce::simplified(
+            &temp_dir
+                .path()
+                .canonicalize()
+                .context("Failed to canonicalize project path")?,
+        )
+        .to_path_buf();
+
+        let mut settings = setup_settings(&project_dir, insta::Settings::clone_current());
+
+        settings.add_filter(&tempdir_filter(project_dir.to_str().unwrap()), "[TMP]/");
+        settings.add_filter(
+            &tempdir_filter(Self::crates_root().to_str().unwrap()),
+            "CRATE_ROOT/",
+        );
+        settings.add_filter(r#"\\([\w&&[^nr"]]|\s|\.)"#, "/$1");
+        settings.add_filter(r"(Panicked at) [^:]+:\d+:\d+", "$1 <location>");
+        settings.add_filter(fortitude_linter::VERSION, "[VERSION]");
+        settings.add_filter(
+            r"E000 Error opening file: .*",
+            "E000 Error opening file: [OS_ERROR]",
+        );
+
+        let settings_scope = settings.bind_to_scope();
+
+        Ok(Self {
+            project_dir,
+            _temp_dir: temp_dir,
+            _settings_scope: settings_scope,
+        })
+    }
+
+    /// Returns the path to the test directory root.
+    pub(crate) fn root(&self) -> &Path {
+        &self.project_dir
+    }
+
+    /// Returns the path to the directory above the crate root.
+    pub(crate) fn crates_root() -> &'static Path {
+        Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap()
+    }
+
+    /// Creates a test fixture with a single file.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The relative path for the file
+    /// * `content` - The content to write to the file
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// let fixture = FortitudeCheck::with_file("fortitude.toml", "select = ['E']")?;
+    /// ```
+    pub(crate) fn with_file(path: impl AsRef<Path>, content: &str) -> Result<Self> {
+        let fixture = Self::new()?;
+        fixture.write_file(path, content)?;
+        Ok(fixture)
+    }
+
+    pub(crate) fn with_files<'a>(
+        files: impl IntoIterator<Item = (&'a str, &'a str)>,
+    ) -> anyhow::Result<Self> {
+        let case = Self::new()?;
+        case.write_files(files)?;
+        Ok(case)
+    }
+
+    /// Ensures that the parent directory of a path exists.
+    fn ensure_parent_directory(path: &Path) -> Result<()> {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .with_context(|| format!("Failed to create directory `{}`", parent.display()))?;
+        }
+        Ok(())
+    }
+
+    /// Writes a file to the test directory.
+    ///
+    /// Parent directories are created automatically if they don't exist.
+    /// Content is dedented to remove common leading whitespace for cleaner test code.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The relative path for the file
+    /// * `content` - The content to write to the file
+    pub(crate) fn write_file(&self, path: impl AsRef<Path>, content: &str) -> Result<()> {
+        let path = path.as_ref();
+        let file_path = self.project_dir.join(path);
+
+        Self::ensure_parent_directory(&file_path)?;
+
+        let content = dedent(content);
+        fs::write(&file_path, content)
+            .with_context(|| format!("Failed to write file `{}`", file_path.display()))?;
+
+        Ok(())
+    }
+
+    pub(crate) fn write_files<'a>(
+        &self,
+        files: impl IntoIterator<Item = (&'a str, &'a str)>,
+    ) -> Result<()> {
+        for file in files {
+            self.write_file(file.0, file.1)?;
+        }
+        Ok(())
+    }
 }
 
 #[test]
 fn check_file_doesnt_exist() -> anyhow::Result<()> {
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .filename("test/file/doesnt/exist.f90").build(),
+    let cmd = FortitudeCheck::new()?;
+    assert_cmd_snapshot!(cmd
+                         .check_command().arg("test/file/doesnt/exist.f90"),
                          @r"
     success: false
     exit_code: 1
@@ -130,10 +218,8 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
 
 #[test]
 fn deprecated_category() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program test
     implicit none
@@ -146,38 +232,17 @@ program test
 end program test
         "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
+
+    assert_cmd_snapshot!(cmd
+                         .check_command()
                          .args(["--select=bugprone", "--preview"])
-                         .file(&test_file)
-                         .build(),
-                         @r#"
+                         .arg("test.f90"),
+                         @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C051 Trailing backslash
-      |
-    3 |     implicit none
-    4 |     integer :: i
-    5 |     i = 1  ! Comment ending with backslash\
-      |                                           ^ C051
-    6 |     select case (i)  ! Select without default
-    7 |         case(1)
-      |
-
-    [TEMP_FILE] C011 Missing default case may not handle all values
-       |
-     4 |       integer :: i
-     5 |       i = 1  ! Comment ending with backslash\
-     6 | /     select case (i)  ! Select without default
-     7 | |         case(1)
-     8 | |             print *, "one"
-     9 | |     end select
-       | |______________^ C011
-    10 |   end program test
-       |
-       = help: Add 'case default'
-
+    test.f90:5:43: C051 Trailing backslash
+    test.f90:6:5: C011 Missing default case may not handle all values
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -190,34 +255,33 @@ end program test
     warning: The selector `bugprone` refers to a deprecated rule category.
     warning: `B001` has been remapped to `C011`.
     warning: `B011` has been remapped to `C051`.
-    "#
+    "
     );
     Ok(())
 }
 
 #[test]
 fn unknown_name_in_config() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let config_file = tempdir.path().join("fpm.toml");
-    fs::write(
-        &config_file,
+    let cmd = FortitudeCheck::with_settings(|_, mut settings| {
+        settings.add_filter(
+            r"(unknown field `unknown-key`, expected one of).*",
+            "$1 [OPTIONS]",
+        );
+        settings
+    })?;
+
+    cmd.write_file(
+        "fpm.toml",
         r#"
 [extra.fortitude.check]
 unknown-key = 1
 "#,
     )?;
-    apply_common_filters!();
-    let mut settings = insta::Settings::clone_current();
-    settings.add_filter(
-        r"(unknown field `unknown-key`, expected one of).*",
-        "$1 [OPTIONS]",
-    );
-    let _bound = settings.bind_to_scope();
 
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .config(&config_file)
-                         .filename("no-file.f90")
-                         .build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .args(["--config-file", "fpm.toml"])
+                         .arg("no_file.f90"),
                          @r"
     success: false
     exit_code: 1
@@ -225,10 +289,10 @@ unknown-key = 1
 
     ----- stderr -----
     fortitude failed
-    Error: Failed to load configuration `[TEMP_FILE]
+    Error: Failed to load configuration `[TMP]/fpm.toml`
 
     Caused by:
-        0: Failed to parse [TEMP_FILE]
+        0: Failed to parse [TMP]/fpm.toml
         1: TOML parse error at line 3, column 1
              |
            3 | unknown-key = 1
@@ -240,10 +304,8 @@ unknown-key = 1
 
 #[test]
 fn check_all() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program test
   logical*4, parameter :: true = .true.
@@ -251,51 +313,18 @@ end program
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=S061,C001,PORT011,PORT021"])
-                         .file(&test_file)
-                         .build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("test.f90")
+                         .args(["--select=S061,C001,PORT011,PORT021"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program uses implicit typing
-      |
-    2 | program test
-      | ^^^^^^^^^^^^ C001
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      |
-      = help: Insert `implicit none`
-
-    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-      |          ^^ PORT021
-    4 | end program
-      |
-      = help: Replace with 'logical(4)'
-
-    [TEMP_FILE] PORT011 logical kind set with number literal '4'
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-      |           ^ PORT011
-    4 | end program
-      |
-      = help: Use the parameter 'int32' from 'iso_fortran_env'
-
-    [TEMP_FILE] S061 [*] end statement should be named.
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      | ^^^^^^^^^^^ S061
-      |
-      = help: Write as 'end program test'.
-
+    test.f90:2:1: C001 program uses implicit typing
+    test.f90:3:10: PORT021 'logical*4' uses non-standard syntax
+    test.f90:3:11: PORT011 logical kind set with number literal '4'
+    test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
     Number of errors: 4
 
@@ -312,10 +341,8 @@ end program
 
 #[test]
 fn check_select_cli() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program test
   logical*4, parameter :: true = .true.
@@ -323,32 +350,16 @@ end program
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
-                         .args(["--select=C001,style"]).build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("test.f90")
+                         .args(["--select=C001,style"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program uses implicit typing
-      |
-    2 | program test
-      | ^^^^^^^^^^^^ C001
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      |
-      = help: Insert `implicit none`
-
-    [TEMP_FILE] S061 [*] end statement should be named.
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      | ^^^^^^^^^^^ S061
-      |
-      = help: Write as 'end program test'.
-
+    test.f90:2:1: C001 program uses implicit typing
+    test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -365,52 +376,34 @@ end program
 
 #[test]
 fn check_select_file() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
+    let cmd = FortitudeCheck::with_files([
+        (
+            "test.f90",
+            r#"
 program test
   logical*4, parameter :: true = .true.
 end program
 "#,
-    )?;
-
-    let config_file = tempdir.path().join("fortitude.toml");
-    fs::write(
-        &config_file,
-        r#"
+        ),
+        (
+            "fortitude.toml",
+            r#"
 [check]
 select = ["C001", "style"]
 "#,
-    )?;
+        ),
+    ])?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .config(&config_file)
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .args(["--config-file", "fortitude.toml"])
+                         .arg("test.f90"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program uses implicit typing
-      |
-    2 | program test
-      | ^^^^^^^^^^^^ C001
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      |
-      = help: Insert `implicit none`
-
-    [TEMP_FILE] S061 [*] end statement should be named.
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      | ^^^^^^^^^^^ S061
-      |
-      = help: Write as 'end program test'.
-
+    test.f90:2:1: C001 program uses implicit typing
+    test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -427,53 +420,35 @@ select = ["C001", "style"]
 
 #[test]
 fn check_extend_select_file() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
+    let cmd = FortitudeCheck::with_files([
+        (
+            "test.f90",
+            r#"
 program test
   logical*4, parameter :: true = .true.
 end program
 "#,
-    )?;
-
-    let config_file = tempdir.path().join("fortitude.toml");
-    fs::write(
-        &config_file,
-        r#"
+        ),
+        (
+            "fortitude.toml",
+            r#"
 [check]
 select = ["C001"]
 "#,
-    )?;
+        ),
+    ])?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .config(&config_file)
-                         .file(&test_file)
-                         .args(["--extend-select", "style"]).build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .args(["--config-file", "fortitude.toml"])
+                         .arg("test.f90")
+                         .args(["--extend-select", "style"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program uses implicit typing
-      |
-    2 | program test
-      | ^^^^^^^^^^^^ C001
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      |
-      = help: Insert `implicit none`
-
-    [TEMP_FILE] S061 [*] end statement should be named.
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      | ^^^^^^^^^^^ S061
-      |
-      = help: Write as 'end program test'.
-
+    test.f90:2:1: C001 program uses implicit typing
+    test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -490,52 +465,33 @@ select = ["C001"]
 
 #[test]
 fn check_select_file_fpm_toml() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
+    let cmd = FortitudeCheck::with_files([
+        (
+            "test.f90",
+            r#"
 program test
   logical*4, parameter :: true = .true.
 end program
 "#,
-    )?;
-
-    let config_file = tempdir.path().join("fpm.toml");
-    fs::write(
-        &config_file,
-        r#"
+        ),
+        (
+            "fpm.toml",
+            r#"
 [extra.fortitude.check]
 select = ["C001", "style"]
 "#,
-    )?;
+        ),
+    ])?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .config(&config_file)
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("test.f90"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program uses implicit typing
-      |
-    2 | program test
-      | ^^^^^^^^^^^^ C001
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      |
-      = help: Insert `implicit none`
-
-    [TEMP_FILE] S061 [*] end statement should be named.
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      | ^^^^^^^^^^^ S061
-      |
-      = help: Write as 'end program test'.
-
+    test.f90:2:1: C001 program uses implicit typing
+    test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -552,52 +508,33 @@ select = ["C001", "style"]
 
 #[test]
 fn check_select_file_pyproject_toml() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
+    let cmd = FortitudeCheck::with_files([
+        (
+            "test.f90",
+            r#"
 program test
   logical*4, parameter :: true = .true.
 end program
 "#,
-    )?;
-
-    let config_file = tempdir.path().join("pyproject.toml");
-    fs::write(
-        &config_file,
-        r#"
+        ),
+        (
+            "pyproject.toml",
+            r#"
 [tool.fortitude.check]
 select = ["C001", "style"]
 "#,
-    )?;
+        ),
+    ])?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .config(&config_file)
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("test.f90"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program uses implicit typing
-      |
-    2 | program test
-      | ^^^^^^^^^^^^ C001
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      |
-      = help: Insert `implicit none`
-
-    [TEMP_FILE] S061 [*] end statement should be named.
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-    4 | end program
-      | ^^^^^^^^^^^ S061
-      |
-      = help: Write as 'end program test'.
-
+    test.f90:2:1: C001 program uses implicit typing
+    test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -614,10 +551,8 @@ select = ["C001", "style"]
 
 #[test]
 fn apply_fixes() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none
@@ -630,35 +565,17 @@ contains
 end program foo
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=S071,C022,S201,C003", "--preview", "--fix"])
-                         .file(&test_file)
-                         .build(),
+
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("test.f90")
+                         .args(["--select=S071,C022,S201,C003", "--preview", "--fix"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C003 'implicit none' missing 'external'
-      |
-    2 | program foo
-    3 |   implicit none
-      |   ^^^^^^^^^^^^^ C003
-    4 |   real :: i
-    5 |   i = 4.0
-      |
-      = help: Add `(external)` to 'implicit none'
-
-    [TEMP_FILE] C022 real has implicit kind
-      |
-    2 | program foo
-    3 |   implicit none
-    4 |   real :: i
-      |   ^^^^ C022
-    5 |   i = 4.0
-    6 | contains
-      |
-
+    test.f90:3:3: C003 'implicit none' missing 'external'
+    test.f90:4:3: C022 real has implicit kind
     fortitude: 1 files scanned.
     Number of errors: 4 (2 fixed, 2 remaining)
 
@@ -683,7 +600,7 @@ end program foo
 "#
     .to_string();
 
-    let transformed = fs::read_to_string(&test_file)?;
+    let transformed = fs::read_to_string(cmd.root().join("test.f90"))?;
     assert_eq!(transformed, expected);
 
     Ok(())
@@ -691,10 +608,8 @@ end program foo
 
 #[test]
 fn apply_unsafe_fixes() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none
@@ -707,24 +622,15 @@ contains
 end program foo
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=S071,C022,S201,C003", "--preview", "--fix", "--unsafe-fixes"])
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("test.f90")
+                         .args(["--select=S071,C022,S201,C003", "--preview", "--fix", "--unsafe-fixes"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C022 real has implicit kind
-      |
-    2 | program foo
-    3 |   implicit none (type, external)
-    4 |   real :: i
-      |   ^^^^ C022
-    5 |   i = 4.0
-    6 | contains
-      |
-
+    test.f90:4:3: C022 real has implicit kind
     fortitude: 1 files scanned.
     Number of errors: 4 (3 fixed, 1 remaining)
 
@@ -748,7 +654,7 @@ end program foo
 "#
     .to_string();
 
-    let transformed = fs::read_to_string(&test_file)?;
+    let transformed = fs::read_to_string(cmd.root().join("test.f90"))?;
     assert_eq!(transformed, expected);
 
     Ok(())
@@ -756,23 +662,20 @@ end program foo
 
 #[test]
 fn apply_all_fixes() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none
 endprogram
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd
+                         .check_command()
                          .arg("--select=S061,C003")
                          .arg("--unsafe-fixes")
                          .arg("--fix")
-                         .arg(&test_file),
+                         .arg("test.f90"),
                          @r"
     success: true
     exit_code: 0
@@ -795,7 +698,7 @@ end program foo
 "#
     .to_string();
 
-    let transformed = fs::read_to_string(&test_file)?;
+    let transformed = fs::read_to_string(cmd.root().join("test.f90"))?;
     assert_eq!(transformed, expected);
 
     Ok(())
@@ -803,37 +706,26 @@ end program foo
 
 #[test]
 fn apply_fixable_fixes() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none
 endprogram
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd
+                         .check_command()
                          .arg("--select=S061,C003")
                          .arg("--unsafe-fixes")
                          .arg("--fix")
                          .arg("--fixable=S061")
-                         .arg(&test_file),
+                         .arg("test.f90"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C003 'implicit none' missing 'external'
-      |
-    2 | program foo
-    3 |   implicit none
-      |   ^^^^^^^^^^^^^ C003
-    4 | end program foo
-      |
-      = help: Add `(external)` to 'implicit none'
-
+    test.f90:3:3: C003 'implicit none' missing 'external'
     fortitude: 1 files scanned.
     Number of errors: 2 (1 fixed, 1 remaining)
 
@@ -852,7 +744,7 @@ end program foo
 "#
     .to_string();
 
-    let transformed = fs::read_to_string(&test_file)?;
+    let transformed = fs::read_to_string(cmd.root().join("test.f90"))?;
     assert_eq!(transformed, expected);
 
     Ok(())
@@ -860,37 +752,25 @@ end program foo
 
 #[test]
 fn skip_unfixable_fixes() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none
 endprogram
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd.check_command()
                          .arg("--select=S061,C003")
                          .arg("--unsafe-fixes")
                          .arg("--fix")
                          .arg("--unfixable=C003")
-                         .arg(&test_file),
+                         .arg("test.f90"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C003 'implicit none' missing 'external'
-      |
-    2 | program foo
-    3 |   implicit none
-      |   ^^^^^^^^^^^^^ C003
-    4 | end program foo
-      |
-      = help: Add `(external)` to 'implicit none'
-
+    test.f90:3:3: C003 'implicit none' missing 'external'
     fortitude: 1 files scanned.
     Number of errors: 2 (1 fixed, 1 remaining)
 
@@ -909,7 +789,7 @@ end program foo
 "#
     .to_string();
 
-    let transformed = fs::read_to_string(&test_file)?;
+    let transformed = fs::read_to_string(cmd.root().join("test.f90"))?;
     assert_eq!(transformed, expected);
 
     Ok(())
@@ -917,34 +797,31 @@ end program foo
 
 #[test]
 fn check_extend_fixable() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
+    let cmd = FortitudeCheck::with_files([
+        (
+            "test.f90",
+            r#"
 program test
   implicit none
 end program
 "#,
-    )?;
-
-    let config_file = tempdir.path().join("fortitude.toml");
-    fs::write(
-        &config_file,
-        r#"
+        ),
+        (
+            "fortitude.toml",
+            r#"
 [check]
 fixable = ["C003"]
 "#,
-    )?;
+        ),
+    ])?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd.check_command()
                          .arg("--select=S061,C003")
                          .arg("--unsafe-fixes")
                          .arg("--fix")
                          .arg("--extend-fixable=S061")
-                         .arg(&test_file),
+                         .args(["--config-file", "fortitude.toml"])
+                         .arg("test.f90"),
                          @r"
     success: true
     exit_code: 0
@@ -964,47 +841,36 @@ fixable = ["C003"]
 
 #[test]
 fn check_overwrite_fixable() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
+    let cmd = FortitudeCheck::with_files([
+        (
+            "test.f90",
+            r#"
 program test
   implicit none
 end program
 "#,
-    )?;
-
-    let config_file = tempdir.path().join("fortitude.toml");
-    fs::write(
-        &config_file,
-        r#"
+        ),
+        (
+            "fortitude.toml",
+            r#"
 [check]
 fixable = ["C003"]
 "#,
-    )?;
+        ),
+    ])?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd.check_command()
                          .arg("--select=S061,C003")
                          .arg("--unsafe-fixes")
                          .arg("--fix")
                          .arg("--fixable=S061")
-                         .arg(&test_file),
+                         .args(["--config-file", "fortitude.toml"])
+                         .arg("test.f90"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C003 'implicit none' missing 'external'
-      |
-    2 | program test
-    3 |   implicit none
-      |   ^^^^^^^^^^^^^ C003
-    4 | end program test
-      |
-      = help: Add `(external)` to 'implicit none'
-
+    test.f90:3:3: C003 'implicit none' missing 'external'
     fortitude: 1 files scanned.
     Number of errors: 2 (1 fixed, 1 remaining)
 
@@ -1020,48 +886,37 @@ fixable = ["C003"]
 
 #[test]
 fn check_overwrite_unfixable() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
-        r#"
+    let cmd = FortitudeCheck::with_files([
+        (
+            "test.f90",
+            r#"
 program test
   implicit none
 end program
 "#,
-    )?;
-
-    let config_file = tempdir.path().join("fortitude.toml");
-    fs::write(
-        &config_file,
-        r#"
+        ),
+        (
+            "fortitude.toml",
+            r#"
 [check]
 fixable = ["S061"]
 "#,
-    )?;
+        ),
+    ])?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd.check_command()
                          .arg("--select=S061,C003")
                          .arg("--unsafe-fixes")
                          .arg("--fix")
                          .arg("--unfixable=S061")
                          .arg("--extend-fixable=C003")
-                         .arg(&test_file),
+                         .args(["--config-file", "fortitude.toml"])
+                         .arg("test.f90"),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S061 end statement should be named.
-      |
-    2 | program test
-    3 |   implicit none (type, external)
-    4 | end program
-      | ^^^^^^^^^^^ S061
-      |
-      = help: Write as 'end program test'.
-
+    test.f90:4:1: S061 end statement should be named.
     fortitude: 1 files scanned.
     Number of errors: 2 (1 fixed, 1 remaining)
 
@@ -1082,10 +937,8 @@ fixable = ["S061"]
 /// not the subsequent line length violation.
 #[test]
 fn check_syntax_errors() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none (type, external)
@@ -1098,44 +951,17 @@ program foo
 end program foo
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=syntax-error,superfluous-semicolon,line-too-long", "--line-length=50", "--preview"])
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("test.f90")
+                         .args(["--select=syntax-error,superfluous-semicolon,line-too-long", "--line-length=50", "--preview"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S081 unnecessary semicolon
-      |
-    4 |   integer :: i
-    5 |   integer :: j
-    6 |   i = 2;
-      |        ^ S081
-    7 |   j = i ^ 2  ! This is a syntax error
-    8 |   print *, j;
-      |
-      = help: Remove this character
-
-    [TEMP_FILE] E001 Syntax error
-      |
-    5 |   integer :: j
-    6 |   i = 2;
-    7 |   j = i ^ 2  ! This is a syntax error
-      |         ^^^ E001
-    8 |   print *, j;
-    9 |   print *, i + i + i + i + i + i + i + i + i + i + i
-      |
-
-    [TEMP_FILE] S001 line length of 52, exceeds maximum 50
-       |
-     7 |   j = i ^ 2  ! This is a syntax error
-     8 |   print *, j;
-     9 |   print *, i + i + i + i + i + i + i + i + i + i + i
-       |                                                   ^^ S001
-    10 | end program foo
-       |
-
+    test.f90:6:8: S081 unnecessary semicolon
+    test.f90:7:9: E001 Syntax error
+    test.f90:9:51: S001 line length of 52, exceeds maximum 50
     fortitude: 1 files scanned.
     Number of errors: 3
 
@@ -1145,7 +971,7 @@ end program foo
 
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST and all fixes.
+    warning: Syntax errors detected in file: [TMP]/test.f90. Discarding subsequent violations from the AST and all fixes.
     ",);
     Ok(())
 }
@@ -1153,10 +979,8 @@ end program foo
 /// The above behaviour can be overridden by ignoring syntax errors.
 #[test]
 fn check_ignore_syntax_errors() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none (type, external)
@@ -1168,35 +992,15 @@ program foo
 end program foo
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=superfluous-semicolon", "--preview"])
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=superfluous-semicolon", "--preview"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S081 unnecessary semicolon
-      |
-    4 |   integer :: i
-    5 |   integer :: j
-    6 |   i = 2;
-      |        ^ S081
-    7 |   j = i ^ 2  ! This is a syntax error
-    8 |   print *, j;
-      |
-      = help: Remove this character
-
-    [TEMP_FILE] S081 unnecessary semicolon
-      |
-    6 |   i = 2;
-    7 |   j = i ^ 2  ! This is a syntax error
-    8 |   print *, j;
-      |             ^ S081
-    9 | end program foo
-      |
-      = help: Remove this character
-
+    test.f90:6:8: S081 unnecessary semicolon
+    test.f90:8:13: S081 unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -1206,7 +1010,7 @@ end program foo
 
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding all fixes. Some violations from the AST may be unreliable.
+    warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
     ",);
     Ok(())
 }
@@ -1214,10 +1018,8 @@ end program foo
 /// Syntax errors can also be ignored with allow comments
 #[test]
 fn check_allow_syntax_errors() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none (type, external)
@@ -1230,35 +1032,15 @@ program foo
 end program foo
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=syntax-error,superfluous-semicolon", "--preview"])
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=syntax-error,superfluous-semicolon", "--preview"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S081 unnecessary semicolon
-      |
-    4 |   integer :: i
-    5 |   integer :: j
-    6 |   i = 2;
-      |        ^ S081
-    7 |   ! allow(syntax-error)
-    8 |   j = i ^ 2  ! This is a syntax error
-      |
-      = help: Remove this character
-
-    [TEMP_FILE] S081 unnecessary semicolon
-       |
-     7 |   ! allow(syntax-error)
-     8 |   j = i ^ 2  ! This is a syntax error
-     9 |   print *, j;
-       |             ^ S081
-    10 | end program foo
-       |
-       = help: Remove this character
-
+    test.f90:6:8: S081 unnecessary semicolon
+    test.f90:9:13: S081 unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -1268,7 +1050,7 @@ end program foo
 
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding subsequent violations from the AST and all fixes.
+    warning: Syntax errors detected in file: [TMP]/test.f90. Discarding subsequent violations from the AST and all fixes.
     ",);
     Ok(())
 }
@@ -1276,10 +1058,8 @@ end program foo
 /// Files with syntax errors should never be fixed under any circumstances.
 #[test]
 fn check_fix_with_syntax_errors() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none (type, external)
@@ -1291,24 +1071,14 @@ program foo
 end program foo
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=superfluous-semicolon", "--preview", "--fix"])
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=superfluous-semicolon", "--preview", "--fix"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S081 unnecessary semicolon
-      |
-    6 |   i = 2
-    7 |   j = i ^ 2  ! This is a syntax error
-    8 |   print *, j;  ! superfluous-semicolon
-      |             ^ S081
-    9 | end program foo
-      |
-      = help: Remove this character
-
+    test.f90:8:13: S081 unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 1
 
@@ -1318,18 +1088,16 @@ end program foo
 
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding all fixes. Some violations from the AST may be unreliable.
-    warning: Syntax errors detected in file: [TEMP_FILE] No fixes will be applied.
+    warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
+    warning: Syntax errors detected in file: [TMP]/test.f90. No fixes will be applied.
     ",);
     Ok(())
 }
 
 #[test]
 fn check_multibyte_utf8() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         // NOTE: There should be trailing whitespace in the snippet, do not remove!
         r#"
 program test
@@ -1346,85 +1114,20 @@ program test
 end program test
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=trailing-whitespace,line-too-long", "--line-length=60"])
-                         .file(&test_file).build(),
-                         @r#"
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=trailing-whitespace,line-too-long", "--line-length=60"]),
+                         @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S001 line length of 222, exceeds maximum 60
-      |
-    2 | ...
-    3 | ...ly_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_long_module_name, only : integer_working_precision
-      |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S001
-    4 | ...
-    5 | ...n(1) :: a = [1]
-      |
-
-    [TEMP_FILE] S001 line length of 72, exceeds maximum 60
-      |
-    3 |   use some_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_really_rea...
-    4 |   implicit none
-    5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
-      |                                                             ^^^^^^^^^^^^ S001
-    6 |   write (*, '("╔════════════════════════════════════════════╗")')
-    7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
-      |
-
-    [TEMP_FILE] S001 line length of 65, exceeds maximum 60
-      |
-    4 |   implicit none
-    5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
-    6 |   write (*, '("╔════════════════════════════════════════════╗")')
-      |                                                             ^^^^^ S001
-    7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
-    8 |   write (*, '("╚════════════════════════════════════════════╝")')
-      |
-
-    [TEMP_FILE] S001 line length of 65, exceeds maximum 60
-      |
-    5 |   integer(integer_working_precision), parameter, dimension(1) :: a = [1]
-    6 |   write (*, '("╔════════════════════════════════════════════╗")')
-    7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
-      |                                                             ^^^^^ S001
-    8 |   write (*, '("╚════════════════════════════════════════════╝")')
-    9 |   !-- transform into g/cm³   
-      |
-
-    [TEMP_FILE] S001 line length of 65, exceeds maximum 60
-       |
-     6 |   write (*, '("╔════════════════════════════════════════════╗")')
-     7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
-     8 |   write (*, '("╚════════════════════════════════════════════╝")')
-       |                                                             ^^^^^ S001
-     9 |   !-- transform into g/cm³   
-    10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-       |
-
-    [TEMP_FILE] S101 [*] trailing whitespace
-       |
-     7 |   write (*, '("║  UTF-8 LOGO BOX                            ║")')
-     8 |   write (*, '("╚════════════════════════════════════════════╝")')
-     9 |   !-- transform into g/cm³   
-       |                           ^^^ S101
-    10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    11 |   !-- transform³ into³ g/cm³   
-       |
-       = help: Remove trailing whitespace
-
-    [TEMP_FILE] S101 [*] trailing whitespace
-       |
-     9 |   !-- transform into g/cm³   
-    10 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    11 |   !-- transform³ into³ g/cm³   
-       |                             ^^^ S101
-    12 |   dens = dens * ( 0.001d0 / (1.0d-30*bohr**3.0d0))
-    13 | end program test
-       |
-       = help: Remove trailing whitespace
-
+    test.f90:3:61: S001 line length of 222, exceeds maximum 60
+    test.f90:5:61: S001 line length of 72, exceeds maximum 60
+    test.f90:6:61: S001 line length of 65, exceeds maximum 60
+    test.f90:7:61: S001 line length of 65, exceeds maximum 60
+    test.f90:8:61: S001 line length of 65, exceeds maximum 60
+    test.f90:9:27: S101 [*] trailing whitespace
+    test.f90:11:29: S101 [*] trailing whitespace
     fortitude: 1 files scanned.
     Number of errors: 7
 
@@ -1435,15 +1138,22 @@ end program test
     [*] 2 fixable with the `--fix` option.
 
     ----- stderr -----
-    "#);
+    ");
 
     Ok(())
 }
 
 #[test]
 fn check_per_file_ignores() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let path = tempdir.path();
+    let cmd = FortitudeCheck::with_file(
+        ".fortitude.toml",
+        r#"
+[check.per-file-ignores]
+"bar*.f90" = ["implicit-typing"]
+"#,
+    )?;
+
+    let path = cmd.root();
     let nested = path.join("nested");
     let double_nested = nested.join("double_nested");
     std::fs::create_dir(nested.as_path())?;
@@ -1465,19 +1175,11 @@ end module {file}{idx}
         }
     }
 
-    let config_file = path.join(".fortitude.toml");
-    let config = r#"
-[check.per-file-ignores]
-"bar*.f90" = ["implicit-typing"]
-"#;
-    fs::write(&config_file, config)?;
-    apply_common_filters!();
     // Expect:
     // - Override per-file-ignores in the config file
     // - Files of foo, bar, and baz
     // - No files with index 2
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd.check_command()
                          .arg("--select=implicit-typing")
                          .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
@@ -1486,65 +1188,11 @@ end module {file}{idx}
     exit_code: 1
     ----- stdout -----
     bar0.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module bar0
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     baz0.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module baz0
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     foo0.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module foo0
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     nested/bar1.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module bar1
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     nested/baz1.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module baz1
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     nested/foo1.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module foo1
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     fortitude: 9 files scanned.
     Number of errors: 6
 
@@ -1562,8 +1210,15 @@ end module {file}{idx}
 
 #[test]
 fn check_extend_per_file_ignores() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let path = tempdir.path();
+    let cmd = FortitudeCheck::with_file(
+        ".fortitude.toml",
+        r#"
+[check.per-file-ignores]
+"bar*.f90" = ["implicit-typing"]
+"#,
+    )?;
+
+    let path = cmd.root();
     let nested = path.join("nested");
     let double_nested = nested.join("double_nested");
     std::fs::create_dir(nested.as_path())?;
@@ -1585,19 +1240,11 @@ end module {file}{idx}
         }
     }
 
-    let config_file = path.join(".fortitude.toml");
-    let config = r#"
-[check.per-file-ignores]
-"bar*.f90" = ["implicit-typing"]
-"#;
-    fs::write(&config_file, config)?;
-    apply_common_filters!();
     // Expect:
     // - Don't overwrite config file
     // - File types of foo and baz but no bar
     // - No files with index 2
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd.check_command()
                          .arg("--select=implicit-typing")
                          .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
@@ -1606,45 +1253,9 @@ end module {file}{idx}
     exit_code: 1
     ----- stdout -----
     baz0.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module baz0
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     foo0.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module foo0
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     nested/baz1.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module baz1
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     nested/foo1.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module foo1
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     fortitude: 9 files scanned.
     Number of errors: 4
 
@@ -1665,7 +1276,7 @@ fn exclude_test_path<P: AsRef<Path>>(tempdir: P) -> PathBuf {
     let foo_path = base_path.join("foo");
     let bar_path = foo_path.join("bar");
     // Simulate a Python env, which is in the default exclude list
-    let venv_path = base_path.join(".venv/lib/site-packages/numpy");
+    let venv_path = base_path.join(".venv/lib/site-packages/scipy");
     std::fs::create_dir_all(bar_path.as_path()).unwrap();
     std::fs::create_dir_all(venv_path.as_path()).unwrap();
     for dir in [&base_path, &foo_path, &bar_path, &venv_path] {
@@ -1697,50 +1308,24 @@ extend-exclude = [
 
 #[test]
 fn check_exclude() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    apply_common_filters!();
+    let cmd = FortitudeCheck::new()?;
     // Expect:
     // - Override 'foo.f90' in config file, see 'base.f90' and 'foo.f90' but not 'bar.f90'
     // - Override builtins, including .venv
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=implicit-typing", "--exclude=bar"])
-                         .filename(".")
-                         .build()
-                         .current_dir(exclude_test_path(tempdir.path())),
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("--isolated")
+                         .arg("--select=implicit-typing")
+                         .arg("--exclude=bar")
+                         .arg(".")
+                         .current_dir(exclude_test_path(cmd.root())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module numpy
-      | ^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
+    .venv/lib/site-packages/scipy/scipy.f90:2:1: C001 module uses implicit typing
     base.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module base
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     foo/foo.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module foo
-      | ^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     fortitude: 3 files scanned.
     Number of errors: 3
 
@@ -1757,30 +1342,19 @@ fn check_exclude() -> anyhow::Result<()> {
 
 #[test]
 fn check_extend_exclude() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    apply_common_filters!();
+    let cmd = FortitudeCheck::new()?;
     // Expect:
     // - Don't overwrite 'foo.f90' in config file, see only base.f90
     // - Don't see anything in venv
-    assert_cmd_snapshot!(fortitude_cmd()
-                         .arg("check")
+    assert_cmd_snapshot!(cmd.check_command()
                          .arg("--select=implicit-typing")
                          .arg("--extend-exclude=bar")
-                         .current_dir(exclude_test_path(tempdir.path())),
+                         .current_dir(exclude_test_path(cmd.root())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
     base.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module base
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     fortitude: 1 files scanned.
     Number of errors: 1
 
@@ -1798,29 +1372,19 @@ fn check_extend_exclude() -> anyhow::Result<()> {
 
 #[test]
 fn check_no_force_exclude() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    apply_common_filters!();
+    let cmd = FortitudeCheck::new()?;
     // Expect:
     // - See error in foo.f90 despite it being in the exclude list
-    assert_cmd_snapshot!(FortitudeCheck::default()
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg("foo/foo.f90")
                          .args(["--select=implicit-typing"])
-                         .filename("foo/foo.f90")
-                         .build()
-                         .current_dir(exclude_test_path(tempdir.path())),
+                         .current_dir(exclude_test_path(cmd.root())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
     foo/foo.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module foo
-      | ^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     fortitude: 1 files scanned.
     Number of errors: 1
 
@@ -1837,16 +1401,15 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
 
 #[test]
 fn check_force_exclude() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    apply_common_filters!();
+    let cmd = FortitudeCheck::new()?;
     // Expect:
     // - Don't see error in foo.f90 despite it being asked for
-    // - Also shouldn't see numpy.f90
-    assert_cmd_snapshot!(FortitudeCheck::default()
+    // - Also shouldn't see scipy.f90
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .args(["foo/foo.f90", ".venv/lib/site-packages/scipy/scipy.f90"])
                          .args(["--select=implicit-typing", "--force-exclude"])
-                         .filename("foo/foo.f90 .venv/lib/site-packages/numpy/numpy.f90")
-                         .build()
-                         .current_dir(exclude_test_path(tempdir.path())),
+                         .current_dir(exclude_test_path(cmd.root())),
                          @r"
     success: true
     exit_code: 0
@@ -1862,29 +1425,19 @@ fn check_force_exclude() -> anyhow::Result<()> {
 
 #[test]
 fn check_exclude_builtin() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    apply_common_filters!();
+    let cmd = FortitudeCheck::new()?;
     // Expect:
     // - See error in venv despite it being excluded by default
-    assert_cmd_snapshot!(FortitudeCheck::default()
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg(".venv/lib/site-packages/")
                          .args(["--select=implicit-typing"])
-                         .filename(".venv/lib/site-packages/")
-                         .build()
-                         .current_dir(exclude_test_path(tempdir.path())),
+                         .current_dir(exclude_test_path(cmd.root())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    .venv/lib/site-packages/numpy/numpy.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module numpy
-      | ^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
+    .venv/lib/site-packages/scipy/scipy.f90:2:1: C001 module uses implicit typing
     fortitude: 1 files scanned.
     Number of errors: 1
 
@@ -1901,15 +1454,14 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
 
 #[test]
 fn check_force_exclude_builtin() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    apply_common_filters!();
+    let cmd = FortitudeCheck::new()?;
     // Expect:
     // - Don't see error in venv even though it was asked for
-    assert_cmd_snapshot!(FortitudeCheck::default()
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg(".venv/lib/site-packages/")
                          .args(["--select=implicit-typing", "--force-exclude"])
-                         .filename(".venv/lib/site-packages/")
-                         .build()
-                         .current_dir(exclude_test_path(tempdir.path())),
+                         .current_dir(exclude_test_path(cmd.root())),
                          @r"
     success: true
     exit_code: 0
@@ -1925,10 +1477,8 @@ fn check_force_exclude_builtin() -> anyhow::Result<()> {
 
 #[test]
 fn check_per_line_ignores() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 ! allow(C001, unnamed-end-statement, literal-kind)
 program test
@@ -1940,24 +1490,14 @@ end program
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101"]).build(),
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=C001,S061,PORT011,PORT021,S101"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
-      |
-    5 |   logical*4, parameter :: true = .true.
-    6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
-      |          ^^ PORT021
-    8 | end program
-      |
-      = help: Replace with 'logical(4)'
-
+    test.f90:7:10: PORT021 'logical*4' uses non-standard syntax
     fortitude: 1 files scanned.
     Number of errors: 1
 
@@ -1975,10 +1515,8 @@ end program
 
 #[test]
 fn ignore_per_line_ignores() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 ! allow(C001, unnamed-end-statement, literal-kind)
 program test
@@ -1990,86 +1528,20 @@ end program
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--ignore-allow-comments"]).build(),
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--ignore-allow-comments"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] C001 program uses implicit typing
-      |
-    2 | ! allow(C001, unnamed-end-statement, literal-kind)
-    3 | program test
-      | ^^^^^^^^^^^^ C001
-    4 |   ! allow(star-kind)
-    5 |   logical*4, parameter :: true = .true.
-    6 |   ! allow(trailing-whitespace)
-      |
-      = help: Insert `implicit none`
-
-    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
-      |
-    3 | program test
-    4 |   ! allow(star-kind)
-    5 |   logical*4, parameter :: true = .true.
-      |          ^^ PORT021
-    6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
-      |
-      = help: Replace with 'logical(4)'
-
-    [TEMP_FILE] PORT011 logical kind set with number literal '4'
-      |
-    3 | program test
-    4 |   ! allow(star-kind)
-    5 |   logical*4, parameter :: true = .true.
-      |           ^ PORT011
-    6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
-      |
-      = help: Use the parameter 'int32' from 'iso_fortran_env'
-
-    [TEMP_FILE] PORT021 'logical*4' uses non-standard syntax
-      |
-    5 |   logical*4, parameter :: true = .true.
-    6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
-      |          ^^ PORT021
-    8 | end program
-      |
-      = help: Replace with 'logical(4)'
-
-    [TEMP_FILE] PORT011 logical kind set with number literal '4'
-      |
-    5 |   logical*4, parameter :: true = .true.
-    6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
-      |           ^ PORT011
-    8 | end program
-      |
-      = help: Use the parameter 'int32' from 'iso_fortran_env'
-
-    [TEMP_FILE] S101 [*] trailing whitespace
-      |
-    5 |   logical*4, parameter :: true = .true.
-    6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
-      |                                          ^^ S101
-    8 | end program
-      |
-      = help: Remove trailing whitespace
-
-    [TEMP_FILE] S061 [*] end statement should be named.
-      |
-    6 |   ! allow(trailing-whitespace)
-    7 |   logical*4, parameter :: false = .false.  
-    8 | end program
-      | ^^^^^^^^^^^ S061
-      |
-      = help: Write as 'end program test'.
-
+    test.f90:3:1: C001 program uses implicit typing
+    test.f90:5:10: PORT021 'logical*4' uses non-standard syntax
+    test.f90:5:11: PORT011 logical kind set with number literal '4'
+    test.f90:7:10: PORT021 'logical*4' uses non-standard syntax
+    test.f90:7:11: PORT011 logical kind set with number literal '4'
+    test.f90:7:42: S101 [*] trailing whitespace
+    test.f90:8:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
     Number of errors: 7
 
@@ -2087,10 +1559,8 @@ end program
 
 #[test]
 fn apply_fixes_with_allow_comment() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 ! allow(superfluous-implicit-none)
 program foo
@@ -2104,10 +1574,9 @@ contains
 end program foo
 "#,
     )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=superfluous-implicit-none", "--fix"])
-                         .file(&test_file).build(),
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=superfluous-implicit-none", "--fix"]),
                          @r"
     success: true
     exit_code: 0
@@ -2133,7 +1602,7 @@ end program foo
 "#
     .to_string();
 
-    let transformed = fs::read_to_string(&test_file)?;
+    let transformed = fs::read_to_string(cmd.root().join("test.f90"))?;
     assert_eq!(transformed, expected);
 
     Ok(())
@@ -2141,57 +1610,36 @@ end program foo
 
 #[test]
 fn check_toml_settings() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let config_file = tempdir.path().join("fortitude.toml");
-    let fortran_file = tempdir.path().join("myfile.ff");
-    fs::write(
-        &config_file,
-        r#"
+    let cmd = FortitudeCheck::with_files([
+        (
+            "fortitude.toml",
+            r#"
 [check]
 file-extensions = ["ff"]
 line-length = 10
 "#,
-    )?;
-    fs::write(
-        &fortran_file,
-        r#"
+        ),
+        (
+            "myfile.ff",
+            r#"
 program myprogram
 end program myprogram
 "#,
-    )?;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=S001,S091,C001"])
-                         .config(&config_file)
-                         .file(&fortran_file)
-                         .build(),
+        ),
+    ])?;
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .args(["--config-file", "fortitude.toml"])
+                         .arg("myfile.ff")
+                         .args(["--select=S001,S091,C001"]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] S091 file extension should be '.f90' or '.F90'
-    [TEMP_FILE] C001 program uses implicit typing
-      |
-    2 | program myprogram
-      | ^^^^^^^^^^^^^^^^^ C001
-    3 | end program myprogram
-      |
-      = help: Insert `implicit none`
-
-    [TEMP_FILE] S001 line length of 17, exceeds maximum 10
-      |
-    2 | program myprogram
-      |           ^^^^^^^ S001
-    3 | end program myprogram
-      |
-
-    [TEMP_FILE] S001 line length of 21, exceeds maximum 10
-      |
-    2 | program myprogram
-    3 | end program myprogram
-      |           ^^^^^^^^^^^ S001
-      |
-
+    myfile.ff:1:1: S091 file extension should be '.f90' or '.F90'
+    myfile.ff:2:1: C001 program uses implicit typing
+    myfile.ff:2:11: S001 line length of 17, exceeds maximum 10
+    myfile.ff:3:11: S001 line length of 21, exceeds maximum 10
     fortitude: 1 files scanned.
     Number of errors: 4
 
@@ -2244,40 +1692,21 @@ exclude.f90
 
 #[test]
 fn check_gitignore() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    apply_common_filters!();
+    let cmd = FortitudeCheck::new()?;
     // Expect:
     // - See file include.f90 in the base path and include/include.f90
     // - Don't see file exclude.f90 in the base path or files in exclude directories
-    assert_cmd_snapshot!(FortitudeCheck::default()
+    assert_cmd_snapshot!(cmd
+                         .check_command()
+                         .arg(".")
                          .args(["--select=implicit-typing"])
-                         .filename(".")
-                         .build()
-                         .current_dir(gitignore_test_path(tempdir.path())),
+                         .current_dir(gitignore_test_path(cmd.root())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
     include.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module base
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     include/include.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module include
-      | ^^^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     fortitude: 2 files scanned.
     Number of errors: 2
 
@@ -2294,99 +1723,26 @@ fn check_gitignore() -> anyhow::Result<()> {
 
 #[test]
 fn check_no_respect_gitignore() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    apply_common_filters!();
+    let cmd = FortitudeCheck::new()?;
     // Expect to see all 8 files, even though exclude.f90 and exclude/ are in the .gitignore
-    assert_cmd_snapshot!(fortitude_cmd()
+    assert_cmd_snapshot!(cmd
+                         .check_command()
                          .arg("--isolated")
-                         .arg("check")
                          .arg("--select=implicit-typing")
                          .arg("--no-respect-gitignore")
-                         .current_dir(gitignore_test_path(tempdir.path())),
+                         .current_dir(gitignore_test_path(cmd.root())),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
     exclude.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module base
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     exclude/exclude.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module exclude
-      | ^^^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     exclude/include.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module exclude
-      | ^^^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     include.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module base
-      | ^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     include/exclude.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module include
-      | ^^^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     include/exclude/exclude.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module exclude
-      | ^^^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     include/exclude/include.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module exclude
-      | ^^^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     include/include.f90:2:1: C001 module uses implicit typing
-      |
-    2 | module include
-      | ^^^^^^^^^^^^^^ C001
-    3 | ! missing implicit none
-    4 | contains
-    5 |   integer function f()
-      |
-      = help: Insert `implicit none`
-
     fortitude: 8 files scanned.
     Number of errors: 8
 
@@ -2404,10 +1760,10 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
 #[test]
 fn preview_enabled_prefix() -> anyhow::Result<()> {
     // All the FORT99XX test rules should be triggered
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=FORT99", "--output-format=concise", "--preview"])
-                         .build()
-                         , @r"
+    assert_cmd_snapshot!(FortitudeCheck::new()?
+                         .check_command()
+                         .args(["--select=FORT99", "--preview"])
+                         .arg("-"), @r"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -2434,9 +1790,10 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
 #[test]
 fn preview_disabled_direct() -> anyhow::Result<()> {
     // All the FORT99XX test rules should be triggered
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=FORT9911", "--output-format=concise"])
-                         .build(), @r"
+    assert_cmd_snapshot!(FortitudeCheck::new()?
+                         .check_command()
+                         .arg("--select=FORT9911")
+                         .arg("-"), @r"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -2452,10 +1809,8 @@ fn preview_disabled_direct() -> anyhow::Result<()> {
 
 #[test]
 fn show_statistics() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program test
   logical*4, parameter :: true = .true.
@@ -2464,10 +1819,9 @@ end program test
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics"]).build(),
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics"]),
                          @r"
     success: false
     exit_code: 1
@@ -2493,10 +1847,8 @@ end program test
 
 #[test]
 fn show_statistics_unsafe_fixes() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program test
   logical*4, parameter :: true = .true.
@@ -2505,10 +1857,9 @@ end program test
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics", "--unsafe-fixes"]).build(),
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
+                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics", "--unsafe-fixes"]),
                          @r"
     success: false
     exit_code: 1
@@ -2534,10 +1885,8 @@ end program test
 
 #[test]
 fn show_statistics_json() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program test
   logical*4, parameter :: true = .true.
@@ -2546,10 +1895,10 @@ end program test
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
-                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics", "--output-format=json"]).build(),
+    assert_cmd_snapshot!(cmd
+                         .check_command_plain()
+                         .arg("test.f90")
+                         .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics", "--output-format=json"]),
                          @r#"
     success: false
     exit_code: 1
@@ -2599,9 +1948,8 @@ program test
   implicit none
 end program test
 "#;
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=C003", "--fix-only", "--unsafe-fixes", "--quiet", "--stdin-filename=test.f90"]).build()
+    assert_cmd_snapshot!(FortitudeCheck::new()?.check_command()
+                         .args(["--select=C003", "--fix-only", "--unsafe-fixes", "--quiet", "--stdin-filename=test.f90"])
                          .pass_stdin(input_file),
                          @r"
     success: true
@@ -2626,7 +1974,8 @@ program test
   implicit none (type, external)
 end program test
 "#;
-    assert_cmd_snapshot!(FortitudeCheck::default()
+    assert_cmd_snapshot!(FortitudeCheck::new()?
+                         .check_command()
                          .args([
                              "--select=C003",
                              "--fix-only",
@@ -2634,7 +1983,6 @@ end program test
                              "--quiet",
                              "--stdin-filename=test.f90"
                          ])
-                         .build()
                          .pass_stdin(input_file),
                          @r"
     success: true
@@ -2654,10 +2002,8 @@ end program test
 /// Issue 429, ignoring syntax errors from missing nodes
 #[test]
 fn ignore_syntax_errors() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none (type, external)
@@ -2666,11 +2012,8 @@ end program foo
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=C003", "--ignore=E001"])
-                         .file(&test_file)
-                         .build(),
+    assert_cmd_snapshot!(cmd.check_command().arg("test.f90")
+                         .args(["--select=C003", "--ignore=E001"]),
                          @r"
     success: true
     exit_code: 0
@@ -2680,7 +2023,7 @@ end program foo
 
 
     ----- stderr -----
-    warning: Syntax errors detected in file: [TEMP_FILE] Discarding all fixes. Some violations from the AST may be unreliable.
+    warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
     ");
 
     Ok(())
@@ -2727,10 +2070,8 @@ ignore = ["missing-intent"]
 
 #[test]
 fn diff_mode() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program foo
   implicit none
@@ -2739,17 +2080,14 @@ end program foo
 "#,
     )?;
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .args(["--select=C", "--diff", "--unsafe-fixes"])
-                         .file(&test_file)
-                         .build(),
+    assert_cmd_snapshot!(cmd.check_command().arg("test.f90")
+                         .args(["--select=C", "--diff", "--unsafe-fixes"]),
                          @r"
     success: true
     exit_code: 0
     ----- stdout -----
-    --- [TEMP_FILE]
-    +++ [TEMP_FILE]
+    --- test.f90
+    +++ test.f90
     @@ -1,5 +1,5 @@
      
      program foo
@@ -2768,15 +2106,14 @@ end program foo
 
 #[test]
 fn nonblock_do_rules() -> anyhow::Result<()> {
-    let test_file =
-        Path::new("../fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90");
+    let cmd = FortitudeCheck::new()?;
+    let test_file = FortitudeCheck::crates_root()
+        .join("fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90");
 
-    apply_common_filters!();
     assert_cmd_snapshot!(
-        FortitudeCheck::default()
+        cmd.check_command()
             .args(["--select=OB09", "--diff", "--unsafe-fixes", "--preview"])
-            .file(test_file)
-            .build()
+            .arg(test_file)
     );
 
     Ok(())
@@ -2784,10 +2121,8 @@ fn nonblock_do_rules() -> anyhow::Result<()> {
 
 #[test]
 fn line_filter() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
-    let test_file = tempdir.path().join("test.f90");
-    fs::write(
-        &test_file,
+    let cmd = FortitudeCheck::with_file(
+        "test.f90",
         r#"
 program test
   logical*4, parameter :: true = .true.
@@ -2804,40 +2139,21 @@ end program test
     // are properly escaped
     let filter_arg = format!(
         "--line-filter=[{{\"name\":{:?}, \"lines\":[[1, 3], [8, 8]]}}]",
-        std::fs::canonicalize(&test_file)?
+        std::fs::canonicalize(cmd.root().join("test.f90"))?
     );
 
-    apply_common_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
                          .args([
                              &filter_arg,
                              "--select=PORT011",
-                         ]).build(),
+                         ]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] PORT011 logical kind set with number literal '4'
-      |
-    2 | program test
-    3 |   logical*4, parameter :: true = .true.
-      |           ^ PORT011
-    4 |   logical*4, parameter :: false = .false.
-    5 |   ! more lines
-      |
-      = help: Use the parameter 'int32' from 'iso_fortran_env'
-
-    [TEMP_FILE] PORT011 logical kind set with number literal '4'
-      |
-    6 |   !
-    7 |   !
-    8 |   logical*4 :: maybe
-      |           ^ PORT011
-    9 | end program test
-      |
-      = help: Use the parameter 'int32' from 'iso_fortran_env'
-
+    test.f90:3:11: PORT011 logical kind set with number literal '4'
+    test.f90:8:11: PORT011 logical kind set with number literal '4'
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -2917,9 +2233,9 @@ end program test
 /// Test changes that have been staged in a git repo
 #[test]
 fn git_staged() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
+    let cmd = FortitudeCheck::new()?;
     let filename = Path::new("test.f90");
-    let (repo, test_file, _) = set_up_git_repo(tempdir.path())?;
+    let (repo, test_file, _) = set_up_git_repo(cmd.root())?;
     // Now edit the file
     fs::write(&test_file, GIT_TEST_FILE_UPDATED_CONTENTS)?;
 
@@ -2928,28 +2244,17 @@ fn git_staged() -> anyhow::Result<()> {
     index.add_path(filename)?;
     index.write()?;
 
-    apply_common_filters!();
-    apply_git_repo_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
                          .args([
                              "--git-staged",
                              "--select=PORT011",
-                         ]).build()
-                         .current_dir(tempdir.path()),
+                         ]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] PORT011 logical kind set with number literal '4'
-       |
-    12 |   ! new line, only this should get flagged
-    13 |   logical*4 :: maybe
-       |           ^ PORT011
-    14 | end program test
-       |
-       = help: Use the parameter 'int32' from 'iso_fortran_env'
-
+    test.f90:13:11: PORT011 logical kind set with number literal '4'
     fortitude: 1 files scanned.
     Number of errors: 1
 
@@ -2967,9 +2272,9 @@ fn git_staged() -> anyhow::Result<()> {
 /// Test filtering to just the commited changes on a git branch
 #[test]
 fn git_since() -> anyhow::Result<()> {
-    let tempdir = TempDir::new()?;
+    let cmd = FortitudeCheck::new()?;
     let filename = Path::new("test.f90");
-    let (repo, test_file, commit_oid) = set_up_git_repo(tempdir.path())?;
+    let (repo, test_file, commit_oid) = set_up_git_repo(cmd.root())?;
 
     // git switch -c
     let commit = repo.find_commit(commit_oid)?;
@@ -2988,29 +2293,18 @@ fn git_since() -> anyhow::Result<()> {
     let sig = git2::Signature::now("fortitude_test", "fortitude@example.com")?;
     repo.commit(Some("HEAD"), &sig, &sig, "second commit", &tree, &[&commit])?;
 
-    apply_common_filters!();
-    apply_git_repo_filters!();
-    assert_cmd_snapshot!(FortitudeCheck::default()
-                         .file(&test_file)
+    assert_cmd_snapshot!(cmd.check_command()
+                         .arg("test.f90")
                          .args([
                              "--git-since",
                              "test-branch",
                              "--select=PORT011",
-                         ]).build()
-                         .current_dir(tempdir.path()),
+                         ]),
                          @r"
     success: false
     exit_code: 1
     ----- stdout -----
-    [TEMP_FILE] PORT011 logical kind set with number literal '4'
-       |
-    12 |   ! new line, only this should get flagged
-    13 |   logical*4 :: maybe
-       |           ^ PORT011
-    14 | end program test
-       |
-       = help: Use the parameter 'int32' from 'iso_fortran_env'
-
+    test.f90:13:11: PORT011 logical kind set with number literal '4'
     fortitude: 1 files scanned.
     Number of errors: 1
 

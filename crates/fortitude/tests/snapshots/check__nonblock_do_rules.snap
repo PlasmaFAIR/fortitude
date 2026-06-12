@@ -4,19 +4,20 @@ info:
   program: fortitude
   args:
     - check
-    - "--isolated"
-    - "../fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90"
+    - "--output-format"
+    - concise
     - "--select=OB09"
     - "--diff"
     - "--unsafe-fixes"
     - "--preview"
+    - /home/peter/Codes/fortitude/crates/fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90
 snapshot_kind: text
 ---
 success: false
 exit_code: 1
 ----- stdout -----
---- fortitude/crates/fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90
-+++ fortitude/crates/fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90
+--- CRATE_ROOT/fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90
++++ CRATE_ROOT/fortitude_linter/resources/test/fixtures/obsolescent/labelled_do.f90
 @@ -2,53 +2,60 @@
      integer :: i, j, k, l, m, foo(10), A(10, 10), B(10, 10, 10)
  
