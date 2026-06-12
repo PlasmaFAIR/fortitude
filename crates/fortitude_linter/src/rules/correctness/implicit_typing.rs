@@ -2,7 +2,7 @@
 use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::settings::FortranStandard;
-use crate::traits::TextRanged;
+use crate::traits::{HasNode, TextRanged};
 use crate::{AstRule, CheckContext};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;

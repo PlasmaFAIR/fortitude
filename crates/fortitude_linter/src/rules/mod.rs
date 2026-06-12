@@ -163,6 +163,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "271") => (RuleGroup::Preview, Ast, Default, style::use_statement::UnsortedUses),
         (Style, "291") => (RuleGroup::Preview, Ast, Default, style::literals::BareDecimal),
         (Style, "301") => (RuleGroup::Preview, Ast, Optional, style::superfluous_while_true::SuperfluousWhileTrue),
+        (Style, "311") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordReuse),
         (Style, "901") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooComplex),
         (Style, "902") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooManyArguments),
 

@@ -216,6 +216,11 @@ impl Diagnostic {
         self.suggestion.as_deref()
     }
 
+    /// Returns the text range for the message.
+    pub fn range(&self) -> TextRange {
+        self.range
+    }
+
     /// Returns the [`Fix`] for the message, if there is any.
     pub fn fix(&self) -> Option<&Fix> {
         self.fix.as_ref()

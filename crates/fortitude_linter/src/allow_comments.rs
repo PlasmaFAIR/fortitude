@@ -12,7 +12,7 @@ use crate::diagnostics::{Diagnostic, Edit, Fix};
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
 use ruff_source_file::SourceFile;
-use ruff_text_size::{Ranged, TextRange, TextSize};
+use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashSet;
 use std::str::FromStr;
 use tree_sitter::Node;

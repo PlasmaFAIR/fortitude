@@ -38,6 +38,7 @@ use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
 use rules::style::file_extensions::NonStandardFileExtension;
 use rules::style::inconsistent_dimension::check_inconsistent_dimension_rules;
+use rules::style::keywords::check_keyword_reuse;
 use rules::style::line_length::LineTooLong;
 use rules::style::useless_return::check_superfluous_returns;
 use rules::style::whitespace::{MissingNewlineAtEndOfFile, TrailingWhitespace};
@@ -299,6 +300,11 @@ pub(crate) fn check_path(
 
         if BEGIN_SCOPE_NODES.contains(&node.kind()) {
             let new_table = SymbolTable::new(&node, file.source_text());
+
+            // Check for keyword reuse in this scope
+            if context.rules.enabled(Rule::KeywordReuse) {
+                violations.extend(check_keyword_reuse(&context, &new_table));
+            }
 
             // Run rules over variable declarations without needing to reparse
             // them into types

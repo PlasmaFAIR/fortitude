@@ -1,5 +1,5 @@
 /// Defines rules that govern the use of keywords.
-use crate::ast::FortitudeNode;
+use crate::ast::{FortitudeNode, symbol_table::SymbolTable};
 use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
@@ -316,14 +316,14 @@ pub mod settings {
 /// With `keyword-case = "lowercase"`:
 ///
 /// ### Incorrect
-/// ```fortran
+/// ```f90
 /// IMPLICIT NONE
 /// INTEGER, INTENT(IN) :: x
 /// END SUBROUTINE foo
 /// ```
 ///
 /// ### Correct
-/// ```fortran
+/// ```f90
 /// implicit none
 /// integer, intent(in) :: x
 /// end subroutine foo
@@ -332,14 +332,14 @@ pub mod settings {
 /// With `keyword-case = "uppercase"`:
 ///
 /// ### Incorrect
-/// ```fortran
+/// ```f90
 /// implicit none
 /// integer, intent(in) :: x
 /// end subroutine foo
 /// ```
 ///
 /// ### Correct
-/// ```fortran
+/// ```f90
 /// IMPLICIT NONE
 /// INTEGER, INTENT(IN) :: x
 /// END SUBROUTINE foo
@@ -429,5 +429,101 @@ pub mod settings_keyword_case {
             }
             Ok(())
         }
+    }
+}
+
+/// ## What it does
+/// Checks for the use of keywords when naming variables, modules, functions,
+/// etc.
+///
+/// ## Why is this bad?
+/// The reuse of keywords as identifiers can be confusing to readers, and may cause
+/// problems for some tools. Enforcing this rule can help maintain a consistent style.
+///
+/// ## Examples
+///
+/// ```f90
+/// module program
+///
+///   implicit none (type, external)
+///   private
+///
+/// contains
+///
+///   subroutine function(stop)
+///     integer, intent(in) :: stop
+///     print *, stop
+///   end subroutine function
+///
+/// end module program
+/// ```
+#[derive(ViolationMetadata)]
+pub struct KeywordReuse {
+    keyword: String,
+    is_block_label: bool,
+}
+
+impl Violation for KeywordReuse {
+    const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
+
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let keyword = &self.keyword;
+        if self.is_block_label {
+            format!("Keyword `{keyword}` used as a label")
+        } else {
+            format!("Keyword `{keyword}` used as an identifier")
+        }
+    }
+}
+
+/// Check the symbol table for any identifiers that are the same as Fortran
+/// keywords.
+pub(crate) fn check_keyword_reuse(
+    context: &CheckContext,
+    symbols: &SymbolTable,
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    // Check the names of all variables declared in the current scope
+    for (name, symbol) in symbols.iter() {
+        if tree_sitter_fortran::KEYWORDS.contains(&name.as_str()) {
+            diagnostics.push(context.create_diagnostic(
+                KeywordReuse {
+                    keyword: name.to_string(),
+                    is_block_label: false,
+                },
+                symbol.name(),
+            ));
+        }
+    }
+    diagnostics.sort_by(|a, b| a.range().ordering(b.range()));
+    diagnostics
+}
+
+impl AstRule for KeywordReuse {
+    /// Check for keyword reuse for block labels, which are not currently
+    /// findable via the symbol table.
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        if node.kind() != "block_label_start_expression" {
+            return None;
+        }
+        let name_node = node.child(0)?;
+        let name = name_node.to_text(context.source_text())?;
+        if tree_sitter_fortran::KEYWORDS.contains(&name) {
+            return some_vec![context.create_diagnostic(
+                KeywordReuse {
+                    keyword: name.to_string(),
+                    is_block_label: true,
+                },
+                name_node,
+            )];
+        }
+        None
+    }
+
+    /// Entry point only on `block_label_start_expression`, as other cases of
+    /// keyword reuse should be caught by `check_keyword_reuse`.
+    fn entrypoints() -> Vec<&'static str> {
+        vec!["block_label_start_expression"]
     }
 }

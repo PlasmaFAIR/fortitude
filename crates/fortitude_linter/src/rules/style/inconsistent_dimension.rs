@@ -1,8 +1,7 @@
 use crate::CheckContext;
 use crate::Rule;
 use crate::ast::FortitudeNode;
-use crate::ast::types::NameDecl;
-use crate::ast::types::VariableDeclaration;
+use crate::ast::types::{HasName, NameDecl, VariableDeclaration};
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::remove_variable_decl;
 use crate::traits::{HasNode, TextRanged};

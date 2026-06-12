@@ -4,7 +4,7 @@ use std::{rc::Rc, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use bitflags::bitflags;
-use fortitude_macros::HasNode;
+use fortitude_macros::{HasName, HasNode};
 use itertools::Itertools;
 use ruff_source_file::SourceFile;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
@@ -39,27 +39,66 @@ impl<'a> ParameterStatement<'a> {
     }
 }
 
-/// A declaration of a single variable
+/// The name node of a variable declaration, procedure declaration, type
+/// definition, etc.
 #[derive(Clone, Debug, HasNode)]
-pub struct NameDecl<'a> {
+pub struct Name<'a> {
     name: String,
+    node: Node<'a>,
+}
+
+impl<'a> Name<'a> {
+    pub fn from_node(node: &Node<'a>, src: &str) -> Self {
+        let node = get_name_node_of_declarator(node);
+        Self {
+            name: node.to_text(src).unwrap_or("<unknown>").to_string(),
+            node,
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.name.as_str()
+    }
+}
+
+impl std::fmt::Display for Name<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
+pub trait HasName<'a> {
+    fn name(&self) -> &Name<'a>;
+}
+
+impl<'a, T> HasName<'a> for &'a T
+where
+    T: HasName<'a>,
+{
+    fn name(&self) -> &Name<'a> {
+        T::name(self)
+    }
+}
+
+impl<'a> HasName<'a> for &'a Name<'a> {
+    fn name(&self) -> &Name<'a> {
+        self
+    }
+}
+
+/// A declaration of a single variable, including sizes, assignments, etc.
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct NameDecl<'a> {
+    name: Name<'a>,
     node: Node<'a>,
 }
 
 impl<'a> NameDecl<'a> {
     pub fn from_node(node: &Node<'a>, src: &str) -> Self {
         Self {
-            name: get_name_node_of_declarator(node)
-                .to_text(src)
-                .unwrap_or("<unknown>")
-                .to_string(),
+            name: Name::from_node(node, src),
             node: *node,
         }
-    }
-
-    /// Variable name
-    pub fn name(&self) -> &str {
-        self.name.as_str()
     }
 
     /// Get size node, if there is one
@@ -379,29 +418,20 @@ impl<'a> VariableDeclaration<'a> {
             src,
         )?;
 
-        let name = if let Some(result) = node.child_with_name("function_result") {
-            let id = result
+        let id = if let Some(result) = node.child_with_name("function_result") {
+            result
                 .child_with_name("identifier")
-                .expect("`function_result` should have `identifier` child");
-            NameDecl::from_node(&id, src)
+                .expect("`function_result` should have `identifier` child")
         } else {
-            let id = node
-                .child_by_field_name("name")
-                .expect("`function_statement` must have `name` field");
-            NameDecl {
-                name: id
-                    .to_text(src)
-                    .context("`name` must have text")?
-                    .to_string(),
-                node: id,
-            }
+            node.child_by_field_name("name")
+                .expect("`function_statement` must have `name` field")
         };
-        let names = vec![name];
+        let name = NameDecl::from_node(&id, src);
 
         Ok(Self {
             type_,
             attributes: vec![],
-            names,
+            names: vec![name],
             node: *node,
             has_colon: false,
             is_function: true,
@@ -412,11 +442,11 @@ impl<'a> VariableDeclaration<'a> {
         &self.type_
     }
 
-    pub fn attributes(&self) -> &Vec<Attribute<'_>> {
+    pub fn attributes(&self) -> &[Attribute<'_>] {
         &self.attributes
     }
 
-    pub fn names(&self) -> &Vec<NameDecl<'a>> {
+    pub fn names(&self) -> &[NameDecl<'a>] {
         &self.names
     }
 
@@ -444,7 +474,7 @@ impl<'a> VariableDeclaration<'a> {
 /// declarator node, and not, say, the initialiser
 pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
     match node.kind() {
-        "identifier" | "method_name" => *node,
+        "identifier" | "method_name" | "type_name" | "name" => *node,
         "sized_declarator" => node
             .named_child(0)
             .expect("sized_declarator should have named child"),
@@ -478,21 +508,20 @@ pub fn get_init_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
 }
 
 /// A single Fortran variable
-#[derive(Clone, Debug, HasNode)]
+#[derive(Clone, Debug)]
 pub struct Variable<'a> {
-    name: String,
-    node: Node<'a>,
+    name: NameDecl<'a>,
     /// Reference to the statement in which the variable is declared
     decl: Rc<VariableDeclaration<'a>>,
 }
 
 impl<'a> Variable<'a> {
-    pub fn new(name: String, node: Node<'a>, decl: Rc<VariableDeclaration<'a>>) -> Self {
-        Self { name, node, decl }
+    pub fn new(name: NameDecl<'a>, decl: Rc<VariableDeclaration<'a>>) -> Self {
+        Self { name, decl }
     }
 
-    pub fn name(&self) -> &str {
-        self.name.as_str()
+    pub fn decl(&self) -> &NameDecl<'a> {
+        &self.name
     }
 
     pub fn decl_statement(&'a self) -> &'a VariableDeclaration<'a> {
@@ -503,7 +532,7 @@ impl<'a> Variable<'a> {
         self.decl.type_()
     }
 
-    pub fn attributes(&self) -> &Vec<Attribute<'_>> {
+    pub fn attributes(&self) -> &[Attribute<'_>] {
         self.decl.attributes()
     }
 
@@ -513,6 +542,18 @@ impl<'a> Variable<'a> {
 
     pub fn has_any_attributes(&self, attrs: &[AttributeKind]) -> bool {
         self.decl.has_any_attributes(attrs)
+    }
+}
+
+impl<'a> HasName<'a> for Variable<'a> {
+    fn name(&self) -> &Name<'a> {
+        self.name.name()
+    }
+}
+
+impl<'a> HasNode<'a> for Variable<'a> {
+    fn node(&self) -> &Node<'a> {
+        self.name.node()
     }
 }
 
@@ -534,7 +575,7 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HasNode)]
 pub(crate) struct ImplicitStatement<'a> {
     node: Node<'a>,
     none_type: ImplicitNoneType,
@@ -576,10 +617,6 @@ impl<'a> ImplicitStatement<'a> {
             return None;
         }
         None
-    }
-
-    pub fn node(&self) -> &Node<'a> {
-        &self.node
     }
 
     pub fn is_equivalent_to(&self, other: &Self) -> bool {
@@ -636,11 +673,11 @@ pub enum ProcedureKind {
     Subroutine,
 }
 
-#[derive(Clone, Debug, HasNode)]
+#[derive(Clone, Debug, HasName, HasNode)]
 pub struct Procedure<'a> {
     type_: Option<Type<'a>>,
     attributes: Vec<ProcedureAttribute<'a>>,
-    name: String,
+    name: Name<'a>,
     args: Vec<String>,
     kind: ProcedureKind,
     node: Node<'a>,
@@ -671,10 +708,8 @@ impl<'a> Procedure<'a> {
 
         let name = stmt
             .child_by_field_name("name")
-            .context("procedure should have `name` field")?
-            .to_text(src)
-            .context("name should have text")?
-            .to_ascii_lowercase();
+            .context("procedure should have `name` field")?;
+        let name = Name::from_node(&name, src);
 
         let args = stmt
             .child_with_name("parameters")
@@ -705,10 +740,6 @@ impl<'a> Procedure<'a> {
         &self.attributes
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
     pub const fn args(&self) -> &Vec<String> {
         &self.args
     }
@@ -723,5 +754,82 @@ impl<'a> Procedure<'a> {
 
     pub const fn is_subroutine(&self) -> bool {
         self.kind.is_subroutine()
+    }
+}
+
+/// Type representing a derived type definition.
+/// Not yet fleshed out! Should add type attributes,
+/// list of type-bound procedures, etc.
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct TypeDefinition<'a> {
+    name: Name<'a>,
+    node: Node<'a>,
+}
+
+impl<'a> TypeDefinition<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if !node.is_named() || node.kind() != "derived_type_definition" {
+            return Err(anyhow!("not a derived type"));
+        }
+
+        let stmt = node
+            .child_with_name("derived_type_statement")
+            .context("expected dervied_type_statement")?;
+        let name_node = stmt
+            .child_with_name("type_name")
+            .context("expected type_name")?;
+        let name = Name::from_node(&name_node, src);
+
+        Ok(Self { name, node: *node })
+    }
+}
+
+/// Type representing a module.
+/// Not yet fleshed out! Should add implicit statement, list of used modules,
+/// default accessibility, etc.
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct Module<'a> {
+    name: Name<'a>,
+    node: Node<'a>,
+}
+
+impl<'a> Module<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if !node.is_named() || node.kind() != "module" {
+            return Err(anyhow!("not a module"));
+        }
+
+        let stmt = node
+            .child_with_name("module_statement")
+            .context("expected module_statement")?;
+        let name_node = stmt.child_with_name("name").context("expected name")?;
+        let name = Name::from_node(&name_node, src);
+
+        Ok(Self { name, node: *node })
+    }
+}
+
+/// Type representing a program.
+/// Not yet fleshed out! Should add implicit statement, list of used modules,
+/// etc.
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct Program<'a> {
+    name: Name<'a>,
+    node: Node<'a>,
+}
+
+impl<'a> Program<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if !node.is_named() || node.kind() != "program" {
+            return Err(anyhow!("not a program"));
+        }
+
+        let stmt = node
+            .child_with_name("program_statement")
+            .context("expected program_statement")?;
+        let name_node = stmt.child_with_name("name").context("expected name")?;
+        let name = Name::from_node(&name_node, src);
+
+        Ok(Self { name, node: *node })
     }
 }
