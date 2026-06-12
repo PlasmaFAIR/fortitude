@@ -177,7 +177,7 @@ files in the GS2 source code, a turbulence modelling tool used in
 magnetically-confined fusion energy research [@gs2]. Each tool was set up as
 follows:
 
-- Fortitude v0.9.0: Activated all 101 rules.
+- Fortitude v0.9.0: Activated all 102 rules.
 - Stylist v0.5.dev (latest on GitHub): Activated all 11 rules.
 - CamFort v1.3.dev (latest on GitHub): Activated the 5 rules in the
   `basic-checks` command.
