@@ -83,10 +83,10 @@ fn apply_fixes<'a>(
         if let Some(first) = edits.peek() {
             // If this fix requires isolation, and we've already applied another fix in the
             // same isolation group, skip it.
-            if let IsolationLevel::Group(id) = fix.isolation() {
-                if !isolated.insert(id) {
-                    continue;
-                }
+            if let IsolationLevel::Group(id) = fix.isolation()
+                && !isolated.insert(id)
+            {
+                continue;
             }
 
             // If this fix overlaps with a fix we've already applied, skip it.

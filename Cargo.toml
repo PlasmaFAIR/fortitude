@@ -5,7 +5,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.93"
 homepage = "https://fortitude.readthedocs.io/"
 documentation = "https://fortitude.readthedocs.io/"
 repository = "https://github.com/PlasmaFAIR/fortitude"
