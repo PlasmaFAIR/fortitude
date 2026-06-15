@@ -198,8 +198,8 @@ impl<'a> SymbolTables<'a> {
         self.inner.push(table);
     }
 
-    pub fn pop_table(&mut self) {
-        self.inner.pop();
+    pub fn pop_table(&mut self) -> Option<SymbolTable<'a>> {
+        self.inner.pop()
     }
 
     /// Return the symbol with the given name if it exists and is a variable

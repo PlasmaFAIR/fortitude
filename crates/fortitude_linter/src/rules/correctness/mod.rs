@@ -14,6 +14,7 @@ pub(crate) mod magic_numbers;
 pub(crate) mod missing_io_specifier;
 pub(crate) mod nonportable_shortcircuit_inquiry;
 pub(crate) mod select_default;
+pub(crate) mod shadowed_variable;
 pub(crate) mod split_escaped_quote;
 pub(crate) mod trailing_backslash;
 pub(crate) mod unreachable_statement;
@@ -71,6 +72,7 @@ mod tests {
     #[test_case(Rule::MultipleAllocationsWithStat, Path::new("C182.f90"))]
     #[test_case(Rule::StatWithoutMessage, Path::new("C183.f90"))]
     #[test_case(Rule::UnreachableStatement, Path::new("C191.f90"))]
+    #[test_case(Rule::ShadowedVariable, Path::new("C201_shadowed_variable.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
