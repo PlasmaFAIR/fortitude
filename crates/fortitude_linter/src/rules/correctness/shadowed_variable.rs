@@ -1,6 +1,9 @@
 use crate::CheckContext;
-use crate::ast::symbol_table::{Symbol, SymbolTable};
 use crate::ast::types::HasName;
+use crate::ast::{
+    symbol_table::{Symbol, SymbolTable},
+    types::Variable,
+};
 use crate::diagnostics::{Diagnostic, FixAvailability, Violation};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
@@ -83,10 +86,18 @@ pub struct ShadowedVariable {
     name: String,
 }
 
-// const ALLOWED_INTS: &[&'static str] = &[
-//     "i", "j", "k", "ii", "jj", "kk", "idx", "index", "err", "ierr", "ioerr", "stat", "iostat",
-//     "status",
-// ];
+const ALLOWED_INTEGERS: &[&str] = &[
+    "i", "j", "k", "ii", "jj", "kk", "idx", "index", "err", "ierr", "ioerr", "stat", "iostat",
+    "status",
+];
+
+fn is_allowed_integer(var: &Variable) -> bool {
+    let t = var.type_();
+    let name = var.name().as_str().to_ascii_lowercase();
+    t.is_intrinsic()
+        && t.as_str().eq_ignore_ascii_case("integer")
+        && ALLOWED_INTEGERS.contains(&name.as_str())
+}
 
 impl Violation for ShadowedVariable {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
@@ -107,15 +118,24 @@ pub(crate) fn check_shadowed_variables(
     // Check the names of all variables declared in the current scope
     symbols
         .iter()
+        // Only check variables
         .filter_map(|(name, symbol)| {
-            if let Symbol::Variable(symbol) = symbol
-                && let Some(_) = context.symbol_table().get_var(name)
-            {
+            if let Symbol::Variable(var) = symbol {
+                Some((name, var))
+            } else {
+                None
+            }
+        })
+        // Filter allowed integers
+        .filter(|(_, var)| !is_allowed_integer(var))
+        // Create diagnostic if var found in a higher scope
+        .filter_map(|(name, var)| {
+            if context.symbol_table().get_var(name).is_some() {
                 Some(context.create_diagnostic(
                     ShadowedVariable {
                         name: name.to_string(),
                     },
-                    symbol.name(),
+                    var.name(),
                 ))
             } else {
                 None
