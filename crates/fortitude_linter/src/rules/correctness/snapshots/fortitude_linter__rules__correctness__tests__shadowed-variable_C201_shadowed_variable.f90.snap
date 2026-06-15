@@ -11,13 +11,3 @@ expression: diagnostics
 13 |
 14 |     allocate(x(n))
    |
-
-./resources/test/fixtures/correctness/C201_shadowed_variable.f90:30:30: C201 Variable `arr` shadows variable in a higher scope
-   |
-28 |     !! Finds minimum element of an array, swaps it with the start
-29 |     subroutine helper(arr)
-30 |       real, intent(inout) :: arr(:) ! Allowed: is a dummy arg
-   |                              ^^^ C201
-31 |       real :: min_val
-32 |       integer :: min_idx
-   |

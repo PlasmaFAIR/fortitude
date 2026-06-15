@@ -126,8 +126,8 @@ pub(crate) fn check_shadowed_variables(
                 None
             }
         })
-        // Filter allowed integers
-        .filter(|(_, var)| !is_allowed_integer(var))
+        // Filter allowed integers and dummy variables
+        .filter(|(_, var)| !is_allowed_integer(var) && !var.is_dummy_var())
         // Create diagnostic if var found in a higher scope
         .filter_map(|(name, var)| {
             if context.symbol_table().get_var(name).is_some() {

@@ -84,22 +84,50 @@ impl<'a> SymbolTable<'a> {
     pub fn new(scope: &Node<'a>, src: &str) -> Self {
         let mut new_table = Self::default();
 
+        // If this is a procedure, collect a list of dummy arg names
+        let mut dummy_vars = vec![];
+        let kind = scope.kind();
+        if matches!(kind, "function" | "subroutine") {
+            let stmt = scope
+                .named_child(0)
+                .expect("First child must be function/subroutine statement");
+            if let Some(params) = stmt.child_by_field_name("parameters") {
+                for child in params.named_children(&mut params.walk()) {
+                    if child.kind() == "identifier" {
+                        dummy_vars.push(
+                            child
+                                .to_text(src)
+                                .unwrap_or("<unknown>")
+                                .to_ascii_lowercase(),
+                        );
+                    }
+                }
+            }
+        }
+
         scope
             .named_children(&mut scope.walk())
             .filter(|child| child.kind() == "variable_declaration")
             .filter_map(|decl| VariableDeclaration::try_from_node(&decl, src).ok())
-            .for_each(|line| new_table.insert_from_decl_line(line));
+            .for_each(|line| new_table.insert_from_decl_line(line, &dummy_vars));
 
         // The `function` statement itself _may_ also be the declaration line if
         // it has a type as a procedure attribute. If it doesn't, then it will
         // either have an explicit decl line, which is handled above, or it's
         // implicitly typed, which we don't currently handle here at all
-        if scope.is_named() && scope.kind() == "function" {
+        if scope.kind() == "function" {
             let stmt = scope
                 .child(0)
                 .expect("`function` must have `function_statement` as zeroth child");
             if let Ok(decl) = VariableDeclaration::try_from_fn_stmt(&stmt, src) {
-                new_table.insert_from_decl_line(decl);
+                let name = decl
+                    .names()
+                    .first()
+                    .expect("Function must have a name")
+                    .name()
+                    .as_str()
+                    .to_ascii_lowercase();
+                new_table.insert_from_decl_line(decl, &[name]);
             }
         }
 
@@ -146,13 +174,14 @@ impl<'a> SymbolTable<'a> {
     }
 
     /// Insert all symbols found in a single variable declaration statement
-    pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
+    pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>, dummy_vars: &[String]) {
         let decl = Rc::new(decl);
         for name in decl.names().iter() {
             let name_lower = name.name().as_str().to_ascii_lowercase();
+            let is_dummy_var = dummy_vars.contains(&name_lower);
             self.inner.insert(
                 name_lower,
-                Symbol::Variable(Variable::new(name.clone(), decl.clone())),
+                Symbol::Variable(Variable::new(name.clone(), is_dummy_var, decl.clone())),
             );
         }
         self.decl_lines.push(decl);
@@ -450,12 +479,14 @@ end subroutine foo
         let x = symbol_table.get_var("x");
         assert!(x.is_some());
         let x = x.unwrap();
+        assert!(x.is_dummy_var());
         assert!(x.attributes().iter().any(|attr| attr.kind().is_dimension()));
         assert!(x.has_attribute(AttributeKind::Intent(Intent::In)));
 
         let y = symbol_table.get_var("y");
         assert!(y.is_some());
         let y = y.unwrap();
+        assert!(y.is_dummy_var());
         let y_dim = y
             .attributes()
             .iter()
@@ -493,6 +524,7 @@ end function foo
         let foo = symbol_table.get_var("foo");
         assert!(foo.is_some());
         let foo = foo.unwrap();
+        assert!(!foo.is_dummy_var());
         assert!(foo.has_attribute(AttributeKind::Allocatable));
         assert!(
             foo.attributes()
@@ -524,6 +556,7 @@ end function foo
         let foo = symbol_table.get_var("foo");
         assert!(foo.is_some());
         let foo = foo.unwrap();
+        assert!(foo.is_dummy_var());
         assert!(foo.type_().is_intrinsic());
 
         Ok(())
@@ -550,6 +583,7 @@ end function foo
         let y = symbol_table.get_var("y");
         assert!(y.is_some());
         let y = y.unwrap();
+        assert!(y.is_dummy_var());
         assert!(y.type_().is_intrinsic());
 
         Ok(())

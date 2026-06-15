@@ -511,13 +511,22 @@ pub fn get_init_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
 #[derive(Clone, Debug)]
 pub struct Variable<'a> {
     name: NameDecl<'a>,
+    is_dummy_var: bool,
     /// Reference to the statement in which the variable is declared
     decl: Rc<VariableDeclaration<'a>>,
 }
 
 impl<'a> Variable<'a> {
-    pub fn new(name: NameDecl<'a>, decl: Rc<VariableDeclaration<'a>>) -> Self {
-        Self { name, decl }
+    pub fn new(name: NameDecl<'a>, is_dummy_var: bool, decl: Rc<VariableDeclaration<'a>>) -> Self {
+        Self {
+            name,
+            is_dummy_var,
+            decl,
+        }
+    }
+
+    pub fn is_dummy_var(&self) -> bool {
+        self.is_dummy_var
     }
 
     pub fn decl(&self) -> &NameDecl<'a> {

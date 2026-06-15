@@ -299,7 +299,7 @@ pub(crate) fn check_path(
             violations.push(context.create_diagnostic(SyntaxError {}, node));
         }
 
-        if BEGIN_SCOPE_NODES.contains(&node.kind()) {
+        if node.is_named() && BEGIN_SCOPE_NODES.contains(&node.kind()) {
             let new_table = SymbolTable::new(&node, file.source_text());
 
             // Check for keyword reuse in this scope
