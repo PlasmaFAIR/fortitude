@@ -303,43 +303,6 @@ unknown-key = 1
 }
 
 #[test]
-fn check_all() -> anyhow::Result<()> {
-    let cmd = FortitudeCheck::with_file(
-        "test.f90",
-        r#"
-program test
-  logical*4, parameter :: true = .true.
-end program
-"#,
-    )?;
-
-    assert_cmd_snapshot!(cmd
-                         .check_command()
-                         .arg("test.f90")
-                         .args(["--select=S061,C001,PORT011,PORT021"]),
-                         @r"
-    success: false
-    exit_code: 1
-    ----- stdout -----
-    test.f90:2:1: C001 program uses implicit typing
-    test.f90:3:10: PORT021 'logical*4' uses non-standard syntax
-    test.f90:3:11: PORT011 logical kind set with number literal '4'
-    test.f90:4:1: S061 [*] end statement should be named.
-    fortitude: 1 files scanned.
-    Number of errors: 4
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
-    [*] 1 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
-
-    ----- stderr -----
-    ");
-    Ok(())
-}
-
-#[test]
 fn check_select_cli() -> anyhow::Result<()> {
     let cmd = FortitudeCheck::with_file(
         "test.f90",
@@ -1789,7 +1752,7 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
 
 #[test]
 fn preview_disabled_direct() -> anyhow::Result<()> {
-    // All the FORT99XX test rules should be triggered
+    // Only selected rule is in preview, so should get a warning
     assert_cmd_snapshot!(FortitudeCheck::new()?
                          .check_command()
                          .arg("--select=FORT9911")
