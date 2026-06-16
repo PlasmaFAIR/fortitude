@@ -38,6 +38,8 @@ affiliations:
     index: 4
 date: 21 April 2026
 bibliography: paper.bib
+
+rsecon26: accepted
 ---
 
 # Summary
