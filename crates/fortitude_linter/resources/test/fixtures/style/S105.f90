@@ -15,17 +15,21 @@ contains
 
   contains
 
-  subroutine do_something()
+  subroutine line_continuation()
           integer :: i
   i = i + 1 &
   + 2 &
     + 3
   end subroutine
 
-subroutine do_something_else()
+subroutine if_statements()
 integer :: i
     i = i + 1
-  end subroutine do_something_else
+if (i == 2) then; i = 3; end if;
+if (i == 4) then
+            i = 2
+            end if
+  end subroutine if_statements
     function my_func()
     integer :: i
   end function
