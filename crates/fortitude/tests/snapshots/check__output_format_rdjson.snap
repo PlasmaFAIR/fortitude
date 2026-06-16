@@ -1,0 +1,147 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - rdjson
+    - "--select"
+    - "S061,C001,PORT011,PORT021"
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+{
+  "source": {
+    "name": "fortitude",
+    "url": "https://github.com/PlasmaFAIR/fortitude"
+  },
+  "severity": "warning",
+  "diagnostics": [
+    {
+      "message": "program uses implicit typing",
+      "location": {
+        "path": "[TMP]/test.f90",
+        "range": {
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 2,
+            "column": 1
+          }
+        }
+      },
+      "code": {
+        "value": "C001"
+      },
+      "suggestions": [
+        {
+          "range": {
+            "start": {
+              "line": 2,
+              "column": 1
+            },
+            "end": {
+              "line": 2,
+              "column": 1
+            }
+          },
+          "text": "implicit none\n"
+        }
+      ]
+    },
+    {
+      "message": "'logical*4' uses non-standard syntax",
+      "location": {
+        "path": "[TMP]/test.f90",
+        "range": {
+          "start": {
+            "line": 2,
+            "column": 10
+          },
+          "end": {
+            "line": 2,
+            "column": 12
+          }
+        }
+      },
+      "code": {
+        "value": "PORT021"
+      },
+      "suggestions": [
+        {
+          "range": {
+            "start": {
+              "line": 2,
+              "column": 3
+            },
+            "end": {
+              "line": 2,
+              "column": 12
+            }
+          },
+          "text": "logical(4)"
+        }
+      ]
+    },
+    {
+      "message": "logical kind set with number literal '4'",
+      "location": {
+        "path": "[TMP]/test.f90",
+        "range": {
+          "start": {
+            "line": 2,
+            "column": 11
+          },
+          "end": {
+            "line": 2,
+            "column": 12
+          }
+        }
+      },
+      "code": {
+        "value": "PORT011"
+      }
+    },
+    {
+      "message": "end statement should be named.",
+      "location": {
+        "path": "[TMP]/test.f90",
+        "range": {
+          "start": {
+            "line": 3,
+            "column": 1
+          },
+          "end": {
+            "line": 3,
+            "column": 12
+          }
+        }
+      },
+      "code": {
+        "value": "S061"
+      },
+      "suggestions": [
+        {
+          "range": {
+            "start": {
+              "line": 3,
+              "column": 1
+            },
+            "end": {
+              "line": 3,
+              "column": 12
+            }
+          },
+          "text": "end program test"
+        }
+      ]
+    }
+  ]
+}
+----- stderr -----

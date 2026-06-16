@@ -1,0 +1,123 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - json
+    - "--select"
+    - "S061,C001,PORT011,PORT021"
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+[
+  {
+    "code": "C001",
+    "message": "program uses implicit typing",
+    "fix": {
+      "applicability": "unsafe",
+      "message": "Insert `implicit none`",
+      "edits": [
+        {
+          "content": "implicit none\n",
+          "location": {
+            "line": 2,
+            "column": 1
+          },
+          "end_location": {
+            "line": 2,
+            "column": 1
+          }
+        }
+      ]
+    },
+    "location": {
+      "line": 1,
+      "column": 1
+    },
+    "end_location": {
+      "line": 2,
+      "column": 1
+    },
+    "filename": "[TMP]/test.f90"
+  },
+  {
+    "code": "PORT021",
+    "message": "'logical*4' uses non-standard syntax",
+    "fix": {
+      "applicability": "unsafe",
+      "message": "Replace with 'logical(4)'",
+      "edits": [
+        {
+          "content": "logical(4)",
+          "location": {
+            "line": 2,
+            "column": 3
+          },
+          "end_location": {
+            "line": 2,
+            "column": 12
+          }
+        }
+      ]
+    },
+    "location": {
+      "line": 2,
+      "column": 10
+    },
+    "end_location": {
+      "line": 2,
+      "column": 12
+    },
+    "filename": "[TMP]/test.f90"
+  },
+  {
+    "code": "PORT011",
+    "message": "logical kind set with number literal '4'",
+    "fix": null,
+    "location": {
+      "line": 2,
+      "column": 11
+    },
+    "end_location": {
+      "line": 2,
+      "column": 12
+    },
+    "filename": "[TMP]/test.f90"
+  },
+  {
+    "code": "S061",
+    "message": "end statement should be named.",
+    "fix": {
+      "applicability": "safe",
+      "message": "Write as 'end program test'.",
+      "edits": [
+        {
+          "content": "end program test",
+          "location": {
+            "line": 3,
+            "column": 1
+          },
+          "end_location": {
+            "line": 3,
+            "column": 12
+          }
+        }
+      ]
+    },
+    "location": {
+      "line": 3,
+      "column": 1
+    },
+    "end_location": {
+      "line": 3,
+      "column": 12
+    },
+    "filename": "[TMP]/test.f90"
+  }
+]
+----- stderr -----

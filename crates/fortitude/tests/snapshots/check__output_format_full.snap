@@ -1,0 +1,62 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - full
+    - "--select"
+    - "S061,C001,PORT011,PORT021"
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+test.f90:1:1: C001 program uses implicit typing
+  |
+1 | program test
+  | ^^^^^^^^^^^^ C001
+2 |   logical*4, parameter :: true = .true.
+3 | end program
+  |
+  = help: Insert `implicit none`
+
+test.f90:2:10: PORT021 'logical*4' uses non-standard syntax
+  |
+1 | program test
+2 |   logical*4, parameter :: true = .true.
+  |          ^^ PORT021
+3 | end program
+  |
+  = help: Replace with 'logical(4)'
+
+test.f90:2:11: PORT011 logical kind set with number literal '4'
+  |
+1 | program test
+2 |   logical*4, parameter :: true = .true.
+  |           ^ PORT011
+3 | end program
+  |
+  = help: Use the parameter 'int32' from 'iso_fortran_env'
+
+test.f90:3:1: S061 [*] end statement should be named.
+  |
+1 | program test
+2 |   logical*4, parameter :: true = .true.
+3 | end program
+  | ^^^^^^^^^^^ S061
+  |
+  = help: Write as 'end program test'.
+
+fortitude: 1 files scanned.
+Number of errors: 4
+
+For more information about specific rules, run:
+
+    fortitude explain X001,Y002,...
+
+[*] 1 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
+
+----- stderr -----

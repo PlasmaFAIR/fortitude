@@ -1,0 +1,22 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - azure
+    - "--select"
+    - "S061,C001,PORT011,PORT021"
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+##vso[task.logissue type=error;sourcepath=[TMP]/test.f90;linenumber=1;columnnumber=1;code=C001;]program uses implicit typing
+##vso[task.logissue type=error;sourcepath=[TMP]/test.f90;linenumber=2;columnnumber=10;code=PORT021;]'logical*4' uses non-standard syntax
+##vso[task.logissue type=error;sourcepath=[TMP]/test.f90;linenumber=2;columnnumber=11;code=PORT011;]logical kind set with number literal '4'
+##vso[task.logissue type=error;sourcepath=[TMP]/test.f90;linenumber=3;columnnumber=1;code=S061;]end statement should be named.
+
+----- stderr -----

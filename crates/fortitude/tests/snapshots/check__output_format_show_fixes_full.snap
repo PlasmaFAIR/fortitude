@@ -1,0 +1,33 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - full
+    - "--select"
+    - implicit-typing
+    - "--fix"
+    - "--unsafe-fixes"
+    - "--show-fixes"
+    - test.f90
+snapshot_kind: text
+---
+success: true
+exit_code: 0
+----- stdout -----
+
+Fixed 1 error:
+- test.f90:
+    1 × C001 (implicit-typing)
+
+fortitude: 1 files scanned.
+Number of errors: 1 (1 fixed, 0 remaining)
+
+For more information about specific rules, run:
+
+    fortitude explain X001,Y002,...
+
+
+----- stderr -----
