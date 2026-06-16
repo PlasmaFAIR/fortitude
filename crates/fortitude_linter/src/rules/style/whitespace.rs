@@ -2,6 +2,7 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::line_width::IndentWidth;
 use fortitude_macros::ViolationMetadata;
+use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::{Line, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
@@ -335,6 +336,9 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// ## What it does
 /// Checks that the correct indentation has been used
 ///
+/// The complexity of handling semicolons requires that this
+/// rule removes any semicolons used midway through a line
+///
 /// ## Why is this bad?
 /// Inconsistent indentation makes Fortran less readable and difficult to
 /// understand the scoping of logic.
@@ -359,71 +363,9 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     let mut violations = Vec::new();
 
     let indent_width: usize = context.settings().incorrect_indent.indent_width.as_usize();
-    let mut current_expected_indent;
     let mut next_expected_indent = 0;
     let mut in_line_continuation = false;
 
-    for line in context.source_text().universal_newlines() {
-        // Skip empty lines and lines with only whitespace
-        if line.trim().is_empty() {
-            continue;
-        }
-
-        // Count leading spaces
-        let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
-
-        // Get indentation range
-        let start = line.start();
-        let end = start + TextSize::try_from(leading_spaces).unwrap();
-        let range = TextRange::new(start, end);
-
-        let content_start = start + TextSize::try_from(leading_spaces as u32).unwrap();
-
-        // Determine what the indentation should be for the next line using the first node for this line
-        (
-            current_expected_indent,
-            next_expected_indent,
-            in_line_continuation,
-        ) = _updated_expected_indentation(
-            next_expected_indent,
-            in_line_continuation,
-            root,
-            line,
-            content_start,
-            indent_width,
-        );
-
-        // Compare with the expected number of leading spaces
-        if leading_spaces != current_expected_indent {
-            let edit = if current_expected_indent > 0 {
-                Edit::range_replacement(" ".repeat(current_expected_indent), range)
-            } else {
-                Edit::deletion(start, end)
-            };
-            let visual_end = if leading_spaces > 0 {
-                start + TextSize::try_from(leading_spaces).unwrap()
-            } else {
-                start + TextSize::try_from(1usize).unwrap()
-            };
-            violations.push(
-                context
-                    .create_diagnostic(IncorrectIndent, TextRange::new(start, visual_end))
-                    .with_fix(Fix::safe_edit(edit)),
-            );
-        }
-    }
-
-    violations
-}
-
-fn _updated_expected_indentation(
-    mut next_expected_indent: usize,
-    mut in_line_continuation: bool,
-    root: &Node,
-    line: Line<'_>,
-    content_start: TextSize,
-    indent_width: usize,
-) -> (usize, usize, bool) {
     const BEGIN_SCOPE_NODES: &[&str] = &[
         "program_statement",
         "module_statement",
@@ -432,6 +374,7 @@ fn _updated_expected_indentation(
         "derived_type_statement",
         "block_construct",
         "block_label_start_expression",
+        "if_statement",
     ];
     const ZERO_INDENT_NODES: &[&str] = &[
         "preproc_if",
@@ -450,47 +393,117 @@ fn _updated_expected_indentation(
         "end_function_statement",
         "end_type_statement",
         "end_block_construct_statement",
+        "end_if_statement",
     ];
 
-    // Determine what the indentation should be for the next line using the first node for this line
-    let mut current_expected_indent = next_expected_indent;
-    if let Some(line_node) =
-        root.named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
-    {
-        let node_kind = &line_node.kind();
+    for line in context.source_text().universal_newlines() {
+        // Skip empty lines and lines with only whitespace
+        if line.trim().is_empty() {
+            continue;
+        }
 
-        // Determine expected indent bases on tree-sitter node kind
-        if BEGIN_SCOPE_NODES.contains(node_kind) {
-            next_expected_indent = current_expected_indent + indent_width;
-        } else if END_SCOPE_NODES.contains(node_kind) {
-            if next_expected_indent < indent_width {
-                current_expected_indent = 0;
-                next_expected_indent = 0;
-            } else {
-                current_expected_indent = current_expected_indent - indent_width;
-                next_expected_indent = current_expected_indent;
+        // Loop through line until all semicolons have been accounted for
+        let mut line_segment_start = line.start();
+        let mut line_segment_end = line_segment_start;
+        let mut is_first_segment = true;
+        for line_segment in line.split_inclusive(';') {
+            // Get the range which defines the location of the previous semicolon plus whitespace
+            line_segment_start = line_segment_end;
+            line_segment_end = line_segment_end + TextSize::from(line_segment.len() as u32);
+
+            // Replace with newline and correct indentation or just indentation if didn't start with semicolon and is first segment
+            // Count leading spaces
+            let leading_spaces = line_segment
+                .chars()
+                .take_while(|c| [' ', '\t'].contains(c))
+                .count();
+
+            // Get indentation range
+            let indent_end = line_segment_start + TextSize::try_from(leading_spaces).unwrap();
+
+            // Get the first none whitespace node
+            let content_start =
+                line_segment_start + TextSize::try_from(leading_spaces as u32).unwrap();
+
+            // Determine what the indentation should be for the next line using the first node for this line
+            let mut current_expected_indent = next_expected_indent;
+            if let Some(line_segment_node) = root
+                .named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
+            {
+                let node_kind = &line_segment_node.kind();
+
+                // Determine expected indent bases on tree-sitter node kind
+                if BEGIN_SCOPE_NODES.contains(node_kind) {
+                    next_expected_indent = current_expected_indent + indent_width;
+                } else if END_SCOPE_NODES.contains(node_kind) {
+                    if next_expected_indent < indent_width {
+                        current_expected_indent = 0;
+                        next_expected_indent = 0;
+                    } else {
+                        current_expected_indent = current_expected_indent - indent_width;
+                        next_expected_indent = current_expected_indent;
+                    }
+                } else if ZERO_INDENT_NODES.contains(node_kind) {
+                    current_expected_indent = 0;
+                } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
+                    current_expected_indent = current_expected_indent - indent_width;
+                } else {
+                    // Determine indent change based on line continuation char "&"
+                    if !in_line_continuation && line.trim().ends_with("&") {
+                        next_expected_indent = current_expected_indent + indent_width;
+                        in_line_continuation = true;
+                    } else if in_line_continuation && !line.trim().ends_with("&") {
+                        next_expected_indent = current_expected_indent - indent_width;
+                        in_line_continuation = false;
+                    }
+                }
             }
-        } else if ZERO_INDENT_NODES.contains(node_kind) {
-            current_expected_indent = 0;
-        } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
-            current_expected_indent = current_expected_indent - indent_width;
-        } else {
-            // Determine indent change based on line continuation char "&"
-            if !in_line_continuation && line.trim().ends_with("&") {
-                next_expected_indent = current_expected_indent + indent_width;
-                in_line_continuation = true;
-            } else if in_line_continuation && !line.trim().ends_with("&") {
-                next_expected_indent = current_expected_indent - indent_width;
-                in_line_continuation = false;
+
+            // Include previous semicolon if present
+            line_segment_start = if (is_first_segment && line.starts_with(';')) || !is_first_segment
+            {
+                line_segment_start - TextSize::try_from(1usize).unwrap()
+            } else {
+                line_segment_start
+            };
+
+            // Compare with the expected number of leading spaces
+            if leading_spaces != current_expected_indent || !is_first_segment {
+                let edit = if current_expected_indent > 0 {
+                    let update = " ".repeat(current_expected_indent);
+                    let indent_range = TextRange::new(line_segment_start, indent_end);
+                    if is_first_segment {
+                        Edit::range_replacement(update, indent_range)
+                    } else {
+                        Edit::range_replacement(format!("\n{}", update), indent_range)
+                    }
+                } else {
+                    Edit::deletion(line_segment_start, indent_end)
+                };
+
+                let visual_end = if leading_spaces > 0 {
+                    line_segment_start + TextSize::try_from(leading_spaces).unwrap()
+                } else {
+                    line_segment_start + TextSize::try_from(1usize).unwrap()
+                };
+
+                violations.push(
+                    context
+                        .create_diagnostic(
+                            IncorrectIndent,
+                            TextRange::new(line_segment_start, visual_end),
+                        )
+                        .with_fix(Fix::safe_edit(edit)),
+                );
+            }
+
+            if is_first_segment {
+                is_first_segment = false;
             }
         }
     }
 
-    (
-        current_expected_indent,
-        next_expected_indent,
-        in_line_continuation,
-    )
+    violations
 }
 
 pub mod settings {
