@@ -4,7 +4,7 @@ use crate::line_width::IndentWidth;
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::{Line, UniversalNewlines};
+use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use tree_sitter::Node;
 
@@ -402,10 +402,14 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             continue;
         }
 
+        // Get current indent for line
+        let line_indent = line.chars().take_while(|c| [' ', '\t'].contains(c)).count();
+
         // Loop through line until all semicolons have been accounted for
         let mut line_segment_start = line.start();
         let mut line_segment_end = line_segment_start;
         let mut is_first_segment = true;
+        let mut edit_string: String = "".to_string();
         for line_segment in line.split_inclusive(';') {
             // Get the range which defines the location of the previous semicolon plus whitespace
             line_segment_start = line_segment_end;
@@ -417,9 +421,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 .chars()
                 .take_while(|c| [' ', '\t'].contains(c))
                 .count();
-
-            // Get indentation range
-            let indent_end = line_segment_start + TextSize::try_from(leading_spaces).unwrap();
 
             // Get the first none whitespace node
             let content_start =
@@ -469,37 +470,46 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
             // Compare with the expected number of leading spaces
             if leading_spaces != current_expected_indent || !is_first_segment {
-                let edit = if current_expected_indent > 0 {
-                    let update = " ".repeat(current_expected_indent);
-                    let indent_range = TextRange::new(line_segment_start, indent_end);
+                if current_expected_indent > 0 {
+                    let new_indent = " ".repeat(current_expected_indent);
                     if is_first_segment {
-                        Edit::range_replacement(update, indent_range)
+                        edit_string =
+                            format!("{}{}{}", edit_string, new_indent, line_segment.trim());
                     } else {
-                        Edit::range_replacement(format!("\n{}", update), indent_range)
+                        edit_string =
+                            format!("{}\n{}{}", edit_string, new_indent, line_segment.trim());
                     }
                 } else {
-                    Edit::deletion(line_segment_start, indent_end)
+                    edit_string = format!("{}{}", edit_string, line_segment.trim());
                 };
-
-                let visual_end = if leading_spaces > 0 {
-                    line_segment_start + TextSize::try_from(leading_spaces).unwrap()
-                } else {
-                    line_segment_start + TextSize::try_from(1usize).unwrap()
-                };
-
-                violations.push(
-                    context
-                        .create_diagnostic(
-                            IncorrectIndent,
-                            TextRange::new(line_segment_start, visual_end),
-                        )
-                        .with_fix(Fix::safe_edit(edit)),
-                );
+                // Remove semicolons
+                edit_string = edit_string.chars().filter(|c| *c != ';').join("");
             }
 
             if is_first_segment {
                 is_first_segment = false;
             }
+        }
+
+        if !edit_string.is_empty() {
+            let visual_end = if !line.contains(';') {
+                if line_indent > 0 {
+                    line_segment_start + TextSize::try_from(line_indent).unwrap()
+                } else {
+                    line_segment_start + TextSize::try_from(1usize).unwrap()
+                }
+            } else {
+                line.end()
+            };
+
+            violations.push(
+                context
+                    .create_diagnostic(IncorrectIndent, TextRange::new(line.start(), visual_end))
+                    .with_fix(Fix::safe_edit(Edit::range_replacement(
+                        edit_string,
+                        TextRange::new(line.start(), line.end()),
+                    ))),
+            );
         }
     }
 
