@@ -18,9 +18,9 @@ contains
 
   end subroutine initialise
 
-  subroutine selection_sort(arr)
-    use some_mod, only: x => y  ! This is a bug!
-    real, intent(inout) :: arr(:)
+  subroutine selection_sort(Arr)
+    use some_mod, only: X => y  ! This is a bug!
+    real, intent(inout) :: Arr(:)
     integer :: i
 
     do i = 1, size(arr)

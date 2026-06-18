@@ -140,7 +140,7 @@ pub(crate) fn check_shadowed_variables(
             }
             if let Symbol::Variable(var) = var {
                 return !is_allowed_integer(var) && !var.is_dummy_var();
-            } 
+            }
             true
         })
         // Create diagnostic if var found in a higher scope
