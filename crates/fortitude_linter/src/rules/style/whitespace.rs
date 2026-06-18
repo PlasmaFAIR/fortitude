@@ -362,7 +362,7 @@ impl AlwaysFixableViolation for IncorrectIndent {
 pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
 
-    let indent_width: usize = context.settings().incorrect_indent.indent_width.as_usize();
+    let indent_width = context.settings().indent_width;
     let mut next_expected_indent = 0;
     let mut in_line_continuation = false;
 

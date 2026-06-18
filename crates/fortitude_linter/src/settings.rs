@@ -63,6 +63,7 @@ pub struct CheckSettings {
     pub per_file_ignores: CompiledPerFileIgnoreList,
 
     pub line_length: usize,
+    pub indent_width: usize,
 
     pub fix: bool,
     pub fix_only: bool,
@@ -104,6 +105,7 @@ impl CheckSettings {
                 .collect(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
+            indent_width: 4,
             fix: false,
             fix_only: false,
             show_fixes: false,
@@ -152,6 +154,7 @@ impl fmt::Display for CheckSettings {
                 self.rules | nested,
                 self.per_file_ignores,
                 self.line_length,
+                self.indent_width,
                 self.fix,
                 self.fix_only,
                 self.show_fixes,

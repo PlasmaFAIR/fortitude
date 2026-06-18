@@ -350,6 +350,20 @@ pub struct CheckOptions {
     )]
     pub line_length: Option<usize>,
 
+    // Global Formatting options
+    /// The number of spaces to use for a single indent to use when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
+    ///
+    /// The indentation is determined by the number of spaces (tabs are equal to one indent_width).
+    #[option(
+        default = "4",
+        value_type = "int",
+        example = r#"
+        # Enforce indentation of base 4.
+        indent-width = 4
+        "#
+    )]
+    pub indent_width: Option<usize>,
+
     /// By default disable ignore-comment-length behavior when running `fortitude`.
     #[option(
         default = "false",
