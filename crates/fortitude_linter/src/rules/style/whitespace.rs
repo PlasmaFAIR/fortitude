@@ -368,12 +368,19 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     const BEGIN_SCOPE_NODES: &[&str] = &[
         "program_statement",
         "module_statement",
+        "submodule_statement",
         "subroutine_statement",
         "function_statement",
+        "function",
         "derived_type_statement",
         "block_construct",
         "block_label_start_expression",
         "if_statement",
+        "interface_statement",
+        "procedure_qualifier",
+        "select_case_statement",
+        "do_statement",
+        "associate_statement",
     ];
     const ZERO_INDENT_NODES: &[&str] = &[
         "preproc_if",
@@ -384,15 +391,20 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         "preproc_def",
         "preproc_function_def",
     ];
-    const SCOPED_ZERO_INDENT_NODES: &[&str] = &["contains_statement"];
+    const SCOPED_ZERO_INDENT_NODES: &[&str] = &["contains_statement", "case_statement"];
     const END_SCOPE_NODES: &[&str] = &[
         "end_program_statement",
         "end_module_statement",
+        "end_submodule_statement",
         "end_subroutine_statement",
         "end_function_statement",
         "end_type_statement",
         "end_block_construct_statement",
         "end_if_statement",
+        "end_interface_statement",
+        "end_select_statement",
+        "end_do_loop_statement",
+        "end_associate_statement",
     ];
 
     for line in context.source_text().universal_newlines() {
