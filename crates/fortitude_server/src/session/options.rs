@@ -740,7 +740,7 @@ mod tests {
                         80,
                     ),
                     indent_width: Some(
-                        4
+                        4,
                     ),
                     configuration_preference: None,
                 },

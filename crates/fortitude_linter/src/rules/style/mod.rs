@@ -121,6 +121,20 @@ mod tests {
         Ok(())
     }
 
+    #[test_case(Rule::IncorrectIndent, Path::new("S105_indent_width_2.f90"))]
+    fn incorrect_indent_width_2(rule_code: Rule, path: &Path) -> Result<()> {
+        let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+
+        let settings = CheckSettings {
+            indent_width: 2,
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
     #[test_case(Rule::KeywordsMissingSpace, Path::new("S231.f90"))]
     #[test_case(Rule::KeywordHasWhitespace, Path::new("S231.f90"))]
     fn keyword_whitespace_include_inout_goto(rule_code: Rule, path: &Path) -> Result<()> {
