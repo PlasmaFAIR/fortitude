@@ -57,7 +57,7 @@ expression: diagnostics
   4 |+    use mpi
 5 5 | #endif
 6 6 | implicit none
-7 7 |
+7 7 | 
 
 ./resources/test/fixtures/style/S105.f90:6:1: S105 [*] Invalid indentation
   |
@@ -76,7 +76,7 @@ expression: diagnostics
 5 5 | #endif
 6   |-implicit none
   6 |+    implicit none
-7 7 |
+7 7 | 
 8 8 | !> my type
 9 9 | type :: my_type
 
@@ -94,7 +94,7 @@ expression: diagnostics
 ℹ Safe fix
 5 5 | #endif
 6 6 | implicit none
-7 7 |
+7 7 | 
 8   |-!> my type
   8 |+    !> my type
 9 9 | type :: my_type
@@ -113,7 +113,7 @@ expression: diagnostics
 
 ℹ Safe fix
 6  6  | implicit none
-7  7  |
+7  7  | 
 8  8  | !> my type
 9     |-type :: my_type
    9  |+    type :: my_type
@@ -133,7 +133,7 @@ expression: diagnostics
    = help: Replace with correct spaces
 
 ℹ Safe fix
-7  7  |
+7  7  | 
 8  8  | !> my type
 9  9  | type :: my_type
 10    |-    integer :: i
@@ -182,7 +182,7 @@ expression: diagnostics
    12 |+    contains
 13 13 |   procedure :: toString
 14 14 |         end type my_type
-15 15 |
+15 15 | 
 
 ./resources/test/fixtures/style/S105.f90:13:1: S105 [*] Invalid indentation
    |
@@ -201,7 +201,7 @@ expression: diagnostics
 13    |-  procedure :: toString
    13 |+        procedure :: toString
 14 14 |         end type my_type
-15 15 |
+15 15 | 
 16 16 |   contains
 
 ./resources/test/fixtures/style/S105.f90:14:1: S105 [*] Invalid indentation
@@ -221,9 +221,9 @@ expression: diagnostics
 13 13 |   procedure :: toString
 14    |-        end type my_type
    14 |+    end type my_type
-15 15 |
+15 15 | 
 16 16 |   contains
-17 17 |
+17 17 | 
 
 ./resources/test/fixtures/style/S105.f90:16:1: S105 [*] Invalid indentation
    |
@@ -239,10 +239,10 @@ expression: diagnostics
 ℹ Safe fix
 13 13 |   procedure :: toString
 14 14 |         end type my_type
-15 15 |
+15 15 | 
 16    |-  contains
    16 |+contains
-17 17 |
+17 17 | 
 18 18 |   subroutine line_continuation()
 19 19 |           integer :: i
 
@@ -258,9 +258,9 @@ expression: diagnostics
    = help: Replace with correct spaces
 
 ℹ Safe fix
-15 15 |
+15 15 | 
 16 16 |   contains
-17 17 |
+17 17 | 
 18    |-  subroutine line_continuation()
    18 |+    subroutine line_continuation()
 19 19 |           integer :: i
@@ -279,7 +279,7 @@ expression: diagnostics
 
 ℹ Safe fix
 16 16 |   contains
-17 17 |
+17 17 | 
 18 18 |   subroutine line_continuation()
 19    |-          integer :: i
    19 |+        integer :: i
@@ -299,7 +299,7 @@ expression: diagnostics
    = help: Replace with correct spaces
 
 ℹ Safe fix
-17 17 |
+17 17 | 
 18 18 |   subroutine line_continuation()
 19 19 |           integer :: i
 20    |-  i = i + 1 &
@@ -327,7 +327,7 @@ expression: diagnostics
    21 |+            + 2 &
 22 22 |     + 3
 23 23 |   end subroutine
-24 24 |
+24 24 | 
 
 ./resources/test/fixtures/style/S105.f90:22:1: S105 [*] Invalid indentation
    |
@@ -346,7 +346,7 @@ expression: diagnostics
 22    |-    + 3
    22 |+            + 3
 23 23 |   end subroutine
-24 24 |
+24 24 | 
 25 25 | subroutine if_statements()
 
 ./resources/test/fixtures/style/S105.f90:23:1: S105 [*] Invalid indentation
@@ -366,7 +366,7 @@ expression: diagnostics
 22 22 |     + 3
 23    |-  end subroutine
    23 |+    end subroutine
-24 24 |
+24 24 | 
 25 25 | subroutine if_statements()
 26 26 | integer :: i
 
@@ -384,7 +384,7 @@ expression: diagnostics
 ℹ Safe fix
 22 22 |     + 3
 23 23 |   end subroutine
-24 24 |
+24 24 | 
 25    |-subroutine if_statements()
    25 |+    subroutine if_statements()
 26 26 | integer :: i
@@ -403,7 +403,7 @@ expression: diagnostics
 
 ℹ Safe fix
 23 23 |   end subroutine
-24 24 |
+24 24 | 
 25 25 | subroutine if_statements()
 26    |-integer :: i
    26 |+        integer :: i
@@ -423,7 +423,7 @@ expression: diagnostics
    = help: Replace with correct spaces
 
 ℹ Safe fix
-24 24 |
+24 24 | 
 25 25 | subroutine if_statements()
 26 26 | integer :: i
 27    |-    i = i + 1
@@ -437,7 +437,7 @@ expression: diagnostics
 26 | integer :: i
 27 |     i = i + 1
 28 | if (i == 2) then; i = 3; end if;
-   | ^ S105
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S105
 29 | if (i == 4) then
 30 |             i = 2
    |
@@ -448,54 +448,12 @@ expression: diagnostics
 26 26 | integer :: i
 27 27 |     i = i + 1
 28    |-if (i == 2) then; i = 3; end if;
-   28 |+        if (i == 2) then; i = 3; end if;
-29 29 | if (i == 4) then
-30 30 |             i = 2
-31 31 |             end if
-
-./resources/test/fixtures/style/S105.f90:28:17: S105 [*] Invalid indentation
-   |
-26 | integer :: i
-27 |     i = i + 1
-28 | if (i == 2) then; i = 3; end if;
-   |                 ^ S105
-29 | if (i == 4) then
-30 |             i = 2
-   |
-   = help: Replace with correct spaces
-
-ℹ Safe fix
-25 25 | subroutine if_statements()
-26 26 | integer :: i
-27 27 |     i = i + 1
-28    |-if (i == 2) then; i = 3; end if;
-   28 |+if (i == 2) then
-   29 |+            i = 3; end if;
-29 30 | if (i == 4) then
-30 31 |             i = 2
-31 32 |             end if
-
-./resources/test/fixtures/style/S105.f90:28:24: S105 [*] Invalid indentation
-   |
-26 | integer :: i
-27 |     i = i + 1
-28 | if (i == 2) then; i = 3; end if;
-   |                        ^ S105
-29 | if (i == 4) then
-30 |             i = 2
-   |
-   = help: Replace with correct spaces
-
-ℹ Safe fix
-25 25 | subroutine if_statements()
-26 26 | integer :: i
-27 27 |     i = i + 1
-28    |-if (i == 2) then; i = 3; end if;
-   28 |+if (i == 2) then; i = 3
-   29 |+        end if;
-29 30 | if (i == 4) then
-30 31 |             i = 2
-31 32 |             end if
+   28 |+        if (i == 2) then
+   29 |+            i = 3
+   30 |+        end if
+29 31 | if (i == 4) then
+30 32 |             i = 2
+31 33 |             end if
 
 ./resources/test/fixtures/style/S105.f90:29:1: S105 [*] Invalid indentation
    |
@@ -579,7 +537,7 @@ expression: diagnostics
    34 |+        integer :: i
 35 35 |   end function
 36 36 | end module mmod
-37 37 |
+37 37 | 
 
 ./resources/test/fixtures/style/S105.f90:35:1: S105 [*] Invalid indentation
    |
@@ -598,8 +556,8 @@ expression: diagnostics
 35    |-  end function
    35 |+    end function
 36 36 | end module mmod
-37 37 |
-38 38 |
+37 37 | 
+38 38 | 
 
 ./resources/test/fixtures/style/S105.f90:39:1: S105 [*] Invalid indentation
    |
@@ -612,8 +570,8 @@ expression: diagnostics
 
 ℹ Safe fix
 36 36 | end module mmod
-37 37 |
-38 38 |
+37 37 | 
+38 38 | 
 39    |-    !> my program
    39 |+!> my program
 40 40 | program mprog
@@ -631,13 +589,13 @@ expression: diagnostics
    = help: Replace with correct spaces
 
 ℹ Safe fix
-38 38 |
+38 38 | 
 39 39 |     !> my program
 40 40 | program mprog
 41    |-  use mmod
    41 |+    use mmod
 42 42 |     implicit none
-43 43 |
+43 43 | 
 44 44 | call do_something()
 
 ./resources/test/fixtures/style/S105.f90:44:1: S105 [*] Invalid indentation
@@ -654,10 +612,10 @@ expression: diagnostics
 ℹ Safe fix
 41 41 |   use mmod
 42 42 |     implicit none
-43 43 |
+43 43 | 
 44    |-call do_something()
    44 |+    call do_something()
-45 45 |
+45 45 | 
 46 46 | block
 47 47 |     real :: x = 3.142
 
@@ -673,9 +631,9 @@ expression: diagnostics
    = help: Replace with correct spaces
 
 ℹ Safe fix
-43 43 |
+43 43 | 
 44 44 | call do_something()
-45 45 |
+45 45 | 
 46    |-block
    46 |+    block
 47 47 |     real :: x = 3.142
@@ -694,7 +652,7 @@ expression: diagnostics
 
 ℹ Safe fix
 44 44 | call do_something()
-45 45 |
+45 45 | 
 46 46 | block
 47    |-    real :: x = 3.142
    47 |+        real :: x = 3.142
@@ -714,7 +672,7 @@ expression: diagnostics
    = help: Replace with correct spaces
 
 ℹ Safe fix
-45 45 |
+45 45 | 
 46 46 | block
 47 47 |     real :: x = 3.142
 48    |-      print*, x
