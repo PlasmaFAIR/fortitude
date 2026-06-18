@@ -434,10 +434,6 @@ pub struct CheckOptions {
     /// `too-many-arguments`, `too-many-nested-blocks`, etc.
     #[option_group]
     pub complexity: Option<ComplexityOptions>,
-
-    /// Options for `incorrect-indent` rule
-    #[option_group]
-    pub incorrect_indent: Option<IncorrectIndentOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -528,24 +524,6 @@ impl KeywordWhitespaceOptions {
         keywords::settings::Settings {
             inout_with_space: self.inout_with_space.unwrap_or_default(),
             goto_with_space: self.goto_with_space.unwrap_or_default(),
-        }
-    }
-}
-
-#[derive(
-    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
-)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct IncorrectIndentOptions {
-    /// The number of spaces to replace tabs with.
-    #[option(default = "2", value_type = "int", example = "indent-width = 4")]
-    pub indent_width: Option<IndentWidth>,
-}
-
-impl IncorrectIndentOptions {
-    pub fn into_settings(self) -> whitespace::settings::IncorrectIndentSettings {
-        whitespace::settings::IncorrectIndentSettings {
-            indent_width: self.indent_width.unwrap_or_default(),
         }
     }
 }
