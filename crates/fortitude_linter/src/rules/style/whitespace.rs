@@ -444,7 +444,11 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 } else if ZERO_INDENT_NODES.contains(node_kind) {
                     current_expected_indent = 0;
                 } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
-                    current_expected_indent = current_expected_indent - indent_width;
+                    current_expected_indent = if current_expected_indent >= indent_width {
+                        current_expected_indent - indent_width
+                    } else {
+                        0usize
+                    }
                 } else {
                     // Determine indent change based on line continuation char "&"
                     if !in_line_continuation && line.trim().ends_with("&") {
