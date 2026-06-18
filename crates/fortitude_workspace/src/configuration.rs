@@ -232,6 +232,7 @@ pub struct Configuration {
     pub per_file_ignores: Option<Vec<PerFileIgnore>>,
     pub extend_per_file_ignores: Vec<PerFileIgnore>,
     pub line_length: Option<usize>,
+    pub indent_width: Option<usize>,
     pub fix: Option<bool>,
     pub fix_only: Option<bool>,
     pub show_fixes: Option<bool>,
@@ -288,6 +289,7 @@ impl Configuration {
             }),
             extend_per_file_ignores: vec![],
             line_length: check.line_length,
+            indent_width: check.indent_width,
             fix: check.fix,
             fix_only: check.fix_only,
             show_fixes: check.show_fixes,
@@ -375,6 +377,9 @@ impl Configuration {
                 line_length: self
                     .line_length
                     .unwrap_or(Settings::default().check.line_length),
+                indent_width: self
+                    .indent_width
+                    .unwrap_or(Settings::default().check.indent_width),
                 unsafe_fixes: self.unsafe_fixes.unwrap_or_default(),
                 preview,
                 target_std: self.target_std.unwrap_or_default(),
@@ -487,6 +492,7 @@ impl Configuration {
                 .chain(config.extend_per_file_ignores)
                 .collect(),
             line_length: self.line_length.or(config.line_length),
+            indent_width: self.indent_width.or(config.indent_width),
             fix: self.fix.or(config.fix),
             fix_only: self.fix_only.or(config.fix_only),
             show_fixes: self.show_fixes.or(config.show_fixes),

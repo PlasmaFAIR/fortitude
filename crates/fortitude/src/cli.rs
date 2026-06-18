@@ -404,6 +404,11 @@ pub struct CheckCommand {
     #[arg(long, help_heading = "Per-Rule Options")]
     pub line_length: Option<usize>,
 
+    // Options for individual rules
+    /// Set size of a single indent.
+    #[arg(long, help_heading = "Per-Rule Options")]
+    pub indent_width: Option<usize>,
+
     // Miscellaneous
     /// The name of the file when passing it through stdin.
     #[arg(long, help_heading = "Miscellaneous")]
@@ -529,6 +534,7 @@ impl CheckCommand {
             show_fixes: resolve_bool_arg(self.show_fixes, self.no_show_fixes),
             force_exclude: resolve_bool_arg(self.force_exclude, self.no_force_exclude),
             line_length: self.line_length,
+            indent_width: self.indent_width,
             respect_gitignore: resolve_bool_arg(self.respect_gitignore, self.no_respect_gitignore),
             preview: resolve_bool_arg(self.preview, self.no_preview).map(PreviewMode::from),
             output_format: self.output_format,
@@ -562,6 +568,7 @@ struct ExplicitConfigOverrides {
     show_fixes: Option<bool>,
     force_exclude: Option<bool>,
     line_length: Option<usize>,
+    indent_width: Option<usize>,
     respect_gitignore: Option<bool>,
     preview: Option<PreviewMode>,
     output_format: Option<OutputFormat>,
@@ -620,6 +627,9 @@ impl ConfigurationTransformer for ExplicitConfigOverrides {
         }
         if self.line_length.is_some() {
             config.line_length = self.line_length;
+        }
+        if self.indent_width.is_some() {
+            config.indent_width = self.indent_width;
         }
         if self.respect_gitignore.is_some() {
             config.respect_gitignore = self.respect_gitignore;
