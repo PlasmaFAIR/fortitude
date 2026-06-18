@@ -515,25 +515,3 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
     violations
 }
-
-pub mod settings {
-    use crate::{display_settings, line_width::IndentWidth};
-    use ruff_macros::CacheKey;
-    use std::fmt::Display;
-
-    #[derive(Debug, Clone, Default, CacheKey)]
-    pub struct IncorrectIndentSettings {
-        pub indent_width: IndentWidth,
-    }
-
-    impl Display for IncorrectIndentSettings {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            display_settings! {
-                formatter = f,
-                namespace = "check.incorrect_indent",
-                fields = [self.indent_width]
-            }
-            Ok(())
-        }
-    }
-}
