@@ -142,7 +142,9 @@ pub(crate) fn check_shadowed_variables(
         })
         // Create diagnostic if var found in a higher scope
         .filter_map(|(name, var)| {
-            if context.symbol_table().get_var(name).is_some() {
+            if let Some(parent) = context.symbol_table().get(name)
+                && (parent.is_variable() || parent.is_used_item())
+            {
                 Some(context.create_diagnostic(
                     ShadowedVariable {
                         name: name.to_string(),

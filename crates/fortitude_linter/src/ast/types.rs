@@ -474,7 +474,7 @@ impl<'a> VariableDeclaration<'a> {
 /// declarator node, and not, say, the initialiser
 pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
     match node.kind() {
-        "identifier" | "method_name" | "type_name" | "name" => *node,
+        "identifier" | "method_name" | "type_name" | "module_name" | "local_name" | "name" => *node,
         "sized_declarator" => node
             .named_child(0)
             .expect("sized_declarator should have named child"),
@@ -490,6 +490,9 @@ pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
                     .expect("init/pointer_init/data_declarator should have left-hand side"),
             )
         }
+        "use_alias" => node
+            .child_with_name("local_name")
+            .expect("use_alias should have local_name child"),
         _ => unreachable!("unexpected node type in declarator ({node:?})"),
     }
 }
@@ -840,5 +843,129 @@ impl<'a> Program<'a> {
         let name = Name::from_node(&name_node, src);
 
         Ok(Self { name, node: *node })
+    }
+}
+
+/// A use statament line
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct UseStatement<'a> {
+    intrinsic: bool,
+    has_only: bool,
+    has_colon: bool,
+    name: Name<'a>,
+    node: Node<'a>,
+}
+
+impl<'a> UseStatement<'a> {
+    /// Create from `use_statement` node
+    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+        if node.kind() != "use_statement" {
+            return Err(anyhow!("wrong node type"));
+        }
+
+        let name = Name::from_node(
+            &node
+                .child_with_name("module_name")
+                .context("expected module_name in 'use_statement'")?,
+            src,
+        );
+
+        let has_only = node.child_with_name("included_items").is_some();
+
+        let mut intrinsic = false;
+        let mut has_colon = false;
+        for child in node.children(&mut node.walk()) {
+            if child.kind() == "intrinsic" {
+                intrinsic = true;
+            }
+            if child.kind() == "::" {
+                has_colon = true;
+            }
+        }
+
+        Ok(Self {
+            intrinsic,
+            has_only,
+            has_colon,
+            name,
+            node: *node,
+        })
+    }
+
+    pub fn included_items(&self) -> Option<Node<'a>> {
+        self.node.child_with_name("included_items")
+    }
+
+    pub fn is_intrinsic(&self) -> bool {
+        self.intrinsic
+    }
+
+    pub fn has_only(&self) -> bool {
+        self.has_only
+    }
+
+    pub fn has_colon(&self) -> bool {
+        self.has_colon
+    }
+}
+
+/// A single Fortran variable
+#[derive(Clone, Debug, HasName)]
+pub struct UsedItem<'a> {
+    name: Name<'a>,
+    alias_of: Option<Name<'a>>,
+    /// Reference to the statement in which the variable is used
+    decl: Rc<UseStatement<'a>>,
+}
+
+impl<'a> UsedItem<'a> {
+    pub fn try_from_node(node: Node<'a>, src: &str, decl: Rc<UseStatement<'a>>) -> Option<Self> {
+        if node.kind() == "identifier" {
+            let name = Name::from_node(&node, src);
+            Some(Self {
+                name,
+                alias_of: None,
+                decl,
+            })
+        } else if node.kind() == "use_alias" {
+            let name = Name::from_node(
+                &node
+                    .child_with_name("local_name")
+                    .expect("use_alias should have local_name child"),
+                src,
+            );
+            let alias_of = Name::from_node(
+                &node
+                    .child_with_name("identifier")
+                    .expect("use_alias should have identifier child"),
+                src,
+            );
+            Some(Self {
+                name,
+                alias_of: Some(alias_of),
+                decl,
+            })
+        } else {
+            // Can include comments etc
+            None
+        }
+    }
+
+    pub fn alias_of(&self) -> Option<&Name<'a>> {
+        self.alias_of.as_ref()
+    }
+
+    pub fn decl_statement(&'a self) -> &'a UseStatement<'a> {
+        self.decl.as_ref()
+    }
+
+    pub fn module_name(&self) -> &Name<'a> {
+        &self.decl.name
+    }
+}
+
+impl<'a> HasNode<'a> for UsedItem<'a> {
+    fn node(&self) -> &Node<'a> {
+        self.name.node()
     }
 }

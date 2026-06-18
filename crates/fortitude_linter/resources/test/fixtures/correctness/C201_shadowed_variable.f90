@@ -1,5 +1,7 @@
 module my_mod
 
+  use, intrinsic :: iso_fortran_env, only: real32
+
   implicit none (type, external)
   private
 
@@ -10,6 +12,7 @@ contains
   subroutine initialise(n)
     integer, intent(in) :: n
     real, allocatable :: x(:)  ! This is a bug!
+    real :: real32 ! This is a bug!
 
     allocate(x(n))
 
