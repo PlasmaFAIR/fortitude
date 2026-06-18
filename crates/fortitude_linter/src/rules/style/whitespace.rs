@@ -410,12 +410,12 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         let mut line_segment_end = line_segment_start;
         let mut is_first_segment = true;
         let mut edit_string: String = "".to_string();
+        let line_contains_semicolon = line.contains(';');
         for line_segment in line.split_inclusive(';') {
             // Get the range which defines the location of the previous semicolon plus whitespace
             line_segment_start = line_segment_end;
             line_segment_end = line_segment_end + TextSize::from(line_segment.len() as u32);
 
-            // Replace with newline and correct indentation or just indentation if didn't start with semicolon and is first segment
             // Count leading spaces
             let leading_spaces = line_segment
                 .chars()
@@ -469,7 +469,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             };
 
             // Compare with the expected number of leading spaces
-            if leading_spaces != current_expected_indent || !is_first_segment {
+            if leading_spaces != current_expected_indent || line_contains_semicolon {
                 if current_expected_indent > 0 {
                     let new_indent = " ".repeat(current_expected_indent);
                     if is_first_segment {
@@ -492,7 +492,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         }
 
         if !edit_string.is_empty() {
-            let visual_end = if !line.contains(';') {
+            let visual_end = if !line_contains_semicolon {
                 if line_indent > 0 {
                     line_segment_start + TextSize::try_from(line_indent).unwrap()
                 } else {
