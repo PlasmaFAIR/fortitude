@@ -17,16 +17,20 @@ use ruff_macros::derive_message_formats;
 /// variable is being referenced in a given context. Shadowing may be
 /// unintentional, which is a common source of bugs.
 ///
-/// There are contexts in which shadowing is acceptable. For instance,
-/// if a procedure dummy argument has the same name as a module variable, this is acceptable,
-/// this indicates that the programmer likely intends to use the dummy argument
-/// in preference to the module variable. However, shadowing a module variable
+/// There are contexts in which shadowing is acceptable. For instance, if a
+/// procedure dummy argument has the same name as a module variable, this
+/// indicates that the programmer likely intends to use the dummy argument to
+/// reference the module variable. However, shadowing a module-scoped variable
 /// with a local variable is generally considered poor practice.
 ///
-/// It is also very common to reuse loop variables such as `i`, `j`, and `k` or error
-/// flags such as `err` in different scopes. Fortitude will ignore integers with common
-/// names. The setting `shadowed-variables.allow` can be used to add further variables
-/// to the whitelist.
+/// It is also very common to reuse loop variables such as `i`, `j`, and `k` or
+/// error flags such as `err` in different scopes. Fortitude will ignore
+/// integers with common names. The setting `check.shadowed-variables.allow` can
+/// be used to add further variables to the whitelist.
+///
+/// The setting `check.shadowed-variables.strict` can be used to disallow
+/// shadowing of variables in all contexts, including dummy arguments, loop
+/// variables, error flags, and variables added to the whitelist.
 ///
 /// ## Examples
 ///
@@ -81,6 +85,10 @@ use ruff_macros::derive_message_formats;
 ///   end subroutine selection_sort
 ///
 /// end module my_mod
+/// ```
+///
+/// ## Settings
+/// See [check.shadowed-variables](../settings.md#checkshadowed-variables)
 #[derive(ViolationMetadata)]
 pub struct ShadowedVariable {
     name: String,
@@ -115,8 +123,10 @@ pub(crate) fn check_shadowed_variables(
     context: &CheckContext,
     symbols: &SymbolTable,
 ) -> Vec<Diagnostic> {
+    let allow = &context.settings().shadowed_variables.allow;
+    let strict = &context.settings().shadowed_variables.strict;
     // Check the names of all variables declared in the current scope
-    symbols
+    let mut diagnostics = symbols
         .iter()
         // Only check variables
         .filter_map(|(name, symbol)| {
@@ -126,8 +136,10 @@ pub(crate) fn check_shadowed_variables(
                 None
             }
         })
-        // Filter allowed integers and dummy variables
-        .filter(|(_, var)| !is_allowed_integer(var) && !var.is_dummy_var())
+        // Filter allowed integers, dummy variables, and allowed names
+        .filter(|(name, var)| {
+            *strict || (!is_allowed_integer(var) && !var.is_dummy_var() && !allow.contains(name))
+        })
         // Create diagnostic if var found in a higher scope
         .filter_map(|(name, var)| {
             if context.symbol_table().get_var(name).is_some() {
@@ -141,5 +153,30 @@ pub(crate) fn check_shadowed_variables(
                 None
             }
         })
-        .collect_vec()
+        .collect_vec();
+    diagnostics.sort();
+    diagnostics
+}
+
+pub mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::fmt::Display;
+
+    #[derive(Debug, Default, Clone, CacheKey)]
+    pub struct Settings {
+        pub allow: Vec<String>,
+        pub strict: bool,
+    }
+
+    impl Display for Settings {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.shadowed-variables",
+                fields = [self.allow | array, self.strict]
+            }
+            Ok(())
+        }
+    }
 }

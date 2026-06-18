@@ -1287,6 +1287,77 @@ wish to switch this to `true` -- but see also
 
 ---
 
+### `check.shadowed-variables`
+
+Options for the `shadowed-variable` rule
+
+#### [`allow`](#check_shadowed-variables_allow) {: #check_shadowed-variables_allow }
+<span id="allow"></span>
+
+A list of variable names that are allowed to be shadowed. By default,
+common loop variables and error flags are allowed to be shadowed.
+Variables in this list will be ignored in addition to the default list.
+
+**Default value**: `[]`
+
+**Type**: `list[str]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.shadowed-variables]
+    allow = ["array", "x"]
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.shadowed-variables]
+    allow = ["array", "x"]
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.shadowed-variables]
+    allow = ["array", "x"]
+    ```
+
+---
+
+#### [`strict`](#check_shadowed-variables_strict) {: #check_shadowed-variables_strict }
+<span id="strict"></span>
+
+Strict mode will flag any shadowed variable, including dummy arguments,
+loop variables, error flags, and variables in the allow list.
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.shadowed-variables]
+    strict = true
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.shadowed-variables]
+    strict = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.shadowed-variables]
+    strict = true
+    ```
+
+---
+
 ### `check.strings`
 
 Options for the string literal rules

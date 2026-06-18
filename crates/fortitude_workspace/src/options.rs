@@ -12,7 +12,7 @@ use fortitude_linter::{
     line_width::IndentWidth,
     rule_selector::RuleSelector,
     rules::{
-        correctness::{exit_labels, use_statements},
+        correctness::{exit_labels, shadowed_variable, use_statements},
         portability::{self, invalid_tab},
         style::{
             complexity,
@@ -379,6 +379,10 @@ pub struct CheckOptions {
     #[option_group]
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
 
+    /// Options for the `shadowed-variable` rule
+    #[option_group]
+    pub shadowed_variables: Option<ShadowedVariableOptions>,
+
     /// Options for the `incorrect-keyword-case` rule
     #[option_group]
     pub incorrect_keyword_case: Option<IncorrectKeywordCaseOptions>,
@@ -444,6 +448,37 @@ impl ExitUnlabelledLoopOptions {
     pub fn into_settings(self) -> exit_labels::settings::Settings {
         exit_labels::settings::Settings {
             allow_unnested_loops: self.allow_unnested_loops.unwrap_or_default(),
+        }
+    }
+}
+
+/// Options for the `shadowed-variable` rule
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct ShadowedVariableOptions {
+    /// A list of variable names that are allowed to be shadowed. By default,
+    /// common loop variables and error flags are allowed to be shadowed.
+    /// Variables in this list will be ignored in addition to the default list.
+    #[option(
+        default = "[]",
+        value_type = "list[str]",
+        example = r#"allow = ["array", "x"]"#
+    )]
+    pub allow: Option<Vec<String>>,
+
+    /// Strict mode will flag any shadowed variable, including dummy arguments,
+    /// loop variables, error flags, and variables in the allow list.
+    #[option(default = "false", value_type = "bool", example = "strict = true")]
+    pub strict: Option<bool>,
+}
+
+impl ShadowedVariableOptions {
+    pub fn into_settings(self) -> shadowed_variable::settings::Settings {
+        shadowed_variable::settings::Settings {
+            allow: self.allow.unwrap_or_default(),
+            strict: self.strict.unwrap_or_default(),
         }
     }
 }

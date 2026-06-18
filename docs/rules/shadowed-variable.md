@@ -9,16 +9,20 @@ Shadowing variables can lead to confusion, as it can be unclear which
 variable is being referenced in a given context. Shadowing may be
 unintentional, which is a common source of bugs.
 
-There are contexts in which shadowing is acceptable. For instance,
-if a procedure dummy argument has the same name as a module variable, this is acceptable,
-this indicates that the programmer likely intends to use the dummy argument
-in preference to the module variable. However, shadowing a module variable
+There are contexts in which shadowing is acceptable. For instance, if a
+procedure dummy argument has the same name as a module variable, this
+indicates that the programmer likely intends to use the dummy argument to
+reference the module variable. However, shadowing a module-scoped variable
 with a local variable is generally considered poor practice.
 
-It is also very common to reuse loop variables such as `i`, `j`, and `k` or error
-flags such as `err` in different scopes. Fortitude will ignore integers with common
-names. The setting `shadowed-variables.allow` can be used to add further variables
-to the whitelist.
+It is also very common to reuse loop variables such as `i`, `j`, and `k` or
+error flags such as `err` in different scopes. Fortitude will ignore
+integers with common names. The setting `check.shadowed-variables.allow` can
+be used to add further variables to the whitelist.
+
+The setting `check.shadowed-variables.strict` can be used to disallow
+shadowing of variables in all contexts, including dummy arguments, loop
+variables, error flags, and variables added to the whitelist.
 
 ## Examples
 
@@ -73,3 +77,7 @@ contains
   end subroutine selection_sort
 
 end module my_mod
+```
+
+## Settings
+See [check.shadowed-variables](../settings.md#checkshadowed-variables)
