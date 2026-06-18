@@ -417,10 +417,8 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             line_segment_end = line_segment_end + TextSize::from(line_segment.len() as u32);
 
             // Count leading spaces
-            let leading_spaces = line_segment
-                .chars()
-                .take_while(|c| [' ', '\t'].contains(c))
-                .count();
+            let leading_spaces = line_segment.chars().take_while(|c| *c == ' ').count()
+                + indent_width * line_segment.chars().take_while(|c| *c == '\t').count();
 
             // Get the first none whitespace node
             let content_start =
