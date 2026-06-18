@@ -19,7 +19,6 @@ use fortitude_linter::{
             inconsistent_dimension::{self, settings::PreferAttribute},
             keywords, line_length,
             strings::{self, settings::Quote},
-            whitespace,
         },
     },
     settings::{FortranStandard, OutputFormat, ProgressBar},

@@ -1,6 +1,5 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use crate::line_width::IndentWidth;
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;

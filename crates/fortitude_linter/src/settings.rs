@@ -21,9 +21,7 @@ use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelect
 use crate::rule_table::RuleTable;
 use crate::rules::correctness::{exit_labels, shadowed_variable, use_statements};
 use crate::rules::portability::{self, invalid_tab};
-use crate::rules::style::{
-    complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
-};
+use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
 
 #[derive(Debug)]
 pub struct Settings {
