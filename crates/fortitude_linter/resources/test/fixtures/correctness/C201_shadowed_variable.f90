@@ -19,6 +19,7 @@ contains
   end subroutine initialise
 
   subroutine selection_sort(arr)
+    use some_mod, only: x => y  ! This is a bug!
     real, intent(inout) :: arr(:)
     integer :: i
 

@@ -21,22 +21,31 @@ expression: diagnostics
 17 |     allocate(x(n))
    |
 
-./resources/test/fixtures/correctness/C201_shadowed_variable.f90:33:30: C201 Variable `arr` shadows variable in a higher scope
+./resources/test/fixtures/correctness/C201_shadowed_variable.f90:22:25: C201 Variable `x` shadows variable in a higher scope
    |
-31 |     !! Finds minimum element of an array, swaps it with the start
-32 |     subroutine helper(arr)
-33 |       real, intent(inout) :: arr(:) ! Allowed: is a dummy arg
-   |                              ^^^ C201
-34 |       real :: min_val
-35 |       integer :: min_idx
+21 |   subroutine selection_sort(arr)
+22 |     use some_mod, only: x => y  ! This is a bug!
+   |                         ^ C201
+23 |     real, intent(inout) :: arr(:)
+24 |     integer :: i
    |
 
-./resources/test/fixtures/correctness/C201_shadowed_variable.f90:36:18: C201 Variable `i` shadows variable in a higher scope
+./resources/test/fixtures/correctness/C201_shadowed_variable.f90:34:30: C201 Variable `arr` shadows variable in a higher scope
    |
-34 |       real :: min_val
-35 |       integer :: min_idx
-36 |       integer :: i  ! Allowed: is a loop variable
+32 |     !! Finds minimum element of an array, swaps it with the start
+33 |     subroutine helper(arr)
+34 |       real, intent(inout) :: arr(:) ! Allowed: is a dummy arg
+   |                              ^^^ C201
+35 |       real :: min_val
+36 |       integer :: min_idx
+   |
+
+./resources/test/fixtures/correctness/C201_shadowed_variable.f90:37:18: C201 Variable `i` shadows variable in a higher scope
+   |
+35 |       real :: min_val
+36 |       integer :: min_idx
+37 |       integer :: i  ! Allowed: is a loop variable
    |                  ^ C201
-37 |
-38 |       min_val = arr(1)
+38 |
+39 |       min_val = arr(1)
    |

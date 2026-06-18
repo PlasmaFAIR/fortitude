@@ -125,20 +125,23 @@ pub(crate) fn check_shadowed_variables(
 ) -> Vec<Diagnostic> {
     let allow = &context.settings().shadowed_variables.allow;
     let strict = &context.settings().shadowed_variables.strict;
-    // Check the names of all variables declared in the current scope
+    // Check the names of all variables and used items declared in the current scope
     let mut diagnostics = symbols
         .iter()
-        // Only check variables
-        .filter_map(|(name, symbol)| {
-            if let Symbol::Variable(var) = symbol {
-                Some((name, var))
-            } else {
-                None
-            }
-        })
+        // Only check variables and used items
+        .filter(|(_, symbol)| symbol.is_variable() || symbol.is_used_item())
         // Filter allowed integers, dummy variables, and allowed names
         .filter(|(name, var)| {
-            *strict || (!is_allowed_integer(var) && !var.is_dummy_var() && !allow.contains(name))
+            if *strict {
+                return true;
+            }
+            if allow.contains(name) {
+                return false;
+            }
+            if let Symbol::Variable(var) = var {
+                return !is_allowed_integer(var) && !var.is_dummy_var();
+            } 
+            true
         })
         // Create diagnostic if var found in a higher scope
         .filter_map(|(name, var)| {
