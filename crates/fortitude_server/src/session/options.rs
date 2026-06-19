@@ -740,7 +740,7 @@ mod tests {
                         80,
                     ),
                     indent_width: Some(
-                        4,
+                        2,
                     ),
                     configuration_preference: None,
                 },
@@ -778,7 +778,7 @@ mod tests {
                     ignore: Some(vec![RuleSelector::from_str("FORT001").unwrap()]),
                     exclude: Some(vec!["third_party".into()]),
                     line_length: Some(80),
-                    indent_width: Some(4),
+                    indent_width: Some(2),
                     configuration_preference: ConfigurationPreference::EditorFirst,
                 },
             }
@@ -848,7 +848,7 @@ mod tests {
                         check: Some(CheckOptions {
                             extend_select: Some(vec![RuleSelector::from_str("C032").unwrap()]),
                             line_length: Some(100),
-                            indent_width: Some(4),
+                            indent_width: Some(2),
                             ..Default::default()
                         }),
                         ..Default::default()

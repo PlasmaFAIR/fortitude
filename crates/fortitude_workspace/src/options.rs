@@ -350,7 +350,7 @@ pub struct CheckOptions {
     pub line_length: Option<usize>,
 
     // Global Formatting options
-    /// The number of spaces to use for a single indent to use when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
+    /// The number of spaces to use for a single indent. Used when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
     ///
     /// The indentation is determined by the number of spaces (tabs are equal to one indent_width).
     #[option(

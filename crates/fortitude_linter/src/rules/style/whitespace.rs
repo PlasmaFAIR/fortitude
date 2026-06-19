@@ -343,7 +343,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// understand the scoping of logic.
 ///
 /// ## Options
-/// - `check.incorrect-indent.indent-width`
+/// - `check.indent-width`
 #[derive(ViolationMetadata)]
 pub(crate) struct IncorrectIndent;
 

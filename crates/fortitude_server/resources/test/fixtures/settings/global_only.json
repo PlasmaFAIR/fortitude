@@ -12,7 +12,7 @@
         "fixAll": false,
         "logLevel": "warn",
         "lineLength": 80,
-        "indentWidth": 4,
+        "indentWidth": 2,
         "ignore_comment_length": false,
         "exclude": ["third_party"]
     }

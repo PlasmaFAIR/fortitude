@@ -17,7 +17,8 @@ use tree_sitter::Node;
 /// `gfortran -std=f2023 -Werror`).
 ///
 /// ## Options
-/// - `check.invalid-tab.indent-width`
+/// - `check.indent-width`
+/// - `check.invalid-tab.indent-width` (takes precedent)
 #[derive(ViolationMetadata)]
 pub(crate) struct InvalidTab;
 
@@ -48,7 +49,11 @@ pub(crate) fn check_invalid_tab(context: &CheckContext, root: &Node) -> Vec<Diag
         .map(|(index, _)| {
             let start = TextSize::try_from(index).unwrap();
             let range = TextRange::new(start, start + TextSize::new(1));
-            let width = context.settings().invalid_tab.indent_width.as_usize();
+            let width = if context.settings().invalid_tab.indent_width.as_usize() == 0usize {
+                context.settings().indent_width
+            } else {
+                context.settings().invalid_tab.indent_width.as_usize()
+            };
             let indent = format!("{:width$}", " ");
             let edit = Edit::range_replacement(indent, range);
             context

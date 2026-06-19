@@ -1,21 +1,21 @@
-use std::{fmt, num::NonZeroU8};
+use std::fmt;
 
 use ruff_macros::CacheKey;
 use serde::{Deserialize, Serialize};
 
 /// The size of a tab.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, CacheKey)]
-pub struct IndentWidth(NonZeroU8);
+pub struct IndentWidth(usize);
 
 impl IndentWidth {
     pub(crate) fn as_usize(self) -> usize {
-        self.0.get() as usize
+        self.0
     }
 }
 
 impl Default for IndentWidth {
     fn default() -> Self {
-        Self(NonZeroU8::new(4).unwrap())
+        Self(0usize)
     }
 }
 
@@ -25,13 +25,13 @@ impl fmt::Display for IndentWidth {
     }
 }
 
-impl From<NonZeroU8> for IndentWidth {
-    fn from(tab_size: NonZeroU8) -> Self {
+impl From<usize> for IndentWidth {
+    fn from(tab_size: usize) -> Self {
         Self(tab_size)
     }
 }
 
-impl From<IndentWidth> for NonZeroU8 {
+impl From<IndentWidth> for usize {
     fn from(value: IndentWidth) -> Self {
         value.0
     }
