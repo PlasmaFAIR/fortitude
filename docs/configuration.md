@@ -50,6 +50,12 @@ each individual source file being checked, with all paths in the
 config file (such as `exclude`) relative to the directory containing
 that config file.
 
+Configuration files do not inherit from or merge with parent
+configuration files. For example, if a nested `fortitude.toml` is closer
+to a source file than the root `fortitude.toml`, then rule selection
+settings such as `select` and `ignore` are taken from the nested file,
+not from the root file.
+
 If a config file is passed on the command line using `--config-file`,
 those settings are used for _all_ files, and any relative paths in
 that config file are resolved relative to the directory where
