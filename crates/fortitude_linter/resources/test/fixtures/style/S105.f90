@@ -45,7 +45,8 @@ contains
 subroutine if_statements()
 integer :: i
     i = i + 1
-if (i == 2) then; i = 3; end if;
+if (i == 1) i = 2
+  if (i == 2) then; i = 3; end if;
 if (i == 4) then
             i = 2
             end if
