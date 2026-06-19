@@ -121,9 +121,15 @@ mod tests {
         Ok(())
     }
 
-    #[test_case(Rule::IncorrectIndent, Path::new("S105_indent_width_2.f90"))]
-    fn incorrect_indent_width_2(rule_code: Rule, path: &Path) -> Result<()> {
-        let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+    #[test]
+    fn incorrect_indent_width_2() -> Result<()> {
+        let rule_code = Rule::IncorrectIndent;
+        let path = Path::new("S105.f90");
+        let snapshot = format!(
+            "{}_{}_indent_width_2",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
 
         let settings = CheckSettings {
             indent_width: 2,
