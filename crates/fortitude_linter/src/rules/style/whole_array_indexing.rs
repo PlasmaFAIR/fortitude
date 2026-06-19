@@ -24,6 +24,9 @@ use tree_sitter::Node;
 /// x = x
 /// y = y
 /// ```
+///
+/// ## References
+/// - [Doctor Fortran: "Doctor, it hurts when I do this!"](https://stevelionel.com/drfortran/2008/03/31/doctor-it-hurts-when-i-do-this/)
 #[derive(ViolationMetadata)]
 pub(crate) struct WholeArrayIndexing;
 
