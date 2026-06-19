@@ -443,7 +443,8 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 let node_kind = &line_segment_node.kind();
 
                 // Determine expected indent bases on tree-sitter node kind
-                if BEGIN_SCOPE_NODES.contains(node_kind) {
+                if BEGIN_SCOPE_NODES.contains(node_kind) && !line_segment_node.inline_if_statement()
+                {
                     next_expected_indent = current_expected_indent + indent_width;
                 } else if END_SCOPE_NODES.contains(node_kind) {
                     if next_expected_indent < indent_width {
