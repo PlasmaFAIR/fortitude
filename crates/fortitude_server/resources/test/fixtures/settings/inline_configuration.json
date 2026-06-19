@@ -3,7 +3,7 @@
     "configuration": {
       "check": {
         "line-length": 100,
-        "indent-width": 4,
+        "indent-width": 2,
         "extend-select": ["C032"]
       }
     },

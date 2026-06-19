@@ -37,6 +37,29 @@ mod tests {
     }
 
     #[test]
+    fn invalid_tab_indent_width_setting_hierarchy() -> Result<()> {
+        let rule_code = Rule::InvalidTab;
+        let path = Path::new("PORT031.f90");
+        let snapshot = format!(
+            "{}_{}_indent_width_setting_hierarchy",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+
+        let settings = CheckSettings {
+            indent_width: 4,
+            invalid_tab: portability::invalid_tab::settings::Settings {
+                indent_width: 2usize.into(),
+            },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("portability").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
     fn warn_port001_no_cray_units() -> Result<()> {
         let rule_code = Rule::NonPortableIoUnit;
         let path = Path::new("PORT001.f90");
