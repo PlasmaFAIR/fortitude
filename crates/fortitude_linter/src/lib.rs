@@ -379,7 +379,7 @@ pub(crate) fn check_path(
     }
 
     if context.is_rule_enabled(Rule::IncorrectIndent) {
-        violations.append(&mut &mut check_incorrect_indent(&context, &root));
+        violations.append(&mut check_incorrect_indent(&context, &root));
     }
 
     if context.is_rule_enabled(Rule::InvalidCharacter) {
