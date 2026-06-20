@@ -20,7 +20,7 @@ expression: diagnostics
 12 +   x = x
 13 |   y = y(:, :)
 14 |   item%values = item%values(:)
-15 |
+15 |   call use_array(x(:))
 
 ./resources/test/fixtures/style/S312.f90:13:7: S312 [*] Avoid redundant whole-array indexing
    |
@@ -28,6 +28,7 @@ expression: diagnostics
 13 |   y = y(:, :)
    |       ^^^^^^^ S312
 14 |   item%values = item%values(:)
+15 |   call use_array(x(:))
    |
    = help: Remove redundant whole-array indexing
 
@@ -37,8 +38,8 @@ expression: diagnostics
    -   y = y(:, :)
 13 +   y = y
 14 |   item%values = item%values(:)
-15 |
-16 |   z = z(1:)
+15 |   call use_array(x(:))
+16 |
 
 ./resources/test/fixtures/style/S312.f90:14:17: S312 [*] Avoid redundant whole-array indexing
    |
@@ -46,8 +47,7 @@ expression: diagnostics
 13 |   y = y(:, :)
 14 |   item%values = item%values(:)
    |                 ^^^^^^^^^^^^^^ S312
-15 |
-16 |   z = z(1:)
+15 |   call use_array(x(:))
    |
    = help: Remove redundant whole-array indexing
 
@@ -56,6 +56,26 @@ expression: diagnostics
 13 |   y = y(:, :)
    -   item%values = item%values(:)
 14 +   item%values = item%values
-15 |
-16 |   z = z(1:)
-17 |   z = z(:5)
+15 |   call use_array(x(:))
+16 |
+17 |   x(:) = x
+
+./resources/test/fixtures/style/S312.f90:15:18: S312 [*] Avoid redundant whole-array indexing
+   |
+13 |   y = y(:, :)
+14 |   item%values = item%values(:)
+15 |   call use_array(x(:))
+   |                  ^^^^ S312
+16 |
+17 |   x(:) = x
+   |
+   = help: Remove redundant whole-array indexing
+
+12 |   x = x(:)
+13 |   y = y(:, :)
+14 |   item%values = item%values(:)
+   -   call use_array(x(:))
+15 +   call use_array(x)
+16 |
+17 |   x(:) = x
+18 |   item%values(:) = item%values

@@ -60,9 +60,23 @@ fn has_only_whole_array_extents(node: &Node, src: &str) -> bool {
         })
 }
 
+fn is_assignment_lhs(node: &Node) -> bool {
+    let Some(parent) = node.parent() else {
+        return false;
+    };
+
+    if parent.kind() != "assignment_statement" {
+        return false;
+    }
+
+    parent.child_by_field_name("left").is_some_and(|lhs| {
+        lhs.start_byte() == node.start_byte() && lhs.end_byte() == node.end_byte()
+    })
+}
+
 impl AstRule for WholeArrayIndexing {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if !has_only_whole_array_extents(node, context.source_text()) {
+        if is_assignment_lhs(node) || !has_only_whole_array_extents(node, context.source_text()) {
             return None;
         }
 
