@@ -447,13 +447,9 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 {
                     next_expected_indent = current_expected_indent + indent_width;
                 } else if END_SCOPE_NODES.contains(node_kind) {
-                    if next_expected_indent < indent_width {
-                        current_expected_indent = 0;
-                        next_expected_indent = 0;
-                    } else {
-                        current_expected_indent = current_expected_indent - indent_width;
-                        next_expected_indent = current_expected_indent;
-                    }
+                    current_expected_indent =
+                        std::cmp::max(current_expected_indent - indent_width, 0);
+                    next_expected_indent = current_expected_indent;
                 } else if ZERO_INDENT_NODES.contains(node_kind) {
                     current_expected_indent = 0;
                 } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
@@ -507,11 +503,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
         if !edit_string.is_empty() {
             let visual_end = if !line_contains_semicolon {
-                if line_indent > 0 {
-                    line_segment_start + TextSize::try_from(line_indent).unwrap()
-                } else {
-                    line_segment_start + TextSize::try_from(1usize).unwrap()
-                }
+                line_segment_start + TextSize::try_from(std::cmp::max(line_indent, 1)).unwrap()
             } else {
                 line.end()
             };
