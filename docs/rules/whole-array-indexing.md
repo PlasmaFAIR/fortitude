@@ -11,6 +11,11 @@ Adding `(:)` to reference an entire array is redundant. Omitting the
 subscript makes the same whole-array reference clearer and avoids unnecessary
 parser/compiler work.
 
+This rule does not apply to the left-hand side of assignment statements.
+For allocatable arrays, removing whole-array indexing can change assignment
+semantics by allowing reallocation, and Fortitude cannot always determine
+whether an array is allocatable.
+
 ## Example
 ```f90
 x = x(:)
