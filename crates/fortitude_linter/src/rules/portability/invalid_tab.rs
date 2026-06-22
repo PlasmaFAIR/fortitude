@@ -17,8 +17,9 @@ use tree_sitter::Node;
 /// `gfortran -std=f2023 -Werror`).
 ///
 /// ## Options
+/// If the more fine grained option (`check.invalid-tab.indent-width`) is provided this will take precedent.
 /// - `check.indent-width`
-/// - `check.invalid-tab.indent-width` (takes precedent)
+/// - `check.invalid-tab.indent-width`
 #[derive(ViolationMetadata)]
 pub(crate) struct InvalidTab;
 
