@@ -499,6 +499,43 @@ By default disable ignore-comment-length behavior when running `fortitude`.
 
 ---
 
+#### [`indent-width`](#check_indent-width) {: #check_indent-width }
+<span id="indent-width"></span>
+
+The number of spaces to use for a single indent. Used when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
+
+The indentation is determined by the number of spaces (tabs are equal to one indent_width).
+
+**Default value**: `4`
+
+**Type**: `int`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Enforce indentation of base 4.
+    indent-width = 4
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Enforce indentation of base 4.
+    indent-width = 4
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Enforce indentation of base 4.
+    indent-width = 4
+    ```
+
+---
+
 #### [`line-length`](#check_line-length) {: #check_line-length }
 <span id="line-length"></span>
 
