@@ -1,5 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
+use fortitude_macros::kind;
 use strum_macros::EnumIs;
 use tree_sitter::Node;
 
@@ -94,7 +95,7 @@ impl<'a> SymbolTable<'a> {
         // it has a type as a procedure attribute. If it doesn't, then it will
         // either have an explicit decl line, which is handled above, or it's
         // implicitly typed, which we don't currently handle here at all
-        if scope.is_named() && scope.kind() == "function" {
+        if scope.kind_id() == kind!("function") {
             let stmt = scope
                 .child(0)
                 .expect("`function` must have `function_statement` as zeroth child");
@@ -107,8 +108,10 @@ impl<'a> SymbolTable<'a> {
         if let Some(procs) = scope.child_with_name("internal_procedures") {
             procs
                 .named_children(&mut procs.walk())
-                .filter_map(|proc| match proc.kind() {
-                    "function" | "subroutine" => Procedure::try_from_node(&proc, src).ok(),
+                .filter_map(|proc| match proc.kind_id() {
+                    kind!("function") | kind!("subroutine") => {
+                        Procedure::try_from_node(&proc, src).ok()
+                    }
                     _ => None,
                 })
                 .for_each(|proc| {
