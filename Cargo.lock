@@ -905,6 +905,8 @@ dependencies = [
  "quote",
  "regex",
  "syn",
+ "tree-sitter",
+ "tree-sitter-fortran",
 ]
 
 [[package]]

@@ -8,7 +8,9 @@ mod rule_namespace;
 mod violation_metadata;
 
 use proc_macro::TokenStream;
-use syn::{DeriveInput, Error, ItemFn, parse_macro_input};
+use quote::{quote, quote_spanned};
+use syn::{DeriveInput, Error, ItemFn, LitStr, parse_macro_input};
+use tree_sitter::Language;
 
 #[proc_macro_derive(ViolationMetadata, attributes(violation_metadata))]
 pub fn derive_violation_metadata(item: TokenStream) -> TokenStream {
@@ -52,4 +54,66 @@ pub fn derive_has_name(input: TokenStream) -> TokenStream {
     has_name::derive_impl(input)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
+}
+
+fn id_for_node_kind(token_stream: TokenStream, named: bool) -> TokenStream {
+    let string_literal: LitStr = parse_macro_input!(token_stream);
+
+    // Get the string value and calculate its length
+    let requested_kind = string_literal.value();
+
+    let language: Language = tree_sitter_fortran::LANGUAGE.into();
+    let found_id = language.id_for_node_kind(&requested_kind, named);
+
+    if found_id != 0 {
+        quote! {
+            #found_id
+        }
+    } else {
+        quote_spanned!(
+            string_literal.span() =>
+            compile_error!("This is not a valid node kind in the tree-sitter-fortran grammar")
+        )
+    }
+    .into()
+}
+
+/// Given a string literal of a named node, return the corresponding tree-sitter
+/// kind_id
+#[proc_macro]
+pub fn kind(token_stream: TokenStream) -> TokenStream {
+    id_for_node_kind(token_stream, true)
+}
+
+/// Given a string literal of an unnamed node (that is, a keyword), return the
+/// corresponding tree-sitter kind_id
+#[proc_macro]
+pub fn kw(token_stream: TokenStream) -> TokenStream {
+    id_for_node_kind(token_stream, false)
+}
+
+/// Given a string literal of a field name, return the corresponding tree-sitter
+/// field_id
+#[proc_macro]
+pub fn field(token_stream: TokenStream) -> TokenStream {
+    let string_literal: LitStr = parse_macro_input!(token_stream);
+
+    // Get the string value and calculate its length
+    let requested_keyword = string_literal.value();
+
+    let language: Language = tree_sitter_fortran::LANGUAGE.into();
+    let found_id = language.field_id_for_name(&requested_keyword);
+
+    if let Some(found_id) = found_id {
+        let id_number: u16 = found_id.into();
+        quote! {
+            std::num::NonZeroU16::new(#id_number).unwrap()
+        }
+    } else {
+        quote_spanned!(
+            string_literal.span() =>
+            compile_error!("This is not a valid field in the tree-sitter-fortran grammar")
+        )
+    }
+    .into()
 }
