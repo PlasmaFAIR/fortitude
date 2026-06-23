@@ -240,8 +240,8 @@ mod tests {
         let snapshot = format!("{}_strict_{}", rule_code.as_ref(), path.to_string_lossy());
         let settings = CheckSettings {
             shadowed_variables: shadowed_variable::settings::Settings {
-                allow: vec!["array".to_string(), "x".to_string()],
                 strict: true,
+                ..shadowed_variable::settings::Settings::default()
             },
             ..CheckSettings::for_rule(rule_code)
         };

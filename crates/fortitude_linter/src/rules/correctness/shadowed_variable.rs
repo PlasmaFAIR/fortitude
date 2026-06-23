@@ -1,9 +1,5 @@
 use crate::CheckContext;
-use crate::ast::types::HasName;
-use crate::ast::{
-    symbol_table::{Symbol, SymbolTable},
-    types::Variable,
-};
+use crate::ast::symbol_table::{Symbol, SymbolTable};
 use crate::diagnostics::{Diagnostic, FixAvailability, Violation};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
@@ -29,8 +25,7 @@ use ruff_macros::derive_message_formats;
 /// be used to add further variables to the whitelist.
 ///
 /// The setting `check.shadowed-variables.strict` can be used to disallow
-/// shadowing of variables in all contexts, including dummy arguments, loop
-/// variables, error flags, and variables added to the whitelist.
+/// shadowing of variables in all contexts, including dummy arguments.
 ///
 /// ## Examples
 ///
@@ -94,19 +89,6 @@ pub struct ShadowedVariable {
     name: String,
 }
 
-const ALLOWED_INTEGERS: &[&str] = &[
-    "i", "j", "k", "ii", "jj", "kk", "idx", "index", "err", "ierr", "ioerr", "stat", "iostat",
-    "status",
-];
-
-fn is_allowed_integer(var: &Variable) -> bool {
-    let t = var.type_();
-    let name = var.name().as_str().to_ascii_lowercase();
-    t.is_intrinsic()
-        && t.as_str().eq_ignore_ascii_case("integer")
-        && ALLOWED_INTEGERS.contains(&name.as_str())
-}
-
 impl Violation for ShadowedVariable {
     const FIX_AVAILABILITY: FixAvailability = FixAvailability::None;
 
@@ -130,16 +112,13 @@ pub(crate) fn check_shadowed_variables(
         .iter()
         // Only check variables and used items
         .filter(|(_, symbol)| symbol.is_variable() || symbol.is_used_item())
-        // Filter allowed integers, dummy variables, and allowed names
+        // Filter dummy variables and allowed names
         .filter(|(name, var)| {
-            if *strict {
-                return true;
-            }
             if allow.contains(name) {
                 return false;
             }
             if let Symbol::Variable(var) = var {
-                return !is_allowed_integer(var) && !var.is_dummy_var();
+                return *strict || !var.is_dummy_var();
             }
             true
         })
@@ -168,10 +147,24 @@ pub mod settings {
     use ruff_macros::CacheKey;
     use std::fmt::Display;
 
-    #[derive(Debug, Default, Clone, CacheKey)]
+    #[derive(Debug, Clone, CacheKey)]
     pub struct Settings {
         pub allow: Vec<String>,
         pub strict: bool,
+    }
+
+    const DEFAULT_ALLOWED: &[&str] = &[
+        "i", "j", "k", "l", "m", "n", "ii", "jj", "kk", "ll", "mm", "nn", "idx", "index", "err",
+        "ierr", "ioerr", "ios", "info", "stat", "iostat", "istat", "status",
+    ];
+
+    impl Default for Settings {
+        fn default() -> Self {
+            Self {
+                allow: DEFAULT_ALLOWED.iter().map(|s| s.to_string()).collect(),
+                strict: false,
+            }
+        }
     }
 
     impl Display for Settings {

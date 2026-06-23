@@ -21,8 +21,7 @@ integers with common names. The setting `check.shadowed-variables.allow` can
 be used to add further variables to the whitelist.
 
 The setting `check.shadowed-variables.strict` can be used to disallow
-shadowing of variables in all contexts, including dummy arguments, loop
-variables, error flags, and variables added to the whitelist.
+shadowing of variables in all contexts, including dummy arguments.
 
 ## Examples
 

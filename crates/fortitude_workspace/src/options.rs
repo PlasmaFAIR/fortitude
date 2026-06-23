@@ -462,14 +462,13 @@ pub struct ShadowedVariableOptions {
     /// common loop variables and error flags are allowed to be shadowed.
     /// Variables in this list will be ignored in addition to the default list.
     #[option(
-        default = "[]",
+        default = r#"["i", "j", "k", "l", "m", "n", "ii", "jj", "kk", "ll", "mm", "nn", "idx", "index", "err", "ierr", "ioerr", "ios", "info", "stat", "iostat", "istat", "status"]"#,
         value_type = "list[str]",
         example = r#"allow = ["array", "x"]"#
     )]
     pub allow: Option<Vec<String>>,
 
-    /// Strict mode will flag any shadowed variable, including dummy arguments,
-    /// loop variables, error flags, and variables in the allow list.
+    /// Strict mode will also include dummy arguments.
     #[option(default = "false", value_type = "bool", example = "strict = true")]
     pub strict: Option<bool>,
 }
