@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C002.f90:4:5: C002 [*] interface 'function' uses implicit typing
+C002 [*] interface 'function' uses implicit typing
+ --> ./resources/test/fixtures/correctness/C002.f90:4:5
   |
 2 |   implicit none
 3 |   interface
 4 |     integer function myfunc(x)
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ C002
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
 5 |       integer, intent(in) :: x
 6 |     end function myfunc
   |
-  = help: Insert `implicit none`
-
+help: Insert `implicit none`
 2 |   implicit none
 3 |   interface
 4 |     integer function myfunc(x)
@@ -21,19 +21,19 @@ snapshot_kind: text
 6 |       integer, intent(in) :: x
 7 |     end function myfunc
 8 |
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/correctness/C002.f90:8:5: C002 [*] interface 'subroutine' uses implicit typing
+C002 [*] interface 'subroutine' uses implicit typing
+  --> ./resources/test/fixtures/correctness/C002.f90:8:5
    |
  6 |     end function myfunc
  7 |
  8 |     subroutine mysub(x)
-   |     ^^^^^^^^^^^^^^^^^^^ C002
+   |     ^^^^^^^^^^^^^^^^^^^
  9 |       implicit none (external)
 10 |       integer, intent(in) :: x
-11 |     end subroutine mysub
    |
-   = help: Change to `implicit none (type, external)`
-
+help: Change to `implicit none (type, external)`
 6  |     end function myfunc
 7  |
 8  |     subroutine mysub(x)
@@ -42,18 +42,19 @@ snapshot_kind: text
 10 |       integer, intent(in) :: x
 11 |     end subroutine mysub
 12 |   end interface
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/correctness/C002.f90:18:5: C002 [*] interface 'function' uses implicit typing
+C002 [*] interface 'function' uses implicit typing
+  --> ./resources/test/fixtures/correctness/C002.f90:18:5
    |
 16 |   implicit none
 17 |   interface
 18 |     real function myfunc2(x)
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^ C002
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
 19 |       implicit real (a,z)
 20 |     end function myfunc2
    |
-   = help: Change to `implicit none`
-
+help: Change to `implicit none`
 16 |   implicit none
 17 |   interface
 18 |     real function myfunc2(x)
@@ -62,19 +63,19 @@ snapshot_kind: text
 20 |     end function myfunc2
 21 |
 22 |     subroutine mysub2(x)
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/correctness/C002.f90:22:5: C002 [*] interface 'subroutine' uses implicit typing
+C002 [*] interface 'subroutine' uses implicit typing
+  --> ./resources/test/fixtures/correctness/C002.f90:22:5
    |
 20 |     end function myfunc2
 21 |
 22 |     subroutine mysub2(x)
-   |     ^^^^^^^^^^^^^^^^^^^^ C002
+   |     ^^^^^^^^^^^^^^^^^^^^
 23 |       integer, intent(inout) :: x
 24 |     end subroutine mysub2
-25 |   end interface
    |
-   = help: Insert `implicit none`
-
+help: Insert `implicit none`
 20 |     end function myfunc2
 21 |
 22 |     subroutine mysub2(x)
@@ -82,3 +83,4 @@ snapshot_kind: text
 24 |       integer, intent(inout) :: x
 25 |     end subroutine mysub2
 26 |   end interface
+note: This is an unsafe fix and may change runtime behavior

@@ -1,13 +1,14 @@
 use std::path::Path;
 
 use anyhow::Result;
+use ruff_diagnostics::Applicability;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 
 use crate::{
     check_file,
-    diagnostics::message::{Emitter, TextEmitter},
+    diagnostics::{DisplayDiagnosticConfig, DisplayDiagnostics},
     fs::read_to_string,
-    settings::{self, CheckSettings, FixMode, UnsafeFixes},
+    settings::{self, CheckSettings, FixMode, OutputFormat},
 };
 
 #[macro_export]
@@ -42,22 +43,19 @@ pub(crate) fn test_contents(path: &Path, file: &SourceFile, settings: &CheckSett
         FixMode::Generate,
         settings::IgnoreAllowComments::Disabled,
     ) {
-        Ok(violations) => {
-            if violations.messages.is_empty() {
+        Ok(diagnostics) => {
+            if diagnostics.messages.is_empty() {
                 return String::new();
             }
 
-            let mut output = Vec::new();
-
-            TextEmitter::default()
+            let config = DisplayDiagnosticConfig::new()
+                .format(OutputFormat::Full)
+                .hide_severity(true)
                 .with_show_fix_status(true)
-                .with_show_fix_diff(true)
-                .with_show_source(true)
-                .with_unsafe_fixes(UnsafeFixes::Enabled)
-                .emit(&mut output, &violations.messages)
-                .unwrap();
+                .show_fix_diff(true)
+                .with_fix_applicability(Applicability::DisplayOnly);
 
-            String::from_utf8(output).unwrap()
+            DisplayDiagnostics::new(&config, &diagnostics.messages).to_string()
         }
         Err(msg) => {
             panic!("Failed to process: {msg}");

@@ -14,41 +14,45 @@ snapshot_kind: text
 success: false
 exit_code: 1
 ----- stdout -----
-test.f90:1:1: C001 program uses implicit typing
+C001 program uses implicit typing
+ --> test.f90:1:1
   |
 1 | program test
-  | ^^^^^^^^^^^^ C001
+  | ^^^^^^^^^^^^
 2 |   logical*4, parameter :: true = .true.
 3 | end program
   |
-  = help: Insert `implicit none`
+help: Insert `implicit none`
 
-test.f90:2:10: PORT021 'logical*4' uses non-standard syntax
+PORT021 'logical*4' uses non-standard syntax
+ --> test.f90:2:10
   |
 1 | program test
 2 |   logical*4, parameter :: true = .true.
-  |          ^^ PORT021
+  |          ^^
 3 | end program
   |
-  = help: Replace with 'logical(4)'
+help: Replace with 'logical(4)'
 
-test.f90:2:11: PORT011 logical kind set with number literal '4'
+PORT011 logical kind set with number literal '4'
+ --> test.f90:2:11
   |
 1 | program test
 2 |   logical*4, parameter :: true = .true.
-  |           ^ PORT011
+  |           ^
 3 | end program
   |
-  = help: Use the parameter 'int32' from 'iso_fortran_env'
+help: Use the parameter 'int32' from 'iso_fortran_env'
 
-test.f90:3:1: S061 [*] end statement should be named.
+S061 [*] end statement should be named.
+ --> test.f90:3:1
   |
 1 | program test
 2 |   logical*4, parameter :: true = .true.
 3 | end program
-  | ^^^^^^^^^^^ S061
+  | ^^^^^^^^^^^
   |
-  = help: Write as 'end program test'.
+help: Write as 'end program test'.
 
 fortitude: 1 files scanned.
 Number of errors: 4

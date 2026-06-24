@@ -3,16 +3,16 @@ source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/modernisation/MOD021.f90:2:9: MOD021 [*] deprecated relational operator '.gt.', prefer '>' instead
+MOD021 [*] deprecated relational operator '.gt.', prefer '>' instead
+ --> ./resources/test/fixtures/modernisation/MOD021.f90:2:9
   |
 1 | program test
 2 |   if (0 .gt. 1) error stop
-  |         ^^^^ MOD021
+  |         ^^^^
 3 |   if (1 .le. 0) error stop
 4 |   if (a.eq.b.and.a.ne.b) error stop
   |
-  = help: Use '>'
-
+help: Use '>'
 1 | program test
   -   if (0 .gt. 1) error stop
 2 +   if (0 > 1) error stop
@@ -20,17 +20,17 @@ snapshot_kind: text
 4 |   if (a.eq.b.and.a.ne.b) error stop
 5 |   if (1 == 2) error stop  ! OK
 
-./resources/test/fixtures/modernisation/MOD021.f90:3:9: MOD021 [*] deprecated relational operator '.le.', prefer '<=' instead
+MOD021 [*] deprecated relational operator '.le.', prefer '<=' instead
+ --> ./resources/test/fixtures/modernisation/MOD021.f90:3:9
   |
 1 | program test
 2 |   if (0 .gt. 1) error stop
 3 |   if (1 .le. 0) error stop
-  |         ^^^^ MOD021
+  |         ^^^^
 4 |   if (a.eq.b.and.a.ne.b) error stop
 5 |   if (1 == 2) error stop  ! OK
   |
-  = help: Use '<='
-
+help: Use '<='
 1 | program test
 2 |   if (0 .gt. 1) error stop
   -   if (1 .le. 0) error stop
@@ -39,17 +39,17 @@ snapshot_kind: text
 5 |   if (1 == 2) error stop  ! OK
 6 |   if (2 /= 2) error stop  ! OK
 
-./resources/test/fixtures/modernisation/MOD021.f90:4:8: MOD021 [*] deprecated relational operator '.eq.', prefer '==' instead
+MOD021 [*] deprecated relational operator '.eq.', prefer '==' instead
+ --> ./resources/test/fixtures/modernisation/MOD021.f90:4:8
   |
 2 |   if (0 .gt. 1) error stop
 3 |   if (1 .le. 0) error stop
 4 |   if (a.eq.b.and.a.ne.b) error stop
-  |        ^^^^ MOD021
+  |        ^^^^
 5 |   if (1 == 2) error stop  ! OK
 6 |   if (2 /= 2) error stop  ! OK
   |
-  = help: Use '=='
-
+help: Use '=='
 1 | program test
 2 |   if (0 .gt. 1) error stop
 3 |   if (1 .le. 0) error stop
@@ -59,17 +59,17 @@ snapshot_kind: text
 6 |   if (2 /= 2) error stop  ! OK
 7 | end program test
 
-./resources/test/fixtures/modernisation/MOD021.f90:4:19: MOD021 [*] deprecated relational operator '.ne.', prefer '/=' instead
+MOD021 [*] deprecated relational operator '.ne.', prefer '/=' instead
+ --> ./resources/test/fixtures/modernisation/MOD021.f90:4:19
   |
 2 |   if (0 .gt. 1) error stop
 3 |   if (1 .le. 0) error stop
 4 |   if (a.eq.b.and.a.ne.b) error stop
-  |                   ^^^^ MOD021
+  |                   ^^^^
 5 |   if (1 == 2) error stop  ! OK
 6 |   if (2 /= 2) error stop  ! OK
   |
-  = help: Use '/='
-
+help: Use '/='
 1 | program test
 2 |   if (0 .gt. 1) error stop
 3 |   if (1 .le. 0) error stop

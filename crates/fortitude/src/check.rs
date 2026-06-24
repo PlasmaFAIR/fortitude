@@ -4,7 +4,7 @@ use crate::resolve;
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
-use fortitude_linter::diagnostics::{Diagnostic, Diagnostics, FixMap};
+use fortitude_linter::diagnostics::{Diagnostics, FixMap, Violation};
 use fortitude_linter::fs::{self, read_to_string};
 use fortitude_linter::line_filter::{FilterMap, git_since, git_staged_files};
 use fortitude_linter::rules::Rule;
@@ -202,6 +202,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
         unsafe_fixes,
         show_fixes,
         output_format,
+        preview,
         ..
     } = file_configuration.settings.check;
 
@@ -269,7 +270,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     if cli.statistics {
         printer.write_statistics(&results, &mut summary_writer)?;
     } else {
-        printer.write_once(&results, &mut summary_writer)?;
+        printer.write_once(&results, &mut summary_writer, preview)?;
     }
 
     let diagnostics = results.diagnostics;
@@ -351,12 +352,10 @@ fn check_files(
                             if settings.check.rules.enabled(Rule::IoError) {
                                 let message = format!("Error opening file: {error}");
                                 let filename = resolved_file.file_name().to_string_lossy();
-                                let diagnostics = vec![
-                                    Diagnostic::new(IoError { message }, TextRange::default())
-                                        .with_file(
-                                            SourceFileBuilder::new(filename.as_ref(), "").finish(),
-                                        ),
-                                ];
+                                let diagnostics = vec![IoError { message }.into_diagnostic(
+                                    TextRange::default(),
+                                    &SourceFileBuilder::new(filename.as_ref(), "").finish(),
+                                )];
                                 return CheckStatus::Skipped(Diagnostics::new(diagnostics));
                             } else {
                                 warn!(
@@ -422,12 +421,10 @@ fn check_files(
                         if settings.check.rules.enabled(Rule::IoError) {
                             let message = format!("Error opening file: {message}");
                             let filename = path.to_string_lossy();
-                            let diagnostics = vec![
-                                Diagnostic::new(IoError { message }, TextRange::default())
-                                    .with_file(
-                                        SourceFileBuilder::new(filename.as_ref(), "").finish(),
-                                    ),
-                            ];
+                            let diagnostics = vec![IoError { message }.into_diagnostic(
+                                TextRange::default(),
+                                &SourceFileBuilder::new(filename.as_ref(), "").finish(),
+                            )];
                             CheckStatus::Skipped(Diagnostics::new(diagnostics))
                         } else {
                             warn!(

@@ -461,23 +461,62 @@ impl fmt::Display for ProgressBar {
     }
 }
 
+/// The diagnostic output format.
 #[derive(
     Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Default, clap::ValueEnum,
 )]
 #[serde(rename_all = "kebab-case")]
 pub enum OutputFormat {
+    /// Print diagnostics in a concise mode.
+    ///
+    /// This will guarantee that each diagnostic is printed on
+    /// a single line. Only the most important or primary aspects
+    /// of the diagnostic are included. Contextual information is
+    /// dropped.
+    ///
+    /// This may use color when printing to a `tty`.
     Concise,
+
+    /// The default full mode will print "pretty" diagnostics.
+    ///
+    /// That is, color will be used when printing to a `tty`.
+    /// Moreover, diagnostic messages may include additional
+    /// context and annotations on the input to help understand
+    /// the message.
     #[default]
     Full,
+    /// Print diagnostics in JSON format.
+    ///
+    /// Unlike `json-lines`, this prints all of the diagnostics as a JSON array.
     Json,
+    /// Print diagnostics in JSON format, one per line.
+    ///
+    /// This will print each diagnostic as a separate JSON object on its own line. See the `json`
+    /// format for an array of all diagnostics. See <https://jsonlines.org/> for more details.
     JsonLines,
+    /// Print diagnostics in the format expected by JUnit.
     Junit,
+
     Grouped,
+    /// Print diagnostics in the format used by [GitHub Actions] workflow error annotations.
+    ///
+    /// [GitHub Actions]: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#setting-an-error-message
     Github,
+    /// Print diagnostics in the JSON format used by GitLab [Code Quality] reports.
+    ///
+    /// [Code Quality]: https://docs.gitlab.com/ci/testing/code_quality/#code-quality-report-format
     Gitlab,
+    /// Print diagnostics in the format emitted by Pylint.
     Pylint,
+    /// Print diagnostics in the JSON format expected by [reviewdog].
+    ///
+    /// [reviewdog]: https://github.com/reviewdog/reviewdog
     Rdjson,
+    /// Print diagnostics in the [Azure Pipelines] format.
+    ///
+    /// [Azure Pipelines]: https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#logissue-log-an-error-or-warning
     Azure,
+
     Sarif,
 }
 

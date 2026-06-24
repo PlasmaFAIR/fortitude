@@ -1,9 +1,10 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C011.f90:4:3: C011 Missing default case may not handle all values
+C011 Missing default case may not handle all values
+  --> ./resources/test/fixtures/correctness/C011.f90:4:3
    |
  2 |     implicit none (type, external)
  3 |     integer :: foo = 4
@@ -13,8 +14,8 @@ snapshot_kind: text
  7 | |   case(2)
  8 | |     print*, "two"
  9 | |   end select
-   | |____________^ C011
+   | |____________^
 10 |     
 11 |     select case(foo)
    |
-   = help: Add 'case default'
+help: Add 'case default'

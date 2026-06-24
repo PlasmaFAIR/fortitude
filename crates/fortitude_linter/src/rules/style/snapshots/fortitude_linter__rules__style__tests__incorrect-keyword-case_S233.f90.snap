@@ -3,31 +3,31 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S233.f90:1:1: S233 [*] Keyword 'MODULE' should be 'module'
+S233 [*] Keyword 'MODULE' should be 'module'
+ --> ./resources/test/fixtures/style/S233.f90:1:1
   |
 1 | MODULE MY_MODULE
-  | ^^^^^^ S233
+  | ^^^^^^
 2 | IMPLICIT NONE
 3 | PRIVATE
   |
-  = help: Change to 'module'
-
+help: Change to 'module'
   - MODULE MY_MODULE
 1 + module MY_MODULE
 2 | IMPLICIT NONE
 3 | PRIVATE
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
 
-./resources/test/fixtures/style/S233.f90:2:1: S233 [*] Keyword 'IMPLICIT' should be 'implicit'
+S233 [*] Keyword 'IMPLICIT' should be 'implicit'
+ --> ./resources/test/fixtures/style/S233.f90:2:1
   |
 1 | MODULE MY_MODULE
 2 | IMPLICIT NONE
-  | ^^^^^^^^ S233
+  | ^^^^^^^^
 3 | PRIVATE
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
   |
-  = help: Change to 'implicit'
-
+help: Change to 'implicit'
 1 | MODULE MY_MODULE
   - IMPLICIT NONE
 2 + implicit NONE
@@ -35,16 +35,16 @@ snapshot_kind: text
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
 5 |
 
-./resources/test/fixtures/style/S233.f90:2:10: S233 [*] Keyword 'NONE' should be 'none'
+S233 [*] Keyword 'NONE' should be 'none'
+ --> ./resources/test/fixtures/style/S233.f90:2:10
   |
 1 | MODULE MY_MODULE
 2 | IMPLICIT NONE
-  |          ^^^^ S233
+  |          ^^^^
 3 | PRIVATE
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
   |
-  = help: Change to 'none'
-
+help: Change to 'none'
 1 | MODULE MY_MODULE
   - IMPLICIT NONE
 2 + IMPLICIT none
@@ -52,16 +52,16 @@ snapshot_kind: text
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
 5 |
 
-./resources/test/fixtures/style/S233.f90:3:1: S233 [*] Keyword 'PRIVATE' should be 'private'
+S233 [*] Keyword 'PRIVATE' should be 'private'
+ --> ./resources/test/fixtures/style/S233.f90:3:1
   |
 1 | MODULE MY_MODULE
 2 | IMPLICIT NONE
 3 | PRIVATE
-  | ^^^^^^^ S233
+  | ^^^^^^^
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
   |
-  = help: Change to 'private'
-
+help: Change to 'private'
 1 | MODULE MY_MODULE
 2 | IMPLICIT NONE
   - PRIVATE
@@ -70,17 +70,17 @@ snapshot_kind: text
 5 |
 6 | TYPE, ABSTRACT :: BASE_TYPE
 
-./resources/test/fixtures/style/S233.f90:4:1: S233 [*] Keyword 'PUBLIC' should be 'public'
+S233 [*] Keyword 'PUBLIC' should be 'public'
+ --> ./resources/test/fixtures/style/S233.f90:4:1
   |
 2 | IMPLICIT NONE
 3 | PRIVATE
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
-  | ^^^^^^ S233
+  | ^^^^^^
 5 |
 6 | TYPE, ABSTRACT :: BASE_TYPE
   |
-  = help: Change to 'public'
-
+help: Change to 'public'
 1 | MODULE MY_MODULE
 2 | IMPLICIT NONE
 3 | PRIVATE
@@ -90,17 +90,17 @@ snapshot_kind: text
 6 | TYPE, ABSTRACT :: BASE_TYPE
 7 | CONTAINS
 
-./resources/test/fixtures/style/S233.f90:6:1: S233 [*] Keyword 'TYPE' should be 'type'
+S233 [*] Keyword 'TYPE' should be 'type'
+ --> ./resources/test/fixtures/style/S233.f90:6:1
   |
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
 5 |
 6 | TYPE, ABSTRACT :: BASE_TYPE
-  | ^^^^ S233
+  | ^^^^
 7 | CONTAINS
 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
   |
-  = help: Change to 'type'
-
+help: Change to 'type'
 3 | PRIVATE
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
 5 |
@@ -110,17 +110,17 @@ snapshot_kind: text
 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
 9 | END TYPE BASE_TYPE
 
-./resources/test/fixtures/style/S233.f90:6:7: S233 [*] Keyword 'ABSTRACT' should be 'abstract'
+S233 [*] Keyword 'ABSTRACT' should be 'abstract'
+ --> ./resources/test/fixtures/style/S233.f90:6:7
   |
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
 5 |
 6 | TYPE, ABSTRACT :: BASE_TYPE
-  |       ^^^^^^^^ S233
+  |       ^^^^^^^^
 7 | CONTAINS
 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
   |
-  = help: Change to 'abstract'
-
+help: Change to 'abstract'
 3 | PRIVATE
 4 | PUBLIC :: TEST_TYPE, TEST_PROC
 5 |
@@ -130,16 +130,16 @@ snapshot_kind: text
 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
 9 | END TYPE BASE_TYPE
 
-./resources/test/fixtures/style/S233.f90:7:1: S233 [*] Keyword 'CONTAINS' should be 'contains'
+S233 [*] Keyword 'CONTAINS' should be 'contains'
+ --> ./resources/test/fixtures/style/S233.f90:7:1
   |
 6 | TYPE, ABSTRACT :: BASE_TYPE
 7 | CONTAINS
-  | ^^^^^^^^ S233
+  | ^^^^^^^^
 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
 9 | END TYPE BASE_TYPE
   |
-  = help: Change to 'contains'
-
+help: Change to 'contains'
 4  | PUBLIC :: TEST_TYPE, TEST_PROC
 5  |
 6  | TYPE, ABSTRACT :: BASE_TYPE
@@ -149,16 +149,16 @@ snapshot_kind: text
 9  | END TYPE BASE_TYPE
 10 |
 
-./resources/test/fixtures/style/S233.f90:8:5: S233 [*] Keyword 'PROCEDURE' should be 'procedure'
+S233 [*] Keyword 'PROCEDURE' should be 'procedure'
+ --> ./resources/test/fixtures/style/S233.f90:8:5
   |
 6 | TYPE, ABSTRACT :: BASE_TYPE
 7 | CONTAINS
 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-  |     ^^^^^^^^^ S233
+  |     ^^^^^^^^^
 9 | END TYPE BASE_TYPE
   |
-  = help: Change to 'procedure'
-
+help: Change to 'procedure'
 5  |
 6  | TYPE, ABSTRACT :: BASE_TYPE
 7  | CONTAINS
@@ -168,16 +168,16 @@ snapshot_kind: text
 10 |
 11 | ABSTRACT INTERFACE
 
-./resources/test/fixtures/style/S233.f90:8:31: S233 [*] Keyword 'DEFERRED' should be 'deferred'
+S233 [*] Keyword 'DEFERRED' should be 'deferred'
+ --> ./resources/test/fixtures/style/S233.f90:8:31
   |
 6 | TYPE, ABSTRACT :: BASE_TYPE
 7 | CONTAINS
 8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
-  |                               ^^^^^^^^ S233
+  |                               ^^^^^^^^
 9 | END TYPE BASE_TYPE
   |
-  = help: Change to 'deferred'
-
+help: Change to 'deferred'
 5  |
 6  | TYPE, ABSTRACT :: BASE_TYPE
 7  | CONTAINS
@@ -187,17 +187,17 @@ snapshot_kind: text
 10 |
 11 | ABSTRACT INTERFACE
 
-./resources/test/fixtures/style/S233.f90:9:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:9:1
    |
  7 | CONTAINS
  8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
  9 | END TYPE BASE_TYPE
-   | ^^^ S233
+   | ^^^
 10 |
 11 | ABSTRACT INTERFACE
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 6  | TYPE, ABSTRACT :: BASE_TYPE
 7  | CONTAINS
 8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
@@ -207,17 +207,17 @@ snapshot_kind: text
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
 
-./resources/test/fixtures/style/S233.f90:9:5: S233 [*] Keyword 'TYPE' should be 'type'
+S233 [*] Keyword 'TYPE' should be 'type'
+  --> ./resources/test/fixtures/style/S233.f90:9:5
    |
  7 | CONTAINS
  8 |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
  9 | END TYPE BASE_TYPE
-   |     ^^^^ S233
+   |     ^^^^
 10 |
 11 | ABSTRACT INTERFACE
    |
-   = help: Change to 'type'
-
+help: Change to 'type'
 6  | TYPE, ABSTRACT :: BASE_TYPE
 7  | CONTAINS
 8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
@@ -227,17 +227,17 @@ snapshot_kind: text
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
 
-./resources/test/fixtures/style/S233.f90:11:1: S233 [*] Keyword 'ABSTRACT' should be 'abstract'
+S233 [*] Keyword 'ABSTRACT' should be 'abstract'
+  --> ./resources/test/fixtures/style/S233.f90:11:1
    |
  9 | END TYPE BASE_TYPE
 10 |
 11 | ABSTRACT INTERFACE
-   | ^^^^^^^^ S233
+   | ^^^^^^^^
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
    |
-   = help: Change to 'abstract'
-
+help: Change to 'abstract'
 8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
 9  | END TYPE BASE_TYPE
 10 |
@@ -247,17 +247,17 @@ snapshot_kind: text
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
 
-./resources/test/fixtures/style/S233.f90:11:10: S233 [*] Keyword 'INTERFACE' should be 'interface'
+S233 [*] Keyword 'INTERFACE' should be 'interface'
+  --> ./resources/test/fixtures/style/S233.f90:11:10
    |
  9 | END TYPE BASE_TYPE
 10 |
 11 | ABSTRACT INTERFACE
-   |          ^^^^^^^^^ S233
+   |          ^^^^^^^^^
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
    |
-   = help: Change to 'interface'
-
+help: Change to 'interface'
 8  |     PROCEDURE(DEFERRED_PROC), DEFERRED :: DO_SOMETHING
 9  | END TYPE BASE_TYPE
 10 |
@@ -267,16 +267,16 @@ snapshot_kind: text
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
 
-./resources/test/fixtures/style/S233.f90:12:5: S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
+S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
+  --> ./resources/test/fixtures/style/S233.f90:12:5
    |
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
-   |     ^^^^^^^^^^ S233
+   |     ^^^^^^^^^^
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
    |
-   = help: Change to 'subroutine'
-
+help: Change to 'subroutine'
 9  | END TYPE BASE_TYPE
 10 |
 11 | ABSTRACT INTERFACE
@@ -286,17 +286,17 @@ snapshot_kind: text
 14 |     END SUBROUTINE DEFERRED_PROC
 15 | END INTERFACE
 
-./resources/test/fixtures/style/S233.f90:13:9: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:13:9
    |
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
-   |         ^^^^^^^ S233
+   |         ^^^^^^^
 14 |     END SUBROUTINE DEFERRED_PROC
 15 | END INTERFACE
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 10 |
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
@@ -306,17 +306,17 @@ snapshot_kind: text
 15 | END INTERFACE
 16 |
 
-./resources/test/fixtures/style/S233.f90:13:18: S233 [*] Keyword 'INTENT' should be 'intent'
+S233 [*] Keyword 'INTENT' should be 'intent'
+  --> ./resources/test/fixtures/style/S233.f90:13:18
    |
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
-   |                  ^^^^^^ S233
+   |                  ^^^^^^
 14 |     END SUBROUTINE DEFERRED_PROC
 15 | END INTERFACE
    |
-   = help: Change to 'intent'
-
+help: Change to 'intent'
 10 |
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
@@ -326,17 +326,17 @@ snapshot_kind: text
 15 | END INTERFACE
 16 |
 
-./resources/test/fixtures/style/S233.f90:13:25: S233 [*] Keyword 'INOUT' should be 'inout'
+S233 [*] Keyword 'INOUT' should be 'inout'
+  --> ./resources/test/fixtures/style/S233.f90:13:25
    |
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
-   |                         ^^^^^ S233
+   |                         ^^^^^
 14 |     END SUBROUTINE DEFERRED_PROC
 15 | END INTERFACE
    |
-   = help: Change to 'inout'
-
+help: Change to 'inout'
 10 |
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
@@ -346,16 +346,16 @@ snapshot_kind: text
 15 | END INTERFACE
 16 |
 
-./resources/test/fixtures/style/S233.f90:14:5: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:14:5
    |
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
-   |     ^^^ S233
+   |     ^^^
 15 | END INTERFACE
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
@@ -365,16 +365,16 @@ snapshot_kind: text
 16 |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 
-./resources/test/fixtures/style/S233.f90:14:9: S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
+S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
+  --> ./resources/test/fixtures/style/S233.f90:14:9
    |
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
-   |         ^^^^^^^^^^ S233
+   |         ^^^^^^^^^^
 15 | END INTERFACE
    |
-   = help: Change to 'subroutine'
-
+help: Change to 'subroutine'
 11 | ABSTRACT INTERFACE
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
@@ -384,17 +384,17 @@ snapshot_kind: text
 16 |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 
-./resources/test/fixtures/style/S233.f90:15:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:15:1
    |
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
 15 | END INTERFACE
-   | ^^^ S233
+   | ^^^
 16 |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
@@ -404,17 +404,17 @@ snapshot_kind: text
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 18 |     INTEGER :: VALUE
 
-./resources/test/fixtures/style/S233.f90:15:5: S233 [*] Keyword 'INTERFACE' should be 'interface'
+S233 [*] Keyword 'INTERFACE' should be 'interface'
+  --> ./resources/test/fixtures/style/S233.f90:15:5
    |
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
 15 | END INTERFACE
-   |     ^^^^^^^^^ S233
+   |     ^^^^^^^^^
 16 |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
    |
-   = help: Change to 'interface'
-
+help: Change to 'interface'
 12 |     SUBROUTINE DEFERRED_PROC(X)
 13 |         INTEGER, INTENT(INOUT) :: X
 14 |     END SUBROUTINE DEFERRED_PROC
@@ -424,17 +424,17 @@ snapshot_kind: text
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 18 |     INTEGER :: VALUE
 
-./resources/test/fixtures/style/S233.f90:17:1: S233 [*] Keyword 'TYPE' should be 'type'
+S233 [*] Keyword 'TYPE' should be 'type'
+  --> ./resources/test/fixtures/style/S233.f90:17:1
    |
 15 | END INTERFACE
 16 |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-   | ^^^^ S233
+   | ^^^^
 18 |     INTEGER :: VALUE
 19 | CONTAINS
    |
-   = help: Change to 'type'
-
+help: Change to 'type'
 14 |     END SUBROUTINE DEFERRED_PROC
 15 | END INTERFACE
 16 |
@@ -444,17 +444,17 @@ snapshot_kind: text
 19 | CONTAINS
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 
-./resources/test/fixtures/style/S233.f90:17:7: S233 [*] Keyword 'EXTENDS' should be 'extends'
+S233 [*] Keyword 'EXTENDS' should be 'extends'
+  --> ./resources/test/fixtures/style/S233.f90:17:7
    |
 15 | END INTERFACE
 16 |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
-   |       ^^^^^^^ S233
+   |       ^^^^^^^
 18 |     INTEGER :: VALUE
 19 | CONTAINS
    |
-   = help: Change to 'extends'
-
+help: Change to 'extends'
 14 |     END SUBROUTINE DEFERRED_PROC
 15 | END INTERFACE
 16 |
@@ -464,16 +464,16 @@ snapshot_kind: text
 19 | CONTAINS
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 
-./resources/test/fixtures/style/S233.f90:18:5: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:18:5
    |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 18 |     INTEGER :: VALUE
-   |     ^^^^^^^ S233
+   |     ^^^^^^^
 19 | CONTAINS
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 15 | END INTERFACE
 16 |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
@@ -483,17 +483,17 @@ snapshot_kind: text
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 21 |     FINAL :: FINALIZE_TEST
 
-./resources/test/fixtures/style/S233.f90:19:1: S233 [*] Keyword 'CONTAINS' should be 'contains'
+S233 [*] Keyword 'CONTAINS' should be 'contains'
+  --> ./resources/test/fixtures/style/S233.f90:19:1
    |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 18 |     INTEGER :: VALUE
 19 | CONTAINS
-   | ^^^^^^^^ S233
+   | ^^^^^^^^
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 21 |     FINAL :: FINALIZE_TEST
    |
-   = help: Change to 'contains'
-
+help: Change to 'contains'
 16 |
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 18 |     INTEGER :: VALUE
@@ -503,17 +503,17 @@ snapshot_kind: text
 21 |     FINAL :: FINALIZE_TEST
 22 | END TYPE TEST_TYPE
 
-./resources/test/fixtures/style/S233.f90:20:5: S233 [*] Keyword 'PROCEDURE' should be 'procedure'
+S233 [*] Keyword 'PROCEDURE' should be 'procedure'
+  --> ./resources/test/fixtures/style/S233.f90:20:5
    |
 18 |     INTEGER :: VALUE
 19 | CONTAINS
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
-   |     ^^^^^^^^^ S233
+   |     ^^^^^^^^^
 21 |     FINAL :: FINALIZE_TEST
 22 | END TYPE TEST_TYPE
    |
-   = help: Change to 'procedure'
-
+help: Change to 'procedure'
 17 | TYPE, EXTENDS(BASE_TYPE) :: TEST_TYPE
 18 |     INTEGER :: VALUE
 19 | CONTAINS
@@ -523,16 +523,16 @@ snapshot_kind: text
 22 | END TYPE TEST_TYPE
 23 |
 
-./resources/test/fixtures/style/S233.f90:21:5: S233 [*] Keyword 'FINAL' should be 'final'
+S233 [*] Keyword 'FINAL' should be 'final'
+  --> ./resources/test/fixtures/style/S233.f90:21:5
    |
 19 | CONTAINS
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 21 |     FINAL :: FINALIZE_TEST
-   |     ^^^^^ S233
+   |     ^^^^^
 22 | END TYPE TEST_TYPE
    |
-   = help: Change to 'final'
-
+help: Change to 'final'
 18 |     INTEGER :: VALUE
 19 | CONTAINS
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
@@ -542,17 +542,17 @@ snapshot_kind: text
 23 |
 24 | INTERFACE TEST_PROC
 
-./resources/test/fixtures/style/S233.f90:22:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:22:1
    |
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 21 |     FINAL :: FINALIZE_TEST
 22 | END TYPE TEST_TYPE
-   | ^^^ S233
+   | ^^^
 23 |
 24 | INTERFACE TEST_PROC
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 19 | CONTAINS
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 21 |     FINAL :: FINALIZE_TEST
@@ -562,17 +562,17 @@ snapshot_kind: text
 24 | INTERFACE TEST_PROC
 25 |     MODULE PROCEDURE IMPL_PROC
 
-./resources/test/fixtures/style/S233.f90:22:5: S233 [*] Keyword 'TYPE' should be 'type'
+S233 [*] Keyword 'TYPE' should be 'type'
+  --> ./resources/test/fixtures/style/S233.f90:22:5
    |
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 21 |     FINAL :: FINALIZE_TEST
 22 | END TYPE TEST_TYPE
-   |     ^^^^ S233
+   |     ^^^^
 23 |
 24 | INTERFACE TEST_PROC
    |
-   = help: Change to 'type'
-
+help: Change to 'type'
 19 | CONTAINS
 20 |     PROCEDURE :: DO_SOMETHING => IMPL_PROC
 21 |     FINAL :: FINALIZE_TEST
@@ -582,17 +582,17 @@ snapshot_kind: text
 24 | INTERFACE TEST_PROC
 25 |     MODULE PROCEDURE IMPL_PROC
 
-./resources/test/fixtures/style/S233.f90:24:1: S233 [*] Keyword 'INTERFACE' should be 'interface'
+S233 [*] Keyword 'INTERFACE' should be 'interface'
+  --> ./resources/test/fixtures/style/S233.f90:24:1
    |
 22 | END TYPE TEST_TYPE
 23 |
 24 | INTERFACE TEST_PROC
-   | ^^^^^^^^^ S233
+   | ^^^^^^^^^
 25 |     MODULE PROCEDURE IMPL_PROC
 26 | END INTERFACE
    |
-   = help: Change to 'interface'
-
+help: Change to 'interface'
 21 |     FINAL :: FINALIZE_TEST
 22 | END TYPE TEST_TYPE
 23 |
@@ -602,15 +602,15 @@ snapshot_kind: text
 26 | END INTERFACE
 27 |
 
-./resources/test/fixtures/style/S233.f90:25:5: S233 [*] Keyword 'MODULE' should be 'module'
+S233 [*] Keyword 'MODULE' should be 'module'
+  --> ./resources/test/fixtures/style/S233.f90:25:5
    |
 24 | INTERFACE TEST_PROC
 25 |     MODULE PROCEDURE IMPL_PROC
-   |     ^^^^^^ S233
+   |     ^^^^^^
 26 | END INTERFACE
    |
-   = help: Change to 'module'
-
+help: Change to 'module'
 22 | END TYPE TEST_TYPE
 23 |
 24 | INTERFACE TEST_PROC
@@ -620,15 +620,15 @@ snapshot_kind: text
 27 |
 28 | CONTAINS
 
-./resources/test/fixtures/style/S233.f90:25:12: S233 [*] Keyword 'PROCEDURE' should be 'procedure'
+S233 [*] Keyword 'PROCEDURE' should be 'procedure'
+  --> ./resources/test/fixtures/style/S233.f90:25:12
    |
 24 | INTERFACE TEST_PROC
 25 |     MODULE PROCEDURE IMPL_PROC
-   |            ^^^^^^^^^ S233
+   |            ^^^^^^^^^
 26 | END INTERFACE
    |
-   = help: Change to 'procedure'
-
+help: Change to 'procedure'
 22 | END TYPE TEST_TYPE
 23 |
 24 | INTERFACE TEST_PROC
@@ -638,17 +638,17 @@ snapshot_kind: text
 27 |
 28 | CONTAINS
 
-./resources/test/fixtures/style/S233.f90:26:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:26:1
    |
 24 | INTERFACE TEST_PROC
 25 |     MODULE PROCEDURE IMPL_PROC
 26 | END INTERFACE
-   | ^^^ S233
+   | ^^^
 27 |
 28 | CONTAINS
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 23 |
 24 | INTERFACE TEST_PROC
 25 |     MODULE PROCEDURE IMPL_PROC
@@ -658,17 +658,17 @@ snapshot_kind: text
 28 | CONTAINS
 29 |
 
-./resources/test/fixtures/style/S233.f90:26:5: S233 [*] Keyword 'INTERFACE' should be 'interface'
+S233 [*] Keyword 'INTERFACE' should be 'interface'
+  --> ./resources/test/fixtures/style/S233.f90:26:5
    |
 24 | INTERFACE TEST_PROC
 25 |     MODULE PROCEDURE IMPL_PROC
 26 | END INTERFACE
-   |     ^^^^^^^^^ S233
+   |     ^^^^^^^^^
 27 |
 28 | CONTAINS
    |
-   = help: Change to 'interface'
-
+help: Change to 'interface'
 23 |
 24 | INTERFACE TEST_PROC
 25 |     MODULE PROCEDURE IMPL_PROC
@@ -678,17 +678,17 @@ snapshot_kind: text
 28 | CONTAINS
 29 |
 
-./resources/test/fixtures/style/S233.f90:28:1: S233 [*] Keyword 'CONTAINS' should be 'contains'
+S233 [*] Keyword 'CONTAINS' should be 'contains'
+  --> ./resources/test/fixtures/style/S233.f90:28:1
    |
 26 | END INTERFACE
 27 |
 28 | CONTAINS
-   | ^^^^^^^^ S233
+   | ^^^^^^^^
 29 |
 30 | PURE SUBROUTINE IMPL_PROC(X)
    |
-   = help: Change to 'contains'
-
+help: Change to 'contains'
 25 |     MODULE PROCEDURE IMPL_PROC
 26 | END INTERFACE
 27 |
@@ -698,17 +698,17 @@ snapshot_kind: text
 30 | PURE SUBROUTINE IMPL_PROC(X)
 31 |     INTEGER, INTENT(INOUT) :: X
 
-./resources/test/fixtures/style/S233.f90:30:1: S233 [*] Keyword 'PURE' should be 'pure'
+S233 [*] Keyword 'PURE' should be 'pure'
+  --> ./resources/test/fixtures/style/S233.f90:30:1
    |
 28 | CONTAINS
 29 |
 30 | PURE SUBROUTINE IMPL_PROC(X)
-   | ^^^^ S233
+   | ^^^^
 31 |     INTEGER, INTENT(INOUT) :: X
 32 |     X = X + 1
    |
-   = help: Change to 'pure'
-
+help: Change to 'pure'
 27 |
 28 | CONTAINS
 29 |
@@ -718,17 +718,17 @@ snapshot_kind: text
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
 
-./resources/test/fixtures/style/S233.f90:30:6: S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
+S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
+  --> ./resources/test/fixtures/style/S233.f90:30:6
    |
 28 | CONTAINS
 29 |
 30 | PURE SUBROUTINE IMPL_PROC(X)
-   |      ^^^^^^^^^^ S233
+   |      ^^^^^^^^^^
 31 |     INTEGER, INTENT(INOUT) :: X
 32 |     X = X + 1
    |
-   = help: Change to 'subroutine'
-
+help: Change to 'subroutine'
 27 |
 28 | CONTAINS
 29 |
@@ -738,16 +738,16 @@ snapshot_kind: text
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
 
-./resources/test/fixtures/style/S233.f90:31:5: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:31:5
    |
 30 | PURE SUBROUTINE IMPL_PROC(X)
 31 |     INTEGER, INTENT(INOUT) :: X
-   |     ^^^^^^^ S233
+   |     ^^^^^^^
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 28 | CONTAINS
 29 |
 30 | PURE SUBROUTINE IMPL_PROC(X)
@@ -757,16 +757,16 @@ snapshot_kind: text
 33 | END SUBROUTINE IMPL_PROC
 34 |
 
-./resources/test/fixtures/style/S233.f90:31:14: S233 [*] Keyword 'INTENT' should be 'intent'
+S233 [*] Keyword 'INTENT' should be 'intent'
+  --> ./resources/test/fixtures/style/S233.f90:31:14
    |
 30 | PURE SUBROUTINE IMPL_PROC(X)
 31 |     INTEGER, INTENT(INOUT) :: X
-   |              ^^^^^^ S233
+   |              ^^^^^^
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
    |
-   = help: Change to 'intent'
-
+help: Change to 'intent'
 28 | CONTAINS
 29 |
 30 | PURE SUBROUTINE IMPL_PROC(X)
@@ -776,16 +776,16 @@ snapshot_kind: text
 33 | END SUBROUTINE IMPL_PROC
 34 |
 
-./resources/test/fixtures/style/S233.f90:31:21: S233 [*] Keyword 'INOUT' should be 'inout'
+S233 [*] Keyword 'INOUT' should be 'inout'
+  --> ./resources/test/fixtures/style/S233.f90:31:21
    |
 30 | PURE SUBROUTINE IMPL_PROC(X)
 31 |     INTEGER, INTENT(INOUT) :: X
-   |                     ^^^^^ S233
+   |                     ^^^^^
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
    |
-   = help: Change to 'inout'
-
+help: Change to 'inout'
 28 | CONTAINS
 29 |
 30 | PURE SUBROUTINE IMPL_PROC(X)
@@ -795,17 +795,17 @@ snapshot_kind: text
 33 | END SUBROUTINE IMPL_PROC
 34 |
 
-./resources/test/fixtures/style/S233.f90:33:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:33:1
    |
 31 |     INTEGER, INTENT(INOUT) :: X
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
-   | ^^^ S233
+   | ^^^
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 30 | PURE SUBROUTINE IMPL_PROC(X)
 31 |     INTEGER, INTENT(INOUT) :: X
 32 |     X = X + 1
@@ -815,17 +815,17 @@ snapshot_kind: text
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
 36 |     INTEGER, INTENT(IN) :: Y
 
-./resources/test/fixtures/style/S233.f90:33:5: S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
+S233 [*] Keyword 'SUBROUTINE' should be 'subroutine'
+  --> ./resources/test/fixtures/style/S233.f90:33:5
    |
 31 |     INTEGER, INTENT(INOUT) :: X
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
-   |     ^^^^^^^^^^ S233
+   |     ^^^^^^^^^^
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
    |
-   = help: Change to 'subroutine'
-
+help: Change to 'subroutine'
 30 | PURE SUBROUTINE IMPL_PROC(X)
 31 |     INTEGER, INTENT(INOUT) :: X
 32 |     X = X + 1
@@ -835,17 +835,17 @@ snapshot_kind: text
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
 36 |     INTEGER, INTENT(IN) :: Y
 
-./resources/test/fixtures/style/S233.f90:35:1: S233 [*] Keyword 'ELEMENTAL' should be 'elemental'
+S233 [*] Keyword 'ELEMENTAL' should be 'elemental'
+  --> ./resources/test/fixtures/style/S233.f90:35:1
    |
 33 | END SUBROUTINE IMPL_PROC
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-   | ^^^^^^^^^ S233
+   | ^^^^^^^^^
 36 |     INTEGER, INTENT(IN) :: Y
 37 |     INTEGER :: RES
    |
-   = help: Change to 'elemental'
-
+help: Change to 'elemental'
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
 34 |
@@ -855,17 +855,17 @@ snapshot_kind: text
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
 
-./resources/test/fixtures/style/S233.f90:35:11: S233 [*] Keyword 'FUNCTION' should be 'function'
+S233 [*] Keyword 'FUNCTION' should be 'function'
+  --> ./resources/test/fixtures/style/S233.f90:35:11
    |
 33 | END SUBROUTINE IMPL_PROC
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-   |           ^^^^^^^^ S233
+   |           ^^^^^^^^
 36 |     INTEGER, INTENT(IN) :: Y
 37 |     INTEGER :: RES
    |
-   = help: Change to 'function'
-
+help: Change to 'function'
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
 34 |
@@ -875,17 +875,17 @@ snapshot_kind: text
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
 
-./resources/test/fixtures/style/S233.f90:35:34: S233 [*] Keyword 'RESULT' should be 'result'
+S233 [*] Keyword 'RESULT' should be 'result'
+  --> ./resources/test/fixtures/style/S233.f90:35:34
    |
 33 | END SUBROUTINE IMPL_PROC
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
-   |                                  ^^^^^^ S233
+   |                                  ^^^^^^
 36 |     INTEGER, INTENT(IN) :: Y
 37 |     INTEGER :: RES
    |
-   = help: Change to 'result'
-
+help: Change to 'result'
 32 |     X = X + 1
 33 | END SUBROUTINE IMPL_PROC
 34 |
@@ -895,16 +895,16 @@ snapshot_kind: text
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
 
-./resources/test/fixtures/style/S233.f90:36:5: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:36:5
    |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
 36 |     INTEGER, INTENT(IN) :: Y
-   |     ^^^^^^^ S233
+   |     ^^^^^^^
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 33 | END SUBROUTINE IMPL_PROC
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
@@ -914,16 +914,16 @@ snapshot_kind: text
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
 
-./resources/test/fixtures/style/S233.f90:36:14: S233 [*] Keyword 'INTENT' should be 'intent'
+S233 [*] Keyword 'INTENT' should be 'intent'
+  --> ./resources/test/fixtures/style/S233.f90:36:14
    |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
 36 |     INTEGER, INTENT(IN) :: Y
-   |              ^^^^^^ S233
+   |              ^^^^^^
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
    |
-   = help: Change to 'intent'
-
+help: Change to 'intent'
 33 | END SUBROUTINE IMPL_PROC
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
@@ -933,16 +933,16 @@ snapshot_kind: text
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
 
-./resources/test/fixtures/style/S233.f90:36:21: S233 [*] Keyword 'IN' should be 'in'
+S233 [*] Keyword 'IN' should be 'in'
+  --> ./resources/test/fixtures/style/S233.f90:36:21
    |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
 36 |     INTEGER, INTENT(IN) :: Y
-   |                     ^^ S233
+   |                     ^^
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
    |
-   = help: Change to 'in'
-
+help: Change to 'in'
 33 | END SUBROUTINE IMPL_PROC
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
@@ -952,17 +952,17 @@ snapshot_kind: text
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
 
-./resources/test/fixtures/style/S233.f90:37:5: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:37:5
    |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
 36 |     INTEGER, INTENT(IN) :: Y
 37 |     INTEGER :: RES
-   |     ^^^^^^^ S233
+   |     ^^^^^^^
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 34 |
 35 | ELEMENTAL FUNCTION DOUBLE_VAL(Y) RESULT(RES)
 36 |     INTEGER, INTENT(IN) :: Y
@@ -972,17 +972,17 @@ snapshot_kind: text
 39 | END FUNCTION DOUBLE_VAL
 40 |
 
-./resources/test/fixtures/style/S233.f90:39:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:39:1
    |
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
-   | ^^^ S233
+   | ^^^
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 36 |     INTEGER, INTENT(IN) :: Y
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
@@ -992,17 +992,17 @@ snapshot_kind: text
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
 
-./resources/test/fixtures/style/S233.f90:39:5: S233 [*] Keyword 'FUNCTION' should be 'function'
+S233 [*] Keyword 'FUNCTION' should be 'function'
+  --> ./resources/test/fixtures/style/S233.f90:39:5
    |
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
-   |     ^^^^^^^^ S233
+   |     ^^^^^^^^
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
    |
-   = help: Change to 'function'
-
+help: Change to 'function'
 36 |     INTEGER, INTENT(IN) :: Y
 37 |     INTEGER :: RES
 38 |     RES = Y * 2
@@ -1012,17 +1012,17 @@ snapshot_kind: text
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
 
-./resources/test/fixtures/style/S233.f90:41:1: S233 [*] Keyword 'RECURSIVE' should be 'recursive'
+S233 [*] Keyword 'RECURSIVE' should be 'recursive'
+  --> ./resources/test/fixtures/style/S233.f90:41:1
    |
 39 | END FUNCTION DOUBLE_VAL
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-   | ^^^^^^^^^ S233
+   | ^^^^^^^^^
 42 |     INTEGER, INTENT(IN) :: N
 43 |     INTEGER :: RES
    |
-   = help: Change to 'recursive'
-
+help: Change to 'recursive'
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
 40 |
@@ -1032,17 +1032,17 @@ snapshot_kind: text
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
 
-./resources/test/fixtures/style/S233.f90:41:11: S233 [*] Keyword 'FUNCTION' should be 'function'
+S233 [*] Keyword 'FUNCTION' should be 'function'
+  --> ./resources/test/fixtures/style/S233.f90:41:11
    |
 39 | END FUNCTION DOUBLE_VAL
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-   |           ^^^^^^^^ S233
+   |           ^^^^^^^^
 42 |     INTEGER, INTENT(IN) :: N
 43 |     INTEGER :: RES
    |
-   = help: Change to 'function'
-
+help: Change to 'function'
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
 40 |
@@ -1052,17 +1052,17 @@ snapshot_kind: text
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
 
-./resources/test/fixtures/style/S233.f90:41:28: S233 [*] Keyword 'RESULT' should be 'result'
+S233 [*] Keyword 'RESULT' should be 'result'
+  --> ./resources/test/fixtures/style/S233.f90:41:28
    |
 39 | END FUNCTION DOUBLE_VAL
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
-   |                            ^^^^^^ S233
+   |                            ^^^^^^
 42 |     INTEGER, INTENT(IN) :: N
 43 |     INTEGER :: RES
    |
-   = help: Change to 'result'
-
+help: Change to 'result'
 38 |     RES = Y * 2
 39 | END FUNCTION DOUBLE_VAL
 40 |
@@ -1072,16 +1072,16 @@ snapshot_kind: text
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
 
-./resources/test/fixtures/style/S233.f90:42:5: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:42:5
    |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
-   |     ^^^^^^^ S233
+   |     ^^^^^^^
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 39 | END FUNCTION DOUBLE_VAL
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
@@ -1091,16 +1091,16 @@ snapshot_kind: text
 44 |     IF (N <= 1) THEN
 45 |         RES = 1
 
-./resources/test/fixtures/style/S233.f90:42:14: S233 [*] Keyword 'INTENT' should be 'intent'
+S233 [*] Keyword 'INTENT' should be 'intent'
+  --> ./resources/test/fixtures/style/S233.f90:42:14
    |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
-   |              ^^^^^^ S233
+   |              ^^^^^^
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
    |
-   = help: Change to 'intent'
-
+help: Change to 'intent'
 39 | END FUNCTION DOUBLE_VAL
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
@@ -1110,16 +1110,16 @@ snapshot_kind: text
 44 |     IF (N <= 1) THEN
 45 |         RES = 1
 
-./resources/test/fixtures/style/S233.f90:42:21: S233 [*] Keyword 'IN' should be 'in'
+S233 [*] Keyword 'IN' should be 'in'
+  --> ./resources/test/fixtures/style/S233.f90:42:21
    |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
-   |                     ^^ S233
+   |                     ^^
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
    |
-   = help: Change to 'in'
-
+help: Change to 'in'
 39 | END FUNCTION DOUBLE_VAL
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
@@ -1129,17 +1129,17 @@ snapshot_kind: text
 44 |     IF (N <= 1) THEN
 45 |         RES = 1
 
-./resources/test/fixtures/style/S233.f90:43:5: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:43:5
    |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
 43 |     INTEGER :: RES
-   |     ^^^^^^^ S233
+   |     ^^^^^^^
 44 |     IF (N <= 1) THEN
 45 |         RES = 1
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 40 |
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
@@ -1149,17 +1149,17 @@ snapshot_kind: text
 45 |         RES = 1
 46 |     ELSE
 
-./resources/test/fixtures/style/S233.f90:44:5: S233 [*] Keyword 'IF' should be 'if'
+S233 [*] Keyword 'IF' should be 'if'
+  --> ./resources/test/fixtures/style/S233.f90:44:5
    |
 42 |     INTEGER, INTENT(IN) :: N
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
-   |     ^^ S233
+   |     ^^
 45 |         RES = 1
 46 |     ELSE
    |
-   = help: Change to 'if'
-
+help: Change to 'if'
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
 43 |     INTEGER :: RES
@@ -1169,17 +1169,17 @@ snapshot_kind: text
 46 |     ELSE
 47 |         RES = N * FACT(N-1)
 
-./resources/test/fixtures/style/S233.f90:44:17: S233 [*] Keyword 'THEN' should be 'then'
+S233 [*] Keyword 'THEN' should be 'then'
+  --> ./resources/test/fixtures/style/S233.f90:44:17
    |
 42 |     INTEGER, INTENT(IN) :: N
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
-   |                 ^^^^ S233
+   |                 ^^^^
 45 |         RES = 1
 46 |     ELSE
    |
-   = help: Change to 'then'
-
+help: Change to 'then'
 41 | RECURSIVE FUNCTION FACT(N) RESULT(RES)
 42 |     INTEGER, INTENT(IN) :: N
 43 |     INTEGER :: RES
@@ -1189,17 +1189,17 @@ snapshot_kind: text
 46 |     ELSE
 47 |         RES = N * FACT(N-1)
 
-./resources/test/fixtures/style/S233.f90:46:5: S233 [*] Keyword 'ELSE' should be 'else'
+S233 [*] Keyword 'ELSE' should be 'else'
+  --> ./resources/test/fixtures/style/S233.f90:46:5
    |
 44 |     IF (N <= 1) THEN
 45 |         RES = 1
 46 |     ELSE
-   |     ^^^^ S233
+   |     ^^^^
 47 |         RES = N * FACT(N-1)
 48 |     END IF
    |
-   = help: Change to 'else'
-
+help: Change to 'else'
 43 |     INTEGER :: RES
 44 |     IF (N <= 1) THEN
 45 |         RES = 1
@@ -1209,16 +1209,16 @@ snapshot_kind: text
 48 |     END IF
 49 | END FUNCTION FACT
 
-./resources/test/fixtures/style/S233.f90:48:5: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:48:5
    |
 46 |     ELSE
 47 |         RES = N * FACT(N-1)
 48 |     END IF
-   |     ^^^ S233
+   |     ^^^
 49 | END FUNCTION FACT
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 45 |         RES = 1
 46 |     ELSE
 47 |         RES = N * FACT(N-1)
@@ -1228,16 +1228,16 @@ snapshot_kind: text
 50 |
 51 | END MODULE MY_MODULE
 
-./resources/test/fixtures/style/S233.f90:48:9: S233 [*] Keyword 'IF' should be 'if'
+S233 [*] Keyword 'IF' should be 'if'
+  --> ./resources/test/fixtures/style/S233.f90:48:9
    |
 46 |     ELSE
 47 |         RES = N * FACT(N-1)
 48 |     END IF
-   |         ^^ S233
+   |         ^^
 49 | END FUNCTION FACT
    |
-   = help: Change to 'if'
-
+help: Change to 'if'
 45 |         RES = 1
 46 |     ELSE
 47 |         RES = N * FACT(N-1)
@@ -1247,17 +1247,17 @@ snapshot_kind: text
 50 |
 51 | END MODULE MY_MODULE
 
-./resources/test/fixtures/style/S233.f90:49:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:49:1
    |
 47 |         RES = N * FACT(N-1)
 48 |     END IF
 49 | END FUNCTION FACT
-   | ^^^ S233
+   | ^^^
 50 |
 51 | END MODULE MY_MODULE
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 46 |     ELSE
 47 |         RES = N * FACT(N-1)
 48 |     END IF
@@ -1267,17 +1267,17 @@ snapshot_kind: text
 51 | END MODULE MY_MODULE
 52 |
 
-./resources/test/fixtures/style/S233.f90:49:5: S233 [*] Keyword 'FUNCTION' should be 'function'
+S233 [*] Keyword 'FUNCTION' should be 'function'
+  --> ./resources/test/fixtures/style/S233.f90:49:5
    |
 47 |         RES = N * FACT(N-1)
 48 |     END IF
 49 | END FUNCTION FACT
-   |     ^^^^^^^^ S233
+   |     ^^^^^^^^
 50 |
 51 | END MODULE MY_MODULE
    |
-   = help: Change to 'function'
-
+help: Change to 'function'
 46 |     ELSE
 47 |         RES = N * FACT(N-1)
 48 |     END IF
@@ -1287,15 +1287,15 @@ snapshot_kind: text
 51 | END MODULE MY_MODULE
 52 |
 
-./resources/test/fixtures/style/S233.f90:51:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:51:1
    |
 49 | END FUNCTION FACT
 50 |
 51 | END MODULE MY_MODULE
-   | ^^^ S233
+   | ^^^
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 48 |     END IF
 49 | END FUNCTION FACT
 50 |
@@ -1305,15 +1305,15 @@ snapshot_kind: text
 53 |
 54 | PROGRAM KEYWORD_ZOO
 
-./resources/test/fixtures/style/S233.f90:51:5: S233 [*] Keyword 'MODULE' should be 'module'
+S233 [*] Keyword 'MODULE' should be 'module'
+  --> ./resources/test/fixtures/style/S233.f90:51:5
    |
 49 | END FUNCTION FACT
 50 |
 51 | END MODULE MY_MODULE
-   |     ^^^^^^ S233
+   |     ^^^^^^
    |
-   = help: Change to 'module'
-
+help: Change to 'module'
 48 |     END IF
 49 | END FUNCTION FACT
 50 |
@@ -1323,15 +1323,15 @@ snapshot_kind: text
 53 |
 54 | PROGRAM KEYWORD_ZOO
 
-./resources/test/fixtures/style/S233.f90:54:1: S233 [*] Keyword 'PROGRAM' should be 'program'
+S233 [*] Keyword 'PROGRAM' should be 'program'
+  --> ./resources/test/fixtures/style/S233.f90:54:1
    |
 54 | PROGRAM KEYWORD_ZOO
-   | ^^^^^^^ S233
+   | ^^^^^^^
 55 | USE MY_MODULE, ONLY: FACT
 56 | USE, INTRINSIC :: ISO_C_BINDING
    |
-   = help: Change to 'program'
-
+help: Change to 'program'
 51 | END MODULE MY_MODULE
 52 |
 53 |
@@ -1341,16 +1341,16 @@ snapshot_kind: text
 56 | USE, INTRINSIC :: ISO_C_BINDING
 57 | IMPLICIT NONE
 
-./resources/test/fixtures/style/S233.f90:55:1: S233 [*] Keyword 'USE' should be 'use'
+S233 [*] Keyword 'USE' should be 'use'
+  --> ./resources/test/fixtures/style/S233.f90:55:1
    |
 54 | PROGRAM KEYWORD_ZOO
 55 | USE MY_MODULE, ONLY: FACT
-   | ^^^ S233
+   | ^^^
 56 | USE, INTRINSIC :: ISO_C_BINDING
 57 | IMPLICIT NONE
    |
-   = help: Change to 'use'
-
+help: Change to 'use'
 52 |
 53 |
 54 | PROGRAM KEYWORD_ZOO
@@ -1360,16 +1360,16 @@ snapshot_kind: text
 57 | IMPLICIT NONE
 58 |
 
-./resources/test/fixtures/style/S233.f90:55:16: S233 [*] Keyword 'ONLY' should be 'only'
+S233 [*] Keyword 'ONLY' should be 'only'
+  --> ./resources/test/fixtures/style/S233.f90:55:16
    |
 54 | PROGRAM KEYWORD_ZOO
 55 | USE MY_MODULE, ONLY: FACT
-   |                ^^^^ S233
+   |                ^^^^
 56 | USE, INTRINSIC :: ISO_C_BINDING
 57 | IMPLICIT NONE
    |
-   = help: Change to 'only'
-
+help: Change to 'only'
 52 |
 53 |
 54 | PROGRAM KEYWORD_ZOO
@@ -1379,16 +1379,16 @@ snapshot_kind: text
 57 | IMPLICIT NONE
 58 |
 
-./resources/test/fixtures/style/S233.f90:56:1: S233 [*] Keyword 'USE' should be 'use'
+S233 [*] Keyword 'USE' should be 'use'
+  --> ./resources/test/fixtures/style/S233.f90:56:1
    |
 54 | PROGRAM KEYWORD_ZOO
 55 | USE MY_MODULE, ONLY: FACT
 56 | USE, INTRINSIC :: ISO_C_BINDING
-   | ^^^ S233
+   | ^^^
 57 | IMPLICIT NONE
    |
-   = help: Change to 'use'
-
+help: Change to 'use'
 53 |
 54 | PROGRAM KEYWORD_ZOO
 55 | USE MY_MODULE, ONLY: FACT
@@ -1398,16 +1398,16 @@ snapshot_kind: text
 58 |
 59 | INTEGER, PARAMETER :: N = 5
 
-./resources/test/fixtures/style/S233.f90:56:6: S233 [*] Keyword 'INTRINSIC' should be 'intrinsic'
+S233 [*] Keyword 'INTRINSIC' should be 'intrinsic'
+  --> ./resources/test/fixtures/style/S233.f90:56:6
    |
 54 | PROGRAM KEYWORD_ZOO
 55 | USE MY_MODULE, ONLY: FACT
 56 | USE, INTRINSIC :: ISO_C_BINDING
-   |      ^^^^^^^^^ S233
+   |      ^^^^^^^^^
 57 | IMPLICIT NONE
    |
-   = help: Change to 'intrinsic'
-
+help: Change to 'intrinsic'
 53 |
 54 | PROGRAM KEYWORD_ZOO
 55 | USE MY_MODULE, ONLY: FACT
@@ -1417,17 +1417,17 @@ snapshot_kind: text
 58 |
 59 | INTEGER, PARAMETER :: N = 5
 
-./resources/test/fixtures/style/S233.f90:57:1: S233 [*] Keyword 'IMPLICIT' should be 'implicit'
+S233 [*] Keyword 'IMPLICIT' should be 'implicit'
+  --> ./resources/test/fixtures/style/S233.f90:57:1
    |
 55 | USE MY_MODULE, ONLY: FACT
 56 | USE, INTRINSIC :: ISO_C_BINDING
 57 | IMPLICIT NONE
-   | ^^^^^^^^ S233
+   | ^^^^^^^^
 58 |
 59 | INTEGER, PARAMETER :: N = 5
    |
-   = help: Change to 'implicit'
-
+help: Change to 'implicit'
 54 | PROGRAM KEYWORD_ZOO
 55 | USE MY_MODULE, ONLY: FACT
 56 | USE, INTRINSIC :: ISO_C_BINDING
@@ -1437,17 +1437,17 @@ snapshot_kind: text
 59 | INTEGER, PARAMETER :: N = 5
 60 | INTEGER :: I, J
 
-./resources/test/fixtures/style/S233.f90:57:10: S233 [*] Keyword 'NONE' should be 'none'
+S233 [*] Keyword 'NONE' should be 'none'
+  --> ./resources/test/fixtures/style/S233.f90:57:10
    |
 55 | USE MY_MODULE, ONLY: FACT
 56 | USE, INTRINSIC :: ISO_C_BINDING
 57 | IMPLICIT NONE
-   |          ^^^^ S233
+   |          ^^^^
 58 |
 59 | INTEGER, PARAMETER :: N = 5
    |
-   = help: Change to 'none'
-
+help: Change to 'none'
 54 | PROGRAM KEYWORD_ZOO
 55 | USE MY_MODULE, ONLY: FACT
 56 | USE, INTRINSIC :: ISO_C_BINDING
@@ -1457,17 +1457,17 @@ snapshot_kind: text
 59 | INTEGER, PARAMETER :: N = 5
 60 | INTEGER :: I, J
 
-./resources/test/fixtures/style/S233.f90:59:1: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:59:1
    |
 57 | IMPLICIT NONE
 58 |
 59 | INTEGER, PARAMETER :: N = 5
-   | ^^^^^^^ S233
+   | ^^^^^^^
 60 | INTEGER :: I, J
 61 | REAL, ALLOCATABLE :: ARR(:)
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 56 | USE, INTRINSIC :: ISO_C_BINDING
 57 | IMPLICIT NONE
 58 |
@@ -1477,17 +1477,17 @@ snapshot_kind: text
 61 | REAL, ALLOCATABLE :: ARR(:)
 62 | LOGICAL :: FLAG
 
-./resources/test/fixtures/style/S233.f90:59:10: S233 [*] Keyword 'PARAMETER' should be 'parameter'
+S233 [*] Keyword 'PARAMETER' should be 'parameter'
+  --> ./resources/test/fixtures/style/S233.f90:59:10
    |
 57 | IMPLICIT NONE
 58 |
 59 | INTEGER, PARAMETER :: N = 5
-   |          ^^^^^^^^^ S233
+   |          ^^^^^^^^^
 60 | INTEGER :: I, J
 61 | REAL, ALLOCATABLE :: ARR(:)
    |
-   = help: Change to 'parameter'
-
+help: Change to 'parameter'
 56 | USE, INTRINSIC :: ISO_C_BINDING
 57 | IMPLICIT NONE
 58 |
@@ -1497,16 +1497,16 @@ snapshot_kind: text
 61 | REAL, ALLOCATABLE :: ARR(:)
 62 | LOGICAL :: FLAG
 
-./resources/test/fixtures/style/S233.f90:60:1: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:60:1
    |
 59 | INTEGER, PARAMETER :: N = 5
 60 | INTEGER :: I, J
-   | ^^^^^^^ S233
+   | ^^^^^^^
 61 | REAL, ALLOCATABLE :: ARR(:)
 62 | LOGICAL :: FLAG
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 57 | IMPLICIT NONE
 58 |
 59 | INTEGER, PARAMETER :: N = 5
@@ -1516,17 +1516,17 @@ snapshot_kind: text
 62 | LOGICAL :: FLAG
 63 | CHARACTER(LEN=10) :: STR
 
-./resources/test/fixtures/style/S233.f90:61:1: S233 [*] Keyword 'REAL' should be 'real'
+S233 [*] Keyword 'REAL' should be 'real'
+  --> ./resources/test/fixtures/style/S233.f90:61:1
    |
 59 | INTEGER, PARAMETER :: N = 5
 60 | INTEGER :: I, J
 61 | REAL, ALLOCATABLE :: ARR(:)
-   | ^^^^ S233
+   | ^^^^
 62 | LOGICAL :: FLAG
 63 | CHARACTER(LEN=10) :: STR
    |
-   = help: Change to 'real'
-
+help: Change to 'real'
 58 |
 59 | INTEGER, PARAMETER :: N = 5
 60 | INTEGER :: I, J
@@ -1536,17 +1536,17 @@ snapshot_kind: text
 63 | CHARACTER(LEN=10) :: STR
 64 | COMPLEX :: CMPLX
 
-./resources/test/fixtures/style/S233.f90:61:7: S233 [*] Keyword 'ALLOCATABLE' should be 'allocatable'
+S233 [*] Keyword 'ALLOCATABLE' should be 'allocatable'
+  --> ./resources/test/fixtures/style/S233.f90:61:7
    |
 59 | INTEGER, PARAMETER :: N = 5
 60 | INTEGER :: I, J
 61 | REAL, ALLOCATABLE :: ARR(:)
-   |       ^^^^^^^^^^^ S233
+   |       ^^^^^^^^^^^
 62 | LOGICAL :: FLAG
 63 | CHARACTER(LEN=10) :: STR
    |
-   = help: Change to 'allocatable'
-
+help: Change to 'allocatable'
 58 |
 59 | INTEGER, PARAMETER :: N = 5
 60 | INTEGER :: I, J
@@ -1556,17 +1556,17 @@ snapshot_kind: text
 63 | CHARACTER(LEN=10) :: STR
 64 | COMPLEX :: CMPLX
 
-./resources/test/fixtures/style/S233.f90:62:1: S233 [*] Keyword 'LOGICAL' should be 'logical'
+S233 [*] Keyword 'LOGICAL' should be 'logical'
+  --> ./resources/test/fixtures/style/S233.f90:62:1
    |
 60 | INTEGER :: I, J
 61 | REAL, ALLOCATABLE :: ARR(:)
 62 | LOGICAL :: FLAG
-   | ^^^^^^^ S233
+   | ^^^^^^^
 63 | CHARACTER(LEN=10) :: STR
 64 | COMPLEX :: CMPLX
    |
-   = help: Change to 'logical'
-
+help: Change to 'logical'
 59 | INTEGER, PARAMETER :: N = 5
 60 | INTEGER :: I, J
 61 | REAL, ALLOCATABLE :: ARR(:)
@@ -1576,16 +1576,16 @@ snapshot_kind: text
 64 | COMPLEX :: CMPLX
 65 |
 
-./resources/test/fixtures/style/S233.f90:63:1: S233 [*] Keyword 'CHARACTER' should be 'character'
+S233 [*] Keyword 'CHARACTER' should be 'character'
+  --> ./resources/test/fixtures/style/S233.f90:63:1
    |
 61 | REAL, ALLOCATABLE :: ARR(:)
 62 | LOGICAL :: FLAG
 63 | CHARACTER(LEN=10) :: STR
-   | ^^^^^^^^^ S233
+   | ^^^^^^^^^
 64 | COMPLEX :: CMPLX
    |
-   = help: Change to 'character'
-
+help: Change to 'character'
 60 | INTEGER :: I, J
 61 | REAL, ALLOCATABLE :: ARR(:)
 62 | LOGICAL :: FLAG
@@ -1595,17 +1595,17 @@ snapshot_kind: text
 65 |
 66 | INTEGER :: ENDIF, IF, ELSEIF
 
-./resources/test/fixtures/style/S233.f90:64:1: S233 [*] Keyword 'COMPLEX' should be 'complex'
+S233 [*] Keyword 'COMPLEX' should be 'complex'
+  --> ./resources/test/fixtures/style/S233.f90:64:1
    |
 62 | LOGICAL :: FLAG
 63 | CHARACTER(LEN=10) :: STR
 64 | COMPLEX :: CMPLX
-   | ^^^^^^^ S233
+   | ^^^^^^^
 65 |
 66 | INTEGER :: ENDIF, IF, ELSEIF
    |
-   = help: Change to 'complex'
-
+help: Change to 'complex'
 61 | REAL, ALLOCATABLE :: ARR(:)
 62 | LOGICAL :: FLAG
 63 | CHARACTER(LEN=10) :: STR
@@ -1615,17 +1615,17 @@ snapshot_kind: text
 66 | INTEGER :: ENDIF, IF, ELSEIF
 67 | INTEGER, DIMENSION(2) :: FUNCTION
 
-./resources/test/fixtures/style/S233.f90:66:1: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:66:1
    |
 64 | COMPLEX :: CMPLX
 65 |
 66 | INTEGER :: ENDIF, IF, ELSEIF
-   | ^^^^^^^ S233
+   | ^^^^^^^
 67 | INTEGER, DIMENSION(2) :: FUNCTION
 68 | ENDIF = 3; IF = 2
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 63 | CHARACTER(LEN=10) :: STR
 64 | COMPLEX :: CMPLX
 65 |
@@ -1635,15 +1635,15 @@ snapshot_kind: text
 68 | ENDIF = 3; IF = 2
 69 |
 
-./resources/test/fixtures/style/S233.f90:67:1: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:67:1
    |
 66 | INTEGER :: ENDIF, IF, ELSEIF
 67 | INTEGER, DIMENSION(2) :: FUNCTION
-   | ^^^^^^^ S233
+   | ^^^^^^^
 68 | ENDIF = 3; IF = 2
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 64 | COMPLEX :: CMPLX
 65 |
 66 | INTEGER :: ENDIF, IF, ELSEIF
@@ -1653,15 +1653,15 @@ snapshot_kind: text
 69 |
 70 | TYPE(TEST_TYPE) :: OBJ
 
-./resources/test/fixtures/style/S233.f90:67:10: S233 [*] Keyword 'DIMENSION' should be 'dimension'
+S233 [*] Keyword 'DIMENSION' should be 'dimension'
+  --> ./resources/test/fixtures/style/S233.f90:67:10
    |
 66 | INTEGER :: ENDIF, IF, ELSEIF
 67 | INTEGER, DIMENSION(2) :: FUNCTION
-   |          ^^^^^^^^^ S233
+   |          ^^^^^^^^^
 68 | ENDIF = 3; IF = 2
    |
-   = help: Change to 'dimension'
-
+help: Change to 'dimension'
 64 | COMPLEX :: CMPLX
 65 |
 66 | INTEGER :: ENDIF, IF, ELSEIF
@@ -1671,16 +1671,16 @@ snapshot_kind: text
 69 |
 70 | TYPE(TEST_TYPE) :: OBJ
 
-./resources/test/fixtures/style/S233.f90:70:1: S233 [*] Keyword 'TYPE' should be 'type'
+S233 [*] Keyword 'TYPE' should be 'type'
+  --> ./resources/test/fixtures/style/S233.f90:70:1
    |
 68 | ENDIF = 3; IF = 2
 69 |
 70 | TYPE(TEST_TYPE) :: OBJ
-   | ^^^^ S233
+   | ^^^^
 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
    |
-   = help: Change to 'type'
-
+help: Change to 'type'
 67 | INTEGER, DIMENSION(2) :: FUNCTION
 68 | ENDIF = 3; IF = 2
 69 |
@@ -1690,16 +1690,16 @@ snapshot_kind: text
 72 |
 73 | ENUM, BIND(C)
 
-./resources/test/fixtures/style/S233.f90:71:1: S233 [*] Keyword 'CLASS' should be 'class'
+S233 [*] Keyword 'CLASS' should be 'class'
+  --> ./resources/test/fixtures/style/S233.f90:71:1
    |
 70 | TYPE(TEST_TYPE) :: OBJ
 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-   | ^^^^^ S233
+   | ^^^^^
 72 |
 73 | ENUM, BIND(C)
    |
-   = help: Change to 'class'
-
+help: Change to 'class'
 68 | ENDIF = 3; IF = 2
 69 |
 70 | TYPE(TEST_TYPE) :: OBJ
@@ -1709,16 +1709,16 @@ snapshot_kind: text
 73 | ENUM, BIND(C)
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 
-./resources/test/fixtures/style/S233.f90:71:19: S233 [*] Keyword 'ALLOCATABLE' should be 'allocatable'
+S233 [*] Keyword 'ALLOCATABLE' should be 'allocatable'
+  --> ./resources/test/fixtures/style/S233.f90:71:19
    |
 70 | TYPE(TEST_TYPE) :: OBJ
 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
-   |                   ^^^^^^^^^^^ S233
+   |                   ^^^^^^^^^^^
 72 |
 73 | ENUM, BIND(C)
    |
-   = help: Change to 'allocatable'
-
+help: Change to 'allocatable'
 68 | ENDIF = 3; IF = 2
 69 |
 70 | TYPE(TEST_TYPE) :: OBJ
@@ -1728,17 +1728,17 @@ snapshot_kind: text
 73 | ENUM, BIND(C)
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 
-./resources/test/fixtures/style/S233.f90:73:1: S233 [*] Keyword 'ENUM' should be 'enum'
+S233 [*] Keyword 'ENUM' should be 'enum'
+  --> ./resources/test/fixtures/style/S233.f90:73:1
    |
 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
 72 |
 73 | ENUM, BIND(C)
-   | ^^^^ S233
+   | ^^^^
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 75 | END ENUM
    |
-   = help: Change to 'enum'
-
+help: Change to 'enum'
 70 | TYPE(TEST_TYPE) :: OBJ
 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
 72 |
@@ -1748,17 +1748,17 @@ snapshot_kind: text
 75 | END ENUM
 76 |
 
-./resources/test/fixtures/style/S233.f90:73:7: S233 [*] Keyword 'BIND' should be 'bind'
+S233 [*] Keyword 'BIND' should be 'bind'
+  --> ./resources/test/fixtures/style/S233.f90:73:7
    |
 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
 72 |
 73 | ENUM, BIND(C)
-   |       ^^^^ S233
+   |       ^^^^
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 75 | END ENUM
    |
-   = help: Change to 'bind'
-
+help: Change to 'bind'
 70 | TYPE(TEST_TYPE) :: OBJ
 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
 72 |
@@ -1768,15 +1768,15 @@ snapshot_kind: text
 75 | END ENUM
 76 |
 
-./resources/test/fixtures/style/S233.f90:74:5: S233 [*] Keyword 'ENUMERATOR' should be 'enumerator'
+S233 [*] Keyword 'ENUMERATOR' should be 'enumerator'
+  --> ./resources/test/fixtures/style/S233.f90:74:5
    |
 73 | ENUM, BIND(C)
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
-   |     ^^^^^^^^^^ S233
+   |     ^^^^^^^^^^
 75 | END ENUM
    |
-   = help: Change to 'enumerator'
-
+help: Change to 'enumerator'
 71 | CLASS(BASE_TYPE), ALLOCATABLE :: POLY
 72 |
 73 | ENUM, BIND(C)
@@ -1786,17 +1786,17 @@ snapshot_kind: text
 76 |
 77 | IF (ENDIF == 2) then
 
-./resources/test/fixtures/style/S233.f90:75:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:75:1
    |
 73 | ENUM, BIND(C)
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 75 | END ENUM
-   | ^^^ S233
+   | ^^^
 76 |
 77 | IF (ENDIF == 2) then
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 72 |
 73 | ENUM, BIND(C)
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
@@ -1806,17 +1806,17 @@ snapshot_kind: text
 77 | IF (ENDIF == 2) then
 78 |     ENDIF = 5
 
-./resources/test/fixtures/style/S233.f90:75:5: S233 [*] Keyword 'ENUM' should be 'enum'
+S233 [*] Keyword 'ENUM' should be 'enum'
+  --> ./resources/test/fixtures/style/S233.f90:75:5
    |
 73 | ENUM, BIND(C)
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 75 | END ENUM
-   |     ^^^^ S233
+   |     ^^^^
 76 |
 77 | IF (ENDIF == 2) then
    |
-   = help: Change to 'enum'
-
+help: Change to 'enum'
 72 |
 73 | ENUM, BIND(C)
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
@@ -1826,17 +1826,17 @@ snapshot_kind: text
 77 | IF (ENDIF == 2) then
 78 |     ENDIF = 5
 
-./resources/test/fixtures/style/S233.f90:77:1: S233 [*] Keyword 'IF' should be 'if'
+S233 [*] Keyword 'IF' should be 'if'
+  --> ./resources/test/fixtures/style/S233.f90:77:1
    |
 75 | END ENUM
 76 |
 77 | IF (ENDIF == 2) then
-   | ^^ S233
+   | ^^
 78 |     ENDIF = 5
 79 |     ELSEIF = IF + 4*(ENDIF + &
    |
-   = help: Change to 'if'
-
+help: Change to 'if'
 74 |     ENUMERATOR :: RED = 1, GREEN = 2, BLUE = 3
 75 | END ENUM
 76 |
@@ -1846,17 +1846,17 @@ snapshot_kind: text
 79 |     ELSEIF = IF + 4*(ENDIF + &
 80 |                     2**10)
 
-./resources/test/fixtures/style/S233.f90:81:5: S233 [*] Keyword 'ELSEIF' should be 'elseif'
+S233 [*] Keyword 'ELSEIF' should be 'elseif'
+  --> ./resources/test/fixtures/style/S233.f90:81:5
    |
 79 |     ELSEIF = IF + 4*(ENDIF + &
 80 |                     2**10)
 81 |     ELSEIF (ENDIF == 3) THEN
-   |     ^^^^^^ S233
+   |     ^^^^^^
 82 |     FUNCTION(IF) = ENDIF/ELSEIF
 83 |     PRINT *, ENDIF
    |
-   = help: Change to 'elseif'
-
+help: Change to 'elseif'
 78 |     ENDIF = 5
 79 |     ELSEIF = IF + 4*(ENDIF + &
 80 |                     2**10)
@@ -1866,17 +1866,17 @@ snapshot_kind: text
 83 |     PRINT *, ENDIF
 84 | ENDIF
 
-./resources/test/fixtures/style/S233.f90:81:25: S233 [*] Keyword 'THEN' should be 'then'
+S233 [*] Keyword 'THEN' should be 'then'
+  --> ./resources/test/fixtures/style/S233.f90:81:25
    |
 79 |     ELSEIF = IF + 4*(ENDIF + &
 80 |                     2**10)
 81 |     ELSEIF (ENDIF == 3) THEN
-   |                         ^^^^ S233
+   |                         ^^^^
 82 |     FUNCTION(IF) = ENDIF/ELSEIF
 83 |     PRINT *, ENDIF
    |
-   = help: Change to 'then'
-
+help: Change to 'then'
 78 |     ENDIF = 5
 79 |     ELSEIF = IF + 4*(ENDIF + &
 80 |                     2**10)
@@ -1886,16 +1886,16 @@ snapshot_kind: text
 83 |     PRINT *, ENDIF
 84 | ENDIF
 
-./resources/test/fixtures/style/S233.f90:83:5: S233 [*] Keyword 'PRINT' should be 'print'
+S233 [*] Keyword 'PRINT' should be 'print'
+  --> ./resources/test/fixtures/style/S233.f90:83:5
    |
 81 |     ELSEIF (ENDIF == 3) THEN
 82 |     FUNCTION(IF) = ENDIF/ELSEIF
 83 |     PRINT *, ENDIF
-   |     ^^^^^ S233
+   |     ^^^^^
 84 | ENDIF
    |
-   = help: Change to 'print'
-
+help: Change to 'print'
 80 |                     2**10)
 81 |     ELSEIF (ENDIF == 3) THEN
 82 |     FUNCTION(IF) = ENDIF/ELSEIF
@@ -1905,17 +1905,17 @@ snapshot_kind: text
 85 |
 86 | ALLOCATE(ARR(N))
 
-./resources/test/fixtures/style/S233.f90:84:1: S233 [*] Keyword 'ENDIF' should be 'endif'
+S233 [*] Keyword 'ENDIF' should be 'endif'
+  --> ./resources/test/fixtures/style/S233.f90:84:1
    |
 82 |     FUNCTION(IF) = ENDIF/ELSEIF
 83 |     PRINT *, ENDIF
 84 | ENDIF
-   | ^^^^^ S233
+   | ^^^^^
 85 |
 86 | ALLOCATE(ARR(N))
    |
-   = help: Change to 'endif'
-
+help: Change to 'endif'
 81 |     ELSEIF (ENDIF == 3) THEN
 82 |     FUNCTION(IF) = ENDIF/ELSEIF
 83 |     PRINT *, ENDIF
@@ -1925,16 +1925,16 @@ snapshot_kind: text
 86 | ALLOCATE(ARR(N))
 87 | ARR = 0.0
 
-./resources/test/fixtures/style/S233.f90:86:1: S233 [*] Keyword 'ALLOCATE' should be 'allocate'
+S233 [*] Keyword 'ALLOCATE' should be 'allocate'
+  --> ./resources/test/fixtures/style/S233.f90:86:1
    |
 84 | ENDIF
 85 |
 86 | ALLOCATE(ARR(N))
-   | ^^^^^^^^ S233
+   | ^^^^^^^^
 87 | ARR = 0.0
    |
-   = help: Change to 'allocate'
-
+help: Change to 'allocate'
 83 |     PRINT *, ENDIF
 84 | ENDIF
 85 |
@@ -1944,17 +1944,17 @@ snapshot_kind: text
 88 |
 89 | ALLOCATE(TEST_TYPE :: POLY)
 
-./resources/test/fixtures/style/S233.f90:89:1: S233 [*] Keyword 'ALLOCATE' should be 'allocate'
+S233 [*] Keyword 'ALLOCATE' should be 'allocate'
+  --> ./resources/test/fixtures/style/S233.f90:89:1
    |
 87 | ARR = 0.0
 88 |
 89 | ALLOCATE(TEST_TYPE :: POLY)
-   | ^^^^^^^^ S233
+   | ^^^^^^^^
 90 |
 91 | ASSOCIATE (TMP => ARR)
    |
-   = help: Change to 'allocate'
-
+help: Change to 'allocate'
 86 | ALLOCATE(ARR(N))
 87 | ARR = 0.0
 88 |
@@ -1964,17 +1964,17 @@ snapshot_kind: text
 91 | ASSOCIATE (TMP => ARR)
 92 |     TMP = 1.0
 
-./resources/test/fixtures/style/S233.f90:91:1: S233 [*] Keyword 'ASSOCIATE' should be 'associate'
+S233 [*] Keyword 'ASSOCIATE' should be 'associate'
+  --> ./resources/test/fixtures/style/S233.f90:91:1
    |
 89 | ALLOCATE(TEST_TYPE :: POLY)
 90 |
 91 | ASSOCIATE (TMP => ARR)
-   | ^^^^^^^^^ S233
+   | ^^^^^^^^^
 92 |     TMP = 1.0
 93 | END ASSOCIATE
    |
-   = help: Change to 'associate'
-
+help: Change to 'associate'
 88 |
 89 | ALLOCATE(TEST_TYPE :: POLY)
 90 |
@@ -1984,17 +1984,17 @@ snapshot_kind: text
 93 | END ASSOCIATE
 94 |
 
-./resources/test/fixtures/style/S233.f90:93:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+  --> ./resources/test/fixtures/style/S233.f90:93:1
    |
 91 | ASSOCIATE (TMP => ARR)
 92 |     TMP = 1.0
 93 | END ASSOCIATE
-   | ^^^ S233
+   | ^^^
 94 |
 95 | BLOCK
    |
-   = help: Change to 'end'
-
+help: Change to 'end'
 90 |
 91 | ASSOCIATE (TMP => ARR)
 92 |     TMP = 1.0
@@ -2004,17 +2004,17 @@ snapshot_kind: text
 95 | BLOCK
 96 |     INTEGER :: LOCAL
 
-./resources/test/fixtures/style/S233.f90:93:5: S233 [*] Keyword 'ASSOCIATE' should be 'associate'
+S233 [*] Keyword 'ASSOCIATE' should be 'associate'
+  --> ./resources/test/fixtures/style/S233.f90:93:5
    |
 91 | ASSOCIATE (TMP => ARR)
 92 |     TMP = 1.0
 93 | END ASSOCIATE
-   |     ^^^^^^^^^ S233
+   |     ^^^^^^^^^
 94 |
 95 | BLOCK
    |
-   = help: Change to 'associate'
-
+help: Change to 'associate'
 90 |
 91 | ASSOCIATE (TMP => ARR)
 92 |     TMP = 1.0
@@ -2024,17 +2024,17 @@ snapshot_kind: text
 95 | BLOCK
 96 |     INTEGER :: LOCAL
 
-./resources/test/fixtures/style/S233.f90:95:1: S233 [*] Keyword 'BLOCK' should be 'block'
+S233 [*] Keyword 'BLOCK' should be 'block'
+  --> ./resources/test/fixtures/style/S233.f90:95:1
    |
 93 | END ASSOCIATE
 94 |
 95 | BLOCK
-   | ^^^^^ S233
+   | ^^^^^
 96 |     INTEGER :: LOCAL
 97 |     LOCAL = 42
    |
-   = help: Change to 'block'
-
+help: Change to 'block'
 92 |     TMP = 1.0
 93 | END ASSOCIATE
 94 |
@@ -2044,16 +2044,16 @@ snapshot_kind: text
 97 |     LOCAL = 42
 98 | END BLOCK
 
-./resources/test/fixtures/style/S233.f90:96:5: S233 [*] Keyword 'INTEGER' should be 'integer'
+S233 [*] Keyword 'INTEGER' should be 'integer'
+  --> ./resources/test/fixtures/style/S233.f90:96:5
    |
 95 | BLOCK
 96 |     INTEGER :: LOCAL
-   |     ^^^^^^^ S233
+   |     ^^^^^^^
 97 |     LOCAL = 42
 98 | END BLOCK
    |
-   = help: Change to 'integer'
-
+help: Change to 'integer'
 93 | END ASSOCIATE
 94 |
 95 | BLOCK
@@ -2063,17 +2063,17 @@ snapshot_kind: text
 98 | END BLOCK
 99 |
 
-./resources/test/fixtures/style/S233.f90:98:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:98:1
     |
  96 |     INTEGER :: LOCAL
  97 |     LOCAL = 42
  98 | END BLOCK
-    | ^^^ S233
+    | ^^^
  99 |
 100 | CRITICAL
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 95  | BLOCK
 96  |     INTEGER :: LOCAL
 97  |     LOCAL = 42
@@ -2083,17 +2083,17 @@ snapshot_kind: text
 100 | CRITICAL
 101 |     PRINT *, "CRITICAL SECTION"
 
-./resources/test/fixtures/style/S233.f90:98:5: S233 [*] Keyword 'BLOCK' should be 'block'
+S233 [*] Keyword 'BLOCK' should be 'block'
+   --> ./resources/test/fixtures/style/S233.f90:98:5
     |
  96 |     INTEGER :: LOCAL
  97 |     LOCAL = 42
  98 | END BLOCK
-    |     ^^^^^ S233
+    |     ^^^^^
  99 |
 100 | CRITICAL
     |
-    = help: Change to 'block'
-
+help: Change to 'block'
 95  | BLOCK
 96  |     INTEGER :: LOCAL
 97  |     LOCAL = 42
@@ -2103,17 +2103,17 @@ snapshot_kind: text
 100 | CRITICAL
 101 |     PRINT *, "CRITICAL SECTION"
 
-./resources/test/fixtures/style/S233.f90:100:1: S233 [*] Keyword 'CRITICAL' should be 'critical'
+S233 [*] Keyword 'CRITICAL' should be 'critical'
+   --> ./resources/test/fixtures/style/S233.f90:100:1
     |
  98 | END BLOCK
  99 |
 100 | CRITICAL
-    | ^^^^^^^^ S233
+    | ^^^^^^^^
 101 |     PRINT *, "CRITICAL SECTION"
 102 | END CRITICAL
     |
-    = help: Change to 'critical'
-
+help: Change to 'critical'
 97  |     LOCAL = 42
 98  | END BLOCK
 99  |
@@ -2123,15 +2123,15 @@ snapshot_kind: text
 102 | END CRITICAL
 103 |
 
-./resources/test/fixtures/style/S233.f90:101:5: S233 [*] Keyword 'PRINT' should be 'print'
+S233 [*] Keyword 'PRINT' should be 'print'
+   --> ./resources/test/fixtures/style/S233.f90:101:5
     |
 100 | CRITICAL
 101 |     PRINT *, "CRITICAL SECTION"
-    |     ^^^^^ S233
+    |     ^^^^^
 102 | END CRITICAL
     |
-    = help: Change to 'print'
-
+help: Change to 'print'
 98  | END BLOCK
 99  |
 100 | CRITICAL
@@ -2141,17 +2141,17 @@ snapshot_kind: text
 103 |
 104 | DO CONCURRENT (I = 1:N)
 
-./resources/test/fixtures/style/S233.f90:102:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:102:1
     |
 100 | CRITICAL
 101 |     PRINT *, "CRITICAL SECTION"
 102 | END CRITICAL
-    | ^^^ S233
+    | ^^^
 103 |
 104 | DO CONCURRENT (I = 1:N)
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 99  |
 100 | CRITICAL
 101 |     PRINT *, "CRITICAL SECTION"
@@ -2161,17 +2161,17 @@ snapshot_kind: text
 104 | DO CONCURRENT (I = 1:N)
 105 |     ARR(I) = I
 
-./resources/test/fixtures/style/S233.f90:102:5: S233 [*] Keyword 'CRITICAL' should be 'critical'
+S233 [*] Keyword 'CRITICAL' should be 'critical'
+   --> ./resources/test/fixtures/style/S233.f90:102:5
     |
 100 | CRITICAL
 101 |     PRINT *, "CRITICAL SECTION"
 102 | END CRITICAL
-    |     ^^^^^^^^ S233
+    |     ^^^^^^^^
 103 |
 104 | DO CONCURRENT (I = 1:N)
     |
-    = help: Change to 'critical'
-
+help: Change to 'critical'
 99  |
 100 | CRITICAL
 101 |     PRINT *, "CRITICAL SECTION"
@@ -2181,17 +2181,17 @@ snapshot_kind: text
 104 | DO CONCURRENT (I = 1:N)
 105 |     ARR(I) = I
 
-./resources/test/fixtures/style/S233.f90:104:1: S233 [*] Keyword 'DO' should be 'do'
+S233 [*] Keyword 'DO' should be 'do'
+   --> ./resources/test/fixtures/style/S233.f90:104:1
     |
 102 | END CRITICAL
 103 |
 104 | DO CONCURRENT (I = 1:N)
-    | ^^ S233
+    | ^^
 105 |     ARR(I) = I
 106 | END DO
     |
-    = help: Change to 'do'
-
+help: Change to 'do'
 101 |     PRINT *, "CRITICAL SECTION"
 102 | END CRITICAL
 103 |
@@ -2201,17 +2201,17 @@ snapshot_kind: text
 106 | END DO
 107 |
 
-./resources/test/fixtures/style/S233.f90:104:4: S233 [*] Keyword 'CONCURRENT' should be 'concurrent'
+S233 [*] Keyword 'CONCURRENT' should be 'concurrent'
+   --> ./resources/test/fixtures/style/S233.f90:104:4
     |
 102 | END CRITICAL
 103 |
 104 | DO CONCURRENT (I = 1:N)
-    |    ^^^^^^^^^^ S233
+    |    ^^^^^^^^^^
 105 |     ARR(I) = I
 106 | END DO
     |
-    = help: Change to 'concurrent'
-
+help: Change to 'concurrent'
 101 |     PRINT *, "CRITICAL SECTION"
 102 | END CRITICAL
 103 |
@@ -2221,17 +2221,17 @@ snapshot_kind: text
 106 | END DO
 107 |
 
-./resources/test/fixtures/style/S233.f90:106:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:106:1
     |
 104 | DO CONCURRENT (I = 1:N)
 105 |     ARR(I) = I
 106 | END DO
-    | ^^^ S233
+    | ^^^
 107 |
 108 | FORALL (J = 1:N)
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 103 |
 104 | DO CONCURRENT (I = 1:N)
 105 |     ARR(I) = I
@@ -2241,17 +2241,17 @@ snapshot_kind: text
 108 | FORALL (J = 1:N)
 109 |     ARR(J) = ARR(J) * 2
 
-./resources/test/fixtures/style/S233.f90:106:5: S233 [*] Keyword 'DO' should be 'do'
+S233 [*] Keyword 'DO' should be 'do'
+   --> ./resources/test/fixtures/style/S233.f90:106:5
     |
 104 | DO CONCURRENT (I = 1:N)
 105 |     ARR(I) = I
 106 | END DO
-    |     ^^ S233
+    |     ^^
 107 |
 108 | FORALL (J = 1:N)
     |
-    = help: Change to 'do'
-
+help: Change to 'do'
 103 |
 104 | DO CONCURRENT (I = 1:N)
 105 |     ARR(I) = I
@@ -2261,17 +2261,17 @@ snapshot_kind: text
 108 | FORALL (J = 1:N)
 109 |     ARR(J) = ARR(J) * 2
 
-./resources/test/fixtures/style/S233.f90:108:1: S233 [*] Keyword 'FORALL' should be 'forall'
+S233 [*] Keyword 'FORALL' should be 'forall'
+   --> ./resources/test/fixtures/style/S233.f90:108:1
     |
 106 | END DO
 107 |
 108 | FORALL (J = 1:N)
-    | ^^^^^^ S233
+    | ^^^^^^
 109 |     ARR(J) = ARR(J) * 2
 110 | END FORALL
     |
-    = help: Change to 'forall'
-
+help: Change to 'forall'
 105 |     ARR(I) = I
 106 | END DO
 107 |
@@ -2281,17 +2281,17 @@ snapshot_kind: text
 110 | END FORALL
 111 |
 
-./resources/test/fixtures/style/S233.f90:110:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:110:1
     |
 108 | FORALL (J = 1:N)
 109 |     ARR(J) = ARR(J) * 2
 110 | END FORALL
-    | ^^^ S233
+    | ^^^
 111 |
 112 | WHERE (ARR > 2.0)
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 107 |
 108 | FORALL (J = 1:N)
 109 |     ARR(J) = ARR(J) * 2
@@ -2301,17 +2301,17 @@ snapshot_kind: text
 112 | WHERE (ARR > 2.0)
 113 |     ARR = ARR + 1.0
 
-./resources/test/fixtures/style/S233.f90:110:5: S233 [*] Keyword 'FORALL' should be 'forall'
+S233 [*] Keyword 'FORALL' should be 'forall'
+   --> ./resources/test/fixtures/style/S233.f90:110:5
     |
 108 | FORALL (J = 1:N)
 109 |     ARR(J) = ARR(J) * 2
 110 | END FORALL
-    |     ^^^^^^ S233
+    |     ^^^^^^
 111 |
 112 | WHERE (ARR > 2.0)
     |
-    = help: Change to 'forall'
-
+help: Change to 'forall'
 107 |
 108 | FORALL (J = 1:N)
 109 |     ARR(J) = ARR(J) * 2
@@ -2321,17 +2321,17 @@ snapshot_kind: text
 112 | WHERE (ARR > 2.0)
 113 |     ARR = ARR + 1.0
 
-./resources/test/fixtures/style/S233.f90:112:1: S233 [*] Keyword 'WHERE' should be 'where'
+S233 [*] Keyword 'WHERE' should be 'where'
+   --> ./resources/test/fixtures/style/S233.f90:112:1
     |
 110 | END FORALL
 111 |
 112 | WHERE (ARR > 2.0)
-    | ^^^^^ S233
+    | ^^^^^
 113 |     ARR = ARR + 1.0
 114 | ELSEWHERE
     |
-    = help: Change to 'where'
-
+help: Change to 'where'
 109 |     ARR(J) = ARR(J) * 2
 110 | END FORALL
 111 |
@@ -2341,17 +2341,17 @@ snapshot_kind: text
 114 | ELSEWHERE
 115 |     ARR = 0.0
 
-./resources/test/fixtures/style/S233.f90:114:1: S233 [*] Keyword 'ELSEWHERE' should be 'elsewhere'
+S233 [*] Keyword 'ELSEWHERE' should be 'elsewhere'
+   --> ./resources/test/fixtures/style/S233.f90:114:1
     |
 112 | WHERE (ARR > 2.0)
 113 |     ARR = ARR + 1.0
 114 | ELSEWHERE
-    | ^^^^^^^^^ S233
+    | ^^^^^^^^^
 115 |     ARR = 0.0
 116 | END WHERE
     |
-    = help: Change to 'elsewhere'
-
+help: Change to 'elsewhere'
 111 |
 112 | WHERE (ARR > 2.0)
 113 |     ARR = ARR + 1.0
@@ -2361,17 +2361,17 @@ snapshot_kind: text
 116 | END WHERE
 117 |
 
-./resources/test/fixtures/style/S233.f90:116:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:116:1
     |
 114 | ELSEWHERE
 115 |     ARR = 0.0
 116 | END WHERE
-    | ^^^ S233
+    | ^^^
 117 |
 118 | SELECT CASE (N)
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 113 |     ARR = ARR + 1.0
 114 | ELSEWHERE
 115 |     ARR = 0.0
@@ -2381,17 +2381,17 @@ snapshot_kind: text
 118 | SELECT CASE (N)
 119 | CASE (1)
 
-./resources/test/fixtures/style/S233.f90:116:5: S233 [*] Keyword 'WHERE' should be 'where'
+S233 [*] Keyword 'WHERE' should be 'where'
+   --> ./resources/test/fixtures/style/S233.f90:116:5
     |
 114 | ELSEWHERE
 115 |     ARR = 0.0
 116 | END WHERE
-    |     ^^^^^ S233
+    |     ^^^^^
 117 |
 118 | SELECT CASE (N)
     |
-    = help: Change to 'where'
-
+help: Change to 'where'
 113 |     ARR = ARR + 1.0
 114 | ELSEWHERE
 115 |     ARR = 0.0
@@ -2401,17 +2401,17 @@ snapshot_kind: text
 118 | SELECT CASE (N)
 119 | CASE (1)
 
-./resources/test/fixtures/style/S233.f90:118:1: S233 [*] Keyword 'SELECT' should be 'select'
+S233 [*] Keyword 'SELECT' should be 'select'
+   --> ./resources/test/fixtures/style/S233.f90:118:1
     |
 116 | END WHERE
 117 |
 118 | SELECT CASE (N)
-    | ^^^^^^ S233
+    | ^^^^^^
 119 | CASE (1)
 120 |     PRINT *, "ONE"
     |
-    = help: Change to 'select'
-
+help: Change to 'select'
 115 |     ARR = 0.0
 116 | END WHERE
 117 |
@@ -2421,17 +2421,17 @@ snapshot_kind: text
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
 
-./resources/test/fixtures/style/S233.f90:118:8: S233 [*] Keyword 'CASE' should be 'case'
+S233 [*] Keyword 'CASE' should be 'case'
+   --> ./resources/test/fixtures/style/S233.f90:118:8
     |
 116 | END WHERE
 117 |
 118 | SELECT CASE (N)
-    |        ^^^^ S233
+    |        ^^^^
 119 | CASE (1)
 120 |     PRINT *, "ONE"
     |
-    = help: Change to 'case'
-
+help: Change to 'case'
 115 |     ARR = 0.0
 116 | END WHERE
 117 |
@@ -2441,16 +2441,16 @@ snapshot_kind: text
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
 
-./resources/test/fixtures/style/S233.f90:119:1: S233 [*] Keyword 'CASE' should be 'case'
+S233 [*] Keyword 'CASE' should be 'case'
+   --> ./resources/test/fixtures/style/S233.f90:119:1
     |
 118 | SELECT CASE (N)
 119 | CASE (1)
-    | ^^^^ S233
+    | ^^^^
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
     |
-    = help: Change to 'case'
-
+help: Change to 'case'
 116 | END WHERE
 117 |
 118 | SELECT CASE (N)
@@ -2460,17 +2460,17 @@ snapshot_kind: text
 121 | CASE DEFAULT
 122 |     PRINT *, "OTHER"
 
-./resources/test/fixtures/style/S233.f90:120:5: S233 [*] Keyword 'PRINT' should be 'print'
+S233 [*] Keyword 'PRINT' should be 'print'
+   --> ./resources/test/fixtures/style/S233.f90:120:5
     |
 118 | SELECT CASE (N)
 119 | CASE (1)
 120 |     PRINT *, "ONE"
-    |     ^^^^^ S233
+    |     ^^^^^
 121 | CASE DEFAULT
 122 |     PRINT *, "OTHER"
     |
-    = help: Change to 'print'
-
+help: Change to 'print'
 117 |
 118 | SELECT CASE (N)
 119 | CASE (1)
@@ -2480,17 +2480,17 @@ snapshot_kind: text
 122 |     PRINT *, "OTHER"
 123 | END SELECT
 
-./resources/test/fixtures/style/S233.f90:121:1: S233 [*] Keyword 'CASE' should be 'case'
+S233 [*] Keyword 'CASE' should be 'case'
+   --> ./resources/test/fixtures/style/S233.f90:121:1
     |
 119 | CASE (1)
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
-    | ^^^^ S233
+    | ^^^^
 122 |     PRINT *, "OTHER"
 123 | END SELECT
     |
-    = help: Change to 'case'
-
+help: Change to 'case'
 118 | SELECT CASE (N)
 119 | CASE (1)
 120 |     PRINT *, "ONE"
@@ -2500,17 +2500,17 @@ snapshot_kind: text
 123 | END SELECT
 124 |
 
-./resources/test/fixtures/style/S233.f90:121:6: S233 [*] Keyword 'DEFAULT' should be 'default'
+S233 [*] Keyword 'DEFAULT' should be 'default'
+   --> ./resources/test/fixtures/style/S233.f90:121:6
     |
 119 | CASE (1)
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
-    |      ^^^^^^^ S233
+    |      ^^^^^^^
 122 |     PRINT *, "OTHER"
 123 | END SELECT
     |
-    = help: Change to 'default'
-
+help: Change to 'default'
 118 | SELECT CASE (N)
 119 | CASE (1)
 120 |     PRINT *, "ONE"
@@ -2520,16 +2520,16 @@ snapshot_kind: text
 123 | END SELECT
 124 |
 
-./resources/test/fixtures/style/S233.f90:122:5: S233 [*] Keyword 'PRINT' should be 'print'
+S233 [*] Keyword 'PRINT' should be 'print'
+   --> ./resources/test/fixtures/style/S233.f90:122:5
     |
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
 122 |     PRINT *, "OTHER"
-    |     ^^^^^ S233
+    |     ^^^^^
 123 | END SELECT
     |
-    = help: Change to 'print'
-
+help: Change to 'print'
 119 | CASE (1)
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
@@ -2539,17 +2539,17 @@ snapshot_kind: text
 124 |
 125 | SELECT TYPE (POLY)
 
-./resources/test/fixtures/style/S233.f90:123:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:123:1
     |
 121 | CASE DEFAULT
 122 |     PRINT *, "OTHER"
 123 | END SELECT
-    | ^^^ S233
+    | ^^^
 124 |
 125 | SELECT TYPE (POLY)
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
 122 |     PRINT *, "OTHER"
@@ -2559,17 +2559,17 @@ snapshot_kind: text
 125 | SELECT TYPE (POLY)
 126 | TYPE IS (TEST_TYPE)
 
-./resources/test/fixtures/style/S233.f90:123:5: S233 [*] Keyword 'SELECT' should be 'select'
+S233 [*] Keyword 'SELECT' should be 'select'
+   --> ./resources/test/fixtures/style/S233.f90:123:5
     |
 121 | CASE DEFAULT
 122 |     PRINT *, "OTHER"
 123 | END SELECT
-    |     ^^^^^^ S233
+    |     ^^^^^^
 124 |
 125 | SELECT TYPE (POLY)
     |
-    = help: Change to 'select'
-
+help: Change to 'select'
 120 |     PRINT *, "ONE"
 121 | CASE DEFAULT
 122 |     PRINT *, "OTHER"
@@ -2579,17 +2579,17 @@ snapshot_kind: text
 125 | SELECT TYPE (POLY)
 126 | TYPE IS (TEST_TYPE)
 
-./resources/test/fixtures/style/S233.f90:125:1: S233 [*] Keyword 'SELECT' should be 'select'
+S233 [*] Keyword 'SELECT' should be 'select'
+   --> ./resources/test/fixtures/style/S233.f90:125:1
     |
 123 | END SELECT
 124 |
 125 | SELECT TYPE (POLY)
-    | ^^^^^^ S233
+    | ^^^^^^
 126 | TYPE IS (TEST_TYPE)
 127 |     PRINT *, "TEST_TYPE"
     |
-    = help: Change to 'select'
-
+help: Change to 'select'
 122 |     PRINT *, "OTHER"
 123 | END SELECT
 124 |
@@ -2599,17 +2599,17 @@ snapshot_kind: text
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
 
-./resources/test/fixtures/style/S233.f90:125:8: S233 [*] Keyword 'TYPE' should be 'type'
+S233 [*] Keyword 'TYPE' should be 'type'
+   --> ./resources/test/fixtures/style/S233.f90:125:8
     |
 123 | END SELECT
 124 |
 125 | SELECT TYPE (POLY)
-    |        ^^^^ S233
+    |        ^^^^
 126 | TYPE IS (TEST_TYPE)
 127 |     PRINT *, "TEST_TYPE"
     |
-    = help: Change to 'type'
-
+help: Change to 'type'
 122 |     PRINT *, "OTHER"
 123 | END SELECT
 124 |
@@ -2619,16 +2619,16 @@ snapshot_kind: text
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
 
-./resources/test/fixtures/style/S233.f90:126:1: S233 [*] Keyword 'TYPE' should be 'type'
+S233 [*] Keyword 'TYPE' should be 'type'
+   --> ./resources/test/fixtures/style/S233.f90:126:1
     |
 125 | SELECT TYPE (POLY)
 126 | TYPE IS (TEST_TYPE)
-    | ^^^^ S233
+    | ^^^^
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
     |
-    = help: Change to 'type'
-
+help: Change to 'type'
 123 | END SELECT
 124 |
 125 | SELECT TYPE (POLY)
@@ -2638,16 +2638,16 @@ snapshot_kind: text
 128 | CLASS DEFAULT
 129 |     PRINT *, "UNKNOWN"
 
-./resources/test/fixtures/style/S233.f90:126:6: S233 [*] Keyword 'IS' should be 'is'
+S233 [*] Keyword 'IS' should be 'is'
+   --> ./resources/test/fixtures/style/S233.f90:126:6
     |
 125 | SELECT TYPE (POLY)
 126 | TYPE IS (TEST_TYPE)
-    |      ^^ S233
+    |      ^^
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
     |
-    = help: Change to 'is'
-
+help: Change to 'is'
 123 | END SELECT
 124 |
 125 | SELECT TYPE (POLY)
@@ -2657,17 +2657,17 @@ snapshot_kind: text
 128 | CLASS DEFAULT
 129 |     PRINT *, "UNKNOWN"
 
-./resources/test/fixtures/style/S233.f90:127:5: S233 [*] Keyword 'PRINT' should be 'print'
+S233 [*] Keyword 'PRINT' should be 'print'
+   --> ./resources/test/fixtures/style/S233.f90:127:5
     |
 125 | SELECT TYPE (POLY)
 126 | TYPE IS (TEST_TYPE)
 127 |     PRINT *, "TEST_TYPE"
-    |     ^^^^^ S233
+    |     ^^^^^
 128 | CLASS DEFAULT
 129 |     PRINT *, "UNKNOWN"
     |
-    = help: Change to 'print'
-
+help: Change to 'print'
 124 |
 125 | SELECT TYPE (POLY)
 126 | TYPE IS (TEST_TYPE)
@@ -2677,17 +2677,17 @@ snapshot_kind: text
 129 |     PRINT *, "UNKNOWN"
 130 | END SELECT
 
-./resources/test/fixtures/style/S233.f90:128:1: S233 [*] Keyword 'CLASS' should be 'class'
+S233 [*] Keyword 'CLASS' should be 'class'
+   --> ./resources/test/fixtures/style/S233.f90:128:1
     |
 126 | TYPE IS (TEST_TYPE)
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
-    | ^^^^^ S233
+    | ^^^^^
 129 |     PRINT *, "UNKNOWN"
 130 | END SELECT
     |
-    = help: Change to 'class'
-
+help: Change to 'class'
 125 | SELECT TYPE (POLY)
 126 | TYPE IS (TEST_TYPE)
 127 |     PRINT *, "TEST_TYPE"
@@ -2697,17 +2697,17 @@ snapshot_kind: text
 130 | END SELECT
 131 |
 
-./resources/test/fixtures/style/S233.f90:128:7: S233 [*] Keyword 'DEFAULT' should be 'default'
+S233 [*] Keyword 'DEFAULT' should be 'default'
+   --> ./resources/test/fixtures/style/S233.f90:128:7
     |
 126 | TYPE IS (TEST_TYPE)
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
-    |       ^^^^^^^ S233
+    |       ^^^^^^^
 129 |     PRINT *, "UNKNOWN"
 130 | END SELECT
     |
-    = help: Change to 'default'
-
+help: Change to 'default'
 125 | SELECT TYPE (POLY)
 126 | TYPE IS (TEST_TYPE)
 127 |     PRINT *, "TEST_TYPE"
@@ -2717,16 +2717,16 @@ snapshot_kind: text
 130 | END SELECT
 131 |
 
-./resources/test/fixtures/style/S233.f90:129:5: S233 [*] Keyword 'PRINT' should be 'print'
+S233 [*] Keyword 'PRINT' should be 'print'
+   --> ./resources/test/fixtures/style/S233.f90:129:5
     |
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
 129 |     PRINT *, "UNKNOWN"
-    |     ^^^^^ S233
+    |     ^^^^^
 130 | END SELECT
     |
-    = help: Change to 'print'
-
+help: Change to 'print'
 126 | TYPE IS (TEST_TYPE)
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
@@ -2736,17 +2736,17 @@ snapshot_kind: text
 131 |
 132 | IF (N > 0) THEN
 
-./resources/test/fixtures/style/S233.f90:130:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:130:1
     |
 128 | CLASS DEFAULT
 129 |     PRINT *, "UNKNOWN"
 130 | END SELECT
-    | ^^^ S233
+    | ^^^
 131 |
 132 | IF (N > 0) THEN
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
 129 |     PRINT *, "UNKNOWN"
@@ -2756,17 +2756,17 @@ snapshot_kind: text
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
 
-./resources/test/fixtures/style/S233.f90:130:5: S233 [*] Keyword 'SELECT' should be 'select'
+S233 [*] Keyword 'SELECT' should be 'select'
+   --> ./resources/test/fixtures/style/S233.f90:130:5
     |
 128 | CLASS DEFAULT
 129 |     PRINT *, "UNKNOWN"
 130 | END SELECT
-    |     ^^^^^^ S233
+    |     ^^^^^^
 131 |
 132 | IF (N > 0) THEN
     |
-    = help: Change to 'select'
-
+help: Change to 'select'
 127 |     PRINT *, "TEST_TYPE"
 128 | CLASS DEFAULT
 129 |     PRINT *, "UNKNOWN"
@@ -2776,17 +2776,17 @@ snapshot_kind: text
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
 
-./resources/test/fixtures/style/S233.f90:132:1: S233 [*] Keyword 'IF' should be 'if'
+S233 [*] Keyword 'IF' should be 'if'
+   --> ./resources/test/fixtures/style/S233.f90:132:1
     |
 130 | END SELECT
 131 |
 132 | IF (N > 0) THEN
-    | ^^ S233
+    | ^^
 133 |     CALL TEST_PROC(I)
 134 | ELSE IF (N == 0) THEN
     |
-    = help: Change to 'if'
-
+help: Change to 'if'
 129 |     PRINT *, "UNKNOWN"
 130 | END SELECT
 131 |
@@ -2796,17 +2796,17 @@ snapshot_kind: text
 134 | ELSE IF (N == 0) THEN
 135 |     STOP
 
-./resources/test/fixtures/style/S233.f90:132:12: S233 [*] Keyword 'THEN' should be 'then'
+S233 [*] Keyword 'THEN' should be 'then'
+   --> ./resources/test/fixtures/style/S233.f90:132:12
     |
 130 | END SELECT
 131 |
 132 | IF (N > 0) THEN
-    |            ^^^^ S233
+    |            ^^^^
 133 |     CALL TEST_PROC(I)
 134 | ELSE IF (N == 0) THEN
     |
-    = help: Change to 'then'
-
+help: Change to 'then'
 129 |     PRINT *, "UNKNOWN"
 130 | END SELECT
 131 |
@@ -2816,16 +2816,16 @@ snapshot_kind: text
 134 | ELSE IF (N == 0) THEN
 135 |     STOP
 
-./resources/test/fixtures/style/S233.f90:133:5: S233 [*] Keyword 'CALL' should be 'call'
+S233 [*] Keyword 'CALL' should be 'call'
+   --> ./resources/test/fixtures/style/S233.f90:133:5
     |
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
-    |     ^^^^ S233
+    |     ^^^^
 134 | ELSE IF (N == 0) THEN
 135 |     STOP
     |
-    = help: Change to 'call'
-
+help: Change to 'call'
 130 | END SELECT
 131 |
 132 | IF (N > 0) THEN
@@ -2835,17 +2835,17 @@ snapshot_kind: text
 135 |     STOP
 136 | ELSE
 
-./resources/test/fixtures/style/S233.f90:134:1: S233 [*] Keyword 'ELSE' should be 'else'
+S233 [*] Keyword 'ELSE' should be 'else'
+   --> ./resources/test/fixtures/style/S233.f90:134:1
     |
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
 134 | ELSE IF (N == 0) THEN
-    | ^^^^ S233
+    | ^^^^
 135 |     STOP
 136 | ELSE
     |
-    = help: Change to 'else'
-
+help: Change to 'else'
 131 |
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
@@ -2855,17 +2855,17 @@ snapshot_kind: text
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
 
-./resources/test/fixtures/style/S233.f90:134:6: S233 [*] Keyword 'IF' should be 'if'
+S233 [*] Keyword 'IF' should be 'if'
+   --> ./resources/test/fixtures/style/S233.f90:134:6
     |
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
 134 | ELSE IF (N == 0) THEN
-    |      ^^ S233
+    |      ^^
 135 |     STOP
 136 | ELSE
     |
-    = help: Change to 'if'
-
+help: Change to 'if'
 131 |
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
@@ -2875,17 +2875,17 @@ snapshot_kind: text
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
 
-./resources/test/fixtures/style/S233.f90:134:18: S233 [*] Keyword 'THEN' should be 'then'
+S233 [*] Keyword 'THEN' should be 'then'
+   --> ./resources/test/fixtures/style/S233.f90:134:18
     |
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
 134 | ELSE IF (N == 0) THEN
-    |                  ^^^^ S233
+    |                  ^^^^
 135 |     STOP
 136 | ELSE
     |
-    = help: Change to 'then'
-
+help: Change to 'then'
 131 |
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
@@ -2895,17 +2895,17 @@ snapshot_kind: text
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
 
-./resources/test/fixtures/style/S233.f90:135:5: S233 [*] Keyword 'STOP' should be 'stop'
+S233 [*] Keyword 'STOP' should be 'stop'
+   --> ./resources/test/fixtures/style/S233.f90:135:5
     |
 133 |     CALL TEST_PROC(I)
 134 | ELSE IF (N == 0) THEN
 135 |     STOP
-    |     ^^^^ S233
+    |     ^^^^
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
     |
-    = help: Change to 'stop'
-
+help: Change to 'stop'
 132 | IF (N > 0) THEN
 133 |     CALL TEST_PROC(I)
 134 | ELSE IF (N == 0) THEN
@@ -2915,17 +2915,17 @@ snapshot_kind: text
 137 |     ERROR STOP "NEGATIVE"
 138 | END IF
 
-./resources/test/fixtures/style/S233.f90:136:1: S233 [*] Keyword 'ELSE' should be 'else'
+S233 [*] Keyword 'ELSE' should be 'else'
+   --> ./resources/test/fixtures/style/S233.f90:136:1
     |
 134 | ELSE IF (N == 0) THEN
 135 |     STOP
 136 | ELSE
-    | ^^^^ S233
+    | ^^^^
 137 |     ERROR STOP "NEGATIVE"
 138 | END IF
     |
-    = help: Change to 'else'
-
+help: Change to 'else'
 133 |     CALL TEST_PROC(I)
 134 | ELSE IF (N == 0) THEN
 135 |     STOP
@@ -2935,16 +2935,16 @@ snapshot_kind: text
 138 | END IF
 139 |
 
-./resources/test/fixtures/style/S233.f90:137:5: S233 [*] Keyword 'ERROR' should be 'error'
+S233 [*] Keyword 'ERROR' should be 'error'
+   --> ./resources/test/fixtures/style/S233.f90:137:5
     |
 135 |     STOP
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
-    |     ^^^^^ S233
+    |     ^^^^^
 138 | END IF
     |
-    = help: Change to 'error'
-
+help: Change to 'error'
 134 | ELSE IF (N == 0) THEN
 135 |     STOP
 136 | ELSE
@@ -2954,16 +2954,16 @@ snapshot_kind: text
 139 |
 140 | DO I = 1, N
 
-./resources/test/fixtures/style/S233.f90:137:11: S233 [*] Keyword 'STOP' should be 'stop'
+S233 [*] Keyword 'STOP' should be 'stop'
+   --> ./resources/test/fixtures/style/S233.f90:137:11
     |
 135 |     STOP
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
-    |           ^^^^ S233
+    |           ^^^^
 138 | END IF
     |
-    = help: Change to 'stop'
-
+help: Change to 'stop'
 134 | ELSE IF (N == 0) THEN
 135 |     STOP
 136 | ELSE
@@ -2973,17 +2973,17 @@ snapshot_kind: text
 139 |
 140 | DO I = 1, N
 
-./resources/test/fixtures/style/S233.f90:138:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:138:1
     |
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
 138 | END IF
-    | ^^^ S233
+    | ^^^
 139 |
 140 | DO I = 1, N
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 135 |     STOP
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
@@ -2993,17 +2993,17 @@ snapshot_kind: text
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
 
-./resources/test/fixtures/style/S233.f90:138:5: S233 [*] Keyword 'IF' should be 'if'
+S233 [*] Keyword 'IF' should be 'if'
+   --> ./resources/test/fixtures/style/S233.f90:138:5
     |
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
 138 | END IF
-    |     ^^ S233
+    |     ^^
 139 |
 140 | DO I = 1, N
     |
-    = help: Change to 'if'
-
+help: Change to 'if'
 135 |     STOP
 136 | ELSE
 137 |     ERROR STOP "NEGATIVE"
@@ -3013,17 +3013,17 @@ snapshot_kind: text
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
 
-./resources/test/fixtures/style/S233.f90:140:1: S233 [*] Keyword 'DO' should be 'do'
+S233 [*] Keyword 'DO' should be 'do'
+   --> ./resources/test/fixtures/style/S233.f90:140:1
     |
 138 | END IF
 139 |
 140 | DO I = 1, N
-    | ^^ S233
+    | ^^
 141 |     IF (I == 3) CYCLE
 142 |     IF (I == 4) EXIT
     |
-    = help: Change to 'do'
-
+help: Change to 'do'
 137 |     ERROR STOP "NEGATIVE"
 138 | END IF
 139 |
@@ -3033,16 +3033,16 @@ snapshot_kind: text
 142 |     IF (I == 4) EXIT
 143 | END DO
 
-./resources/test/fixtures/style/S233.f90:141:5: S233 [*] Keyword 'IF' should be 'if'
+S233 [*] Keyword 'IF' should be 'if'
+   --> ./resources/test/fixtures/style/S233.f90:141:5
     |
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
-    |     ^^ S233
+    |     ^^
 142 |     IF (I == 4) EXIT
 143 | END DO
     |
-    = help: Change to 'if'
-
+help: Change to 'if'
 138 | END IF
 139 |
 140 | DO I = 1, N
@@ -3052,16 +3052,16 @@ snapshot_kind: text
 143 | END DO
 144 |
 
-./resources/test/fixtures/style/S233.f90:141:17: S233 [*] Keyword 'CYCLE' should be 'cycle'
+S233 [*] Keyword 'CYCLE' should be 'cycle'
+   --> ./resources/test/fixtures/style/S233.f90:141:17
     |
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
-    |                 ^^^^^ S233
+    |                 ^^^^^
 142 |     IF (I == 4) EXIT
 143 | END DO
     |
-    = help: Change to 'cycle'
-
+help: Change to 'cycle'
 138 | END IF
 139 |
 140 | DO I = 1, N
@@ -3071,16 +3071,16 @@ snapshot_kind: text
 143 | END DO
 144 |
 
-./resources/test/fixtures/style/S233.f90:142:5: S233 [*] Keyword 'IF' should be 'if'
+S233 [*] Keyword 'IF' should be 'if'
+   --> ./resources/test/fixtures/style/S233.f90:142:5
     |
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
 142 |     IF (I == 4) EXIT
-    |     ^^ S233
+    |     ^^
 143 | END DO
     |
-    = help: Change to 'if'
-
+help: Change to 'if'
 139 |
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
@@ -3090,16 +3090,16 @@ snapshot_kind: text
 144 |
 145 | GOTO 100
 
-./resources/test/fixtures/style/S233.f90:142:17: S233 [*] Keyword 'EXIT' should be 'exit'
+S233 [*] Keyword 'EXIT' should be 'exit'
+   --> ./resources/test/fixtures/style/S233.f90:142:17
     |
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
 142 |     IF (I == 4) EXIT
-    |                 ^^^^ S233
+    |                 ^^^^
 143 | END DO
     |
-    = help: Change to 'exit'
-
+help: Change to 'exit'
 139 |
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
@@ -3109,17 +3109,17 @@ snapshot_kind: text
 144 |
 145 | GOTO 100
 
-./resources/test/fixtures/style/S233.f90:143:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:143:1
     |
 141 |     IF (I == 3) CYCLE
 142 |     IF (I == 4) EXIT
 143 | END DO
-    | ^^^ S233
+    | ^^^
 144 |
 145 | GOTO 100
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
 142 |     IF (I == 4) EXIT
@@ -3129,17 +3129,17 @@ snapshot_kind: text
 145 | GOTO 100
 146 | GO TO 100
 
-./resources/test/fixtures/style/S233.f90:143:5: S233 [*] Keyword 'DO' should be 'do'
+S233 [*] Keyword 'DO' should be 'do'
+   --> ./resources/test/fixtures/style/S233.f90:143:5
     |
 141 |     IF (I == 3) CYCLE
 142 |     IF (I == 4) EXIT
 143 | END DO
-    |     ^^ S233
+    |     ^^
 144 |
 145 | GOTO 100
     |
-    = help: Change to 'do'
-
+help: Change to 'do'
 140 | DO I = 1, N
 141 |     IF (I == 3) CYCLE
 142 |     IF (I == 4) EXIT
@@ -3149,17 +3149,17 @@ snapshot_kind: text
 145 | GOTO 100
 146 | GO TO 100
 
-./resources/test/fixtures/style/S233.f90:145:1: S233 [*] Keyword 'GOTO' should be 'goto'
+S233 [*] Keyword 'GOTO' should be 'goto'
+   --> ./resources/test/fixtures/style/S233.f90:145:1
     |
 143 | END DO
 144 |
 145 | GOTO 100
-    | ^^^^ S233
+    | ^^^^
 146 | GO TO 100
 147 | PRINT *, "SHOULD NOT PRINT"
     |
-    = help: Change to 'goto'
-
+help: Change to 'goto'
 142 |     IF (I == 4) EXIT
 143 | END DO
 144 |
@@ -3169,16 +3169,16 @@ snapshot_kind: text
 147 | PRINT *, "SHOULD NOT PRINT"
 148 | 100 CONTINUE
 
-./resources/test/fixtures/style/S233.f90:146:1: S233 [*] Keyword 'GO' should be 'go'
+S233 [*] Keyword 'GO' should be 'go'
+   --> ./resources/test/fixtures/style/S233.f90:146:1
     |
 145 | GOTO 100
 146 | GO TO 100
-    | ^^ S233
+    | ^^
 147 | PRINT *, "SHOULD NOT PRINT"
 148 | 100 CONTINUE
     |
-    = help: Change to 'go'
-
+help: Change to 'go'
 143 | END DO
 144 |
 145 | GOTO 100
@@ -3188,16 +3188,16 @@ snapshot_kind: text
 148 | 100 CONTINUE
 149 |
 
-./resources/test/fixtures/style/S233.f90:146:4: S233 [*] Keyword 'TO' should be 'to'
+S233 [*] Keyword 'TO' should be 'to'
+   --> ./resources/test/fixtures/style/S233.f90:146:4
     |
 145 | GOTO 100
 146 | GO TO 100
-    |    ^^ S233
+    |    ^^
 147 | PRINT *, "SHOULD NOT PRINT"
 148 | 100 CONTINUE
     |
-    = help: Change to 'to'
-
+help: Change to 'to'
 143 | END DO
 144 |
 145 | GOTO 100
@@ -3207,16 +3207,16 @@ snapshot_kind: text
 148 | 100 CONTINUE
 149 |
 
-./resources/test/fixtures/style/S233.f90:147:1: S233 [*] Keyword 'PRINT' should be 'print'
+S233 [*] Keyword 'PRINT' should be 'print'
+   --> ./resources/test/fixtures/style/S233.f90:147:1
     |
 145 | GOTO 100
 146 | GO TO 100
 147 | PRINT *, "SHOULD NOT PRINT"
-    | ^^^^^ S233
+    | ^^^^^
 148 | 100 CONTINUE
     |
-    = help: Change to 'print'
-
+help: Change to 'print'
 144 |
 145 | GOTO 100
 146 | GO TO 100
@@ -3226,17 +3226,17 @@ snapshot_kind: text
 149 |
 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
 
-./resources/test/fixtures/style/S233.f90:148:5: S233 [*] Keyword 'CONTINUE' should be 'continue'
+S233 [*] Keyword 'CONTINUE' should be 'continue'
+   --> ./resources/test/fixtures/style/S233.f90:148:5
     |
 146 | GO TO 100
 147 | PRINT *, "SHOULD NOT PRINT"
 148 | 100 CONTINUE
-    |     ^^^^^^^^ S233
+    |     ^^^^^^^^
 149 |
 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
     |
-    = help: Change to 'continue'
-
+help: Change to 'continue'
 145 | GOTO 100
 146 | GO TO 100
 147 | PRINT *, "SHOULD NOT PRINT"
@@ -3246,17 +3246,17 @@ snapshot_kind: text
 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
 151 |
 
-./resources/test/fixtures/style/S233.f90:150:1: S233 [*] Keyword 'CALL' should be 'call'
+S233 [*] Keyword 'CALL' should be 'call'
+   --> ./resources/test/fixtures/style/S233.f90:150:1
     |
 148 | 100 CONTINUE
 149 |
 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
-    | ^^^^ S233
+    | ^^^^
 151 |
 152 | SYNC ALL
     |
-    = help: Change to 'call'
-
+help: Change to 'call'
 147 | PRINT *, "SHOULD NOT PRINT"
 148 | 100 CONTINUE
 149 |
@@ -3266,17 +3266,17 @@ snapshot_kind: text
 152 | SYNC ALL
 153 |
 
-./resources/test/fixtures/style/S233.f90:152:1: S233 [*] Keyword 'SYNC' should be 'sync'
+S233 [*] Keyword 'SYNC' should be 'sync'
+   --> ./resources/test/fixtures/style/S233.f90:152:1
     |
 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
 151 |
 152 | SYNC ALL
-    | ^^^^ S233
+    | ^^^^
 153 |
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
     |
-    = help: Change to 'sync'
-
+help: Change to 'sync'
 149 |
 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
 151 |
@@ -3286,17 +3286,17 @@ snapshot_kind: text
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
 155 | WRITE(10,*) "HELLO"
 
-./resources/test/fixtures/style/S233.f90:152:6: S233 [*] Keyword 'ALL' should be 'all'
+S233 [*] Keyword 'ALL' should be 'all'
+   --> ./resources/test/fixtures/style/S233.f90:152:6
     |
 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
 151 |
 152 | SYNC ALL
-    |      ^^^ S233
+    |      ^^^
 153 |
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
     |
-    = help: Change to 'all'
-
+help: Change to 'all'
 149 |
 150 | CALL C_F_POINTER(C_NULL_PTR, ARR)
 151 |
@@ -3306,17 +3306,17 @@ snapshot_kind: text
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
 155 | WRITE(10,*) "HELLO"
 
-./resources/test/fixtures/style/S233.f90:154:1: S233 [*] Keyword 'OPEN' should be 'open'
+S233 [*] Keyword 'OPEN' should be 'open'
+   --> ./resources/test/fixtures/style/S233.f90:154:1
     |
 152 | SYNC ALL
 153 |
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-    | ^^^^ S233
+    | ^^^^
 155 | WRITE(10,*) "HELLO"
 156 | READ(10,*) STR
     |
-    = help: Change to 'open'
-
+help: Change to 'open'
 151 |
 152 | SYNC ALL
 153 |
@@ -3326,17 +3326,17 @@ snapshot_kind: text
 156 | READ(10,*) STR
 157 | CLOSE(10)
 
-./resources/test/fixtures/style/S233.f90:154:6: S233 [*] Keyword 'UNIT' should be 'unit'
+S233 [*] Keyword 'UNIT' should be 'unit'
+   --> ./resources/test/fixtures/style/S233.f90:154:6
     |
 152 | SYNC ALL
 153 |
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
-    |      ^^^^ S233
+    |      ^^^^
 155 | WRITE(10,*) "HELLO"
 156 | READ(10,*) STR
     |
-    = help: Change to 'unit'
-
+help: Change to 'unit'
 151 |
 152 | SYNC ALL
 153 |
@@ -3346,16 +3346,16 @@ snapshot_kind: text
 156 | READ(10,*) STR
 157 | CLOSE(10)
 
-./resources/test/fixtures/style/S233.f90:155:1: S233 [*] Keyword 'WRITE' should be 'write'
+S233 [*] Keyword 'WRITE' should be 'write'
+   --> ./resources/test/fixtures/style/S233.f90:155:1
     |
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
 155 | WRITE(10,*) "HELLO"
-    | ^^^^^ S233
+    | ^^^^^
 156 | READ(10,*) STR
 157 | CLOSE(10)
     |
-    = help: Change to 'write'
-
+help: Change to 'write'
 152 | SYNC ALL
 153 |
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
@@ -3365,16 +3365,16 @@ snapshot_kind: text
 157 | CLOSE(10)
 158 |
 
-./resources/test/fixtures/style/S233.f90:156:1: S233 [*] Keyword 'READ' should be 'read'
+S233 [*] Keyword 'READ' should be 'read'
+   --> ./resources/test/fixtures/style/S233.f90:156:1
     |
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
 155 | WRITE(10,*) "HELLO"
 156 | READ(10,*) STR
-    | ^^^^ S233
+    | ^^^^
 157 | CLOSE(10)
     |
-    = help: Change to 'read'
-
+help: Change to 'read'
 153 |
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
 155 | WRITE(10,*) "HELLO"
@@ -3384,17 +3384,17 @@ snapshot_kind: text
 158 |
 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
 
-./resources/test/fixtures/style/S233.f90:157:1: S233 [*] Keyword 'CLOSE' should be 'close'
+S233 [*] Keyword 'CLOSE' should be 'close'
+   --> ./resources/test/fixtures/style/S233.f90:157:1
     |
 155 | WRITE(10,*) "HELLO"
 156 | READ(10,*) STR
 157 | CLOSE(10)
-    | ^^^^^ S233
+    | ^^^^^
 158 |
 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
     |
-    = help: Change to 'close'
-
+help: Change to 'close'
 154 | OPEN(UNIT=10, FILE="test.txt", STATUS="UNKNOWN")
 155 | WRITE(10,*) "HELLO"
 156 | READ(10,*) STR
@@ -3404,17 +3404,17 @@ snapshot_kind: text
 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
 160 |
 
-./resources/test/fixtures/style/S233.f90:159:1: S233 [*] Keyword 'INQUIRE' should be 'inquire'
+S233 [*] Keyword 'INQUIRE' should be 'inquire'
+   --> ./resources/test/fixtures/style/S233.f90:159:1
     |
 157 | CLOSE(10)
 158 |
 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
-    | ^^^^^^^ S233
+    | ^^^^^^^
 160 |
 161 | NULLIFY(POLY)
     |
-    = help: Change to 'inquire'
-
+help: Change to 'inquire'
 156 | READ(10,*) STR
 157 | CLOSE(10)
 158 |
@@ -3424,17 +3424,17 @@ snapshot_kind: text
 161 | NULLIFY(POLY)
 162 |
 
-./resources/test/fixtures/style/S233.f90:161:1: S233 [*] Keyword 'NULLIFY' should be 'nullify'
+S233 [*] Keyword 'NULLIFY' should be 'nullify'
+   --> ./resources/test/fixtures/style/S233.f90:161:1
     |
 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
 160 |
 161 | NULLIFY(POLY)
-    | ^^^^^^^ S233
+    | ^^^^^^^
 162 |
 163 | DEALLOCATE(ARR)
     |
-    = help: Change to 'nullify'
-
+help: Change to 'nullify'
 158 |
 159 | INQUIRE(FILE="test.txt", EXIST=FLAG)
 160 |
@@ -3444,17 +3444,17 @@ snapshot_kind: text
 163 | DEALLOCATE(ARR)
 164 |
 
-./resources/test/fixtures/style/S233.f90:163:1: S233 [*] Keyword 'DEALLOCATE' should be 'deallocate'
+S233 [*] Keyword 'DEALLOCATE' should be 'deallocate'
+   --> ./resources/test/fixtures/style/S233.f90:163:1
     |
 161 | NULLIFY(POLY)
 162 |
 163 | DEALLOCATE(ARR)
-    | ^^^^^^^^^^ S233
+    | ^^^^^^^^^^
 164 |
 165 | STOP
     |
-    = help: Change to 'deallocate'
-
+help: Change to 'deallocate'
 160 |
 161 | NULLIFY(POLY)
 162 |
@@ -3464,16 +3464,16 @@ snapshot_kind: text
 165 | STOP
 166 | END PROGRAM KEYWORD_ZOO
 
-./resources/test/fixtures/style/S233.f90:165:1: S233 [*] Keyword 'STOP' should be 'stop'
+S233 [*] Keyword 'STOP' should be 'stop'
+   --> ./resources/test/fixtures/style/S233.f90:165:1
     |
 163 | DEALLOCATE(ARR)
 164 |
 165 | STOP
-    | ^^^^ S233
+    | ^^^^
 166 | END PROGRAM KEYWORD_ZOO
     |
-    = help: Change to 'stop'
-
+help: Change to 'stop'
 162 |
 163 | DEALLOCATE(ARR)
 164 |
@@ -3481,28 +3481,28 @@ snapshot_kind: text
 165 + stop
 166 | END PROGRAM KEYWORD_ZOO
 
-./resources/test/fixtures/style/S233.f90:166:1: S233 [*] Keyword 'END' should be 'end'
+S233 [*] Keyword 'END' should be 'end'
+   --> ./resources/test/fixtures/style/S233.f90:166:1
     |
 165 | STOP
 166 | END PROGRAM KEYWORD_ZOO
-    | ^^^ S233
+    | ^^^
     |
-    = help: Change to 'end'
-
+help: Change to 'end'
 163 | DEALLOCATE(ARR)
 164 |
 165 | STOP
     - END PROGRAM KEYWORD_ZOO
 166 + end PROGRAM KEYWORD_ZOO
 
-./resources/test/fixtures/style/S233.f90:166:5: S233 [*] Keyword 'PROGRAM' should be 'program'
+S233 [*] Keyword 'PROGRAM' should be 'program'
+   --> ./resources/test/fixtures/style/S233.f90:166:5
     |
 165 | STOP
 166 | END PROGRAM KEYWORD_ZOO
-    |     ^^^^^^^ S233
+    |     ^^^^^^^
     |
-    = help: Change to 'program'
-
+help: Change to 'program'
 163 | DEALLOCATE(ARR)
 164 |
 165 | STOP

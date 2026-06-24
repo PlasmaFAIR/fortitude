@@ -3,16 +3,16 @@ source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C143.f90:9:3: C143 [*] 'end associate' statement in named 'associate' block missing label
+C143 [*] 'end associate' statement in named 'associate' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:9:3
    |
  8 |   label1: associate(x => 1 + 1)
  9 |   end associate
-   |   ^^^^^^^^^^^^^ C143
+   |   ^^^^^^^^^^^^^
 10 |
 11 |   label2: block
    |
-   = help: Add label 'label1'
-
+help: Add label 'label1'
 6  |   type(team_type) :: parent
 7  |
 8  |   label1: associate(x => 1 + 1)
@@ -22,16 +22,16 @@ snapshot_kind: text
 11 |   label2: block
 12 |   end block
 
-./resources/test/fixtures/correctness/C143.f90:15:3: C143 [*] 'end critical' statement in named 'critical' block missing label
+C143 [*] 'end critical' statement in named 'critical' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:15:3
    |
 14 |   label3: critical
 15 |   end critical
-   |   ^^^^^^^^^^^^ C143
+   |   ^^^^^^^^^^^^
 16 |
 17 |   form team(1, parent)
    |
-   = help: Add label 'label3'
-
+help: Add label 'label3'
 12 |   end block
 13 |
 14 |   label3: critical
@@ -41,17 +41,17 @@ snapshot_kind: text
 17 |   form team(1, parent)
 18 |   label4: change team(parent)
 
-./resources/test/fixtures/correctness/C143.f90:19:3: C143 [*] 'end team' statement in named 'change team' block missing label
+C143 [*] 'end team' statement in named 'change team' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:19:3
    |
 17 |   form team(1, parent)
 18 |   label4: change team(parent)
 19 |   end team
-   |   ^^^^^^^^ C143
+   |   ^^^^^^^^
 20 |
 21 |   label5: do i = 1, 10
    |
-   = help: Add label 'label4'
-
+help: Add label 'label4'
 16 |
 17 |   form team(1, parent)
 18 |   label4: change team(parent)
@@ -61,16 +61,16 @@ snapshot_kind: text
 21 |   label5: do i = 1, 10
 22 |   end do
 
-./resources/test/fixtures/correctness/C143.f90:22:3: C143 [*] 'end do' statement in named 'do' block missing label
+C143 [*] 'end do' statement in named 'do' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:22:3
    |
 21 |   label5: do i = 1, 10
 22 |   end do
-   |   ^^^^^^ C143
+   |   ^^^^^^
 23 |
 24 |   label6: forall(i=1:3)
    |
-   = help: Add label 'label5'
-
+help: Add label 'label5'
 19 |   end team
 20 |
 21 |   label5: do i = 1, 10
@@ -80,16 +80,16 @@ snapshot_kind: text
 24 |   label6: forall(i=1:3)
 25 |   end forall
 
-./resources/test/fixtures/correctness/C143.f90:25:3: C143 [*] 'end forall' statement in named 'forall' block missing label
+C143 [*] 'end forall' statement in named 'forall' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:25:3
    |
 24 |   label6: forall(i=1:3)
 25 |   end forall
-   |   ^^^^^^^^^^ C143
+   |   ^^^^^^^^^^
 26 |
 27 |   label7: if (.true.) then
    |
-   = help: Add label 'label6'
-
+help: Add label 'label6'
 22 |   end do
 23 |
 24 |   label6: forall(i=1:3)
@@ -99,16 +99,16 @@ snapshot_kind: text
 27 |   label7: if (.true.) then
 28 |   end if
 
-./resources/test/fixtures/correctness/C143.f90:28:3: C143 [*] 'end if' statement in named 'if' block missing label
+C143 [*] 'end if' statement in named 'if' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:28:3
    |
 27 |   label7: if (.true.) then
 28 |   end if
-   |   ^^^^^^ C143
+   |   ^^^^^^
 29 |
 30 |   label8: select case(i)
    |
-   = help: Add label 'label7'
-
+help: Add label 'label7'
 25 |   end forall
 26 |
 27 |   label7: if (.true.) then
@@ -118,16 +118,16 @@ snapshot_kind: text
 30 |   label8: select case(i)
 31 |   end select
 
-./resources/test/fixtures/correctness/C143.f90:31:3: C143 [*] 'end select' statement in named 'select case' block missing label
+C143 [*] 'end select' statement in named 'select case' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:31:3
    |
 30 |   label8: select case(i)
 31 |   end select
-   |   ^^^^^^^^^^ C143
+   |   ^^^^^^^^^^
 32 |
 33 |   label9: select rank(i)
    |
-   = help: Add label 'label8'
-
+help: Add label 'label8'
 28 |   end if
 29 |
 30 |   label8: select case(i)
@@ -137,16 +137,16 @@ snapshot_kind: text
 33 |   label9: select rank(i)
 34 |   end select
 
-./resources/test/fixtures/correctness/C143.f90:34:3: C143 [*] 'end select' statement in named 'select rank' block missing label
+C143 [*] 'end select' statement in named 'select rank' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:34:3
    |
 33 |   label9: select rank(i)
 34 |   end select
-   |   ^^^^^^^^^^ C143
+   |   ^^^^^^^^^^
 35 |
 36 |   label10: select type(i)
    |
-   = help: Add label 'label9'
-
+help: Add label 'label9'
 31 |   end select
 32 |
 33 |   label9: select rank(i)
@@ -156,16 +156,16 @@ snapshot_kind: text
 36 |   label10: select type(i)
 37 |   end select
 
-./resources/test/fixtures/correctness/C143.f90:37:3: C143 [*] 'end select' statement in named 'select type' block missing label
+C143 [*] 'end select' statement in named 'select type' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:37:3
    |
 36 |   label10: select type(i)
 37 |   end select
-   |   ^^^^^^^^^^ C143
+   |   ^^^^^^^^^^
 38 |
 39 |   label11: where(i > 0)
    |
-   = help: Add label 'label10'
-
+help: Add label 'label10'
 34 |   end select
 35 |
 36 |   label10: select type(i)
@@ -175,16 +175,16 @@ snapshot_kind: text
 39 |   label11: where(i > 0)
 40 |   end where
 
-./resources/test/fixtures/correctness/C143.f90:40:3: C143 [*] 'end where' statement in named 'where' block missing label
+C143 [*] 'end where' statement in named 'where' block missing label
+  --> ./resources/test/fixtures/correctness/C143.f90:40:3
    |
 39 |   label11: where(i > 0)
 40 |   end where
-   |   ^^^^^^^^^ C143
+   |   ^^^^^^^^^
 41 |   
 42 |   label_yes1: associate(x => 1 + 1)
    |
-   = help: Add label 'label11'
-
+help: Add label 'label11'
 37 |   end select
 38 |
 39 |   label11: where(i > 0)

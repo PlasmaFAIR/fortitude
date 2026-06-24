@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/obsolescent/OB051.f90:4:3: OB051 [*] `pause` statements are a deleted feature
+OB051 [*] `pause` statements are a deleted feature
+ --> ./resources/test/fixtures/obsolescent/OB051.f90:4:3
   |
 2 |   implicit none
 3 |   print*,"hello"
 4 |   pause
-  |   ^^^^^ OB051
+  |   ^^^^^
 5 |   print*,"bye"
 6 | end program
   |
-  = help: Use 'read(*, *)' instead
-
+help: Use 'read(*, *)' instead
 1 | program test
 2 |   implicit none
 3 |   print*,"hello"
@@ -21,3 +21,4 @@ snapshot_kind: text
 4 +   read(*, *)
 5 |   print*,"bye"
 6 | end program
+note: This is an unsafe fix and may change runtime behavior

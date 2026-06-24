@@ -4,18 +4,17 @@ use std::io::Write;
 use anyhow::Result;
 use bitflags::bitflags;
 use colored::Colorize;
+use fortitude_linter::preview::{is_show_diff_enabled, is_warning_severity_enabled};
 use itertools::{Itertools, iterate};
 use serde::Serialize;
 
 use crate::check::CheckResults;
-use fortitude_linter::diagnostics::message::{
-    AzureEmitter, Emitter, GithubEmitter, GitlabEmitter, GroupedEmitter, JsonEmitter,
-    JsonLinesEmitter, JunitEmitter, PylintEmitter, RdjsonEmitter, SarifEmitter, TextEmitter,
+use fortitude_linter::diagnostics::{
+    Diagnostic, Diagnostics, DisplayDiagnosticConfig, FixMap, SecondaryCode, render_diagnostics,
 };
-use fortitude_linter::diagnostics::{Diagnostic, Diagnostics, FixMap};
 use fortitude_linter::fs::relativize_path;
 use fortitude_linter::logging::LogLevel;
-use fortitude_linter::settings::{FixMode, OutputFormat, UnsafeFixes};
+use fortitude_linter::settings::{FixMode, OutputFormat, PreviewMode, UnsafeFixes};
 
 bitflags! {
     #[derive(Default, Debug, Copy, Clone)]
@@ -31,7 +30,7 @@ bitflags! {
 
 #[derive(Serialize)]
 struct ExpandedStatistics<'a> {
-    code: &'a str,
+    code: Option<&'a SecondaryCode>,
     name: &'static str,
     count: usize,
     #[serde(rename = "fixable")]
@@ -47,7 +46,7 @@ impl ExpandedStatistics<'_> {
 
 /// Accumulator type for grouping diagnostics by code.
 /// Format: (`code`, `representative_diagnostic`, `total_count`, `fixable_count`)
-type DiagnosticGroup<'a> = (&'a str, &'a Diagnostic, usize, usize);
+type DiagnosticGroup<'a> = (Option<&'a SecondaryCode>, &'a Diagnostic, usize, usize);
 
 pub(crate) struct Printer {
     format: OutputFormat,
@@ -225,7 +224,12 @@ impl Printer {
         Ok(())
     }
 
-    pub(crate) fn write_once(&self, results: &CheckResults, writer: &mut dyn Write) -> Result<()> {
+    pub(crate) fn write_once(
+        &self,
+        results: &CheckResults,
+        writer: &mut dyn Write,
+        preview: PreviewMode,
+    ) -> Result<()> {
         if matches!(self.log_level, LogLevel::Silent) {
             return Ok(());
         }
@@ -247,69 +251,29 @@ impl Printer {
             return Ok(());
         }
 
-        let fixables = FixableStatistics::try_from(&results.diagnostics, self.unsafe_fixes);
+        let diagnostics = &results.diagnostics;
+        let fixables = FixableStatistics::try_from(diagnostics, self.unsafe_fixes);
 
-        match self.format {
-            OutputFormat::Concise | OutputFormat::Full => {
-                TextEmitter::default()
-                    .with_show_fix_status(true)
-                    .with_show_fix_diff(self.flags.intersects(Flags::SHOW_FIX_DIFF))
-                    .with_show_source(self.format == OutputFormat::Full)
-                    .with_unsafe_fixes(fortitude_linter::settings::UnsafeFixes::Hint)
-                    .emit(writer, &results.diagnostics.messages)?;
+        let config = DisplayDiagnosticConfig::new()
+            .preview(preview.is_enabled())
+            .hide_severity(!is_warning_severity_enabled(preview))
+            .color(!cfg!(test) && colored::control::SHOULD_COLORIZE.should_colorize())
+            .with_show_fix_status(show_fix_status(self.fix_mode, fixables.as_ref()))
+            .with_fix_applicability(self.unsafe_fixes.required_applicability())
+            .show_fix_diff(is_show_diff_enabled(preview));
 
-                if self.flags.intersects(Flags::SHOW_FIX_SUMMARY)
-                    && !results.diagnostics.fixed.is_empty()
-                {
-                    writeln!(writer)?;
-                    print_fix_summary(writer, &results.diagnostics.fixed)?;
-                    writeln!(writer)?;
-                }
+        render_diagnostics(writer, self.format, config, &diagnostics.messages)?;
 
-                self.write_summary_text(writer, results)?;
+        if matches!(
+            self.format,
+            OutputFormat::Full | OutputFormat::Concise | OutputFormat::Grouped
+        ) {
+            if self.flags.intersects(Flags::SHOW_FIX_SUMMARY) && !diagnostics.fixed.is_empty() {
+                writeln!(writer)?;
+                print_fix_summary(writer, &diagnostics.fixed)?;
+                writeln!(writer)?;
             }
-            OutputFormat::Github => {
-                GithubEmitter.emit(writer, &results.diagnostics.messages)?;
-            }
-            OutputFormat::Gitlab => {
-                GitlabEmitter::default().emit(writer, &results.diagnostics.messages)?;
-            }
-            OutputFormat::Grouped => {
-                GroupedEmitter::default()
-                    .with_show_fix_status(show_fix_status(self.fix_mode, fixables.as_ref()))
-                    .with_unsafe_fixes(self.unsafe_fixes)
-                    .emit(writer, &results.diagnostics.messages)?;
-
-                if self.flags.intersects(Flags::SHOW_FIX_SUMMARY)
-                    && !results.diagnostics.fixed.is_empty()
-                {
-                    writeln!(writer)?;
-                    print_fix_summary(writer, &results.diagnostics.fixed)?;
-                    writeln!(writer)?;
-                }
-                self.write_summary_text(writer, results)?;
-            }
-            OutputFormat::Json => {
-                JsonEmitter.emit(writer, &results.diagnostics.messages)?;
-            }
-            OutputFormat::Sarif => {
-                SarifEmitter.emit(writer, &results.diagnostics.messages)?;
-            }
-            OutputFormat::Azure => {
-                AzureEmitter.emit(writer, &results.diagnostics.messages)?;
-            }
-            OutputFormat::JsonLines => {
-                JsonLinesEmitter.emit(writer, &results.diagnostics.messages)?;
-            }
-            OutputFormat::Rdjson => {
-                RdjsonEmitter.emit(writer, &results.diagnostics.messages)?;
-            }
-            OutputFormat::Junit => {
-                JunitEmitter.emit(writer, &results.diagnostics.messages)?;
-            }
-            OutputFormat::Pylint => {
-                PylintEmitter.emit(writer, &results.diagnostics.messages)?;
-            }
+            self.write_summary_text(writer, results)?;
         }
 
         writer.flush()?;
@@ -326,12 +290,12 @@ impl Printer {
             .diagnostics
             .messages
             .iter()
-            .sorted_by_key(|diagnostic| diagnostic.code())
+            .sorted_by_key(|diagnostic| diagnostic.secondary_code())
             .fold(vec![], |mut acc: Vec<DiagnosticGroup>, diagnostic| {
                 let is_fixable = diagnostic
                     .fix()
                     .is_some_and(|fix| fix.applies(required_applicability));
-                let code = diagnostic.code();
+                let code = diagnostic.secondary_code();
 
                 if let Some((prev_code, _prev_message, count, fixable_count)) = acc.last_mut()
                     && *prev_code == code
@@ -377,7 +341,7 @@ impl Printer {
                 );
                 let code_width = statistics
                     .iter()
-                    .map(|statistic| statistic.code.len())
+                    .map(|statistic| statistic.code.map_or(0, |s| s.len()))
                     .max()
                     .unwrap();
                 let any_fixable = statistics.iter().any(ExpandedStatistics::any_fixable);
@@ -392,7 +356,12 @@ impl Printer {
                         writer,
                         "{:>count_width$}\t{:<code_width$}\t{}{}",
                         statistic.count.to_string().bold(),
-                        statistic.code.red().bold(),
+                        statistic
+                            .code
+                            .map(SecondaryCode::as_str)
+                            .unwrap_or_default()
+                            .red()
+                            .bold(),
                         if any_fixable {
                             if statistic.all_fixable {
                                 &all_fixable

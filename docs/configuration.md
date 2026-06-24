@@ -275,7 +275,7 @@ Options:
       --statistics
           Show counts for every rule with at least one violation
   -h, --help
-          Print help
+          Print help (see more with '--help')
 
 Rule selection:
       --ignore <RULE_CODE>

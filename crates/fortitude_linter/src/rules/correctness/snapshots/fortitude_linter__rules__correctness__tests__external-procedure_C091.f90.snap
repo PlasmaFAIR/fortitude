@@ -1,15 +1,16 @@
 ---
-source: fortitude/src/rules/correctness/mod.rs
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C091.f90:12:3: C091 'g' declared as `external`
+C091 'g' declared as `external`
+  --> ./resources/test/fixtures/correctness/C091.f90:12:3
    |
 10 |   end interface
 11 |
 12 |   external :: g
-   |   ^^^^^^^^^^^^^ C091
+   |   ^^^^^^^^^^^^^
 13 |
 14 | end program test
    |
-   = help: Write an explicit interface
+help: Write an explicit interface

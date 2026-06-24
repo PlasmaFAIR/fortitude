@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S242.f90:5:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+ --> ./resources/test/fixtures/style/S242.f90:5:11
   |
 3 |   implicit none (type, external)
 4 |
 5 |   print*, 'This isn''t necessary'
-  |           ^^^^^^^^^^^^^^^^^^^^^^^ S242
+  |           ^^^^^^^^^^^^^^^^^^^^^^^
 6 |   print*, "This ""is not"" necessary"
 7 |   print*, 'This "isn''t" unnecessary'
   |
-  = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 2 |   use, intrinsic :: iso_c_binding, only: c_char
 3 |   implicit none (type, external)
 4 |
@@ -23,16 +23,16 @@ snapshot_kind: text
 7 |   print*, 'This "isn''t" unnecessary'
 8 |   print*, "This ""isn't"" unnecessary"
 
-./resources/test/fixtures/style/S242.f90:6:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+ --> ./resources/test/fixtures/style/S242.f90:6:11
   |
 5 |   print*, 'This isn''t necessary'
 6 |   print*, "This ""is not"" necessary"
-  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ S242
+  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7 |   print*, 'This "isn''t" unnecessary'
 8 |   print*, "This ""isn't"" unnecessary"
   |
-  = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 3 |   implicit none (type, external)
 4 |
 5 |   print*, 'This isn''t necessary'
@@ -42,17 +42,17 @@ snapshot_kind: text
 8 |   print*, "This ""isn't"" unnecessary"
 9 |   print*, 4_"Does this ""break""?"
 
-./resources/test/fixtures/style/S242.f90:9:13: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:9:13
    |
  7 |   print*, 'This "isn''t" unnecessary'
  8 |   print*, "This ""isn't"" unnecessary"
  9 |   print*, 4_"Does this ""break""?"
-   |             ^^^^^^^^^^^^^^^^^^^^^^ S242
+   |             ^^^^^^^^^^^^^^^^^^^^^^
 10 |   print*, c_char_'Does this ''break''?'
 11 |   print*, 'This &
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 6  |   print*, "This ""is not"" necessary"
 7  |   print*, 'This "isn''t" unnecessary'
 8  |   print*, "This ""isn't"" unnecessary"
@@ -62,17 +62,17 @@ snapshot_kind: text
 11 |   print*, 'This &
 12 |        &isn''t &
 
-./resources/test/fixtures/style/S242.f90:10:18: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:10:18
    |
  8 |   print*, "This ""isn't"" unnecessary"
  9 |   print*, 4_"Does this ""break""?"
 10 |   print*, c_char_'Does this ''break''?'
-   |                  ^^^^^^^^^^^^^^^^^^^^^^ S242
+   |                  ^^^^^^^^^^^^^^^^^^^^^^
 11 |   print*, 'This &
 12 |        &isn''t &
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 7  |   print*, 'This "isn''t" unnecessary'
 8  |   print*, "This ""isn't"" unnecessary"
 9  |   print*, 4_"Does this ""break""?"
@@ -82,7 +82,8 @@ snapshot_kind: text
 12 |        &isn''t &
 13 |        &necessary'
 
-./resources/test/fixtures/style/S242.f90:11:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:11:11
    |
  9 |     print*, 4_"Does this ""break""?"
 10 |     print*, c_char_'Does this ''break''?'
@@ -90,12 +91,11 @@ snapshot_kind: text
    |  ___________^
 12 | |        &isn''t &
 13 | |        &necessary'
-   | |__________________^ S242
+   | |__________________^
 14 |     print*, 'This &
 15 |          &""isn''t"" &
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 8  |   print*, "This ""isn't"" unnecessary"
 9  |   print*, 4_"Does this ""break""?"
 10 |   print*, c_char_'Does this ''break''?'
@@ -109,17 +109,17 @@ snapshot_kind: text
 15 |        &""isn''t"" &
 16 |        &unnecessary'
 
-./resources/test/fixtures/style/S242.f90:21:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:21:11
    |
 19 |   print*, ''                    ! empty
 20 |   print*, ""                    ! empty
 21 |   print*, ''''                  ! '
-   |           ^^^^ S242
+   |           ^^^^
 22 |   print*, """"                  ! "
 23 |   print*, ''''''                ! ''
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 18 |   ! Multiple quotes
 19 |   print*, ''                    ! empty
 20 |   print*, ""                    ! empty
@@ -129,17 +129,17 @@ snapshot_kind: text
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
 
-./resources/test/fixtures/style/S242.f90:22:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:22:11
    |
 20 |   print*, ""                    ! empty
 21 |   print*, ''''                  ! '
 22 |   print*, """"                  ! "
-   |           ^^^^ S242
+   |           ^^^^
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 19 |   print*, ''                    ! empty
 20 |   print*, ""                    ! empty
 21 |   print*, ''''                  ! '
@@ -149,17 +149,17 @@ snapshot_kind: text
 24 |   print*, ''''''''              ! '''
 25 |   print*, """"""                ! ""
 
-./resources/test/fixtures/style/S242.f90:23:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:23:11
    |
 21 |   print*, ''''                  ! '
 22 |   print*, """"                  ! "
 23 |   print*, ''''''                ! ''
-   |           ^^^^^^ S242
+   |           ^^^^^^
 24 |   print*, ''''''''              ! '''
 25 |   print*, """"""                ! ""
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 20 |   print*, ""                    ! empty
 21 |   print*, ''''                  ! '
 22 |   print*, """"                  ! "
@@ -169,17 +169,17 @@ snapshot_kind: text
 25 |   print*, """"""                ! ""
 26 |   print*, """"""""              ! """
 
-./resources/test/fixtures/style/S242.f90:24:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:24:11
    |
 22 |   print*, """"                  ! "
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
-   |           ^^^^^^^^ S242
+   |           ^^^^^^^^
 25 |   print*, """"""                ! ""
 26 |   print*, """"""""              ! """
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 21 |   print*, ''''                  ! '
 22 |   print*, """"                  ! "
 23 |   print*, ''''''                ! ''
@@ -189,16 +189,16 @@ snapshot_kind: text
 26 |   print*, """"""""              ! """
 27 |
 
-./resources/test/fixtures/style/S242.f90:25:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:25:11
    |
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
 25 |   print*, """"""                ! ""
-   |           ^^^^^^ S242
+   |           ^^^^^^
 26 |   print*, """"""""              ! """
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 22 |   print*, """"                  ! "
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
@@ -208,17 +208,17 @@ snapshot_kind: text
 27 |
 28 | end program test
 
-./resources/test/fixtures/style/S242.f90:26:11: S242 [*] Avoidable escaped quotes
+S242 [*] Avoidable escaped quotes
+  --> ./resources/test/fixtures/style/S242.f90:26:11
    |
 24 |   print*, ''''''''              ! '''
 25 |   print*, """"""                ! ""
 26 |   print*, """"""""              ! """
-   |           ^^^^^^^^ S242
+   |           ^^^^^^^^
 27 |
 28 | end program test
    |
-   = help: Change outer quotes to avoid escaping inner quotes
-
+help: Change outer quotes to avoid escaping inner quotes
 23 |   print*, ''''''                ! ''
 24 |   print*, ''''''''              ! '''
 25 |   print*, """"""                ! ""

@@ -16,181 +16,262 @@ exit_code: 1
 ----- stdout -----
 {
   "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-  "version": "2.1.0",
   "runs": [
     {
+      "results": [
+        {
+          "fixes": [
+            {
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "[TMP]/test.f90"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "endColumn": 1,
+                        "endLine": 2,
+                        "startColumn": 1,
+                        "startLine": 2
+                      },
+                      "insertedContent": {
+                        "text": "implicit none\n"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "description": {
+                "text": "Insert `implicit none`"
+              }
+            }
+          ],
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "[TMP]/test.f90"
+                },
+                "region": {
+                  "endColumn": 1,
+                  "endLine": 2,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "program uses implicit typing"
+          },
+          "ruleId": "C001"
+        },
+        {
+          "fixes": [
+            {
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "[TMP]/test.f90"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "endColumn": 12,
+                        "endLine": 2,
+                        "startColumn": 3,
+                        "startLine": 2
+                      },
+                      "insertedContent": {
+                        "text": "logical(4)"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "description": {
+                "text": "Replace with 'logical(4)'"
+              }
+            }
+          ],
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "[TMP]/test.f90"
+                },
+                "region": {
+                  "endColumn": 12,
+                  "endLine": 2,
+                  "startColumn": 10,
+                  "startLine": 2
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "'logical*4' uses non-standard syntax"
+          },
+          "ruleId": "PORT021"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "[TMP]/test.f90"
+                },
+                "region": {
+                  "endColumn": 12,
+                  "endLine": 2,
+                  "startColumn": 11,
+                  "startLine": 2
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "logical kind set with number literal '4'"
+          },
+          "ruleId": "PORT011"
+        },
+        {
+          "fixes": [
+            {
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "[TMP]/test.f90"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "endColumn": 12,
+                        "endLine": 3,
+                        "startColumn": 1,
+                        "startLine": 3
+                      },
+                      "insertedContent": {
+                        "text": "end program test"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "description": {
+                "text": "Write as 'end program test'."
+              }
+            }
+          ],
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "[TMP]/test.f90"
+                },
+                "region": {
+                  "endColumn": 12,
+                  "endLine": 3,
+                  "startColumn": 1,
+                  "startLine": 3
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "end statement should be named."
+          },
+          "ruleId": "S061"
+        }
+      ],
       "tool": {
         "driver": {
-          "name": "fortitude",
           "informationUri": "https://github.com/PlasmaFAIR/fortitude",
+          "name": "fortitude",
           "rules": [
             {
-              "id": "C001",
-              "shortDescription": {
-                "text": "{entity} uses implicit typing"
-              },
               "fullDescription": {
                 "text": "## What does it do?\nChecks for missing `implicit none`.\n\n## Why is this bad?\nVery early Fortran determined the type of variables implicitly\nfrom the first character of their name which saved lines in the\ndays of punchcards, and for backwards compatibility this is still\nthe default behaviour. However, the major downside is that typos\ncan silently introduce undefined variables and lead to hard to\ntrack down bugs. For example:\n\n```f90\ndo i = 1, 10\n    print*, in\nend do\n```\n\nwill print garbage.\n\n'implicit none' should be used in all modules and programs, as\nimplicit typing reduces the readability of code and increases the\nchances of typing errors. Because it applies to all children of an\nentity (all procedures in a module, for example), it _isn't_\nrequired in every procedure, just the parent module or program if\nthere is one.\n"
               },
               "help": {
                 "text": "{entity} uses implicit typing"
               },
+              "id": "C001",
               "properties": {
                 "id": "C001",
                 "kind": "Correctness",
                 "name": "implicit-typing",
                 "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "{entity} uses implicit typing"
               }
             },
             {
-              "id": "PORT011",
-              "shortDescription": {
-                "text": "{dtype} kind set with number literal '{literal}'"
-              },
               "fullDescription": {
                 "text": "## What it does\nChecks for use of raw number literals as kinds\n\n## Why is this bad?\nRather than setting an intrinsic type's kind using an integer literal, such as\n`real(8)` or `integer(kind=4)`, consider setting kinds using parameters in the\nintrinsic module `iso_fortran_env` such as `real64` and `int32`. For\nC-compatible types, consider instead `iso_c_binding` types such as\n`real(c_double)`.\n\nAlthough it is widely believed that `real(8)` represents an 8-byte floating\npoint (and indeed, this is the case for most compilers and architectures),\nthere is nothing in the standard to mandate this, and compiler vendors are free\nto choose any mapping between kind numbers and machine precision. This may lead\nto surprising results if your code is ported to another machine or compiler.\n\nFor floating point variables, we recommended using `real(sp)` (single\nprecision), `real(dp)` (double precision), and `real(qp)` (quadruple precision),\nusing:\n\n```f90\nuse, intrinsic :: iso_fortran_env, only: sp => real32, &\n                                         dp => real64, &\n                                         qp => real128\n```\n\nOr alternatively:\n\n```f90\ninteger, parameter :: sp = selected_real_kind(6, 37)\ninteger, parameter :: dp = selected_real_kind(15, 307)\ninteger, parameter :: qp = selected_real_kind(33, 4931)\n```\n\nSome prefer to set one precision parameter `wp` (working precision), which is\nset in one module and used throughout a project.\n\nInteger sizes may be set similarly:\n\n```f90\ninteger, parameter :: i1 = selected_int_kind(2)  ! 8 bits\ninteger, parameter :: i2 = selected_int_kind(4)  ! 16 bits\ninteger, parameter :: i4 = selected_int_kind(9)  ! 32 bits\ninteger, parameter :: i8 = selected_int_kind(18) ! 64 bits\n```\n\nOr:\n\n```f90\nuse, intrinsic :: iso_fortran_env, only: i1 => int8, &\n                                         i2 => int16, &\n                                         i4 => int32, &\n                                         i8 => int64\n```\n"
               },
               "help": {
                 "text": "{dtype} kind set with number literal '{literal}'"
               },
+              "id": "PORT011",
               "properties": {
                 "id": "PORT011",
                 "kind": "Portability",
                 "name": "literal-kind",
                 "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "{dtype} kind set with number literal '{literal}'"
               }
             },
             {
-              "id": "PORT021",
-              "shortDescription": {
-                "text": "'{dtype}{size}' uses non-standard syntax"
-              },
               "fullDescription": {
                 "text": "## What it does\nChecks for non-standard kind specifiers such as `int*4` or `real*8`\n\n## Why is this bad?\nTypes such as 'real*8' or 'integer*4' are not standard Fortran and should be\navoided. For these cases, consider instead using 'real(real64)' or\n'integer(int32)', where 'real64' and 'int32' may be found in the intrinsic\nmodule 'iso_fortran_env'. You may also wish to determine kinds using the\nbuilt-in functions 'selected_real_kind' and 'selected_int_kind'.\n\nFixes to this rule are considered unsafe, as while `dtype*N` is generally\nunderstood to mean a `dtype` that occupied `N` bytes, this does not necessarily\ncorrespond to `dtype(N)`, which is a `dtype` of 'kind' `N`. For example, the NAG\ncompiler may be configured to use a sequential kind system in which `real*8`\ncorresponds to `real(2)`\n\nIn a future version, we hope to upgrade this to a safe fix by use of parameters\nin `iso_fortran_env`, as `real*8` should always correspond to `real(real64)`.\n"
               },
               "help": {
                 "text": "'{dtype}{size}' uses non-standard syntax"
               },
+              "id": "PORT021",
               "properties": {
                 "id": "PORT021",
                 "kind": "Portability",
                 "name": "star-kind",
                 "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "'{dtype}{size}' uses non-standard syntax"
               }
             },
             {
-              "id": "S061",
-              "shortDescription": {
-                "text": "end statement should be named."
-              },
               "fullDescription": {
                 "text": "## What does it do?\nChecks that `end` statements include the type of construct they're ending\n\n## Why is this bad?\nEnd statements should specify what kind of construct they're ending, and the\nname of that construct. For example, prefer this:\n\n```f90\nmodule mymodule\n  ...\nend module mymodule\n```\n\nTo this:\n\n```f90\nmodule mymodule\n  ...\nend\n```\n\nOr this:\n\n```f90\nmodule mymodule\n  ...\nend module\n```\n\nSimilar rules apply for many other Fortran statements\n"
               },
               "help": {
                 "text": "end statement should be named."
               },
+              "id": "S061",
               "properties": {
                 "id": "S061",
                 "kind": "Style",
                 "name": "unnamed-end-statement",
                 "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "end statement should be named."
               }
             }
           ],
           "version": "[VERSION]"
         }
-      },
-      "results": [
-        {
-          "level": "error",
-          "message": {
-            "text": "program uses implicit typing"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "[TMP]/test.f90"
-                },
-                "region": {
-                  "startLine": 1,
-                  "startColumn": 1,
-                  "endLine": 2,
-                  "endColumn": 1
-                }
-              }
-            }
-          ],
-          "ruleId": "C001"
-        },
-        {
-          "level": "error",
-          "message": {
-            "text": "'logical*4' uses non-standard syntax"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "[TMP]/test.f90"
-                },
-                "region": {
-                  "startLine": 2,
-                  "startColumn": 10,
-                  "endLine": 2,
-                  "endColumn": 12
-                }
-              }
-            }
-          ],
-          "ruleId": "PORT021"
-        },
-        {
-          "level": "error",
-          "message": {
-            "text": "logical kind set with number literal '4'"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "[TMP]/test.f90"
-                },
-                "region": {
-                  "startLine": 2,
-                  "startColumn": 11,
-                  "endLine": 2,
-                  "endColumn": 12
-                }
-              }
-            }
-          ],
-          "ruleId": "PORT011"
-        },
-        {
-          "level": "error",
-          "message": {
-            "text": "end statement should be named."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "[TMP]/test.f90"
-                },
-                "region": {
-                  "startLine": 3,
-                  "startColumn": 1,
-                  "endLine": 3,
-                  "endColumn": 12
-                }
-              }
-            }
-          ],
-          "ruleId": "S061"
-        }
-      ]
+      }
     }
-  ]
+  ],
+  "version": "2.1.0"
 }
 ----- stderr -----

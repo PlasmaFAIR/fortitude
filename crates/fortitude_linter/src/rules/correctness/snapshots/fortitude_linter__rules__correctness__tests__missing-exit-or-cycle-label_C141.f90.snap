@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C141.f90:4:7: C141 [*] 'exit' statement in named 'do' loop missing label 'label1'
+C141 [*] 'exit' statement in named 'do' loop missing label 'label1'
+ --> ./resources/test/fixtures/correctness/C141.f90:4:7
   |
 2 |   label1: do
 3 |     if (.true.) then
 4 |       EXIT
-  |       ^^^^ C141
+  |       ^^^^
 5 |     end if
 6 |   end do label1
   |
-  = help: Add label 'label1'
-
+help: Add label 'label1'
 1 | program test
 2 |   label1: do
 3 |     if (.true.) then
@@ -22,16 +22,17 @@ snapshot_kind: text
 5 |     end if
 6 |   end do label1
 7 |
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/correctness/C141.f90:9:17: C141 [*] 'exit' statement in named 'do' loop missing label 'label2'
+C141 [*] 'exit' statement in named 'do' loop missing label 'label2'
+  --> ./resources/test/fixtures/correctness/C141.f90:9:17
    |
  8 |   label2: do
  9 |     if (.true.) exit
-   |                 ^^^^ C141
+   |                 ^^^^
 10 |   end do label2
    |
-   = help: Add label 'label2'
-
+help: Add label 'label2'
 6  |   end do label1
 7  |
 8  |   label2: do
@@ -40,18 +41,19 @@ snapshot_kind: text
 10 |   end do label2
 11 |
 12 |   label3: do
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/correctness/C141.f90:28:19: C141 [*] 'cycle' statement in named 'do' loop missing label 'inner'
+C141 [*] 'cycle' statement in named 'do' loop missing label 'inner'
+  --> ./resources/test/fixtures/correctness/C141.f90:28:19
    |
 26 |   label6: do i = 1, 2
 27 |     inner: do j = 1, 2
 28 |       if (.true.) CYCLE ! named inner loop: warns on inner loop
-   |                   ^^^^^ C141
+   |                   ^^^^^
 29 |     end do inner
 30 |   end do label6
    |
-   = help: Add label 'inner'
-
+help: Add label 'inner'
 25 |
 26 |   label6: do i = 1, 2
 27 |     inner: do j = 1, 2
@@ -60,3 +62,4 @@ snapshot_kind: text
 29 |     end do inner
 30 |   end do label6
 31 |
+note: This is an unsafe fix and may change runtime behavior

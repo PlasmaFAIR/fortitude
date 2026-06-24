@@ -3,31 +3,31 @@ source: crates/fortitude_linter/src/rules/modernisation/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/modernisation/MOD051.f90:2:3: MOD051 [*] save statement is superfluous at the module level
+MOD051 [*] save statement is superfluous at the module level
+ --> ./resources/test/fixtures/modernisation/MOD051.f90:2:3
   |
 1 | module test
 2 |   save
-  |   ^^^^ MOD051
+  |   ^^^^
 3 |
 4 |   integer :: a
   |
-  = help: Remove `save`
-
+help: Remove `save`
 1 | module test
   -   save
 2 |
 3 |   integer :: a
 4 |
 
-./resources/test/fixtures/modernisation/MOD051.f90:13:12: MOD051 [*] save attribute is superfluous at the module level
+MOD051 [*] save attribute is superfluous at the module level
+  --> ./resources/test/fixtures/modernisation/MOD051.f90:13:12
    |
 12 | module test
 13 |   integer, save :: a
-   |            ^^^^ MOD051
+   |            ^^^^
 14 | end module test
    |
-   = help: Remove `save`
-
+help: Remove `save`
 10 | end module test
 11 |
 12 | module test

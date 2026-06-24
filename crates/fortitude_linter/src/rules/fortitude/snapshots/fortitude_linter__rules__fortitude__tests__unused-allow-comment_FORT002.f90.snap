@@ -3,15 +3,15 @@ source: crates/fortitude_linter/src/rules/fortitude/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/fortitude/FORT002.f90:1:9: FORT002 [*] Unused rule `implicit-typing` in allow comment
+FORT002 [*] Unused rule `implicit-typing` in allow comment
+ --> ./resources/test/fixtures/fortitude/FORT002.f90:1:9
   |
 1 | ! allow(implicit-typing)
-  |         ^^^^^^^^^^^^^^^ FORT002
+  |         ^^^^^^^^^^^^^^^
 2 | program foo
 3 |   implicit none
   |
-  = help: Remove unused allow comment
-
+help: Remove unused allow comment
   - ! allow(implicit-typing)
 1 | program foo
 2 |   implicit none

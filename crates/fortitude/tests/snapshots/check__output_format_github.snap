@@ -14,9 +14,9 @@ snapshot_kind: text
 success: false
 exit_code: 1
 ----- stdout -----
-::error title=Fortitude (C001),file=[TMP]/test.f90,line=1,col=1,endLine=2,endColumn=1::test.f90:1:1: C001 program uses implicit typing
-::error title=Fortitude (PORT021),file=[TMP]/test.f90,line=2,col=10,endLine=2,endColumn=12::test.f90:2:10: PORT021 'logical*4' uses non-standard syntax
-::error title=Fortitude (PORT011),file=[TMP]/test.f90,line=2,col=11,endLine=2,endColumn=12::test.f90:2:11: PORT011 logical kind set with number literal '4'
-::error title=Fortitude (S061),file=[TMP]/test.f90,line=3,col=1,endLine=3,endColumn=12::test.f90:3:1: S061 end statement should be named.
+::error title=fortitude (C001),file=[TMP]/test.f90,line=1,endLine=2::test.f90:1:1: C001 program uses implicit typing%0A  help: Insert `implicit none`
+::error title=fortitude (PORT021),file=[TMP]/test.f90,line=2,col=10,endLine=2,endColumn=12::test.f90:2:10: PORT021 'logical*4' uses non-standard syntax%0A  help: Replace with 'logical(4)'
+::error title=fortitude (PORT011),file=[TMP]/test.f90,line=2,col=11,endLine=2,endColumn=12::test.f90:2:11: PORT011 logical kind set with number literal '4'%0A  help: Use the parameter 'int32' from 'iso_fortran_env'
+::error title=fortitude (S061),file=[TMP]/test.f90,line=3,col=1,endLine=3,endColumn=12::test.f90:3:1: S061 end statement should be named.%0A  help: Write as 'end program test'.
 
 ----- stderr -----

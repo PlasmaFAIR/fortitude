@@ -241,8 +241,8 @@ end program test
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:5:43: C051 Trailing backslash
-    test.f90:6:5: C011 Missing default case may not handle all values
+    test.f90:5:43: error[C051] Trailing backslash
+    test.f90:6:5: error[C011] Missing default case may not handle all values
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -537,8 +537,8 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:3:3: C003 'implicit none' missing 'external'
-    test.f90:4:3: C022 real has implicit kind
+    test.f90:3:3: error[C003] 'implicit none' missing 'external'
+    test.f90:4:3: error[C022] real has implicit kind
     fortitude: 1 files scanned.
     Number of errors: 4 (2 fixed, 2 remaining)
 
@@ -593,7 +593,7 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:4:3: C022 real has implicit kind
+    test.f90:4:3: error[C022] real has implicit kind
     fortitude: 1 files scanned.
     Number of errors: 4 (3 fixed, 1 remaining)
 
@@ -922,9 +922,9 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:6:8: S081 unnecessary semicolon
-    test.f90:7:9: E001 Syntax error
-    test.f90:9:51: S001 line length of 52, exceeds maximum 50
+    test.f90:6:8: error[S081] unnecessary semicolon
+    test.f90:7:9: error[E001] Syntax error
+    test.f90:9:51: error[S001] line length of 52, exceeds maximum 50
     fortitude: 1 files scanned.
     Number of errors: 3
 
@@ -962,8 +962,8 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:6:8: S081 unnecessary semicolon
-    test.f90:8:13: S081 unnecessary semicolon
+    test.f90:6:8: error[S081] unnecessary semicolon
+    test.f90:8:13: error[S081] unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -1002,8 +1002,8 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:6:8: S081 unnecessary semicolon
-    test.f90:9:13: S081 unnecessary semicolon
+    test.f90:6:8: error[S081] unnecessary semicolon
+    test.f90:9:13: error[S081] unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 2
 
@@ -1041,7 +1041,7 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:8:13: S081 unnecessary semicolon
+    test.f90:8:13: error[S081] unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 1
 
@@ -1730,12 +1730,12 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    -:1:1: FORT9900 Hey this is a stable test rule.
-    -:1:1: FORT9901 [*] Hey this is a stable test rule with a safe fix.
-    -:1:1: FORT9902 Hey this is a stable test rule with an unsafe fix.
-    -:1:1: FORT9903 Hey this is a stable test rule with a display only fix.
-    -:1:1: FORT9911 Hey this is a preview test rule.
-    -:1:1: FORT9950 Hey this is a test rule that was redirected from another.
+    -:1:1: error[FORT9900] Hey this is a stable test rule.
+    -:1:1: error[FORT9901] [*] Hey this is a stable test rule with a safe fix.
+    -:1:1: error[FORT9902] Hey this is a stable test rule with an unsafe fix.
+    -:1:1: error[FORT9903] Hey this is a stable test rule with a display only fix.
+    -:1:1: error[FORT9911] Hey this is a preview test rule.
+    -:1:1: error[FORT9950] Hey this is a test rule that was redirected from another.
     fortitude: 1 files scanned.
     Number of errors: 6
 

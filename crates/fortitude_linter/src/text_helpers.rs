@@ -21,6 +21,15 @@ macro_rules! impl_show_nonprinting {
                 }
             }
         }
+
+        /// If `c` is an unprintable character, then this returns a printable
+        /// representation of it (using a fancier Unicode codepoint).
+        pub(crate) fn unprintable_replacement(c: char) -> Option<&'static str> {
+            match c {
+                $($from => Some($to),)*
+                _ => None,
+            }
+        }
     };
 }
 
