@@ -1,0 +1,31 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/correctness/C201_shadowed_variable.f90:14:26: C201 Variable `x` shadows variable in a higher scope
+   |
+12 |   subroutine initialise(n)
+13 |     integer, intent(in) :: n
+14 |     real, allocatable :: x(:)  ! This is a bug!
+   |                          ^ C201
+15 |     real :: real32 ! This is a bug!
+   |
+
+./resources/test/fixtures/correctness/C201_shadowed_variable.f90:15:13: C201 Variable `real32` shadows variable in a higher scope
+   |
+13 |     integer, intent(in) :: n
+14 |     real, allocatable :: x(:)  ! This is a bug!
+15 |     real :: real32 ! This is a bug!
+   |             ^^^^^^ C201
+16 |
+17 |     allocate(x(n))
+   |
+
+./resources/test/fixtures/correctness/C201_shadowed_variable.f90:22:25: C201 Variable `x` shadows variable in a higher scope
+   |
+21 |   subroutine selection_sort(Arr)
+22 |     use some_mod, only: X => y  ! This is a bug!
+   |                         ^ C201
+23 |     real, intent(inout) :: Arr(:)
+24 |     integer :: i
+   |

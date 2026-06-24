@@ -112,6 +112,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "182") => (RuleGroup::Stable, Ast, Default, correctness::error_handling::MultipleAllocationsWithStat),
         (Correctness, "183") => (RuleGroup::Stable, Ast, Optional, correctness::error_handling::StatWithoutMessage),
         (Correctness, "191") => (RuleGroup::Stable, Ast, Default, correctness::unreachable_statement::UnreachableStatement),
+        (Correctness, "201") => (RuleGroup::Preview, None, Optional, correctness::shadowed_variable::ShadowedVariable),
 
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),

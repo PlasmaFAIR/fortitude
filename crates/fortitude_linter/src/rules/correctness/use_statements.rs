@@ -29,8 +29,8 @@ use tree_sitter::Node;
 /// code have come from, and avoids introducing many unneeded components to your
 /// local scope.
 ///
-/// ## Options
-/// - `check.use-statements.allow-bare-use`
+/// ## Settings
+/// See [check.use-statements](../settings.md#checkuse-statements)
 #[derive(ViolationMetadata)]
 pub(crate) struct UseAll {}
 

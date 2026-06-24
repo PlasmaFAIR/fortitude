@@ -33,6 +33,7 @@ use ast::FortitudeNode;
 use diagnostics::{Diagnostic, Diagnostics, FixMap, Violation};
 use fix::{FixResult, fix_file};
 use locator::Locator;
+use rules::correctness::shadowed_variable::check_shadowed_variables;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
 use rules::error::syntax_error::SyntaxError;
@@ -307,12 +308,17 @@ pub(crate) fn check_path(
             violations.push(context.create_diagnostic(SyntaxError {}, node));
         }
 
-        if BEGIN_SCOPE_NODES.contains(&node.kind()) {
+        if node.is_named() && BEGIN_SCOPE_NODES.contains(&node.kind()) {
             let new_table = SymbolTable::new(&node, file.source_text());
 
             // Check for keyword reuse in this scope
             if context.rules.enabled(Rule::KeywordReuse) {
                 violations.extend(check_keyword_reuse(&context, &new_table));
+            }
+
+            // Check for shadowed variables in this scope
+            if context.rules.enabled(Rule::ShadowedVariable) {
+                violations.extend(check_shadowed_variables(&context, &new_table))
             }
 
             // Run rules over variable declarations without needing to reparse
