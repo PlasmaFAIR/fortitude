@@ -1,0 +1,20 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/style/S106.f90:2:1: S106 [*] Preprocessor statements should have zero indentation
+  |
+1 | module mmod
+2 |   #if USE_MPI==1
+  | ^^ S106
+3 |   use mpi
+4 | #endif
+  |
+  = help: Remove indentation
+
+1 | module mmod
+  -   #if USE_MPI==1
+2 + #if USE_MPI==1
+3 |   use mpi
+4 | #endif
+5 | end module mmod
