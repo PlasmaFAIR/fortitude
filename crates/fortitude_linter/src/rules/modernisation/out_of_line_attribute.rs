@@ -5,7 +5,7 @@ use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,
 };
 use crate::traits::{HasNode, TextRanged};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 
 use anyhow::{Context, Result};
 use fortitude_macros::ViolationMetadata;
@@ -276,8 +276,8 @@ impl AstRule for OutOfLineAttribute {
                 .collect_vec(),
         )
     }
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["parameter_statement", "variable_modification"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["parameter_statement", "variable_modification"]
     }
 }
 

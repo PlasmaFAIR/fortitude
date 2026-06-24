@@ -5,7 +5,7 @@ use crate::diagnostics::{
 use crate::fix::edits::redent;
 use crate::stylist::ToCapitalisation;
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use log::debug;
 use ruff_macros::derive_message_formats;
@@ -83,8 +83,8 @@ impl AstRule for UselessReturn {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["keyword_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["keyword_statement"]
     }
 }
 

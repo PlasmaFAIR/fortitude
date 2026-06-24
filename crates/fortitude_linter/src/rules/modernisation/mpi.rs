@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -97,7 +97,7 @@ impl AstRule for OldMPIModule {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["use_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["use_statement"]
     }
 }

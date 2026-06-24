@@ -3,7 +3,7 @@ use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -76,8 +76,8 @@ impl AstRule for MissingExitOrCycleLabel {
         Some(violations)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["do_loop"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["do_loop"]
     }
 }
 
@@ -161,8 +161,8 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
         some_vec!(context.create_diagnostic(Self { name }, node))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["keyword_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["keyword_statement"]
     }
 }
 
@@ -255,8 +255,8 @@ impl AstRule for MissingEndLabel {
         Some(vec![violation])
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![
             "associate_statement",
             "block_construct",
             "coarray_critical_statement",

@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -105,8 +105,8 @@ impl AstRule for UnnamedEndStatement {
         ]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![
             "end_module_statement",
             "end_submodule_statement",
             "end_program_statement",

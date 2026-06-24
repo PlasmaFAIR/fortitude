@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -35,7 +35,7 @@ impl AstRule for MissingActionSpecifier {
         some_vec![context.create_diagnostic(Self {}, node)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["open_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["open_statement"]
     }
 }

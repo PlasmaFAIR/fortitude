@@ -73,7 +73,7 @@ pub trait AstRule {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
-    fn entrypoints() -> Vec<&'static str>;
+    fn entrypoints() -> Vec<u16>;
 }
 
 pub struct CheckContext<'a> {
@@ -332,7 +332,7 @@ pub(crate) fn check_path(
             violations.push(violation);
         }
 
-        if let Some(rules) = context.rules.ast_entrypoints().get(node.kind()) {
+        if let Some(rules) = context.rules.ast_entrypoints().get(&node.kind_id()) {
             for rule in rules {
                 if let Some(violation) = rule.check(&context, &node) {
                     violations.extend(violation);

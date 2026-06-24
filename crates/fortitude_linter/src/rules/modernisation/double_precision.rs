@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex_captures;
 use ruff_macros::derive_message_formats;
@@ -70,8 +70,8 @@ impl AstRule for DoublePrecision {
         some_vec![context.create_diagnostic(DoublePrecision::try_new(txt)?, node)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["intrinsic_type"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["intrinsic_type"]
     }
 }
 
@@ -165,7 +165,7 @@ impl AstRule for DoublePrecisionLiteral {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["number_literal"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["number_literal"]
     }
 }

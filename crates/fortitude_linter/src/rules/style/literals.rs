@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextSize;
@@ -90,7 +90,7 @@ impl AstRule for BareDecimal {
         ]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["number_literal"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["number_literal"]
     }
 }

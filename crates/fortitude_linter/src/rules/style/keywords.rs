@@ -5,8 +5,9 @@ use crate::diagnostics::{
 };
 use crate::stylist::ToCapitalisation;
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::{TextRange, TextSize};
 use std::str::FromStr;
@@ -141,8 +142,8 @@ impl AstRule for KeywordsMissingSpace {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![
             "elseif_clause",
             "elsewhere_clause",
             "end_associate_statement",
@@ -163,7 +164,7 @@ impl AstRule for KeywordsMissingSpace {
             "end_subroutine_statement",
             "end_type_statement",
             "end_where_statement",
-            "inout",
+            "inout" | kw,
             "intrinsic_type",    // double precision and double complex
             "keyword_statement", // goto
             "select_case_statement",
@@ -265,9 +266,9 @@ impl AstRule for KeywordHasWhitespace {
         some_vec!(context.create_diagnostic(violation, first_child))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![
-            "in",
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![
+            "in" | kw,
             "keyword_statement", // goto
         ]
     }
@@ -405,8 +406,15 @@ impl AstRule for IncorrectKeywordCase {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        tree_sitter_fortran::KEYWORDS.to_vec()
+    fn entrypoints() -> Vec<u16> {
+        let language: tree_sitter::Language = tree_sitter_fortran::LANGUAGE.into();
+        // TODO(peter): make this compiletime
+        tree_sitter_fortran::KEYWORDS
+            .iter()
+            .map(|kw| language.id_for_node_kind(kw, false))
+            // these two are named
+            .chain(kind_ids!["none", "default"])
+            .collect_vec()
     }
 }
 
@@ -523,7 +531,7 @@ impl AstRule for KeywordReuse {
 
     /// Entry point only on `block_label_start_expression`, as other cases of
     /// keyword reuse should be caught by `check_keyword_reuse`.
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["block_label_start_expression"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["block_label_start_expression"]
     }
 }

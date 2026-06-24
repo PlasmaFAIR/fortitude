@@ -8,7 +8,7 @@ use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 
 /// ## What does it do?
 /// Checks for trailing whitespace.
@@ -165,8 +165,8 @@ impl AstRule for IncorrectSpaceBeforeComment {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["comment"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["comment"]
     }
 }
 
@@ -231,8 +231,8 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["::"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["::" | kw]
     }
 }
 
@@ -326,7 +326,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["(", "[", ")", "]"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["(" | kw, "[" | kw, ")" | kw, "]" | kw]
     }
 }

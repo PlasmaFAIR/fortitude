@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex;
 use ruff_macros::derive_message_formats;
@@ -67,7 +67,7 @@ impl AstRule for TrailingBackslash {
         some_vec!(context.create_diagnostic(Self {}, range))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["comment"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["comment"]
     }
 }

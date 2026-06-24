@@ -9,7 +9,7 @@ use tree_sitter::Node;
 use crate::ast::FortitudeNode;
 use crate::stylist::Quote;
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 
 /// ## What does it do?
 /// Catches use of single- or double-quoted strings, depending on the value of
@@ -109,8 +109,8 @@ impl AstRule for BadQuoteString {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["string_literal"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["string_literal"]
     }
 }
 
@@ -187,8 +187,8 @@ impl AstRule for AvoidableEscapedQuote {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["string_literal"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["string_literal"]
     }
 }
 
