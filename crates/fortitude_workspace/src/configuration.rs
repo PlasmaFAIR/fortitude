@@ -1,7 +1,7 @@
 use crate::options::{
     ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions,
     IncorrectKeywordCaseOptions, InvalidTabOptions, KeywordWhitespaceOptions, LineTooLongOptions,
-    Options, PortabilityOptions, StringOptions, UseStatementsOptions,
+    Options, PortabilityOptions, ShadowedVariableOptions, StringOptions, UseStatementsOptions,
 };
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
@@ -249,6 +249,7 @@ pub struct Configuration {
 
     // Individual rules
     pub exit_unlabelled_loops: Option<ExitUnlabelledLoopOptions>,
+    pub shadowed_variables: Option<ShadowedVariableOptions>,
     pub incorrect_keyword_case: Option<IncorrectKeywordCaseOptions>,
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
     pub strings: Option<StringOptions>,
@@ -328,6 +329,7 @@ impl Configuration {
 
             // Individual rules
             exit_unlabelled_loops: check.exit_unlabelled_loops,
+            shadowed_variables: check.shadowed_variables,
             incorrect_keyword_case: check.incorrect_keyword_case,
             keyword_whitespace: check.keyword_whitespace,
             strings: check.strings,
@@ -388,6 +390,10 @@ impl Configuration {
                 exit_unlabelled_loops: self
                     .exit_unlabelled_loops
                     .map(ExitUnlabelledLoopOptions::into_settings)
+                    .unwrap_or_default(),
+                shadowed_variables: self
+                    .shadowed_variables
+                    .map(ShadowedVariableOptions::into_settings)
                     .unwrap_or_default(),
                 incorrect_keyword_case: self
                     .incorrect_keyword_case
@@ -490,6 +496,7 @@ impl Configuration {
             force_exclude: self.force_exclude.or(config.force_exclude),
             respect_gitignore: self.respect_gitignore.or(config.respect_gitignore),
             exit_unlabelled_loops: self.exit_unlabelled_loops.or(config.exit_unlabelled_loops),
+            shadowed_variables: self.shadowed_variables.or(config.shadowed_variables),
             incorrect_keyword_case: self
                 .incorrect_keyword_case
                 .or(config.incorrect_keyword_case),

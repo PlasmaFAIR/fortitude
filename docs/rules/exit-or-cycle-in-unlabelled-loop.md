@@ -26,4 +26,4 @@ end do
 ```
 
 ## Settings
-See [allow-unnested-loops](../settings.md#check_exit-unlabelled-loops_allow-unnested-loops)
+See [check.exit-unlabelled-loops](../settings.md#checkexit-unlabelled-loops)

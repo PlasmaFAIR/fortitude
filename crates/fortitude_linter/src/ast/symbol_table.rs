@@ -1,5 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
+use itertools::Itertools;
 use strum_macros::EnumIs;
 use tree_sitter::Node;
 
@@ -8,7 +9,8 @@ use crate::{ast::types::ProcedureKind, traits::HasNode};
 use super::{
     FortitudeNode,
     types::{
-        HasName, Module, Name, Procedure, Program, TypeDefinition, Variable, VariableDeclaration,
+        HasName, Module, Name, Procedure, Program, TypeDefinition, UseStatement, UsedItem,
+        Variable, VariableDeclaration,
     },
 };
 
@@ -39,6 +41,7 @@ pub enum Symbol<'a> {
     Type(TypeDefinition<'a>),
     Module(Module<'a>),
     Program(Program<'a>),
+    UsedItem(UsedItem<'a>),
 }
 
 impl<'a> Symbol<'a> {
@@ -49,6 +52,7 @@ impl<'a> Symbol<'a> {
             Self::Type(typedef) => typedef.name(),
             Self::Module(module) => module.name(),
             Self::Program(program) => program.name(),
+            Self::UsedItem(item) => item.name(),
         }
     }
 }
@@ -61,6 +65,7 @@ impl<'a> HasNode<'a> for Symbol<'a> {
             Self::Type(typedef) => typedef.node(),
             Self::Module(module) => module.node(),
             Self::Program(program) => program.node(),
+            Self::UsedItem(item) => item.node(),
         }
     }
 }
@@ -76,6 +81,7 @@ impl<'a> HasNode<'a> for Symbol<'a> {
 pub struct SymbolTable<'a> {
     inner: HashMap<String, Symbol<'a>>,
     decl_lines: Vec<Rc<VariableDeclaration<'a>>>,
+    use_statements: Vec<Rc<UseStatement<'a>>>,
 }
 
 impl<'a> SymbolTable<'a> {
@@ -84,22 +90,57 @@ impl<'a> SymbolTable<'a> {
     pub fn new(scope: &Node<'a>, src: &str) -> Self {
         let mut new_table = Self::default();
 
+        // If this is a procedure, collect a list of dummy arg names
+        let dummy_vars = if matches!(scope.kind(), "function" | "subroutine") {
+            scope
+                .named_child(0)
+                .expect("First child must be function/subroutine statement")
+                .child_by_field_name("parameters")
+                .map_or(vec![], |params| {
+                    params
+                        .named_children(&mut params.walk())
+                        .filter(|child| child.kind() == "identifier")
+                        .map(|child| {
+                            child
+                                .to_text(src)
+                                .unwrap_or("<unknown>")
+                                .to_ascii_lowercase()
+                        })
+                        .collect_vec()
+                })
+        } else {
+            vec![]
+        };
+
+        scope
+            .named_children(&mut scope.walk())
+            .filter(|child| child.kind() == "use_statement")
+            .filter_map(|stmt| UseStatement::try_from_node(&stmt, src).ok())
+            .for_each(|stmt| new_table.insert_from_use_statement(stmt, src));
+
         scope
             .named_children(&mut scope.walk())
             .filter(|child| child.kind() == "variable_declaration")
             .filter_map(|decl| VariableDeclaration::try_from_node(&decl, src).ok())
-            .for_each(|line| new_table.insert_from_decl_line(line));
+            .for_each(|line| new_table.insert_from_decl_line(line, &dummy_vars));
 
         // The `function` statement itself _may_ also be the declaration line if
         // it has a type as a procedure attribute. If it doesn't, then it will
         // either have an explicit decl line, which is handled above, or it's
         // implicitly typed, which we don't currently handle here at all
-        if scope.is_named() && scope.kind() == "function" {
+        if scope.kind() == "function" {
             let stmt = scope
                 .child(0)
                 .expect("`function` must have `function_statement` as zeroth child");
             if let Ok(decl) = VariableDeclaration::try_from_fn_stmt(&stmt, src) {
-                new_table.insert_from_decl_line(decl);
+                let name = decl
+                    .names()
+                    .first()
+                    .expect("Function must have a name")
+                    .name()
+                    .as_str()
+                    .to_ascii_lowercase();
+                new_table.insert_from_decl_line(decl, &[name]);
             }
         }
 
@@ -146,16 +187,33 @@ impl<'a> SymbolTable<'a> {
     }
 
     /// Insert all symbols found in a single variable declaration statement
-    pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>) {
+    pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>, dummy_vars: &[String]) {
         let decl = Rc::new(decl);
         for name in decl.names().iter() {
             let name_lower = name.name().as_str().to_ascii_lowercase();
+            let is_dummy_var = dummy_vars.contains(&name_lower);
             self.inner.insert(
                 name_lower,
-                Symbol::Variable(Variable::new(name.clone(), decl.clone())),
+                Symbol::Variable(Variable::new(name.clone(), is_dummy_var, decl.clone())),
             );
         }
         self.decl_lines.push(decl);
+    }
+
+    /// Insert all symbols found in a single use statement
+    pub fn insert_from_use_statement(&mut self, stmt: UseStatement<'a>, src: &str) {
+        let stmt = Rc::new(stmt);
+        if let Some(items) = stmt.included_items() {
+            for item in items.named_children(&mut items.walk()) {
+                // Other nodes such as comments can be found in the list
+                if let Some(item) = UsedItem::try_from_node(item, src, stmt.clone()) {
+                    let symbol = Symbol::UsedItem(item);
+                    let name = symbol.name().as_str().to_ascii_lowercase();
+                    self.inner.insert(name, symbol);
+                }
+            }
+        }
+        self.use_statements.push(stmt);
     }
 
     /// Return the symbol with the given name if it exists
@@ -166,6 +224,11 @@ impl<'a> SymbolTable<'a> {
     /// Iterator over the variable declaration lines
     pub fn iter_decl_lines(&self) -> impl Iterator<Item = &Rc<VariableDeclaration<'a>>> {
         self.decl_lines.iter()
+    }
+
+    /// Iterator over the use statements
+    pub fn iter_use_statements(&self) -> impl Iterator<Item = &Rc<UseStatement<'a>>> {
+        self.use_statements.iter()
     }
 
     /// Iterator over symbols in this scope
@@ -198,8 +261,8 @@ impl<'a> SymbolTables<'a> {
         self.inner.push(table);
     }
 
-    pub fn pop_table(&mut self) {
-        self.inner.pop();
+    pub fn pop_table(&mut self) -> Option<SymbolTable<'a>> {
+        self.inner.pop()
     }
 
     /// Return the symbol with the given name if it exists and is a variable
@@ -450,12 +513,14 @@ end subroutine foo
         let x = symbol_table.get_var("x");
         assert!(x.is_some());
         let x = x.unwrap();
+        assert!(x.is_dummy_var());
         assert!(x.attributes().iter().any(|attr| attr.kind().is_dimension()));
         assert!(x.has_attribute(AttributeKind::Intent(Intent::In)));
 
         let y = symbol_table.get_var("y");
         assert!(y.is_some());
         let y = y.unwrap();
+        assert!(y.is_dummy_var());
         let y_dim = y
             .attributes()
             .iter()
@@ -493,6 +558,7 @@ end function foo
         let foo = symbol_table.get_var("foo");
         assert!(foo.is_some());
         let foo = foo.unwrap();
+        assert!(!foo.is_dummy_var());
         assert!(foo.has_attribute(AttributeKind::Allocatable));
         assert!(
             foo.attributes()
@@ -524,6 +590,7 @@ end function foo
         let foo = symbol_table.get_var("foo");
         assert!(foo.is_some());
         let foo = foo.unwrap();
+        assert!(foo.is_dummy_var());
         assert!(foo.type_().is_intrinsic());
 
         Ok(())
@@ -550,6 +617,7 @@ end function foo
         let y = symbol_table.get_var("y");
         assert!(y.is_some());
         let y = y.unwrap();
+        assert!(y.is_dummy_var());
         assert!(y.type_().is_intrinsic());
 
         Ok(())
@@ -593,6 +661,85 @@ end program foo
     }
 
     #[test]
+    fn used_items() -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+program foo
+  use, intrinsic :: iso_fortran_env, only: i8 => int8, real32
+  use :: my_module, only: my_subroutine
+  use another_module
+end program foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root, code));
+
+        let i8 = symbol_table.get("i8");
+        assert!(i8.is_some());
+        let i8 = i8.unwrap();
+        assert!(i8.is_used_item());
+        assert!(i8.name().as_str() == "i8");
+        let Symbol::UsedItem(i8) = i8 else {
+            panic!("Expected i8 to be a UsedItem");
+        };
+        assert!(i8.alias_of().is_some());
+        let i8_alias_of = i8.alias_of().unwrap();
+        assert!(i8_alias_of.as_str() == "int8");
+        let i8_module = i8.module_name();
+        assert!(i8_module.as_str() == "iso_fortran_env");
+
+        let real32 = symbol_table.get("real32");
+        assert!(real32.is_some());
+        let real32 = real32.unwrap();
+        assert!(real32.is_used_item());
+        assert!(real32.name().as_str() == "real32");
+        let Symbol::UsedItem(real32) = real32 else {
+            panic!("Expected real32 to be a UsedItem");
+        };
+        assert!(real32.alias_of().is_none());
+        let real32_module = real32.module_name();
+        assert!(real32_module.as_str() == "iso_fortran_env");
+
+        let iso_fortran_env = real32.decl_statement();
+        assert!(iso_fortran_env.name().as_str() == "iso_fortran_env");
+        assert!(iso_fortran_env.is_intrinsic());
+        assert!(iso_fortran_env.has_colon());
+        assert!(iso_fortran_env.has_only());
+
+        let my_subroutine = symbol_table.get("my_subroutine");
+        assert!(my_subroutine.is_some());
+        let my_subroutine = my_subroutine.unwrap();
+        assert!(my_subroutine.is_used_item());
+        let Symbol::UsedItem(my_subroutine) = my_subroutine else {
+            panic!("Expected my_subroutine to be a UsedItem");
+        };
+        assert!(my_subroutine.alias_of().is_none());
+        let my_subroutine_module = my_subroutine.module_name();
+        assert!(my_subroutine_module.as_str() == "my_module");
+
+        let my_module = my_subroutine.decl_statement();
+        assert!(my_module.name().as_str() == "my_module");
+        assert!(!my_module.is_intrinsic());
+        assert!(my_module.has_colon());
+        assert!(my_module.has_only());
+
+        let symbol_table = symbol_table.pop_table().unwrap();
+        let another_module = symbol_table.iter_use_statements().last().unwrap();
+        assert!(another_module.name().as_str() == "another_module");
+        assert!(!another_module.is_intrinsic());
+        assert!(!another_module.has_colon());
+        assert!(!another_module.has_only());
+
+        Ok(())
+    }
+
+    #[test]
     fn all_symbols() -> Result<()> {
         let mut parser = Parser::new();
         parser
@@ -601,6 +748,7 @@ end program foo
 
         let code = r#"
 program foo
+  use :: some_module, only: p, q => r
   integer :: a, b
 contains
   integer function bar(x) result(y)
@@ -617,7 +765,7 @@ end program foo
         let symbol_table = SymbolTable::new(&root, code);
 
         let count = symbol_table.iter_symbols().count();
-        assert_eq!(count, 4);
+        assert_eq!(count, 6);
 
         Ok(())
     }

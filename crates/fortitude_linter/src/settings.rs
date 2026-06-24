@@ -19,7 +19,7 @@ use crate::fs::{EXCLUDE_BUILTINS, FilePatternSet, INCLUDE};
 use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
-use crate::rules::correctness::{exit_labels, use_statements};
+use crate::rules::correctness::{exit_labels, shadowed_variable, use_statements};
 use crate::rules::portability::{self, invalid_tab};
 use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
 
@@ -73,6 +73,7 @@ pub struct CheckSettings {
 
     // Individual rule settings
     pub exit_unlabelled_loops: exit_labels::settings::Settings,
+    pub shadowed_variables: shadowed_variable::settings::Settings,
     pub incorrect_keyword_case: keywords::settings_keyword_case::Settings,
     pub keyword_whitespace: keywords::settings::Settings,
     pub strings: strings::settings::Settings,
@@ -109,6 +110,7 @@ impl CheckSettings {
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
             exit_unlabelled_loops: exit_labels::settings::Settings::default(),
+            shadowed_variables: shadowed_variable::settings::Settings::default(),
             incorrect_keyword_case: keywords::settings_keyword_case::Settings::default(),
             keyword_whitespace: keywords::settings::Settings::default(),
             strings: strings::settings::Settings::default(),
@@ -162,6 +164,7 @@ impl fmt::Display for CheckSettings {
             namespace = "check",
             fields = [
                 self.exit_unlabelled_loops | nested,
+                self.shadowed_variables | nested,
                 self.incorrect_keyword_case | nested,
                 self.keyword_whitespace | nested,
                 self.strings | nested,

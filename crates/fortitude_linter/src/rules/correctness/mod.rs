@@ -14,6 +14,7 @@ pub(crate) mod magic_numbers;
 pub(crate) mod missing_io_specifier;
 pub(crate) mod nonportable_shortcircuit_inquiry;
 pub(crate) mod select_default;
+pub mod shadowed_variable;
 pub(crate) mod split_escaped_quote;
 pub(crate) mod trailing_backslash;
 pub(crate) mod unreachable_statement;
@@ -34,7 +35,7 @@ mod tests {
 
     use crate::apply_common_filters;
     use crate::registry::Rule;
-    use crate::rules::correctness::{exit_labels, use_statements};
+    use crate::rules::correctness::{exit_labels, shadowed_variable, use_statements};
     use crate::settings::{CheckSettings, FortranStandard};
     use crate::test::test_path;
 
@@ -71,6 +72,7 @@ mod tests {
     #[test_case(Rule::MultipleAllocationsWithStat, Path::new("C182.f90"))]
     #[test_case(Rule::StatWithoutMessage, Path::new("C183.f90"))]
     #[test_case(Rule::UnreachableStatement, Path::new("C191.f90"))]
+    #[test_case(Rule::ShadowedVariable, Path::new("C201_shadowed_variable.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -206,6 +208,46 @@ mod tests {
         let snapshot = "c151_fix_multiple_inline_if";
         apply_common_filters!();
         assert_snapshot!(snapshot, fixed);
+        Ok(())
+    }
+
+    #[test]
+    fn c201_shadowed_variable_whitelist() -> Result<()> {
+        let rule_code = Rule::ShadowedVariable;
+        let path = Path::new("C201_shadowed_variable.f90");
+        let snapshot = format!(
+            "{}_whitelist_{}",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+        let settings = CheckSettings {
+            shadowed_variables: shadowed_variable::settings::Settings {
+                allow: vec!["array".to_string(), "x".to_string()],
+                strict: false,
+            },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn c201_shadowed_variable_strict() -> Result<()> {
+        let rule_code = Rule::ShadowedVariable;
+        let path = Path::new("C201_shadowed_variable.f90");
+        let snapshot = format!("{}_strict_{}", rule_code.as_ref(), path.to_string_lossy());
+        let settings = CheckSettings {
+            shadowed_variables: shadowed_variable::settings::Settings {
+                strict: true,
+                ..shadowed_variable::settings::Settings::default()
+            },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("correctness").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
         Ok(())
     }
 }
