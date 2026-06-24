@@ -1296,7 +1296,6 @@ Options for the `shadowed-variable` rule
 
 A list of variable names that are allowed to be shadowed. By default,
 common loop variables and error flags are allowed to be shadowed.
-Variables in this list will be ignored in addition to the default list.
 
 **Default value**: `["i", "j", "k", "l", "m", "n", "ii", "jj", "kk", "ll", "mm", "nn", "idx", "index", "err", "ierr", "ioerr", "ios", "info", "stat", "iostat", "istat", "status"]`
 
@@ -1328,7 +1327,7 @@ Variables in this list will be ignored in addition to the default list.
 #### [`strict`](#check_shadowed-variables_strict) {: #check_shadowed-variables_strict }
 <span id="strict"></span>
 
-Strict mode will also include dummy arguments.
+Strict mode will also check dummy arguments for violations
 
 **Default value**: `false`
 

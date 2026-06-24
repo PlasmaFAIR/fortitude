@@ -13,19 +13,18 @@ use ruff_macros::derive_message_formats;
 /// variable is being referenced in a given context. Shadowing may be
 /// unintentional, which is a common source of bugs.
 ///
-/// There are contexts in which shadowing is acceptable. For instance, if a
+/// There are contexts in which shadowing may be acceptable. For instance, if a
 /// procedure dummy argument has the same name as a module variable, this
 /// indicates that the programmer likely intends to use the dummy argument to
-/// reference the module variable. However, shadowing a module-scoped variable
-/// with a local variable is generally considered poor practice.
+/// reference the module variable.  If you want to also capture dummy arguments,
+/// the setting `check.shadowed-variables.strict` can be used to toggle this
+/// behaviour.
 ///
 /// It is also very common to reuse loop variables such as `i`, `j`, and `k` or
-/// error flags such as `err` in different scopes. Fortitude will ignore
-/// integers with common names. The setting `check.shadowed-variables.allow` can
-/// be used to add further variables to the whitelist.
-///
-/// The setting `check.shadowed-variables.strict` can be used to disallow
-/// shadowing of variables in all contexts, including dummy arguments.
+/// error flags such as `err` in different scopes. By default, Fortitude will
+/// ignore variables with common names. The setting
+/// `check.shadowed-variables.allow` can be used to modify which variables are
+/// allowed to be shadowed.
 ///
 /// ## Examples
 ///
@@ -62,7 +61,7 @@ use ruff_macros::derive_message_formats;
 ///       real, intent(inout) :: arr(:) ! Allowed: is a dummy arg
 ///       real :: min_val
 ///       integer :: min_idx
-///       integer :: i  ! Allowed: is a loop variable
+///       integer :: i  ! Allowed: is a common loop variable
 ///
 ///       min_val = arr(1)
 ///       min_idx = 1

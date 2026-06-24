@@ -460,7 +460,6 @@ impl ExitUnlabelledLoopOptions {
 pub struct ShadowedVariableOptions {
     /// A list of variable names that are allowed to be shadowed. By default,
     /// common loop variables and error flags are allowed to be shadowed.
-    /// Variables in this list will be ignored in addition to the default list.
     #[option(
         default = r#"["i", "j", "k", "l", "m", "n", "ii", "jj", "kk", "ll", "mm", "nn", "idx", "index", "err", "ierr", "ioerr", "ios", "info", "stat", "iostat", "istat", "status"]"#,
         value_type = "list[str]",
@@ -468,7 +467,7 @@ pub struct ShadowedVariableOptions {
     )]
     pub allow: Option<Vec<String>>,
 
-    /// Strict mode will also include dummy arguments.
+    /// Strict mode will also check dummy arguments for violations
     #[option(default = "false", value_type = "bool", example = "strict = true")]
     pub strict: Option<bool>,
 }

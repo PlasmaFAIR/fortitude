@@ -880,6 +880,7 @@ impl<'a> UseStatement<'a> {
             }
             if child.kind() == "::" {
                 has_colon = true;
+                break;
             }
         }
 
