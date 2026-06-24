@@ -1,5 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
+use itertools::Itertools;
 use strum_macros::EnumIs;
 use tree_sitter::Node;
 
@@ -90,25 +91,26 @@ impl<'a> SymbolTable<'a> {
         let mut new_table = Self::default();
 
         // If this is a procedure, collect a list of dummy arg names
-        let mut dummy_vars = vec![];
-        let kind = scope.kind();
-        if matches!(kind, "function" | "subroutine") {
-            let stmt = scope
+        let dummy_vars = if matches!(scope.kind(), "function" | "subroutine") {
+            scope
                 .named_child(0)
-                .expect("First child must be function/subroutine statement");
-            if let Some(params) = stmt.child_by_field_name("parameters") {
-                for child in params.named_children(&mut params.walk()) {
-                    if child.kind() == "identifier" {
-                        dummy_vars.push(
+                .expect("First child must be function/subroutine statement")
+                .child_by_field_name("parameters")
+                .map_or(vec![], |params| {
+                    params
+                        .named_children(&mut params.walk())
+                        .filter(|child| child.kind() == "identifier")
+                        .map(|child| {
                             child
                                 .to_text(src)
                                 .unwrap_or("<unknown>")
-                                .to_ascii_lowercase(),
-                        );
-                    }
-                }
-            }
-        }
+                                .to_ascii_lowercase()
+                        })
+                        .collect_vec()
+                })
+        } else {
+            vec![]
+        };
 
         scope
             .named_children(&mut scope.walk())
