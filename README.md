@@ -315,6 +315,9 @@ or, as HTML:
 
 ## License
 
+See the [`incorrect-keyword-case`](https://fortitude.readthedocs.io/en/stable/rules/incorrect-keyword-case/)
+rule, which can be configured via [`check.settings.keyword-case`](https://fortitude.readthedocs.io/en/stable/settings/#check_incorrect-keyword-case_keyword-case).
+
 This work is distributed under the MIT License. See [`LICENSE`](LICENSE) for more
 information.
 
