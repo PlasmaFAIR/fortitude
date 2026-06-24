@@ -53,6 +53,41 @@ impl PartialEq<&str> for NoqaCode {
     }
 }
 
+/// Use `kind_ids!` in `AstRule::entrypoints` to convert a `Vec` of string
+/// literals into a `Vec` of compiletime kind IDs. For unnamed keywords, append
+/// ``| kw`` to the literal.
+///
+/// # Example
+/// ```
+/// use fortitude_linter::kind_ids;
+/// use fortitude_macros::{kind, kw};
+///
+/// fn main() {
+///     let ids = kind_ids![
+///         "function",
+///         "end" | kw
+///     ];
+///     let expected = vec![kind!("function"), kw!("end")];
+///     assert_eq!(ids, expected);
+/// }
+/// ```
+#[macro_export]
+macro_rules! kind_ids {
+    ($($kinds:literal $(| $modifier:tt)?),* $(,)?) => {
+        vec![
+            $(
+                kind_ids!(@kind $kinds $(| $modifier)?),
+            )*
+        ]
+    };
+    (@kind $kind:literal) => {
+        fortitude_macros::kind!($kind)
+    };
+    (@kind $kind:literal | kw) => {
+        fortitude_macros::kw!($kind)
+    };
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum RuleGroup {
     /// The rule is stable.
