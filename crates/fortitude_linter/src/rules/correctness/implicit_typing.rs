@@ -3,7 +3,7 @@ use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::settings::FortranStandard;
 use crate::traits::{HasNode, TextRanged};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
@@ -187,8 +187,8 @@ impl AstRule for ImplicitTyping {
         ]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["module", "submodule", "program", "subroutine", "function"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["module", "submodule", "program", "subroutine", "function"]
     }
 }
 
@@ -238,8 +238,8 @@ impl AstRule for InterfaceImplicitTyping {
         ]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["function", "subroutine"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["function", "subroutine"]
     }
 }
 
@@ -300,7 +300,7 @@ impl AstRule for ImplicitExternalProcedures {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["implicit_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["implicit_statement"]
     }
 }

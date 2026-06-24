@@ -1,7 +1,7 @@
 use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use log::debug;
@@ -354,7 +354,7 @@ impl AstRule for ArithmeticIf {
         some_vec![diagnostic]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["arithmetic_if_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["arithmetic_if_statement"]
     }
 }

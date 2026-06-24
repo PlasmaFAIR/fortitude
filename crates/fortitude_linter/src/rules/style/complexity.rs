@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
@@ -122,8 +122,8 @@ impl AstRule for TooComplex {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["program", "function", "subroutine"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["program", "function", "subroutine"]
     }
 }
 
@@ -288,8 +288,8 @@ impl AstRule for TooManyArguments {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["function", "subroutine"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["function", "subroutine"]
     }
 }
 

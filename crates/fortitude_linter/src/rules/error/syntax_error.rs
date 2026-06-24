@@ -1,5 +1,5 @@
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 
 use ruff_macros::derive_message_formats;
@@ -30,7 +30,7 @@ impl AstRule for SyntaxError {
         some_vec![context.create_diagnostic(Self {}, node)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["ERROR"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["ERROR"]
     }
 }

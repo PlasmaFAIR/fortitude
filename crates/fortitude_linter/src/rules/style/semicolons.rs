@@ -5,7 +5,7 @@ use ruff_text_size::TextSize;
 use tree_sitter::Node;
 
 use crate::ast::FortitudeNode;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 
 fn semicolon_is_superfluous(node: &Node) -> bool {
     let line_number = node.start_position().row;
@@ -85,8 +85,8 @@ impl AstRule for SuperfluousSemicolon {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![";"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![";" | kw]
     }
 }
 
@@ -134,7 +134,7 @@ impl AstRule for MultipleStatementsPerLine {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![";"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![";" | kw]
     }
 }

@@ -1,7 +1,7 @@
 use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use log::debug;
 use ruff_macros::derive_message_formats;
@@ -61,8 +61,8 @@ impl AstRule for LabelledDoLoop {
         some_vec![diagnostic]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["do_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["do_statement"]
     }
 }
 
@@ -127,8 +127,8 @@ impl AstRule for SharedDoTermination {
         some_vec![diagnostic]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["do_label_virtual"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["do_label_virtual"]
     }
 }
 
@@ -198,8 +198,8 @@ impl AstRule for BadDoTermination {
         Some(diagnostics)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["end_do_label_loop_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["end_do_label_loop_statement"]
     }
 }
 
@@ -273,8 +273,8 @@ impl AstRule for GotoEndDo {
         some_vec!(diagnostic)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["keyword_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["keyword_statement"]
     }
 }
 

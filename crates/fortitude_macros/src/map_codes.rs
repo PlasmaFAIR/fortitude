@@ -480,7 +480,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         use std::path::Path;
         use ruff_source_file::SourceFile;
         use tree_sitter::Node;
-        use crate::{AstRule, CheckContext};
+        use crate::{AstRule, CheckContext, kind_ids};
         use crate::diagnostics::{Diagnostic, Violation};
 
         #[derive(
@@ -567,7 +567,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
                 }
             }
 
-            pub fn entrypoints(&self) -> Vec<&'static str> {
+            pub fn entrypoints(&self) -> Vec<u16> {
                 match self {
                     #ast_rule_entrypoint_match_arms
                 }

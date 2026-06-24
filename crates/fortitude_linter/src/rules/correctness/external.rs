@@ -3,7 +3,7 @@ use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
-use crate::{AstRule, CheckContext, ast::FortitudeNode};
+use crate::{AstRule, CheckContext, ast::FortitudeNode, kind_ids};
 
 /// ## What does it do?
 /// Checks for procedures declared with just `external`
@@ -49,8 +49,8 @@ impl AstRule for ExternalProcedure {
         some_vec!(context.create_diagnostic(Self { name }, node))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["variable_modification"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["variable_modification"]
     }
 }
 
@@ -87,7 +87,7 @@ impl AstRule for ProcedureNotInModule {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["function", "subroutine"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["function", "subroutine"]
     }
 }

@@ -78,7 +78,7 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
         fp.write(
             f"""\
 use crate::ast::FortitudeNode;
-use crate::{{AstRule, CheckContext}};
+use crate::{{AstRule, CheckContext, kind_ids}};
 use crate::diagnostics::{{Diagnostic, Edit, Fix, FixAvailability, Violation}};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
@@ -112,8 +112,8 @@ impl AstRule for {name} {{
         None
     }}
 
-    fn entrypoints() -> Vec<&'static str> {{
-        vec![]
+    fn entrypoints() -> Vec<u16> {{
+        kind_ids![]
     }}
 }}
 """,

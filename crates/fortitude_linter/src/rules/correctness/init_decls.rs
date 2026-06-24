@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::ast::types::{AttributeKind, get_name_node_of_declarator};
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -97,8 +97,8 @@ impl AstRule for InitialisationInDeclaration {
         some_vec![context.create_diagnostic(Self { name }, node)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["init_declarator"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["init_declarator"]
     }
 }
 
@@ -223,7 +223,7 @@ impl AstRule for PointerInitialisationInDeclaration {
         some_vec![context.create_diagnostic(Self { name }, node)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["pointer_init_declarator"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["pointer_init_declarator"]
     }
 }

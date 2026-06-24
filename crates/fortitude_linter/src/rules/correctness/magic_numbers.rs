@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::rules::utilities::literal_as_io_unit;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
@@ -95,8 +95,8 @@ impl AstRule for MagicNumberInArraySize {
         Some(violations)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["sized_declarator", "type_qualifier"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["sized_declarator", "type_qualifier"]
     }
 }
 
@@ -153,8 +153,8 @@ impl AstRule for MagicIoUnit {
         some_vec!(context.create_diagnostic(Self { value }, unit))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![
             "read_statement",
             "write_statement",
             "open_statement",

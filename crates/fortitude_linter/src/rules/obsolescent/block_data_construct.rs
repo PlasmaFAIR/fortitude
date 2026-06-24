@@ -1,6 +1,6 @@
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::FortranStandard;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
@@ -37,7 +37,7 @@ impl AstRule for BlockDataConstruct {
         some_vec![context.create_diagnostic(BlockDataConstruct {}, node)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["block_data_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["block_data_statement"]
     }
 }
