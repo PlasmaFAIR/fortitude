@@ -1,5 +1,6 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use crate::rules::Rule;
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
@@ -345,9 +346,9 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// ## Options
 /// - `check.indent-width`
 #[derive(ViolationMetadata)]
-pub(crate) struct IncorrectIndent;
+pub(crate) struct InvalidIndentationMultiple;
 
-impl AlwaysFixableViolation for IncorrectIndent {
+impl AlwaysFixableViolation for InvalidIndentationMultiple {
     #[derive_message_formats]
     fn message(&self) -> String {
         "Invalid indentation".to_string()
@@ -358,12 +359,29 @@ impl AlwaysFixableViolation for IncorrectIndent {
     }
 }
 
+#[derive(ViolationMetadata)]
+pub(crate) struct InvalidPreprocIndentation;
+
+impl AlwaysFixableViolation for InvalidPreprocIndentation {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Preprocessor statements should have zero indentation".to_string()
+    }
+
+    fn fix_title(&self) -> String {
+        "Remove indentation".to_string()
+    }
+}
+
 pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
 
     let indent_width = context.settings().indent_width;
-    let mut next_expected_indent = 0;
-    let mut in_line_continuation = false;
+
+    let constructs_to_indent_map = &context
+        .settings()
+        .invalid_indentation_multiple
+        .construct_to_indent_map;
 
     const BEGIN_SCOPE_NODES: &[&str] = &[
         "program_statement",
@@ -382,7 +400,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         "do_statement",
         "associate_statement",
     ];
-    const ZERO_INDENT_NODES: &[&str] = &[
+    const PREPROC_NODES: &[&str] = &[
         "preproc_if",
         "preproc_ifdef",
         "preproc_elifdef",
@@ -407,6 +425,10 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         "end_associate_statement",
     ];
 
+    // Array to track both the number of scopes we are inside and their respective indents
+    let mut scope_indents: Vec<usize> = Vec::new();
+
+    let mut in_line_continuation = false;
     for line in context.source_text().universal_newlines() {
         // Skip empty lines and lines with only whitespace
         if line.trim().is_empty() {
@@ -415,6 +437,12 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
         // Get current indent for line
         let line_indent = line.chars().take_while(|c| [' ', '\t'].contains(c)).count();
+
+        // Booleans to determine the rule that has been broken
+        let mut is_preproc_violation = false;
+
+        // boolean to track if a line should be updated based on the users selected rules
+        let mut edit_is_activated = context.is_rule_enabled(Rule::InvalidIndentationMultiple);
 
         // Loop through line until all semicolons have been accounted for
         let mut line_segment_start = line.start();
@@ -435,8 +463,8 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             let content_start =
                 line_segment_start + TextSize::try_from(leading_spaces as u32).unwrap();
 
-            // Determine what the indentation should be for the next line using the first node for this line
-            let mut current_expected_indent = next_expected_indent;
+            // Determine what the indentation should be for this line segment using the first node for this line and the current scope
+            let mut current_expected_indent = *scope_indents.last().unwrap_or(&0usize);
             if let Some(line_segment_node) = root
                 .named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
             {
@@ -445,26 +473,32 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 // Determine expected indent bases on tree-sitter node kind
                 if BEGIN_SCOPE_NODES.contains(node_kind) && !line_segment_node.inline_if_statement()
                 {
-                    next_expected_indent = current_expected_indent + indent_width;
-                } else if END_SCOPE_NODES.contains(node_kind) {
-                    current_expected_indent =
-                        std::cmp::max(current_expected_indent - indent_width, 0);
-                    next_expected_indent = current_expected_indent;
-                } else if ZERO_INDENT_NODES.contains(node_kind) {
-                    current_expected_indent = 0;
-                } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
-                    current_expected_indent = if current_expected_indent >= indent_width {
-                        current_expected_indent - indent_width
+                    if edit_is_activated {
+                        scope_indents.push(
+                            current_expected_indent
+                                + indent_width
+                                    * constructs_to_indent_map.get(*node_kind).unwrap_or(&1usize),
+                        );
                     } else {
-                        0usize
+                        scope_indents.push(leading_spaces);
                     }
-                } else {
+                } else if END_SCOPE_NODES.contains(node_kind) {
+                    scope_indents.pop();
+                    current_expected_indent = *scope_indents.last().unwrap_or(&0usize);
+                } else if PREPROC_NODES.contains(node_kind) {
+                    edit_is_activated = edit_is_activated
+                        || context.is_rule_enabled(Rule::InvalidPreprocIndentation);
+                    is_preproc_violation = true;
+                    current_expected_indent = 0usize;
+                } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
+                    current_expected_indent = *scope_indents.iter().rev().nth(1).unwrap_or(&0usize);
+                } else if edit_is_activated {
                     // Determine indent change based on line continuation char "&"
                     if !in_line_continuation && line.trim().ends_with("&") {
-                        next_expected_indent = current_expected_indent + indent_width;
+                        scope_indents.push(current_expected_indent + indent_width);
                         in_line_continuation = true;
                     } else if in_line_continuation && !line.trim().ends_with("&") {
-                        next_expected_indent = current_expected_indent - indent_width;
+                        scope_indents.pop();
                         in_line_continuation = false;
                     }
                 }
@@ -480,18 +514,12 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
             // Compare with the expected number of leading spaces
             if leading_spaces != current_expected_indent || line_contains_semicolon {
-                if current_expected_indent > 0 {
-                    let new_indent = " ".repeat(current_expected_indent);
-                    if is_first_segment {
-                        edit_string =
-                            format!("{}{}{}", edit_string, new_indent, line_segment.trim());
-                    } else {
-                        edit_string =
-                            format!("{}\n{}{}", edit_string, new_indent, line_segment.trim());
-                    }
+                let new_indent = " ".repeat(current_expected_indent);
+                if is_first_segment {
+                    edit_string = format!("{}{}{}", edit_string, new_indent, line_segment.trim());
                 } else {
-                    edit_string = format!("{}{}", edit_string, line_segment.trim());
-                };
+                    edit_string = format!("{}\n{}{}", edit_string, new_indent, line_segment.trim());
+                }
                 // Remove semicolons
                 edit_string = edit_string.chars().filter(|c| *c != ';').join("");
             }
@@ -508,16 +536,100 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 line.end()
             };
 
-            violations.push(
-                context
-                    .create_diagnostic(IncorrectIndent, TextRange::new(line.start(), visual_end))
-                    .with_fix(Fix::safe_edit(Edit::range_replacement(
-                        edit_string,
-                        TextRange::new(line.start(), line.end()),
-                    ))),
-            );
+            let range = TextRange::new(line.start(), visual_end);
+            let fix = Fix::safe_edit(Edit::range_replacement(
+                edit_string,
+                TextRange::new(line.start(), line.end()),
+            ));
+
+            if context.is_rule_enabled(Rule::InvalidIndentationMultiple) {
+                violations.push(
+                    context
+                        .create_diagnostic(InvalidIndentationMultiple, range)
+                        .with_fix(fix),
+                );
+            } else if is_preproc_violation
+                && context.is_rule_enabled(Rule::InvalidPreprocIndentation)
+            {
+                violations.push(
+                    context
+                        .create_diagnostic(InvalidPreprocIndentation, range)
+                        .with_fix(fix.clone()),
+                );
+            }
         }
     }
 
     violations
+}
+
+pub mod settings {
+    use crate::display_settings;
+    use ruff_macros::CacheKey;
+    use std::{collections::HashMap, fmt::Display};
+
+    #[derive(Debug, Clone, Default, CacheKey)]
+    pub struct InvalidIndentationMultipleSettings {
+        pub construct_to_indent_map: HashMap<String, usize>,
+        pub should_indent_program_contents: bool,
+        pub should_indent_module_contents: bool,
+        pub should_indent_submodule_contents: bool,
+        pub should_indent_subroutine_contents: bool,
+        pub should_indent_function_contents: bool,
+        pub should_indent_derived_type_contents: bool,
+        pub should_indent_block_contents: bool,
+        pub should_indent_if_contents: bool,
+        pub should_indent_interface_contents: bool,
+        pub should_indent_select_contents: bool,
+        pub should_indent_do_contents: bool,
+        pub should_indent_associate_contents: bool,
+        pub num_indents_for_program_contents: usize,
+        pub num_indents_for_module_contents: usize,
+        pub num_indents_for_submodule_contents: usize,
+        pub num_indents_for_subroutine_contents: usize,
+        pub num_indents_for_function_contents: usize,
+        pub num_indents_for_derived_type_contents: usize,
+        pub num_indents_for_block_contents: usize,
+        pub num_indents_for_if_contents: usize,
+        pub num_indents_for_interface_contents: usize,
+        pub num_indents_for_select_contents: usize,
+        pub num_indents_for_do_contents: usize,
+        pub num_indents_for_associate_contents: usize,
+    }
+
+    impl Display for InvalidIndentationMultipleSettings {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            display_settings! {
+                formatter = f,
+                namespace = "check.invalid-indentation-multiple",
+                fields = [
+                    self.should_indent_program_contents,
+                    self.should_indent_module_contents,
+                    self.should_indent_submodule_contents,
+                    self.should_indent_subroutine_contents,
+                    self.should_indent_function_contents,
+                    self.should_indent_derived_type_contents,
+                    self.should_indent_block_contents,
+                    self.should_indent_if_contents,
+                    self.should_indent_interface_contents,
+                    self.should_indent_select_contents,
+                    self.should_indent_do_contents,
+                    self.should_indent_associate_contents,
+                    self.num_indents_for_program_contents,
+                    self.num_indents_for_module_contents,
+                    self.num_indents_for_submodule_contents,
+                    self.num_indents_for_subroutine_contents,
+                    self.num_indents_for_function_contents,
+                    self.num_indents_for_derived_type_contents,
+                    self.num_indents_for_block_contents,
+                    self.num_indents_for_if_contents,
+                    self.num_indents_for_interface_contents,
+                    self.num_indents_for_select_contents,
+                    self.num_indents_for_do_contents,
+                    self.num_indents_for_associate_contents,
+                ]
+            }
+            Ok(())
+        }
+    }
 }

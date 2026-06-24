@@ -378,7 +378,10 @@ pub(crate) fn check_path(
         violations.append(&mut check_invalid_tab(&context, &root));
     }
 
-    if context.is_rule_enabled(Rule::IncorrectIndent) {
+    if context.any_rule_enabled(&[
+        Rule::InvalidIndentationMultiple,
+        Rule::InvalidPreprocIndentation,
+    ]) {
         violations.append(&mut check_incorrect_indent(&context, &root));
     }
 

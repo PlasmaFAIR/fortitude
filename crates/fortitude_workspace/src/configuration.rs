@@ -1,7 +1,8 @@
 use crate::options::{
     ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions,
-    IncorrectKeywordCaseOptions, InvalidTabOptions, KeywordWhitespaceOptions, LineTooLongOptions,
-    Options, PortabilityOptions, ShadowedVariableOptions, StringOptions, UseStatementsOptions,
+    IncorrectKeywordCaseOptions, InvalidIndentationMultipleOptions, InvalidTabOptions,
+    KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions, ShadowedVariableOptions, 
+    StringOptions, UseStatementsOptions,
 };
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
@@ -260,6 +261,7 @@ pub struct Configuration {
     pub line_too_long: Option<LineTooLongOptions>,
     pub use_statements: Option<UseStatementsOptions>,
     pub complexity: Option<ComplexityOptions>,
+    pub invalid_indentation_multiple: Option<InvalidIndentationMultipleOptions>,
 }
 
 impl Configuration {
@@ -341,6 +343,7 @@ impl Configuration {
             line_too_long: check.line_too_long,
             use_statements: check.use_statements,
             complexity: check.complexity,
+            invalid_indentation_multiple: check.invalid_indentation_multiple,
         }
     }
 
@@ -436,6 +439,10 @@ impl Configuration {
                     .complexity
                     .map(ComplexityOptions::into_settings)
                     .unwrap_or_default(),
+                invalid_indentation_multiple: self
+                    .invalid_indentation_multiple
+                    .map(InvalidIndentationMultipleOptions::into_settings)
+                    .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {
                 project_root: project_root.to_path_buf(),
@@ -517,6 +524,9 @@ impl Configuration {
             line_too_long: self.line_too_long.or(config.line_too_long),
             use_statements: self.use_statements.or(config.use_statements),
             complexity: self.complexity.or(config.complexity),
+            invalid_indentation_multiple: self
+                .invalid_indentation_multiple
+                .or(config.invalid_indentation_multiple),
         }
     }
 }
