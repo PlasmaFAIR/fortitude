@@ -540,7 +540,7 @@ expression: diagnostics
 37 |
 38 |   subroutine line_continuation()
    -           integer :: i
-39 +         integer :: i
+39 +             integer :: i
 40 |   i = i + 1 &
 41 |   + 2 &
 42 |     + 3
@@ -560,7 +560,7 @@ expression: diagnostics
 38 |   subroutine line_continuation()
 39 |           integer :: i
    -   i = i + 1 &
-40 +         i = i + 1 &
+40 +             i = i + 1 &
 41 |   + 2 &
 42 |     + 3
 43 |   end subroutine
@@ -580,7 +580,7 @@ expression: diagnostics
 39 |           integer :: i
 40 |   i = i + 1 &
    -   + 2 &
-41 +             + 2 &
+41 +                 + 2 &
 42 |     + 3
 43 |   end subroutine
 44 |
@@ -599,7 +599,7 @@ expression: diagnostics
 40 |   i = i + 1 &
 41 |   + 2 &
    -     + 3
-42 +             + 3
+42 +                 + 3
 43 |   end subroutine
 44 |
 45 | subroutine if_statements()
@@ -658,7 +658,7 @@ expression: diagnostics
 44 |
 45 | subroutine if_statements()
    - integer :: i
-46 +         integer :: i
+46 +             integer :: i
 47 |     i = i + 1
 48 | if (i == 1) i = 2
 49 |   if (i == 2) then; i = 3; end if;
@@ -678,7 +678,7 @@ expression: diagnostics
 45 | subroutine if_statements()
 46 | integer :: i
    -     i = i + 1
-47 +         i = i + 1
+47 +             i = i + 1
 48 | if (i == 1) i = 2
 49 |   if (i == 2) then; i = 3; end if;
 50 | if (i == 4) then
@@ -698,7 +698,7 @@ expression: diagnostics
 46 | integer :: i
 47 |     i = i + 1
    - if (i == 1) i = 2
-48 +         if (i == 1) i = 2
+48 +             if (i == 1) i = 2
 49 |   if (i == 2) then; i = 3; end if;
 50 | if (i == 4) then
 51 |             i = 2
@@ -718,9 +718,9 @@ expression: diagnostics
 47 |     i = i + 1
 48 | if (i == 1) i = 2
    -   if (i == 2) then; i = 3; end if;
-49 +         if (i == 2) then
+49 +             if (i == 2) then
 50 +             i = 3
-51 +         end if
+51 +             end if
 52 | if (i == 4) then
 53 |             i = 2
 54 |             end if
@@ -740,30 +740,30 @@ expression: diagnostics
 48 | if (i == 1) i = 2
 49 |   if (i == 2) then; i = 3; end if;
    - if (i == 4) then
-50 +         if (i == 4) then
+50 +             if (i == 4) then
 51 |             i = 2
 52 |             end if
 53 |
 
-./resources/test/fixtures/style/S105.f90:52:1: S105 [*] Invalid indentation
+./resources/test/fixtures/style/S105.f90:54:1: S105 [*] Invalid indentation
    |
-50 | if (i == 4) then
-51 |             i = 2
 52 |             end if
-   | ^^^^^^^^^^^^ S105
 53 |
 54 |         named_if: if (i == 1) then
+   | ^^^^^^^^ S105
+55 |     i = i + 1
+56 |     end if
    |
    = help: Replace with correct spaces
 
-49 |   if (i == 2) then; i = 3; end if;
-50 | if (i == 4) then
 51 |             i = 2
-   -             end if
-52 +         end if
+52 |             end if
 53 |
-54 |         named_if: if (i == 1) then
+   -         named_if: if (i == 1) then
+54 +             named_if: if (i == 1) then
 55 |     i = i + 1
+56 |     end if
+57 |   end subroutine if_statements
 
 ./resources/test/fixtures/style/S105.f90:55:1: S105 [*] Invalid indentation
    |
@@ -799,7 +799,7 @@ expression: diagnostics
 54 |         named_if: if (i == 1) then
 55 |     i = i + 1
    -     end if
-56 +         end if
+56 +             end if
 57 |   end subroutine if_statements
 58 |     function my_func()
 59 |     integer :: i
@@ -1177,6 +1177,45 @@ expression: diagnostics
 93 |         select case (i)
 94 |       case (1)
 
+./resources/test/fixtures/style/S105.f90:92:1: S105 [*] Invalid indentation
+   |
+91 |       subroutine select_cases
+92 |         integer :: i
+   | ^^^^^^^^ S105
+93 |         select case (i)
+94 |       case (1)
+   |
+   = help: Replace with correct spaces
+
+89 |             contains
+90 |
+91 |       subroutine select_cases
+   -         integer :: i
+92 +             integer :: i
+93 |         select case (i)
+94 |       case (1)
+95 |           i = 2
+
+./resources/test/fixtures/style/S105.f90:93:1: S105 [*] Invalid indentation
+   |
+91 |       subroutine select_cases
+92 |         integer :: i
+93 |         select case (i)
+   | ^^^^^^^^ S105
+94 |       case (1)
+95 |           i = 2
+   |
+   = help: Replace with correct spaces
+
+90 |
+91 |       subroutine select_cases
+92 |         integer :: i
+   -         select case (i)
+93 +             select case (i)
+94 |       case (1)
+95 |           i = 2
+96 |             case (2)
+
 ./resources/test/fixtures/style/S105.f90:94:1: S105 [*] Invalid indentation
    |
 92 |         integer :: i
@@ -1192,7 +1231,7 @@ expression: diagnostics
 92 |         integer :: i
 93 |         select case (i)
    -       case (1)
-94 +         case (1)
+94 +             case (1)
 95 |           i = 2
 96 |             case (2)
 97 |         i = 1
@@ -1212,30 +1251,10 @@ expression: diagnostics
 93 |         select case (i)
 94 |       case (1)
    -           i = 2
-95 +             i = 2
+95 +                 i = 2
 96 |             case (2)
 97 |         i = 1
 98 |             end select
-
-./resources/test/fixtures/style/S105.f90:96:1: S105 [*] Invalid indentation
-   |
-94 |       case (1)
-95 |           i = 2
-96 |             case (2)
-   | ^^^^^^^^^^^^ S105
-97 |         i = 1
-98 |             end select
-   |
-   = help: Replace with correct spaces
-
-93 |         select case (i)
-94 |       case (1)
-95 |           i = 2
-   -             case (2)
-96 +         case (2)
-97 |         i = 1
-98 |             end select
-99 |           i = 3
 
 ./resources/test/fixtures/style/S105.f90:97:1: S105 [*] Invalid indentation
    |
@@ -1252,29 +1271,10 @@ expression: diagnostics
 95  |           i = 2
 96  |             case (2)
     -         i = 1
-97  +             i = 1
+97  +                 i = 1
 98  |             end select
 99  |           i = 3
 100 |
-
-./resources/test/fixtures/style/S105.f90:98:1: S105 [*] Invalid indentation
-   |
-96 |             case (2)
-97 |         i = 1
-98 |             end select
-   | ^^^^^^^^^^^^ S105
-99 |           i = 3
-   |
-   = help: Replace with correct spaces
-
-95  |           i = 2
-96  |             case (2)
-97  |         i = 1
-    -             end select
-98  +         end select
-99  |           i = 3
-100 |
-101 |   end subroutine select_cases
 
 ./resources/test/fixtures/style/S105.f90:99:1: S105 [*] Invalid indentation
     |
@@ -1291,7 +1291,7 @@ expression: diagnostics
 97  |         i = 1
 98  |             end select
     -           i = 3
-99  +         i = 3
+99  +             i = 3
 100 |
 101 |   end subroutine select_cases
 102 |
@@ -1564,7 +1564,7 @@ expression: diagnostics
 116 |
 117 |   subroutine associates
     -     integer :: i
-118 +         integer :: i
+118 +             integer :: i
 119 |   associate(x => i)
 120 |   print *, x
 121 |     end associate
@@ -1584,7 +1584,7 @@ expression: diagnostics
 117 |   subroutine associates
 118 |     integer :: i
     -   associate(x => i)
-119 +         associate(x => i)
+119 +             associate(x => i)
 120 |   print *, x
 121 |     end associate
 122 |
@@ -1623,7 +1623,7 @@ expression: diagnostics
 119 |   associate(x => i)
 120 |   print *, x
     -     end associate
-121 +         end associate
+121 +             end associate
 122 |
 123 |     named_associate: associate(x => i)
 124 |   print *, x
@@ -1643,7 +1643,7 @@ expression: diagnostics
 121 |     end associate
 122 |
     -     named_associate: associate(x => i)
-123 +         named_associate: associate(x => i)
+123 +             named_associate: associate(x => i)
 124 |   print *, x
 125 |     end associate named_associate
 126 |   end subroutine associates
@@ -1682,7 +1682,7 @@ expression: diagnostics
 123 |     named_associate: associate(x => i)
 124 |   print *, x
     -     end associate named_associate
-125 +         end associate named_associate
+125 +             end associate named_associate
 126 |   end subroutine associates
 127 |   end program mprog
 
