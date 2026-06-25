@@ -2,7 +2,7 @@ use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind, kw};
 use log::debug;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
@@ -180,9 +180,10 @@ impl AstRule for BadDoTermination {
 
         let src = context.source_text();
 
-        match end_action.kind() {
-            "end" | "enddo" => (),
-            "keyword_statement" if ControlFlow::maybe_from(&end_action, src)?.is_continue() => (),
+        match end_action.kind_id() {
+            kw!("end") | kw!("enddo") => {}
+            kind!("keyword_statement")
+                if ControlFlow::maybe_from(&end_action, src)?.is_continue() => {}
             _ => {
                 let mut diagnostic = context.create_diagnostic(Self {}, end_action);
                 if let Some(fix) =

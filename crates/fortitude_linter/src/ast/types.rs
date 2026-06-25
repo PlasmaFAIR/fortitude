@@ -4,9 +4,8 @@ use std::{rc::Rc, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use bitflags::bitflags;
-use fortitude_macros::{HasName, HasNode};
+use fortitude_macros::{HasName, HasNode, kind, kw};
 use itertools::Itertools;
-use ruff_source_file::SourceFile;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
 
@@ -594,23 +593,26 @@ pub(crate) struct ImplicitStatement<'a> {
 }
 
 impl<'a> ImplicitStatement<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &SourceFile) -> Option<Self> {
+    pub fn try_from_node(node: Node<'a>) -> Option<Self> {
         if node.kind() != "implicit_statement" {
             return None;
         }
-        let text = node.to_text(src.source_text()).map(|t| t.to_lowercase())?;
         let mut none_type = ImplicitNoneType::empty();
-        if !text.contains("none") {
+        let ids = node
+            .descendants()
+            .map(|child| child.kind_id())
+            .collect_vec();
+        if !ids.contains(&kind!("none")) {
             return Some(Self { node, none_type });
         }
-        if text.contains("type") {
+        if ids.contains(&kw!("type")) {
             none_type |= ImplicitNoneType::TYPE;
         }
-        if text.contains("external") {
+        if ids.contains(&kw!("external")) {
             none_type |= ImplicitNoneType::EXTERNAL;
         }
         // If the (type, external) part is missing, then 'type' is implied
-        if !text.contains("type") && !text.contains("external") {
+        if !ids.contains(&kw!("type")) && !ids.contains(&kw!("external")) {
             none_type = ImplicitNoneType::TYPE;
         }
         Some(Self { node, none_type })
@@ -618,13 +620,17 @@ impl<'a> ImplicitStatement<'a> {
 
     /// Determine the implicit typing scheme of a
     /// program/module/submodule/function/subroutine node.
-    pub fn try_from_scope(node: &'a Node, src: &SourceFile) -> Option<Self> {
+    pub fn try_from_scope(node: &'a Node) -> Option<Self> {
         if matches!(
-            node.kind(),
-            "module" | "submodule" | "program" | "function" | "subroutine"
+            node.kind_id(),
+            kind!("module")
+                | kind!("submodule")
+                | kind!("program")
+                | kind!("function")
+                | kind!("subroutine")
         ) {
             if let Some(child) = node.child_with_name("implicit_statement") {
-                return ImplicitStatement::try_from_node(child, src);
+                return ImplicitStatement::try_from_node(child);
             }
             return None;
         }
@@ -668,8 +674,8 @@ pub struct ProcedureAttribute<'a> {
 }
 
 impl<'a> ProcedureAttribute<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
-        let kind = ProcedureAttributeKind::from_str(node.to_text(src).context("expected text")?)?;
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
+        let kind = ProcedureAttributeKind::from_str(node.kind())?;
         Ok(Self { kind, node })
     }
 
@@ -713,8 +719,8 @@ impl<'a> Procedure<'a> {
 
         let attributes: Result<Vec<_>> = stmt
             .named_children(&mut stmt.walk())
-            .filter(|attr| attr.kind() == "procedure_qualifier")
-            .map(|attr| ProcedureAttribute::try_from_node(attr, src))
+            .filter(|attr| attr.kind_id() == kind!("procedure_qualifier"))
+            .map(ProcedureAttribute::try_from_node)
             .collect();
         let attributes = attributes?;
 
