@@ -237,7 +237,7 @@ popular open-source Fortran linting tool currently in use.
 Some of the code in Fortitude was created with the assistance of the generative
 AI tool GitHub Copilot, but none has been generated wholesale, and all code has
 been verified by at least two human developers prior to deployment. The software
-is thoroughly tested, and all tests have been designed manually. Besides
+is thoroughly tested, and all tests have been designed manually. Other than
 spelling and grammar checking, this paper was written without AI assistance.
 
 # Acknowledgements
