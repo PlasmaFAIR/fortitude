@@ -1,0 +1,137 @@
+---
+source: crates/fortitude_linter/src/rules/portability/mod.rs
+expression: diagnostics
+---
+./resources/test/fixtures/portability/PORT051.f90:66:13: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+65 |     ! All fail.
+66 |     i = 2 + -3
+   |             ^ PORT051
+67 |     i = 2 + - 3
+68 |     i = 2 +- 3
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:67:13: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+65 |     ! All fail.
+66 |     i = 2 + -3
+67 |     i = 2 + - 3
+   |             ^ PORT051
+68 |     i = 2 +- 3
+69 |     i = 2 + -(3)
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:68:12: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+66 |     i = 2 + -3
+67 |     i = 2 + - 3
+68 |     i = 2 +- 3
+   |            ^ PORT051
+69 |     i = 2 + -(3)
+70 |     i = 2 * -3
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:69:13: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+67 |     i = 2 + - 3
+68 |     i = 2 +- 3
+69 |     i = 2 + -(3)
+   |             ^ PORT051
+70 |     i = 2 * -3
+71 |     i = 2 * 10 ** -2
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:70:13: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+68 |     i = 2 +- 3
+69 |     i = 2 + -(3)
+70 |     i = 2 * -3
+   |             ^ PORT051
+71 |     i = 2 * 10 ** -2
+72 |     i = 2 * 10 ** -2 * 3
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:71:19: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+69 |     i = 2 + -(3)
+70 |     i = 2 * -3
+71 |     i = 2 * 10 ** -2
+   |                   ^ PORT051
+72 |     i = 2 * 10 ** -2 * 3
+73 |     i = 3 * 10 ** - 3 * -2
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:72:19: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+70 |     i = 2 * -3
+71 |     i = 2 * 10 ** -2
+72 |     i = 2 * 10 ** -2 * 3
+   |                   ^ PORT051
+73 |     i = 3 * 10 ** - 3 * -2
+74 |     i = 3 + .negate. 2
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:73:19: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+71 |     i = 2 * 10 ** -2
+72 |     i = 2 * 10 ** -2 * 3
+73 |     i = 3 * 10 ** - 3 * -2
+   |                   ^ PORT051
+74 |     i = 3 + .negate. 2
+75 |     i = 2 * .negate.3
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:73:25: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+71 |     i = 2 * 10 ** -2
+72 |     i = 2 * 10 ** -2 * 3
+73 |     i = 3 * 10 ** - 3 * -2
+   |                         ^ PORT051
+74 |     i = 3 + .negate. 2
+75 |     i = 2 * .negate.3
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:74:13: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+72 |     i = 2 * 10 ** -2 * 3
+73 |     i = 3 * 10 ** - 3 * -2
+74 |     i = 3 + .negate. 2
+   |             ^^^^^^^^ PORT051
+75 |     i = 2 * .negate.3
+76 |     i = 3 * 10 ** .negate. (2)
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:75:13: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+73 |     i = 3 * 10 ** - 3 * -2
+74 |     i = 3 + .negate. 2
+75 |     i = 2 * .negate.3
+   |             ^^^^^^^^ PORT051
+76 |     i = 3 * 10 ** .negate. (2)
+77 |     i = 3 * 10 ** -2 * .negate. 1
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:76:19: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+74 |     i = 3 + .negate. 2
+75 |     i = 2 * .negate.3
+76 |     i = 3 * 10 ** .negate. (2)
+   |                   ^^^^^^^^ PORT051
+77 |     i = 3 * 10 ** -2 * .negate. 1
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:77:19: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+75 |     i = 2 * .negate.3
+76 |     i = 3 * 10 ** .negate. (2)
+77 |     i = 3 * 10 ** -2 * .negate. 1
+   |                   ^ PORT051
+   |
+
+./resources/test/fixtures/portability/PORT051.f90:77:24: PORT051 Unary operator following arithmetic operator (use parentheses)
+   |
+75 |     i = 2 * .negate.3
+76 |     i = 3 * 10 ** .negate. (2)
+77 |     i = 3 * 10 ** -2 * .negate. 1
+   |                        ^^^^^^^^ PORT051
+   |

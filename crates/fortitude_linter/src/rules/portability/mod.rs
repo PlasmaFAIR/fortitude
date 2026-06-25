@@ -3,6 +3,7 @@ pub(crate) mod literal_kinds;
 pub(crate) mod non_portable_io_unit;
 pub mod return_in_program;
 pub(crate) mod star_kinds;
+pub mod unary_following_arithmetic;
 
 #[cfg(test)]
 mod tests {
@@ -25,6 +26,7 @@ mod tests {
     #[test_case(Rule::StarKind, Path::new("PORT021.f90"))]
     #[test_case(Rule::InvalidTab, Path::new("PORT031.f90"))]
     #[test_case(Rule::ReturnInProgram, Path::new("PORT041.f90"))]
+    #[test_case(Rule::UnaryFollowingArithmetic, Path::new("PORT051.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
