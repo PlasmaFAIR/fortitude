@@ -1,8 +1,8 @@
 use crate::options::{
     ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions,
     IncorrectKeywordCaseOptions, InvalidIndentationMultipleOptions, InvalidTabOptions,
-    KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions, ShadowedVariableOptions, 
-    StringOptions, UseStatementsOptions,
+    KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions,
+    ShadowedVariableOptions, StringOptions, UseStatementsOptions,
 };
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
