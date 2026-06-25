@@ -6,6 +6,7 @@ use crate::{
     whitespace::{has_leading_content, has_trailing_content},
 };
 use anyhow::{Result, anyhow};
+use fortitude_macros::{kind, kw};
 use itertools::Itertools;
 use ruff_source_file::{LineRanges, SourceFile};
 use ruff_text_size::{TextRange, TextSize};
@@ -508,28 +509,28 @@ pub enum ControlFlow {
 
 impl ControlFlow {
     pub fn maybe_from(value: &Node, src: &str) -> Option<Self> {
-        if value.kind() != "keyword_statement" {
+        if value.kind_id() != kind!("keyword_statement") {
             return None;
         }
-        match value.child(0)?.to_text(src)?.to_ascii_lowercase().as_str() {
-            "continue" => Some(Self::Continue),
-            "cycle" => Some(Self::Cycle),
-            "exit" => Some(Self::Exit),
-            "return" => Some(Self::Return),
-            "stop" => Some(Self::Stop),
-            "error" => Some(Self::Stop),
+        match value.child(0)?.kind_id() {
+            kw!("continue") => Some(Self::Continue),
+            kw!("cycle") => Some(Self::Cycle),
+            kw!("exit") => Some(Self::Exit),
+            kw!("return") => Some(Self::Return),
+            kw!("stop") => Some(Self::Stop),
+            kw!("error") => Some(Self::Stop),
             keyword => Self::parse_goto(keyword, value, src),
         }
     }
 
-    fn parse_goto(keyword: &str, value: &Node, src: &str) -> Option<Self> {
-        if !matches!(keyword, "go" | "goto") {
+    fn parse_goto(keyword: u16, value: &Node, src: &str) -> Option<Self> {
+        if !matches!(keyword, kw!("go") | kw!("goto")) {
             return None;
         }
 
         // We expect either `go to N` or `goto N`.
         // Don't bother with assigned or computed gotos for now
-        let expected_ref_index = if keyword == "go" { 2 } else { 1 };
+        let expected_ref_index = if keyword == kw!("go") { 2 } else { 1 };
         if value.child_count() > expected_ref_index + 1 {
             return None;
         }

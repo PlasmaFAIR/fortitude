@@ -1,3 +1,4 @@
+use fortitude_macros::kind;
 use line_filter::FilterSet;
 use ruff_text_size::Ranged;
 pub use rule_selector::RuleSelector;
@@ -326,8 +327,10 @@ pub(crate) fn check_path(
             Rule::SuperfluousElseCycle,
             Rule::SuperfluousElseExit,
             Rule::SuperfluousElseStop,
-        ]) && matches!(node.kind(), "keyword_statement" | "stop_statement")
-            && let Some(violation) = check_superfluous_returns(&context, &node)
+        ]) && matches!(
+            node.kind_id(),
+            kind!("keyword_statement") | kind!("stop_statement")
+        ) && let Some(violation) = check_superfluous_returns(&context, &node)
         {
             violations.push(violation);
         }

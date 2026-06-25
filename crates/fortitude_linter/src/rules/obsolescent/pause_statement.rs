@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Fix, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kw};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -32,12 +32,7 @@ impl Violation for PauseStatement {
 
 impl AstRule for PauseStatement {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if node
-            .child(0)?
-            .to_text(context.source_text())?
-            .to_lowercase()
-            != "pause"
-        {
+        if node.child(0)?.kind_id() != kw!("pause") {
             return None;
         }
 
