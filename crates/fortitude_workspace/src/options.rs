@@ -2,7 +2,7 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 use ruff_macros::{CombineOptions, OptionsMetadata};
 use rustc_hash::FxHashMap;
@@ -636,88 +636,88 @@ pub struct InvalidIndentationMultipleOptions {
     /// The number of full indents to use for the contents of a program
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-program-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-program-contents = 2"
     )]
     pub num_indents_for_program_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a module
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-module-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-module-contents = 2"
     )]
     pub num_indents_for_module_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a submodule
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-submodule-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-submodule-contents = 2"
     )]
     pub num_indents_for_submodule_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a subroutine
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-subroutine-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-subroutine-contents = 2"
     )]
     pub num_indents_for_subroutine_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a function
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-function-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-function-contents = 2"
     )]
     pub num_indents_for_function_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a derived type
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-derived-type-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-derived-type-contents = 2"
     )]
     pub num_indents_for_derived_type_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a block
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-block-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-block-contents = 2"
     )]
     pub num_indents_for_block_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a if block
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-if-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-if-contents = 2"
     )]
     pub num_indents_for_if_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a interface
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-interface-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-interface-contents = 2"
     )]
     pub num_indents_for_interface_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a select case construct
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-select-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-select-contents = 2"
     )]
     pub num_indents_for_select_contents: Option<usize>,
 
     /// The number of full indents to use for the contents of a do block
     #[option(
         default = "1",
-        value_type = "int",
-        example = "num-indents-for-do-contents = 0"
+        value_type = "usize",
+        example = "num-indents-for-do-contents = 2"
     )]
     pub num_indents_for_do_contents: Option<usize>,
 
@@ -725,179 +725,92 @@ pub struct InvalidIndentationMultipleOptions {
     #[option(
         default = "1",
         value_type = "int",
-        example = "num-indents-for-associate-contents = 0"
+        example = "num-indents-for-associate-contents = 2"
     )]
     pub num_indents_for_associate_contents: Option<usize>,
 }
 
 impl InvalidIndentationMultipleOptions {
     pub fn into_settings(self) -> whitespace::settings::InvalidIndentationMultipleSettings {
-        let mut indentation_map: HashMap<String, usize> = HashMap::new();
+        let mut settings_to_return =
+            whitespace::settings::InvalidIndentationMultipleSettings::default();
 
-        indentation_map.insert(
-            "program_statement".to_string(),
-            if self.should_indent_program_contents.unwrap_or_default() {
-                self.num_indents_for_program_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
+        settings_to_return.should_indent_program_contents = self
+            .should_indent_program_contents
+            .unwrap_or(settings_to_return.should_indent_program_contents);
+        settings_to_return.should_indent_module_contents = self
+            .should_indent_module_contents
+            .unwrap_or(settings_to_return.should_indent_module_contents);
+        settings_to_return.should_indent_submodule_contents = self
+            .should_indent_submodule_contents
+            .unwrap_or(settings_to_return.should_indent_submodule_contents);
+        settings_to_return.should_indent_subroutine_contents = self
+            .should_indent_subroutine_contents
+            .unwrap_or(settings_to_return.should_indent_subroutine_contents);
+        settings_to_return.should_indent_function_contents = self
+            .should_indent_function_contents
+            .unwrap_or(settings_to_return.should_indent_function_contents);
+        settings_to_return.should_indent_derived_type_contents = self
+            .should_indent_derived_type_contents
+            .unwrap_or(settings_to_return.should_indent_derived_type_contents);
+        settings_to_return.should_indent_block_contents = self
+            .should_indent_block_contents
+            .unwrap_or(settings_to_return.should_indent_block_contents);
+        settings_to_return.should_indent_if_contents = self
+            .should_indent_if_contents
+            .unwrap_or(settings_to_return.should_indent_if_contents);
+        settings_to_return.should_indent_interface_contents = self
+            .should_indent_interface_contents
+            .unwrap_or(settings_to_return.should_indent_interface_contents);
+        settings_to_return.should_indent_select_contents = self
+            .should_indent_select_contents
+            .unwrap_or(settings_to_return.should_indent_select_contents);
+        settings_to_return.should_indent_do_contents = self
+            .should_indent_do_contents
+            .unwrap_or(settings_to_return.should_indent_do_contents);
+        settings_to_return.should_indent_associate_contents = self
+            .should_indent_associate_contents
+            .unwrap_or(settings_to_return.should_indent_associate_contents);
+        settings_to_return.num_indents_for_program_contents = self
+            .num_indents_for_program_contents
+            .unwrap_or(settings_to_return.num_indents_for_program_contents);
+        settings_to_return.num_indents_for_module_contents = self
+            .num_indents_for_module_contents
+            .unwrap_or(settings_to_return.num_indents_for_module_contents);
+        settings_to_return.num_indents_for_submodule_contents = self
+            .num_indents_for_submodule_contents
+            .unwrap_or(settings_to_return.num_indents_for_submodule_contents);
+        settings_to_return.num_indents_for_subroutine_contents = self
+            .num_indents_for_subroutine_contents
+            .unwrap_or(settings_to_return.num_indents_for_subroutine_contents);
+        settings_to_return.num_indents_for_function_contents = self
+            .num_indents_for_function_contents
+            .unwrap_or(settings_to_return.num_indents_for_function_contents);
+        settings_to_return.num_indents_for_derived_type_contents = self
+            .num_indents_for_derived_type_contents
+            .unwrap_or(settings_to_return.num_indents_for_derived_type_contents);
+        settings_to_return.num_indents_for_block_contents = self
+            .num_indents_for_block_contents
+            .unwrap_or(settings_to_return.num_indents_for_block_contents);
+        settings_to_return.num_indents_for_if_contents = self
+            .num_indents_for_if_contents
+            .unwrap_or(settings_to_return.num_indents_for_if_contents);
+        settings_to_return.num_indents_for_interface_contents = self
+            .num_indents_for_interface_contents
+            .unwrap_or(settings_to_return.num_indents_for_interface_contents);
+        settings_to_return.num_indents_for_select_contents = self
+            .num_indents_for_select_contents
+            .unwrap_or(settings_to_return.num_indents_for_select_contents);
+        settings_to_return.num_indents_for_do_contents = self
+            .num_indents_for_do_contents
+            .unwrap_or(settings_to_return.num_indents_for_do_contents);
+        settings_to_return.num_indents_for_associate_contents = self
+            .num_indents_for_associate_contents
+            .unwrap_or(settings_to_return.num_indents_for_associate_contents);
 
-        indentation_map.insert(
-            "module_statement".to_string(),
-            if self.should_indent_module_contents.unwrap_or_default() {
-                self.num_indents_for_module_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
+        settings_to_return = settings_to_return.populate_construct_to_indent_map();
 
-        indentation_map.insert(
-            "submodule_statement".to_string(),
-            if self.should_indent_submodule_contents.unwrap_or_default() {
-                self.num_indents_for_submodule_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
-
-        indentation_map.insert(
-            "subroutine_statement".to_string(),
-            if self.should_indent_subroutine_contents.unwrap_or_default() {
-                self.num_indents_for_subroutine_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
-
-        let func_indent = if self.should_indent_function_contents.unwrap_or_default() {
-            self.num_indents_for_function_contents.unwrap_or_default()
-        } else {
-            0usize
-        };
-        indentation_map.insert("function_statement".to_string(), func_indent);
-        indentation_map.insert("function".to_string(), func_indent);
-
-        indentation_map.insert(
-            "derived_type_statement".to_string(),
-            if self.should_indent_derived_type_contents.unwrap_or_default() {
-                self.num_indents_for_derived_type_contents
-                    .unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
-
-        let block_indent = if self.should_indent_block_contents.unwrap_or_default() {
-            self.num_indents_for_block_contents.unwrap_or_default()
-        } else {
-            0usize
-        };
-        indentation_map.insert("block_construct".to_string(), block_indent);
-        indentation_map.insert("block_label_start_expression".to_string(), block_indent);
-
-        indentation_map.insert(
-            "if_statement".to_string(),
-            if self.should_indent_if_contents.unwrap_or_default() {
-                self.num_indents_for_if_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
-
-        indentation_map.insert(
-            "interface_statement".to_string(),
-            if self.should_indent_interface_contents.unwrap_or_default() {
-                self.num_indents_for_interface_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
-
-        indentation_map.insert(
-            "select_case_statement".to_string(),
-            if self.should_indent_select_contents.unwrap_or_default() {
-                self.num_indents_for_select_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
-
-        indentation_map.insert(
-            "do_statement".to_string(),
-            if self.should_indent_do_contents.unwrap_or_default() {
-                self.num_indents_for_do_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
-
-        indentation_map.insert(
-            "associate_statement".to_string(),
-            if self.should_indent_associate_contents.unwrap_or_default() {
-                self.num_indents_for_associate_contents.unwrap_or_default()
-            } else {
-                0usize
-            },
-        );
-
-        whitespace::settings::InvalidIndentationMultipleSettings {
-            construct_to_indent_map: indentation_map,
-            should_indent_program_contents: self.should_indent_program_contents.unwrap_or_default(),
-            should_indent_module_contents: self.should_indent_module_contents.unwrap_or_default(),
-            should_indent_submodule_contents: self
-                .should_indent_submodule_contents
-                .unwrap_or_default(),
-            should_indent_subroutine_contents: self
-                .should_indent_subroutine_contents
-                .unwrap_or_default(),
-            should_indent_function_contents: self
-                .should_indent_function_contents
-                .unwrap_or_default(),
-            should_indent_derived_type_contents: self
-                .should_indent_derived_type_contents
-                .unwrap_or_default(),
-            should_indent_block_contents: self.should_indent_block_contents.unwrap_or_default(),
-            should_indent_if_contents: self.should_indent_if_contents.unwrap_or_default(),
-            should_indent_interface_contents: self
-                .should_indent_interface_contents
-                .unwrap_or_default(),
-            should_indent_select_contents: self.should_indent_select_contents.unwrap_or_default(),
-            should_indent_do_contents: self.should_indent_do_contents.unwrap_or_default(),
-            should_indent_associate_contents: self
-                .should_indent_associate_contents
-                .unwrap_or_default(),
-            num_indents_for_program_contents: self
-                .num_indents_for_program_contents
-                .unwrap_or_default(),
-            num_indents_for_module_contents: self
-                .num_indents_for_module_contents
-                .unwrap_or_default(),
-            num_indents_for_submodule_contents: self
-                .num_indents_for_submodule_contents
-                .unwrap_or_default(),
-            num_indents_for_subroutine_contents: self
-                .num_indents_for_subroutine_contents
-                .unwrap_or_default(),
-            num_indents_for_function_contents: self
-                .num_indents_for_function_contents
-                .unwrap_or_default(),
-            num_indents_for_derived_type_contents: self
-                .num_indents_for_derived_type_contents
-                .unwrap_or_default(),
-            num_indents_for_block_contents: self.num_indents_for_block_contents.unwrap_or_default(),
-            num_indents_for_if_contents: self.num_indents_for_if_contents.unwrap_or_default(),
-            num_indents_for_interface_contents: self
-                .num_indents_for_interface_contents
-                .unwrap_or_default(),
-            num_indents_for_select_contents: self
-                .num_indents_for_select_contents
-                .unwrap_or_default(),
-            num_indents_for_do_contents: self.num_indents_for_do_contents.unwrap_or_default(),
-            num_indents_for_associate_contents: self
-                .num_indents_for_associate_contents
-                .unwrap_or_default(),
-        }
+        settings_to_return
     }
 }
 

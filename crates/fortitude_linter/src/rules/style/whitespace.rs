@@ -373,6 +373,49 @@ impl AlwaysFixableViolation for InvalidPreprocIndentation {
     }
 }
 
+const BEGIN_SCOPE_NODES: [&str; 15] = [
+    "program_statement",
+    "module_statement",
+    "submodule_statement",
+    "subroutine_statement",
+    "function_statement",
+    "function",
+    "derived_type_statement",
+    "block_construct",
+    "if_statement",
+    "interface_statement",
+    "procedure_qualifier",
+    "select_case_statement",
+    // loop and statement needed to catch case of checking parent of block_label_start_expression
+    "do_loop",
+    "do_statement",
+    "associate_statement",
+];
+const PREPROC_NODES: [&str; 7] = [
+    "preproc_if",
+    "preproc_ifdef",
+    "preproc_elifdef",
+    "preproc_else",
+    "preproc_include",
+    "preproc_def",
+    "preproc_function_def",
+];
+const SCOPED_ZERO_INDENT_NODES: [&str; 2] = ["contains_statement", "case_statement"];
+const END_SCOPE_NODES: [&str; 12] = [
+    "end_program_statement",
+    "end_module_statement",
+    "end_submodule_statement",
+    "end_subroutine_statement",
+    "end_function_statement",
+    "end_type_statement",
+    "end_block_construct_statement",
+    "end_if_statement",
+    "end_interface_statement",
+    "end_select_statement",
+    "end_do_loop_statement",
+    "end_associate_statement",
+];
+
 pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
 
@@ -382,48 +425,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         .settings()
         .invalid_indentation_multiple
         .construct_to_indent_map;
-
-    const BEGIN_SCOPE_NODES: &[&str] = &[
-        "program_statement",
-        "module_statement",
-        "submodule_statement",
-        "subroutine_statement",
-        "function_statement",
-        "function",
-        "derived_type_statement",
-        "block_construct",
-        "block_label_start_expression",
-        "if_statement",
-        "interface_statement",
-        "procedure_qualifier",
-        "select_case_statement",
-        "do_statement",
-        "associate_statement",
-    ];
-    const PREPROC_NODES: &[&str] = &[
-        "preproc_if",
-        "preproc_ifdef",
-        "preproc_elifdef",
-        "preproc_else",
-        "preproc_include",
-        "preproc_def",
-        "preproc_function_def",
-    ];
-    const SCOPED_ZERO_INDENT_NODES: &[&str] = &["contains_statement", "case_statement"];
-    const END_SCOPE_NODES: &[&str] = &[
-        "end_program_statement",
-        "end_module_statement",
-        "end_submodule_statement",
-        "end_subroutine_statement",
-        "end_function_statement",
-        "end_type_statement",
-        "end_block_construct_statement",
-        "end_if_statement",
-        "end_interface_statement",
-        "end_select_statement",
-        "end_do_loop_statement",
-        "end_associate_statement",
-    ];
 
     // Array to track both the number of scopes we are inside and their respective indents
     let mut scope_indents: Vec<usize> = Vec::new();
@@ -468,29 +469,36 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             if let Some(line_segment_node) = root
                 .named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
             {
-                let node_kind = &line_segment_node.kind();
+                // Handle block labels by taking parent
+                let node = if matches!(line_segment_node.kind(), "block_label_start_expression") {
+                    line_segment_node
+                        .ancestors()
+                        .next()
+                        .unwrap_or(line_segment_node)
+                } else {
+                    line_segment_node.clone()
+                };
+                let node_kind = node.kind();
 
                 // Determine expected indent bases on tree-sitter node kind
-                if BEGIN_SCOPE_NODES.contains(node_kind) && !line_segment_node.inline_if_statement()
-                {
+                if BEGIN_SCOPE_NODES.contains(&node_kind) && !node.inline_if_statement() {
                     if edit_is_activated {
                         scope_indents.push(
                             current_expected_indent
-                                + indent_width
-                                    * constructs_to_indent_map.get(*node_kind).unwrap_or(&1usize),
+                                + indent_width * constructs_to_indent_map.get(node_kind).unwrap(),
                         );
                     } else {
                         scope_indents.push(leading_spaces);
                     }
-                } else if END_SCOPE_NODES.contains(node_kind) {
+                } else if END_SCOPE_NODES.contains(&node_kind) {
                     scope_indents.pop();
                     current_expected_indent = *scope_indents.last().unwrap_or(&0usize);
-                } else if PREPROC_NODES.contains(node_kind) {
+                } else if PREPROC_NODES.contains(&node_kind) {
                     edit_is_activated = edit_is_activated
                         || context.is_rule_enabled(Rule::InvalidPreprocIndentation);
                     is_preproc_violation = true;
                     current_expected_indent = 0usize;
-                } else if SCOPED_ZERO_INDENT_NODES.contains(node_kind) {
+                } else if SCOPED_ZERO_INDENT_NODES.contains(&node_kind) {
                     current_expected_indent = *scope_indents.iter().rev().nth(1).unwrap_or(&0usize);
                 } else if edit_is_activated {
                     // Determine indent change based on line continuation char "&"
@@ -568,7 +576,7 @@ pub mod settings {
     use ruff_macros::CacheKey;
     use std::{collections::HashMap, fmt::Display};
 
-    #[derive(Debug, Clone, Default, CacheKey)]
+    #[derive(Debug, Clone, CacheKey)]
     pub struct InvalidIndentationMultipleSettings {
         pub construct_to_indent_map: HashMap<String, usize>,
         pub should_indent_program_contents: bool,
@@ -595,6 +603,156 @@ pub mod settings {
         pub num_indents_for_select_contents: usize,
         pub num_indents_for_do_contents: usize,
         pub num_indents_for_associate_contents: usize,
+    }
+
+    impl Default for InvalidIndentationMultipleSettings {
+        fn default() -> Self {
+            let mut construct_to_indent_map: HashMap<String, usize> = HashMap::new();
+            for node_kind in super::BEGIN_SCOPE_NODES {
+                construct_to_indent_map.insert(node_kind.to_string(), 1usize);
+            }
+            Self {
+                construct_to_indent_map: construct_to_indent_map,
+                should_indent_program_contents: true,
+                should_indent_module_contents: true,
+                should_indent_submodule_contents: true,
+                should_indent_subroutine_contents: true,
+                should_indent_function_contents: true,
+                should_indent_derived_type_contents: true,
+                should_indent_block_contents: true,
+                should_indent_if_contents: true,
+                should_indent_interface_contents: true,
+                should_indent_select_contents: true,
+                should_indent_do_contents: true,
+                should_indent_associate_contents: true,
+                num_indents_for_program_contents: 1usize,
+                num_indents_for_module_contents: 1usize,
+                num_indents_for_submodule_contents: 1usize,
+                num_indents_for_subroutine_contents: 1usize,
+                num_indents_for_function_contents: 1usize,
+                num_indents_for_derived_type_contents: 1usize,
+                num_indents_for_block_contents: 1usize,
+                num_indents_for_if_contents: 1usize,
+                num_indents_for_interface_contents: 1usize,
+                num_indents_for_select_contents: 1usize,
+                num_indents_for_do_contents: 1usize,
+                num_indents_for_associate_contents: 1usize,
+            }
+        }
+    }
+
+    impl InvalidIndentationMultipleSettings {
+        pub fn populate_construct_to_indent_map(&mut self) -> Self {
+            self.construct_to_indent_map.insert(
+                "program_statement".to_string(),
+                if self.should_indent_program_contents {
+                    self.num_indents_for_program_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "module_statement".to_string(),
+                if self.should_indent_module_contents {
+                    self.num_indents_for_module_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "submodule_statement".to_string(),
+                if self.should_indent_submodule_contents {
+                    self.num_indents_for_submodule_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "subroutine_statement".to_string(),
+                if self.should_indent_subroutine_contents {
+                    self.num_indents_for_subroutine_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "function_statement".to_string(),
+                if self.should_indent_function_contents {
+                    self.num_indents_for_function_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "derived_type_statement".to_string(),
+                if self.should_indent_derived_type_contents {
+                    self.num_indents_for_derived_type_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "block_construct".to_string(),
+                if self.should_indent_block_contents {
+                    self.num_indents_for_block_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "if_statement".to_string(),
+                if self.should_indent_if_contents {
+                    self.num_indents_for_if_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "interface_statement".to_string(),
+                if self.should_indent_interface_contents {
+                    self.num_indents_for_interface_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "select_case_statement".to_string(),
+                if self.should_indent_select_contents {
+                    self.num_indents_for_select_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "do_statement".to_string(),
+                if self.should_indent_do_contents {
+                    self.num_indents_for_do_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.construct_to_indent_map.insert(
+                "associate_statement".to_string(),
+                if self.should_indent_associate_contents {
+                    self.num_indents_for_associate_contents
+                } else {
+                    0usize
+                },
+            );
+
+            self.clone()
+        }
     }
 
     impl Display for InvalidIndentationMultipleSettings {

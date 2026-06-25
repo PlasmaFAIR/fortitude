@@ -50,6 +50,10 @@ if (i == 1) i = 2
 if (i == 4) then
             i = 2
             end if
+
+        named_if: if (i == 1) then
+    i = i + 1
+    end if
   end subroutine if_statements
     function my_func()
     integer :: i
