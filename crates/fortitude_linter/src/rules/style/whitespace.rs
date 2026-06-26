@@ -561,9 +561,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 edit_string = edit_string.chars().filter(|c| *c != ';').join("");
             }
 
-            if is_first_segment {
-                is_first_segment = false;
-            }
+            is_first_segment = false;
         }
 
         if !edit_string.is_empty() {
@@ -579,20 +577,16 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 TextRange::new(line.start(), line.end()),
             ));
 
-            if context.is_rule_enabled(Rule::InvalidIndentationMultiple) {
-                violations.push(
-                    context
-                        .create_diagnostic(InvalidIndentationMultiple, range)
-                        .with_fix(fix),
-                );
-            } else if is_preproc_violation
-                && context.is_rule_enabled(Rule::InvalidPreprocIndentation)
+            if let Some(diagnostic) =
+                context.create_diagnostic_if_enabled(InvalidIndentationMultiple, range)
             {
-                violations.push(
-                    context
-                        .create_diagnostic(InvalidPreprocIndentation, range)
-                        .with_fix(fix.clone()),
-                );
+                violations.push(diagnostic.with_fix(fix));
+            } else if is_preproc_violation {
+                if let Some(diagnostic) =
+                    context.create_diagnostic_if_enabled(InvalidPreprocIndentation, range)
+                {
+                    violations.push(diagnostic.with_fix(fix));
+                };
             }
         }
     }
