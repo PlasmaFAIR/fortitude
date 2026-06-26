@@ -19,6 +19,7 @@ use fortitude_linter::{
             inconsistent_dimension::{self, settings::PreferAttribute},
             keywords, line_length,
             strings::{self, settings::Quote},
+            whitespace,
         },
     },
     settings::{FortranStandard, OutputFormat, ProgressBar},
@@ -349,6 +350,20 @@ pub struct CheckOptions {
     )]
     pub line_length: Option<usize>,
 
+    // Global Formatting options
+    /// The number of spaces to use for a single indent. Used when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
+    ///
+    /// The indentation is determined by the number of spaces (tabs are equal to one indent_width).
+    #[option(
+        default = "4",
+        value_type = "int",
+        example = r#"
+        # Enforce indentation of base 4.
+        indent-width = 4
+        "#
+    )]
+    pub indent_width: Option<usize>,
+
     /// By default disable ignore-comment-length behavior when running `fortitude`.
     #[option(
         default = "false",
@@ -419,6 +434,10 @@ pub struct CheckOptions {
     /// `too-many-arguments`, `too-many-nested-blocks`, etc.
     #[option_group]
     pub complexity: Option<ComplexityOptions>,
+
+    /// Options for `invalid-indentation-multiple` rule
+    #[option_group]
+    pub invalid_indentation_multiple: Option<InvalidIndentationMultipleOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -510,6 +529,288 @@ impl KeywordWhitespaceOptions {
             inout_with_space: self.inout_with_space.unwrap_or_default(),
             goto_with_space: self.goto_with_space.unwrap_or_default(),
         }
+    }
+}
+
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct InvalidIndentationMultipleOptions {
+    /// Whether the contents of a program should be indented relative to the program statement
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-program-contents = false"
+    )]
+    pub should_indent_program_contents: Option<bool>,
+
+    /// Whether the contents of a module should be indented relative to the module statement
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-module-contents = false"
+    )]
+    pub should_indent_module_contents: Option<bool>,
+
+    /// Whether the contents of a submodule should be indented relative to the submodule statement
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-submodule-contents = false"
+    )]
+    pub should_indent_submodule_contents: Option<bool>,
+
+    /// Whether the contents of a subroutine should be indented relative to the subroutine signature
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-subroutine-contents = false"
+    )]
+    pub should_indent_subroutine_contents: Option<bool>,
+
+    /// Whether the contents of a function should be indented relative to the function signature
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-function-contents = false"
+    )]
+    pub should_indent_function_contents: Option<bool>,
+
+    /// Whether the contents of a derived type should be indented relative to the derived type statement
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-derived-type-contents = false"
+    )]
+    pub should_indent_derived_type_contents: Option<bool>,
+
+    /// Whether the contents of a block should be indented relative to the start of the block
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-block-contents = false"
+    )]
+    pub should_indent_block_contents: Option<bool>,
+
+    /// Whether the contents of a if block should be indented relative to the start of the if block
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-if-contents = false"
+    )]
+    pub should_indent_if_contents: Option<bool>,
+
+    /// Whether the contents of a interface should be indented relative to the interface statement
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-interface-contents = false"
+    )]
+    pub should_indent_interface_contents: Option<bool>,
+
+    /// Whether the contents of a select should be indented relative to the select statement
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-select-contents = false"
+    )]
+    pub should_indent_select_contents: Option<bool>,
+
+    /// Whether the contents of a do loop should be indented relative to the start of the do block
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-do-contents = false"
+    )]
+    pub should_indent_do_contents: Option<bool>,
+
+    /// Whether the contents of an associate block should be indented relative to the associate statement
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-associate-contents = false"
+    )]
+    pub should_indent_associate_contents: Option<bool>,
+
+    /// The number of full indents to use for the contents of a program
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-program-contents = 2"
+    )]
+    pub num_indents_for_program_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a module
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-module-contents = 2"
+    )]
+    pub num_indents_for_module_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a submodule
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-submodule-contents = 2"
+    )]
+    pub num_indents_for_submodule_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a subroutine
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-subroutine-contents = 2"
+    )]
+    pub num_indents_for_subroutine_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a function
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-function-contents = 2"
+    )]
+    pub num_indents_for_function_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a derived type
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-derived-type-contents = 2"
+    )]
+    pub num_indents_for_derived_type_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a block
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-block-contents = 2"
+    )]
+    pub num_indents_for_block_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a if block
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-if-contents = 2"
+    )]
+    pub num_indents_for_if_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a interface
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-interface-contents = 2"
+    )]
+    pub num_indents_for_interface_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a select case construct
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-select-contents = 2"
+    )]
+    pub num_indents_for_select_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a do block
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "num-indents-for-do-contents = 2"
+    )]
+    pub num_indents_for_do_contents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a associate
+    #[option(
+        default = "1",
+        value_type = "int",
+        example = "num-indents-for-associate-contents = 2"
+    )]
+    pub num_indents_for_associate_contents: Option<usize>,
+}
+
+impl InvalidIndentationMultipleOptions {
+    pub fn into_settings(self) -> whitespace::settings::InvalidIndentationMultipleSettings {
+        let mut settings_to_return =
+            whitespace::settings::InvalidIndentationMultipleSettings::default();
+
+        settings_to_return.should_indent_program_contents = self
+            .should_indent_program_contents
+            .unwrap_or(settings_to_return.should_indent_program_contents);
+        settings_to_return.should_indent_module_contents = self
+            .should_indent_module_contents
+            .unwrap_or(settings_to_return.should_indent_module_contents);
+        settings_to_return.should_indent_submodule_contents = self
+            .should_indent_submodule_contents
+            .unwrap_or(settings_to_return.should_indent_submodule_contents);
+        settings_to_return.should_indent_subroutine_contents = self
+            .should_indent_subroutine_contents
+            .unwrap_or(settings_to_return.should_indent_subroutine_contents);
+        settings_to_return.should_indent_function_contents = self
+            .should_indent_function_contents
+            .unwrap_or(settings_to_return.should_indent_function_contents);
+        settings_to_return.should_indent_derived_type_contents = self
+            .should_indent_derived_type_contents
+            .unwrap_or(settings_to_return.should_indent_derived_type_contents);
+        settings_to_return.should_indent_block_contents = self
+            .should_indent_block_contents
+            .unwrap_or(settings_to_return.should_indent_block_contents);
+        settings_to_return.should_indent_if_contents = self
+            .should_indent_if_contents
+            .unwrap_or(settings_to_return.should_indent_if_contents);
+        settings_to_return.should_indent_interface_contents = self
+            .should_indent_interface_contents
+            .unwrap_or(settings_to_return.should_indent_interface_contents);
+        settings_to_return.should_indent_select_contents = self
+            .should_indent_select_contents
+            .unwrap_or(settings_to_return.should_indent_select_contents);
+        settings_to_return.should_indent_do_contents = self
+            .should_indent_do_contents
+            .unwrap_or(settings_to_return.should_indent_do_contents);
+        settings_to_return.should_indent_associate_contents = self
+            .should_indent_associate_contents
+            .unwrap_or(settings_to_return.should_indent_associate_contents);
+        settings_to_return.num_indents_for_program_contents = self
+            .num_indents_for_program_contents
+            .unwrap_or(settings_to_return.num_indents_for_program_contents);
+        settings_to_return.num_indents_for_module_contents = self
+            .num_indents_for_module_contents
+            .unwrap_or(settings_to_return.num_indents_for_module_contents);
+        settings_to_return.num_indents_for_submodule_contents = self
+            .num_indents_for_submodule_contents
+            .unwrap_or(settings_to_return.num_indents_for_submodule_contents);
+        settings_to_return.num_indents_for_subroutine_contents = self
+            .num_indents_for_subroutine_contents
+            .unwrap_or(settings_to_return.num_indents_for_subroutine_contents);
+        settings_to_return.num_indents_for_function_contents = self
+            .num_indents_for_function_contents
+            .unwrap_or(settings_to_return.num_indents_for_function_contents);
+        settings_to_return.num_indents_for_derived_type_contents = self
+            .num_indents_for_derived_type_contents
+            .unwrap_or(settings_to_return.num_indents_for_derived_type_contents);
+        settings_to_return.num_indents_for_block_contents = self
+            .num_indents_for_block_contents
+            .unwrap_or(settings_to_return.num_indents_for_block_contents);
+        settings_to_return.num_indents_for_if_contents = self
+            .num_indents_for_if_contents
+            .unwrap_or(settings_to_return.num_indents_for_if_contents);
+        settings_to_return.num_indents_for_interface_contents = self
+            .num_indents_for_interface_contents
+            .unwrap_or(settings_to_return.num_indents_for_interface_contents);
+        settings_to_return.num_indents_for_select_contents = self
+            .num_indents_for_select_contents
+            .unwrap_or(settings_to_return.num_indents_for_select_contents);
+        settings_to_return.num_indents_for_do_contents = self
+            .num_indents_for_do_contents
+            .unwrap_or(settings_to_return.num_indents_for_do_contents);
+        settings_to_return.num_indents_for_associate_contents = self
+            .num_indents_for_associate_contents
+            .unwrap_or(settings_to_return.num_indents_for_associate_contents);
+
+        settings_to_return = settings_to_return.populate_construct_to_indent_map();
+
+        settings_to_return
     }
 }
 
