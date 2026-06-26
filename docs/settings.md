@@ -1141,6 +1141,776 @@ Defaults to `"lowercase"`, consistent with modern Fortran conventions.
 
 ---
 
+### `check.invalid-indentation-multiple`
+
+#### [`num-indents-for-associate-contents`](#check_invalid-indentation-multiple_num-indents-for-associate-contents) {: #check_invalid-indentation-multiple_num-indents-for-associate-contents }
+<span id="num-indents-for-associate-contents"></span>
+
+The number of full indents to use for the contents of a associate
+
+**Default value**: `1`
+
+**Type**: `int`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-associate-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-associate-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-associate-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-block-contents`](#check_invalid-indentation-multiple_num-indents-for-block-contents) {: #check_invalid-indentation-multiple_num-indents-for-block-contents }
+<span id="num-indents-for-block-contents"></span>
+
+The number of full indents to use for the contents of a block
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-block-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-block-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-block-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-derived-type-contents`](#check_invalid-indentation-multiple_num-indents-for-derived-type-contents) {: #check_invalid-indentation-multiple_num-indents-for-derived-type-contents }
+<span id="num-indents-for-derived-type-contents"></span>
+
+The number of full indents to use for the contents of a derived type
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-derived-type-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-derived-type-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-derived-type-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-do-contents`](#check_invalid-indentation-multiple_num-indents-for-do-contents) {: #check_invalid-indentation-multiple_num-indents-for-do-contents }
+<span id="num-indents-for-do-contents"></span>
+
+The number of full indents to use for the contents of a do block
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-do-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-do-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-do-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-function-contents`](#check_invalid-indentation-multiple_num-indents-for-function-contents) {: #check_invalid-indentation-multiple_num-indents-for-function-contents }
+<span id="num-indents-for-function-contents"></span>
+
+The number of full indents to use for the contents of a function
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-function-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-function-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-function-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-if-contents`](#check_invalid-indentation-multiple_num-indents-for-if-contents) {: #check_invalid-indentation-multiple_num-indents-for-if-contents }
+<span id="num-indents-for-if-contents"></span>
+
+The number of full indents to use for the contents of a if block
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-if-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-if-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-if-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-interface-contents`](#check_invalid-indentation-multiple_num-indents-for-interface-contents) {: #check_invalid-indentation-multiple_num-indents-for-interface-contents }
+<span id="num-indents-for-interface-contents"></span>
+
+The number of full indents to use for the contents of a interface
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-interface-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-interface-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-interface-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-module-contents`](#check_invalid-indentation-multiple_num-indents-for-module-contents) {: #check_invalid-indentation-multiple_num-indents-for-module-contents }
+<span id="num-indents-for-module-contents"></span>
+
+The number of full indents to use for the contents of a module
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-module-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-module-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-module-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-program-contents`](#check_invalid-indentation-multiple_num-indents-for-program-contents) {: #check_invalid-indentation-multiple_num-indents-for-program-contents }
+<span id="num-indents-for-program-contents"></span>
+
+The number of full indents to use for the contents of a program
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-program-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-program-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-program-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-select-contents`](#check_invalid-indentation-multiple_num-indents-for-select-contents) {: #check_invalid-indentation-multiple_num-indents-for-select-contents }
+<span id="num-indents-for-select-contents"></span>
+
+The number of full indents to use for the contents of a select case construct
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-select-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-select-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-select-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-submodule-contents`](#check_invalid-indentation-multiple_num-indents-for-submodule-contents) {: #check_invalid-indentation-multiple_num-indents-for-submodule-contents }
+<span id="num-indents-for-submodule-contents"></span>
+
+The number of full indents to use for the contents of a submodule
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-submodule-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-submodule-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-submodule-contents = 2
+    ```
+
+---
+
+#### [`num-indents-for-subroutine-contents`](#check_invalid-indentation-multiple_num-indents-for-subroutine-contents) {: #check_invalid-indentation-multiple_num-indents-for-subroutine-contents }
+<span id="num-indents-for-subroutine-contents"></span>
+
+The number of full indents to use for the contents of a subroutine
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-subroutine-contents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-subroutine-contents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-subroutine-contents = 2
+    ```
+
+---
+
+#### [`should-indent-associate-contents`](#check_invalid-indentation-multiple_should-indent-associate-contents) {: #check_invalid-indentation-multiple_should-indent-associate-contents }
+<span id="should-indent-associate-contents"></span>
+
+Whether the contents of an associate block should be indented relative to the associate statement
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-associate-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-associate-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-associate-contents = false
+    ```
+
+---
+
+#### [`should-indent-block-contents`](#check_invalid-indentation-multiple_should-indent-block-contents) {: #check_invalid-indentation-multiple_should-indent-block-contents }
+<span id="should-indent-block-contents"></span>
+
+Whether the contents of a block should be indented relative to the start of the block
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-block-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-block-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-block-contents = false
+    ```
+
+---
+
+#### [`should-indent-derived-type-contents`](#check_invalid-indentation-multiple_should-indent-derived-type-contents) {: #check_invalid-indentation-multiple_should-indent-derived-type-contents }
+<span id="should-indent-derived-type-contents"></span>
+
+Whether the contents of a derived type should be indented relative to the derived type statement
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-derived-type-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-derived-type-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-derived-type-contents = false
+    ```
+
+---
+
+#### [`should-indent-do-contents`](#check_invalid-indentation-multiple_should-indent-do-contents) {: #check_invalid-indentation-multiple_should-indent-do-contents }
+<span id="should-indent-do-contents"></span>
+
+Whether the contents of a do loop should be indented relative to the start of the do block
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-do-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-do-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-do-contents = false
+    ```
+
+---
+
+#### [`should-indent-function-contents`](#check_invalid-indentation-multiple_should-indent-function-contents) {: #check_invalid-indentation-multiple_should-indent-function-contents }
+<span id="should-indent-function-contents"></span>
+
+Whether the contents of a function should be indented relative to the function signature
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-function-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-function-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-function-contents = false
+    ```
+
+---
+
+#### [`should-indent-if-contents`](#check_invalid-indentation-multiple_should-indent-if-contents) {: #check_invalid-indentation-multiple_should-indent-if-contents }
+<span id="should-indent-if-contents"></span>
+
+Whether the contents of a if block should be indented relative to the start of the if block
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-if-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-if-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-if-contents = false
+    ```
+
+---
+
+#### [`should-indent-interface-contents`](#check_invalid-indentation-multiple_should-indent-interface-contents) {: #check_invalid-indentation-multiple_should-indent-interface-contents }
+<span id="should-indent-interface-contents"></span>
+
+Whether the contents of a interface should be indented relative to the interface statement
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-interface-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-interface-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-interface-contents = false
+    ```
+
+---
+
+#### [`should-indent-module-contents`](#check_invalid-indentation-multiple_should-indent-module-contents) {: #check_invalid-indentation-multiple_should-indent-module-contents }
+<span id="should-indent-module-contents"></span>
+
+Whether the contents of a module should be indented relative to the module statement
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-module-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-module-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-module-contents = false
+    ```
+
+---
+
+#### [`should-indent-program-contents`](#check_invalid-indentation-multiple_should-indent-program-contents) {: #check_invalid-indentation-multiple_should-indent-program-contents }
+<span id="should-indent-program-contents"></span>
+
+Whether the contents of a program should be indented relative to the program statement
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-program-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-program-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-program-contents = false
+    ```
+
+---
+
+#### [`should-indent-select-contents`](#check_invalid-indentation-multiple_should-indent-select-contents) {: #check_invalid-indentation-multiple_should-indent-select-contents }
+<span id="should-indent-select-contents"></span>
+
+Whether the contents of a select should be indented relative to the select statement
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-select-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-select-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-select-contents = false
+    ```
+
+---
+
+#### [`should-indent-submodule-contents`](#check_invalid-indentation-multiple_should-indent-submodule-contents) {: #check_invalid-indentation-multiple_should-indent-submodule-contents }
+<span id="should-indent-submodule-contents"></span>
+
+Whether the contents of a submodule should be indented relative to the submodule statement
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-submodule-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-submodule-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-submodule-contents = false
+    ```
+
+---
+
+#### [`should-indent-subroutine-contents`](#check_invalid-indentation-multiple_should-indent-subroutine-contents) {: #check_invalid-indentation-multiple_should-indent-subroutine-contents }
+<span id="should-indent-subroutine-contents"></span>
+
+Whether the contents of a subroutine should be indented relative to the subroutine signature
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-subroutine-contents = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-subroutine-contents = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-subroutine-contents = false
+    ```
+
+---
+
 ### `check.invalid-tab`
 
 Options for `invalid-tab` rule

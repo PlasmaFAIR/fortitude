@@ -345,6 +345,30 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 ///
 /// ## Options
 /// - `check.indent-width`
+/// - `check.invalid-indentation-multiple.num-indents-for-associate-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-block-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-derived-type-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-do-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-function-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-if-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-interface-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-module-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-program-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-select-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-submodule-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-subroutine-contents`
+/// - `check.invalid-indentation-multiple.should-indent-associate-contents`
+/// - `check.invalid-indentation-multiple.should-indent-block-contents`
+/// - `check.invalid-indentation-multiple.should-indent-derived-type-contents`
+/// - `check.invalid-indentation-multiple.should-indent-do-contents`
+/// - `check.invalid-indentation-multiple.should-indent-function-contents`
+/// - `check.invalid-indentation-multiple.should-indent-if-contents`
+/// - `check.invalid-indentation-multiple.should-indent-interface-contents`
+/// - `check.invalid-indentation-multiple.should-indent-module-contents`
+/// - `check.invalid-indentation-multiple.should-indent-program-contents`
+/// - `check.invalid-indentation-multiple.should-indent-select-contents`
+/// - `check.invalid-indentation-multiple.should-indent-submodule-contents`
+/// - `check.invalid-indentation-multiple.should-indent-subroutine-contents`
 #[derive(ViolationMetadata)]
 pub(crate) struct InvalidIndentationMultiple;
 
@@ -359,6 +383,11 @@ impl AlwaysFixableViolation for InvalidIndentationMultiple {
     }
 }
 
+/// ## What it does
+/// Checks that preprocessor statements have zero indentation before the '#'
+///
+/// ## Why is this bad?
+/// Preprocessor statements with indentation are invalid fortran
 #[derive(ViolationMetadata)]
 pub(crate) struct InvalidPreprocIndentation;
 
