@@ -25,6 +25,10 @@ contains
 
   contains
 
+      integer function get_x() result(x)
+      x = 1
+      end function get_x
+
         function minterface_i(x)
           integer :: x
           print *, x
@@ -34,6 +38,14 @@ contains
           real :: x
   print *, x
           end function minterface_r
+
+      function wrapped_function( &
+        x &
+      )
+        integer, intent(in) :: x
+
+          print *, x
+      end function wrapped_function
 
   subroutine line_continuation()
           integer :: i

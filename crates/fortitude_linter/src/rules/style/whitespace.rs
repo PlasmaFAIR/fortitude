@@ -498,8 +498,11 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             if let Some(line_segment_node) = root
                 .named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
             {
-                // Handle block labels by taking parent
-                let node = if matches!(line_segment_node.kind(), "block_label_start_expression") {
+                // Handle block labels and functions beginning with their return type  by taking their parent
+                let node = if (matches!(line_segment_node.kind(), "block_label_start_expression"))
+                    || (matches!(line_segment_node.kind(), "intrinsic_type")
+                        && !line_segment.contains("::"))
+                {
                     line_segment_node
                         .ancestors()
                         .next()
