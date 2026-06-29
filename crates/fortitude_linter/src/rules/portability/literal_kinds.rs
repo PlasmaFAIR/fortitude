@@ -1,6 +1,6 @@
 use crate::ast::{FortitudeNode, dtype_is_plain_number};
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use lazy_regex::regex_is_match;
 use ruff_macros::derive_message_formats;
@@ -117,8 +117,8 @@ impl AstRule for LiteralKind {
         some_vec![context.create_diagnostic(Self { dtype, literal }, literal_node)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["intrinsic_type"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["intrinsic_type"]
     }
 }
 
@@ -198,7 +198,7 @@ impl AstRule for LiteralKindSuffix {
         some_vec![context.create_diagnostic(Self { literal, suffix }, kind)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["number_literal"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["number_literal"]
     }
 }

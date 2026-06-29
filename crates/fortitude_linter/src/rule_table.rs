@@ -20,7 +20,7 @@ pub struct RuleTable {
     enabled: RuleSet,
     should_fix: RuleSet,
     #[cache_key(ignore)]
-    ast_entrypoints: OnceLock<BTreeMap<&'static str, Vec<AstRuleEnum>>>,
+    ast_entrypoints: OnceLock<BTreeMap<u16, Vec<AstRuleEnum>>>,
 }
 
 impl RuleTable {
@@ -79,9 +79,9 @@ impl RuleTable {
 
     /// Return a mapping of AST entrypoints to lists of the rules and codes that
     /// operate on them.
-    pub fn ast_entrypoints(&self) -> &BTreeMap<&'static str, Vec<AstRuleEnum>> {
+    pub fn ast_entrypoints(&self) -> &BTreeMap<u16, Vec<AstRuleEnum>> {
         self.ast_entrypoints.get_or_init(|| {
-            let mut map: BTreeMap<&'static str, Vec<_>> = BTreeMap::new();
+            let mut map: BTreeMap<u16, Vec<_>> = BTreeMap::new();
 
             self.iter_enabled()
                 .filter_map(|rule| TryFrom::try_from(rule).ok())

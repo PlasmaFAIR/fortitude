@@ -1,7 +1,7 @@
 /// Defines rules that raise errors if implicit typing is in use.
 use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -32,7 +32,7 @@ impl AlwaysFixableViolation for SuperfluousImplicitNone {
 impl AstRule for SuperfluousImplicitNone {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let src = context.source_file();
-        let stmt = ImplicitStatement::try_from_node(*node, src)?;
+        let stmt = ImplicitStatement::try_from_node(*node)?;
         // If this isn't an `implicit none` statement, then we don't care about it.
         if stmt.is_not_implicit_none() {
             return None;
@@ -47,7 +47,7 @@ impl AstRule for SuperfluousImplicitNone {
                         break;
                     }
                     "module" | "submodule" | "program" | "function" | "subroutine" => {
-                        match ImplicitStatement::try_from_scope(&ancestor, src) {
+                        match ImplicitStatement::try_from_scope(&ancestor) {
                             None => {
                                 // If the ancestor doesn't have any `implicit` statement, then
                                 // keep searching up the tree for a higher-level entity with
@@ -81,7 +81,7 @@ impl AstRule for SuperfluousImplicitNone {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["implicit_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["implicit_statement"]
     }
 }

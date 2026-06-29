@@ -1,8 +1,8 @@
 use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
-use fortitude_macros::ViolationMetadata;
+use crate::{AstRule, CheckContext, kind_ids};
+use fortitude_macros::{ViolationMetadata, kind, kw};
 use log::debug;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
@@ -61,8 +61,8 @@ impl AstRule for LabelledDoLoop {
         some_vec![diagnostic]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["do_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["do_statement"]
     }
 }
 
@@ -127,8 +127,8 @@ impl AstRule for SharedDoTermination {
         some_vec![diagnostic]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["do_label_virtual"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["do_label_virtual"]
     }
 }
 
@@ -180,9 +180,10 @@ impl AstRule for BadDoTermination {
 
         let src = context.source_text();
 
-        match end_action.kind() {
-            "end" | "enddo" => (),
-            "keyword_statement" if ControlFlow::maybe_from(&end_action, src)?.is_continue() => (),
+        match end_action.kind_id() {
+            kw!("end") | kw!("enddo") => {}
+            kind!("keyword_statement")
+                if ControlFlow::maybe_from(&end_action, src)?.is_continue() => {}
             _ => {
                 let mut diagnostic = context.create_diagnostic(Self {}, end_action);
                 if let Some(fix) =
@@ -198,8 +199,8 @@ impl AstRule for BadDoTermination {
         Some(diagnostics)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["end_do_label_loop_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["end_do_label_loop_statement"]
     }
 }
 
@@ -273,8 +274,8 @@ impl AstRule for GotoEndDo {
         some_vec!(diagnostic)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["keyword_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["keyword_statement"]
     }
 }
 

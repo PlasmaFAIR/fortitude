@@ -3,7 +3,8 @@ use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 
 use crate::{
-    AstRule, CheckContext, ast::FortitudeNode, settings::FortranStandard, traits::TextRanged,
+    AstRule, CheckContext, ast::FortitudeNode, kind_ids, settings::FortranStandard,
+    traits::TextRanged,
 };
 
 /// ## What it does
@@ -112,7 +113,7 @@ impl AstRule for SuperfluousSave {
         }
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["module", "submodule", "variable_declaration"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["module", "submodule", "variable_declaration"]
     }
 }

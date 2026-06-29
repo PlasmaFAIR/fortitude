@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use crate::fix::edits::delete_stmt_part;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -67,8 +67,8 @@ impl AstRule for SuperfluousWhileTrue {
         some_vec!(context.create_diagnostic(Self {}, node).with_fix(fix))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["while_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["while_statement"]
     }
 }
 

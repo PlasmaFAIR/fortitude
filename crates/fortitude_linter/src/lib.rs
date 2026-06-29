@@ -1,3 +1,4 @@
+use fortitude_macros::kind;
 use line_filter::FilterSet;
 pub use rule_selector::RuleSelector;
 use rule_table::RuleTable;
@@ -74,7 +75,7 @@ pub trait AstRule {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>>;
 
     /// Return list of tree-sitter node types on which a rule should trigger.
-    fn entrypoints() -> Vec<&'static str>;
+    fn entrypoints() -> Vec<u16>;
 }
 
 pub struct CheckContext<'a> {
@@ -341,13 +342,15 @@ pub(crate) fn check_path(
             Rule::SuperfluousElseCycle,
             Rule::SuperfluousElseExit,
             Rule::SuperfluousElseStop,
-        ]) && matches!(node.kind(), "keyword_statement" | "stop_statement")
-            && let Some(violation) = check_superfluous_returns(&context, &node)
+        ]) && matches!(
+            node.kind_id(),
+            kind!("keyword_statement") | kind!("stop_statement")
+        ) && let Some(violation) = check_superfluous_returns(&context, &node)
         {
             violations.push(violation);
         }
 
-        if let Some(rules) = context.rules.ast_entrypoints().get(node.kind()) {
+        if let Some(rules) = context.rules.ast_entrypoints().get(&node.kind_id()) {
             for rule in rules {
                 if let Some(violation) = rule.check(&context, &node) {
                     violations.extend(violation);

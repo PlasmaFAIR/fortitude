@@ -3,8 +3,8 @@ use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::settings::FortranStandard;
 use crate::traits::{HasNode, TextRanged};
-use crate::{AstRule, CheckContext};
-use fortitude_macros::ViolationMetadata;
+use crate::{AstRule, CheckContext, kind_ids};
+use fortitude_macros::{ViolationMetadata, kw};
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -46,16 +46,16 @@ fn replace_with_implicit_none(node: &Node, src: &SourceFile) -> Edit {
 
 /// Assuming we have `implicit none (external)` for some cursed reason, adds
 /// `type` to it to make it `implicit none (type, external)`.
-fn add_type_to_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
+fn add_type_to_implicit_none(node: &Node) -> Option<Edit> {
     node.children(&mut node.walk())
-        .find(|child| child.to_text(src.source_text()).unwrap().to_lowercase() == "external")
+        .find(|child| child.kind_id() == kw!("external"))
         .map(|external_node| Edit::insertion("type, ".to_string(), external_node.start_textsize()))
 }
 
 // Add `(external)` to `implicit none (type)` or `(type, external)` to `implicit none`.
-fn add_external_to_implicit_none(node: &Node, src: &SourceFile) -> Edit {
+fn add_external_to_implicit_none(node: &Node) -> Edit {
     node.children(&mut node.walk())
-        .find(|child| child.to_text(src.source_text()).unwrap().to_lowercase() == "type")
+        .find(|child| child.kind_id() == kw!("type"))
         .map_or_else(
             || Edit::insertion(" (type, external)".to_string(), node.end_textsize()),
             |type_node| Edit::insertion(", external".to_string(), type_node.end_textsize()),
@@ -87,7 +87,7 @@ impl ImplicitTypingEdit {
     /// Called on the scope that should contain an `implicit none` statement.
     /// Returns an edit if a violation is found, otherwise returns `None`.
     fn try_from_scope(node: &Node, src: &SourceFile) -> Option<Self> {
-        match ImplicitStatement::try_from_scope(node, src) {
+        match ImplicitStatement::try_from_scope(node) {
             Some(stmt) => {
                 if stmt.is_implicit_none_type() {
                     // This is sufficient for these rules.
@@ -99,7 +99,7 @@ impl ImplicitTypingEdit {
                     // technically correct but probably a mistake, so we want to
                     // fix it to `implicit none (type, external)`.
                     let error_type = ImplicitTypingErrorType::ExternalWithoutType;
-                    let edit = add_type_to_implicit_none(stmt.node(), src)?;
+                    let edit = add_type_to_implicit_none(stmt.node())?;
                     return Some(Self { edit, error_type });
                 }
                 // If we get here, then there is an implicit statement but it's
@@ -187,8 +187,8 @@ impl AstRule for ImplicitTyping {
         ]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["module", "submodule", "program", "subroutine", "function"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["module", "submodule", "program", "subroutine", "function"]
     }
 }
 
@@ -238,8 +238,8 @@ impl AstRule for InterfaceImplicitTyping {
         ]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["function", "subroutine"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["function", "subroutine"]
     }
 }
 
@@ -278,7 +278,7 @@ impl AstRule for ImplicitExternalProcedures {
             return None;
         }
 
-        let stmt = ImplicitStatement::try_from_node(*node, context.source_file())?;
+        let stmt = ImplicitStatement::try_from_node(*node)?;
 
         if stmt.is_implicit_none_external() {
             // If `external` is already present, then it's correct.
@@ -292,7 +292,7 @@ impl AstRule for ImplicitExternalProcedures {
 
         // If we get here, it's either `implicit none` or `implicit none
         // (type)`, so we want to add `external` to it.
-        let edit = add_external_to_implicit_none(stmt.node(), context.source_file());
+        let edit = add_external_to_implicit_none(stmt.node());
         some_vec!(
             context
                 .create_diagnostic(Self {}, node)
@@ -300,7 +300,7 @@ impl AstRule for ImplicitExternalProcedures {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["implicit_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["implicit_statement"]
     }
 }

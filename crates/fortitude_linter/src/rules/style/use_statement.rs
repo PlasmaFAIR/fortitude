@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic};
 use crate::diagnostics::{Edit, Fix};
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::{LineRanges, SourceFile};
@@ -104,8 +104,8 @@ impl AstRule for UnsortedUses {
         }
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["module", "submodule", "program", "subroutine", "function"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["module", "submodule", "program", "subroutine", "function"]
     }
 }
 

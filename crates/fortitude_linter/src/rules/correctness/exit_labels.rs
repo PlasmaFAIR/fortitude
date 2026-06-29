@@ -3,8 +3,8 @@ use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
-use fortitude_macros::ViolationMetadata;
+use crate::{AstRule, CheckContext, kind_ids};
+use fortitude_macros::{ViolationMetadata, kind, kw};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -53,10 +53,11 @@ impl AstRule for MissingExitOrCycleLabel {
 
         let violations: Vec<Diagnostic> = node
             .named_descendants_except(["do_loop"])
-            .filter(|node| node.kind() == "keyword_statement")
-            .map(|stmt| (stmt, stmt.to_text(src).unwrap_or_default().to_lowercase()))
-            .filter(|(_, name)| name == "exit" || name == "cycle")
-            .map(|(stmt, name)| {
+            .filter(|node| node.kind_id() == kind!("keyword_statement"))
+            .filter_map(|node| node.child(0))
+            .filter(|child| matches!(child.kind_id(), kw!("exit") | kw!("cycle")))
+            .filter(|child| child.next_named_sibling().is_none())
+            .map(|stmt| {
                 let label_with_space = format!(" {label}");
                 let edit = Edit::insertion(label_with_space, stmt.end_textsize());
                 let fix = Fix::unsafe_edit(edit);
@@ -64,7 +65,7 @@ impl AstRule for MissingExitOrCycleLabel {
                 context
                     .create_diagnostic(
                         Self {
-                            name: name.to_string(),
+                            name: stmt.kind().to_string(),
                             label: label.to_string(),
                         },
                         stmt,
@@ -76,8 +77,8 @@ impl AstRule for MissingExitOrCycleLabel {
         Some(violations)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["do_loop"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["do_loop"]
     }
 }
 
@@ -133,7 +134,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
 
         let parent_loop = node
             .ancestors()
-            .filter(|ancestor| ancestor.kind() == "do_loop")
+            .filter(|ancestor| ancestor.kind_id() == kind!("do_loop"))
             .nth(0)?;
 
         // Immediate parent loop has a label, but we don't want to warn here, because
@@ -154,15 +155,15 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
         {
             parent_loop
                 .ancestors()
-                .filter(|ancestor| ancestor.kind() == "do_loop")
+                .filter(|ancestor| ancestor.kind_id() == kind!("do_loop"))
                 .nth(0)?;
         }
 
         some_vec!(context.create_diagnostic(Self { name }, node))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["keyword_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["keyword_statement"]
     }
 }
 
@@ -255,8 +256,8 @@ impl AstRule for MissingEndLabel {
         Some(vec![violation])
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![
             "associate_statement",
             "block_construct",
             "coarray_critical_statement",

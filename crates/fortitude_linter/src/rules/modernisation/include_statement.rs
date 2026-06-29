@@ -1,6 +1,6 @@
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
@@ -42,7 +42,7 @@ impl AstRule for IncludeStatement {
         some_vec![context.create_diagnostic(IncludeStatement {}, range)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["include_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["include_statement"]
     }
 }

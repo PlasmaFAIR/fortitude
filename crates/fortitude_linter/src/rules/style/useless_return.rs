@@ -5,8 +5,8 @@ use crate::diagnostics::{
 use crate::fix::edits::redent;
 use crate::stylist::ToCapitalisation;
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
-use fortitude_macros::ViolationMetadata;
+use crate::{AstRule, CheckContext, kind_ids};
+use fortitude_macros::{ViolationMetadata, kind};
 use log::debug;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
@@ -61,17 +61,12 @@ impl AlwaysFixableViolation for UselessReturn {
 
 impl AstRule for UselessReturn {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let _ = context;
-        if !node
-            .to_text(context.source_text())?
-            .eq_ignore_ascii_case("return")
-        {
-            return None;
-        }
-        let sibling = node.next_non_comment_sibling();
+        let sibling = node.parent()?.next_non_comment_sibling()?;
         if !matches!(
-            sibling?.kind(),
-            "end_function_statement" | "end_subroutine_statement" | "internal_procedures"
+            sibling.kind_id(),
+            kind!("end_function_statement")
+                | kind!("end_subroutine_statement")
+                | kind!("internal_procedures")
         ) {
             return None;
         }
@@ -83,8 +78,8 @@ impl AstRule for UselessReturn {
         )
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["keyword_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["return" | kw]
     }
 }
 

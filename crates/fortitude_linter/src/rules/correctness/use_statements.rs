@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Edit, Fix, Violation};
 use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -57,8 +57,8 @@ impl AstRule for UseAll {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["use_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["use_statement"]
     }
 }
 
@@ -141,8 +141,8 @@ impl AstRule for MissingIntrinsic {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["use_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["use_statement"]
     }
 }
 

@@ -2,7 +2,7 @@ use std::iter::once;
 
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use anyhow::{Context, Result, anyhow};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
@@ -204,8 +204,8 @@ impl AstRule for UncheckedStat {
         ))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![
             "allocate_statement",
             "deallocate_statement",
             "open_statement",
@@ -369,8 +369,8 @@ impl AstRule for MultipleAllocationsWithStat {
         some_vec!(context.create_diagnostic(Self { alloc_type }, stat_node))
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["allocate_statement", "deallocate_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["allocate_statement", "deallocate_statement"]
     }
 }
 
@@ -439,8 +439,8 @@ impl AstRule for StatWithoutMessage {
         None
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec![
+    fn entrypoints() -> Vec<u16> {
+        kind_ids![
             "allocate_statement",
             "deallocate_statement",
             "open_statement",

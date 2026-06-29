@@ -1,5 +1,5 @@
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -78,7 +78,7 @@ impl AstRule for CommonBlock {
         some_vec![context.create_diagnostic(CommonBlock {}, node)]
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["common_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["common_statement"]
     }
 }

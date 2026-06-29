@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::traits::TextRanged;
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
@@ -130,8 +130,8 @@ impl AstRule for NonportableShortcircuitInquiry {
         Some(violations)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["if_statement"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["if_statement"]
     }
 }
 

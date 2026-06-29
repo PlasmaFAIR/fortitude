@@ -1,5 +1,5 @@
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -36,8 +36,8 @@ impl AstRule for MultipleModules {
         Some(violations)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["translation_unit"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["translation_unit"]
     }
 }
 
@@ -82,7 +82,7 @@ impl AstRule for ProgramWithModule {
         Some(violations)
     }
 
-    fn entrypoints() -> Vec<&'static str> {
-        vec!["translation_unit"]
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["translation_unit"]
     }
 }
