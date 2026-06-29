@@ -389,10 +389,10 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     }
 
     fn module_name(&self, src: &str) -> Option<String> {
-        if self.kind() != "use_statement" {
+        if self.kind_id() != kind!("use_statement") {
             return None;
         }
-        self.child_with_name("module_name")?
+        self.named_child_with_kind_id(kind!("module_name"))?
             .to_text(src)
             .map(|s| s.to_string())
     }
