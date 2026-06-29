@@ -2,32 +2,32 @@
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 ---
-./resources/test/fixtures/style/S105.f90:1:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+ --> ./resources/test/fixtures/style/S105.f90:1:1
   |
 1 |   !> my module
-  | ^^ S105
+  | ^^
 2 | module mmod
 3 |   #if USE_MPI==1
   |
-  = help: Replace with correct spaces
-
+help: Replace with correct spaces
   -   !> my module
 1 + !> my module
 2 | module mmod
 3 |   #if USE_MPI==1
 4 |   use mpi
 
-./resources/test/fixtures/style/S105.f90:3:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+ --> ./resources/test/fixtures/style/S105.f90:3:1
   |
 1 |   !> my module
 2 | module mmod
 3 |   #if USE_MPI==1
-  | ^^ S105
+  | ^^
 4 |   use mpi
 5 | #endif
   |
-  = help: Replace with correct spaces
-
+help: Replace with correct spaces
 1 |   !> my module
 2 | module mmod
   -   #if USE_MPI==1
@@ -36,17 +36,17 @@ expression: diagnostics
 5 | #endif
 6 | implicit none
 
-./resources/test/fixtures/style/S105.f90:4:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+ --> ./resources/test/fixtures/style/S105.f90:4:1
   |
 2 | module mmod
 3 |   #if USE_MPI==1
 4 |   use mpi
-  | ^^ S105
+  | ^^
 5 | #endif
 6 | implicit none
   |
-  = help: Replace with correct spaces
-
+help: Replace with correct spaces
 1 |   !> my module
 2 | module mmod
 3 |   #if USE_MPI==1
@@ -56,17 +56,17 @@ expression: diagnostics
 6 | implicit none
 7 |
 
-./resources/test/fixtures/style/S105.f90:6:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+ --> ./resources/test/fixtures/style/S105.f90:6:1
   |
 4 |   use mpi
 5 | #endif
 6 | implicit none
-  | ^ S105
+  | ^
 7 |
 8 | interface
   |
-  = help: Replace with correct spaces
-
+help: Replace with correct spaces
 3 |   #if USE_MPI==1
 4 |   use mpi
 5 | #endif
@@ -76,17 +76,17 @@ expression: diagnostics
 8 | interface
 9 |     module function interfaced_function(i) result(x)
 
-./resources/test/fixtures/style/S105.f90:8:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:8:1
    |
  6 | implicit none
  7 |
  8 | interface
-   | ^ S105
+   | ^
  9 |     module function interfaced_function(i) result(x)
 10 |           integer, intent(in) :: i
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 5  | #endif
 6  | implicit none
 7  |
@@ -96,16 +96,16 @@ expression: diagnostics
 10 |           integer, intent(in) :: i
 11 |       end function interfaced_function
 
-./resources/test/fixtures/style/S105.f90:9:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:9:1
    |
  8 | interface
  9 |     module function interfaced_function(i) result(x)
-   | ^^^^ S105
+   | ^^^^
 10 |           integer, intent(in) :: i
 11 |       end function interfaced_function
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 6  | implicit none
 7  |
 8  | interface
@@ -115,17 +115,17 @@ expression: diagnostics
 11 |       end function interfaced_function
 12 |     end interface
 
-./resources/test/fixtures/style/S105.f90:10:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:10:1
    |
  8 | interface
  9 |     module function interfaced_function(i) result(x)
 10 |           integer, intent(in) :: i
-   | ^^^^^^^^^^ S105
+   | ^^^^^^^^^^
 11 |       end function interfaced_function
 12 |     end interface
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 7  |
 8  | interface
 9  |     module function interfaced_function(i) result(x)
@@ -135,16 +135,16 @@ expression: diagnostics
 12 |     end interface
 13 |
 
-./resources/test/fixtures/style/S105.f90:11:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:11:1
    |
  9 |     module function interfaced_function(i) result(x)
 10 |           integer, intent(in) :: i
 11 |       end function interfaced_function
-   | ^^^^^^ S105
+   | ^^^^^^
 12 |     end interface
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 8  | interface
 9  |     module function interfaced_function(i) result(x)
 10 |           integer, intent(in) :: i
@@ -154,17 +154,17 @@ expression: diagnostics
 13 |
 14 | interface minterface
 
-./resources/test/fixtures/style/S105.f90:14:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:14:1
    |
 12 |     end interface
 13 |
 14 | interface minterface
-   | ^ S105
+   | ^
 15 |           module procedure minterface_i,minterface_r
 16 |   end interface minterface
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 11 |       end function interfaced_function
 12 |     end interface
 13 |
@@ -174,15 +174,15 @@ expression: diagnostics
 16 |   end interface minterface
 17 |
 
-./resources/test/fixtures/style/S105.f90:15:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:15:1
    |
 14 | interface minterface
 15 |           module procedure minterface_i,minterface_r
-   | ^^^^^^^^^^ S105
+   | ^^^^^^^^^^
 16 |   end interface minterface
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 12 |     end interface
 13 |
 14 | interface minterface
@@ -192,17 +192,17 @@ expression: diagnostics
 17 |
 18 | !> my type
 
-./resources/test/fixtures/style/S105.f90:16:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:16:1
    |
 14 | interface minterface
 15 |           module procedure minterface_i,minterface_r
 16 |   end interface minterface
-   | ^^ S105
+   | ^^
 17 |
 18 | !> my type
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 13 |
 14 | interface minterface
 15 |           module procedure minterface_i,minterface_r
@@ -212,17 +212,17 @@ expression: diagnostics
 18 | !> my type
 19 | type :: my_type
 
-./resources/test/fixtures/style/S105.f90:18:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:18:1
    |
 16 |   end interface minterface
 17 |
 18 | !> my type
-   | ^ S105
+   | ^
 19 | type :: my_type
 20 |     integer :: i
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 15 |           module procedure minterface_i,minterface_r
 16 |   end interface minterface
 17 |
@@ -232,16 +232,16 @@ expression: diagnostics
 20 |     integer :: i
 21 |   real :: y
 
-./resources/test/fixtures/style/S105.f90:19:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:19:1
    |
 18 | !> my type
 19 | type :: my_type
-   | ^ S105
+   | ^
 20 |     integer :: i
 21 |   real :: y
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 16 |   end interface minterface
 17 |
 18 | !> my type
@@ -251,17 +251,17 @@ expression: diagnostics
 21 |   real :: y
 22 | contains
 
-./resources/test/fixtures/style/S105.f90:20:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:20:1
    |
 18 | !> my type
 19 | type :: my_type
 20 |     integer :: i
-   | ^^^^ S105
+   | ^^^^
 21 |   real :: y
 22 | contains
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 17 |
 18 | !> my type
 19 | type :: my_type
@@ -271,17 +271,17 @@ expression: diagnostics
 22 | contains
 23 |   procedure :: toString
 
-./resources/test/fixtures/style/S105.f90:21:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:21:1
    |
 19 | type :: my_type
 20 |     integer :: i
 21 |   real :: y
-   | ^^ S105
+   | ^^
 22 | contains
 23 |   procedure :: toString
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 18 | !> my type
 19 | type :: my_type
 20 |     integer :: i
@@ -291,17 +291,17 @@ expression: diagnostics
 23 |   procedure :: toString
 24 |         end type my_type
 
-./resources/test/fixtures/style/S105.f90:22:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:22:1
    |
 20 |     integer :: i
 21 |   real :: y
 22 | contains
-   | ^ S105
+   | ^
 23 |   procedure :: toString
 24 |         end type my_type
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 19 | type :: my_type
 20 |     integer :: i
 21 |   real :: y
@@ -311,16 +311,16 @@ expression: diagnostics
 24 |         end type my_type
 25 |
 
-./resources/test/fixtures/style/S105.f90:23:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:23:1
    |
 21 |   real :: y
 22 | contains
 23 |   procedure :: toString
-   | ^^ S105
+   | ^^
 24 |         end type my_type
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 20 |     integer :: i
 21 |   real :: y
 22 | contains
@@ -330,17 +330,17 @@ expression: diagnostics
 25 |
 26 |   contains
 
-./resources/test/fixtures/style/S105.f90:24:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:24:1
    |
 22 | contains
 23 |   procedure :: toString
 24 |         end type my_type
-   | ^^^^^^^^ S105
+   | ^^^^^^^^
 25 |
 26 |   contains
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 21 |   real :: y
 22 | contains
 23 |   procedure :: toString
@@ -350,17 +350,17 @@ expression: diagnostics
 26 |   contains
 27 |
 
-./resources/test/fixtures/style/S105.f90:26:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:26:1
    |
 24 |         end type my_type
 25 |
 26 |   contains
-   | ^^ S105
+   | ^^
 27 |
 28 |       integer function get_x() result(x)
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 23 |   procedure :: toString
 24 |         end type my_type
 25 |
@@ -370,17 +370,17 @@ expression: diagnostics
 28 |       integer function get_x() result(x)
 29 |       x = 1
 
-./resources/test/fixtures/style/S105.f90:28:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:28:1
    |
 26 |   contains
 27 |
 28 |       integer function get_x() result(x)
-   | ^^^^^^ S105
+   | ^^^^^^
 29 |       x = 1
 30 |       end function get_x
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 25 |
 26 |   contains
 27 |
@@ -390,15 +390,15 @@ expression: diagnostics
 30 |       end function get_x
 31 |
 
-./resources/test/fixtures/style/S105.f90:29:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:29:1
    |
 28 |       integer function get_x() result(x)
 29 |       x = 1
-   | ^^^^^^ S105
+   | ^^^^^^
 30 |       end function get_x
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 26 |   contains
 27 |
 28 |       integer function get_x() result(x)
@@ -408,17 +408,17 @@ expression: diagnostics
 31 |
 32 |         function minterface_i(x)
 
-./resources/test/fixtures/style/S105.f90:30:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:30:1
    |
 28 |       integer function get_x() result(x)
 29 |       x = 1
 30 |       end function get_x
-   | ^^^^^^ S105
+   | ^^^^^^
 31 |
 32 |         function minterface_i(x)
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 27 |
 28 |       integer function get_x() result(x)
 29 |       x = 1
@@ -428,17 +428,17 @@ expression: diagnostics
 32 |         function minterface_i(x)
 33 |           integer :: x
 
-./resources/test/fixtures/style/S105.f90:32:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:32:1
    |
 30 |       end function get_x
 31 |
 32 |         function minterface_i(x)
-   | ^^^^^^^^ S105
+   | ^^^^^^^^
 33 |           integer :: x
 34 |           print *, x
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 29 |       x = 1
 30 |       end function get_x
 31 |
@@ -448,16 +448,16 @@ expression: diagnostics
 34 |           print *, x
 35 |         end function minterface_i
 
-./resources/test/fixtures/style/S105.f90:33:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:33:1
    |
 32 |         function minterface_i(x)
 33 |           integer :: x
-   | ^^^^^^^^^^ S105
+   | ^^^^^^^^^^
 34 |           print *, x
 35 |         end function minterface_i
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 30 |       end function get_x
 31 |
 32 |         function minterface_i(x)
@@ -467,16 +467,16 @@ expression: diagnostics
 35 |         end function minterface_i
 36 |
 
-./resources/test/fixtures/style/S105.f90:34:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:34:1
    |
 32 |         function minterface_i(x)
 33 |           integer :: x
 34 |           print *, x
-   | ^^^^^^^^^^ S105
+   | ^^^^^^^^^^
 35 |         end function minterface_i
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 31 |
 32 |         function minterface_i(x)
 33 |           integer :: x
@@ -486,17 +486,17 @@ expression: diagnostics
 36 |
 37 |     function minterface_r(x)
 
-./resources/test/fixtures/style/S105.f90:35:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:35:1
    |
 33 |           integer :: x
 34 |           print *, x
 35 |         end function minterface_i
-   | ^^^^^^^^ S105
+   | ^^^^^^^^
 36 |
 37 |     function minterface_r(x)
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 32 |         function minterface_i(x)
 33 |           integer :: x
 34 |           print *, x
@@ -506,16 +506,16 @@ expression: diagnostics
 37 |     function minterface_r(x)
 38 |           real :: x
 
-./resources/test/fixtures/style/S105.f90:38:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:38:1
    |
 37 |     function minterface_r(x)
 38 |           real :: x
-   | ^^^^^^^^^^ S105
+   | ^^^^^^^^^^
 39 |   print *, x
 40 |           end function minterface_r
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 35 |         end function minterface_i
 36 |
 37 |     function minterface_r(x)
@@ -525,16 +525,16 @@ expression: diagnostics
 40 |           end function minterface_r
 41 |
 
-./resources/test/fixtures/style/S105.f90:39:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:39:1
    |
 37 |     function minterface_r(x)
 38 |           real :: x
 39 |   print *, x
-   | ^^ S105
+   | ^^
 40 |           end function minterface_r
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 36 |
 37 |     function minterface_r(x)
 38 |           real :: x
@@ -544,17 +544,17 @@ expression: diagnostics
 41 |
 42 |       function wrapped_function( &
 
-./resources/test/fixtures/style/S105.f90:40:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:40:1
    |
 38 |           real :: x
 39 |   print *, x
 40 |           end function minterface_r
-   | ^^^^^^^^^^ S105
+   | ^^^^^^^^^^
 41 |
 42 |       function wrapped_function( &
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 37 |     function minterface_r(x)
 38 |           real :: x
 39 |   print *, x
@@ -564,17 +564,17 @@ expression: diagnostics
 42 |       function wrapped_function( &
 43 |         x &
 
-./resources/test/fixtures/style/S105.f90:42:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:42:1
    |
 40 |           end function minterface_r
 41 |
 42 |       function wrapped_function( &
-   | ^^^^^^ S105
+   | ^^^^^^
 43 |         x &
 44 |       )
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 39 |   print *, x
 40 |           end function minterface_r
 41 |
@@ -584,16 +584,16 @@ expression: diagnostics
 44 |       )
 45 |         integer, intent(in) :: x
 
-./resources/test/fixtures/style/S105.f90:44:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:44:1
    |
 42 |       function wrapped_function( &
 43 |         x &
 44 |       )
-   | ^^^^^^ S105
+   | ^^^^^^
 45 |         integer, intent(in) :: x
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 41 |
 42 |       function wrapped_function( &
 43 |         x &
@@ -603,16 +603,16 @@ expression: diagnostics
 46 |
 47 |           print *, x
 
-./resources/test/fixtures/style/S105.f90:47:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:47:1
    |
 45 |         integer, intent(in) :: x
 46 |
 47 |           print *, x
-   | ^^^^^^^^^^ S105
+   | ^^^^^^^^^^
 48 |       end function wrapped_function
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 44 |       )
 45 |         integer, intent(in) :: x
 46 |
@@ -622,16 +622,16 @@ expression: diagnostics
 49 |
 50 |   subroutine line_continuation()
 
-./resources/test/fixtures/style/S105.f90:48:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:48:1
    |
 47 |           print *, x
 48 |       end function wrapped_function
-   | ^^^^^^ S105
+   | ^^^^^^
 49 |
 50 |   subroutine line_continuation()
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 45 |         integer, intent(in) :: x
 46 |
 47 |           print *, x
@@ -641,17 +641,17 @@ expression: diagnostics
 50 |   subroutine line_continuation()
 51 |           integer :: i
 
-./resources/test/fixtures/style/S105.f90:50:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:50:1
    |
 48 |       end function wrapped_function
 49 |
 50 |   subroutine line_continuation()
-   | ^^ S105
+   | ^^
 51 |           integer :: i
 52 |   i = i + 1 &
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 47 |           print *, x
 48 |       end function wrapped_function
 49 |
@@ -661,16 +661,16 @@ expression: diagnostics
 52 |   i = i + 1 &
 53 |   + 2 &
 
-./resources/test/fixtures/style/S105.f90:51:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:51:1
    |
 50 |   subroutine line_continuation()
 51 |           integer :: i
-   | ^^^^^^^^^^ S105
+   | ^^^^^^^^^^
 52 |   i = i + 1 &
 53 |   + 2 &
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 48 |       end function wrapped_function
 49 |
 50 |   subroutine line_continuation()
@@ -680,17 +680,17 @@ expression: diagnostics
 53 |   + 2 &
 54 |     + 3
 
-./resources/test/fixtures/style/S105.f90:52:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:52:1
    |
 50 |   subroutine line_continuation()
 51 |           integer :: i
 52 |   i = i + 1 &
-   | ^^ S105
+   | ^^
 53 |   + 2 &
 54 |     + 3
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 49 |
 50 |   subroutine line_continuation()
 51 |           integer :: i
@@ -700,17 +700,17 @@ expression: diagnostics
 54 |     + 3
 55 |   end subroutine
 
-./resources/test/fixtures/style/S105.f90:53:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:53:1
    |
 51 |           integer :: i
 52 |   i = i + 1 &
 53 |   + 2 &
-   | ^^ S105
+   | ^^
 54 |     + 3
 55 |   end subroutine
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 50 |   subroutine line_continuation()
 51 |           integer :: i
 52 |   i = i + 1 &
@@ -720,16 +720,16 @@ expression: diagnostics
 55 |   end subroutine
 56 |
 
-./resources/test/fixtures/style/S105.f90:54:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:54:1
    |
 52 |   i = i + 1 &
 53 |   + 2 &
 54 |     + 3
-   | ^^^^ S105
+   | ^^^^
 55 |   end subroutine
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 51 |           integer :: i
 52 |   i = i + 1 &
 53 |   + 2 &
@@ -739,17 +739,17 @@ expression: diagnostics
 56 |
 57 | subroutine if_statements()
 
-./resources/test/fixtures/style/S105.f90:55:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:55:1
    |
 53 |   + 2 &
 54 |     + 3
 55 |   end subroutine
-   | ^^ S105
+   | ^^
 56 |
 57 | subroutine if_statements()
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 52 |   i = i + 1 &
 53 |   + 2 &
 54 |     + 3
@@ -759,17 +759,17 @@ expression: diagnostics
 57 | subroutine if_statements()
 58 | integer :: i
 
-./resources/test/fixtures/style/S105.f90:57:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:57:1
    |
 55 |   end subroutine
 56 |
 57 | subroutine if_statements()
-   | ^ S105
+   | ^
 58 | integer :: i
 59 |     i = i + 1
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 54 |     + 3
 55 |   end subroutine
 56 |
@@ -779,16 +779,16 @@ expression: diagnostics
 59 |     i = i + 1
 60 | if (i == 1) i = 2
 
-./resources/test/fixtures/style/S105.f90:58:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:58:1
    |
 57 | subroutine if_statements()
 58 | integer :: i
-   | ^ S105
+   | ^
 59 |     i = i + 1
 60 | if (i == 1) i = 2
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 55 |   end subroutine
 56 |
 57 | subroutine if_statements()
@@ -798,17 +798,17 @@ expression: diagnostics
 60 | if (i == 1) i = 2
 61 |   if (i == 2) then; i = 3; end if;
 
-./resources/test/fixtures/style/S105.f90:59:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:59:1
    |
 57 | subroutine if_statements()
 58 | integer :: i
 59 |     i = i + 1
-   | ^^^^ S105
+   | ^^^^
 60 | if (i == 1) i = 2
 61 |   if (i == 2) then; i = 3; end if;
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 56 |
 57 | subroutine if_statements()
 58 | integer :: i
@@ -818,17 +818,17 @@ expression: diagnostics
 61 |   if (i == 2) then; i = 3; end if;
 62 | if (i == 4) then
 
-./resources/test/fixtures/style/S105.f90:60:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:60:1
    |
 58 | integer :: i
 59 |     i = i + 1
 60 | if (i == 1) i = 2
-   | ^ S105
+   | ^
 61 |   if (i == 2) then; i = 3; end if;
 62 | if (i == 4) then
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 57 | subroutine if_statements()
 58 | integer :: i
 59 |     i = i + 1
@@ -838,17 +838,17 @@ expression: diagnostics
 62 | if (i == 4) then
 63 |             i = 2
 
-./resources/test/fixtures/style/S105.f90:61:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:61:1
    |
 59 |     i = i + 1
 60 | if (i == 1) i = 2
 61 |   if (i == 2) then; i = 3; end if;
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S105
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 62 | if (i == 4) then
 63 |             i = 2
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 58 | integer :: i
 59 |     i = i + 1
 60 | if (i == 1) i = 2
@@ -860,17 +860,17 @@ expression: diagnostics
 65 |             i = 2
 66 |             end if
 
-./resources/test/fixtures/style/S105.f90:62:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:62:1
    |
 60 | if (i == 1) i = 2
 61 |   if (i == 2) then; i = 3; end if;
 62 | if (i == 4) then
-   | ^ S105
+   | ^
 63 |             i = 2
 64 |             end if
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 59 |     i = i + 1
 60 | if (i == 1) i = 2
 61 |   if (i == 2) then; i = 3; end if;
@@ -880,17 +880,17 @@ expression: diagnostics
 64 |             end if
 65 |
 
-./resources/test/fixtures/style/S105.f90:64:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:64:1
    |
 62 | if (i == 4) then
 63 |             i = 2
 64 |             end if
-   | ^^^^^^^^^^^^ S105
+   | ^^^^^^^^^^^^
 65 |
 66 |         named_if: if (i == 1) then
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 61 |   if (i == 2) then; i = 3; end if;
 62 | if (i == 4) then
 63 |             i = 2
@@ -900,16 +900,16 @@ expression: diagnostics
 66 |         named_if: if (i == 1) then
 67 |     i = i + 1
 
-./resources/test/fixtures/style/S105.f90:67:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:67:1
    |
 66 |         named_if: if (i == 1) then
 67 |     i = i + 1
-   | ^^^^ S105
+   | ^^^^
 68 |     end if
 69 |   end subroutine if_statements
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 64 |             end if
 65 |
 66 |         named_if: if (i == 1) then
@@ -919,17 +919,17 @@ expression: diagnostics
 69 |   end subroutine if_statements
 70 |     function my_func()
 
-./resources/test/fixtures/style/S105.f90:68:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:68:1
    |
 66 |         named_if: if (i == 1) then
 67 |     i = i + 1
 68 |     end if
-   | ^^^^ S105
+   | ^^^^
 69 |   end subroutine if_statements
 70 |     function my_func()
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 65 |
 66 |         named_if: if (i == 1) then
 67 |     i = i + 1
@@ -939,17 +939,17 @@ expression: diagnostics
 70 |     function my_func()
 71 |     integer :: i
 
-./resources/test/fixtures/style/S105.f90:69:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:69:1
    |
 67 |     i = i + 1
 68 |     end if
 69 |   end subroutine if_statements
-   | ^^ S105
+   | ^^
 70 |     function my_func()
 71 |     integer :: i
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 66 |         named_if: if (i == 1) then
 67 |     i = i + 1
 68 |     end if
@@ -959,17 +959,17 @@ expression: diagnostics
 71 |     integer :: i
 72 |   end function
 
-./resources/test/fixtures/style/S105.f90:71:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:71:1
    |
 69 |   end subroutine if_statements
 70 |     function my_func()
 71 |     integer :: i
-   | ^^^^ S105
+   | ^^^^
 72 |   end function
 73 | end module mmod
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 68 |     end if
 69 |   end subroutine if_statements
 70 |     function my_func()
@@ -979,16 +979,16 @@ expression: diagnostics
 73 | end module mmod
 74 |
 
-./resources/test/fixtures/style/S105.f90:72:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:72:1
    |
 70 |     function my_func()
 71 |     integer :: i
 72 |   end function
-   | ^^ S105
+   | ^^
 73 | end module mmod
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 69 |   end subroutine if_statements
 70 |     function my_func()
 71 |     integer :: i
@@ -998,17 +998,17 @@ expression: diagnostics
 74 |
 75 | submodule (mmod) msubmodule
 
-./resources/test/fixtures/style/S105.f90:77:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:77:1
    |
 75 | submodule (mmod) msubmodule
 76 | contains
 77 |                 module function interfaced_function(i) result(x)
-   | ^^^^^^^^^^^^^^^^ S105
+   | ^^^^^^^^^^^^^^^^
 78 |         integer, intent(in) :: i
 79 |         x = i
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 74 |
 75 | submodule (mmod) msubmodule
 76 | contains
@@ -1018,16 +1018,16 @@ expression: diagnostics
 79 |         x = i
 80 |       end function interfaced_function
 
-./resources/test/fixtures/style/S105.f90:80:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:80:1
    |
 78 |         integer, intent(in) :: i
 79 |         x = i
 80 |       end function interfaced_function
-   | ^^^^^^ S105
+   | ^^^^^^
 81 | end submodule msubmodule
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 77 |                 module function interfaced_function(i) result(x)
 78 |         integer, intent(in) :: i
 79 |         x = i
@@ -1037,15 +1037,15 @@ expression: diagnostics
 82 |
 83 |
 
-./resources/test/fixtures/style/S105.f90:84:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:84:1
    |
 84 |     !> my program
-   | ^^^^ S105
+   | ^^^^
 85 | program mprog
 86 |   use mmod
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 81 | end submodule msubmodule
 82 |
 83 |
@@ -1055,16 +1055,16 @@ expression: diagnostics
 86 |   use mmod
 87 |     implicit none
 
-./resources/test/fixtures/style/S105.f90:86:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:86:1
    |
 84 |     !> my program
 85 | program mprog
 86 |   use mmod
-   | ^^ S105
+   | ^^
 87 |     implicit none
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 83 |
 84 |     !> my program
 85 | program mprog
@@ -1074,16 +1074,16 @@ expression: diagnostics
 88 |
 89 |             print "Semicolon ; in string"
 
-./resources/test/fixtures/style/S105.f90:89:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:89:1
    |
 87 |     implicit none
 88 |
 89 |             print "Semicolon ; in string"
-   | ^^^^^^^^^^^^ S105
+   | ^^^^^^^^^^^^
 90 |             print "Semicolon ; in string with ; not in string"; print "hello"
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 86 |   use mmod
 87 |     implicit none
 88 |
@@ -1093,16 +1093,16 @@ expression: diagnostics
 91 |
 92 | call do_something()
 
-./resources/test/fixtures/style/S105.f90:90:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:90:1
    |
 89 |             print "Semicolon ; in string"
 90 |             print "Semicolon ; in string with ; not in string"; print "hello"
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ S105
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 91 |
 92 | call do_something()
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 87 |     implicit none
 88 |
 89 |             print "Semicolon ; in string"
@@ -1113,17 +1113,17 @@ expression: diagnostics
 93 | call do_something()
 94 |
 
-./resources/test/fixtures/style/S105.f90:92:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:92:1
    |
 90 |             print "Semicolon ; in string with ; not in string"; print "hello"
 91 |
 92 | call do_something()
-   | ^ S105
+   | ^
 93 |
 94 | block
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 89 |             print "Semicolon ; in string"
 90 |             print "Semicolon ; in string with ; not in string"; print "hello"
 91 |
@@ -1133,17 +1133,17 @@ expression: diagnostics
 94 | block
 95 |     real :: x = 3.142
 
-./resources/test/fixtures/style/S105.f90:94:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:94:1
    |
 92 | call do_something()
 93 |
 94 | block
-   | ^ S105
+   | ^
 95 |     real :: x = 3.142
 96 |       print*, x
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 91 |
 92 | call do_something()
 93 |
@@ -1153,16 +1153,16 @@ expression: diagnostics
 96 |       print*, x
 97 |     y = x
 
-./resources/test/fixtures/style/S105.f90:95:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:95:1
    |
 94 | block
 95 |     real :: x = 3.142
-   | ^^^^ S105
+   | ^^^^
 96 |       print*, x
 97 |     y = x
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 92 | call do_something()
 93 |
 94 | block
@@ -1172,17 +1172,17 @@ expression: diagnostics
 97 |     y = x
 98 | inner: block
 
-./resources/test/fixtures/style/S105.f90:96:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:96:1
    |
 94 | block
 95 |     real :: x = 3.142
 96 |       print*, x
-   | ^^^^^^ S105
+   | ^^^^^^
 97 |     y = x
 98 | inner: block
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 93 |
 94 | block
 95 |     real :: x = 3.142
@@ -1192,17 +1192,17 @@ expression: diagnostics
 98 | inner: block
 99 |     real :: y = 12.1
 
-./resources/test/fixtures/style/S105.f90:97:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+  --> ./resources/test/fixtures/style/S105.f90:97:1
    |
 95 |     real :: x = 3.142
 96 |       print*, x
 97 |     y = x
-   | ^^^^ S105
+   | ^^^^
 98 | inner: block
 99 |     real :: y = 12.1
    |
-   = help: Replace with correct spaces
-
+help: Replace with correct spaces
 94  | block
 95  |     real :: x = 3.142
 96  |       print*, x
@@ -1212,17 +1212,17 @@ expression: diagnostics
 99  |     real :: y = 12.1
 100 |       print*, y
 
-./resources/test/fixtures/style/S105.f90:98:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:98:1
     |
  96 |       print*, x
  97 |     y = x
  98 | inner: block
-    | ^ S105
+    | ^
  99 |     real :: y = 12.1
 100 |       print*, y
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 95  |     real :: x = 3.142
 96  |       print*, x
 97  |     y = x
@@ -1232,17 +1232,17 @@ expression: diagnostics
 100 |       print*, y
 101 | end block inner
 
-./resources/test/fixtures/style/S105.f90:99:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:99:1
     |
  97 |     y = x
  98 | inner: block
  99 |     real :: y = 12.1
-    | ^^^^ S105
+    | ^^^^
 100 |       print*, y
 101 | end block inner
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 96  |       print*, x
 97  |     y = x
 98  | inner: block
@@ -1252,17 +1252,17 @@ expression: diagnostics
 101 | end block inner
 102 |   end block
 
-./resources/test/fixtures/style/S105.f90:100:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:100:1
     |
  98 | inner: block
  99 |     real :: y = 12.1
 100 |       print*, y
-    | ^^^^^^ S105
+    | ^^^^^^
 101 | end block inner
 102 |   end block
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 97  |     y = x
 98  | inner: block
 99  |     real :: y = 12.1
@@ -1272,16 +1272,16 @@ expression: diagnostics
 102 |   end block
 103 |
 
-./resources/test/fixtures/style/S105.f90:101:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:101:1
     |
  99 |     real :: y = 12.1
 100 |       print*, y
 101 | end block inner
-    | ^ S105
+    | ^
 102 |   end block
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 98  | inner: block
 99  |     real :: y = 12.1
 100 |       print*, y
@@ -1291,17 +1291,17 @@ expression: diagnostics
 103 |
 104 |             contains
 
-./resources/test/fixtures/style/S105.f90:102:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:102:1
     |
 100 |       print*, y
 101 | end block inner
 102 |   end block
-    | ^^ S105
+    | ^^
 103 |
 104 |             contains
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 99  |     real :: y = 12.1
 100 |       print*, y
 101 | end block inner
@@ -1311,17 +1311,17 @@ expression: diagnostics
 104 |             contains
 105 |
 
-./resources/test/fixtures/style/S105.f90:104:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:104:1
     |
 102 |   end block
 103 |
 104 |             contains
-    | ^^^^^^^^^^^^ S105
+    | ^^^^^^^^^^^^
 105 |
 106 |       subroutine select_cases
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 101 | end block inner
 102 |   end block
 103 |
@@ -1331,17 +1331,17 @@ expression: diagnostics
 106 |       subroutine select_cases
 107 |         integer :: i
 
-./resources/test/fixtures/style/S105.f90:106:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:106:1
     |
 104 |             contains
 105 |
 106 |       subroutine select_cases
-    | ^^^^^^ S105
+    | ^^^^^^
 107 |         integer :: i
 108 |         select case (i)
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 103 |
 104 |             contains
 105 |
@@ -1351,17 +1351,17 @@ expression: diagnostics
 108 |         select case (i)
 109 |       case (1)
 
-./resources/test/fixtures/style/S105.f90:109:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:109:1
     |
 107 |         integer :: i
 108 |         select case (i)
 109 |       case (1)
-    | ^^^^^^ S105
+    | ^^^^^^
 110 |           i = 2
 111 |             case (2)
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 106 |       subroutine select_cases
 107 |         integer :: i
 108 |         select case (i)
@@ -1371,17 +1371,17 @@ expression: diagnostics
 111 |             case (2)
 112 |         i = 1
 
-./resources/test/fixtures/style/S105.f90:110:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:110:1
     |
 108 |         select case (i)
 109 |       case (1)
 110 |           i = 2
-    | ^^^^^^^^^^ S105
+    | ^^^^^^^^^^
 111 |             case (2)
 112 |         i = 1
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 107 |         integer :: i
 108 |         select case (i)
 109 |       case (1)
@@ -1391,17 +1391,17 @@ expression: diagnostics
 112 |         i = 1
 113 |             end select
 
-./resources/test/fixtures/style/S105.f90:111:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:111:1
     |
 109 |       case (1)
 110 |           i = 2
 111 |             case (2)
-    | ^^^^^^^^^^^^ S105
+    | ^^^^^^^^^^^^
 112 |         i = 1
 113 |             end select
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 108 |         select case (i)
 109 |       case (1)
 110 |           i = 2
@@ -1411,17 +1411,17 @@ expression: diagnostics
 113 |             end select
 114 |           i = 3
 
-./resources/test/fixtures/style/S105.f90:112:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:112:1
     |
 110 |           i = 2
 111 |             case (2)
 112 |         i = 1
-    | ^^^^^^^^ S105
+    | ^^^^^^^^
 113 |             end select
 114 |           i = 3
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 109 |       case (1)
 110 |           i = 2
 111 |             case (2)
@@ -1431,16 +1431,16 @@ expression: diagnostics
 114 |           i = 3
 115 |
 
-./resources/test/fixtures/style/S105.f90:113:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:113:1
     |
 111 |             case (2)
 112 |         i = 1
 113 |             end select
-    | ^^^^^^^^^^^^ S105
+    | ^^^^^^^^^^^^
 114 |           i = 3
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 110 |           i = 2
 111 |             case (2)
 112 |         i = 1
@@ -1450,17 +1450,17 @@ expression: diagnostics
 115 |
 116 |   end subroutine select_cases
 
-./resources/test/fixtures/style/S105.f90:114:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:114:1
     |
 112 |         i = 1
 113 |             end select
 114 |           i = 3
-    | ^^^^^^^^^^ S105
+    | ^^^^^^^^^^
 115 |
 116 |   end subroutine select_cases
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 111 |             case (2)
 112 |         i = 1
 113 |             end select
@@ -1470,17 +1470,17 @@ expression: diagnostics
 116 |   end subroutine select_cases
 117 |
 
-./resources/test/fixtures/style/S105.f90:116:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:116:1
     |
 114 |           i = 3
 115 |
 116 |   end subroutine select_cases
-    | ^^ S105
+    | ^^
 117 |
 118 |   function do_construct
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 113 |             end select
 114 |           i = 3
 115 |
@@ -1490,16 +1490,16 @@ expression: diagnostics
 118 |   function do_construct
 119 |     integer :: i, j, x
 
-./resources/test/fixtures/style/S105.f90:118:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:118:1
     |
 116 |   end subroutine select_cases
 117 |
 118 |   function do_construct
-    | ^^ S105
+    | ^^
 119 |     integer :: i, j, x
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 115 |
 116 |   end subroutine select_cases
 117 |
@@ -1509,16 +1509,16 @@ expression: diagnostics
 120 |
 121 |       do i = 1, 10
 
-./resources/test/fixtures/style/S105.f90:119:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:119:1
     |
 118 |   function do_construct
 119 |     integer :: i, j, x
-    | ^^^^ S105
+    | ^^^^
 120 |
 121 |       do i = 1, 10
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 116 |   end subroutine select_cases
 117 |
 118 |   function do_construct
@@ -1528,17 +1528,17 @@ expression: diagnostics
 121 |       do i = 1, 10
 122 |   do j = i, 10
 
-./resources/test/fixtures/style/S105.f90:121:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:121:1
     |
 119 |     integer :: i, j, x
 120 |
 121 |       do i = 1, 10
-    | ^^^^^^ S105
+    | ^^^^^^
 122 |   do j = i, 10
 123 |     x = i * j
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 118 |   function do_construct
 119 |     integer :: i, j, x
 120 |
@@ -1548,16 +1548,16 @@ expression: diagnostics
 123 |     x = i * j
 124 |   end do
 
-./resources/test/fixtures/style/S105.f90:122:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:122:1
     |
 121 |       do i = 1, 10
 122 |   do j = i, 10
-    | ^^ S105
+    | ^^
 123 |     x = i * j
 124 |   end do
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 119 |     integer :: i, j, x
 120 |
 121 |       do i = 1, 10
@@ -1567,17 +1567,17 @@ expression: diagnostics
 124 |   end do
 125 |       end do
 
-./resources/test/fixtures/style/S105.f90:123:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:123:1
     |
 121 |       do i = 1, 10
 122 |   do j = i, 10
 123 |     x = i * j
-    | ^^^^ S105
+    | ^^^^
 124 |   end do
 125 |       end do
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 120 |
 121 |       do i = 1, 10
 122 |   do j = i, 10
@@ -1587,16 +1587,16 @@ expression: diagnostics
 125 |       end do
 126 |
 
-./resources/test/fixtures/style/S105.f90:124:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:124:1
     |
 122 |   do j = i, 10
 123 |     x = i * j
 124 |   end do
-    | ^^ S105
+    | ^^
 125 |       end do
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 121 |       do i = 1, 10
 122 |   do j = i, 10
 123 |     x = i * j
@@ -1606,17 +1606,17 @@ expression: diagnostics
 126 |
 127 |           named_do: do i = 1, 10
 
-./resources/test/fixtures/style/S105.f90:125:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:125:1
     |
 123 |     x = i * j
 124 |   end do
 125 |       end do
-    | ^^^^^^ S105
+    | ^^^^^^
 126 |
 127 |           named_do: do i = 1, 10
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 122 |   do j = i, 10
 123 |     x = i * j
 124 |   end do
@@ -1626,17 +1626,17 @@ expression: diagnostics
 127 |           named_do: do i = 1, 10
 128 |         print *, i
 
-./resources/test/fixtures/style/S105.f90:127:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:127:1
     |
 125 |       end do
 126 |
 127 |           named_do: do i = 1, 10
-    | ^^^^^^^^^^ S105
+    | ^^^^^^^^^^
 128 |         print *, i
 129 |           end do
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 124 |   end do
 125 |       end do
 126 |
@@ -1646,16 +1646,16 @@ expression: diagnostics
 129 |           end do
 130 |   end function do_construct
 
-./resources/test/fixtures/style/S105.f90:128:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:128:1
     |
 127 |           named_do: do i = 1, 10
 128 |         print *, i
-    | ^^^^^^^^ S105
+    | ^^^^^^^^
 129 |           end do
 130 |   end function do_construct
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 125 |       end do
 126 |
 127 |           named_do: do i = 1, 10
@@ -1665,16 +1665,16 @@ expression: diagnostics
 130 |   end function do_construct
 131 |
 
-./resources/test/fixtures/style/S105.f90:129:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:129:1
     |
 127 |           named_do: do i = 1, 10
 128 |         print *, i
 129 |           end do
-    | ^^^^^^^^^^ S105
+    | ^^^^^^^^^^
 130 |   end function do_construct
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 126 |
 127 |           named_do: do i = 1, 10
 128 |         print *, i
@@ -1684,17 +1684,17 @@ expression: diagnostics
 131 |
 132 |   subroutine associates
 
-./resources/test/fixtures/style/S105.f90:130:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:130:1
     |
 128 |         print *, i
 129 |           end do
 130 |   end function do_construct
-    | ^^ S105
+    | ^^
 131 |
 132 |   subroutine associates
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 127 |           named_do: do i = 1, 10
 128 |         print *, i
 129 |           end do
@@ -1704,17 +1704,17 @@ expression: diagnostics
 132 |   subroutine associates
 133 |     integer :: i
 
-./resources/test/fixtures/style/S105.f90:132:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:132:1
     |
 130 |   end function do_construct
 131 |
 132 |   subroutine associates
-    | ^^ S105
+    | ^^
 133 |     integer :: i
 134 |   associate(x => i)
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 129 |           end do
 130 |   end function do_construct
 131 |
@@ -1724,16 +1724,16 @@ expression: diagnostics
 134 |   associate(x => i)
 135 |   print *, x
 
-./resources/test/fixtures/style/S105.f90:133:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:133:1
     |
 132 |   subroutine associates
 133 |     integer :: i
-    | ^^^^ S105
+    | ^^^^
 134 |   associate(x => i)
 135 |   print *, x
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 130 |   end function do_construct
 131 |
 132 |   subroutine associates
@@ -1743,17 +1743,17 @@ expression: diagnostics
 135 |   print *, x
 136 |     end associate
 
-./resources/test/fixtures/style/S105.f90:134:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:134:1
     |
 132 |   subroutine associates
 133 |     integer :: i
 134 |   associate(x => i)
-    | ^^ S105
+    | ^^
 135 |   print *, x
 136 |     end associate
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 131 |
 132 |   subroutine associates
 133 |     integer :: i
@@ -1763,16 +1763,16 @@ expression: diagnostics
 136 |     end associate
 137 |
 
-./resources/test/fixtures/style/S105.f90:135:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:135:1
     |
 133 |     integer :: i
 134 |   associate(x => i)
 135 |   print *, x
-    | ^^ S105
+    | ^^
 136 |     end associate
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 132 |   subroutine associates
 133 |     integer :: i
 134 |   associate(x => i)
@@ -1782,17 +1782,17 @@ expression: diagnostics
 137 |
 138 |     named_associate: associate(x => i)
 
-./resources/test/fixtures/style/S105.f90:136:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:136:1
     |
 134 |   associate(x => i)
 135 |   print *, x
 136 |     end associate
-    | ^^^^ S105
+    | ^^^^
 137 |
 138 |     named_associate: associate(x => i)
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 133 |     integer :: i
 134 |   associate(x => i)
 135 |   print *, x
@@ -1802,17 +1802,17 @@ expression: diagnostics
 138 |     named_associate: associate(x => i)
 139 |   print *, x
 
-./resources/test/fixtures/style/S105.f90:138:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:138:1
     |
 136 |     end associate
 137 |
 138 |     named_associate: associate(x => i)
-    | ^^^^ S105
+    | ^^^^
 139 |   print *, x
 140 |     end associate named_associate
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 135 |   print *, x
 136 |     end associate
 137 |
@@ -1822,16 +1822,16 @@ expression: diagnostics
 140 |     end associate named_associate
 141 |   end subroutine associates
 
-./resources/test/fixtures/style/S105.f90:139:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:139:1
     |
 138 |     named_associate: associate(x => i)
 139 |   print *, x
-    | ^^ S105
+    | ^^
 140 |     end associate named_associate
 141 |   end subroutine associates
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 136 |     end associate
 137 |
 138 |     named_associate: associate(x => i)
@@ -1841,17 +1841,17 @@ expression: diagnostics
 141 |   end subroutine associates
 142 |   end program mprog
 
-./resources/test/fixtures/style/S105.f90:140:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:140:1
     |
 138 |     named_associate: associate(x => i)
 139 |   print *, x
 140 |     end associate named_associate
-    | ^^^^ S105
+    | ^^^^
 141 |   end subroutine associates
 142 |   end program mprog
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 137 |
 138 |     named_associate: associate(x => i)
 139 |   print *, x
@@ -1860,16 +1860,16 @@ expression: diagnostics
 141 |   end subroutine associates
 142 |   end program mprog
 
-./resources/test/fixtures/style/S105.f90:141:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:141:1
     |
 139 |   print *, x
 140 |     end associate named_associate
 141 |   end subroutine associates
-    | ^^ S105
+    | ^^
 142 |   end program mprog
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 138 |     named_associate: associate(x => i)
 139 |   print *, x
 140 |     end associate named_associate
@@ -1877,15 +1877,15 @@ expression: diagnostics
 141 +     end subroutine associates
 142 |   end program mprog
 
-./resources/test/fixtures/style/S105.f90:142:1: S105 [*] Invalid indentation
+S105 [*] Invalid indentation
+   --> ./resources/test/fixtures/style/S105.f90:142:1
     |
 140 |     end associate named_associate
 141 |   end subroutine associates
 142 |   end program mprog
-    | ^^ S105
+    | ^^
     |
-    = help: Replace with correct spaces
-
+help: Replace with correct spaces
 139 |   print *, x
 140 |     end associate named_associate
 141 |   end subroutine associates

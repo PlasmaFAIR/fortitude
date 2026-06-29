@@ -2,17 +2,17 @@
 source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
 ---
-./resources/test/fixtures/portability/PORT031.f90:4:1: PORT031 [*] Invalid tab character
+PORT031 [*] Invalid tab character
+ --> ./resources/test/fixtures/portability/PORT031.f90:4:1
   |
 2 | ! the horrible whitespace!
 3 | program invalid_tab
 4 |     implicit none
-  | ^^^^ PORT031
+  | ^^^^
 5 |     print*, "Don't flag this:    "
 6 |     ! Or this:|    |
   |
-  = help: Replace with spaces
-
+help: Replace with spaces
 1 | ! If you touch this file, be careful your editor doesn't auto-correct
 2 | ! the horrible whitespace!
 3 | program invalid_tab
@@ -21,18 +21,19 @@ expression: diagnostics
 5 |     print*, "Don't flag this:	"
 6 |     ! Or this:|	|
 7 |     if	(.true.)	then
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT031.f90:7:7: PORT031 [*] Invalid tab character
+PORT031 [*] Invalid tab character
+ --> ./resources/test/fixtures/portability/PORT031.f90:7:7
   |
 5 |     print*, "Don't flag this:    "
 6 |     ! Or this:|    |
 7 |     if    (.true.)    then
-  |       ^^^^ PORT031
+  |       ^^^^
 8 |         print*, "Mixed tab/space"
 9 |     else
   |
-  = help: Replace with spaces
-
+help: Replace with spaces
 4  | 	implicit none
 5  |     print*, "Don't flag this:	"
 6  |     ! Or this:|	|
@@ -41,18 +42,19 @@ expression: diagnostics
 8  |     	print*, "Mixed tab/space"
 9  |     else
 10 | 		print*, "Two tabs"
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT031.f90:7:16: PORT031 [*] Invalid tab character
+PORT031 [*] Invalid tab character
+ --> ./resources/test/fixtures/portability/PORT031.f90:7:16
   |
 5 |     print*, "Don't flag this:    "
 6 |     ! Or this:|    |
 7 |     if    (.true.)    then
-  |                   ^^^^ PORT031
+  |                   ^^^^
 8 |         print*, "Mixed tab/space"
 9 |     else
   |
-  = help: Replace with spaces
-
+help: Replace with spaces
 4  | 	implicit none
 5  |     print*, "Don't flag this:	"
 6  |     ! Or this:|	|
@@ -61,18 +63,19 @@ expression: diagnostics
 8  |     	print*, "Mixed tab/space"
 9  |     else
 10 | 		print*, "Two tabs"
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT031.f90:8:5: PORT031 [*] Invalid tab character
+PORT031 [*] Invalid tab character
+  --> ./resources/test/fixtures/portability/PORT031.f90:8:5
    |
  6 |     ! Or this:|    |
  7 |     if    (.true.)    then
  8 |         print*, "Mixed tab/space"
-   |     ^^^^ PORT031
+   |     ^^^^
  9 |     else
 10 |         print*, "Two tabs"
    |
-   = help: Replace with spaces
-
+help: Replace with spaces
 5  |     print*, "Don't flag this:	"
 6  |     ! Or this:|	|
 7  |     if	(.true.)	then
@@ -81,18 +84,19 @@ expression: diagnostics
 9  |     else
 10 | 		print*, "Two tabs"
 11 |     end if
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT031.f90:10:1: PORT031 [*] Invalid tab character
+PORT031 [*] Invalid tab character
+  --> ./resources/test/fixtures/portability/PORT031.f90:10:1
    |
  8 |         print*, "Mixed tab/space"
  9 |     else
 10 |         print*, "Two tabs"
-   | ^^^^ PORT031
+   | ^^^^
 11 |     end if
 12 | end program invalid_tab
    |
-   = help: Replace with spaces
-
+help: Replace with spaces
 7  |     if	(.true.)	then
 8  |     	print*, "Mixed tab/space"
 9  |     else
@@ -100,18 +104,19 @@ expression: diagnostics
 10 +   	print*, "Two tabs"
 11 |     end if
 12 | end program invalid_tab
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT031.f90:10:2: PORT031 [*] Invalid tab character
+PORT031 [*] Invalid tab character
+  --> ./resources/test/fixtures/portability/PORT031.f90:10:2
    |
  8 |         print*, "Mixed tab/space"
  9 |     else
 10 |         print*, "Two tabs"
-   |     ^^^^ PORT031
+   |     ^^^^
 11 |     end if
 12 | end program invalid_tab
    |
-   = help: Replace with spaces
-
+help: Replace with spaces
 7  |     if	(.true.)	then
 8  |     	print*, "Mixed tab/space"
 9  |     else
@@ -119,3 +124,4 @@ expression: diagnostics
 10 + 	  print*, "Two tabs"
 11 |     end if
 12 | end program invalid_tab
+note: This is an unsafe fix and may change runtime behavior
