@@ -203,7 +203,7 @@ impl Diagnostic {
     ///
     /// An "info" diagnostic is useful when contextualizing or otherwise
     /// helpful information can be added to help end users understand the
-    /// main diagnostic message better. For example, if a the main diagnostic
+    /// main diagnostic message better. For example, if the main diagnostic
     /// message is about a function call being invalid, a useful "info"
     /// sub-diagnostic could show the function definition (or only the relevant
     /// parts of it).
