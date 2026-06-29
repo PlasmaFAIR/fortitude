@@ -86,6 +86,9 @@ program mprog
   use mmod
     implicit none
 
+            print "Semicolon ; in string"
+            print "Semicolon ; in string with ; not in string"; print "hello"
+
 call do_something()
 
 block

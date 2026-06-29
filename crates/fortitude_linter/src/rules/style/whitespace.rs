@@ -2,7 +2,6 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::rules::Rule;
 use fortitude_macros::ViolationMetadata;
-use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};
@@ -447,6 +446,32 @@ const END_SCOPE_NODES: [&str; 12] = [
     "end_associate_statement",
 ];
 
+fn split_segments_outside_quotes(line: &str) -> Vec<&str> {
+    let mut segments = Vec::new();
+    let mut start = 0;
+    let mut in_quotes = false;
+    let mut chars = line.char_indices();
+
+    while let Some((idx, ch)) = chars.next() {
+        if in_quotes {
+            if ['\'', '"'].contains(&ch) {
+                in_quotes = false;
+            }
+        } else if ch == ';' {
+            segments.push(&line[start..idx + ch.len_utf8()]);
+            start = idx + ch.len_utf8();
+        } else if ['\'', '"'].contains(&ch) {
+            in_quotes = true;
+        }
+    }
+
+    if start < line.len() {
+        segments.push(&line[start..]);
+    }
+
+    segments
+}
+
 pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
 
@@ -475,13 +500,14 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         // boolean to track if a line should be updated based on the users selected rules
         let mut edit_is_activated = context.is_rule_enabled(Rule::InvalidIndentationMultiple);
 
-        // Loop through line until all semicolons have been accounted for
+        // Loop through line until all semicolons outside quoted strings have been accounted for
         let mut line_segment_start = line.start();
         let mut line_segment_end = line_segment_start;
         let mut is_first_segment = true;
         let mut edit_string: String = "".to_string();
-        let line_contains_semicolon = line.contains(';');
-        for line_segment in line.split_inclusive(';') {
+        let line_segments = split_segments_outside_quotes(&line);
+        let line_contains_semicolon = line_segments.iter().any(|segment| segment.ends_with(';'));
+        for line_segment in line_segments {
             // Get the range which defines the location of the previous semicolon plus whitespace
             line_segment_start = line_segment_end;
             line_segment_end = line_segment_end + TextSize::from(line_segment.len() as u32);
@@ -494,18 +520,19 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             let content_start =
                 line_segment_start + TextSize::try_from(leading_spaces as u32).unwrap();
 
-            // Boolean to track if this line segment if continued onto the next line via a '&'
-            let line_segment_has_continuation = line_segment.trim().ends_with("&");
+            // Boolean to track if this line segment continued onto the next line via a '&'
+            let line_segment_has_continuation = line_segment.trim().ends_with('&');
 
             // Determine what the indentation should be for this line segment using the first node for this line and the current scope
             let mut current_expected_indent = *scope_indents.last().unwrap_or(&0usize);
             if let Some(line_segment_node) = root
                 .named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
             {
-                // Handle block labels and functions beginning with their return type  by taking their parent
+                // Handle block labels, module procedures and functions beginning with their return type by taking their parent
                 let node = if (matches!(line_segment_node.kind(), "block_label_start_expression"))
                     || (matches!(line_segment_node.kind(), "intrinsic_type")
-                        && !line_segment.contains("::"))
+                        && !line_segment.contains("::")
+                        || (matches!(line_segment_node.kind(), "procedure_qualifier")))
                 {
                     line_segment_node
                         .ancestors()
@@ -575,8 +602,17 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 } else {
                     edit_string = format!("{}\n{}{}", edit_string, new_indent, line_segment.trim());
                 }
-                // Remove semicolons
-                edit_string = edit_string.chars().filter(|c| *c != ';').join("");
+                // Remove semicolons that are not inside quotes
+                let mut in_quotes = false;
+                edit_string = edit_string
+                    .chars()
+                    .filter(|c| {
+                        if ['\'', '"'].contains(c) {
+                            in_quotes = !in_quotes;
+                        }
+                        !(matches!(c, ';') && !in_quotes)
+                    })
+                    .collect();
             }
 
             is_first_segment = false;
@@ -650,12 +686,9 @@ pub mod settings {
 
     impl Default for InvalidIndentationMultipleSettings {
         fn default() -> Self {
-            let mut construct_to_indent_map: HashMap<String, usize> = HashMap::new();
-            for node_kind in super::BEGIN_SCOPE_NODES {
-                construct_to_indent_map.insert(node_kind.to_string(), 1usize);
-            }
-            Self {
-                construct_to_indent_map: construct_to_indent_map,
+            let construct_to_indent_map: HashMap<String, usize> = HashMap::new();
+            let mut settings = Self {
+                construct_to_indent_map,
                 should_indent_program_contents: true,
                 should_indent_module_contents: true,
                 should_indent_submodule_contents: true,
@@ -682,7 +715,8 @@ pub mod settings {
                 num_indents_for_do_contents: 1usize,
                 num_indents_for_associate_contents: 1usize,
                 num_indents_for_line_continuation: 1usize,
-            }
+            };
+            settings.populate_construct_to_indent_map()
         }
     }
 
@@ -724,14 +758,15 @@ pub mod settings {
                 },
             );
 
-            self.construct_to_indent_map.insert(
-                "function_statement".to_string(),
-                if self.should_indent_function_contents {
-                    self.num_indents_for_function_contents
-                } else {
-                    0usize
-                },
-            );
+            let function_indent = if self.should_indent_function_contents {
+                self.num_indents_for_function_contents
+            } else {
+                0usize
+            };
+            self.construct_to_indent_map
+                .insert("function_statement".to_string(), function_indent);
+            self.construct_to_indent_map
+                .insert("function".to_string(), function_indent);
 
             self.construct_to_indent_map.insert(
                 "derived_type_statement".to_string(),
@@ -778,14 +813,15 @@ pub mod settings {
                 },
             );
 
-            self.construct_to_indent_map.insert(
-                "do_statement".to_string(),
-                if self.should_indent_do_contents {
-                    self.num_indents_for_do_contents
-                } else {
-                    0usize
-                },
-            );
+            let do_indent = if self.should_indent_do_contents {
+                self.num_indents_for_do_contents
+            } else {
+                0usize
+            };
+            self.construct_to_indent_map
+                .insert("do_loop".to_string(), do_indent);
+            self.construct_to_indent_map
+                .insert("do_statement".to_string(), do_indent);
 
             self.construct_to_indent_map.insert(
                 "associate_statement".to_string(),
