@@ -4,7 +4,7 @@ use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, field};
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -54,7 +54,7 @@ impl AstRule for MissingIntent {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let entity = node.parent()?.kind().to_string();
         Some(
-            node.child_by_field_name("parameters")?
+            node.child_by_field_id(field!("parameters").into())?
                 .named_children(&mut node.walk())
                 .filter_map(|param| {
                     // Get variable declaration

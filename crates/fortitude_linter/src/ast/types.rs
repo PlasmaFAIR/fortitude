@@ -4,7 +4,7 @@ use std::{rc::Rc, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use bitflags::bitflags;
-use fortitude_macros::{HasName, HasNode, kind, kw};
+use fortitude_macros::{HasName, HasNode, field, kind, kw};
 use itertools::Itertools;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
 use tree_sitter::Node;
@@ -22,7 +22,7 @@ impl<'a> ParameterStatement<'a> {
     pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
         Ok(Self {
             name: node
-                .child_with_name("identifier")
+                .named_child_with_kind_id(kind!("identifier"))
                 .context("expected identifier in 'parameter_statement'")?
                 .to_text(src)
                 .context("expected text")?
@@ -119,7 +119,7 @@ pub enum ExtentSize<'a> {
 
 impl<'a> ExtentSize<'a> {
     pub fn from_node(node: Node<'a>) -> Self {
-        if node.kind() == "assumed_size" {
+        if node.kind_id() == kind!("assumed_size") {
             Self::AssumedSize(node)
         } else {
             Self::Expression(node)
@@ -146,7 +146,7 @@ pub struct Extent<'a> {
 
 impl<'a> Extent<'a> {
     pub fn try_from_node(node: Node<'a>) -> Result<Self> {
-        if node.kind() != "extent_specifier" {
+        if node.kind_id() != kind!("extent_specifier") {
             return Err(anyhow!(
                 "expected 'extent_specifier', got '{}'",
                 node.kind()
@@ -178,12 +178,12 @@ pub enum DimensionArraySpec<'a> {
 
 impl<'a> DimensionArraySpec<'a> {
     pub fn try_from_node(node: Node<'a>) -> Result<Self> {
-        match node.kind() {
-            "extent_specifier" => Ok(Self::Extent(Extent::try_from_node(node)?)),
-            "assumed_size" => Ok(Self::AssumedSize),
-            "assumed_rank" => Ok(Self::AssumedRank),
-            "multiple_subscript" => Ok(Self::MultipleSubscript(node)),
-            "multiple_subscript_triplet" => {
+        match node.kind_id() {
+            kind!("extent_specifier") => Ok(Self::Extent(Extent::try_from_node(node)?)),
+            kind!("assumed_size") => Ok(Self::AssumedSize),
+            kind!("assumed_rank") => Ok(Self::AssumedRank),
+            kind!("multiple_subscript") => Ok(Self::MultipleSubscript(node)),
+            kind!("multiple_subscript_triplet") => {
                 Ok(Self::MultipleSubscriptTriplet(Extent::try_from_node(node)?))
             }
             _ => Ok(Self::Expression(node)),
@@ -198,7 +198,7 @@ pub struct Dimension<'a> {
 
 impl<'a> Dimension<'a> {
     pub fn try_from_node(node: Node<'a>) -> Result<Self> {
-        if !matches!(node.kind(), "argument_list" | "size") {
+        if !matches!(node.kind_id(), kind!("argument_list") | kind!("size")) {
             return Err(anyhow!(
                 "Dimension::try_from_node called with wrong node kind (expected 'argument_list/size', got '{}'",
                 node.kind()
@@ -226,11 +226,13 @@ impl Intent {
     pub fn from_node(node: &Node) -> Self {
         let children = node
             .children(&mut node.walk())
-            .map(|child| child.kind())
+            .map(|child| child.kind_id())
             .collect_vec();
-        if children.contains(&"inout") || (children.contains(&"in") && children.contains(&"out")) {
+        if children.contains(&kw!("inout"))
+            || (children.contains(&kw!("in")) && children.contains(&kw!("out")))
+        {
             Self::InOut
-        } else if children.contains(&"in") {
+        } else if children.contains(&kw!("in")) {
             Self::In
         } else {
             Self::Out
@@ -326,14 +328,14 @@ pub enum Type<'a> {
 
 impl<'a> Type<'a> {
     pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
-        let kind = node.kind();
+        let kind = node.kind_id();
         let name = node.to_text(src).context("expected text")?.to_string();
         match kind {
-            "intrinsic_type" => Ok(Type::Intrinsic(TypeInner { node, name })),
-            "derived_type" => Ok(Type::Derived(TypeInner { node, name })),
-            "procedure" => Ok(Type::Procedure(TypeInner { node, name })),
-            "declared_type" => Ok(Type::Declared(TypeInner { node, name })),
-            _ => Err(anyhow!("unexpected 'type' kind '{kind}'")),
+            kind!("intrinsic_type") => Ok(Type::Intrinsic(TypeInner { node, name })),
+            kind!("derived_type") => Ok(Type::Derived(TypeInner { node, name })),
+            kind!("procedure") => Ok(Type::Procedure(TypeInner { node, name })),
+            kind!("declared_type") => Ok(Type::Declared(TypeInner { node, name })),
+            _ => Err(anyhow!("unexpected 'type' kind '{}'", node.kind())),
         }
     }
 
@@ -372,22 +374,23 @@ pub struct VariableDeclaration<'a> {
 impl<'a> VariableDeclaration<'a> {
     /// Create from `variable_declaration` node
     pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
-        if node.kind() != "variable_declaration" {
+        if node.kind_id() != kind!("variable_declaration") {
             return Err(anyhow!("wrong node type"));
         }
 
         let type_ = Type::try_from_node(
-            node.child_by_field_name("type").context("expected type")?,
+            node.child_by_field_id(field!("type").into())
+                .context("expected type")?,
             src,
         )?;
 
         let attributes: Result<Vec<_>> = node
-            .children_by_field_name("attribute", &mut node.walk())
+            .children_by_field_id(field!("attribute"), &mut node.walk())
             .map(Attribute::try_from_node)
             .collect();
 
         let names = node
-            .children_by_field_name("declarator", &mut node.walk())
+            .children_by_field_id(field!("declarator"), &mut node.walk())
             .map(|decl| NameDecl::from_node(&decl, src))
             .collect_vec();
 
@@ -408,21 +411,22 @@ impl<'a> VariableDeclaration<'a> {
 
     /// Create from `function_statement`. Will fail if the statement has no `type`
     pub fn try_from_fn_stmt(node: &Node<'a>, src: &str) -> Result<Self> {
-        if node.kind() != "function_statement" {
+        if node.kind_id() != kind!("function_statement") {
             return Err(anyhow!("wrong node type"));
         }
 
         let type_ = Type::try_from_node(
-            node.child_by_field_name("type").context("expected type")?,
+            node.child_by_field_id(field!("type").into())
+                .context("expected type")?,
             src,
         )?;
 
-        let id = if let Some(result) = node.child_with_name("function_result") {
+        let id = if let Some(result) = node.named_child_with_kind_id(kind!("function_result")) {
             result
-                .child_with_name("identifier")
+                .named_child_with_kind_id(kind!("identifier"))
                 .expect("`function_result` should have `identifier` child")
         } else {
-            node.child_by_field_name("name")
+            node.child_by_field_id(field!("name").into())
                 .expect("`function_statement` must have `name` field")
         };
         let name = NameDecl::from_node(&id, src);
@@ -472,25 +476,31 @@ impl<'a> VariableDeclaration<'a> {
 /// Returns the tree-sitter node corresponding to the actual name of a
 /// declarator node, and not, say, the initialiser
 pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
-    match node.kind() {
-        "identifier" | "method_name" | "type_name" | "module_name" | "local_name" | "name" => *node,
-        "sized_declarator" => node
+    match node.kind_id() {
+        kind!("identifier")
+        | kind!("method_name")
+        | kind!("type_name")
+        | kind!("module_name")
+        | kind!("local_name")
+        | kind!("name") => *node,
+        kind!("sized_declarator") => node
             .named_child(0)
             .expect("sized_declarator should have named child"),
-        "coarray_declarator" => get_name_node_of_declarator(
+        kind!("coarray_declarator") => get_name_node_of_declarator(
             &node
                 .named_child(0)
                 .expect("coarray_declarator should have named child"),
         ),
-        "init_declarator" | "pointer_init_declarator" | "data_declarator" => {
+        #[allow(clippy::manual_range_patterns)]
+        kind!("init_declarator") | kind!("pointer_init_declarator") | kind!("data_declarator") => {
             get_name_node_of_declarator(
                 &node
-                    .child_by_field_name("left")
+                    .child_by_field_id(field!("left").into())
                     .expect("init/pointer_init/data_declarator should have left-hand side"),
             )
         }
-        "use_alias" => node
-            .child_with_name("local_name")
+        kind!("use_alias") => node
+            .named_child_with_kind_id(kind!("local_name"))
             .expect("use_alias should have local_name child"),
         _ => unreachable!("unexpected node type in declarator ({node:?})"),
     }
@@ -500,13 +510,13 @@ pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
 /// declarator node, if there is one
 pub fn get_size_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
     node.named_descendants()
-        .find(|child| child.kind() == "size")
+        .find(|child| child.kind_id() == kind!("size"))
 }
 
 /// Returns the tree-sitter node corresponding to the initialiser of the
 /// declarator node, if there is one
 pub fn get_init_node_of_declarator<'a>(node: &'a Node<'a>) -> Option<Node<'a>> {
-    node.child_by_field_name("right")
+    node.child_by_field_id(field!("right").into())
 }
 
 /// A single Fortran variable
@@ -594,7 +604,7 @@ pub(crate) struct ImplicitStatement<'a> {
 
 impl<'a> ImplicitStatement<'a> {
     pub fn try_from_node(node: Node<'a>) -> Option<Self> {
-        if node.kind() != "implicit_statement" {
+        if node.kind_id() != kind!("implicit_statement") {
             return None;
         }
         let mut none_type = ImplicitNoneType::empty();
@@ -629,7 +639,7 @@ impl<'a> ImplicitStatement<'a> {
                 | kind!("function")
                 | kind!("subroutine")
         ) {
-            if let Some(child) = node.child_with_name("implicit_statement") {
+            if let Some(child) = node.named_child_with_kind_id(kind!("implicit_statement")) {
                 return ImplicitStatement::try_from_node(child);
             }
             return None;
@@ -703,7 +713,7 @@ pub struct Procedure<'a> {
 
 impl<'a> Procedure<'a> {
     pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
-        if !node.is_named() || !matches!(node.kind(), "function" | "subroutine") {
+        if !matches!(node.kind_id(), kind!("function") | kind!("subroutine")) {
             return Err(anyhow!("not a procedure"));
         }
 
@@ -725,12 +735,12 @@ impl<'a> Procedure<'a> {
         let attributes = attributes?;
 
         let name = stmt
-            .child_by_field_name("name")
+            .child_by_field_id(field!("name").into())
             .context("procedure should have `name` field")?;
         let name = Name::from_node(&name, src);
 
         let args = stmt
-            .child_with_name("parameters")
+            .named_child_with_kind_id(kind!("parameters"))
             .map(|params| {
                 params
                     .named_children(&mut params.walk())
@@ -786,15 +796,15 @@ pub struct TypeDefinition<'a> {
 
 impl<'a> TypeDefinition<'a> {
     pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
-        if !node.is_named() || node.kind() != "derived_type_definition" {
+        if node.kind_id() != kind!("derived_type_definition") {
             return Err(anyhow!("not a derived type"));
         }
 
         let stmt = node
-            .child_with_name("derived_type_statement")
+            .named_child_with_kind_id(kind!("derived_type_statement"))
             .context("expected dervied_type_statement")?;
         let name_node = stmt
-            .child_with_name("type_name")
+            .named_child_with_kind_id(kind!("type_name"))
             .context("expected type_name")?;
         let name = Name::from_node(&name_node, src);
 
@@ -813,14 +823,16 @@ pub struct Module<'a> {
 
 impl<'a> Module<'a> {
     pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
-        if !node.is_named() || node.kind() != "module" {
+        if node.kind_id() != kind!("module") {
             return Err(anyhow!("not a module"));
         }
 
         let stmt = node
-            .child_with_name("module_statement")
+            .named_child_with_kind_id(kind!("module_statement"))
             .context("expected module_statement")?;
-        let name_node = stmt.child_with_name("name").context("expected name")?;
+        let name_node = stmt
+            .named_child_with_kind_id(kind!("name"))
+            .context("expected name")?;
         let name = Name::from_node(&name_node, src);
 
         Ok(Self { name, node: *node })
@@ -838,14 +850,16 @@ pub struct Program<'a> {
 
 impl<'a> Program<'a> {
     pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
-        if !node.is_named() || node.kind() != "program" {
+        if node.kind_id() != kind!("program") {
             return Err(anyhow!("not a program"));
         }
 
         let stmt = node
-            .child_with_name("program_statement")
+            .named_child_with_kind_id(kind!("program_statement"))
             .context("expected program_statement")?;
-        let name_node = stmt.child_with_name("name").context("expected name")?;
+        let name_node = stmt
+            .named_child_with_kind_id(kind!("name"))
+            .context("expected name")?;
         let name = Name::from_node(&name_node, src);
 
         Ok(Self { name, node: *node })
@@ -865,26 +879,28 @@ pub struct UseStatement<'a> {
 impl<'a> UseStatement<'a> {
     /// Create from `use_statement` node
     pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
-        if node.kind() != "use_statement" {
+        if node.kind_id() != kind!("use_statement") {
             return Err(anyhow!("wrong node type"));
         }
 
         let name = Name::from_node(
             &node
-                .child_with_name("module_name")
+                .named_child_with_kind_id(kind!("module_name"))
                 .context("expected module_name in 'use_statement'")?,
             src,
         );
 
-        let has_only = node.child_with_name("included_items").is_some();
+        let has_only = node
+            .named_child_with_kind_id(kind!("included_items"))
+            .is_some();
 
         let mut intrinsic = false;
         let mut has_colon = false;
         for child in node.children(&mut node.walk()) {
-            if child.kind() == "intrinsic" {
+            if child.kind_id() == kw!("intrinsic") {
                 intrinsic = true;
             }
-            if child.kind() == "::" {
+            if child.kind_id() == kw!("::") {
                 has_colon = true;
                 break;
             }
@@ -900,7 +916,7 @@ impl<'a> UseStatement<'a> {
     }
 
     pub fn included_items(&self) -> Option<Node<'a>> {
-        self.node.child_with_name("included_items")
+        self.node.named_child_with_kind_id(kind!("included_items"))
     }
 
     pub fn is_intrinsic(&self) -> bool {
@@ -927,23 +943,23 @@ pub struct UsedItem<'a> {
 
 impl<'a> UsedItem<'a> {
     pub fn try_from_node(node: Node<'a>, src: &str, decl: Rc<UseStatement<'a>>) -> Option<Self> {
-        if node.kind() == "identifier" {
+        if node.kind_id() == kind!("identifier") {
             let name = Name::from_node(&node, src);
             Some(Self {
                 name,
                 alias_of: None,
                 decl,
             })
-        } else if node.kind() == "use_alias" {
+        } else if node.kind_id() == kind!("use_alias") {
             let name = Name::from_node(
                 &node
-                    .child_with_name("local_name")
+                    .named_child_with_kind_id(kind!("local_name"))
                     .expect("use_alias should have local_name child"),
                 src,
             );
             let alias_of = Name::from_node(
                 &node
-                    .child_with_name("identifier")
+                    .named_child_with_kind_id(kind!("identifier"))
                     .expect("use_alias should have identifier child"),
                 src,
             );

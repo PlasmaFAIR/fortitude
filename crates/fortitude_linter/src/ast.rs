@@ -251,7 +251,7 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
                     .child_by_field_id(field!("name").into())
                     .is_some_and(|n| {
                         n.to_text(src)
-                            .is_some_and(|s| s.eq_ignore_ascii_case(&keyword))
+                            .is_some_and(|s| s.eq_ignore_ascii_case(keyword))
                     })
         })
     }
