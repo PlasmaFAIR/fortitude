@@ -55,6 +55,7 @@ impl Violation for AssumedSize {
 }
 impl AstRule for AssumedSize {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        // TODO Reimplement using SymbolTable and VariableDeclaration
         let src = context.source_text();
         let declaration = node
             .ancestors()
@@ -190,6 +191,8 @@ impl Violation for AssumedSizeCharacterIntent {
 }
 impl AstRule for AssumedSizeCharacterIntent {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        // TODO Reimplement using SymbolTable and VariableDeclaration
+
         // The recommended fix to this is only possible in Fortran 2003 and later.
         // Those still writing Fortran 95 code are on their own!
         if context.settings().target_std < FortranStandard::F2003 {
