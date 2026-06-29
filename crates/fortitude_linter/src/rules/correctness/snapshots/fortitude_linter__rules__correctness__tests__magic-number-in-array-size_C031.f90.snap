@@ -1,9 +1,8 @@
 ---
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
-C031 Magic number in array size, consider replacing 221 with named `parameter`
+C031 Magic number `221` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:4:16
   |
 2 |   implicit none
@@ -13,8 +12,9 @@ C031 Magic number in array size, consider replacing 221 with named `parameter`
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 221 with named `parameter`
+C031 Magic number `221` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:4:27
   |
 2 |   implicit none
@@ -24,8 +24,9 @@ C031 Magic number in array size, consider replacing 221 with named `parameter`
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 100 with named `parameter`
+C031 Magic number `100` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:4:37
   |
 2 |   implicit none
@@ -35,8 +36,9 @@ C031 Magic number in array size, consider replacing 100 with named `parameter`
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 33 with named `parameter`
+C031 Magic number `33` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:4:53
   |
 2 |   implicit none
@@ -46,8 +48,9 @@ C031 Magic number in array size, consider replacing 33 with named `parameter`
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 44 with named `parameter`
+C031 Magic number `44` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:4:56
   |
 2 |   implicit none
@@ -57,8 +60,9 @@ C031 Magic number in array size, consider replacing 44 with named `parameter`
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 5 with named `parameter`
+C031 Magic number `5` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:4:60
   |
 2 |   implicit none
@@ -68,8 +72,9 @@ C031 Magic number in array size, consider replacing 5 with named `parameter`
 5 |   integer, dimension(57) :: E
 6 |   integer, dimension(57, 64) :: F
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 57 with named `parameter`
+C031 Magic number `57` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:5:22
   |
 3 |   integer, parameter :: NUM_POINTS = 54
@@ -79,8 +84,9 @@ C031 Magic number in array size, consider replacing 57 with named `parameter`
 6 |   integer, dimension(57, 64) :: F
 7 |   integer, dimension(NUM_POINTS) :: G
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 57 with named `parameter`
+C031 Magic number `57` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:6:22
   |
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
@@ -90,8 +96,9 @@ C031 Magic number in array size, consider replacing 57 with named `parameter`
 7 |   integer, dimension(NUM_POINTS) :: G
 8 |   integer :: H(NUM_POINTS)
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 64 with named `parameter`
+C031 Magic number `64` in array size
  --> ./resources/test/fixtures/correctness/C031.f90:6:26
   |
 4 |   integer :: A(221), B(4, 221), C(1:100), D(1, 2:3, 33:44, 5, NUM_POINTS)
@@ -101,8 +108,9 @@ C031 Magic number in array size, consider replacing 64 with named `parameter`
 7 |   integer, dimension(NUM_POINTS) :: G
 8 |   integer :: H(NUM_POINTS)
   |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 8 with named `parameter`
+C031 Magic number `8` in array size
   --> ./resources/test/fixtures/correctness/C031.f90:13:24
    |
 11 | contains
@@ -112,8 +120,9 @@ C031 Magic number in array size, consider replacing 8 with named `parameter`
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 9 with named `parameter`
+C031 Magic number `9` in array size
   --> ./resources/test/fixtures/correctness/C031.f90:13:26
    |
 11 | contains
@@ -123,8 +132,9 @@ C031 Magic number in array size, consider replacing 9 with named `parameter`
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 10 with named `parameter`
+C031 Magic number `10` in array size
   --> ./resources/test/fixtures/correctness/C031.f90:13:29
    |
 11 | contains
@@ -134,8 +144,9 @@ C031 Magic number in array size, consider replacing 10 with named `parameter`
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 11 with named `parameter`
+C031 Magic number `11` in array size
   --> ./resources/test/fixtures/correctness/C031.f90:13:33
    |
 11 | contains
@@ -145,8 +156,9 @@ C031 Magic number in array size, consider replacing 11 with named `parameter`
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 12 with named `parameter`
+C031 Magic number `12` in array size
   --> ./resources/test/fixtures/correctness/C031.f90:13:36
    |
 11 | contains
@@ -156,8 +168,9 @@ C031 Magic number in array size, consider replacing 12 with named `parameter`
 14 |     integer, intent(out) :: M(57)
 15 |   end subroutine foo
    |
+help: Replace with named `parameter`
 
-C031 Magic number in array size, consider replacing 57 with named `parameter`
+C031 Magic number `57` in array size
   --> ./resources/test/fixtures/correctness/C031.f90:14:31
    |
 12 |   subroutine foo(L, M)
@@ -167,3 +180,4 @@ C031 Magic number in array size, consider replacing 57 with named `parameter`
 15 |   end subroutine foo
 16 | end module test
    |
+help: Replace with named `parameter`

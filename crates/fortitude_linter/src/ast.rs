@@ -109,6 +109,17 @@ pub trait FortitudeNode<'tree> {
     /// Get the first child with a given name. Returns None if not found.
     fn child_with_name(&self, name: &str) -> Option<Node<'tree>>;
 
+    /// Get the first child with a matching `kind_id`. It is recommended to
+    /// generate this using the `kind!` macro. Ignores unnamed nodes. Returns
+    /// None if not found.
+    fn named_child_with_kind_id(&self, kind_id: u16) -> Option<Node<'tree>>;
+
+    /// Get the first child with a matching `kind_id`. This checks all named
+    /// and unnamed nodes, so if the intention is to match a specific keyword,
+    /// the `kind_id` should be generated using the `kw!` macro to avoid
+    /// catching named nodes. Returns None if not found.
+    fn child_with_kind_id(&self, kind_id: u16) -> Option<Node<'tree>>;
+
     /// Get a named `keyword_argument` child node, if it exists.
     fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>>;
 
@@ -220,6 +231,16 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     fn child_with_name(&self, name: &str) -> Option<Node<'tree1>> {
         self.named_children(&mut self.walk())
             .find(|x| x.kind() == name)
+    }
+
+    fn named_child_with_kind_id(&self, kind_id: u16) -> Option<Node<'tree1>> {
+        self.named_children(&mut self.walk())
+            .find(|x| x.kind_id() == kind_id)
+    }
+
+    fn child_with_kind_id(&self, kind_id: u16) -> Option<Node<'tree1>> {
+        self.children(&mut self.walk())
+            .find(|x| x.kind_id() == kind_id)
     }
 
     fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>> {
