@@ -1,316 +1,350 @@
 ---
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
+snapshot_kind: text
 ---
-./resources/test/fixtures/style/S311_keyword_reuse.f90:1:8: S311 Keyword `module` used as an identifier
+S311 Keyword `module` used as an identifier
+ --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:1:8
   |
 1 | module module
-  |        ^^^^^^ S311
+  |        ^^^^^^
 2 |
 3 |     implicit none (type, external)
   |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:40:9: S311 Keyword `program` used as an identifier
+S311 Keyword `program` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:40:9
    |
 38 | end module module
 39 |
 40 | program program
-   |         ^^^^^^^ S311
+   |         ^^^^^^^
 41 |
 42 |     implicit none (type, external)
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:6:13: S311 Keyword `private` used as an identifier
+S311 Keyword `private` used as an identifier
+ --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:6:13
   |
 4 |     private
 5 |
 6 |     real :: private
-  |             ^^^^^^^ S311
+  |             ^^^^^^^
 7 |     real :: public
 8 |     real :: contains
   |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:7:13: S311 Keyword `public` used as an identifier
+S311 Keyword `public` used as an identifier
+ --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:7:13
   |
 6 |     real :: private
 7 |     real :: public
-  |             ^^^^^^ S311
+  |             ^^^^^^
 8 |     real :: contains
 9 |     real, allocatable :: allocatable
   |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:8:13: S311 Keyword `contains` used as an identifier
+S311 Keyword `contains` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:8:13
    |
  6 |     real :: private
  7 |     real :: public
  8 |     real :: contains
-   |             ^^^^^^^^ S311
+   |             ^^^^^^^^
  9 |     real, allocatable :: allocatable
 10 |     real, pointer :: pointer
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:9:26: S311 Keyword `allocatable` used as an identifier
+S311 Keyword `allocatable` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:9:26
    |
  7 |     real :: public
  8 |     real :: contains
  9 |     real, allocatable :: allocatable
-   |                          ^^^^^^^^^^^ S311
+   |                          ^^^^^^^^^^^
 10 |     real, pointer :: pointer
 11 |     real, target :: target
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:10:22: S311 Keyword `pointer` used as an identifier
+S311 Keyword `pointer` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:10:22
    |
  8 |     real :: contains
  9 |     real, allocatable :: allocatable
 10 |     real, pointer :: pointer
-   |                      ^^^^^^^ S311
+   |                      ^^^^^^^
 11 |     real, target :: target
 12 |     integer, parameter :: parameter = 3
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:11:21: S311 Keyword `target` used as an identifier
+S311 Keyword `target` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:11:21
    |
  9 |     real, allocatable :: allocatable
 10 |     real, pointer :: pointer
 11 |     real, target :: target
-   |                     ^^^^^^ S311
+   |                     ^^^^^^
 12 |     integer, parameter :: parameter = 3
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:12:27: S311 Keyword `parameter` used as an identifier
+S311 Keyword `parameter` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:12:27
    |
 10 |     real, pointer :: pointer
 11 |     real, target :: target
 12 |     integer, parameter :: parameter = 3
-   |                           ^^^^^^^^^ S311
+   |                           ^^^^^^^^^
 13 |
 14 |     public :: public  ! Shouldn't trigger here, only on the declaration above
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:16:10: S311 Keyword `type` used as an identifier
+S311 Keyword `type` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:16:10
    |
 14 |     public :: public  ! Shouldn't trigger here, only on the declaration above
 15 |
 16 |     type type
-   |          ^^^^ S311
+   |          ^^^^
 17 |         integer :: extends
 18 |     end type type
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:17:20: S311 Keyword `extends` used as an identifier
+S311 Keyword `extends` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:17:20
    |
 16 |     type type
 17 |         integer :: extends
-   |                    ^^^^^^^ S311
+   |                    ^^^^^^^
 18 |     end type type
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:25:9: S311 Keyword `do` used as a label
+S311 Keyword `do` used as a label
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:25:9
    |
 23 |         integer :: i
 24 |         integer :: j
 25 |         do: do i = 1, 10
-   |         ^^ S311
+   |         ^^
 26 |             cycle: do j = 1, 10
 27 |                 print *, i, j
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:26:13: S311 Keyword `cycle` used as a label
+S311 Keyword `cycle` used as a label
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:26:13
    |
 24 |         integer :: j
 25 |         do: do i = 1, 10
 26 |             cycle: do j = 1, 10
-   |             ^^^^^ S311
+   |             ^^^^^
 27 |                 print *, i, j
 28 |                 if (j == 5) then
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:45:16: S311 Keyword `integer` used as an identifier
+S311 Keyword `integer` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:45:16
    |
 45 |     integer :: integer
-   |                ^^^^^^^ S311
+   |                ^^^^^^^
 46 |     real :: real
 47 |     character :: character
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:46:13: S311 Keyword `real` used as an identifier
+S311 Keyword `real` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:46:13
    |
 45 |     integer :: integer
 46 |     real :: real
-   |             ^^^^ S311
+   |             ^^^^
 47 |     character :: character
 48 |     logical :: logical
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:47:18: S311 Keyword `character` used as an identifier
+S311 Keyword `character` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:47:18
    |
 45 |     integer :: integer
 46 |     real :: real
 47 |     character :: character
-   |                  ^^^^^^^^^ S311
+   |                  ^^^^^^^^^
 48 |     logical :: logical
 49 |     complex :: complex
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:48:16: S311 Keyword `logical` used as an identifier
+S311 Keyword `logical` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:48:16
    |
 46 |     real :: real
 47 |     character :: character
 48 |     logical :: logical
-   |                ^^^^^^^ S311
+   |                ^^^^^^^
 49 |     complex :: complex
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:49:16: S311 Keyword `complex` used as an identifier
+S311 Keyword `complex` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:49:16
    |
 47 |     character :: character
 48 |     logical :: logical
 49 |     complex :: complex
-   |                ^^^^^^^ S311
+   |                ^^^^^^^
 50 |
 51 |     block: block
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:62:16: S311 Keyword `subroutine` used as an identifier
+S311 Keyword `subroutine` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:62:16
    |
 60 | contains
 61 |
 62 |     subroutine subroutine(print, in, out, inout)
-   |                ^^^^^^^^^^ S311
+   |                ^^^^^^^^^^
 63 |         integer, intent(inout) :: print
 64 |         integer, intent(in) :: in
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:72:22: S311 Keyword `function` used as an identifier
+S311 Keyword `function` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:72:22
    |
 70 |     end subroutine subroutine
 71 |
 72 |     integer function function(pure,  elemental, recursive) result(result)
-   |                      ^^^^^^^^ S311
+   |                      ^^^^^^^^
 73 |         integer, intent(in) :: pure
 74 |         integer, intent(in) :: elemental
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:52:20: S311 Keyword `allocate` used as an identifier
+S311 Keyword `allocate` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:52:20
    |
 51 |     block: block
 52 |         integer :: allocate, deallocate, write
-   |                    ^^^^^^^^ S311
+   |                    ^^^^^^^^
 53 |         print *, allocate, deallocate, write
 54 |     end block block
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:52:30: S311 Keyword `deallocate` used as an identifier
+S311 Keyword `deallocate` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:52:30
    |
 51 |     block: block
 52 |         integer :: allocate, deallocate, write
-   |                              ^^^^^^^^^^ S311
+   |                              ^^^^^^^^^^
 53 |         print *, allocate, deallocate, write
 54 |     end block block
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:52:42: S311 Keyword `write` used as an identifier
+S311 Keyword `write` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:52:42
    |
 51 |     block: block
 52 |         integer :: allocate, deallocate, write
-   |                                          ^^^^^ S311
+   |                                          ^^^^^
 53 |         print *, allocate, deallocate, write
 54 |     end block block
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:51:5: S311 Keyword `block` used as a label
+S311 Keyword `block` used as a label
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:51:5
    |
 49 |     complex :: complex
 50 |
 51 |     block: block
-   |     ^^^^^ S311
+   |     ^^^^^
 52 |         integer :: allocate, deallocate, write
 53 |         print *, allocate, deallocate, write
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:57:20: S311 Keyword `namelist` used as an identifier
+S311 Keyword `namelist` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:57:20
    |
 56 |     block
 57 |         integer :: namelist
-   |                    ^^^^^^^^ S311
+   |                    ^^^^^^^^
 58 |     end block
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:63:35: S311 Keyword `print` used as an identifier
+S311 Keyword `print` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:63:35
    |
 62 |     subroutine subroutine(print, in, out, inout)
 63 |         integer, intent(inout) :: print
-   |                                   ^^^^^ S311
+   |                                   ^^^^^
 64 |         integer, intent(in) :: in
 65 |         integer, intent(out) :: out
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:64:32: S311 Keyword `in` used as an identifier
+S311 Keyword `in` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:64:32
    |
 62 |     subroutine subroutine(print, in, out, inout)
 63 |         integer, intent(inout) :: print
 64 |         integer, intent(in) :: in
-   |                                ^^ S311
+   |                                ^^
 65 |         integer, intent(out) :: out
 66 |         integer, intent(inout) :: inout
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:65:33: S311 Keyword `out` used as an identifier
+S311 Keyword `out` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:65:33
    |
 63 |         integer, intent(inout) :: print
 64 |         integer, intent(in) :: in
 65 |         integer, intent(out) :: out
-   |                                 ^^^ S311
+   |                                 ^^^
 66 |         integer, intent(inout) :: inout
 67 |         print *, print, in, inout
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:66:35: S311 Keyword `inout` used as an identifier
+S311 Keyword `inout` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:66:35
    |
 64 |         integer, intent(in) :: in
 65 |         integer, intent(out) :: out
 66 |         integer, intent(inout) :: inout
-   |                                   ^^^^^ S311
+   |                                   ^^^^^
 67 |         print *, print, in, inout
 68 |         out = in + inout
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:72:67: S311 Keyword `result` used as an identifier
+S311 Keyword `result` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:72:67
    |
 70 |     end subroutine subroutine
 71 |
 72 |     integer function function(pure,  elemental, recursive) result(result)
-   |                                                                   ^^^^^^ S311
+   |                                                                   ^^^^^^
 73 |         integer, intent(in) :: pure
 74 |         integer, intent(in) :: elemental
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:73:32: S311 Keyword `pure` used as an identifier
+S311 Keyword `pure` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:73:32
    |
 72 |     integer function function(pure,  elemental, recursive) result(result)
 73 |         integer, intent(in) :: pure
-   |                                ^^^^ S311
+   |                                ^^^^
 74 |         integer, intent(in) :: elemental
 75 |         integer, intent(in) :: recursive
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:74:32: S311 Keyword `elemental` used as an identifier
+S311 Keyword `elemental` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:74:32
    |
 72 |     integer function function(pure,  elemental, recursive) result(result)
 73 |         integer, intent(in) :: pure
 74 |         integer, intent(in) :: elemental
-   |                                ^^^^^^^^^ S311
+   |                                ^^^^^^^^^
 75 |         integer, intent(in) :: recursive
 76 |         result = pure + elemental + recursive
    |
 
-./resources/test/fixtures/style/S311_keyword_reuse.f90:75:32: S311 Keyword `recursive` used as an identifier
+S311 Keyword `recursive` used as an identifier
+  --> ./resources/test/fixtures/style/S311_keyword_reuse.f90:75:32
    |
 73 |         integer, intent(in) :: pure
 74 |         integer, intent(in) :: elemental
 75 |         integer, intent(in) :: recursive
-   |                                ^^^^^^^^^ S311
+   |                                ^^^^^^^^^
 76 |         result = pure + elemental + recursive
 77 |     end function function
    |

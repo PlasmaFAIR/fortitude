@@ -3,16 +3,16 @@ source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/correctness/C152.f90:25:3: C152 [*] Line continuation in inline if-statement is misleading
+C152 [*] Line continuation in inline if-statement is misleading
+  --> ./resources/test/fixtures/correctness/C152.f90:25:3
    |
 24 |     ! Raise an error if the body is on a new line.
 25 | /   if (condition) &
 26 | |       print *, "Hello"
-   | |______________________^ C152
+   | |______________________^
 27 |         print *, "World!"
    |
-   = help: Convert to `if(...) then` block
-
+help: Convert to `if(...) then` block
 22 |       "Hello world!"; end if
 23 |
 24 |   ! Raise an error if the body is on a new line.
@@ -25,18 +25,18 @@ snapshot_kind: text
 29 |
 30 |   ! Misleading semicolons: the second statement in the body should be placed
 
-./resources/test/fixtures/correctness/C152.f90:31:3: C152 [*] Line continuation in inline if-statement is misleading
+C152 [*] Line continuation in inline if-statement is misleading
+  --> ./resources/test/fixtures/correctness/C152.f90:31:3
    |
 29 |     ! Misleading semicolons: the second statement in the body should be placed
 30 |     ! after the `end if` in the fix.
 31 | /   if (condition) &
 32 | |       print *, "Hello"; print *, "World!"
-   | |______________________^ C152
+   | |______________________^
 33 |
 34 |     ! Permit body split across multiple lines.
    |
-   = help: Convert to `if(...) then` block
-
+help: Convert to `if(...) then` block
 28 |
 29 |   ! Misleading semicolons: the second statement in the body should be placed
 30 |   ! after the `end if` in the fix.
@@ -49,18 +49,18 @@ snapshot_kind: text
 35 |   ! Permit body split across multiple lines.
 36 |   if (condition) print *, &
 
-./resources/test/fixtures/correctness/C152.f90:47:3: C152 [*] Line continuation in inline if-statement is misleading
+C152 [*] Line continuation in inline if-statement is misleading
+  --> ./resources/test/fixtures/correctness/C152.f90:47:3
    |
 46 |     ! ... but not if the body starts on a new line
 47 | /   if (condition &
 48 | |       .and. i > 0) &
 49 | |         print *, "Hello world!"
-   | |_______________________________^ C152
+   | |_______________________________^
 50 |
 51 |     ! Some cases might result in weird indentation.
    |
-   = help: Convert to `if(...) then` block
-
+help: Convert to `if(...) then` block
 45 |
 46 |   ! ... but not if the body starts on a new line
 47 |   if (condition &
@@ -73,18 +73,18 @@ snapshot_kind: text
 52 |   ! Some cases might result in weird indentation.
 53 |   do i = 1, 3; if (i == 2) &
 
-./resources/test/fixtures/correctness/C152.f90:52:16: C152 [*] Line continuation in inline if-statement is misleading
+C152 [*] Line continuation in inline if-statement is misleading
+  --> ./resources/test/fixtures/correctness/C152.f90:52:16
    |
 51 |     ! Some cases might result in weird indentation.
 52 |     do i = 1, 3; if (i == 2) &
    |  ________________^
 53 | |     print *, "foo"; end do
-   | |__________________^ C152
+   | |__________________^
 54 |
 55 |     ! We don't handle misleading semicolons here.
    |
-   = help: Convert to `if(...) then` block
-
+help: Convert to `if(...) then` block
 49 |         print *, "Hello world!"
 50 |
 51 |   ! Some cases might result in weird indentation.

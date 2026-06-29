@@ -2,32 +2,53 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
-
-use super::Emitter;
-use crate::Diagnostic;
-use crate::fs::relativize_path;
+use crate::{
+    diagnostics::{Diagnostic, SecondaryCode},
+    fs::relativize_path,
+};
 
 /// Generate violations in Pylint format.
+///
+/// The format is given by this string:
+///
+/// ```python
+/// "%(path)s:%(row)d: [%(code)s] %(text)s"
+/// ```
+///
 /// See: [Flake8 documentation](https://flake8.pycqa.org/en/latest/internal/formatters.html#pylint-formatter)
-#[derive(Default)]
-pub struct PylintEmitter;
+pub(super) struct PylintRenderer {}
 
-impl Emitter for PylintEmitter {
-    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
-        for message in messages {
-            let row = message.compute_start_location().line;
+impl PylintRenderer {
+    pub(super) fn render(
+        &self,
+        f: &mut std::fmt::Formatter,
+        diagnostics: &[Diagnostic],
+    ) -> std::fmt::Result {
+        for diagnostic in diagnostics {
+            let (filename, row) = diagnostic
+                .primary_span_ref()
+                .map(|span| {
+                    let file = span.file();
 
-            let body = format!(
-                "[{code}] {body}",
-                code = message.rule().noqa_code(),
-                body = message.body()
-            );
+                    let row = span
+                        .range()
+                        .map(|range| file.to_source_code().line_column(range.start()).line);
+
+                    (relativize_path(file.name()), row)
+                })
+                .unwrap_or_default();
+
+            let code = diagnostic
+                .secondary_code()
+                .map_or_else(|| diagnostic.name(), SecondaryCode::as_str);
+
+            let row = row.unwrap_or_default();
 
             writeln!(
-                writer,
-                "{path}:{row}: {body}",
-                path = relativize_path(message.filename()),
+                f,
+                "{path}:{row}: [{code}] {body}",
+                path = filename,
+                body = diagnostic.concise_message()
             )?;
         }
 
@@ -37,16 +58,33 @@ impl Emitter for PylintEmitter {
 
 #[cfg(test)]
 mod tests {
-    use insta::assert_snapshot;
-
-    use super::PylintEmitter;
-    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
+    use crate::diagnostics::{
+        OutputFormat,
+        message::tests::{TestEnvironment, create_diagnostics, create_syntax_error_diagnostics},
+    };
 
     #[test]
     fn output() {
-        let mut emitter = PylintEmitter;
-        let content = capture_emitter_output(&mut emitter, &create_messages());
+        let (env, diagnostics) = create_diagnostics(OutputFormat::Pylint);
+        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
+    }
 
-        assert_snapshot!(content);
+    #[test]
+    fn syntax_errors() {
+        let (env, diagnostics) = create_syntax_error_diagnostics(OutputFormat::Pylint);
+        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
+    }
+
+    #[test]
+    fn missing_file() {
+        let mut env = TestEnvironment::new();
+        env.format(OutputFormat::Pylint);
+
+        let diag = env.err().build();
+
+        insta::assert_snapshot!(
+            env.render(&diag),
+            @":1: [stable-test-rule] main diagnostic message",
+        );
     }
 }

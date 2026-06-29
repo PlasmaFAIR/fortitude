@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S255.f90:19:7: S255 [*] Unnecessary else-if after `stop` statement
+S255 [*] Unnecessary else-if after `stop` statement
+  --> ./resources/test/fixtures/style/S255.f90:19:7
    |
 17 |     if ((a - b) < 0) then
 18 |       capped_sub = 0
 19 |       STOP
-   |       ^^^^ S255
+   |       ^^^^
 20 |     else if ((a - b) > 10) then
 21 |       capped_sub = 10
    |
-   = help: Remove unnecessary 'else-if'
-
+help: Remove unnecessary 'else-if'
 17 |     if ((a - b) < 0) then
 18 |       capped_sub = 0
 19 |       STOP
@@ -24,17 +24,17 @@ snapshot_kind: text
 23 |       stop 3
 24 |     else
 
-./resources/test/fixtures/style/S255.f90:22:7: S255 [*] Unnecessary else after `stop` statement
+S255 [*] Unnecessary else after `stop` statement
+  --> ./resources/test/fixtures/style/S255.f90:22:7
    |
 20 |     else if ((a - b) > 10) then
 21 |       capped_sub = 10
 22 |       stop 3
-   |       ^^^^^^ S255
+   |       ^^^^^^
 23 |     else
 24 |       capped_sub = a - b
    |
-   = help: Remove unnecessary 'else'
-
+help: Remove unnecessary 'else'
 20 |     else if ((a - b) > 10) then
 21 |       capped_sub = 10
 22 |       stop 3
@@ -47,17 +47,17 @@ snapshot_kind: text
 27 |
 28 |   integer function capped_mult(a, b)
 
-./resources/test/fixtures/style/S255.f90:32:7: S255 [*] Unnecessary else after `error stop` statement
+S255 [*] Unnecessary else after `error stop` statement
+  --> ./resources/test/fixtures/style/S255.f90:32:7
    |
 30 |     if ((a * b) > 100) then
 31 |       capped_mult = 100
 32 |       error     stop 2
-   |       ^^^^^^^^^^^^^^^^ S255
+   |       ^^^^^^^^^^^^^^^^
 33 |     else
 34 |       capped_mult = a * b
    |
-   = help: Remove unnecessary 'else'
-
+help: Remove unnecessary 'else'
 30 |     if ((a * b) > 100) then
 31 |       capped_mult = 100
 32 |       error     stop 2

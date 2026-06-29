@@ -15,38 +15,34 @@ success: false
 exit_code: 1
 ----- stdout -----
 {
-  "source": {
-    "name": "fortitude",
-    "url": "https://github.com/PlasmaFAIR/fortitude"
-  },
-  "severity": "warning",
   "diagnostics": [
     {
-      "message": "program uses implicit typing",
+      "code": {
+        "url": "https://fortitude.readthedocs.io//en/stable/rules/ImplicitTyping",
+        "value": "C001"
+      },
       "location": {
         "path": "[TMP]/test.f90",
         "range": {
-          "start": {
-            "line": 1,
-            "column": 1
-          },
           "end": {
             "line": 2,
+            "column": 1
+          },
+          "start": {
+            "line": 1,
             "column": 1
           }
         }
       },
-      "code": {
-        "value": "C001"
-      },
+      "message": "program uses implicit typing",
       "suggestions": [
         {
           "range": {
-            "start": {
+            "end": {
               "line": 2,
               "column": 1
             },
-            "end": {
+            "start": {
               "line": 2,
               "column": 1
             }
@@ -56,33 +52,34 @@ exit_code: 1
       ]
     },
     {
-      "message": "'logical*4' uses non-standard syntax",
+      "code": {
+        "url": "https://fortitude.readthedocs.io//en/stable/rules/StarKind",
+        "value": "PORT021"
+      },
       "location": {
         "path": "[TMP]/test.f90",
         "range": {
-          "start": {
-            "line": 2,
-            "column": 10
-          },
           "end": {
             "line": 2,
             "column": 12
+          },
+          "start": {
+            "line": 2,
+            "column": 10
           }
         }
       },
-      "code": {
-        "value": "PORT021"
-      },
+      "message": "'logical*4' uses non-standard syntax",
       "suggestions": [
         {
           "range": {
-            "start": {
-              "line": 2,
-              "column": 3
-            },
             "end": {
               "line": 2,
               "column": 12
+            },
+            "start": {
+              "line": 2,
+              "column": 3
             }
           },
           "text": "logical(4)"
@@ -90,58 +87,65 @@ exit_code: 1
       ]
     },
     {
-      "message": "logical kind set with number literal '4'",
+      "code": {
+        "url": "https://fortitude.readthedocs.io//en/stable/rules/LiteralKind",
+        "value": "PORT011"
+      },
       "location": {
         "path": "[TMP]/test.f90",
         "range": {
+          "end": {
+            "line": 2,
+            "column": 12
+          },
           "start": {
             "line": 2,
             "column": 11
-          },
-          "end": {
-            "line": 2,
-            "column": 12
           }
         }
       },
-      "code": {
-        "value": "PORT011"
-      }
+      "message": "logical kind set with number literal '4'"
     },
     {
-      "message": "end statement should be named.",
+      "code": {
+        "url": "https://fortitude.readthedocs.io//en/stable/rules/UnnamedEndStatement",
+        "value": "S061"
+      },
       "location": {
         "path": "[TMP]/test.f90",
         "range": {
-          "start": {
-            "line": 3,
-            "column": 1
-          },
           "end": {
             "line": 3,
             "column": 12
+          },
+          "start": {
+            "line": 3,
+            "column": 1
           }
         }
       },
-      "code": {
-        "value": "S061"
-      },
+      "message": "end statement should be named.",
       "suggestions": [
         {
           "range": {
-            "start": {
-              "line": 3,
-              "column": 1
-            },
             "end": {
               "line": 3,
               "column": 12
+            },
+            "start": {
+              "line": 3,
+              "column": 1
             }
           },
           "text": "end program test"
         }
       ]
     }
-  ]
+  ],
+  "severity": "WARNING",
+  "source": {
+    "name": "fortitude",
+    "url": "https://fortitude.readthedocs.io/"
+  }
 }
 ----- stderr -----

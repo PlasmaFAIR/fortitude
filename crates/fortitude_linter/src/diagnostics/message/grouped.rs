@@ -2,54 +2,36 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
+use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
-use std::io::Write;
 use std::num::NonZeroUsize;
+use std::ops::Deref;
 
 use colored::Colorize;
 
-use ruff_source_file::OneIndexed;
+use ruff_diagnostics::Applicability;
+use ruff_source_file::{LineColumn, OneIndexed};
 
+use crate::diagnostics::DisplayDiagnosticConfig;
 use crate::fs::relativize_path;
-use crate::settings::UnsafeFixes;
 
-use super::diff::calculate_print_width;
-use super::text::{MessageCodeFrame, RuleCodeAndBody};
-use super::{Emitter, MessageWithLocation, group_messages_by_filename};
 use crate::Diagnostic;
 
-#[derive(Default)]
-pub struct GroupedEmitter {
-    show_fix_status: bool,
-    show_source: bool,
-    unsafe_fixes: UnsafeFixes,
+pub struct GroupedRenderer<'a> {
+    config: &'a DisplayDiagnosticConfig,
 }
 
-impl GroupedEmitter {
-    #[must_use]
-    pub fn with_show_fix_status(mut self, show_fix_status: bool) -> Self {
-        self.show_fix_status = show_fix_status;
-        self
+impl<'a> GroupedRenderer<'a> {
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
+        Self { config }
     }
 
-    // Might only be used in tests?
-    #[must_use]
-    #[allow(dead_code)]
-    pub fn with_show_source(mut self, show_source: bool) -> Self {
-        self.show_source = show_source;
-        self
-    }
-
-    #[must_use]
-    pub fn with_unsafe_fixes(mut self, unsafe_fixes: UnsafeFixes) -> Self {
-        self.unsafe_fixes = unsafe_fixes;
-        self
-    }
-}
-
-impl Emitter for GroupedEmitter {
-    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
-        for (filename, messages) in group_messages_by_filename(messages) {
+    pub(super) fn render(
+        &self,
+        f: &mut std::fmt::Formatter,
+        messages: &[Diagnostic],
+    ) -> std::fmt::Result {
+        for (filename, messages) in group_diagnostics_by_filename(messages) {
             // Compute the maximum number of digits in the row and column, for messages in
             // this file.
 
@@ -61,60 +43,83 @@ impl Emitter for GroupedEmitter {
                 max_column_length = max_column_length.max(message.start_location.column);
             }
 
-            let row_length = calculate_print_width(max_row_length);
-            let column_length = calculate_print_width(max_column_length);
+            let row_length = max_row_length.digits();
+            let column_length = max_column_length.digits();
 
             // Print the filename.
-            writeln!(writer, "{}:", relativize_path(filename).underline())?;
+            writeln!(f, "{}:", relativize_path(filename).underline())?;
 
             // Print each message.
             for message in messages {
                 write!(
-                    writer,
+                    f,
                     "{}",
                     DisplayGroupedMessage {
                         message,
-                        show_fix_status: self.show_fix_status,
-                        unsafe_fixes: self.unsafe_fixes,
-                        show_source: self.show_source,
+                        show_fix_status: self.config.show_fix_status(),
+                        applicability: self.config.fix_applicability(),
                         row_length,
                         column_length,
                     }
                 )?;
             }
 
-            // Print a blank line between files, unless we're showing the source, in which case
-            // we'll have already printed a blank line between messages.
-            if !self.show_source {
-                writeln!(writer)?;
-            }
+            // Print a blank line between files
+            writeln!(f)?;
         }
 
         Ok(())
     }
 }
 
+pub(super) struct DiagnosticWithLocation<'a> {
+    pub diagnostic: &'a Diagnostic,
+    pub start_location: LineColumn,
+}
+
+impl Deref for DiagnosticWithLocation<'_> {
+    type Target = Diagnostic;
+
+    fn deref(&self) -> &Self::Target {
+        self.diagnostic
+    }
+}
+
+pub(super) fn group_diagnostics_by_filename<'a>(
+    diagnostics: &'a [Diagnostic],
+) -> BTreeMap<String, Vec<DiagnosticWithLocation<'a>>> {
+    let mut grouped_diagnostics = BTreeMap::default();
+    for diagnostic in diagnostics {
+        grouped_diagnostics
+            .entry(diagnostic.expect_filename())
+            .or_insert_with(Vec::new)
+            .push(DiagnosticWithLocation {
+                diagnostic,
+                start_location: diagnostic.start_location().unwrap_or_default(),
+            });
+    }
+    grouped_diagnostics
+}
+
 struct DisplayGroupedMessage<'a> {
-    message: MessageWithLocation<'a>,
+    message: DiagnosticWithLocation<'a>,
     show_fix_status: bool,
-    unsafe_fixes: UnsafeFixes,
-    show_source: bool,
+    applicability: Applicability,
     row_length: NonZeroUsize,
     column_length: NonZeroUsize,
 }
 
 impl Display for DisplayGroupedMessage<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let MessageWithLocation {
-            message,
+        let DiagnosticWithLocation {
+            diagnostic,
             start_location,
         } = &self.message;
 
         write!(
             f,
             "  {row_padding}",
-            row_padding = " "
-                .repeat(self.row_length.get() - calculate_print_width(start_location.line).get())
+            row_padding = " ".repeat(self.row_length.get() - start_location.line.digits().get())
         )?;
 
         // Check if we're working on a jupyter notebook and translate positions with cell accordingly
@@ -124,99 +129,92 @@ impl Display for DisplayGroupedMessage<'_> {
             f,
             "{row}{sep}{col}{col_padding} {code_and_body}",
             sep = ":".cyan(),
-            col_padding = " ".repeat(
-                self.column_length.get() - calculate_print_width(start_location.column).get()
-            ),
+            col_padding =
+                " ".repeat(self.column_length.get() - start_location.column.digits().get()),
             code_and_body = RuleCodeAndBody {
-                message,
+                diagnostic,
                 show_fix_status: self.show_fix_status,
-                unsafe_fixes: self.unsafe_fixes
+                applicability: self.applicability
             },
         )?;
 
-        if self.show_source {
-            use std::fmt::Write;
-            let mut padded = PadAdapter::new(f);
-            writeln!(padded, "{}", MessageCodeFrame { message })?;
-        }
-
         Ok(())
     }
 }
 
-/// Adapter that adds a '  ' at the start of every line without the need to copy the string.
-/// Inspired by Rust's `debug_struct()` internal implementation that also uses a `PadAdapter`.
-struct PadAdapter<'buf> {
-    buf: &'buf mut (dyn std::fmt::Write + 'buf),
-    on_newline: bool,
+pub(super) struct RuleCodeAndBody<'a> {
+    pub(crate) diagnostic: &'a Diagnostic,
+    pub(crate) show_fix_status: bool,
+    pub(crate) applicability: Applicability,
 }
 
-impl<'buf> PadAdapter<'buf> {
-    fn new(buf: &'buf mut (dyn std::fmt::Write + 'buf)) -> Self {
-        Self {
-            buf,
-            on_newline: true,
-        }
-    }
-}
-
-impl std::fmt::Write for PadAdapter<'_> {
-    fn write_str(&mut self, s: &str) -> std::fmt::Result {
-        for s in s.split_inclusive('\n') {
-            if self.on_newline {
-                self.buf.write_str("  ")?;
+impl Display for RuleCodeAndBody<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if self.show_fix_status
+            && let Some(fix) = self.diagnostic.fix()
+        {
+            // Do not display an indicator for inapplicable fixes
+            if fix.applies(self.applicability) {
+                if let Some(code) = self.diagnostic.secondary_code() {
+                    write!(f, "{} ", code.red().bold())?;
+                }
+                return write!(
+                    f,
+                    "{fix}{body}",
+                    fix = format_args!("[{}] ", "*".cyan()),
+                    body = self.diagnostic.concise_message(),
+                );
             }
+        };
 
-            self.on_newline = s.ends_with('\n');
-            self.buf.write_str(s)?;
+        if let Some(code) = self.diagnostic.secondary_code() {
+            write!(
+                f,
+                "{code} {body}",
+                code = code.red().bold(),
+                body = self.diagnostic.concise_message(),
+            )
+        } else {
+            write!(
+                f,
+                "{code}: {body}",
+                code = self.diagnostic.id().as_str().red().bold(),
+                body = self.diagnostic.concise_message(),
+            )
         }
-
-        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use insta::assert_snapshot;
-
-    use super::GroupedEmitter;
-    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
-    use crate::settings::UnsafeFixes;
+    use crate::diagnostics::{
+        OutputFormat,
+        message::tests::{create_diagnostics, create_syntax_error_diagnostics},
+    };
 
     #[test]
     fn default() {
-        let mut emitter = GroupedEmitter::default();
-        let content = capture_emitter_output(&mut emitter, &create_messages());
-
-        assert_snapshot!(content);
-    }
-
-    #[test]
-    fn show_source() {
-        let mut emitter = GroupedEmitter::default().with_show_source(true);
-        let content = capture_emitter_output(&mut emitter, &create_messages());
-
-        assert_snapshot!(content);
+        let (env, diagnostics) = create_diagnostics(OutputFormat::Grouped);
+        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
     }
 
     #[test]
     fn fix_status() {
-        let mut emitter = GroupedEmitter::default()
-            .with_show_fix_status(true)
-            .with_show_source(true);
-        let content = capture_emitter_output(&mut emitter, &create_messages());
-
-        assert_snapshot!(content);
+        let (mut env, diagnostics) = create_diagnostics(OutputFormat::Grouped);
+        env.show_fix_status(true);
+        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
     }
 
     #[test]
     fn fix_status_unsafe() {
-        let mut emitter = GroupedEmitter::default()
-            .with_show_fix_status(true)
-            .with_show_source(true)
-            .with_unsafe_fixes(UnsafeFixes::Enabled);
-        let content = capture_emitter_output(&mut emitter, &create_messages());
+        let (mut env, diagnostics) = create_diagnostics(OutputFormat::Grouped);
+        env.fix_applicability(ruff_diagnostics::Applicability::Unsafe);
+        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
+    }
 
-        assert_snapshot!(content);
+    #[test]
+    fn syntax_errors() {
+        let (env, diagnostics) = create_syntax_error_diagnostics(OutputFormat::Grouped);
+        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
     }
 }

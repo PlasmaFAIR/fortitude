@@ -3,32 +3,33 @@ source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/portability/PORT021.f90:1:8: PORT021 [*] 'integer*8' uses non-standard syntax
+PORT021 [*] 'integer*8' uses non-standard syntax
+ --> ./resources/test/fixtures/portability/PORT021.f90:1:8
   |
 1 | integer*8 function add_if(x, y, z)
-  |        ^^ PORT021
+  |        ^^
 2 |   integer(kind=2), intent(in) :: x
 3 |   integer *4, intent(in) :: y
   |
-  = help: Replace with 'integer(8)'
-
+help: Replace with 'integer(8)'
   - integer*8 function add_if(x, y, z)
 1 + integer(8) function add_if(x, y, z)
 2 |   integer(kind=2), intent(in) :: x
 3 |   integer *4, intent(in) :: y
 4 |   logical*   4, intent(in) :: z
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT021.f90:3:11: PORT021 [*] 'integer*4' uses non-standard syntax
+PORT021 [*] 'integer*4' uses non-standard syntax
+ --> ./resources/test/fixtures/portability/PORT021.f90:3:11
   |
 1 | integer*8 function add_if(x, y, z)
 2 |   integer(kind=2), intent(in) :: x
 3 |   integer *4, intent(in) :: y
-  |           ^^ PORT021
+  |           ^^
 4 |   logical*   4, intent(in) :: z
 5 |   real    * &
   |
-  = help: Replace with 'integer(4)'
-
+help: Replace with 'integer(4)'
 1 | integer*8 function add_if(x, y, z)
 2 |   integer(kind=2), intent(in) :: x
   -   integer *4, intent(in) :: y
@@ -36,18 +37,19 @@ snapshot_kind: text
 4 |   logical*   4, intent(in) :: z
 5 |   real    * &
 6 |        8 :: t
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT021.f90:4:10: PORT021 [*] 'logical*4' uses non-standard syntax
+PORT021 [*] 'logical*4' uses non-standard syntax
+ --> ./resources/test/fixtures/portability/PORT021.f90:4:10
   |
 2 |   integer(kind=2), intent(in) :: x
 3 |   integer *4, intent(in) :: y
 4 |   logical*   4, intent(in) :: z
-  |          ^^^^^ PORT021
+  |          ^^^^^
 5 |   real    * &
 6 |        8 :: t
   |
-  = help: Replace with 'logical(4)'
-
+help: Replace with 'logical(4)'
 1 | integer*8 function add_if(x, y, z)
 2 |   integer(kind=2), intent(in) :: x
 3 |   integer *4, intent(in) :: y
@@ -56,20 +58,21 @@ snapshot_kind: text
 5 |   real    * &
 6 |        8 :: t
 7 |
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT021.f90:5:11: PORT021 [*] 'real*8' uses non-standard syntax
+PORT021 [*] 'real*8' uses non-standard syntax
+ --> ./resources/test/fixtures/portability/PORT021.f90:5:11
   |
 3 |     integer *4, intent(in) :: y
 4 |     logical*   4, intent(in) :: z
 5 |     real    * &
   |  ___________^
 6 | |        8 :: t
-  | |________^ PORT021
+  | |________^
 7 |
 8 |     if (x == 2) then
   |
-  = help: Replace with 'real(8)'
-
+help: Replace with 'real(8)'
 2 |   integer(kind=2), intent(in) :: x
 3 |   integer *4, intent(in) :: y
 4 |   logical*   4, intent(in) :: z
@@ -79,17 +82,18 @@ snapshot_kind: text
 6 |
 7 |   if (x == 2) then
 8 |     add_if = x + y
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT021.f90:16:8: PORT021 [*] 'real*4' uses non-standard syntax
+PORT021 [*] 'real*4' uses non-standard syntax
+  --> ./resources/test/fixtures/portability/PORT021.f90:16:8
    |
 15 | subroutine complex_mul(x, real)
 16 |   real * 4, intent(in) :: x
-   |        ^^^ PORT021
+   |        ^^^
 17 |   complex  *  8, intent(inout) :: real
 18 |   ! This would be a false positive with purely regexp based linting
    |
-   = help: Replace with 'real(4)'
-
+help: Replace with 'real(4)'
 13 | end function add_if
 14 |
 15 | subroutine complex_mul(x, real)
@@ -98,18 +102,19 @@ snapshot_kind: text
 17 |   complex  *  8, intent(inout) :: real
 18 |   ! This would be a false positive with purely regexp based linting
 19 |   real = real * 8
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/portability/PORT021.f90:17:12: PORT021 [*] 'complex*8' uses non-standard syntax
+PORT021 [*] 'complex*8' uses non-standard syntax
+  --> ./resources/test/fixtures/portability/PORT021.f90:17:12
    |
 15 | subroutine complex_mul(x, real)
 16 |   real * 4, intent(in) :: x
 17 |   complex  *  8, intent(inout) :: real
-   |            ^^^^ PORT021
+   |            ^^^^
 18 |   ! This would be a false positive with purely regexp based linting
 19 |   real = real * 8
    |
-   = help: Replace with 'complex(8)'
-
+help: Replace with 'complex(8)'
 14 |
 15 | subroutine complex_mul(x, real)
 16 |   real * 4, intent(in) :: x
@@ -118,3 +123,4 @@ snapshot_kind: text
 18 |   ! This would be a false positive with purely regexp based linting
 19 |   real = real * 8
 20 | end subroutine complex_mul
+note: This is an unsafe fix and may change runtime behavior

@@ -1,12 +1,14 @@
 ---
 source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
+snapshot_kind: text
 ---
-./resources/test/fixtures/obsolescent/OB201.f90:13:5: OB201 mpif.h include is deprecated, use mpi or mpi_f08 module instead
+OB201 mpif.h include is deprecated, use mpi or mpi_f08 module instead
+  --> ./resources/test/fixtures/obsolescent/OB201.f90:13:5
    |
 12 |     ! Discouraged since MPI 3.0, deprecated since MPI 4.1
 13 |     include "mpif.h"
-   |     ^^^^^^^^^^^^^^^^ OB201
+   |     ^^^^^^^^^^^^^^^^
 14 |
 15 | end module obsolete_mpi
    |

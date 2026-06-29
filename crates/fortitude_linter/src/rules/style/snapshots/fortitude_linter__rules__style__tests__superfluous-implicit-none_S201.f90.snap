@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S201.f90:5:5: S201 [*] 'implicit none' set on the enclosing module
+S201 [*] 'implicit none' set on the enclosing module
+ --> ./resources/test/fixtures/style/S201.f90:5:5
   |
 3 | contains
 4 |   integer function myfunc(x)
 5 |     implicit none
-  |     ^^^^^^^^^^^^^ S201
+  |     ^^^^^^^^^^^^^
 6 |     integer, intent(in) :: x
 7 |     myfunc = x * 2
   |
-  = help: Remove unnecessary 'implicit none'
-
+help: Remove unnecessary 'implicit none'
 2 |   implicit none
 3 | contains
 4 |   integer function myfunc(x)
@@ -22,17 +22,17 @@ snapshot_kind: text
 6 |     myfunc = x * 2
 7 |   end function myfunc
 
-./resources/test/fixtures/style/S201.f90:10:5: S201 [*] 'implicit none' set on the enclosing module
+S201 [*] 'implicit none' set on the enclosing module
+  --> ./resources/test/fixtures/style/S201.f90:10:5
    |
  8 |   end function myfunc
  9 |   subroutine mysub(x)
 10 |     implicit none (type)
-   |     ^^^^^^^^^^^^^^^^^^^^ S201
+   |     ^^^^^^^^^^^^^^^^^^^^
 11 |     integer, intent(inout) :: x
 12 |     x = x * 2
    |
-   = help: Remove unnecessary 'implicit none'
-
+help: Remove unnecessary 'implicit none'
 7  |     myfunc = x * 2
 8  |   end function myfunc
 9  |   subroutine mysub(x)
@@ -41,17 +41,17 @@ snapshot_kind: text
 11 |     x = x * 2
 12 |   end subroutine mysub
 
-./resources/test/fixtures/style/S201.f90:23:5: S201 [*] 'implicit none' set on the enclosing program
+S201 [*] 'implicit none' set on the enclosing program
+  --> ./resources/test/fixtures/style/S201.f90:23:5
    |
 21 | contains
 22 |   integer function myfunc2(x)
 23 |     implicit none
-   |     ^^^^^^^^^^^^^ S201
+   |     ^^^^^^^^^^^^^
 24 |     integer, intent(in) :: x
 25 |     myfunc2 = x * 2
    |
-   = help: Remove unnecessary 'implicit none'
-
+help: Remove unnecessary 'implicit none'
 20 |
 21 | contains
 22 |   integer function myfunc2(x)
@@ -60,17 +60,17 @@ snapshot_kind: text
 24 |     myfunc2 = x * 2
 25 |   end function myfunc2
 
-./resources/test/fixtures/style/S201.f90:28:5: S201 [*] 'implicit none' set on the enclosing program
+S201 [*] 'implicit none' set on the enclosing program
+  --> ./resources/test/fixtures/style/S201.f90:28:5
    |
 26 |   end function myfunc2
 27 |   subroutine mysub2(x)
 28 |     implicit none
-   |     ^^^^^^^^^^^^^ S201
+   |     ^^^^^^^^^^^^^
 29 |     integer, intent(inout) :: x
 30 |     x = x * 2
    |
-   = help: Remove unnecessary 'implicit none'
-
+help: Remove unnecessary 'implicit none'
 25 |     myfunc2 = x * 2
 26 |   end function myfunc2
 27 |   subroutine mysub2(x)

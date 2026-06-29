@@ -2,53 +2,44 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
-
 use serde::ser::SerializeSeq;
 use serde::{Serialize, Serializer};
-use serde_json::{Value, json};
 
-use crate::diagnostics::Edit;
-use ruff_source_file::SourceCode;
+use ruff_diagnostics::{Edit, Fix};
+use ruff_source_file::{LineColumn, SourceCode};
 use ruff_text_size::Ranged;
 
-use super::{Emitter, LineColumn};
-use crate::Diagnostic;
+use crate::diagnostics::{ConciseMessage, Diagnostic};
 
-#[derive(Default)]
-pub struct RdjsonEmitter;
+pub struct RdjsonRenderer {}
 
-impl Emitter for RdjsonEmitter {
-    fn emit(&mut self, writer: &mut dyn Write, messages: &[Diagnostic]) -> anyhow::Result<()> {
-        serde_json::to_writer_pretty(
-            writer,
-            &json!({
-                "source": {
-                    "name": "fortitude",
-                    "url": "https://github.com/PlasmaFAIR/fortitude",
-                },
-                "severity": "warning",
-                "diagnostics": &ExpandedMessages{ messages }
-            }),
-        )?;
-
-        Ok(())
+impl RdjsonRenderer {
+    pub(super) fn render(
+        &self,
+        f: &mut std::fmt::Formatter,
+        diagnostics: &[Diagnostic],
+    ) -> std::fmt::Result {
+        write!(
+            f,
+            "{:#}",
+            serde_json::json!(RdjsonDiagnostics::new(diagnostics))
+        )
     }
 }
 
-struct ExpandedMessages<'a> {
-    messages: &'a [Diagnostic],
+struct ExpandedDiagnostics<'a> {
+    diagnostics: &'a [Diagnostic],
 }
 
-impl Serialize for ExpandedMessages<'_> {
+impl Serialize for ExpandedDiagnostics<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut s = serializer.serialize_seq(Some(self.messages.len()))?;
+        let mut s = serializer.serialize_seq(Some(self.diagnostics.len()))?;
 
-        for message in self.messages {
-            let value = message_to_rdjson_value(message);
+        for diagnostic in self.diagnostics {
+            let value = diagnostic_to_rdjson(diagnostic);
             s.serialize_element(&value)?;
         }
 
@@ -56,76 +47,184 @@ impl Serialize for ExpandedMessages<'_> {
     }
 }
 
-fn message_to_rdjson_value(message: &Diagnostic) -> Value {
-    let source_code = message.source_file().to_source_code();
+fn diagnostic_to_rdjson<'a>(diagnostic: &'a Diagnostic) -> RdjsonDiagnostic<'a> {
+    let span = diagnostic.primary_span_ref();
+    let source_file = span.map(|span| {
+        let file = span.file();
+        (file.name(), file)
+    });
 
-    let start_location = source_code.line_column(message.start());
-    let end_location = source_code.line_column(message.end());
+    let location = source_file.as_ref().map(|(path, source)| {
+        let range = diagnostic.range().map(|range| {
+            let source_code = source.to_source_code();
+            let start = source_code.line_column(range.start());
+            let end = source_code.line_column(range.end());
+            RdjsonRange::new(start, end)
+        });
 
-    if let Some(fix) = message.fix() {
-        json!({
-            "message": message.body(),
-            "location": {
-                "path": message.filename(),
-                "range": rdjson_range(start_location, end_location),
-            },
-            "code": {
-                "value": message.rule().noqa_code().to_string(),
-                // "url": message.rule().and_then(|rule| rule.url()),
-            },
-            "suggestions": rdjson_suggestions(fix.edits(), &source_code),
-        })
-    } else {
-        json!({
-            "message": message.body(),
-            "location": {
-                "path": message.filename(),
-                "range": rdjson_range(start_location, end_location),
-            },
-            "code": {
-                "value": message.rule().noqa_code().to_string(),
-                // "url": message.rule().and_then(|rule| rule.url()),
-            },
-        })
+        RdjsonLocation { path, range }
+    });
+
+    let edits = diagnostic.fix().map(Fix::edits).unwrap_or_default();
+
+    RdjsonDiagnostic {
+        message: diagnostic.concise_message(),
+        location,
+        code: RdjsonCode {
+            value: diagnostic
+                .secondary_code()
+                .map_or_else(|| diagnostic.name(), |code| code.as_str()),
+            url: diagnostic.documentation_url(),
+        },
+        suggestions: rdjson_suggestions(
+            edits,
+            source_file
+                .as_ref()
+                .map(|(_, source)| source.to_source_code()),
+        ),
     }
 }
 
-fn rdjson_suggestions(edits: &[Edit], source_code: &SourceCode) -> Value {
-    Value::Array(
-        edits
-            .iter()
-            .map(|edit| {
-                let location = source_code.line_column(edit.start());
-                let end_location = source_code.line_column(edit.end());
+fn rdjson_suggestions<'a>(
+    edits: &'a [Edit],
+    source_code: Option<SourceCode>,
+) -> Vec<RdjsonSuggestion<'a>> {
+    if edits.is_empty() {
+        return Vec::new();
+    }
 
-                json!({
-                    "range": rdjson_range(location, end_location),
-                    "text": edit.content().unwrap_or_default(),
-                })
-            })
-            .collect(),
-    )
+    let Some(source_code) = source_code else {
+        debug_assert!(false, "Expected a source file for a diagnostic with a fix");
+        return Vec::new();
+    };
+
+    edits
+        .iter()
+        .map(|edit| {
+            let start = source_code.line_column(edit.start());
+            let end = source_code.line_column(edit.end());
+            let range = RdjsonRange::new(start, end);
+
+            RdjsonSuggestion {
+                range,
+                text: edit.content().unwrap_or_default(),
+            }
+        })
+        .collect()
 }
 
-fn rdjson_range(start: LineColumn, end: LineColumn) -> Value {
-    json!({
-        "start": start,
-        "end": end,
-    })
+#[derive(Serialize)]
+struct RdjsonDiagnostics<'a> {
+    diagnostics: ExpandedDiagnostics<'a>,
+    severity: &'static str,
+    source: RdjsonSource,
+}
+
+impl<'a> RdjsonDiagnostics<'a> {
+    fn new(diagnostics: &'a [Diagnostic]) -> Self {
+        Self {
+            source: RdjsonSource {
+                name: "fortitude",
+                url: env!("CARGO_PKG_HOMEPAGE"),
+            },
+            severity: "WARNING",
+            diagnostics: ExpandedDiagnostics { diagnostics },
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct RdjsonSource {
+    name: &'static str,
+    url: &'static str,
+}
+
+#[derive(Serialize)]
+struct RdjsonDiagnostic<'a> {
+    code: RdjsonCode<'a>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    location: Option<RdjsonLocation<'a>>,
+    message: ConciseMessage<'a>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    suggestions: Vec<RdjsonSuggestion<'a>>,
+}
+
+#[derive(Serialize)]
+struct RdjsonLocation<'a> {
+    path: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    range: Option<RdjsonRange>,
+}
+
+#[derive(Default, Serialize)]
+struct RdjsonRange {
+    end: LineColumn,
+    start: LineColumn,
+}
+
+impl RdjsonRange {
+    fn new(start: LineColumn, end: LineColumn) -> Self {
+        Self { start, end }
+    }
+}
+
+#[derive(Serialize)]
+struct RdjsonCode<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    url: Option<&'a str>,
+    value: &'a str,
+}
+
+#[derive(Serialize)]
+struct RdjsonSuggestion<'a> {
+    range: RdjsonRange,
+    text: &'a str,
 }
 
 #[cfg(test)]
 mod tests {
-    use insta::assert_snapshot;
-
-    use super::RdjsonEmitter;
-    use crate::diagnostics::message::tests::{capture_emitter_output, create_messages};
+    use crate::diagnostics::{
+        OutputFormat,
+        message::tests::{TestEnvironment, create_diagnostics, create_syntax_error_diagnostics},
+    };
 
     #[test]
     fn output() {
-        let mut emitter = RdjsonEmitter;
-        let content = capture_emitter_output(&mut emitter, &create_messages());
+        let (env, diagnostics) = create_diagnostics(OutputFormat::Rdjson);
+        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
+    }
 
-        assert_snapshot!(content);
+    #[test]
+    fn syntax_errors() {
+        let (env, diagnostics) = create_syntax_error_diagnostics(OutputFormat::Rdjson);
+        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
+    }
+
+    #[test]
+    fn missing_file_stable() {
+        let mut env = TestEnvironment::new();
+        env.format(OutputFormat::Rdjson);
+        env.preview(false);
+
+        let diag = env
+            .err()
+            .documentation_url("https://docs.astral.sh/ruff/rules/test-diagnostic")
+            .build();
+
+        insta::assert_snapshot!(env.render(&diag));
+    }
+
+    #[test]
+    fn missing_file_preview() {
+        let mut env = TestEnvironment::new();
+        env.format(OutputFormat::Rdjson);
+        env.preview(true);
+
+        let diag = env
+            .err()
+            .documentation_url("https://docs.astral.sh/ruff/rules/test-diagnostic")
+            .build();
+
+        insta::assert_snapshot!(env.render(&diag));
     }
 }

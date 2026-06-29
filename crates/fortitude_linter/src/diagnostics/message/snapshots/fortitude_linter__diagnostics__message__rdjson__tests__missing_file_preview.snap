@@ -1,0 +1,21 @@
+---
+source: crates/fortitude_linter/src/diagnostics/render/rdjson.rs
+expression: env.render(&diag)
+snapshot_kind: text
+---
+{
+  "diagnostics": [
+    {
+      "code": {
+        "url": "https://docs.astral.sh/ruff/rules/test-diagnostic",
+        "value": "stable-test-rule"
+      },
+      "message": "main diagnostic message"
+    }
+  ],
+  "severity": "WARNING",
+  "source": {
+    "name": "fortitude",
+    "url": "https://fortitude.readthedocs.io/"
+  }
+}

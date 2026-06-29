@@ -3,15 +3,15 @@ source: crates/fortitude_linter/src/rules/obsolescent/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/obsolescent/OB031.f90:6:9: OB031 [*] deprecated type-specific function 'DSIN'
+OB031 [*] deprecated type-specific function 'DSIN'
+ --> ./resources/test/fixtures/obsolescent/OB031.f90:6:9
   |
 5 |     y = ASIN(x)
 6 |     y = DSIN(x)
-  |         ^^^^ OB031
+  |         ^^^^
 7 | end subroutine test
   |
-  = help: Use 'SIN'
-
+help: Use 'SIN'
 3 |     real(kind=dp) :: x, y
 4 |
 5 |     y = ASIN(x)
@@ -20,17 +20,18 @@ snapshot_kind: text
 7 | end subroutine test
 8 |
 9 | subroutine test1()
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/obsolescent/OB031.f90:13:19: OB031 [*] deprecated type-specific function 'DSIN'
+OB031 [*] deprecated type-specific function 'DSIN'
+  --> ./resources/test/fixtures/obsolescent/OB031.f90:13:19
    |
 11 |     real(kind=dp) :: x, y
 12 |
 13 |     y = ASIN(x) + DSIN(x)
-   |                   ^^^^ OB031
+   |                   ^^^^
 14 | end subroutine test1
    |
-   = help: Use 'SIN'
-
+help: Use 'SIN'
 10 |     use, intrinsic :: iso_fortran_env, dp => real64
 11 |     real(kind=dp) :: x, y
 12 |
@@ -39,37 +40,40 @@ snapshot_kind: text
 14 | end subroutine test1
 15 |
 16 | subroutine test2()
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/obsolescent/OB031.f90:20:9: OB031 [*] deprecated type-specific function 'dsin'
+OB031 [*] deprecated type-specific function 'dsin'
+  --> ./resources/test/fixtures/obsolescent/OB031.f90:20:9
    |
 18 |     real(kind=dp) :: x, y
 19 |
 20 |     y = dsin(x) + dcos(x)
-   |         ^^^^ OB031
+   |         ^^^^
 21 | end subroutine test2
    |
-   = help: Use 'sin'
-
+help: Use 'sin'
 17 |     use, intrinsic :: iso_fortran_env, dp => real64
 18 |     real(kind=dp) :: x, y
 19 |
    -     y = dsin(x) + dcos(x)
 20 +     y = sin(x) + dcos(x)
 21 | end subroutine test2
+note: This is an unsafe fix and may change runtime behavior
 
-./resources/test/fixtures/obsolescent/OB031.f90:20:19: OB031 [*] deprecated type-specific function 'dcos'
+OB031 [*] deprecated type-specific function 'dcos'
+  --> ./resources/test/fixtures/obsolescent/OB031.f90:20:19
    |
 18 |     real(kind=dp) :: x, y
 19 |
 20 |     y = dsin(x) + dcos(x)
-   |                   ^^^^ OB031
+   |                   ^^^^
 21 | end subroutine test2
    |
-   = help: Use 'cos'
-
+help: Use 'cos'
 17 |     use, intrinsic :: iso_fortran_env, dp => real64
 18 |     real(kind=dp) :: x, y
 19 |
    -     y = dsin(x) + dcos(x)
 20 +     y = dsin(x) + cos(x)
 21 | end subroutine test2
+note: This is an unsafe fix and may change runtime behavior

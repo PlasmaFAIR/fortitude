@@ -1,0 +1,8 @@
+---
+source: crates/fortitude_linter/src/diagnostics/message/grouped.rs
+expression: env.render_diagnostics(&diagnostics)
+snapshot_kind: text
+---
+syntax_errors.py:
+  1:15 invalid-syntax: Expected one or more symbol names after import
+  3:12 invalid-syntax: Expected ')', found newline

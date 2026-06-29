@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S231.f90:4:1: S231 [*] Missing space in 'endfunction'
+S231 [*] Missing space in 'endfunction'
+ --> ./resources/test/fixtures/style/S231.f90:4:1
   |
 2 |   integer, intent(in) :: x
 3 |   y = x
 4 | endfunction f
-  | ^^^^^^^^^^^ S231
+  | ^^^^^^^^^^^
 5 |
 6 | module m
   |
-  = help: Replace with 'end function'
-
+help: Replace with 'end function'
 1 | integer function f(x) result(y)
 2 |   integer, intent(in) :: x
 3 |   y = x
@@ -23,17 +23,17 @@ snapshot_kind: text
 6 | module m
 7 |   implicit none
 
-./resources/test/fixtures/style/S231.f90:31:3: S231 [*] Missing space in 'endtype'
+S231 [*] Missing space in 'endtype'
+  --> ./resources/test/fixtures/style/S231.f90:31:3
    |
 29 |   type, extends(point_2d) :: point_3d
 30 |     real :: z
 31 |   endtype point_3d
-   |   ^^^^^^^ S231
+   |   ^^^^^^^
 32 |
 33 |   enum, bind(c)
    |
-   = help: Replace with 'end type'
-
+help: Replace with 'end type'
 28 |
 29 |   type, extends(point_2d) :: point_3d
 30 |     real :: z
@@ -43,17 +43,17 @@ snapshot_kind: text
 33 |   enum, bind(c)
 34 |     enumerator :: a = 1
 
-./resources/test/fixtures/style/S231.f90:39:3: S231 [*] Missing space in 'endenum'
+S231 [*] Missing space in 'endenum'
+  --> ./resources/test/fixtures/style/S231.f90:39:3
    |
 37 |   enum, bind(c)
 38 |     enumerator :: b = 2
 39 |   EndEnum
-   |   ^^^^^^^ S231
+   |   ^^^^^^^
 40 |
 41 | contains
    |
-   = help: Replace with 'end enum'
-
+help: Replace with 'end enum'
 36 |
 37 |   enum, bind(c)
 38 |     enumerator :: b = 2
@@ -63,17 +63,17 @@ snapshot_kind: text
 41 | contains
 42 |   integer function f1(x, y)
 
-./resources/test/fixtures/style/S231.f90:43:21: S231 [*] Missing space in 'inout'
+S231 [*] Missing space in 'inout'
+  --> ./resources/test/fixtures/style/S231.f90:43:21
    |
 41 | contains
 42 |   integer function f1(x, y)
 43 |     integer, intent(inoUt) :: x
-   |                     ^^^^^ S231
+   |                     ^^^^^
 44 |     integer, intent(in out) :: y
 45 |     select case (x)
    |
-   = help: Replace with 'in out'
-
+help: Replace with 'in out'
 40 |
 41 | contains
 42 |   integer function f1(x, y)
@@ -83,17 +83,17 @@ snapshot_kind: text
 45 |     select case (x)
 46 |       case(1)
 
-./resources/test/fixtures/style/S231.f90:51:5: S231 [*] Missing space in 'selectcase'
+S231 [*] Missing space in 'selectcase'
+  --> ./resources/test/fixtures/style/S231.f90:51:5
    |
 49 |         print *, y
 50 |     end select
 51 |     selectcase (y)
-   |     ^^^^^^^^^^ S231
+   |     ^^^^^^^^^^
 52 |       case(1)
 53 |         f1 = y
    |
-   = help: Replace with 'select case'
-
+help: Replace with 'select case'
 48 |       case default
 49 |         print *, y
 50 |     end select
@@ -103,16 +103,16 @@ snapshot_kind: text
 53 |         f1 = y
 54 |       case default
 
-./resources/test/fixtures/style/S231.f90:56:5: S231 [*] Missing space in 'endselect'
+S231 [*] Missing space in 'endselect'
+  --> ./resources/test/fixtures/style/S231.f90:56:5
    |
 54 |       case default
 55 |         f1 = x
 56 |     endselect
-   |     ^^^^^^^^^ S231
+   |     ^^^^^^^^^
 57 |   end function f1
    |
-   = help: Replace with 'end select'
-
+help: Replace with 'end select'
 53 |         f1 = y
 54 |       case default
 55 |         f1 = x
@@ -122,17 +122,17 @@ snapshot_kind: text
 58 |
 59 |   integer function f2(x)
 
-./resources/test/fixtures/style/S231.f90:67:5: S231 [*] Missing space in 'endblock'
+S231 [*] Missing space in 'endblock'
+  --> ./resources/test/fixtures/style/S231.f90:67:5
    |
 65 |     block_name: block
 66 |       integer :: k
 67 |     endblock block_name
-   |     ^^^^^^^^ S231
+   |     ^^^^^^^^
 68 |     print *, "x"
 69 |     f2 = x
    |
-   = help: Replace with 'end block'
-
+help: Replace with 'end block'
 64 |     end block
 65 |     block_name: block
 66 |       integer :: k
@@ -142,17 +142,17 @@ snapshot_kind: text
 69 |     f2 = x
 70 |   endfunction f2
 
-./resources/test/fixtures/style/S231.f90:70:3: S231 [*] Missing space in 'endfunction'
+S231 [*] Missing space in 'endfunction'
+  --> ./resources/test/fixtures/style/S231.f90:70:3
    |
 68 |     print *, "x"
 69 |     f2 = x
 70 |   endfunction f2
-   |   ^^^^^^^^^^^ S231
+   |   ^^^^^^^^^^^
 71 |
 72 |   subroutine s1()
    |
-   = help: Replace with 'end function'
-
+help: Replace with 'end function'
 67 |     endblock block_name
 68 |     print *, "x"
 69 |     f2 = x
@@ -162,17 +162,17 @@ snapshot_kind: text
 72 |   subroutine s1()
 73 |     integer, parameter :: N = 3
 
-./resources/test/fixtures/style/S231.f90:84:7: S231 [*] Missing space in 'endforall'
+S231 [*] Missing space in 'endforall'
+  --> ./resources/test/fixtures/style/S231.f90:84:7
    |
 82 |       forall(i = 1:N, j = 1:N, i /= j)
 83 |         A(i, j) = 0.0
 84 |       endforall
-   |       ^^^^^^^^^ S231
+   |       ^^^^^^^^^
 85 |     endassociate named_associate
 86 |     print *, A
    |
-   = help: Replace with 'end forall'
-
+help: Replace with 'end forall'
 81 |     named_associate: associate(A => matrix)
 82 |       forall(i = 1:N, j = 1:N, i /= j)
 83 |         A(i, j) = 0.0
@@ -182,17 +182,17 @@ snapshot_kind: text
 86 |     print *, A
 87 |   end subroutine s1
 
-./resources/test/fixtures/style/S231.f90:85:5: S231 [*] Missing space in 'endassociate'
+S231 [*] Missing space in 'endassociate'
+  --> ./resources/test/fixtures/style/S231.f90:85:5
    |
 83 |         A(i, j) = 0.0
 84 |       endforall
 85 |     endassociate named_associate
-   |     ^^^^^^^^^^^^ S231
+   |     ^^^^^^^^^^^^
 86 |     print *, A
 87 |   end subroutine s1
    |
-   = help: Replace with 'end associate'
-
+help: Replace with 'end associate'
 82 |       forall(i = 1:N, j = 1:N, i /= j)
 83 |         A(i, j) = 0.0
 84 |       endforall
@@ -202,17 +202,17 @@ snapshot_kind: text
 87 |   end subroutine s1
 88 |
 
-./resources/test/fixtures/style/S231.f90:98:5: S231 [*] Missing space in 'selecttype'
+S231 [*] Missing space in 'selecttype'
+   --> ./resources/test/fixtures/style/S231.f90:98:5
     |
  96 |         print *, ptr%x, ptr%y
  97 |     end select
  98 |     selecttype(ptr)
-    |     ^^^^^^^^^^ S231
+    |     ^^^^^^^^^^
  99 |       type is(point_3d) ! only trigger for 3d
 100 |         print *, ptr%x, ptr%y, ptr%z
     |
-    = help: Replace with 'select type'
-
+help: Replace with 'select type'
 95  |       class is (point_2d) ! should trigger for either
 96  |         print *, ptr%x, ptr%y
 97  |     end select
@@ -222,16 +222,16 @@ snapshot_kind: text
 100 |         print *, ptr%x, ptr%y, ptr%z
 101 |     endselect
 
-./resources/test/fixtures/style/S231.f90:101:5: S231 [*] Missing space in 'endselect'
+S231 [*] Missing space in 'endselect'
+   --> ./resources/test/fixtures/style/S231.f90:101:5
     |
  99 |       type is(point_3d) ! only trigger for 3d
 100 |         print *, ptr%x, ptr%y, ptr%z
 101 |     endselect
-    |     ^^^^^^^^^ S231
+    |     ^^^^^^^^^
 102 |   endsubroutine s2
     |
-    = help: Replace with 'end select'
-
+help: Replace with 'end select'
 98  |     selecttype(ptr)
 99  |       type is(point_3d) ! only trigger for 3d
 100 |         print *, ptr%x, ptr%y, ptr%z
@@ -241,17 +241,17 @@ snapshot_kind: text
 103 |
 104 | end module m
 
-./resources/test/fixtures/style/S231.f90:102:3: S231 [*] Missing space in 'endsubroutine'
+S231 [*] Missing space in 'endsubroutine'
+   --> ./resources/test/fixtures/style/S231.f90:102:3
     |
 100 |         print *, ptr%x, ptr%y, ptr%z
 101 |     endselect
 102 |   endsubroutine s2
-    |   ^^^^^^^^^^^^^ S231
+    |   ^^^^^^^^^^^^^
 103 |
 104 | end module m
     |
-    = help: Replace with 'end subroutine'
-
+help: Replace with 'end subroutine'
 99  |       type is(point_3d) ! only trigger for 3d
 100 |         print *, ptr%x, ptr%y, ptr%z
 101 |     endselect
@@ -261,17 +261,17 @@ snapshot_kind: text
 104 | end module m
 105 |
 
-./resources/test/fixtures/style/S231.f90:125:7: S231 [*] Missing space in 'endcritical'
+S231 [*] Missing space in 'endcritical'
+   --> ./resources/test/fixtures/style/S231.f90:125:7
     |
 123 |       critical
 124 |         total = total + this
 125 |       endcritical
-    |       ^^^^^^^^^^^ S231
+    |       ^^^^^^^^^^^
 126 |       sync all
 127 |     endteam
     |
-    = help: Replace with 'end critical'
-
+help: Replace with 'end critical'
 122 |     change team(team_id)
 123 |       critical
 124 |         total = total + this
@@ -281,17 +281,17 @@ snapshot_kind: text
 127 |     endteam
 128 |   end function coarray_stuff
 
-./resources/test/fixtures/style/S231.f90:127:5: S231 [*] Missing space in 'endteam'
+S231 [*] Missing space in 'endteam'
+   --> ./resources/test/fixtures/style/S231.f90:127:5
     |
 125 |       endcritical
 126 |       sync all
 127 |     endteam
-    |     ^^^^^^^ S231
+    |     ^^^^^^^
 128 |   end function coarray_stuff
 129 | endmodule m2
     |
-    = help: Replace with 'end team'
-
+help: Replace with 'end team'
 124 |         total = total + this
 125 |       endcritical
 126 |       sync all
@@ -301,17 +301,17 @@ snapshot_kind: text
 129 | endmodule m2
 130 |
 
-./resources/test/fixtures/style/S231.f90:129:1: S231 [*] Missing space in 'endmodule'
+S231 [*] Missing space in 'endmodule'
+   --> ./resources/test/fixtures/style/S231.f90:129:1
     |
 127 |     endteam
 128 |   end function coarray_stuff
 129 | endmodule m2
-    | ^^^^^^^^^ S231
+    | ^^^^^^^^^
 130 |
 131 | submodule (m) s1
     |
-    = help: Replace with 'end module'
-
+help: Replace with 'end module'
 126 |       sync all
 127 |     endteam
 128 |   end function coarray_stuff
@@ -321,17 +321,17 @@ snapshot_kind: text
 131 | submodule (m) s1
 132 |   implicit none
 
-./resources/test/fixtures/style/S231.f90:135:3: S231 [*] Missing space in 'endprocedure'
+S231 [*] Missing space in 'endprocedure'
+   --> ./resources/test/fixtures/style/S231.f90:135:3
     |
 133 | contains
 134 |   module procedure procedure_1
 135 |   endprocedure procedure_1
-    |   ^^^^^^^^^^^^ S231
+    |   ^^^^^^^^^^^^
 136 |   integer function submodule_f1(x)
 137 |     integer, intent(in) :: x
     |
-    = help: Replace with 'end procedure'
-
+help: Replace with 'end procedure'
 132 |   implicit none
 133 | contains
 134 |   module procedure procedure_1
@@ -341,17 +341,17 @@ snapshot_kind: text
 137 |     integer, intent(in) :: x
 138 |     submodule_f1 = x
 
-./resources/test/fixtures/style/S231.f90:151:1: S231 [*] Missing space in 'endsubmodule'
+S231 [*] Missing space in 'endsubmodule'
+   --> ./resources/test/fixtures/style/S231.f90:151:1
     |
 149 |     submodule_f2 = x
 150 |   end function submodule_f2
 151 | endSubmodule s2
-    | ^^^^^^^^^^^^ S231
+    | ^^^^^^^^^^^^
 152 |
 153 | program p
     |
-    = help: Replace with 'end submodule'
-
+help: Replace with 'end submodule'
 148 |     integer, intent(in) :: x
 149 |     submodule_f2 = x
 150 |   end function submodule_f2
@@ -361,17 +361,17 @@ snapshot_kind: text
 153 | program p
 154 |   use :: m, only: s1, s2, point_2d, point_3d
 
-./resources/test/fixtures/style/S231.f90:159:3: S231 [*] Missing space in 'doubleprecision'
+S231 [*] Missing space in 'doubleprecision'
+   --> ./resources/test/fixtures/style/S231.f90:159:3
     |
 157 |   double precision :: A(n)
 158 |   double complex :: b
 159 |   DoublePrecision :: c
-    |   ^^^^^^^^^^^^^^^ S231
+    |   ^^^^^^^^^^^^^^^
 160 |   DoubleComplex :: d
 161 |   integer :: i, j, k
     |
-    = help: Replace with 'double precision'
-
+help: Replace with 'double precision'
 156 |   integer, parameter :: n = 10
 157 |   double precision :: A(n)
 158 |   double complex :: b
@@ -381,17 +381,17 @@ snapshot_kind: text
 161 |   integer :: i, j, k
 162 |   type(point_2d) :: p2d
 
-./resources/test/fixtures/style/S231.f90:160:3: S231 [*] Missing space in 'doublecomplex'
+S231 [*] Missing space in 'doublecomplex'
+   --> ./resources/test/fixtures/style/S231.f90:160:3
     |
 158 |   double complex :: b
 159 |   DoublePrecision :: c
 160 |   DoubleComplex :: d
-    |   ^^^^^^^^^^^^^ S231
+    |   ^^^^^^^^^^^^^
 161 |   integer :: i, j, k
 162 |   type(point_2d) :: p2d
     |
-    = help: Replace with 'double complex'
-
+help: Replace with 'double complex'
 157 |   double precision :: A(n)
 158 |   double complex :: b
 159 |   DoublePrecision :: c
@@ -401,17 +401,17 @@ snapshot_kind: text
 162 |   type(point_2d) :: p2d
 163 |   type(point_3d) :: p3d
 
-./resources/test/fixtures/style/S231.f90:170:3: S231 [*] Missing space in 'endinterface'
+S231 [*] Missing space in 'endinterface'
+   --> ./resources/test/fixtures/style/S231.f90:170:3
     |
 168 |       integer, intent(in) :: x
 169 |     end function f
 170 |   endinterface
-    |   ^^^^^^^^^^^^ S231
+    |   ^^^^^^^^^^^^
 171 |
 172 |   do i = 1, n
     |
-    = help: Replace with 'end interface'
-
+help: Replace with 'end interface'
 167 |     function f(x)
 168 |       integer, intent(in) :: x
 169 |     end function f
@@ -421,17 +421,17 @@ snapshot_kind: text
 172 |   do i = 1, n
 173 |     A(i) = real(i)
 
-./resources/test/fixtures/style/S231.f90:178:3: S231 [*] Missing space in 'enddo'
+S231 [*] Missing space in 'enddo'
+   --> ./resources/test/fixtures/style/S231.f90:178:3
     |
 176 |   do_name: do i = 1, n
 177 |     A(i) = A(i) + 1
 178 |   enddo do_name
-    |   ^^^^^ S231
+    |   ^^^^^
 179 |
 180 |   where (A > 5.0)
     |
-    = help: Replace with 'end do'
-
+help: Replace with 'end do'
 175 |
 176 |   do_name: do i = 1, n
 177 |     A(i) = A(i) + 1
@@ -441,17 +441,17 @@ snapshot_kind: text
 180 |   where (A > 5.0)
 181 |     A = A * 2.0
 
-./resources/test/fixtures/style/S231.f90:182:3: S231 [*] Missing space in 'elsewhere'
+S231 [*] Missing space in 'elsewhere'
+   --> ./resources/test/fixtures/style/S231.f90:182:3
     |
 180 |   where (A > 5.0)
 181 |     A = A * 2.0
 182 |   eLseWHere
-    |   ^^^^^^^^^ S231
+    |   ^^^^^^^^^
 183 |     A = A + 10.0
 184 |   endwheRe
     |
-    = help: Replace with 'else where'
-
+help: Replace with 'else where'
 179 |
 180 |   where (A > 5.0)
 181 |     A = A * 2.0
@@ -461,17 +461,17 @@ snapshot_kind: text
 184 |   endwheRe
 185 |
 
-./resources/test/fixtures/style/S231.f90:184:3: S231 [*] Missing space in 'endwhere'
+S231 [*] Missing space in 'endwhere'
+   --> ./resources/test/fixtures/style/S231.f90:184:3
     |
 182 |   eLseWHere
 183 |     A = A + 10.0
 184 |   endwheRe
-    |   ^^^^^^^^ S231
+    |   ^^^^^^^^
 185 |
 186 |   where (A > 15.0)
     |
-    = help: Replace with 'end where'
-
+help: Replace with 'end where'
 181 |     A = A * 2.0
 182 |   eLseWHere
 183 |     A = A + 10.0
@@ -481,17 +481,17 @@ snapshot_kind: text
 186 |   where (A > 15.0)
 187 |     A = A + 3.0
 
-./resources/test/fixtures/style/S231.f90:194:3: S231 [*] Missing space in 'elseif'
+S231 [*] Missing space in 'elseif'
+   --> ./resources/test/fixtures/style/S231.f90:194:3
     |
 192 |   if (A(1) == 11.0) then
 193 |     print *, "foo"
 194 |   eLsEIf (A(1) == 12.0) then
-    |   ^^^^^^ S231
+    |   ^^^^^^
 195 |     print *, "bar"
 196 |   else if (A(2) == 12.0) then
     |
-    = help: Replace with 'else if'
-
+help: Replace with 'else if'
 191 |
 192 |   if (A(1) == 11.0) then
 193 |     print *, "foo"
@@ -501,17 +501,17 @@ snapshot_kind: text
 196 |   else if (A(2) == 12.0) then
 197 |     print *, "baz"
 
-./resources/test/fixtures/style/S231.f90:204:3: S231 [*] Missing space in 'endif'
+S231 [*] Missing space in 'endif'
+   --> ./resources/test/fixtures/style/S231.f90:204:3
     |
 202 |   if (A(1) == 11.0) then
 203 |     print *, "foo"
 204 |   EndIf
-    |   ^^^^^ S231
+    |   ^^^^^
 205 |
 206 |   call s1()
     |
-    = help: Replace with 'end if'
-
+help: Replace with 'end if'
 201 |
 202 |   if (A(1) == 11.0) then
 203 |     print *, "foo"
@@ -521,17 +521,17 @@ snapshot_kind: text
 206 |   call s1()
 207 |
 
-./resources/test/fixtures/style/S231.f90:218:15: S231 [*] Missing space in 'goto'
+S231 [*] Missing space in 'goto'
+   --> ./resources/test/fixtures/style/S231.f90:218:15
     |
 216 |   10 continue
 217 |   i = i + 1
 218 |   if (i < 10) goTo 10
-    |               ^^^^ S231
+    |               ^^^^
 219 |   if (i < 20) gO To 10
 220 |   if (i < 30) go  & ! helpful comment!
     |
-    = help: Replace with 'go to'
-
+help: Replace with 'go to'
 215 |   i = 1
 216 |   10 continue
 217 |   i = i + 1
@@ -541,15 +541,15 @@ snapshot_kind: text
 220 |   if (i < 30) go  & ! helpful comment!
 221 |     to 10
 
-./resources/test/fixtures/style/S231.f90:229:1: S231 [*] Missing space in 'endprogram'
+S231 [*] Missing space in 'endprogram'
+   --> ./resources/test/fixtures/style/S231.f90:229:1
     |
 227 |     fff = x
 228 |   end function fff
 229 | endprogram p
-    | ^^^^^^^^^^ S231
+    | ^^^^^^^^^^
     |
-    = help: Replace with 'end program'
-
+help: Replace with 'end program'
 226 |       out) :: x
 227 |     fff = x
 228 |   end function fff

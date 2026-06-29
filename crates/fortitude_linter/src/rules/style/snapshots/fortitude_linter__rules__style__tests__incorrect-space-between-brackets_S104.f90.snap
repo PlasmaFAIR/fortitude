@@ -3,17 +3,17 @@ source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
 snapshot_kind: text
 ---
-./resources/test/fixtures/style/S104.f90:5:14: S104 [*] Should be 0 space after the opening bracket
+S104 [*] Should be 0 space after the opening bracket
+ --> ./resources/test/fixtures/style/S104.f90:5:14
   |
 3 |   integer :: a(3)
 4 |   a = [1, 2, 3] ! This should be unchanged
 5 |   call mysub( a) ! This should remove the space after the (
-  |              ^ S104
+  |              ^
 6 | contains
 7 |   subroutine mysub( a) ! This should remove the space after the (
   |
-  = help: remove extra whitespace
-
+help: remove extra whitespace
 2 |   implicit none
 3 |   integer :: a(3)
 4 |   a = [1, 2, 3] ! This should be unchanged
@@ -23,17 +23,17 @@ snapshot_kind: text
 7 |   subroutine mysub( a) ! This should remove the space after the (
 8 |     implicit none
 
-./resources/test/fixtures/style/S104.f90:7:20: S104 [*] Should be 0 space after the opening bracket
+S104 [*] Should be 0 space after the opening bracket
+ --> ./resources/test/fixtures/style/S104.f90:7:20
   |
 5 |   call mysub( a) ! This should remove the space after the (
 6 | contains
 7 |   subroutine mysub( a) ! This should remove the space after the (
-  |                    ^ S104
+  |                    ^
 8 |     implicit none
 9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
   |
-  = help: remove extra whitespace
-
+help: remove extra whitespace
 4  |   a = [1, 2, 3] ! This should be unchanged
 5  |   call mysub( a) ! This should remove the space after the (
 6  | contains
@@ -43,17 +43,17 @@ snapshot_kind: text
 9  |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
 10 |     integer, dimension(2) :: b ! This should be unchanged
 
-./resources/test/fixtures/style/S104.f90:9:21: S104 [*] Should be 0 space after the opening bracket
+S104 [*] Should be 0 space after the opening bracket
+  --> ./resources/test/fixtures/style/S104.f90:9:21
    |
  7 |   subroutine mysub( a) ! This should remove the space after the (
  8 |     implicit none
  9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
-   |                     ^ S104
+   |                     ^
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
    |
-   = help: remove extra whitespace
-
+help: remove extra whitespace
 6  | contains
 7  |   subroutine mysub( a) ! This should remove the space after the (
 8  |     implicit none
@@ -63,17 +63,17 @@ snapshot_kind: text
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
 
-./resources/test/fixtures/style/S104.f90:9:31: S104 [*] Should be 0 space after the opening bracket
+S104 [*] Should be 0 space after the opening bracket
+  --> ./resources/test/fixtures/style/S104.f90:9:31
    |
  7 |   subroutine mysub( a) ! This should remove the space after the (
  8 |     implicit none
  9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
-   |                               ^ S104
+   |                               ^
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
    |
-   = help: remove extra whitespace
-
+help: remove extra whitespace
 6  | contains
 7  |   subroutine mysub( a) ! This should remove the space after the (
 8  |     implicit none
@@ -83,17 +83,17 @@ snapshot_kind: text
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
 
-./resources/test/fixtures/style/S104.f90:11:24: S104 [*] Should be 0 space after the opening bracket
+S104 [*] Should be 0 space after the opening bracket
+  --> ./resources/test/fixtures/style/S104.f90:11:24
    |
  9 |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
-   |                        ^^^ S104
+   |                        ^^^
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
    |
-   = help: remove extra whitespace
-
+help: remove extra whitespace
 8  |     implicit none
 9  |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
 10 |     integer, dimension(2) :: b ! This should be unchanged
@@ -103,17 +103,17 @@ snapshot_kind: text
 13 |           5 ] ! This should remove the space before the ]
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
 
-./resources/test/fixtures/style/S104.f90:12:10: S104 [*] Should be 0 space after the opening bracket
+S104 [*] Should be 0 space after the opening bracket
+  --> ./resources/test/fixtures/style/S104.f90:12:10
    |
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
-   |          ^ S104
+   |          ^
 13 |           5 ] ! This should remove the space before the ]
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
    |
-   = help: remove extra whitespace
-
+help: remove extra whitespace
 9  |     integer, intent( in) :: a( 3) ! This should remove the space after both the brackets
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
@@ -123,17 +123,17 @@ snapshot_kind: text
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
 15 |   end subroutine mysub
 
-./resources/test/fixtures/style/S104.f90:13:12: S104 [*] Should be 0 space before the closing bracket
+S104 [*] Should be 0 space before the closing bracket
+  --> ./resources/test/fixtures/style/S104.f90:13:12
    |
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
-   |            ^ S104
+   |            ^
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
 15 |   end subroutine mysub
    |
-   = help: remove extra whitespace
-
+help: remove extra whitespace
 10 |     integer, dimension(2) :: b ! This should be unchanged
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
@@ -143,17 +143,17 @@ snapshot_kind: text
 15 |   end subroutine mysub
 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
 
-./resources/test/fixtures/style/S104.f90:14:11: S104 [*] Should be 0 space after the opening bracket
+S104 [*] Should be 0 space after the opening bracket
+  --> ./resources/test/fixtures/style/S104.f90:14:11
    |
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
-   |           ^ S104
+   |           ^
 15 |   end subroutine mysub
 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
    |
-   = help: remove extra whitespace
-
+help: remove extra whitespace
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
@@ -163,17 +163,17 @@ snapshot_kind: text
 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
 17 |     a &
 
-./resources/test/fixtures/style/S104.f90:14:15: S104 [*] Should be 0 space before the closing bracket
+S104 [*] Should be 0 space before the closing bracket
+  --> ./resources/test/fixtures/style/S104.f90:14:15
    |
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
 14 |     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
-   |               ^ S104
+   |               ^
 15 |   end subroutine mysub
 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
    |
-   = help: remove extra whitespace
-
+help: remove extra whitespace
 11 |     integer, dimension(   2) :: c = [6, 7] ! This should remove the spaces after the (
 12 |     b = [ 4, & ! This should remove the space after the [
 13 |           5 ] ! This should remove the space before the ]
@@ -183,17 +183,17 @@ snapshot_kind: text
 16 |   subroutine myothersub( & ! This should be allowed for long parameter lists
 17 |     a &
 
-./resources/test/fixtures/style/S104.f90:24:33: S104 [*] Should be 0 space before the closing bracket
+S104 [*] Should be 0 space before the closing bracket
+  --> ./resources/test/fixtures/style/S104.f90:24:33
    |
 22 |     & ) ! This should be unchanged
 23 |   end subroutine myothersub
 24 |   subroutine emptyparantesessub( ) ! This should remove the space between the brackets
-   |                                 ^ S104
+   |                                 ^
 25 |   end subroutine emptyparantesessub
 26 | end program myprog
    |
-   = help: remove extra whitespace
-
+help: remove extra whitespace
 21 |     a = (1 + 1 &
 22 |     & ) ! This should be unchanged
 23 |   end subroutine myothersub
