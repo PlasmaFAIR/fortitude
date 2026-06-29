@@ -1367,6 +1367,38 @@ The number of full indents to use for the contents of a interface
 
 ---
 
+#### [`num-indents-for-line-continuation`](#check_invalid-indentation-multiple_num-indents-for-line-continuation) {: #check_invalid-indentation-multiple_num-indents-for-line-continuation }
+<span id="num-indents-for-line-continuation"></span>
+
+The number of full indents to use after a line continuation (`&`)
+
+**Default value**: `1`
+
+**Type**: `int`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-line-continuation = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    num-indents-for-line-continuation = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    num-indents-for-line-continuation = 2
+    ```
+
+---
+
 #### [`num-indents-for-module-contents`](#check_invalid-indentation-multiple_num-indents-for-module-contents) {: #check_invalid-indentation-multiple_num-indents-for-module-contents }
 <span id="num-indents-for-module-contents"></span>
 
@@ -1523,6 +1555,38 @@ The number of full indents to use for the contents of a subroutine
     ```toml
     [tool.fortitude.check.invalid-indentation-multiple]
     num-indents-for-subroutine-contents = 2
+    ```
+
+---
+
+#### [`should-indent-after-line-continuation`](#check_invalid-indentation-multiple_should-indent-after-line-continuation) {: #check_invalid-indentation-multiple_should-indent-after-line-continuation }
+<span id="should-indent-after-line-continuation"></span>
+
+Whether the line following a line continuation (`&`) should be indented relative to the line containing `&`.
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.invalid-indentation-multiple]
+    should-indent-after-line-continuation = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.invalid-indentation-multiple]
+    should-indent-after-line-continuation = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.invalid-indentation-multiple]
+    should-indent-after-line-continuation = false
     ```
 
 ---

@@ -633,6 +633,14 @@ pub struct InvalidIndentationMultipleOptions {
     )]
     pub should_indent_associate_contents: Option<bool>,
 
+    /// Whether the line following a line continuation (`&`) should be indented relative to the line containing `&`.
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "should-indent-after-line-continuation = false"
+    )]
+    pub should_indent_after_line_continuation: Option<bool>,
+
     /// The number of full indents to use for the contents of a program
     #[option(
         default = "1",
@@ -728,6 +736,14 @@ pub struct InvalidIndentationMultipleOptions {
         example = "num-indents-for-associate-contents = 2"
     )]
     pub num_indents_for_associate_contents: Option<usize>,
+
+    /// The number of full indents to use after a line continuation (`&`)
+    #[option(
+        default = "1",
+        value_type = "int",
+        example = "num-indents-for-line-continuation = 2"
+    )]
+    pub num_indents_for_line_continuation: Option<usize>,
 }
 
 impl InvalidIndentationMultipleOptions {
@@ -771,6 +787,9 @@ impl InvalidIndentationMultipleOptions {
         settings_to_return.should_indent_associate_contents = self
             .should_indent_associate_contents
             .unwrap_or(settings_to_return.should_indent_associate_contents);
+        settings_to_return.should_indent_after_line_continuation = self
+            .should_indent_after_line_continuation
+            .unwrap_or(settings_to_return.should_indent_after_line_continuation);
         settings_to_return.num_indents_for_program_contents = self
             .num_indents_for_program_contents
             .unwrap_or(settings_to_return.num_indents_for_program_contents);
@@ -807,6 +826,9 @@ impl InvalidIndentationMultipleOptions {
         settings_to_return.num_indents_for_associate_contents = self
             .num_indents_for_associate_contents
             .unwrap_or(settings_to_return.num_indents_for_associate_contents);
+        settings_to_return.num_indents_for_line_continuation = self
+            .num_indents_for_line_continuation
+            .unwrap_or(settings_to_return.num_indents_for_line_continuation);
 
         settings_to_return = settings_to_return.populate_construct_to_indent_map();
 

@@ -356,6 +356,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// - `check.invalid-indentation-multiple.num-indents-for-program-contents`
 /// - `check.invalid-indentation-multiple.num-indents-for-select-contents`
 /// - `check.invalid-indentation-multiple.num-indents-for-submodule-contents`
+/// - `check.invalid-indentation-multiple.num-indents-for-line-continuation`
 /// - `check.invalid-indentation-multiple.num-indents-for-subroutine-contents`
 /// - `check.invalid-indentation-multiple.should-indent-associate-contents`
 /// - `check.invalid-indentation-multiple.should-indent-block-contents`
@@ -369,6 +370,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// - `check.invalid-indentation-multiple.should-indent-select-contents`
 /// - `check.invalid-indentation-multiple.should-indent-submodule-contents`
 /// - `check.invalid-indentation-multiple.should-indent-subroutine-contents`
+/// - `check.invalid-indentation-multiple.should-indent-after-line-continuation`
 #[derive(ViolationMetadata)]
 pub(crate) struct InvalidIndentationMultiple;
 
@@ -470,7 +472,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
         // Booleans to determine the rule that has been broken
         let mut is_preproc_violation = false;
-
         // boolean to track if a line should be updated based on the users selected rules
         let mut edit_is_activated = context.is_rule_enabled(Rule::InvalidIndentationMultiple);
 
@@ -492,6 +493,9 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             // Get the first none whitespace node
             let content_start =
                 line_segment_start + TextSize::try_from(leading_spaces as u32).unwrap();
+
+            // Boolean to track if this line segment if continued onto the next line via a '&'
+            let line_segment_has_continuation = line_segment.trim().ends_with("&");
 
             // Determine what the indentation should be for this line segment using the first node for this line and the current scope
             let mut current_expected_indent = *scope_indents.last().unwrap_or(&0usize);
@@ -532,14 +536,25 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     current_expected_indent = 0usize;
                 } else if SCOPED_ZERO_INDENT_NODES.contains(&node_kind) {
                     current_expected_indent = *scope_indents.iter().rev().nth(1).unwrap_or(&0usize);
-                } else if edit_is_activated {
-                    // Determine indent change based on line continuation char "&"
-                    if !in_line_continuation && line.trim().ends_with("&") {
-                        scope_indents.push(current_expected_indent + indent_width);
+                }
+
+                // Determine indent change based on line continuation char "&"
+                if edit_is_activated {
+                    if !in_line_continuation && line_segment_has_continuation {
                         in_line_continuation = true;
-                    } else if in_line_continuation && !line.trim().ends_with("&") {
-                        scope_indents.pop();
+                        scope_indents.push(
+                            current_expected_indent
+                                + indent_width
+                                    * constructs_to_indent_map.get("line_continuation").unwrap(),
+                        );
+                    } else if in_line_continuation && !line_segment_has_continuation {
                         in_line_continuation = false;
+                        scope_indents.pop();
+                        // Align single closing brace with the outer indent
+                        if [")", "]", "}", r"\)"].contains(&line_segment.trim()) {
+                            current_expected_indent =
+                                *scope_indents.iter().rev().nth(1).unwrap_or(&0usize);
+                        }
                     }
                 }
             }
@@ -617,6 +632,7 @@ pub mod settings {
         pub should_indent_select_contents: bool,
         pub should_indent_do_contents: bool,
         pub should_indent_associate_contents: bool,
+        pub should_indent_after_line_continuation: bool,
         pub num_indents_for_program_contents: usize,
         pub num_indents_for_module_contents: usize,
         pub num_indents_for_submodule_contents: usize,
@@ -629,6 +645,7 @@ pub mod settings {
         pub num_indents_for_select_contents: usize,
         pub num_indents_for_do_contents: usize,
         pub num_indents_for_associate_contents: usize,
+        pub num_indents_for_line_continuation: usize,
     }
 
     impl Default for InvalidIndentationMultipleSettings {
@@ -651,6 +668,7 @@ pub mod settings {
                 should_indent_select_contents: true,
                 should_indent_do_contents: true,
                 should_indent_associate_contents: true,
+                should_indent_after_line_continuation: true,
                 num_indents_for_program_contents: 1usize,
                 num_indents_for_module_contents: 1usize,
                 num_indents_for_submodule_contents: 1usize,
@@ -663,6 +681,7 @@ pub mod settings {
                 num_indents_for_select_contents: 1usize,
                 num_indents_for_do_contents: 1usize,
                 num_indents_for_associate_contents: 1usize,
+                num_indents_for_line_continuation: 1usize,
             }
         }
     }
@@ -777,6 +796,15 @@ pub mod settings {
                 },
             );
 
+            self.construct_to_indent_map.insert(
+                "line_continuation".to_string(),
+                if self.should_indent_after_line_continuation {
+                    self.num_indents_for_line_continuation
+                } else {
+                    0usize
+                },
+            );
+
             self.clone()
         }
     }
@@ -799,6 +827,7 @@ pub mod settings {
                     self.should_indent_select_contents,
                     self.should_indent_do_contents,
                     self.should_indent_associate_contents,
+                    self.should_indent_after_line_continuation,
                     self.num_indents_for_program_contents,
                     self.num_indents_for_module_contents,
                     self.num_indents_for_submodule_contents,
@@ -811,6 +840,7 @@ pub mod settings {
                     self.num_indents_for_select_contents,
                     self.num_indents_for_do_contents,
                     self.num_indents_for_associate_contents,
+                    self.num_indents_for_line_continuation,
                 ]
             }
             Ok(())
