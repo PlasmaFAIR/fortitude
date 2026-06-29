@@ -1,6 +1,6 @@
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -78,10 +78,10 @@ impl AstRule for MissingDefaultCase {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let has_default = node
             .named_children(&mut node.walk())
-            .filter(|child| child.kind() == "case_statement")
+            .filter(|child| child.kind_id() == kind!("case_statement"))
             .any(|case| {
                 case.named_children(&mut case.walk())
-                    .any(|child| child.kind() == "default")
+                    .any(|child| child.kind_id() == kind!("default"))
             });
 
         if has_default {
