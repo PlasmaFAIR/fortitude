@@ -3,7 +3,7 @@ use crate::diagnostics::{Diagnostic, Edit, Fix, Violation};
 use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind, kw};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -80,7 +80,7 @@ impl AstRule for MissingDefaultPointerInitalisation {
             return None;
         }
         // Only operate on derived types
-        if node.parent()?.kind() != "derived_type_definition" {
+        if node.parent()?.kind_id() != kind!("derived_type_definition") {
             return None;
         }
 
@@ -88,22 +88,18 @@ impl AstRule for MissingDefaultPointerInitalisation {
 
         // Only check pointer variables
         if !node.named_children(&mut node_cursor).any(|node| {
-            node.kind() == "type_qualifier"
-                && node
-                    .to_text(context.source_text())
-                    .unwrap_or("")
-                    .to_lowercase()
-                    .starts_with("pointer")
+            node.kind_id() == kind!("type_qualifier")
+                && node.child_with_kind_id(kw!("pointer")).is_some()
         }) {
             return None;
         }
 
         let violations: Vec<Diagnostic> = node
             .named_descendants()
-            .filter(|node| node.kind() == "identifier")
+            .filter(|node| node.kind_id() == kind!("identifier"))
             .filter(|node| match node.parent() {
                 None => false,
-                Some(parent) => parent.kind() == "variable_declaration",
+                Some(parent) => parent.kind_id() == kind!("variable_declaration"),
             })
             .map(|node| {
                 let var_name = node
