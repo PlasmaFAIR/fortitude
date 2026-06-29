@@ -1,9 +1,8 @@
 ---
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
-C043 file opened without action specifier
+C043 File opened without action specifier
  --> ./resources/test/fixtures/correctness/C041.f90:7:3
   |
 6 |   open(123, file="test0", action="read")
@@ -14,7 +13,7 @@ C043 file opened without action specifier
   |
 help: Add 'action=read', 'action=write', or 'action=readwrite'
 
-C043 file opened without action specifier
+C043 File opened without action specifier
   --> ./resources/test/fixtures/correctness/C041.f90:8:3
    |
  6 |   open(123, file="test0", action="read")
@@ -26,7 +25,7 @@ C043 file opened without action specifier
    |
 help: Add 'action=read', 'action=write', or 'action=readwrite'
 
-C043 file opened without action specifier
+C043 File opened without action specifier
   --> ./resources/test/fixtures/correctness/C041.f90:9:3
    |
  7 |   open(unit=234, file="test1")

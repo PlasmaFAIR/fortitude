@@ -6,7 +6,7 @@ use crate::{
     whitespace::{has_leading_content, has_trailing_content},
 };
 use anyhow::{Result, anyhow};
-use fortitude_macros::{kind, kw};
+use fortitude_macros::{field, kind, kw};
 use itertools::Itertools;
 use ruff_source_file::{LineRanges, SourceFile};
 use ruff_text_size::{TextRange, TextSize};
@@ -244,17 +244,21 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     }
 
     fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>> {
-        let keyword = keyword.as_ref().to_lowercase();
+        let keyword = keyword.as_ref();
         self.named_children(&mut self.walk()).find(|child| {
-            child.kind() == "keyword_argument"
+            child.kind_id() == kind!("keyword_argument")
                 && child
-                    .child_by_field_name("name")
-                    .is_some_and(|n| n.to_text(src).is_some_and(|s| s.to_lowercase() == keyword))
+                    .child_by_field_id(field!("name").into())
+                    .is_some_and(|n| {
+                        n.to_text(src)
+                            .is_some_and(|s| s.eq_ignore_ascii_case(&keyword))
+                    })
         })
     }
 
     fn kwarg_value<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>> {
-        self.kwarg(keyword, src)?.child_by_field_name("value")
+        self.kwarg(keyword, src)?
+            .child_by_field_id(field!("value").into())
     }
 
     fn kwarg_exists<S: AsRef<str>>(&self, keyword: S, src: &str) -> bool {

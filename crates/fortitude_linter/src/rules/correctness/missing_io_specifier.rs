@@ -19,7 +19,7 @@ pub(crate) struct MissingActionSpecifier {}
 impl Violation for MissingActionSpecifier {
     #[derive_message_formats]
     fn message(&self) -> String {
-        "file opened without action specifier".to_string()
+        "File opened without action specifier".to_string()
     }
 
     fn fix_title(&self) -> Option<String> {
