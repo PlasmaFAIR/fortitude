@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::FortranStandard;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, field, kind};
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
@@ -58,12 +58,14 @@ impl AstRule for AssumedSize {
         let src = context.source_text();
         let declaration = node
             .ancestors()
-            .find(|parent| parent.kind() == "variable_declaration")?;
+            .find(|parent| parent.kind_id() == kind!("variable_declaration"))?;
 
         // Deal with `character([len=]*)` elsewhere
         if let Some(dtype) = declaration.parse_intrinsic_type() {
-            let is_character = dtype.to_lowercase() == "character";
-            let is_kind = node.ancestors().any(|parent| parent.kind() == "kind");
+            let is_character = dtype.eq_ignore_ascii_case("character");
+            let is_kind = node
+                .ancestors()
+                .any(|parent| parent.kind_id() == kind!("kind"));
             if is_character && is_kind {
                 return None;
             }
@@ -71,9 +73,9 @@ impl AstRule for AssumedSize {
 
         // Assumed size ok for parameters
         if declaration
-            .children_by_field_name("attribute", &mut declaration.walk())
+            .children_by_field_id(field!("attribute"), &mut declaration.walk())
             .filter_map(|attr| attr.to_text(src))
-            .any(|attr_name| attr_name.to_lowercase() == "parameter")
+            .any(|attr_name| attr_name.eq_ignore_ascii_case("parameter"))
         {
             return None;
         }
@@ -81,9 +83,9 @@ impl AstRule for AssumedSize {
         // Are we looking at something declared like `array(*)`?
         if let Some(sized_decl) = node
             .ancestors()
-            .find(|parent| parent.kind() == "sized_declarator")
+            .find(|parent| parent.kind_id() == kind!("sized_declarator"))
         {
-            let identifier = sized_decl.child_with_name("identifier")?;
+            let identifier = sized_decl.named_child_with_kind_id(kind!("identifier"))?;
             let name = identifier.to_text(src)?.to_string();
             return some_vec![context.create_diagnostic(Self { name }, node)];
         }
@@ -91,11 +93,13 @@ impl AstRule for AssumedSize {
         // Collect things that look like `dimension(*)` -- this
         // applies to all identifiers on this line
         let all_decls = declaration
-            .children_by_field_name("declarator", &mut declaration.walk())
+            .children_by_field_id(field!("declarator"), &mut declaration.walk())
             .filter_map(|declarator| {
-                let identifier = match declarator.kind() {
-                    "identifier" => Some(declarator),
-                    "sized_declarator" => declarator.child_with_name("identifier"),
+                let identifier = match declarator.kind_id() {
+                    kind!("identifier") => Some(declarator),
+                    kind!("sized_declarator") => {
+                        declarator.named_child_with_kind_id(kind!("identifier"))
+                    }
                     _ => None,
                 }?;
                 identifier.to_text(src)
@@ -197,23 +201,26 @@ impl AstRule for AssumedSizeCharacterIntent {
 
         let declaration = node
             .ancestors()
-            .find(|parent| parent.kind() == "variable_declaration")?;
+            .find(|parent| parent.kind_id() == kind!("variable_declaration"))?;
 
         // Only applies to `character`
-        if declaration.parse_intrinsic_type()?.to_lowercase() != "character" {
+        if !declaration
+            .parse_intrinsic_type()?
+            .eq_ignore_ascii_case("character")
+        {
             return None;
         }
 
         // Handle `character*(*)` elsewhere -- note this just skips emitting a warning
         // for the first `*`, we'll still get one for the second `*`, but this is desired
         if let Some(sibling) = node.next_named_sibling()
-            && sibling.kind() == "assumed_size"
+            && sibling.kind_id() == kind!("assumed_size")
         {
             return None;
         }
 
         let attrs_as_text = declaration
-            .children_by_field_name("attribute", &mut declaration.walk())
+            .children_by_field_id(field!("attribute"), &mut declaration.walk())
             .filter_map(|attr| attr.to_text(src))
             .map(|attr| attr.to_lowercase())
             .collect_vec();
@@ -235,9 +242,11 @@ impl AstRule for AssumedSizeCharacterIntent {
         let all_decls = declaration
             .children_by_field_name("declarator", &mut declaration.walk())
             .filter_map(|declarator| {
-                let identifier = match declarator.kind() {
-                    "identifier" => Some(declarator),
-                    "sized_declarator" => declarator.child_with_name("identifier"),
+                let identifier = match declarator.kind_id() {
+                    kind!("identifier") => Some(declarator),
+                    kind!("sized_declarator") => {
+                        declarator.named_child_with_kind_id(kind!("identifier"))
+                    }
                     _ => None,
                 }?;
                 identifier.to_text(src)
