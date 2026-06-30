@@ -86,7 +86,7 @@ impl AstRule for AssumedSize {
             .ancestors()
             .find(|parent| parent.kind_id() == kind!("sized_declarator"))
         {
-            let identifier = sized_decl.named_child_with_kind_id(kind!("identifier"))?;
+            let identifier = sized_decl.child_with_id(kind!("identifier"))?;
             let name = identifier.to_text(src)?.to_string();
             return some_vec![context.create_diagnostic(Self { name }, node)];
         }
@@ -98,9 +98,7 @@ impl AstRule for AssumedSize {
             .filter_map(|declarator| {
                 let identifier = match declarator.kind_id() {
                     kind!("identifier") => Some(declarator),
-                    kind!("sized_declarator") => {
-                        declarator.named_child_with_kind_id(kind!("identifier"))
-                    }
+                    kind!("sized_declarator") => declarator.child_with_id(kind!("identifier")),
                     _ => None,
                 }?;
                 identifier.to_text(src)
@@ -247,9 +245,7 @@ impl AstRule for AssumedSizeCharacterIntent {
             .filter_map(|declarator| {
                 let identifier = match declarator.kind_id() {
                     kind!("identifier") => Some(declarator),
-                    kind!("sized_declarator") => {
-                        declarator.named_child_with_kind_id(kind!("identifier"))
-                    }
+                    kind!("sized_declarator") => declarator.child_with_id(kind!("identifier")),
                     _ => None,
                 }?;
                 identifier.to_text(src)

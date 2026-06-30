@@ -89,7 +89,7 @@ impl AstRule for MissingDefaultPointerInitalisation {
         // Only check pointer variables
         if !node.named_children(&mut node_cursor).any(|node| {
             node.kind_id() == kind!("type_qualifier")
-                && node.child_with_kind_id(kw!("pointer")).is_some()
+                && node.child_with_id(kw!("pointer")).is_some()
         }) {
             return None;
         }

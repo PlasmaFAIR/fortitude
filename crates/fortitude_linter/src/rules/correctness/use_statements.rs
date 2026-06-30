@@ -51,9 +51,7 @@ impl AstRule for UseAll {
             .use_statements
             .allow_bare_use
             .contains(&module_name)
-            && node
-                .named_child_with_kind_id(kind!("included_items"))
-                .is_none()
+            && node.child_with_id(kind!("included_items")).is_none()
         {
             return some_vec![context.create_diagnostic(UseAll {}, node)];
         }

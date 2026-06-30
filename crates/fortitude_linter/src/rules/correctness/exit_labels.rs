@@ -47,12 +47,12 @@ impl AstRule for MissingExitOrCycleLabel {
         let src = context.source_text();
         // Skip unlabelled loops
         let label = node
-            .child_with_name("block_label_start_expression")?
+            .child_with_id(kind!("block_label_start_expression"))?
             .to_text(src)?
             .trim_end_matches(':');
 
         let violations: Vec<Diagnostic> = node
-            .named_descendants_except(["do_loop"])
+            .descendants_except(&[kind!("do_loop")])
             .filter(|node| node.kind_id() == kind!("keyword_statement"))
             .filter_map(|node| node.child(0))
             .filter(|child| matches!(child.kind_id(), kw!("exit") | kw!("cycle")))
@@ -140,7 +140,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
         // Immediate parent loop has a label, but we don't want to warn here, because
         // that's covered by missing-exit-or-cycle-label
         if parent_loop
-            .child_with_name("block_label_start_expression")
+            .child_with_id(kind!("block_label_start_expression"))
             .is_some()
         {
             return None;
@@ -219,21 +219,22 @@ impl AstRule for MissingEndLabel {
         let src = context.source_text();
         // Skip unlabelled loops
         let label = node
-            .child_with_name("block_label_start_expression")?
+            .child_with_id(kind!("block_label_start_expression"))?
             .to_text(src)?
             .trim_end_matches(':');
 
-        let end = match node.kind() {
-            "select_case_statement" | "select_type_statement" | "select_rank_statement" => {
-                "end_select_statement".to_string()
-            }
-            "do_loop" => "end_do_loop_statement".to_string(),
+        let end = match node.kind_id() {
+            #[allow(clippy::manual_range_patterns)]
+            kind!("select_case_statement")
+            | kind!("select_type_statement")
+            | kind!("select_rank_statement") => "end_select_statement".to_string(),
+            kind!("do_loop") => "end_do_loop_statement".to_string(),
             _ => format!("end_{}", node.kind()),
         };
 
         let violation: Diagnostic = node
             .child_with_name(&end)
-            .filter(|node| node.child_with_name("block_label").is_none())
+            .filter(|node| node.child_with_id(kind!("block_label")).is_none())
             .map(|stmt| {
                 let label_with_space = format!(" {label}");
                 let edit = Edit::insertion(label_with_space, stmt.end_textsize());

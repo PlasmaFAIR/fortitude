@@ -42,7 +42,7 @@ impl<'a> Iterator for DepthFirstIterator<'a> {
 
 pub struct DepthFirstIteratorExcept<'a> {
     cursor: TreeCursor<'a>,
-    exceptions: Vec<String>, // TODO Use kind ids instead
+    exceptions: &'a [u16],
 }
 
 impl<'a> Iterator for DepthFirstIteratorExcept<'a> {
@@ -50,10 +50,7 @@ impl<'a> Iterator for DepthFirstIteratorExcept<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // ignore exception list if we're at a depth of 0
-        if (self.cursor.depth() == 0
-            || !self
-                .exceptions
-                .contains(&self.cursor.node().kind().to_string()))
+        if (self.cursor.depth() == 0 || !self.exceptions.contains(&self.cursor.node().kind_id()))
             && self.cursor.goto_first_child()
         {
             return Some(self.cursor.node());
@@ -93,15 +90,7 @@ pub trait FortitudeNode<'tree> {
 
     /// Iterate over all nodes beneath the current node in a depth-first manner, never going deeper
     /// than any node types in the exceptions list.
-    fn descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node<'_>>
-    where
-        I: IntoIterator<Item = &'a str>;
-
-    /// Iterate over all nodes beneath the current node in a depth-first manner, never going deeper
-    /// than any node types in the exceptions list.
-    fn named_descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node<'_>>
-    where
-        I: IntoIterator<Item = &'a str>;
+    fn descendants_except(&self, exceptions: &'tree [u16]) -> impl Iterator<Item = Node<'_>>;
 
     /// Iterate over all nodes above the current node.
     fn ancestors(&self) -> impl Iterator<Item = Node<'_>>;
@@ -110,15 +99,9 @@ pub trait FortitudeNode<'tree> {
     fn child_with_name(&self, name: &str) -> Option<Node<'tree>>;
 
     /// Get the first child with a matching `kind_id`. It is recommended to
-    /// generate this using the `kind!` macro. Ignores unnamed nodes. Returns
-    /// None if not found.
-    fn named_child_with_kind_id(&self, kind_id: u16) -> Option<Node<'tree>>;
-
-    /// Get the first child with a matching `kind_id`. This checks all named
-    /// and unnamed nodes, so if the intention is to match a specific keyword,
-    /// the `kind_id` should be generated using the `kw!` macro to avoid
-    /// catching named nodes. Returns None if not found.
-    fn child_with_kind_id(&self, kind_id: u16) -> Option<Node<'tree>>;
+    /// generate this using the `kind!` or `kw!` macros. Returns None if not
+    /// found.
+    fn child_with_id(&self, kind_id: u16) -> Option<Node<'tree>>;
 
     /// Get a named `keyword_argument` child node, if it exists.
     fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>>;
@@ -206,22 +189,11 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         self.descendants().filter(|&x| x.is_named())
     }
 
-    fn descendants_except<'tree, I>(&self, exceptions: I) -> impl Iterator<Item = Node<'_>>
-    where
-        I: IntoIterator<Item = &'tree str>,
-    {
+    fn descendants_except(&self, exceptions: &'tree1 [u16]) -> impl Iterator<Item = Node<'_>> {
         DepthFirstIteratorExcept {
             cursor: self.walk(),
-            exceptions: exceptions.into_iter().map(|x| x.to_string()).collect(),
+            exceptions,
         }
-    }
-
-    fn named_descendants_except<'a, I>(&self, exceptions: I) -> impl Iterator<Item = Node<'_>>
-    where
-        I: IntoIterator<Item = &'a str>,
-    {
-        self.descendants_except(exceptions)
-            .filter(|&x| x.is_named())
     }
 
     fn ancestors(&self) -> impl Iterator<Item = Node<'_>> {
@@ -233,12 +205,7 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
             .find(|x| x.kind() == name)
     }
 
-    fn named_child_with_kind_id(&self, kind_id: u16) -> Option<Node<'tree1>> {
-        self.named_children(&mut self.walk())
-            .find(|x| x.kind_id() == kind_id)
-    }
-
-    fn child_with_kind_id(&self, kind_id: u16) -> Option<Node<'tree1>> {
+    fn child_with_id(&self, kind_id: u16) -> Option<Node<'tree1>> {
         self.children(&mut self.walk())
             .find(|x| x.kind_id() == kind_id)
     }
@@ -343,13 +310,14 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     }
 
     fn inline_if_statement(&self) -> bool {
-        self.kind() == "if_statement" && self.child_with_name("end_if_statement").is_none()
+        self.kind_id() == kind!("if_statement")
+            && self.child_with_id(kind!("end_if_statement")).is_none()
     }
 
     fn prev_non_comment_sibling(&self) -> Option<Node<'tree1>> {
         let mut sibling = self.prev_named_sibling();
         while let Some(prev_sibling) = sibling {
-            if prev_sibling.kind() != "comment" {
+            if prev_sibling.kind_id() != kind!("comment") {
                 return Some(prev_sibling);
             }
             sibling = prev_sibling.prev_named_sibling();
@@ -364,7 +332,7 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
     ) -> Option<Node<'tree1>> {
         let mut sibling = self.next_named_sibling();
         while let Some(next_sibling) = sibling {
-            if next_sibling.kind() == "statement_label"
+            if next_sibling.kind_id() == kind!("statement_label")
                 && next_sibling.to_text(src) == Some(label.as_ref())
             {
                 return Some(next_sibling);
@@ -392,7 +360,7 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
         if self.kind_id() != kind!("use_statement") {
             return None;
         }
-        self.named_child_with_kind_id(kind!("module_name"))?
+        self.child_with_id(kind!("module_name"))?
             .to_text(src)
             .map(|s| s.to_string())
     }

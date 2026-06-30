@@ -34,8 +34,8 @@ impl Violation for ExternalProcedure {
 impl AstRule for ExternalProcedure {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Exit early if not an external procedure declaration
-        node.named_child_with_kind_id(kind!("type_qualifier"))?
-            .child_with_kind_id(kw!("external"))?;
+        node.child_with_id(kind!("type_qualifier"))?
+            .child_with_id(kw!("external"))?;
 
         let name = node
             .child_by_field_id(field!("declarator").into())?

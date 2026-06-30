@@ -56,10 +56,10 @@ impl AstRule for MagicNumberInArraySize {
             if node.child(0)?.kind_id() != kw!("dimension") {
                 return None;
             }
-            node.named_child_with_kind_id(kind!("argument_list"))?
+            node.child_with_id(kind!("argument_list"))?
         } else {
             // sized_declarator
-            node.named_child_with_kind_id(kind!("size"))?
+            node.child_with_id(kind!("size"))?
         };
 
         let violations: Vec<_> = size

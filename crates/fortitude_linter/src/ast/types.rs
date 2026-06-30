@@ -22,7 +22,7 @@ impl<'a> ParameterStatement<'a> {
     pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
         Ok(Self {
             name: node
-                .named_child_with_kind_id(kind!("identifier"))
+                .child_with_id(kind!("identifier"))
                 .context("expected identifier in 'parameter_statement'")?
                 .to_text(src)
                 .context("expected text")?
@@ -421,9 +421,9 @@ impl<'a> VariableDeclaration<'a> {
             src,
         )?;
 
-        let id = if let Some(result) = node.named_child_with_kind_id(kind!("function_result")) {
+        let id = if let Some(result) = node.child_with_id(kind!("function_result")) {
             result
-                .named_child_with_kind_id(kind!("identifier"))
+                .child_with_id(kind!("identifier"))
                 .expect("`function_result` should have `identifier` child")
         } else {
             node.child_by_field_id(field!("name").into())
@@ -500,7 +500,7 @@ pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
             )
         }
         kind!("use_alias") => node
-            .named_child_with_kind_id(kind!("local_name"))
+            .child_with_id(kind!("local_name"))
             .expect("use_alias should have local_name child"),
         _ => unreachable!("unexpected node type in declarator ({node:?})"),
     }
@@ -639,7 +639,7 @@ impl<'a> ImplicitStatement<'a> {
                 | kind!("function")
                 | kind!("subroutine")
         ) {
-            if let Some(child) = node.named_child_with_kind_id(kind!("implicit_statement")) {
+            if let Some(child) = node.child_with_id(kind!("implicit_statement")) {
                 return ImplicitStatement::try_from_node(child);
             }
             return None;
@@ -740,7 +740,7 @@ impl<'a> Procedure<'a> {
         let name = Name::from_node(&name, src);
 
         let args = stmt
-            .named_child_with_kind_id(kind!("parameters"))
+            .child_with_id(kind!("parameters"))
             .map(|params| {
                 params
                     .named_children(&mut params.walk())
@@ -801,10 +801,10 @@ impl<'a> TypeDefinition<'a> {
         }
 
         let stmt = node
-            .named_child_with_kind_id(kind!("derived_type_statement"))
+            .child_with_id(kind!("derived_type_statement"))
             .context("expected dervied_type_statement")?;
         let name_node = stmt
-            .named_child_with_kind_id(kind!("type_name"))
+            .child_with_id(kind!("type_name"))
             .context("expected type_name")?;
         let name = Name::from_node(&name_node, src);
 
@@ -828,11 +828,9 @@ impl<'a> Module<'a> {
         }
 
         let stmt = node
-            .named_child_with_kind_id(kind!("module_statement"))
+            .child_with_id(kind!("module_statement"))
             .context("expected module_statement")?;
-        let name_node = stmt
-            .named_child_with_kind_id(kind!("name"))
-            .context("expected name")?;
+        let name_node = stmt.child_with_id(kind!("name")).context("expected name")?;
         let name = Name::from_node(&name_node, src);
 
         Ok(Self { name, node: *node })
@@ -855,11 +853,9 @@ impl<'a> Program<'a> {
         }
 
         let stmt = node
-            .named_child_with_kind_id(kind!("program_statement"))
+            .child_with_id(kind!("program_statement"))
             .context("expected program_statement")?;
-        let name_node = stmt
-            .named_child_with_kind_id(kind!("name"))
-            .context("expected name")?;
+        let name_node = stmt.child_with_id(kind!("name")).context("expected name")?;
         let name = Name::from_node(&name_node, src);
 
         Ok(Self { name, node: *node })
@@ -885,14 +881,12 @@ impl<'a> UseStatement<'a> {
 
         let name = Name::from_node(
             &node
-                .named_child_with_kind_id(kind!("module_name"))
+                .child_with_id(kind!("module_name"))
                 .context("expected module_name in 'use_statement'")?,
             src,
         );
 
-        let has_only = node
-            .named_child_with_kind_id(kind!("included_items"))
-            .is_some();
+        let has_only = node.child_with_id(kind!("included_items")).is_some();
 
         let mut intrinsic = false;
         let mut has_colon = false;
@@ -916,7 +910,7 @@ impl<'a> UseStatement<'a> {
     }
 
     pub fn included_items(&self) -> Option<Node<'a>> {
-        self.node.named_child_with_kind_id(kind!("included_items"))
+        self.node.child_with_id(kind!("included_items"))
     }
 
     pub fn is_intrinsic(&self) -> bool {
@@ -953,13 +947,13 @@ impl<'a> UsedItem<'a> {
         } else if node.kind_id() == kind!("use_alias") {
             let name = Name::from_node(
                 &node
-                    .named_child_with_kind_id(kind!("local_name"))
+                    .child_with_id(kind!("local_name"))
                     .expect("use_alias should have local_name child"),
                 src,
             );
             let alias_of = Name::from_node(
                 &node
-                    .named_child_with_kind_id(kind!("identifier"))
+                    .child_with_id(kind!("identifier"))
                     .expect("use_alias should have identifier child"),
                 src,
             );

@@ -221,7 +221,7 @@ impl AstRule for PointerInitialisationInDeclaration {
         }
 
         // Array syntax on the variable name
-        if let Some(arr) = var.named_child_with_kind_id(kind!("identifier")) {
+        if let Some(arr) = var.child_with_id(kind!("identifier")) {
             let name = arr.to_text(src)?.to_string();
             return some_vec![context.create_diagnostic(Self { name }, node)];
         }
