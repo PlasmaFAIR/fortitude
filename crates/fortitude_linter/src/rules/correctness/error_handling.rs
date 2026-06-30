@@ -1,11 +1,13 @@
 use std::iter::once;
 
 use crate::ast::FortitudeNode;
-use crate::diagnostics::{Diagnostic, Violation};
+use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
+use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use anyhow::{Context, Result, anyhow};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, field, kind};
 use ruff_macros::derive_message_formats;
+use ruff_text_size::TextRange;
 use tree_sitter::Node;
 
 #[derive(
@@ -27,24 +29,23 @@ enum StatType {
 
 impl StatType {
     fn from_node(node: &Node, src: &str) -> Result<Self> {
-        match node.kind() {
-            "allocate_statement" | "deallocate_statement" => Ok(StatType::Stat),
-            "open_statement"
-            | "close_statement"
-            | "read_statement"
-            | "write_statement"
-            | "inquire_statement"
-            | "file_position_statement" => Ok(StatType::IoStat),
-            "subroutine_call" => {
+        match node.kind_id() {
+            kind!("allocate_statement") | kind!("deallocate_statement") => Ok(StatType::Stat),
+            kind!("open_statement")
+            | kind!("close_statement")
+            | kind!("read_statement")
+            | kind!("write_statement")
+            | kind!("inquire_statement")
+            | kind!("file_position_statement") => Ok(StatType::IoStat),
+            kind!("subroutine_call") => {
                 // Looking only for execute_command_line
                 let subroutine_node = node
-                    .child_by_field_name("subroutine")
+                    .child_by_field_id(field!("subroutine").into())
                     .context("Could not retrieve subroutine name")?;
                 let subroutine_text = subroutine_node
                     .to_text(src)
-                    .context("Failed to parse subroutine text")?
-                    .to_lowercase();
-                if subroutine_text == "execute_command_line" {
+                    .context("Failed to parse subroutine text")?;
+                if "execute_command_line".eq_ignore_ascii_case(subroutine_text) {
                     Ok(StatType::CmdStat)
                 } else {
                     Err(anyhow!("Unknown subroutine: {subroutine_text}"))
@@ -66,7 +67,7 @@ impl StatType {
 enum CheckStatus {
     Checked,
     Unchecked,
-    Overwritten,
+    Overwritten(TextRange),
 }
 
 /// ## What does it do?
@@ -108,7 +109,7 @@ impl Violation for UncheckedStat {
         let check_status = match result {
             CheckStatus::Checked => "checked",
             CheckStatus::Unchecked => "not checked",
-            CheckStatus::Overwritten => "overwritten before being checked",
+            CheckStatus::Overwritten(_) => "overwritten before being checked",
         };
         format!("{stat} argument '{name}' is {check_status} in this scope.")
     }
@@ -123,17 +124,16 @@ impl AstRule for UncheckedStat {
         let stat_name: &'static str = stat_type.into();
 
         // Find a 'stat' argument in the allocate statement
-        let arg_list = if node.kind() == "subroutine_call" {
-            node.child_with_name("argument_list")?
+        let arg_list = if node.kind_id() == kind!("subroutine_call") {
+            node.child_with_id(kind!("argument_list"))?
         } else {
             *node
         };
         let stat_node = arg_list.kwarg(stat_name, src)?;
 
         let name = stat_node
-            .child_by_field_name("value")?
-            .to_text(src)?
-            .to_string();
+            .child_by_field_id(field!("value").into())?
+            .to_text(src)?;
 
         // Check if the 'stat' variable is checked.
         //
@@ -168,21 +168,27 @@ impl AstRule for UncheckedStat {
             .chain(node.ancestors())
             .take_while(not_scope_boundary)
         {
-            match find_stat_in_siblings(&ancestor, &name.to_lowercase(), src) {
+            match find_stat_in_siblings(&ancestor, name, src) {
                 Ok(CheckStatus::Checked) => {
                     // Found the variable, so stop checking.
                     return None;
                 }
-                Ok(CheckStatus::Overwritten) => {
+                Ok(CheckStatus::Overwritten(textrange)) => {
                     // Found the variable, but it has been overwritten.
-                    return some_vec!(context.create_diagnostic(
+                    let annotation = Annotation::secondary(
+                        Span::from(context.source_file().clone()).with_range(textrange),
+                    )
+                    .message("Overwritten here");
+                    let mut diagnostic = context.create_diagnostic(
                         Self {
-                            name,
+                            name: name.to_owned(),
                             stat: stat_type,
-                            result: CheckStatus::Overwritten
+                            result: CheckStatus::Overwritten(textrange),
                         },
-                        stat_node
-                    ));
+                        stat_node,
+                    );
+                    diagnostic.annotate(annotation);
+                    return some_vec!(diagnostic);
                 }
                 Ok(CheckStatus::Unchecked) => {
                     // Didn't find it here. Continue searching.
@@ -196,7 +202,7 @@ impl AstRule for UncheckedStat {
         }
         some_vec!(context.create_diagnostic(
             Self {
-                name,
+                name: name.to_owned(),
                 stat: stat_type,
                 result: CheckStatus::Unchecked
             },
@@ -232,9 +238,9 @@ fn find_stat_in_siblings(node: &Node, stat_name: &str, src: &str) -> Result<Chec
         }
 
         if let Some(stat_node) = once(sibling).chain(sibling.descendants()).find(|d| {
-            d.kind() == "identifier"
+            d.kind_id() == kind!("identifier")
                 && d.to_text(src)
-                    .is_some_and(|d| d.to_lowercase().as_str() == stat_name)
+                    .is_some_and(|d| d.eq_ignore_ascii_case(stat_name))
         }) {
             return stat_check_status(&stat_node, stat_name, src);
         }
@@ -245,7 +251,6 @@ fn find_stat_in_siblings(node: &Node, stat_name: &str, src: &str) -> Result<Chec
 fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckStatus> {
     let ancestor = node.parent().context("Node should have a parent")?;
 
-    // stat_name should be lowercase.
     // Two cases to consider:
     //
     // - The stat variable is on the left hand side of an assignment statement.
@@ -254,21 +259,21 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
     // We expect false negatives if stat is passed to a user function or
     // subroutine and overwritten/ignored there.
 
-    if ancestor.kind() == "assignment_statement"
-        && let Some(lhs) = ancestor.child_by_field_name("left")
+    if ancestor.kind_id() == kind!("assignment_statement")
+        && let Some(lhs) = ancestor.child_by_field_id(field!("left").into())
     {
         let lhs_text = lhs.to_text(src).context("to_text error")?;
-        if lhs_text.to_lowercase().as_str() == stat_name {
-            return Ok(CheckStatus::Overwritten);
+        if lhs_text.eq_ignore_ascii_case(stat_name) {
+            return Ok(CheckStatus::Overwritten(lhs.textrange()));
         }
     }
-    if ancestor.kind() == "keyword_argument" {
+    if ancestor.kind_id() == kind!("keyword_argument") {
         // See if the stat variable is passed to another error handling routine.
         let routine = ancestor
             .parent()
             .context("Keyword argument should have a parent")?;
         // If the parent is an argument list, then the routine is the grandparent.
-        let routine = if routine.kind() == "argument_list" {
+        let routine = if routine.kind_id() == kind!("argument_list") {
             routine
                 .parent()
                 .context("Argument list should have a parent")?
@@ -278,14 +283,14 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
         let is_in_error_checking_routine = StatType::from_node(&routine, src).is_ok();
         let kwarg_name_is_stat_type = StatType::try_from(
             ancestor
-                .child_by_field_name("name")
+                .child_by_field_id(field!("name").into())
                 .context("Keyword argument should have a name")?
                 .to_text(src)
                 .context("to_text error")?,
         )
         .is_ok();
         if is_in_error_checking_routine && kwarg_name_is_stat_type {
-            return Ok(CheckStatus::Overwritten);
+            return Ok(CheckStatus::Overwritten(ancestor.textrange()));
         }
     }
     Ok(CheckStatus::Checked)
@@ -293,15 +298,19 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
 
 fn not_scope_boundary(node: &Node) -> bool {
     !matches!(
-        node.kind(),
-        "function" | "subroutine" | "program" | "module_procedure" | "block_construct"
+        node.kind_id(),
+        kind!("function")
+            | kind!("subroutine")
+            | kind!("program")
+            | kind!("module_procedure")
+            | kind!("block_construct")
     )
 }
 
 fn new_branch(node: &Node) -> bool {
     matches!(
-        node.kind(),
-        "elseif_clause" | "else_clause" | "case_statement"
+        node.kind_id(),
+        kind!("elseif_clause") | kind!("else_clause") | kind!("case_statement")
     )
 }
 
@@ -311,9 +320,9 @@ enum AllocationType {
 }
 impl AllocationType {
     fn from_node(node: &Node) -> Result<Self> {
-        match node.kind() {
-            "allocate_statement" => Ok(AllocationType::Allocate),
-            "deallocate_statement" => Ok(AllocationType::Deallocate),
+        match node.kind_id() {
+            kind!("allocate_statement") => Ok(AllocationType::Allocate),
+            kind!("deallocate_statement") => Ok(AllocationType::Deallocate),
             _ => Err(anyhow!("Node is not an allocation type")),
         }
     }
@@ -355,7 +364,7 @@ impl AstRule for MultipleAllocationsWithStat {
         let stat_node = node.kwarg("stat", src)?;
 
         // Count allocations
-        let count = if node.kind() == "allocate_statement" {
+        let count = if node.kind_id() == kind!("allocate_statement") {
             count_allocations(node)
         } else {
             count_deallocations(node)
@@ -375,13 +384,13 @@ impl AstRule for MultipleAllocationsWithStat {
 }
 
 fn count_allocations(node: &Node) -> usize {
-    node.children_by_field_name("allocation", &mut node.walk())
+    node.children_by_field_id(field!("allocation"), &mut node.walk())
         .count()
 }
 
 fn count_deallocations(node: &Node) -> usize {
     node.named_children(&mut node.walk())
-        .filter(|c| c.kind() == "identifier")
+        .filter(|c| c.kind_id() == kind!("identifier"))
         .count()
 }
 
@@ -426,8 +435,8 @@ impl AstRule for StatWithoutMessage {
 
         let stat_type = StatType::from_node(node, src).ok()?;
         let stat_name: &'static str = stat_type.into();
-        let arg_list = if node.kind() == "subroutine_call" {
-            node.child_with_name("argument_list")?
+        let arg_list = if node.kind_id() == kind!("subroutine_call") {
+            node.child_with_id(kind!("argument_list"))?
         } else {
             *node
         };
