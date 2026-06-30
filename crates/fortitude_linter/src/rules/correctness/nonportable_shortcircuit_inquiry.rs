@@ -1,8 +1,8 @@
 use crate::ast::FortitudeNode;
-use crate::diagnostics::{Diagnostic, Violation};
+use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind};
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
@@ -76,9 +76,6 @@ use tree_sitter::Node;
 pub(crate) struct NonportableShortcircuitInquiry {
     arg: String,
     function: String,
-    // Useful for when we get multiple notes in Diagnostics
-    #[allow(dead_code)]
-    present: TextRange,
 }
 
 impl Violation for NonportableShortcircuitInquiry {
@@ -96,20 +93,20 @@ struct PresentCall {
 }
 
 fn present_call(expr: &Node, src: &str, function: &str) -> Option<PresentCall> {
-    if expr.kind() != "call_expression" {
+    if expr.kind_id() != kind!("call_expression") {
         return None;
     }
-    if expr.child(0)?.to_text(src)?.to_lowercase() != function {
+    if !expr.child(0)?.to_text(src)?.eq_ignore_ascii_case(function) {
         return None;
     }
-    let arg_list = expr.child_with_name("argument_list")?;
+    let arg_list = expr.child_with_id(kind!("argument_list"))?;
     // Make sure we skip the two-arg version of `associated`
     // Length 3: "(", "identifier, ")"
     if arg_list.children(&mut arg_list.walk()).len() != 3 {
         return None;
     }
 
-    let identifier = arg_list.child_with_name("identifier")?;
+    let identifier = arg_list.child_with_id(kind!("identifier"))?;
     let arg = identifier.to_text(src)?.to_lowercase().to_string();
 
     Some(PresentCall {
@@ -159,7 +156,7 @@ fn find_nonportable_shortcircuits(
                 .iter()
                 .any(|call| call.range.contains(node.start_textsize()))
         })
-        .filter(|expr| expr.kind() == "identifier")
+        .filter(|expr| expr.kind_id() == kind!("identifier"))
         .filter_map(|expr| {
             // Now check if this identifier matches any in the `present()` calls
             let id = expr.to_text(text).unwrap_or_default().to_lowercase();
@@ -170,14 +167,20 @@ fn find_nonportable_shortcircuits(
             }
         })
         .map(|(node, arg, &present)| {
-            context.create_diagnostic(
+            // Annotate the 'present()' call as well as the identifier
+            // Both can be unlabelled primary annotations, as there is
+            // ambiguity in which is the 'cause' of the violation.
+            let mut diagnostic = context.create_diagnostic(
                 NonportableShortcircuitInquiry {
                     arg,
                     function: function.to_string(),
-                    present,
                 },
                 node,
-            )
+            );
+            diagnostic.annotate(Annotation::primary(
+                Span::from(context.source_file().clone()).with_range(present),
+            ));
+            diagnostic
         })
         .collect_vec()
 }
