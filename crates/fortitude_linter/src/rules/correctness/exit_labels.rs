@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{
-    AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
+    AlwaysFixableViolation, Annotation, Diagnostic, Edit, Fix, FixAvailability, Span, Violation,
 };
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
@@ -118,7 +118,7 @@ pub(crate) struct ExitOrCycleInUnlabelledLoop {
 impl Violation for ExitOrCycleInUnlabelledLoop {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { name } = self;
+        let Self { name, .. } = self;
         format!("'{name}' statement in unlabelled 'do' loop")
     }
 }
@@ -159,7 +159,13 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
                 .nth(0)?;
         }
 
-        some_vec!(context.create_diagnostic(Self { name }, node))
+        let mut diagnostic = context.create_diagnostic(Self { name }, node);
+        // Add annotation to highlight the parent loop
+        let statement = parent_loop.child_with_id(kind!("do_statement"))?;
+        let span = Span::from(context.source_file().clone()).with_range(statement.textrange());
+        diagnostic.annotate(Annotation::secondary(span).message("Unlabelled loop"));
+
+        some_vec!(diagnostic)
     }
 
     fn entrypoints() -> Vec<u16> {
