@@ -1,7 +1,7 @@
 use crate::ast::{FortitudeNode, types::BlockExit};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -35,32 +35,32 @@ impl Violation for UnreachableStatement {
 
 // TODO: This list may need to be expanded. Doesn't handle preproc or coarray
 // statements yet.
-pub const EXECUTABLE_STATEMENTS: &[&str] = &[
-    "keyword_statement",
-    "stop_statement",
-    "assignment_statement",
-    "pointer_association_statement",
-    "subroutine_call",
-    "read_statement",
-    "write_statement",
-    "print_statement",
-    "open_statement",
-    "close_statement",
-    "format_statement",
-    "inquire_statement",
-    "file_position_statement",
-    "allocate_statement",
-    "deallocate_statement",
-    "if_statement",
-    "do_statement",
-    "select_case_statement",
-    "select_type_statement",
-    "select_rank_statement",
-    "where_statement",
-    "forall_statement",
-    "block_construct",
-    "associate_statement",
-    "nullify_statement",
+pub const EXECUTABLE_STATEMENTS: &[u16] = &[
+    kind!("keyword_statement"),
+    kind!("stop_statement"),
+    kind!("assignment_statement"),
+    kind!("pointer_association_statement"),
+    kind!("subroutine_call"),
+    kind!("read_statement"),
+    kind!("write_statement"),
+    kind!("print_statement"),
+    kind!("open_statement"),
+    kind!("close_statement"),
+    kind!("format_statement"),
+    kind!("inquire_statement"),
+    kind!("file_position_statement"),
+    kind!("allocate_statement"),
+    kind!("deallocate_statement"),
+    kind!("if_statement"),
+    kind!("do_statement"),
+    kind!("select_case_statement"),
+    kind!("select_type_statement"),
+    kind!("select_rank_statement"),
+    kind!("where_statement"),
+    kind!("forall_statement"),
+    kind!("block_construct"),
+    kind!("associate_statement"),
+    kind!("nullify_statement"),
 ];
 
 impl AstRule for UnreachableStatement {
@@ -70,7 +70,7 @@ impl AstRule for UnreachableStatement {
         let text = node.child(0)?.to_text(context.source_text())?;
         let _ = BlockExit::try_from(text).ok()?;
         let sibling = node.next_non_comment_sibling()?;
-        if EXECUTABLE_STATEMENTS.contains(&sibling.kind()) {
+        if EXECUTABLE_STATEMENTS.contains(&sibling.kind_id()) {
             some_vec!(context.create_diagnostic(
                 UnreachableStatement {
                     kind: text.to_string(),
