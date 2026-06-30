@@ -1,6 +1,7 @@
 use crate::CheckContext;
 use crate::ast::symbol_table::{Symbol, SymbolTable};
-use crate::diagnostics::{Diagnostic, FixAvailability, Violation};
+use crate::diagnostics::{Annotation, Diagnostic, FixAvailability, Span, Violation};
+use crate::traits::TextRanged;
 use fortitude_macros::ViolationMetadata;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
@@ -126,12 +127,18 @@ pub(crate) fn check_shadowed_variables(
             if let Some(parent) = context.symbol_table().get(name)
                 && (parent.is_variable() || parent.is_used_item())
             {
-                Some(context.create_diagnostic(
+                let mut diagnostic = context.create_diagnostic(
                     ShadowedVariable {
                         name: name.to_string(),
                     },
                     var.name(),
-                ))
+                );
+                let annotation = Annotation::secondary(
+                    Span::from(context.source_file().clone()).with_range(parent.name().textrange()),
+                )
+                .message("Shadows variable declared here");
+                diagnostic.annotate(annotation);
+                Some(diagnostic)
             } else {
                 None
             }
