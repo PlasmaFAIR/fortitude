@@ -280,7 +280,7 @@ unknown-key = 1
 
     assert_cmd_snapshot!(cmd
                          .check_command()
-                         .args(["--config-file", "fpm.toml"])
+                         .args(["--config", "fpm.toml"])
                          .arg("no_file.f90"),
                          @r"
     success: false
@@ -359,7 +359,7 @@ select = ["C001", "style"]
 
     assert_cmd_snapshot!(cmd
                          .check_command()
-                         .args(["--config-file", "fortitude.toml"])
+                         .args(["--config", "fortitude.toml"])
                          .arg("test.f90"),
                          @r"
     success: false
@@ -403,7 +403,7 @@ select = ["C001"]
 
     assert_cmd_snapshot!(cmd
                          .check_command()
-                         .args(["--config-file", "fortitude.toml"])
+                         .args(["--config", "fortitude.toml"])
                          .arg("test.f90")
                          .args(["--extend-select", "style"]),
                          @r"
@@ -783,7 +783,7 @@ fixable = ["C003"]
                          .arg("--unsafe-fixes")
                          .arg("--fix")
                          .arg("--extend-fixable=S061")
-                         .args(["--config-file", "fortitude.toml"])
+                         .args(["--config", "fortitude.toml"])
                          .arg("test.f90"),
                          @r"
     success: true
@@ -827,7 +827,7 @@ fixable = ["C003"]
                          .arg("--unsafe-fixes")
                          .arg("--fix")
                          .arg("--fixable=S061")
-                         .args(["--config-file", "fortitude.toml"])
+                         .args(["--config", "fortitude.toml"])
                          .arg("test.f90"),
                          @r"
     success: false
@@ -873,7 +873,7 @@ fixable = ["S061"]
                          .arg("--fix")
                          .arg("--unfixable=S061")
                          .arg("--extend-fixable=C003")
-                         .args(["--config-file", "fortitude.toml"])
+                         .args(["--config", "fortitude.toml"])
                          .arg("test.f90"),
                          @r"
     success: false
@@ -1592,7 +1592,7 @@ end program myprogram
     ])?;
     assert_cmd_snapshot!(cmd
                          .check_command()
-                         .args(["--config-file", "fortitude.toml"])
+                         .args(["--config", "fortitude.toml"])
                          .arg("myfile.ff")
                          .args(["--select=S001,S091,C001"]),
                          @r"
@@ -2347,5 +2347,282 @@ fn output_format_show_fixes(output_format: &str) -> Result<()> {
         ])
     );
 
+    Ok(())
+}
+
+#[test]
+fn config_override_rejected_if_invalid_toml() {
+    assert_cmd_snapshot!(fortitude_cmd().arg("check")
+        .args(STDIN_BASE_OPTIONS)
+        .args(["--config", "foo = bar", "."]), @"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: invalid value 'foo = bar' for '--config <CONFIG_OPTION>'
+
+      tip: A `--config` flag must either be a path to a `.toml` configuration file
+           or a TOML `<KEY> = <VALUE>` pair overriding a specific configuration
+           option
+
+    The supplied argument is not valid TOML:
+
+    TOML parse error at line 1, column 7
+      |
+    1 | foo = bar
+      |       ^^^
+    string values must be quoted, expected literal string
+
+    For more information, try '--help'.
+    ");
+}
+
+#[test]
+fn too_many_config_files() -> Result<()> {
+    let fixture = FortitudeCheck::new()?;
+    fixture.write_file("fortitude.toml", "")?;
+    fixture.write_file("fortitude2.toml", "")?;
+
+    assert_cmd_snapshot!(fixture
+        .check_command()
+        .arg("--config")
+        .arg("fortitude.toml")
+        .arg("--config")
+        .arg("fortitude2.toml")
+        .arg("."), @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    fortitude failed
+    Error: You cannot specify more than one configuration file on the command line.
+
+      tip: remove either `--config=fortitude.toml` or `--config=fortitude2.toml`.
+           For more information, try `--help`.
+    ");
+    Ok(())
+}
+
+#[test]
+fn config_file_and_isolated() -> Result<()> {
+    let fixture = FortitudeCheck::new()?;
+    fixture.write_file("fortitude.toml", "")?;
+
+    assert_cmd_snapshot!(fixture
+        .check_command()
+        .arg("--config")
+        .arg("fortitude.toml")
+        .arg("--isolated")
+        .arg("."), @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    fortitude failed
+    Error: The argument `--config=fortitude.toml` cannot be used with `--isolated`
+
+      tip: You cannot specify a configuration file and also specify `--isolated`,
+           as `--isolated` causes fortitude to ignore all configuration files.
+           For more information, try `--help`.
+    ");
+    Ok(())
+}
+
+#[test]
+fn config_override_via_cli() -> Result<()> {
+    let fixture = FortitudeCheck::with_file(
+        "fortitude.toml",
+        r#"
+[check]
+line-length = 100
+select = ["E"]
+        "#,
+    )?;
+    let test_code = r#"
+program test
+integer, dimension(3) :: foo
+
+x = "longer_than_90_charactersssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+end
+"#;
+    assert_cmd_snapshot!(fixture
+        .check_command()
+        .arg("--config")
+        .arg("fortitude.toml")
+        .args(["--config", "check.line-length=90"])
+        .args(["--config", "check.extend-select=['S001', 'S263']"])
+        .args(["--config", "check.inconsistent-dimensions.prefer-attribute = \"never\""])
+        .arg("-")
+        .pass_stdin(test_code), @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    -:3:26: S263 Bad declaration of array
+    -:5:91: S001 line length of 97, exceeds maximum 90
+    fortitude: 1 files scanned.
+    Number of errors: 2
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn valid_toml_but_nonexistent_option_provided_via_config_argument() {
+    assert_cmd_snapshot!(fortitude_cmd().arg("check")
+        .args(STDIN_BASE_OPTIONS)
+        .args([".", "--config", "check.extend-select=['NOTACODE']"]),
+        @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: invalid value 'check.extend-select=['NOTACODE']' for '--config <CONFIG_OPTION>'
+
+      tip: A `--config` flag must either be a path to a `.toml` configuration file
+           or a TOML `<KEY> = <VALUE>` pair overriding a specific configuration
+           option
+
+    Could not parse the supplied argument as a `fortitude.toml` configuration option:
+
+    Unknown rule selector: `NOTACODE`
+    in `check.extend-select`
+
+    For more information, try '--help'.
+    ");
+}
+
+#[test]
+fn each_toml_option_requires_a_new_flag_1() {
+    assert_cmd_snapshot!(fortitude_cmd().arg("check")
+        .args(STDIN_BASE_OPTIONS)
+        // commas can't be used to delimit different config overrides;
+        // you need a new --config flag for each override
+        .args([".", "--config", "check.extend-select=['S001'], check.line-length=90"]),
+        @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: invalid value 'check.extend-select=['S001'], check.line-length=90' for '--config <CONFIG_OPTION>'
+
+      tip: A `--config` flag must either be a path to a `.toml` configuration file
+           or a TOML `<KEY> = <VALUE>` pair overriding a specific configuration
+           option
+
+    The supplied argument is not valid TOML:
+
+    TOML parse error at line 1, column 29
+      |
+    1 | check.extend-select=['S001'], check.line-length=90
+      |                             ^
+    unexpected key or value, expected newline, `#`
+
+    For more information, try '--help'.
+    ");
+}
+
+#[test]
+fn each_toml_option_requires_a_new_flag_2() {
+    assert_cmd_snapshot!(fortitude_cmd().arg("check")
+        .args(STDIN_BASE_OPTIONS)
+        // spaces *also* can't be used to delimit different config overrides;
+        // you need a new --config flag for each override
+        .args([".", "--config", "check.extend-select=['S001'] check.line-length=90"]),
+        @r"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: invalid value 'check.extend-select=['S001'] check.line-length=90' for '--config <CONFIG_OPTION>'
+
+      tip: A `--config` flag must either be a path to a `.toml` configuration file
+           or a TOML `<KEY> = <VALUE>` pair overriding a specific configuration
+           option
+
+    The supplied argument is not valid TOML:
+
+    TOML parse error at line 1, column 30
+      |
+    1 | check.extend-select=['S001'] check.line-length=90
+      |                              ^
+    unexpected key or value, expected newline, `#`
+
+    For more information, try '--help'.
+    ");
+}
+
+#[test]
+fn config_doubly_overridden_via_cli() -> Result<()> {
+    let fixture = FortitudeCheck::with_file(
+        "fortitude.toml",
+        r#"
+[check]
+line-length = 100
+select=["S001"]
+"#,
+    )?;
+    let test_code = "program test\nx = 'longer_than_90_charactersssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss'\nend";
+    assert_cmd_snapshot!(fixture
+        .check_command()
+        // The --line-length flag takes priority over both the config file
+        // and the `--config="check.line-length=110"` flag,
+        // despite them both being specified after this flag on the command line:
+        .args(["--line-length", "90"])
+        .arg("--config")
+        .arg("fortitude.toml")
+        .args(["--config", "check.line-length=110"])
+        .arg("-")
+        .pass_stdin(test_code), @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+    -:2:91: S001 line length of 97, exceeds maximum 90
+    fortitude: 1 files scanned.
+    Number of errors: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn complex_config_setting_overridden_via_cli() -> Result<()> {
+    let fixture = FortitudeCheck::with_file("fortitude.toml", "check.select = ['C001']")?;
+    let test_code = "program violates_c001; end";
+    assert_cmd_snapshot!(fixture
+        .check_command()
+        .arg("--config")
+        .arg("fortitude.toml")
+        .args(["--config", "check.per-file-ignores = {'generated.f90' = ['C001']}"])
+        .args(["--stdin-filename", "generated.f90"])
+        .arg("-")
+        .pass_stdin(test_code), @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    fortitude: 1 files scanned.
+    All checks passed!
+
+
+    ----- stderr -----
+    ");
     Ok(())
 }

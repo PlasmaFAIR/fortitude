@@ -298,7 +298,7 @@ take into account:
 - Configuration file settings from various sources:
   - Project level, such as `/path/to/project/fortitude.toml`
   - User level, such as `$HOME/.config/fortitude/fortitude.toml`
-  - Passed directly: `fortitude --config-file=myconfig.toml check`
+  - Passed directly: `fortitude --config=myconfig.toml check`
 - Command line settings (which may override config file settings)
 
 Config files within a project can also be hierarchical, so those nested deeper in
