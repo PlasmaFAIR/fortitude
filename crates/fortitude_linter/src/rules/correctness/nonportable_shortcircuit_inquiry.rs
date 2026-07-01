@@ -180,12 +180,12 @@ fn find_nonportable_shortcircuits(
             diagnostic
                 .primary_annotation_mut()
                 .expect("Must have primary annotation")
-                .set_message(&format!("`{arg}` referenced here"));
+                .set_message(format!("`{arg}` referenced here"));
             diagnostic.annotate(
                 Annotation::secondary(
                     Span::from(context.source_file().clone()).with_range(present),
                 )
-                .message(&format!("Inquiry `{function}({arg})` called here")),
+                .message(format!("Inquiry `{function}({arg})` called here")),
             );
             diagnostic
         })
