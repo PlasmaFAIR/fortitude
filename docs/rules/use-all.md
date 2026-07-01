@@ -21,5 +21,9 @@ This makes it easier for programmers to understand where the symbols in your
 code have come from, and avoids introducing many unneeded components to your
 local scope.
 
-## Settings
-See [check.use-statements](../settings.md#checkuse-statements)
+## Options
+- [`check.use-statements.allow-bare-use`][check.use-statements.allow-bare-use]
+
+
+[check.use-statements.allow-bare-use]: ../settings.md#check_use-statements_allow-bare-use
+

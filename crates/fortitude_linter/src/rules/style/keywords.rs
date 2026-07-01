@@ -90,12 +90,16 @@ impl DoubleKeyword {
 /// omitted, such as `elseif` instead of `else if` and `endmodule` instead of
 /// `endmodule`. The keywords `inout` and `goto` are exempt from this rule by
 /// default, but may be included by setting the options
-/// [`inout-with-space`](../settings.md#inout-with-space) and
-/// [`goto-with-space`](../settings.md#goto-with-space).
+/// [`check.keyword-whitespace.inout-with-space`] and
+/// [`check.keyword-whitespace.goto-with-space`].
 ///
 /// ## Why is this bad?
 /// Contracting two keywords into one can make code less readable. Enforcing
 /// this rule can help maintain a consistent style.
+///
+/// ## Options
+/// - `check.keyword-whitespace.inout-with-space`
+/// - `check.keyword-whitespace.goto-with-space`
 #[derive(ViolationMetadata)]
 pub struct KeywordsMissingSpace {
     keywords: DoubleKeyword,
@@ -175,15 +179,20 @@ impl AstRule for KeywordsMissingSpace {
 
 /// ## What it does
 /// Checks for the use of `in out` instead of `inout` and `go to` instead of `goto`.
-/// Either may be exempted from this rule by setting the options
-/// [`inout-with-space`](../settings.md#inout-with-space) and
-/// [`goto-with-space`](../settings.md#goto-with-space).
 ///
 /// ## Why is this bad?
 /// By convention, `inout` is normally preferred to `in out`. Both `go to` and
 /// `goto` are valid, but Fortitude prefers the latter as `goto` is most common
 /// in other languages, and neither `go` nor `to` have secondary purposes in
 /// other keywords. Enforcing this rule can help maintain a consistent style.
+///
+/// Either keyword may be exempted from this rule by setting the options
+/// [`check.keyword-whitespace.inout-with-space`] and
+/// [`check.keyword-whitespace.goto-with-space`].
+///
+/// ## Options
+/// - `check.keyword-whitespace.inout-with-space`
+/// - `check.keyword-whitespace.goto-with-space`
 #[derive(ViolationMetadata)]
 pub struct KeywordHasWhitespace {
     keywords: DoubleKeyword,
@@ -298,9 +307,7 @@ pub mod settings {
 }
 
 /// ## What it does
-/// Checks that Fortran keywords use a consistent casing style. Flags any keyword
-/// whose casing does not match the configured style (see
-/// [`keyword-case`](../settings.md#keyword-case)).
+/// Checks that Fortran keywords use a consistent casing style.
 ///
 /// ## Why is this bad?
 /// Fortran is case-insensitive, so keyword casing is purely a stylistic choice.
@@ -309,8 +316,10 @@ pub mod settings {
 /// harder to scan. Enforcing a consistent style helps maintain a uniform
 /// appearance across the codebase.
 ///
-/// Modern Fortran style guides generally favour lowercase keywords. Older
-/// codebases often use uppercase, inherited from fixed-form Fortran conventions.
+/// Modern Fortran style guides generally favour lowercase keywords, while older
+/// codebases often use uppercase, inherited from fixed-form Fortran
+/// conventions; the used case can be configured with
+/// [`check.incorrect-keyword-case.keyword-case`]
 ///
 /// ## Examples
 ///
@@ -345,6 +354,9 @@ pub mod settings {
 /// INTEGER, INTENT(IN) :: x
 /// END SUBROUTINE foo
 /// ```
+///
+/// ## Options
+/// - `check.incorrect-keyword-case.keyword-case`
 #[derive(ViolationMetadata)]
 pub struct IncorrectKeywordCase {
     actual: String,

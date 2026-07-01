@@ -97,6 +97,17 @@ use tree_sitter::Node;
 /// Use instead:
 /// ```f90
 /// ```
+///
+/// <!---
+/// Delete this section if you don't have any options
+/// ## Options
+/// - `check.options-group.option-name`
+/// --->
+///
+/// <---
+/// ## References
+/// - Include any references here
+/// --->
 #[derive(ViolationMetadata)]
 pub(crate) struct {name};
 
