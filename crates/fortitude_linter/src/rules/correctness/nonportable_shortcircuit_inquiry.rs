@@ -172,14 +172,21 @@ fn find_nonportable_shortcircuits(
             // ambiguity in which is the 'cause' of the violation.
             let mut diagnostic = context.create_diagnostic(
                 NonportableShortcircuitInquiry {
-                    arg,
+                    arg: arg.clone(),
                     function: function.to_string(),
                 },
                 node,
             );
-            diagnostic.annotate(Annotation::primary(
-                Span::from(context.source_file().clone()).with_range(present),
-            ));
+            diagnostic
+                .primary_annotation_mut()
+                .expect("Must have primary annotation")
+                .set_message(&format!("`{arg}` referenced here"));
+            diagnostic.annotate(
+                Annotation::secondary(
+                    Span::from(context.source_file().clone()).with_range(present),
+                )
+                .message(&format!("Inquiry `{function}({arg})` called here")),
+            );
             diagnostic
         })
         .collect_vec()

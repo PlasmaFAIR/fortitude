@@ -8,7 +8,9 @@ C161 variable inquiry `present(arg1)` and use in same logical expression
 11 |     end if
 12 |
 13 |     if (present(arg1) .and. arg1 > 1) then
-   |         ^^^^^^^^^^^^^       ^^^^
+   |         -------------       ^^^^ `arg1` referenced here
+   |         |
+   |         Inquiry `present(arg1)` called here
 14 |       bad = .true.
 15 |     end if
    |
@@ -19,7 +21,9 @@ C161 variable inquiry `present(arg2)` and use in same logical expression
 19 |     end if
 20 |
 21 |     if (present(arg2) .and. (size(arg2) > 4)) then
-   |         ^^^^^^^^^^^^^             ^^^^
+   |         -------------             ^^^^ `arg2` referenced here
+   |         |
+   |         Inquiry `present(arg2)` called here
 22 |       bad = .true.
 23 |     end if
    |
@@ -30,7 +34,9 @@ C161 variable inquiry `present(arg1)` and use in same logical expression
 31 |     end if
 32 |
 33 |     if (present(arg1) .and. associated(arg1)) then
-   |         ^^^^^^^^^^^^^                  ^^^^
+   |         -------------                  ^^^^ `arg1` referenced here
+   |         |
+   |         Inquiry `present(arg1)` called here
 34 |       bad = .true.
 35 |     end if
    |
@@ -41,7 +47,9 @@ C161 variable inquiry `associated(arg1)` and use in same logical expression
 31 |     end if
 32 |
 33 |     if (present(arg1) .and. associated(arg1)) then
-   |                 ^^^^        ^^^^^^^^^^^^^^^^
+   |                 ^^^^        ---------------- Inquiry `associated(arg1)` called here
+   |                 |
+   |                 `arg1` referenced here
 34 |       bad = .true.
 35 |     end if
    |
@@ -52,7 +60,9 @@ C161 variable inquiry `associated(arg1)` and use in same logical expression
 40 |     end if
 41 |
 42 |     if (associated(arg1) .and. arg1 > 1) then
-   |         ^^^^^^^^^^^^^^^^       ^^^^
+   |         ----------------       ^^^^ `arg1` referenced here
+   |         |
+   |         Inquiry `associated(arg1)` called here
 43 |       bad = .true.
 44 |     end if
    |
@@ -63,7 +73,9 @@ C161 variable inquiry `present(arg2)` and use in same logical expression
 44 |     end if
 45 |
 46 |     if ((.not. allocated(arg2)) .or. (.not. present(arg2))) then
-   |                          ^^^^               ^^^^^^^^^^^^^
+   |                          ^^^^               ------------- Inquiry `present(arg2)` called here
+   |                          |
+   |                          `arg2` referenced here
 47 |       bad = .true.
 48 |     end if
    |
@@ -74,7 +86,9 @@ C161 variable inquiry `allocated(arg2)` and use in same logical expression
 44 |     end if
 45 |
 46 |     if ((.not. allocated(arg2)) .or. (.not. present(arg2))) then
-   |                ^^^^^^^^^^^^^^^                      ^^^^
+   |                ---------------                      ^^^^ `arg2` referenced here
+   |                |
+   |                Inquiry `allocated(arg2)` called here
 47 |       bad = .true.
 48 |     end if
    |
@@ -85,7 +99,9 @@ C161 variable inquiry `allocated(arg2)` and use in same logical expression
 48 |     end if
 49 |
 50 |     if (allocated(arg2) .and. size(arg2) > 1) then
-   |         ^^^^^^^^^^^^^^^            ^^^^
+   |         ---------------            ^^^^ `arg2` referenced here
+   |         |
+   |         Inquiry `allocated(arg2)` called here
 51 |       bad = .true.
 52 |     end if
    |
