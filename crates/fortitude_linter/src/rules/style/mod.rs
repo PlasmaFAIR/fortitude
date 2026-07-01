@@ -14,7 +14,7 @@ pub mod strings;
 pub mod superfluous_while_true;
 pub(crate) mod use_statement;
 pub mod useless_return;
-pub(crate) mod whitespace;
+pub mod whitespace;
 
 #[cfg(test)]
 mod tests {
@@ -29,7 +29,9 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
-    use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
+    use crate::rules::style::{
+        complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
+    };
     use crate::settings::CheckSettings;
     use crate::test::{test_contents, test_path};
 
@@ -46,6 +48,8 @@ mod tests {
     #[test_case(Rule::IncorrectSpaceBeforeComment, Path::new("S102.f90"))]
     #[test_case(Rule::IncorrectSpaceAroundDoubleColon, Path::new("S103.f90"))]
     #[test_case(Rule::IncorrectSpaceBetweenBrackets, Path::new("S104.f90"))]
+    #[test_case(Rule::InvalidIndentationMultiple, Path::new("S105.f90"))]
+    #[test_case(Rule::InvalidPreprocIndentation, Path::new("S106.f90"))]
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201.f90"))]
     #[test_case(Rule::MultipleModules, Path::new("S211.f90"))]
     #[test_case(Rule::ProgramWithModule, Path::new("S212.f90"))]
@@ -112,6 +116,56 @@ mod tests {
             line_too_long: line_length::settings::Settings {
                 ignore_comments: true,
             },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_indentation_multiple_width_2() -> Result<()> {
+        let rule_code = Rule::InvalidIndentationMultiple;
+        let path = Path::new("S105.f90");
+        let snapshot = format!(
+            "{}_{}_indent_width_2",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+
+        let settings = CheckSettings {
+            indent_width: 2,
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_indentation_non_default_settings() -> Result<()> {
+        let rule_code = Rule::InvalidIndentationMultiple;
+        let path = Path::new("S105.f90");
+        let snapshot = format!(
+            "{}_{}_non_default_settings",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+
+        let mut invalid_indentation_multiple_settings =
+            whitespace::settings::InvalidIndentationMultipleSettings {
+                should_indent_associate_contents: false,
+                should_indent_if_contents: false,
+                num_indents_for_subroutine_contents: 2,
+                ..Default::default()
+            };
+
+        invalid_indentation_multiple_settings.populate_construct_to_indent_map();
+
+        let settings = CheckSettings {
+            invalid_indentation_multiple: invalid_indentation_multiple_settings,
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;

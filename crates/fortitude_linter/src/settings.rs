@@ -21,7 +21,9 @@ use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelect
 use crate::rule_table::RuleTable;
 use crate::rules::correctness::{exit_labels, shadowed_variable, use_statements};
 use crate::rules::portability::{self, invalid_tab};
-use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
+use crate::rules::style::{
+    complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
+};
 
 #[derive(Debug)]
 pub struct Settings {
@@ -61,6 +63,7 @@ pub struct CheckSettings {
     pub per_file_ignores: CompiledPerFileIgnoreList,
 
     pub line_length: usize,
+    pub indent_width: usize,
 
     pub fix: bool,
     pub fix_only: bool,
@@ -83,6 +86,7 @@ pub struct CheckSettings {
     pub line_too_long: line_length::settings::Settings,
     pub use_statements: use_statements::settings::Settings,
     pub complexity: complexity::settings::Settings,
+    pub invalid_indentation_multiple: whitespace::settings::InvalidIndentationMultipleSettings,
 }
 
 impl Default for CheckSettings {
@@ -101,6 +105,7 @@ impl CheckSettings {
                 .collect(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
+            indent_width: 4,
             fix: false,
             fix_only: false,
             show_fixes: false,
@@ -120,6 +125,8 @@ impl CheckSettings {
             line_too_long: line_length::settings::Settings::default(),
             use_statements: use_statements::settings::Settings::default(),
             complexity: complexity::settings::Settings::default(),
+            invalid_indentation_multiple:
+                whitespace::settings::InvalidIndentationMultipleSettings::default(),
         }
     }
 
@@ -148,6 +155,7 @@ impl fmt::Display for CheckSettings {
                 self.rules | nested,
                 self.per_file_ignores,
                 self.line_length,
+                self.indent_width,
                 self.fix,
                 self.fix_only,
                 self.show_fixes,

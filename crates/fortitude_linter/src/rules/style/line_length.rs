@@ -85,7 +85,12 @@ impl LineTooLong {
         let ignore_comments = settings.line_too_long.ignore_comments;
         let mut violations = Vec::new();
 
-        let tab_size = settings.invalid_tab.indent_width.as_usize();
+        // Default to general indent_width but use the invalid_tab specific value if provided
+        let tab_size = if context.settings().invalid_tab.indent_width.as_usize() == 0usize {
+            context.settings().indent_width
+        } else {
+            context.settings().invalid_tab.indent_width.as_usize()
+        };
 
         let comment_positions: HashSet<Point> = context
             .source_text()

@@ -180,6 +180,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
         (Style, "103") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceAroundDoubleColon),
         (Style, "104") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBetweenBrackets),
+        (Style, "105") => (RuleGroup::Preview, None, Optional, style::whitespace::InvalidIndentationMultiple),
+        (Style, "106") => (RuleGroup::Preview, None, Optional, style::whitespace::InvalidPreprocIndentation),
         (Style, "201") => (RuleGroup::Stable, Ast, Optional, style::implicit_none::SuperfluousImplicitNone),
         (Style, "211") => (RuleGroup::Stable, Ast, Optional, style::file_contents::MultipleModules),
         (Style, "212") => (RuleGroup::Stable, Ast, Optional, style::file_contents::ProgramWithModule),
