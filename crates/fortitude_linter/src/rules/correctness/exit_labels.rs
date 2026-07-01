@@ -108,8 +108,8 @@ impl AstRule for MissingExitOrCycleLabel {
 /// end do
 /// ```
 ///
-/// ## Settings
-/// See [check.exit-unlabelled-loops](../settings.md#checkexit-unlabelled-loops)
+/// ## Options
+/// - `check.exit-unlabelled-loops.allow-unnested-loops`
 #[derive(ViolationMetadata)]
 pub(crate) struct ExitOrCycleInUnlabelledLoop {
     name: String,

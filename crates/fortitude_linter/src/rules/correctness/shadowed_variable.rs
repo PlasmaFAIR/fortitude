@@ -81,8 +81,9 @@ use ruff_macros::derive_message_formats;
 /// end module my_mod
 /// ```
 ///
-/// ## Settings
-/// See [check.shadowed-variables](../settings.md#checkshadowed-variables)
+/// ## Options
+/// - `check.shadowed-variables.allow`
+/// - `check.shadowed-variables.strict`
 #[derive(ViolationMetadata)]
 pub struct ShadowedVariable {
     name: String,

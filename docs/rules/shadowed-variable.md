@@ -77,5 +77,11 @@ contains
 end module my_mod
 ```
 
-## Settings
-See [check.shadowed-variables](../settings.md#checkshadowed-variables)
+## Options
+- [`check.shadowed-variables.allow`][check.shadowed-variables.allow]
+- [`check.shadowed-variables.strict`][check.shadowed-variables.strict]
+
+
+[check.shadowed-variables.allow]: ../settings.md#check_shadowed-variables_allow
+[check.shadowed-variables.strict]: ../settings.md#check_shadowed-variables_strict
+

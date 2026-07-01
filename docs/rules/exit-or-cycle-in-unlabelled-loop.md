@@ -25,5 +25,9 @@ do i = 1, 10
 end do
 ```
 
-## Settings
-See [check.exit-unlabelled-loops](../settings.md#checkexit-unlabelled-loops)
+## Options
+- [`check.exit-unlabelled-loops.allow-unnested-loops`][check.exit-unlabelled-loops.allow-unnested-loops]
+
+
+[check.exit-unlabelled-loops.allow-unnested-loops]: ../settings.md#check_exit-unlabelled-loops_allow-unnested-loops
+
