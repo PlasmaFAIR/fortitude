@@ -175,10 +175,6 @@ impl AstRule for UncheckedStat {
                 }
                 Ok(CheckStatus::Overwritten(textrange)) => {
                     // Found the variable, but it has been overwritten.
-                    let annotation = Annotation::secondary(
-                        Span::from(context.source_file().clone()).with_range(textrange),
-                    )
-                    .message("Overwritten here");
                     let mut diagnostic = context.create_diagnostic(
                         Self {
                             name: name.to_owned(),
@@ -187,6 +183,14 @@ impl AstRule for UncheckedStat {
                         },
                         stat_node,
                     );
+                    diagnostic
+                        .primary_annotation_mut()
+                        .expect("Must have primary annotation")
+                        .set_message("Set here...");
+                    let annotation = Annotation::secondary(
+                        Span::from(context.source_file().clone()).with_range(textrange),
+                    )
+                    .message("... and overwritten here");
                     diagnostic.annotate(annotation);
                     return some_vec!(diagnostic);
                 }

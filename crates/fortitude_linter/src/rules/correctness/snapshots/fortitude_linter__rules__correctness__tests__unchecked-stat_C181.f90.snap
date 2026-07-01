@@ -8,12 +8,12 @@ C181 stat argument 'status' is overwritten before being checked in this scope.
 12 |   ! Set stat, but don't check it until after another allocate.
 13 |   ! Should raise an error.
 14 |   ALLOCATE (x(10), stat=status)
-   |                    ^^^^^^^^^^^
+   |                    ^^^^^^^^^^^ Set here...
 15 |
 16 |   ! Set same stat and check it.
 17 |   ! This is fine.
 18 |   allocate (y(10), stat=Status)
-   |                    ----------- Overwritten here
+   |                    ----------- ... and overwritten here
 19 |   print *, "Something between allocation and checking"
 20 |   if (status /= 0) then
    |
@@ -23,10 +23,10 @@ C181 stat argument 'status' is overwritten before being checked in this scope.
    |
 28 |   ! Repeat, but the second allocate is not a direct sibling
 29 |   ALLOCATE (x(10), Stat=status)
-   |                    ^^^^^^^^^^^
+   |                    ^^^^^^^^^^^ Set here...
 30 |   if (.true.) then
 31 |     ALLOCATE (y(10), STAT=statUs)
-   |                      ----------- Overwritten here
+   |                      ----------- ... and overwritten here
 32 |     if (status /= 0) then
 33 |       print *, "Error allocating y"
    |
@@ -36,7 +36,7 @@ C181 stat argument 'STATUS_X' is overwritten before being checked in this scope.
     |
  58 |   ! Repeat, but using a custom error handler
  59 |   allocate (x(10), stat=STATUS_X)
-    |                    ^^^^^^^^^^^^^
+    |                    ^^^^^^^^^^^^^ Set here...
  60 |   if (.true.) then
  61 |     allocate (y(10), STAT=status_y)
     |
@@ -45,7 +45,7 @@ C181 stat argument 'STATUS_X' is overwritten before being checked in this scope.
 101 |   ! Stat is not checked in any cases. Should raise for all four.
 102 |   if(if_option == 1) then
 103 |     allocate (x(10), stat=STATUS_X)
-    |                      ------------- Overwritten here
+    |                      ------------- ... and overwritten here
 104 |   else
 105 |     allocate (x(30), stat=status_x)
     |
@@ -99,9 +99,9 @@ C181 stat argument 'status_w' is overwritten before being checked in this scope.
 114 |   ! Set stat, but overwrite it before checking it.
 115 |   ! Should raise an error.
 116 |   allocate (w(10), STAT=status_w)
-    |                    ^^^^^^^^^^^^^
+    |                    ^^^^^^^^^^^^^ Set here...
 117 |   STATUS_W = 0
-    |   -------- Overwritten here
+    |   -------- ... and overwritten here
 118 |   if (Status_w /= 0) then
 119 |     print *, "Error allocating w"
     |
@@ -123,9 +123,9 @@ C181 iostat argument 'status' is overwritten before being checked in this scope.
 144 |     real(8), allocatable :: x(:)
 145 |     logical :: file_exist
 146 |     inquire(unit=10, iostat=status, exist=file_exist)
-    |                      ^^^^^^^^^^^^^
+    |                      ^^^^^^^^^^^^^ Set here...
 147 |     open (file="file.txt", unit=10, IOSTAT=Status, asynchronous="YES")
-    |                                     ------------- Overwritten here
+    |                                     ------------- ... and overwritten here
 148 |     write(10, *, iostat=status) line
 149 |     flush(10, iostat=STATUS)
     |
@@ -136,9 +136,9 @@ C181 iostat argument 'Status' is overwritten before being checked in this scope.
 145 |     logical :: file_exist
 146 |     inquire(unit=10, iostat=status, exist=file_exist)
 147 |     open (file="file.txt", unit=10, IOSTAT=Status, asynchronous="YES")
-    |                                     ^^^^^^^^^^^^^
+    |                                     ^^^^^^^^^^^^^ Set here...
 148 |     write(10, *, iostat=status) line
-    |                  ------------- Overwritten here
+    |                  ------------- ... and overwritten here
 149 |     flush(10, iostat=STATUS)
 150 |     backspace(10, iostat=Status)
     |
@@ -149,9 +149,9 @@ C181 iostat argument 'status' is overwritten before being checked in this scope.
 146 |     inquire(unit=10, iostat=status, exist=file_exist)
 147 |     open (file="file.txt", unit=10, IOSTAT=Status, asynchronous="YES")
 148 |     write(10, *, iostat=status) line
-    |                  ^^^^^^^^^^^^^
+    |                  ^^^^^^^^^^^^^ Set here...
 149 |     flush(10, iostat=STATUS)
-    |               ------------- Overwritten here
+    |               ------------- ... and overwritten here
 150 |     backspace(10, iostat=Status)
 151 |     rewind(10, IOSTAT=status)
     |
@@ -162,9 +162,9 @@ C181 iostat argument 'STATUS' is overwritten before being checked in this scope.
 147 |     open (file="file.txt", unit=10, IOSTAT=Status, asynchronous="YES")
 148 |     write(10, *, iostat=status) line
 149 |     flush(10, iostat=STATUS)
-    |               ^^^^^^^^^^^^^
+    |               ^^^^^^^^^^^^^ Set here...
 150 |     backspace(10, iostat=Status)
-    |                   ------------- Overwritten here
+    |                   ------------- ... and overwritten here
 151 |     rewind(10, IOSTAT=status)
 152 |     read(10, *, iostat=status, asynchronous="YES") line
     |
@@ -175,9 +175,9 @@ C181 iostat argument 'Status' is overwritten before being checked in this scope.
 148 |     write(10, *, iostat=status) line
 149 |     flush(10, iostat=STATUS)
 150 |     backspace(10, iostat=Status)
-    |                   ^^^^^^^^^^^^^
+    |                   ^^^^^^^^^^^^^ Set here...
 151 |     rewind(10, IOSTAT=status)
-    |                ------------- Overwritten here
+    |                ------------- ... and overwritten here
 152 |     read(10, *, iostat=status, asynchronous="YES") line
 153 |     wait(10, Iostat=STATUS)
     |
@@ -188,9 +188,9 @@ C181 iostat argument 'status' is overwritten before being checked in this scope.
 149 |     flush(10, iostat=STATUS)
 150 |     backspace(10, iostat=Status)
 151 |     rewind(10, IOSTAT=status)
-    |                ^^^^^^^^^^^^^
+    |                ^^^^^^^^^^^^^ Set here...
 152 |     read(10, *, iostat=status, asynchronous="YES") line
-    |                 ------------- Overwritten here
+    |                 ------------- ... and overwritten here
 153 |     wait(10, Iostat=STATUS)
 154 |     endfile(10, iostat=status)
     |
@@ -201,9 +201,9 @@ C181 iostat argument 'status' is overwritten before being checked in this scope.
 150 |     backspace(10, iostat=Status)
 151 |     rewind(10, IOSTAT=status)
 152 |     read(10, *, iostat=status, asynchronous="YES") line
-    |                 ^^^^^^^^^^^^^
+    |                 ^^^^^^^^^^^^^ Set here...
 153 |     wait(10, Iostat=STATUS)
-    |              ------------- Overwritten here
+    |              ------------- ... and overwritten here
 154 |     endfile(10, iostat=status)
 155 |     close(10, iostat=STATUS)
     |
@@ -214,9 +214,9 @@ C181 iostat argument 'STATUS' is overwritten before being checked in this scope.
 151 |     rewind(10, IOSTAT=status)
 152 |     read(10, *, iostat=status, asynchronous="YES") line
 153 |     wait(10, Iostat=STATUS)
-    |              ^^^^^^^^^^^^^
+    |              ^^^^^^^^^^^^^ Set here...
 154 |     endfile(10, iostat=status)
-    |                 ------------- Overwritten here
+    |                 ------------- ... and overwritten here
 155 |     close(10, iostat=STATUS)
 156 |     ! Something other than IO statement, reuse status
     |
@@ -227,9 +227,9 @@ C181 iostat argument 'status' is overwritten before being checked in this scope.
 152 |     read(10, *, iostat=status, asynchronous="YES") line
 153 |     wait(10, Iostat=STATUS)
 154 |     endfile(10, iostat=status)
-    |                 ^^^^^^^^^^^^^
+    |                 ^^^^^^^^^^^^^ Set here...
 155 |     close(10, iostat=STATUS)
-    |               ------------- Overwritten here
+    |               ------------- ... and overwritten here
 156 |     ! Something other than IO statement, reuse status
 157 |     allocate(x(10), STAT=Status)
     |
@@ -240,10 +240,10 @@ C181 iostat argument 'STATUS' is overwritten before being checked in this scope.
 153 |     wait(10, Iostat=STATUS)
 154 |     endfile(10, iostat=status)
 155 |     close(10, iostat=STATUS)
-    |               ^^^^^^^^^^^^^
+    |               ^^^^^^^^^^^^^ Set here...
 156 |     ! Something other than IO statement, reuse status
 157 |     allocate(x(10), STAT=Status)
-    |                     ----------- Overwritten here
+    |                     ----------- ... and overwritten here
 158 |     deallocate(x, stat=status)
 159 |   end subroutine io
     |
@@ -254,9 +254,9 @@ C181 stat argument 'Status' is overwritten before being checked in this scope.
 155 |     close(10, iostat=STATUS)
 156 |     ! Something other than IO statement, reuse status
 157 |     allocate(x(10), STAT=Status)
-    |                     ^^^^^^^^^^^
+    |                     ^^^^^^^^^^^ Set here...
 158 |     deallocate(x, stat=status)
-    |                   ----------- Overwritten here
+    |                   ----------- ... and overwritten here
 159 |   end subroutine io
     |
 
@@ -275,9 +275,9 @@ C181 cmdstat argument 'Status' is overwritten before being checked in this scope
     |
 161 |   integer function cmd_line() result(status)
 162 |     call execute_command_line("ls", cmdstat=Status)
-    |                                     ^^^^^^^^^^^^^^
+    |                                     ^^^^^^^^^^^^^^ Set here...
 163 |     call execute_command_line("ls", Cmdstat=status)
-    |                                     -------------- Overwritten here
+    |                                     -------------- ... and overwritten here
 164 |   end function cmd_line
     |
 
