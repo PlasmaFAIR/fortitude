@@ -1,10 +1,21 @@
-use clap::{ArgAction::SetTrue, Parser, Subcommand};
-use fortitude_workspace::configuration::{
-    convert_file_and_extensions_to_include, resolve_bool_arg,
+use anyhow::bail;
+use clap::{
+    ArgAction::SetTrue,
+    Parser, Subcommand,
+    builder::{TypedValueParser, ValueParserFactory},
 };
+use fortitude_workspace::{
+    configuration::{convert_file_and_extensions_to_include, resolve_bool_arg},
+    options::Options,
+};
+use itertools::Itertools;
 use path_absolutize::path_dedot;
+use ruff_options_metadata::{OptionEntry, OptionsMetadata};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
+use std::sync::Arc;
+use std::{fmt::Write as _, ops::Deref};
 
 use fortitude_linter::{
     fs::{FilePattern, GlobPath},
@@ -15,6 +26,7 @@ use fortitude_linter::{
         FortranStandard, IgnoreAllowComments, OutputFormat, PatternPrefixPair, PreviewMode,
         ProgressBar, UnsafeFixes,
     },
+    warn_user_once_by_message,
 };
 use fortitude_workspace::configuration::{Configuration, ConfigurationTransformer};
 
@@ -43,9 +55,26 @@ pub struct GlobalConfigArgs {
     #[clap(flatten)]
     log_level_args: LogLevelArgs,
 
-    /// Path to a TOML configuration file
-    #[arg(long, global = true, help_heading = "Global options")]
+    /// Either a path to a TOML configuration file
+    /// (`[fpm,fortitude,pyproject].toml`), or a TOML `<KEY> = <VALUE>` pair
+    /// (such as you might find in a `fortitude.toml` configuration file)
+    /// overriding a specific configuration option.  Overrides of individual
+    /// settings using this option always take precedence over all configuration
+    /// files, including configuration files that were also specified using
+    /// `--config`.
+    #[arg(
+        long,
+        action = clap::ArgAction::Append,
+        value_name = "CONFIG_OPTION",
+        value_parser = ConfigArgumentParser,
+        global = true,
+        help_heading = "Global options",
+    )]
+    pub config: Vec<SingleConfigArgument>,
+    /// Path to a TOML configuration file. (Deprecated: Use `--config=<filename>` instead.)
+    #[arg(long, global = true, help_heading = "Global options", hide = true)]
     pub config_file: Option<PathBuf>,
+
     /// Ignore all configuration files.
     #[arg(
         long,
@@ -452,7 +481,6 @@ pub struct CheckArguments {
 /// Configuration-related arguments passed via the CLI.
 #[derive(Default)]
 pub struct ConfigArguments {
-    // TODO: add other ruff bits like `isolated` and `overrides`
     /// Whether the user specified --isolated on the command line
     pub(crate) isolated: bool,
     /// The logging level to be used, derived from command-line arguments passed
@@ -460,6 +488,11 @@ pub struct ConfigArguments {
     /// Path to a fpm.toml or fortitude.toml configuration file (etc.).
     /// Either 0 or 1 configuration file paths may be provided on the command line.
     config_file: Option<PathBuf>,
+    /// Overrides provided via the `--config "KEY=VALUE"` option.
+    /// An arbitrary number of these overrides may be provided on the command line.
+    /// These overrides take precedence over all configuration files,
+    /// even configuration files that were also specified using `--config`.
+    overrides: Configuration,
     /// Overrides provided via dedicated flags such as `--line-length` etc.
     /// These overrides take precedence over all configuration files,
     /// and also over all overrides specified using any `--config "KEY=VALUE"` flags.
@@ -476,12 +509,63 @@ impl ConfigArguments {
         per_flag_overrides: ExplicitConfigOverrides,
     ) -> anyhow::Result<Self> {
         let log_level = global_options.log_level();
-        let config_file = global_options.config_file;
+        let deprecated_config_file = global_options.config_file;
+        let config_options = global_options.config;
         let isolated = global_options.isolated;
+
+        if deprecated_config_file.is_some() {
+            warn_user_once_by_message!(
+                "The `--config-file` option is now deprecated in favour of `--config`"
+            );
+        }
+
+        let mut config_file: Option<PathBuf> = deprecated_config_file;
+        let mut overrides = Configuration::default();
+
+        for option in config_options {
+            match option {
+                SingleConfigArgument::SettingsOverride(overridden_option) => {
+                    let overridden_option = Arc::try_unwrap(overridden_option)
+                        .unwrap_or_else(|option| option.deref().clone());
+                    overrides = overrides.combine(Configuration::from_options(
+                        overridden_option,
+                        &path_dedot::CWD,
+                    ));
+                }
+                SingleConfigArgument::FilePath(path) => {
+                    if isolated {
+                        bail!(
+                            "\
+The argument `--config={}` cannot be used with `--isolated`
+
+  tip: You cannot specify a configuration file and also specify `--isolated`,
+       as `--isolated` causes fortitude to ignore all configuration files.
+       For more information, try `--help`.
+",
+                            path.display()
+                        );
+                    }
+                    if let Some(ref config_file) = config_file {
+                        let (first, second) = (config_file.display(), path.display());
+                        bail!(
+                            "\
+You cannot specify more than one configuration file on the command line.
+
+  tip: remove either `--config={first}` or `--config={second}`.
+       For more information, try `--help`.
+"
+                        );
+                    }
+                    config_file = Some(path);
+                }
+            }
+        }
+
         Ok(Self {
             isolated,
             log_level,
             config_file,
+            overrides,
             per_flag_overrides,
         })
     }
@@ -489,7 +573,8 @@ impl ConfigArguments {
 
 impl ConfigurationTransformer for ConfigArguments {
     fn transform(&self, config: Configuration) -> Configuration {
-        self.per_flag_overrides.transform(config)
+        let with_config_overrides = self.overrides.clone().combine(config);
+        self.per_flag_overrides.transform(with_config_overrides)
     }
 }
 
@@ -700,5 +785,205 @@ pub struct ServerCommand {
 impl ServerCommand {
     pub(crate) fn resolve_preview(self) -> Option<bool> {
         resolve_bool_arg(Some(self.preview), Some(self.no_preview))
+    }
+}
+
+/// Enumeration of various ways in which a --config CLI flag
+/// could be invalid
+#[derive(Debug)]
+enum InvalidConfigFlagReason {
+    InvalidToml(toml::de::Error),
+    /// It was valid TOML, but not a valid fortitude config file.
+    /// E.g. the user tried to select a rule that doesn't exist,
+    /// or tried to enable a setting that doesn't exist
+    ValidTomlButInvalidFortitudeSchema(toml::de::Error),
+    /// It was a valid fortitude config file, but the user tried to pass a
+    /// value for `extend` as part of the config override.
+    /// `extend` is special, because it affects which config files we look at
+    /// in the first place. We currently only parse --config overrides *after*
+    /// we've combined them with all the arguments from the various config files
+    /// that we found, so trying to override `extend` as part of a --config
+    /// override is forbidden.
+    // TODO(peter): use this when we get `extend`
+    #[allow(dead_code)]
+    ExtendPassedViaConfigFlag,
+}
+
+impl InvalidConfigFlagReason {
+    const fn description(&self) -> &'static str {
+        match self {
+            Self::InvalidToml(_) => "The supplied argument is not valid TOML",
+            Self::ValidTomlButInvalidFortitudeSchema(_) => {
+                "Could not parse the supplied argument as a `fortitude.toml` configuration option"
+            }
+            Self::ExtendPassedViaConfigFlag => "Cannot include `extend` in a --config flag value",
+        }
+    }
+}
+
+/// Enumeration to represent a single `--config` argument
+/// passed via the CLI.
+///
+/// Using the `--config` flag, users may pass 0 or 1 paths
+/// to configuration files and an arbitrary number of
+/// "inline TOML" overrides for specific settings.
+///
+/// For example:
+///
+/// ```sh
+/// fortitude check --config "path/to/fortitude.toml" --config "extend-select=['E501', 'F841']" --config "lint.per-file-ignores = {'some_file.py' = ['F841']}"
+/// ```
+#[derive(Clone, Debug)]
+pub enum SingleConfigArgument {
+    FilePath(PathBuf),
+    SettingsOverride(Arc<Options>),
+}
+
+#[derive(Clone)]
+pub struct ConfigArgumentParser;
+
+impl ValueParserFactory for SingleConfigArgument {
+    type Parser = ConfigArgumentParser;
+
+    fn value_parser() -> Self::Parser {
+        ConfigArgumentParser
+    }
+}
+
+impl TypedValueParser for ConfigArgumentParser {
+    type Value = SingleConfigArgument;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        // Convert to UTF-8.
+        let Some(value) = value.to_str() else {
+            // But respect non-UTF-8 paths.
+            let path_to_config_file = PathBuf::from(value);
+            if path_to_config_file.is_file() {
+                return Ok(SingleConfigArgument::FilePath(path_to_config_file));
+            }
+            return Err(clap::Error::new(clap::error::ErrorKind::InvalidUtf8));
+        };
+
+        // Expand environment variables and tildes.
+        if let Ok(path_to_config_file) =
+            shellexpand::full(value).map(|config| PathBuf::from(&*config))
+            && path_to_config_file.is_file()
+        {
+            return Ok(SingleConfigArgument::FilePath(path_to_config_file));
+        }
+
+        let config_parse_error = match toml::Table::from_str(value) {
+            Ok(table) => match table.try_into::<Options>() {
+                Ok(option) => {
+                    return Ok(SingleConfigArgument::SettingsOverride(Arc::new(option)));
+                }
+                Err(underlying_error) => {
+                    InvalidConfigFlagReason::ValidTomlButInvalidFortitudeSchema(underlying_error)
+                }
+            },
+            Err(underlying_error) => InvalidConfigFlagReason::InvalidToml(underlying_error),
+        };
+
+        let mut new_error = clap::Error::new(clap::error::ErrorKind::ValueValidation).with_cmd(cmd);
+        if let Some(arg) = arg {
+            new_error.insert(
+                clap::error::ContextKind::InvalidArg,
+                clap::error::ContextValue::String(arg.to_string()),
+            );
+        }
+        new_error.insert(
+            clap::error::ContextKind::InvalidValue,
+            clap::error::ContextValue::String(value.to_string()),
+        );
+
+        let underlying_error = match &config_parse_error {
+            InvalidConfigFlagReason::ExtendPassedViaConfigFlag => {
+                let tip = config_parse_error.description().into();
+                new_error.insert(
+                    clap::error::ContextKind::Suggested,
+                    clap::error::ContextValue::StyledStrs(vec![tip]),
+                );
+                return Err(new_error);
+            }
+            InvalidConfigFlagReason::InvalidToml(underlying_error)
+            | InvalidConfigFlagReason::ValidTomlButInvalidFortitudeSchema(underlying_error) => {
+                underlying_error
+            }
+        };
+
+        // small hack so that multiline tips
+        // have the same indent on the left-hand side:
+        let tip_indent = " ".repeat("  tip: ".len());
+
+        let mut tip = format!(
+            "\
+A `--config` flag must either be a path to a `.toml` configuration file
+{tip_indent}or a TOML `<KEY> = <VALUE>` pair overriding a specific configuration
+{tip_indent}option"
+        );
+
+        // Here we do some heuristics to try to figure out whether
+        // the user was trying to pass in a path to a configuration file
+        // or some inline TOML.
+        // We want to display the most helpful error to the user as possible.
+        if Path::new(value)
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("toml"))
+        {
+            if !value.contains('=') {
+                let _ = write!(
+                    &mut tip,
+                    "
+
+It looks like you were trying to pass a path to a configuration file.
+The path `{value}` does not point to a configuration file"
+                );
+            }
+        } else if let Some((key, value)) = value.split_once('=') {
+            let key = key.trim_ascii();
+            let value = value.trim_ascii_start();
+
+            match Options::metadata().find(key) {
+                Some(OptionEntry::Set(set)) if !value.starts_with('{') => {
+                    let prefixed_subfields = set
+                        .collect_fields()
+                        .iter()
+                        .map(|(name, _)| format!("- `{key}.{name}`"))
+                        .join("\n");
+
+                    let _ = write!(
+                        &mut tip,
+                        "
+
+`{key}` is a table of configuration options.
+Did you want to override one of the table's subkeys?
+
+Possible choices:
+
+{prefixed_subfields}"
+                    );
+                }
+                _ => {
+                    let _ = write!(
+                        &mut tip,
+                        "\n\n{}:\n\n{underlying_error}",
+                        config_parse_error.description()
+                    );
+                }
+            }
+        }
+        let tip = tip.trim_end().to_owned().into();
+
+        new_error.insert(
+            clap::error::ContextKind::Suggested,
+            clap::error::ContextValue::StyledStrs(vec![tip]),
+        );
+
+        Err(new_error)
     }
 }

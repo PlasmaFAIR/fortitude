@@ -56,10 +56,9 @@ to a source file than the root `fortitude.toml`, then rule selection
 settings such as `select` and `ignore` are taken from the nested file,
 not from the root file.
 
-If a config file is passed on the command line using `--config-file`,
-those settings are used for _all_ files, and any relative paths in
-that config file are resolved relative to the directory where
-`fortitude` is run.
+If a config file is passed on the command line using `--config`, those settings
+are used for _all_ files, and any relative paths in that config file are
+resolved relative to the directory where `fortitude` is run.
 
 Similarly, any other options set on the command line (for example,
 `--select`) override those in all found config files.
@@ -196,6 +195,54 @@ $ fortitude check --select S001 --select implicit-typing --quiet
 Settings on the command line always take precedence over those given in the configuration
 file.
 
+### The `--config` CLI flag
+
+The `--config` flag has two uses. It is most often used to point to the
+configuration file that you would like Fortitude to use, for example:
+
+```console
+$ fortitude check path/to/directory --config path/to/fortitude.toml
+```
+
+However, the `--config` flag can also be used to provide arbitrary
+overrides of configuration settings using TOML `<KEY> = <VALUE>` pairs.
+This is mostly useful in situations where you wish to override a configuration setting
+that does not have a dedicated command-line flag.
+
+In the below example, the `--config` flag is the only way of overriding the
+`use-statements.allow-bare-use` configuration setting from the command line,
+since this setting has no dedicated CLI flag. The `per-file-ignores` setting
+could also have been overridden via the `--per-file-ignores` dedicated flag,
+but using `--config` to override the setting is also fine:
+
+```console
+$ fortitude check path/to/file --config path/to/fortitude.toml --config
+"lint.use-statements.allow-bare-use = ['netcdf']" --config "lint.per-file-ignores = {'some_file.f90' = ['C001']}"
+```
+
+Configuration options passed to `--config` are parsed in the same way as
+configuration options in a `fortitude.toml` file.  As such, options specific to
+the Fortitude linter need to be prefixed with `check.`  (`--config
+"check.use-statements.allow-bare-use = ['netcdf']"` rather than simply `--config
+"use-statements.allow-bare-use = ['netcdf']"`).
+
+If a specific configuration option is simultaneously overridden by
+a dedicated flag and by the `--config` flag, the dedicated flag
+takes priority. In this example, the maximum permitted line length
+will be set to 90, not 100:
+
+```console
+$ fortitude check path/to/file --line-length=90 --config "check.line-length=100"
+```
+
+Specifying `--config "check.line-length=90"` will override the
+`check.line-length` setting from *all* configuration files detected by
+Fortitude, including configuration files discovered in subdirectories.  In this
+respect, specifying `--config "check.line-length=90"` has the same effect as
+specifying `--line-length=90`, which will similarly override the
+`check.line-length` setting from all configuration files detected by Fortitude,
+regardless of where a specific configuration file is located.
+
 ### Full command-line interface
 
 See `fortitude help` for the full list of Fortitude's top-level commands:
@@ -225,8 +272,10 @@ Log levels:
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
 
 Global options:
-      --config-file <CONFIG_FILE>  Path to a TOML configuration file
-      --isolated                   Ignore all configuration files
+      --config <CONFIG_OPTION>
+          Either a path to a TOML configuration file (`[fpm,fortitude,pyproject].toml`), or a TOML `<KEY> = <VALUE>` pair (such as you might find in a `fortitude.toml` configuration file) overriding a specific configuration option.  Overrides of individual settings using this option always take precedence over all configuration files, including configuration files that were also specified using `--config`
+      --isolated
+          Ignore all configuration files
 
 For help with a specific command, see: `fortitude help <command>`.
 ```
@@ -330,8 +379,10 @@ Log levels:
   -s, --silent   Disable all logging (but still exit with status code "1" upon detecting diagnostics)
 
 Global options:
-      --config-file <CONFIG_FILE>  Path to a TOML configuration file
-      --isolated                   Ignore all configuration files
+      --config <CONFIG_OPTION>
+          Either a path to a TOML configuration file (`[fpm,fortitude,pyproject].toml`), or a TOML `<KEY> = <VALUE>` pair (such as you might find in a `fortitude.toml` configuration file) overriding a specific configuration option.  Overrides of individual settings using this option always take precedence over all configuration files, including configuration files that were also specified using `--config`
+      --isolated
+          Ignore all configuration files
 ```
 
 <!-- End auto-generated check help. -->
