@@ -201,6 +201,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "291") => (RuleGroup::Preview, Ast, Default, style::literals::BareDecimal),
         (Style, "301") => (RuleGroup::Preview, Ast, Optional, style::superfluous_while_true::SuperfluousWhileTrue),
         (Style, "311") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordReuse),
+        (Style, "312") => (RuleGroup::Preview, Ast, Optional, style::whole_array_indexing::WholeArrayIndexing),
         (Style, "901") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooComplex),
         (Style, "902") => (RuleGroup::Preview, Ast, Optional, style::complexity::TooManyArguments),
 
