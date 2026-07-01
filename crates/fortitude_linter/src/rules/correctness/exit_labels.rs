@@ -1,6 +1,6 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{
-    AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
+    AlwaysFixableViolation, Annotation, Diagnostic, Edit, Fix, FixAvailability, Span, Violation,
 };
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
@@ -47,12 +47,12 @@ impl AstRule for MissingExitOrCycleLabel {
         let src = context.source_text();
         // Skip unlabelled loops
         let label = node
-            .child_with_name("block_label_start_expression")?
+            .child_with_id(kind!("block_label_start_expression"))?
             .to_text(src)?
             .trim_end_matches(':');
 
         let violations: Vec<Diagnostic> = node
-            .named_descendants_except(["do_loop"])
+            .descendants_except(&[kind!("do_loop")])
             .filter(|node| node.kind_id() == kind!("keyword_statement"))
             .filter_map(|node| node.child(0))
             .filter(|child| matches!(child.kind_id(), kw!("exit") | kw!("cycle")))
@@ -118,7 +118,7 @@ pub(crate) struct ExitOrCycleInUnlabelledLoop {
 impl Violation for ExitOrCycleInUnlabelledLoop {
     #[derive_message_formats]
     fn message(&self) -> String {
-        let Self { name } = self;
+        let Self { name, .. } = self;
         format!("'{name}' statement in unlabelled 'do' loop")
     }
 }
@@ -140,7 +140,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
         // Immediate parent loop has a label, but we don't want to warn here, because
         // that's covered by missing-exit-or-cycle-label
         if parent_loop
-            .child_with_name("block_label_start_expression")
+            .child_with_id(kind!("block_label_start_expression"))
             .is_some()
         {
             return None;
@@ -159,7 +159,18 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
                 .nth(0)?;
         }
 
-        some_vec!(context.create_diagnostic(Self { name }, node))
+        let mut diagnostic = context.create_diagnostic(Self { name }, node);
+        diagnostic
+            .primary_annotation_mut()
+            .expect("Must have primary annotation")
+            .set_message("...control flow statement here");
+        // Add annotation to highlight the parent loop
+        let statement = parent_loop.child_with_id(kind!("do_statement"))?;
+        let span = Span::from(context.source_file().clone()).with_range(statement.textrange());
+        diagnostic
+            .annotate(Annotation::secondary(span).message("Unlabelled loop referenced by..."));
+
+        some_vec!(diagnostic)
     }
 
     fn entrypoints() -> Vec<u16> {
@@ -219,21 +230,22 @@ impl AstRule for MissingEndLabel {
         let src = context.source_text();
         // Skip unlabelled loops
         let label = node
-            .child_with_name("block_label_start_expression")?
+            .child_with_id(kind!("block_label_start_expression"))?
             .to_text(src)?
             .trim_end_matches(':');
 
-        let end = match node.kind() {
-            "select_case_statement" | "select_type_statement" | "select_rank_statement" => {
-                "end_select_statement".to_string()
-            }
-            "do_loop" => "end_do_loop_statement".to_string(),
+        let end = match node.kind_id() {
+            #[allow(clippy::manual_range_patterns)]
+            kind!("select_case_statement")
+            | kind!("select_type_statement")
+            | kind!("select_rank_statement") => "end_select_statement".to_string(),
+            kind!("do_loop") => "end_do_loop_statement".to_string(),
             _ => format!("end_{}", node.kind()),
         };
 
         let violation: Diagnostic = node
             .child_with_name(&end)
-            .filter(|node| node.child_with_name("block_label").is_none())
+            .filter(|node| node.child_with_id(kind!("block_label")).is_none())
             .map(|stmt| {
                 let label_with_space = format!(" {label}");
                 let edit = Edit::insertion(label_with_space, stmt.end_textsize());

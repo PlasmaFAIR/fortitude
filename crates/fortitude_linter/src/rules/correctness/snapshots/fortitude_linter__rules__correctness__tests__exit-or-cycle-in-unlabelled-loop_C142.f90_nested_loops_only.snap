@@ -1,26 +1,29 @@
 ---
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 C142 'cycle' statement in unlabelled 'do' loop
-  --> ./resources/test/fixtures/correctness/C142.f90:27:7
+  --> ./resources/test/fixtures/correctness/C142.f90:26:5
    |
+24 |   label5: do i = 1, 2
 25 |     ! should warn
 26 |     do j = 1, 2
+   |     ----------- Unlabelled loop referenced by...
 27 |       cycle
-   |       ^^^^^
+   |       ^^^^^ ...control flow statement here
 28 |     end do
 29 |   end do label5
    |
 
 C142 'exit' statement in unlabelled 'do' loop
-  --> ./resources/test/fixtures/correctness/C142.f90:56:7
+  --> ./resources/test/fixtures/correctness/C142.f90:54:5
    |
+53 |   do
 54 |     do
+   |     -- Unlabelled loop referenced by...
 55 |       ! should warn
 56 |       exit
-   |       ^^^^
+   |       ^^^^ ...control flow statement here
 57 |     end do
 58 |   end do
    |

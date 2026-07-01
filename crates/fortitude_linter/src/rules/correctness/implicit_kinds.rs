@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -66,7 +66,9 @@ impl AstRule for ImplicitRealKind {
             return None;
         }
 
-        if node.parent()?.kind() == "derived_type" && node.next_named_sibling()?.kind() == "kind" {
+        if node.parent()?.kind_id() == kind!("derived_type")
+            && node.next_named_sibling()?.kind_id() == kind!("kind")
+        {
             return None;
         }
 

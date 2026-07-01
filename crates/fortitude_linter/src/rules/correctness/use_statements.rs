@@ -3,7 +3,7 @@ use crate::diagnostics::{Diagnostic, Edit, Fix, Violation};
 use crate::settings::FortranStandard;
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind, kw};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -43,6 +43,7 @@ impl Violation for UseAll {
 
 impl AstRule for UseAll {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        // TODO rewrite to use UseStatements when added to SymbolTable
         let module_name = node.module_name(context.source_text())?.to_lowercase();
 
         if !context
@@ -50,7 +51,7 @@ impl AstRule for UseAll {
             .use_statements
             .allow_bare_use
             .contains(&module_name)
-            && node.child_with_name("included_items").is_none()
+            && node.child_with_id(kind!("included_items")).is_none()
         {
             return some_vec![context.create_diagnostic(UseAll {}, node)];
         }
@@ -108,6 +109,8 @@ impl Violation for MissingIntrinsic {
 
 impl AstRule for MissingIntrinsic {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        // TODO rewrite to use UseStatements when added to SymbolTable
+
         // Feature only available in Fortran 2003 and later
         if context.settings().target_std < FortranStandard::F2003 {
             return None;
@@ -117,10 +120,9 @@ impl AstRule for MissingIntrinsic {
         if INTRINSIC_MODULES.iter().any(|&m| m == module_name)
             && node
                 .children(&mut node.walk())
-                .filter_map(|child| child.to_text(context.source_text()))
-                .all(|child| child != "intrinsic" && child != "non_intrinsic")
+                .all(|child| !matches!(child.kind_id(), kw!("intrinsic") | kw!("non_intrinsic")))
         {
-            let intrinsic = if node.child(1)?.kind() == "::" {
+            let intrinsic = if node.child(1)?.kind_id() == kw!("::") {
                 ", intrinsic"
             } else {
                 ", intrinsic ::"
@@ -128,7 +130,7 @@ impl AstRule for MissingIntrinsic {
 
             let use_field = node
                 .children(&mut node.walk())
-                .find(|&child| child.to_text(context.source_text()) == Some("use"))?;
+                .find(|&child| child.kind_id() == kw!("use"))?;
             let start_pos = use_field.end_textsize();
             let fix = Fix::unsafe_edit(Edit::insertion(intrinsic.to_string(), start_pos));
 

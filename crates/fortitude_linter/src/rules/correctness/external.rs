@@ -1,5 +1,5 @@
 use crate::diagnostics::{Diagnostic, Violation};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, field, kind, kw};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -33,17 +33,12 @@ impl Violation for ExternalProcedure {
 
 impl AstRule for ExternalProcedure {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if node
-            .child_with_name("type_qualifier")?
-            .to_text(context.source_text())?
-            .to_lowercase()
-            != "external"
-        {
-            return None;
-        }
+        // Exit early if not an external procedure declaration
+        node.child_with_id(kind!("type_qualifier"))?
+            .child_with_id(kw!("external"))?;
 
         let name = node
-            .child_by_field_name("declarator")?
+            .child_by_field_id(field!("declarator").into())?
             .to_text(context.source_text())?
             .to_string();
         some_vec!(context.create_diagnostic(Self { name }, node))
@@ -77,7 +72,7 @@ impl Violation for ProcedureNotInModule {
 
 impl AstRule for ProcedureNotInModule {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if node.parent()?.kind() == "translation_unit" {
+        if node.parent()?.kind_id() == kind!("translation_unit") {
             let procedure_stmt = node.child(0)?;
             let procedure = node.kind().to_string();
             return some_vec![

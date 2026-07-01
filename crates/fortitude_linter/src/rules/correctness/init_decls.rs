@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::ast::types::{AttributeKind, get_name_node_of_declarator};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -85,7 +85,10 @@ impl AstRule for InitialisationInDeclaration {
         let src = context.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
-            ["function", "subroutine", "module_procedure"].contains(&parent.kind())
+            matches!(
+                parent.kind_id(),
+                kind!("function") | kind!("subroutine") | kind!("module_procedure")
+            )
         })?;
 
         let name = get_name_node_of_declarator(node).to_text(src)?.to_string();
@@ -204,7 +207,10 @@ impl AstRule for PointerInitialisationInDeclaration {
         let src = context.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
-            ["function", "subroutine", "module_procedure"].contains(&parent.kind())
+            matches!(
+                parent.kind_id(),
+                kind!("function") | kind!("subroutine") | kind!("module_procedure")
+            )
         })?;
 
         let var = get_name_node_of_declarator(node);
@@ -215,7 +221,7 @@ impl AstRule for PointerInitialisationInDeclaration {
         }
 
         // Array syntax on the variable name
-        if let Some(arr) = var.child_with_name("identifier") {
+        if let Some(arr) = var.child_with_id(kind!("identifier")) {
             let name = arr.to_text(src)?.to_string();
             return some_vec![context.create_diagnostic(Self { name }, node)];
         }

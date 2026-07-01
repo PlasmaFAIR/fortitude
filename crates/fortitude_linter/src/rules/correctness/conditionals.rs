@@ -2,7 +2,7 @@ use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind, kw};
 use ruff_macros::derive_message_formats;
 use ruff_source_file::{LineEnding, SourceFile, find_newline};
 use ruff_text_size::TextSize;
@@ -58,18 +58,18 @@ impl AstRule for MisleadingInlineIfSemicolon {
         }
 
         // Check that the if statement is followed directly by a semicolon
-        if let Some(semicolon_node) = node.next_sibling().filter(|n| n.kind() == ";") {
+        if let Some(semicolon_node) = node.next_sibling().filter(|n| n.kind_id() == kw!(";")) {
             // Find the first following non-semicolon node, and check that it's
             // on the same line as the first semicolon node.
             // Comments on the same line are permitted.
             let mut current_node = semicolon_node;
             while let Some(next) = current_node.next_sibling() {
-                if next.kind() == ";" {
+                if next.kind_id() == kw!(";") {
                     current_node = next;
                     continue;
                 }
                 if next.start_position().row != semicolon_node.start_position().row
-                    || next.kind() == "comment"
+                    || next.kind_id() == kind!("comment")
                 {
                     return None;
                 }
@@ -153,9 +153,9 @@ impl AstRule for MisleadingInlineIfContinuation {
 
         // Check if the condition is immediately following by a continuation
         let body_start = node
-            .child_with_name("parenthesized_expression")?
+            .child_with_id(kind!("parenthesized_expression"))?
             .next_sibling()?;
-        if body_start.kind() == "&" {
+        if body_start.kind_id() == kw!("&") {
             let content = ifthenify(node, context.source_file())?;
             let start_byte = node.start_textsize();
             let end_byte = node.end_textsize();
@@ -191,7 +191,7 @@ pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
         .as_str();
     // Divide the if statement into everything up to the end of the condition
     // and the body.
-    let condition_node = node.child_with_name("parenthesized_expression")?;
+    let condition_node = node.child_with_id(kind!("parenthesized_expression"))?;
     let condition_end_byte = condition_node.end_byte() - node.start_byte();
     let mut body_start_byte = condition_end_byte;
     // Skip over any whitespace or line continuations between the condition

@@ -1,7 +1,7 @@
 use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind};
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -28,10 +28,8 @@ pub(crate) struct MissingAccessibilityStatement {
 impl Violation for MissingAccessibilityStatement {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!(
-            "module '{}' missing default accessibility statement",
-            self.name
-        )
+        let name = &self.name;
+        format!("module '{name}' missing default accessibility statement")
     }
 }
 
@@ -39,12 +37,12 @@ impl AstRule for MissingAccessibilityStatement {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let module = node.parent()?;
 
-        let bare_private_statement = match module.child_with_name("private_statement") {
+        let bare_private_statement = match module.child_with_id(kind!("private_statement")) {
             Some(statement) => statement.named_child(0).is_none(),
             None => false,
         };
 
-        let bare_public_statement = match module.child_with_name("public_statement") {
+        let bare_public_statement = match module.child_with_id(kind!("public_statement")) {
             Some(statement) => statement.named_child(0).is_none(),
             None => false,
         };
@@ -85,7 +83,8 @@ pub(crate) struct DefaultPublicAccessibility {
 impl Violation for DefaultPublicAccessibility {
     #[derive_message_formats]
     fn message(&self) -> String {
-        format!("module '{}' has default `public` accessibility", self.name)
+        let name = &self.name;
+        format!("module '{name}' has default `public` accessibility")
     }
 }
 
@@ -94,9 +93,9 @@ impl AstRule for DefaultPublicAccessibility {
         // Bare `public` statement`
         if node.named_child(0).is_none() {
             let module = node.parent()?;
-            let statement = module.child_with_name("module_statement")?;
+            let statement = module.child_with_id(kind!("module_statement"))?;
             let name = statement
-                .child_with_name("name")?
+                .child_with_id(kind!("name"))?
                 .to_text(context.source_text())?
                 .to_string();
             return some_vec![context.create_diagnostic(DefaultPublicAccessibility { name }, node)];

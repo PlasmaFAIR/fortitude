@@ -4,7 +4,7 @@ use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::settings::FortranStandard;
 use crate::traits::{HasNode, TextRanged};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::{ViolationMetadata, kw};
+use fortitude_macros::{ViolationMetadata, kind, kw};
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use tree_sitter::Node;
@@ -17,7 +17,7 @@ fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
     let last_use_statement_range = node
         .named_children(&mut node.walk())
         .filter_map(|child| {
-            if child.kind() == "use_statement" {
+            if child.kind_id() == kind!("use_statement") {
                 Some(child.textrange())
             } else {
                 None
@@ -169,8 +169,8 @@ impl AstRule for ImplicitTyping {
         // Run on functions and subroutines only if they aren't in a module,
         // program, or submodule. This rule will catch implicit typing in the
         // parent enttity, so we don't need to check it in the children.
-        if matches!(node.kind(), "function" | "subroutine")
-            && node.parent()?.kind() != "translation_unit"
+        if matches!(node.kind_id(), kind!("function") | kind!("subroutine"))
+            && node.parent()?.kind_id() != kind!("translation_unit")
         {
             return None;
         }
@@ -222,7 +222,7 @@ impl AstRule for InterfaceImplicitTyping {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Exit early if we're not in an interface.
         let parent = node.parent()?;
-        if parent.kind() != "interface" {
+        if parent.kind_id() != kind!("interface") {
             return None;
         }
 
