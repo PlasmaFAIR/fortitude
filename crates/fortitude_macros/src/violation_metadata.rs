@@ -37,6 +37,13 @@ fn get_docs(attrs: &[Attribute]) -> syn::Result<String> {
                 let line = value.strip_prefix(' ').unwrap_or(&value);
                 explanation.push_str(line);
                 explanation.push('\n');
+
+                if explanation.contains(&"## Settings") {
+                    return Err(Error::new_spanned(
+                        attr,
+                        "use '## Options' instead of '## Settings'",
+                    ));
+                }
             } else {
                 return Err(Error::new_spanned(attr, "unimplemented doc comment style"));
             }
