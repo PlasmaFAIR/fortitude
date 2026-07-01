@@ -133,6 +133,7 @@
 | PORT021 | [star-kind](rules/star-kind.md) | '{dtype}{size}' uses non-standard syntax | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | PORT031 | [invalid-tab](rules/invalid-tab.md) | Invalid tab character | <span title='Rule is stable' style='opacity: 0.6'>✔️</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule turned on by default'>▶️</span> |
 | PORT041 | [return-in-program](rules/return-in-program.md) | 'return' statement in program body | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| PORT051 | [unary-following-arithmetic](rules/unary-following-arithmetic.md) | Unary operator following an arithmetic expression | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Fortitude (FORT)
 

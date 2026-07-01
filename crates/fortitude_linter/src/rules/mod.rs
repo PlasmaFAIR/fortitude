@@ -166,6 +166,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Portability, "021") => (RuleGroup::Stable, Ast, Default, portability::star_kinds::StarKind),
         (Portability, "031") => (RuleGroup::Stable, None, Default, portability::invalid_tab::InvalidTab),
         (Portability, "041") => (RuleGroup::Preview, Ast, Optional, portability::return_in_program::ReturnInProgram),
+        (Portability, "051") => (RuleGroup::Preview, Ast, Optional, portability::unary_following_arithmetic::UnaryFollowingArithmetic),
 
         // style
         (Style, "001") => (RuleGroup::Stable, None, Default, style::line_length::LineTooLong),

@@ -1,0 +1,326 @@
+---
+source: crates/fortitude_linter/src/rules/portability/mod.rs
+expression: diagnostics
+---
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:79:13
+   |
+78 |     ! All fail.
+79 |     i = 2 + +3
+   |             ^
+80 |     i = 2 - - 3
+81 |     i = 2 * -3
+   |
+help: Add parenthesese around the desired argument of the unary operator
+76 |     i = 10 ** (-2) * 3 ! some comment.
+77 |
+78 |     ! All fail.
+   -     i = 2 + +3
+79 +     i = 2 + (+3)
+80 |     i = 2 - - 3
+81 |     i = 2 * -3
+82 |     i = 2 / -(3)
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:80:13
+   |
+78 |     ! All fail.
+79 |     i = 2 + +3
+80 |     i = 2 - - 3
+   |             ^
+81 |     i = 2 * -3
+82 |     i = 2 / -(3)
+   |
+help: Add parenthesese around the desired argument of the unary operator
+77 |
+78 |     ! All fail.
+79 |     i = 2 + +3
+   -     i = 2 - - 3
+80 +     i = 2 - (- 3)
+81 |     i = 2 * -3
+82 |     i = 2 / -(3)
+83 |     i = 10 ** +3
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:81:13
+   |
+79 |     i = 2 + +3
+80 |     i = 2 - - 3
+81 |     i = 2 * -3
+   |             ^
+82 |     i = 2 / -(3)
+83 |     i = 10 ** +3
+   |
+help: Add parenthesese around the desired argument of the unary operator
+78 |     ! All fail.
+79 |     i = 2 + +3
+80 |     i = 2 - - 3
+   -     i = 2 * -3
+81 +     i = 2 * (-3)
+82 |     i = 2 / -(3)
+83 |     i = 10 ** +3
+84 |     i = 10 ** -2
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:82:13
+   |
+80 |     i = 2 - - 3
+81 |     i = 2 * -3
+82 |     i = 2 / -(3)
+   |             ^
+83 |     i = 10 ** +3
+84 |     i = 10 ** -2
+   |
+help: Add parenthesese around the desired argument of the unary operator
+79 |     i = 2 + +3
+80 |     i = 2 - - 3
+81 |     i = 2 * -3
+   -     i = 2 / -(3)
+82 +     i = 2 / (-(3))
+83 |     i = 10 ** +3
+84 |     i = 10 ** -2
+85 |     i = 10 ** -2 * 3
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:83:15
+   |
+81 |     i = 2 * -3
+82 |     i = 2 / -(3)
+83 |     i = 10 ** +3
+   |               ^
+84 |     i = 10 ** -2
+85 |     i = 10 ** -2 * 3
+   |
+help: Add parenthesese around the desired argument of the unary operator
+80 |     i = 2 - - 3
+81 |     i = 2 * -3
+82 |     i = 2 / -(3)
+   -     i = 10 ** +3
+83 +     i = 10 ** (+3)
+84 |     i = 10 ** -2
+85 |     i = 10 ** -2 * 3
+86 |     i = 10 ** -(2) / 3
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:84:15
+   |
+82 |     i = 2 / -(3)
+83 |     i = 10 ** +3
+84 |     i = 10 ** -2
+   |               ^
+85 |     i = 10 ** -2 * 3
+86 |     i = 10 ** -(2) / 3
+   |
+help: Add parenthesese around the desired argument of the unary operator
+81 |     i = 2 * -3
+82 |     i = 2 / -(3)
+83 |     i = 10 ** +3
+   -     i = 10 ** -2
+84 +     i = 10 ** (-2)
+85 |     i = 10 ** -2 * 3
+86 |     i = 10 ** -(2) / 3
+87 |     i = 10 &
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:85:15
+   |
+83 |     i = 10 ** +3
+84 |     i = 10 ** -2
+85 |     i = 10 ** -2 * 3
+   |               ^
+86 |     i = 10 ** -(2) / 3
+87 |     i = 10 &
+   |
+help: Add parenthesese around the desired argument of the unary operator
+82 |     i = 2 / -(3)
+83 |     i = 10 ** +3
+84 |     i = 10 ** -2
+   -     i = 10 ** -2 * 3
+85 +     i = 10 ** (-2) * 3
+86 |     i = 10 ** -(2) / 3
+87 |     i = 10 &
+88 |             &** -2 * 3
+note: This is an unsafe fix and may change runtime behavior
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:86:15
+   |
+84 |     i = 10 ** -2
+85 |     i = 10 ** -2 * 3
+86 |     i = 10 ** -(2) / 3
+   |               ^
+87 |     i = 10 &
+88 |             &** -2 * 3
+   |
+help: Add parenthesese around the desired argument of the unary operator
+83 |     i = 10 ** +3
+84 |     i = 10 ** -2
+85 |     i = 10 ** -2 * 3
+   -     i = 10 ** -(2) / 3
+86 +     i = 10 ** (-(2)) / 3
+87 |     i = 10 &
+88 |             &** -2 * 3
+89 |     i = 10 ** &
+note: This is an unsafe fix and may change runtime behavior
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:88:17
+   |
+86 |     i = 10 ** -(2) / 3
+87 |     i = 10 &
+88 |             &** -2 * 3
+   |                 ^
+89 |     i = 10 ** &
+90 |             &-2
+   |
+help: Add parenthesese around the desired argument of the unary operator
+85 |     i = 10 ** -2 * 3
+86 |     i = 10 ** -(2) / 3
+87 |     i = 10 &
+   -             &** -2 * 3
+88 +             &** (-2) * 3
+89 |     i = 10 ** &
+90 |             &-2
+91 |     i = 10 ** -&
+note: This is an unsafe fix and may change runtime behavior
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:90:14
+   |
+88 |             &** -2 * 3
+89 |     i = 10 ** &
+90 |             &-2
+   |              ^
+91 |     i = 10 ** -&
+92 |             &2
+   |
+help: Add parenthesese around the desired argument of the unary operator
+87 |     i = 10 &
+88 |             &** -2 * 3
+89 |     i = 10 ** &
+   -             &-2
+90 +             &(-2)
+91 |     i = 10 ** -&
+92 |             &2
+93 |     i = 10 ** -2 ! some comment.
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:91:15
+   |
+89 |     i = 10 ** &
+90 |             &-2
+91 |     i = 10 ** -&
+   |               ^
+92 |             &2
+93 |     i = 10 ** -2 ! some comment.
+   |
+help: Add parenthesese around the desired argument of the unary operator
+88 |             &** -2 * 3
+89 |     i = 10 ** &
+90 |             &-2
+   -     i = 10 ** -&
+   -             &2
+91 +     i = 10 ** (-&
+92 +             &2)
+93 |     i = 10 ** -2 ! some comment.
+94 |     i = 10   **    -      2
+95 |     i = 10   **    -      2  *   3
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:93:15
+   |
+91 |     i = 10 ** -&
+92 |             &2
+93 |     i = 10 ** -2 ! some comment.
+   |               ^
+94 |     i = 10   **    -      2
+95 |     i = 10   **    -      2  *   3
+   |
+help: Add parenthesese around the desired argument of the unary operator
+90 |             &-2
+91 |     i = 10 ** -&
+92 |             &2
+   -     i = 10 ** -2 ! some comment.
+93 +     i = 10 ** (-2) ! some comment.
+94 |     i = 10   **    -      2
+95 |     i = 10   **    -      2  *   3
+96 |     i = 10 ** -2 * 3 ** -7
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:94:20
+   |
+92 |             &2
+93 |     i = 10 ** -2 ! some comment.
+94 |     i = 10   **    -      2
+   |                    ^
+95 |     i = 10   **    -      2  *   3
+96 |     i = 10 ** -2 * 3 ** -7
+   |
+help: Add parenthesese around the desired argument of the unary operator
+91 |     i = 10 ** -&
+92 |             &2
+93 |     i = 10 ** -2 ! some comment.
+   -     i = 10   **    -      2
+94 +     i = 10   **    (-      2)
+95 |     i = 10   **    -      2  *   3
+96 |     i = 10 ** -2 * 3 ** -7
+97 |
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:95:20
+   |
+93 |     i = 10 ** -2 ! some comment.
+94 |     i = 10   **    -      2
+95 |     i = 10   **    -      2  *   3
+   |                    ^
+96 |     i = 10 ** -2 * 3 ** -7
+   |
+help: Add parenthesese around the desired argument of the unary operator
+92 |             &2
+93 |     i = 10 ** -2 ! some comment.
+94 |     i = 10   **    -      2
+   -     i = 10   **    -      2  *   3
+95 +     i = 10   **    (-      2)  *   3
+96 |     i = 10 ** -2 * 3 ** -7
+97 |
+98 | end program main
+note: This is an unsafe fix and may change runtime behavior
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:96:15
+   |
+94 |     i = 10   **    -      2
+95 |     i = 10   **    -      2  *   3
+96 |     i = 10 ** -2 * 3 ** -7
+   |               ^
+97 |
+98 | end program main
+   |
+help: Add parenthesese around the desired argument of the unary operator
+93 |     i = 10 ** -2 ! some comment.
+94 |     i = 10   **    -      2
+95 |     i = 10   **    -      2  *   3
+   -     i = 10 ** -2 * 3 ** -7
+96 +     i = 10 ** (-2) * 3 ** -7
+97 |
+98 | end program main
+note: This is an unsafe fix and may change runtime behavior
+
+PORT051 [*] Unary operator following an arithmetic expression
+  --> ./resources/test/fixtures/portability/PORT051.f90:96:25
+   |
+94 |     i = 10   **    -      2
+95 |     i = 10   **    -      2  *   3
+96 |     i = 10 ** -2 * 3 ** -7
+   |                         ^
+97 |
+98 | end program main
+   |
+help: Add parenthesese around the desired argument of the unary operator
+93 |     i = 10 ** -2 ! some comment.
+94 |     i = 10   **    -      2
+95 |     i = 10   **    -      2  *   3
+   -     i = 10 ** -2 * 3 ** -7
+96 +     i = 10 ** -2 * 3 ** (-7)
+97 |
+98 | end program main
