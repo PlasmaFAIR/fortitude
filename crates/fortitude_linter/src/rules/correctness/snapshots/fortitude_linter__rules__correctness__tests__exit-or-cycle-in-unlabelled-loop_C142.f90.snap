@@ -8,9 +8,9 @@ C142 'cycle' statement in unlabelled 'do' loop
 24 |   label5: do i = 1, 2
 25 |     ! should warn
 26 |     do j = 1, 2
-   |     ----------- Unlabelled loop
+   |     ----------- Unlabelled loop referenced by...
 27 |       cycle
-   |       ^^^^^
+   |       ^^^^^ ...control flow statement here
 28 |     end do
 29 |   end do label5
    |
@@ -21,10 +21,10 @@ C142 'exit' statement in unlabelled 'do' loop
 46 |   end do label8
 47 |
 48 |   do
-   |   -- Unlabelled loop
+   |   -- Unlabelled loop referenced by...
 49 |     ! should warn, except if `nested-loops-only` is true
 50 |     exit
-   |     ^^^^
+   |     ^^^^ ...control flow statement here
 51 |   end do
    |
 
@@ -33,10 +33,10 @@ C142 'exit' statement in unlabelled 'do' loop
    |
 53 |   do
 54 |     do
-   |     -- Unlabelled loop
+   |     -- Unlabelled loop referenced by...
 55 |       ! should warn
 56 |       exit
-   |       ^^^^
+   |       ^^^^ ...control flow statement here
 57 |     end do
 58 |   end do
    |

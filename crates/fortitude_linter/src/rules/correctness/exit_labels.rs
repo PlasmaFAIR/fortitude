@@ -160,10 +160,15 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
         }
 
         let mut diagnostic = context.create_diagnostic(Self { name }, node);
+        diagnostic
+            .primary_annotation_mut()
+            .expect("Must have primary annotation")
+            .set_message("...control flow statement here");
         // Add annotation to highlight the parent loop
         let statement = parent_loop.child_with_id(kind!("do_statement"))?;
         let span = Span::from(context.source_file().clone()).with_range(statement.textrange());
-        diagnostic.annotate(Annotation::secondary(span).message("Unlabelled loop"));
+        diagnostic
+            .annotate(Annotation::secondary(span).message("Unlabelled loop referenced by..."));
 
         some_vec!(diagnostic)
     }
