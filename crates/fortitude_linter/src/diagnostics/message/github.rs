@@ -22,7 +22,7 @@ impl GithubRenderer {
     ) -> std::fmt::Result {
         for diagnostic in diagnostics {
             let severity = match diagnostic.severity() {
-                Severity::Info => "notice",
+                Severity::Info | Severity::None => "notice",
                 Severity::Warning => "warning",
                 Severity::Error | Severity::Fatal => "error",
             };

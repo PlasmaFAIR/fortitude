@@ -5,7 +5,7 @@
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
 
-use crate::rules::Rule;
+use crate::{diagnostics::Severity, rules::Rule};
 use std::fmt::{Debug, Display};
 
 use super::{Diagnostic, create_lint_diagnostic};
@@ -34,6 +34,11 @@ pub trait ViolationMetadata {
     /// Returns an explanation of what this violation catches,
     /// why it's bad, and what users should do instead.
     fn explain() -> Option<&'static str>;
+
+    /// Returns the severity of this violation.
+    fn severity() -> Severity {
+        Severity::None
+    }
 }
 
 pub trait Violation: ViolationMetadata + Sized {

@@ -80,6 +80,7 @@ impl<'a> ConciseRenderer<'a> {
                 }
             } else {
                 let (severity, severity_style) = match diag.severity() {
+                    Severity::None => ("none", stylesheet.none),
                     Severity::Info => ("info", stylesheet.info),
                     Severity::Warning => ("warning", stylesheet.warning),
                     Severity::Error => ("error", stylesheet.error),

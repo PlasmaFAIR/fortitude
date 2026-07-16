@@ -202,6 +202,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
         unsafe_fixes,
         show_fixes,
         output_format,
+        severity_default,
         preview,
         ..
     } = file_configuration.settings.check;
@@ -261,6 +262,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
 
     let printer = Printer::new(
         output_format,
+        severity_default,
         config_arguments.log_level,
         printer_flags,
         fix_mode,

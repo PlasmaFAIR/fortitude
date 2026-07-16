@@ -16,7 +16,8 @@ impl AzureRenderer {
     ) -> std::fmt::Result {
         for diag in diagnostics {
             let severity = match diag.severity() {
-                Severity::Info | Severity::Warning => "warning",
+                Severity::None | Severity::Info => "debug",
+                Severity::Warning => "warning",
                 Severity::Error | Severity::Fatal => "error",
             };
             write!(f, "##vso[task.logissue type={severity};")?;

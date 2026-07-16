@@ -3,6 +3,7 @@ use crate::options::{
     IncorrectKeywordCaseOptions, InvalidTabOptions, KeywordWhitespaceOptions, LineTooLongOptions,
     Options, PortabilityOptions, ShadowedVariableOptions, StringOptions, UseStatementsOptions,
 };
+use fortitude_linter::diagnostics::{RuleSeverityOverrides, Severity};
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
 };
@@ -236,6 +237,8 @@ pub struct Configuration {
     pub show_fixes: Option<bool>,
     pub unsafe_fixes: Option<UnsafeFixes>,
     pub output_format: Option<OutputFormat>,
+    pub severity_default: Option<Severity>,
+    pub severity_overrides: Option<Vec<RuleSeverityOverrides>>,
     pub target_std: Option<FortranStandard>,
     pub progress_bar: Option<ProgressBar>,
     pub preview: Option<PreviewMode>,
@@ -291,6 +294,8 @@ impl Configuration {
             show_fixes: check.show_fixes,
             unsafe_fixes: check.unsafe_fixes.map(UnsafeFixes::from),
             output_format: check.output_format,
+            severity_default: check.severity_default,
+            severity_overrides: check.severity_overrides,
             target_std: check.target_std,
             progress_bar: check.progress_bar,
             preview: check.preview.map(PreviewMode::from),
@@ -377,6 +382,8 @@ impl Configuration {
                 target_std: self.target_std.unwrap_or_default(),
                 progress_bar,
                 output_format: self.output_format.unwrap_or_default(),
+                severity_default: self.severity_default.unwrap_or_default(),
+                severity_overrides: self.severity_overrides.unwrap_or_default(),
                 show_fixes: self.show_fixes.unwrap_or_default(),
                 per_file_ignores: CompiledPerFileIgnoreList::resolve(
                     self.per_file_ignores
@@ -485,6 +492,16 @@ impl Configuration {
             show_fixes: self.show_fixes.or(config.show_fixes),
             unsafe_fixes: self.unsafe_fixes.or(config.unsafe_fixes),
             output_format: self.output_format.or(config.output_format),
+            severity_default: self.severity_default.or(config.severity_default),
+            severity_overrides: match (self.severity_overrides, config.severity_overrides) {
+                (Some(mut self_overrides), Some(config_overrides)) => {
+                    self_overrides.extend(config_overrides);
+                    Some(self_overrides)
+                }
+                (Some(self_overrides), None) => Some(self_overrides),
+                (None, Some(config_overrides)) => Some(config_overrides),
+                (None, None) => None,
+            },
             progress_bar: self.progress_bar.or(config.progress_bar),
             preview: self.preview.or(config.preview),
             exclude: self.exclude.or(config.exclude),

@@ -7,7 +7,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use crate::diagnostics::Applicability;
+use crate::diagnostics::{Applicability, RuleSeverityOverrides, Severity};
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_macros::CacheKey;
@@ -67,6 +67,8 @@ pub struct CheckSettings {
     pub show_fixes: bool,
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
+    pub severity_default: Severity,
+    pub severity_overrides: Vec<RuleSeverityOverrides>,
     pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
@@ -106,6 +108,8 @@ impl CheckSettings {
             show_fixes: false,
             unsafe_fixes: UnsafeFixes::default(),
             output_format: OutputFormat::default(),
+            severity_default: Severity::default(),
+            severity_overrides: Vec::default(),
             target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
@@ -133,6 +137,26 @@ impl CheckSettings {
         Self {
             rules,
             ..Self::default()
+        }
+    }
+
+    pub fn resolve_severity(&self, rule: Rule, severity: Severity) -> Severity {
+        if let Some(override_severity) = self
+            .severity_overrides
+            .iter()
+            .rev() // Last override takes precedence
+            .find(|override_| override_.matches(rule))
+            .map(|override_| override_.severity)
+        {
+            return match override_severity {
+                Severity::None => self.severity_default,
+                other => other,
+            };
+        }
+
+        match severity {
+            Severity::None => self.severity_default,
+            other => other,
         }
     }
 }

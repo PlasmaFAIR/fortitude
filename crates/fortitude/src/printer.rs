@@ -3,14 +3,15 @@ use std::io::Write;
 
 use anyhow::Result;
 use bitflags::bitflags;
-use colored::Colorize;
+use colored::{Color, Colorize};
 use fortitude_linter::preview::{is_show_diff_enabled, is_warning_severity_enabled};
 use itertools::{Itertools, iterate};
 use serde::Serialize;
 
 use crate::check::CheckResults;
 use fortitude_linter::diagnostics::{
-    Diagnostic, Diagnostics, DisplayDiagnosticConfig, FixMap, SecondaryCode, render_diagnostics,
+    Diagnostic, Diagnostics, DisplayDiagnosticConfig, FixMap, SecondaryCode, Severity,
+    render_diagnostics,
 };
 use fortitude_linter::fs::relativize_path;
 use fortitude_linter::logging::LogLevel;
@@ -50,6 +51,7 @@ type DiagnosticGroup<'a> = (Option<&'a SecondaryCode>, &'a Diagnostic, usize, us
 
 pub(crate) struct Printer {
     format: OutputFormat,
+    severity_default: Severity,
     log_level: LogLevel,
     flags: Flags,
     fix_mode: FixMode,
@@ -59,6 +61,7 @@ pub(crate) struct Printer {
 impl Printer {
     pub(crate) fn new(
         format: OutputFormat,
+        severity_default: Severity,
         log_level: LogLevel,
         flags: Flags,
         fix_mode: FixMode,
@@ -66,6 +69,7 @@ impl Printer {
     ) -> Self {
         Self {
             format,
+            severity_default,
             log_level,
             flags,
             fix_mode,
@@ -113,8 +117,8 @@ impl Printer {
 
             let explain = format!(
                 "fortitude explain {},{},...",
-                "X001".bold().bright_red(),
-                "Y002".bold().bright_red()
+                "X001".bold().color(self.severity_default),
+                "Y002".bold().color(self.severity_default)
             );
             let info =
                 format!("For more information about specific rules, run:\n\n    {explain}\n");
@@ -243,7 +247,11 @@ impl Printer {
                     && !results.diagnostics.fixed.is_empty()
                 {
                     writeln!(writer)?;
-                    print_fix_summary(writer, &results.diagnostics.fixed)?;
+                    print_fix_summary(
+                        writer,
+                        &results.diagnostics.fixed,
+                        self.severity_default.into(),
+                    )?;
                     writeln!(writer)?;
                 }
                 self.write_summary_text(writer, results)?;
@@ -270,7 +278,7 @@ impl Printer {
         ) {
             if self.flags.intersects(Flags::SHOW_FIX_SUMMARY) && !diagnostics.fixed.is_empty() {
                 writeln!(writer)?;
-                print_fix_summary(writer, &diagnostics.fixed)?;
+                print_fix_summary(writer, &diagnostics.fixed, self.severity_default.into())?;
                 writeln!(writer)?;
             }
             self.write_summary_text(writer, results)?;
@@ -360,7 +368,7 @@ impl Printer {
                             .code
                             .map(SecondaryCode::as_str)
                             .unwrap_or_default()
-                            .red()
+                            .color(self.severity_default)
                             .bold(),
                         if any_fixable {
                             if statistic.all_fixable {
@@ -414,7 +422,7 @@ fn show_fix_status(fix_mode: FixMode, fixables: Option<&FixableStatistics>) -> b
     (!fix_mode.is_apply()) && fixables.is_some_and(FixableStatistics::any_applicable_fixes)
 }
 
-fn print_fix_summary(writer: &mut dyn Write, fixed: &FixMap) -> Result<()> {
+fn print_fix_summary(writer: &mut dyn Write, fixed: &FixMap, color: Color) -> Result<()> {
     let total = fixed
         .values()
         .map(|table| table.values().sum::<usize>())
@@ -447,7 +455,7 @@ fn print_fix_summary(writer: &mut dyn Write, fixed: &FixMap) -> Result<()> {
             writeln!(
                 writer,
                 "    {count:>num_digits$} × {} ({})",
-                rule.noqa_code().to_string().red().bold(),
+                rule.noqa_code().to_string().color(color).bold(),
                 rule.as_ref(),
             )?;
         }

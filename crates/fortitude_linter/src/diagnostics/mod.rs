@@ -10,18 +10,21 @@ use std::{
     borrow::Cow,
     fmt::{Display, Formatter},
     ops::{Add, AddAssign},
+    str::FromStr,
     sync::Arc,
 };
 
+use clap::builder::{TypedValueParser, ValueParserFactory};
+use colored::Color;
 use ruff_source_file::{LineColumn, SourceFile};
 use rustc_hash::FxHashMap;
 
 use anyhow::Result;
 use ruff_annotate_snippets::Level as AnnotateLevel;
 use ruff_text_size::{Ranged, TextRange};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use crate::{fix::FixTable, rules::Rule, settings::OutputFormat, traits::TextRanged};
+use crate::{RuleSelector, fix::FixTable, rules::Rule, settings::OutputFormat, traits::TextRanged};
 
 pub use message::{DisplayDiagnostic, DisplayDiagnostics, render_diagnostics};
 pub use violation::{AlwaysFixableViolation, FixAvailability, Violation, ViolationMetadata};
@@ -1177,11 +1180,15 @@ impl From<SourceFile> for Span {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize)]
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize,
+)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
+    None,
     Info,
     Warning,
+    #[default]
     Error,
     Fatal,
 }
@@ -1189,6 +1196,7 @@ pub enum Severity {
 impl Severity {
     fn to_annotate(self) -> AnnotateLevel {
         match self {
+            Severity::None => AnnotateLevel::None,
             Severity::Info => AnnotateLevel::Info,
             Severity::Warning => AnnotateLevel::Warning,
             Severity::Error => AnnotateLevel::Error,
@@ -1205,6 +1213,144 @@ impl Severity {
 
     pub const fn is_fatal(self) -> bool {
         matches!(self, Severity::Fatal)
+    }
+}
+
+impl From<Severity> for Color {
+    fn from(severity: Severity) -> Self {
+        match severity {
+            Severity::None => Color::White,
+            Severity::Info => Color::Blue,
+            Severity::Warning => Color::Yellow,
+            Severity::Error => Color::Red,
+            Severity::Fatal => Color::Red,
+        }
+    }
+}
+
+impl FromStr for Severity {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "none" => Ok(Severity::None),
+            "info" => Ok(Severity::Info),
+            "warning" => Ok(Severity::Warning),
+            "error" => Ok(Severity::Error),
+            "fatal" => Ok(Severity::Fatal),
+            _ => Err(anyhow::anyhow!(
+                "Expected one of 'none', 'info', 'warning', 'error', or 'fatal', got {s:?}"
+            )),
+        }
+    }
+}
+
+impl Display for Severity {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Severity::None => "none",
+            Severity::Info => "info",
+            Severity::Warning => "warning",
+            Severity::Error => "error",
+            Severity::Fatal => "fatal",
+        };
+        f.write_str(s)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RuleSeverityOverrides {
+    pub selector: RuleSelector,
+    pub severity: Severity,
+}
+
+impl RuleSeverityOverrides {
+    const EXPECTED_PATTERN: &'static str = "<RuleSelector>:<Severity> pair";
+
+    pub fn matches(&self, rule: Rule) -> bool {
+        self.selector.all_rules().any(|r| r == rule)
+    }
+}
+
+impl Display for RuleSeverityOverrides {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let (prefix, code) = self.selector.prefix_and_code();
+        write!(f, "{prefix}{code}:{}", self.severity)
+    }
+}
+
+impl FromStr for RuleSeverityOverrides {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (selector, severity) = s
+            .split_once(':')
+            .ok_or_else(|| anyhow::anyhow!("Expected {}, got {s:?}", Self::EXPECTED_PATTERN))?;
+
+        Ok(Self {
+            selector: RuleSelector::from_str(selector.trim())?,
+            severity: Severity::from_str(severity.trim())?,
+        })
+    }
+}
+
+impl Serialize for RuleSeverityOverrides {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for RuleSeverityOverrides {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Self::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+#[derive(Clone)]
+pub struct RuleSeverityOverridesParser;
+
+impl ValueParserFactory for RuleSeverityOverrides {
+    type Parser = RuleSeverityOverridesParser;
+
+    fn value_parser() -> Self::Parser {
+        RuleSeverityOverridesParser
+    }
+}
+
+impl TypedValueParser for RuleSeverityOverridesParser {
+    type Value = RuleSeverityOverrides;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        let value = value
+            .to_str()
+            .ok_or_else(|| clap::Error::new(clap::error::ErrorKind::InvalidUtf8))?;
+
+        value.parse().map_err(|_| {
+            let mut error = clap::Error::new(clap::error::ErrorKind::ValueValidation).with_cmd(cmd);
+            if let Some(arg) = arg {
+                error.insert(
+                    clap::error::ContextKind::InvalidArg,
+                    clap::error::ContextValue::String(arg.to_string()),
+                );
+            }
+            error.insert(
+                clap::error::ContextKind::InvalidValue,
+                clap::error::ContextValue::String(value.to_string()),
+            );
+            error
+        })
     }
 }
 
