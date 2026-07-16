@@ -494,9 +494,9 @@ impl Configuration {
             output_format: self.output_format.or(config.output_format),
             severity_default: self.severity_default.or(config.severity_default),
             severity_overrides: match (self.severity_overrides, config.severity_overrides) {
-                (Some(mut self_overrides), Some(config_overrides)) => {
-                    self_overrides.extend(config_overrides);
-                    Some(self_overrides)
+                (Some(self_overrides), Some(mut config_overrides)) => {
+                    config_overrides.extend(self_overrides);
+                    Some(config_overrides)
                 }
                 (Some(self_overrides), None) => Some(self_overrides),
                 (None, Some(config_overrides)) => Some(config_overrides),

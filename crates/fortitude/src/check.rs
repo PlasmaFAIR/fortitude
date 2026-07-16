@@ -354,10 +354,15 @@ fn check_files(
                             if settings.check.rules.enabled(Rule::IoError) {
                                 let message = format!("Error opening file: {error}");
                                 let filename = resolved_file.file_name().to_string_lossy();
-                                let diagnostics = vec![IoError { message }.into_diagnostic(
+                                let mut diagnostic = IoError { message }.into_diagnostic(
                                     TextRange::default(),
                                     &SourceFileBuilder::new(filename.as_ref(), "").finish(),
-                                )];
+                                );
+                                let severity = settings
+                                    .check
+                                    .resolve_severity(Rule::IoError, Rule::IoError.severity());
+                                diagnostic.set_severity(severity);
+                                let diagnostics = vec![diagnostic];
                                 return CheckStatus::Skipped(Diagnostics::new(diagnostics));
                             } else {
                                 warn!(
@@ -423,10 +428,15 @@ fn check_files(
                         if settings.check.rules.enabled(Rule::IoError) {
                             let message = format!("Error opening file: {message}");
                             let filename = path.to_string_lossy();
-                            let diagnostics = vec![IoError { message }.into_diagnostic(
+                            let mut diagnostic = IoError { message }.into_diagnostic(
                                 TextRange::default(),
                                 &SourceFileBuilder::new(filename.as_ref(), "").finish(),
-                            )];
+                            );
+                            let severity = settings
+                                .check
+                                .resolve_severity(Rule::IoError, Rule::IoError.severity());
+                            diagnostic.set_severity(severity);
+                            let diagnostics = vec![diagnostic];
                             CheckStatus::Skipped(Diagnostics::new(diagnostics))
                         } else {
                             warn!(

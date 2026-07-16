@@ -303,6 +303,11 @@ impl Diagnostic {
             Some(message.into_diagnostic_message());
     }
 
+    /// Set the severity of this diagnostic.
+    pub fn set_severity(&mut self, severity: Severity) {
+        Arc::make_mut(&mut self.inner).severity = severity;
+    }
+
     /// Returns the severity of this diagnostic.
     ///
     /// Note that this may be different than the severity of sub-diagnostics.
@@ -1718,7 +1723,7 @@ where
     B: Display,
     S: Display,
 {
-    let mut diagnostic = Diagnostic::new(DiagnosticId::Lint(rule), Severity::Error, body);
+    let mut diagnostic = Diagnostic::new(DiagnosticId::Lint(rule), rule.severity(), body);
 
     let span = Span::from(file).with_range(range);
     let mut annotation = Annotation::primary(span);

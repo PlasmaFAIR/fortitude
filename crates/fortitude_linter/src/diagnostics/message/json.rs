@@ -95,7 +95,7 @@ pub(super) fn diagnostic_to_json<'a>(
     } else {
         JsonDiagnostic {
             code: diagnostic.secondary_code_or_id(),
-            severity: Severity::Error,
+            severity: diagnostic.severity(),
             url: diagnostic.documentation_url(),
             message: diagnostic.concise_message(),
             fix,
