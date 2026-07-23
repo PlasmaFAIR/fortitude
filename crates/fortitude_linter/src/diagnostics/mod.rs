@@ -3,17 +3,20 @@
 // SPDX-License-Identifier: MIT
 
 mod message;
+pub mod panic;
 mod stylesheet;
 pub mod violation;
 
 use std::{
+    backtrace::BacktraceStatus,
     borrow::Cow,
     fmt::{Display, Formatter},
     ops::{Add, AddAssign},
+    path::Path,
     sync::Arc,
 };
 
-use ruff_source_file::{LineColumn, SourceFile};
+use ruff_source_file::{LineColumn, SourceFile, SourceFileBuilder};
 use rustc_hash::FxHashMap;
 
 use anyhow::Result;
@@ -21,7 +24,10 @@ use ruff_annotate_snippets::Level as AnnotateLevel;
 use ruff_text_size::{Ranged, TextRange};
 use serde::Serialize;
 
-use crate::{fix::FixTable, rules::Rule, settings::OutputFormat, traits::TextRanged};
+use crate::{
+    diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat,
+    traits::TextRanged,
+};
 
 pub use message::{DisplayDiagnostic, DisplayDiagnostics, render_diagnostics};
 pub use violation::{AlwaysFixableViolation, FixAvailability, Violation, ViolationMetadata};
@@ -1600,6 +1606,55 @@ where
         env!("CARGO_PKG_HOMEPAGE"),
         rule.name()
     )));
+
+    diagnostic
+}
+
+/// Create a `Diagnostic` from a panic.
+pub fn create_panic_diagnostic(error: &PanicError, path: Option<&Path>) -> Diagnostic {
+    let mut diagnostic = Diagnostic::new(
+        DiagnosticId::Panic,
+        Severity::Fatal,
+        error.to_diagnostic_message(path.as_ref().map(|path| path.display())),
+    );
+
+    diagnostic.sub(SubDiagnostic::new(
+        SubDiagnosticSeverity::Info,
+        "This indicates a bug in Fortitude.",
+    ));
+    let report_message = "If you could open an issue at \
+                            https://github.com/PlasmaFAIR/fortitude/issues/new?title=%5Bpanic%5D, \
+                            we'd be very appreciative!";
+    diagnostic.sub(SubDiagnostic::new(
+        SubDiagnosticSeverity::Info,
+        report_message,
+    ));
+
+    if let Some(backtrace) = &error.backtrace {
+        match backtrace.status() {
+            BacktraceStatus::Disabled => {
+                diagnostic.sub(SubDiagnostic::new(
+                            SubDiagnosticSeverity::Info,
+                            "run with `RUST_BACKTRACE=1` environment variable to show the full backtrace information",
+                        ));
+            }
+            BacktraceStatus::Captured => {
+                diagnostic.sub(SubDiagnostic::new(
+                    SubDiagnosticSeverity::Info,
+                    format!("Backtrace:\n{backtrace}"),
+                ));
+            }
+            _ => {}
+        }
+    }
+
+    if let Some(path) = path {
+        let file = SourceFileBuilder::new(path.to_string_lossy(), "").finish();
+        let span = Span::from(file);
+        let mut annotation = Annotation::primary(span);
+        annotation.hide_snippet(true);
+        diagnostic.annotate(annotation);
+    }
 
     diagnostic
 }
