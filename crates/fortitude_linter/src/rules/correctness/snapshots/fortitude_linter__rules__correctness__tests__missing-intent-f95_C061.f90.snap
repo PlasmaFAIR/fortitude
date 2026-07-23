@@ -10,7 +10,7 @@ C061 function argument 'a' missing 'intent' attribute
 10 |     use mod
 11 |     integer :: a, c(2), f
    |                ^
-12 |     integer, dimension(:), intent(in) :: b
+12 |     integer, intent(in), contiguous :: b(:)
 13 |     procedure(sub) :: p         ! must not have `intent`
    |
 
@@ -21,7 +21,7 @@ C061 function argument 'c' missing 'intent' attribute
 10 |     use mod
 11 |     integer :: a, c(2), f
    |                   ^^^^
-12 |     integer, dimension(:), intent(in) :: b
+12 |     integer, intent(in), contiguous :: b(:)
 13 |     procedure(sub) :: p         ! must not have `intent`
    |
 

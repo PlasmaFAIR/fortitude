@@ -549,7 +549,7 @@ end subroutine foo
         let code = r#"
 function foo(x)
   integer, intent(in) :: x
-  integer, allocatable, dimension(:) :: foo
+  integer, allocatable, dimension(:), contiguous, save :: foo
 end function foo
 "#;
         let tree = parser.parse(code, None).context("Failed to parse")?;
@@ -563,6 +563,8 @@ end function foo
         let foo = foo.unwrap();
         assert!(!foo.is_dummy_var());
         assert!(foo.has_attribute(AttributeKind::Allocatable));
+        assert!(foo.has_attribute(AttributeKind::Contiguous));
+        assert!(foo.has_attribute(AttributeKind::Save));
         assert!(
             foo.attributes()
                 .iter()
