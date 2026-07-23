@@ -278,7 +278,8 @@ impl<'a> AttributeKind<'a> {
     pub fn try_from_node(value: &Node<'a>) -> Result<Self> {
         let first_child = value.child(0).unwrap().kind();
         // TODO: handle codimension properly
-        let attr = AttributeKind::from_str(first_child)?;
+        let attr = AttributeKind::from_str(first_child)
+            .context(format!("unknown attribute '{first_child}'"))?;
 
         match attr {
             AttributeKind::Intent(_) => Ok(AttributeKind::Intent(Intent::from_node(value))),
@@ -685,7 +686,8 @@ pub struct ProcedureAttribute<'a> {
 
 impl<'a> ProcedureAttribute<'a> {
     pub fn try_from_node(node: Node<'a>) -> Result<Self> {
-        let kind = ProcedureAttributeKind::from_str(node.kind())?;
+        let kind = ProcedureAttributeKind::from_str(node.kind())
+            .context(format!("unknown procedure attribute '{}'", node.kind()))?;
         Ok(Self { kind, node })
     }
 
@@ -717,7 +719,8 @@ impl<'a> Procedure<'a> {
             return Err(anyhow!("not a procedure"));
         }
 
-        let kind = ProcedureKind::from_str(node.kind()).unwrap();
+        let kind = ProcedureKind::from_str(node.kind())
+            .context(format!("unknown procedure kind '{}'", node.kind()))?;
 
         let stmt = node.child(0).context("expected child")?;
 
@@ -730,6 +733,7 @@ impl<'a> Procedure<'a> {
         let attributes: Result<Vec<_>> = stmt
             .named_children(&mut stmt.walk())
             .filter(|attr| attr.kind_id() == kind!("procedure_qualifier"))
+            .map(|attr| attr.child(0).expect("procedure_qualifier must have child"))
             .map(ProcedureAttribute::try_from_node)
             .collect();
         let attributes = attributes?;
