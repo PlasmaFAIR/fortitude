@@ -59,7 +59,8 @@ pub fn gather_allow_comments<'a, 'b>(
         r#"! allow\((.*)\)\s*"#,
         node.to_text(file.source_text()).unwrap()
     )?;
-    let range = if let Some(next_node) = node.next_named_sibling() {
+    let range = {
+        let next_node = node.next_named_sibling()?;
         let start_byte = next_node.start_textsize();
         let end_byte = next_node.end_textsize();
 
@@ -74,8 +75,6 @@ pub fn gather_allow_comments<'a, 'b>(
         let end_line = src.line_end(end_index);
 
         TextRange::new(start_line, end_line)
-    } else {
-        return None;
     };
 
     // Partition the found selectors into valid and invalid

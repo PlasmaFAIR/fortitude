@@ -19,7 +19,7 @@ pub fn version_command(output_format: HelpFormat) -> Result<()> {
 
     match output_format {
         HelpFormat::Text => {
-            writeln!(stdout, "fortitude {}", &version_info)?;
+            writeln!(stdout, "fortitude {}", version_info)?;
         }
         HelpFormat::Json => {
             serde_json::to_writer_pretty(stdout, &version_info)?;
