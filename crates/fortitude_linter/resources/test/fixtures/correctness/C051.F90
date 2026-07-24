@@ -8,4 +8,6 @@ program t
     A = 2.0
     print *, A
 
+    ! this is fine \
+    ! if this is a comment
 end program t
