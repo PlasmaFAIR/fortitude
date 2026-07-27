@@ -250,7 +250,7 @@ pub enum AttributeKind<'a> {
     Codimension,
     Dimension(Dimension<'a>),
     Constant,
-    Continguous,
+    Contiguous,
     Device,
     External,
     Intent(Intent),

@@ -9,7 +9,7 @@ contains
   integer function foo(a, b, c, p)
     use mod
     integer :: a, c(2), f
-    integer, dimension(:), intent(in) :: b
+    integer, intent(in), contiguous :: b(:)
     procedure(sub) :: p         ! must not have `intent`
   end function foo
 
