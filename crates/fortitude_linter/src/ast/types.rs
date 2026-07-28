@@ -313,26 +313,103 @@ impl<'a> Attribute<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, EnumIs, IntoStaticStr)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
+pub enum IntrinsicType<'a> {
+    Byte(TypeInner<'a>),
+    Integer(TypeInner<'a>),
+    Real(TypeInner<'a>),
+    #[strum(to_string = "double precision")]
+    DoublePrecision(TypeInner<'a>),
+    Complex(TypeInner<'a>),
+    #[strum(to_string = "double complex")]
+    DoubleComplex(TypeInner<'a>),
+    Logical(TypeInner<'a>),
+    Character(TypeInner<'a>),
+}
+
+impl<'a> IntrinsicType<'a> {
+    pub fn from_node(node: Node<'a>, src: &'a str) -> Self {
+        if node.kind_id() != kind!("intrinsic_type") {
+            panic!(
+                "IntrinsicType can only be created from `intrinsic_type`, got {}",
+                node.kind()
+            );
+        }
+        let type_node = node.child(0).expect("must have zeroth child");
+        let name = type_node.to_text(src).expect("must have text");
+        match type_node.kind_id() {
+            kw!("byte") => IntrinsicType::Byte(TypeInner { node, name }),
+            kw!("integer") => IntrinsicType::Integer(TypeInner { node, name }),
+            kw!("real") => IntrinsicType::Real(TypeInner { node, name }),
+            kw!("doubleprecision") => IntrinsicType::DoublePrecision(TypeInner { node, name }),
+            kw!("complex") => IntrinsicType::Complex(TypeInner { node, name }),
+            kw!("doublecomplex") => IntrinsicType::DoubleComplex(TypeInner { node, name }),
+            kw!("logical") => IntrinsicType::Logical(TypeInner { node, name }),
+            kw!("character") => IntrinsicType::Character(TypeInner { node, name }),
+            kw!("double") => {
+                let second = node
+                    .child(1)
+                    .expect("`double` must be followed by either `complex` or `precision`");
+                match second.kind_id() {
+                    kw!("complex") => IntrinsicType::DoubleComplex(TypeInner { node, name }),
+                    kw!("precision") => IntrinsicType::DoublePrecision(TypeInner { node, name }),
+                    _ => unreachable!("unexpected keyword following `double`"),
+                }
+            }
+            _ => unreachable!("Unexpected node kind for `intrinsic_type`"),
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Byte(TypeInner { name, .. }) => name,
+            Self::Integer(TypeInner { name, .. }) => name,
+            Self::Real(TypeInner { name, .. }) => name,
+            Self::DoublePrecision(TypeInner { name, .. }) => name,
+            Self::Complex(TypeInner { name, .. }) => name,
+            Self::DoubleComplex(TypeInner { name, .. }) => name,
+            Self::Logical(TypeInner { name, .. }) => name,
+            Self::Character(TypeInner { name, .. }) => name,
+        }
+    }
+}
+
+impl<'a> HasNode<'a> for IntrinsicType<'a> {
+    fn node(&self) -> &Node<'a> {
+        match self {
+            Self::Byte(TypeInner { node, .. }) => node,
+            Self::Integer(TypeInner { node, .. }) => node,
+            Self::Real(TypeInner { node, .. }) => node,
+            Self::DoublePrecision(TypeInner { node, .. }) => node,
+            Self::Complex(TypeInner { node, .. }) => node,
+            Self::DoubleComplex(TypeInner { node, .. }) => node,
+            Self::Logical(TypeInner { node, .. }) => node,
+            Self::Character(TypeInner { node, .. }) => node,
+        }
+    }
+}
+
+#[derive(Clone, Debug, HasNode)]
 pub struct TypeInner<'a> {
     node: Node<'a>,
-    name: String,
+    name: &'a str,
 }
 
 #[derive(Clone, Debug, EnumIs)]
 pub enum Type<'a> {
-    Intrinsic(TypeInner<'a>),
+    Intrinsic(IntrinsicType<'a>),
     Derived(TypeInner<'a>),
     Procedure(TypeInner<'a>),
     Declared(TypeInner<'a>),
 }
 
 impl<'a> Type<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: Node<'a>, src: &'a str) -> Result<Self> {
         let kind = node.kind_id();
-        let name = node.to_text(src).context("expected text")?.to_string();
+        let name = node.to_text(src).context("expected text")?;
         match kind {
-            kind!("intrinsic_type") => Ok(Type::Intrinsic(TypeInner { node, name })),
+            kind!("intrinsic_type") => Ok(Type::Intrinsic(IntrinsicType::from_node(node, src))),
             kind!("derived_type") => Ok(Type::Derived(TypeInner { node, name })),
             kind!("procedure") => Ok(Type::Procedure(TypeInner { node, name })),
             kind!("declared_type") => Ok(Type::Declared(TypeInner { node, name })),
@@ -342,10 +419,10 @@ impl<'a> Type<'a> {
 
     pub fn as_str(&self) -> &str {
         match self {
-            Self::Intrinsic(TypeInner { name, .. }) => name.as_str(),
-            Self::Derived(TypeInner { name, .. }) => name.as_str(),
-            Self::Procedure(TypeInner { name, .. }) => name.as_str(),
-            Self::Declared(TypeInner { name, .. }) => name.as_str(),
+            Self::Intrinsic(inner) => inner.as_str(),
+            Self::Derived(TypeInner { name, .. }) => name,
+            Self::Procedure(TypeInner { name, .. }) => name,
+            Self::Declared(TypeInner { name, .. }) => name,
         }
     }
 }
@@ -353,7 +430,7 @@ impl<'a> Type<'a> {
 impl<'a> HasNode<'a> for Type<'a> {
     fn node(&self) -> &Node<'a> {
         match self {
-            Self::Intrinsic(TypeInner { node, .. }) => node,
+            Self::Intrinsic(inner) => inner.node(),
             Self::Derived(TypeInner { node, .. }) => node,
             Self::Procedure(TypeInner { node, .. }) => node,
             Self::Declared(TypeInner { node, .. }) => node,
@@ -374,7 +451,7 @@ pub struct VariableDeclaration<'a> {
 
 impl<'a> VariableDeclaration<'a> {
     /// Create from `variable_declaration` node
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>, src: &'a str) -> Result<Self> {
         if node.kind_id() != kind!("variable_declaration") {
             return Err(anyhow!("wrong node type"));
         }
@@ -411,7 +488,7 @@ impl<'a> VariableDeclaration<'a> {
     }
 
     /// Create from `function_statement`. Will fail if the statement has no `type`
-    pub fn try_from_fn_stmt(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_fn_stmt(node: &Node<'a>, src: &'a str) -> Result<Self> {
         if node.kind_id() != kind!("function_statement") {
             return Err(anyhow!("wrong node type"));
         }
@@ -714,7 +791,7 @@ pub struct Procedure<'a> {
 }
 
 impl<'a> Procedure<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>, src: &'a str) -> Result<Self> {
         if !matches!(node.kind_id(), kind!("function") | kind!("subroutine")) {
             return Err(anyhow!("not a procedure"));
         }
@@ -988,5 +1065,46 @@ impl<'a> UsedItem<'a> {
 impl<'a> HasNode<'a> for UsedItem<'a> {
     fn node(&self) -> &Node<'a> {
         self.name.node()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::FortitudeNode;
+    use anyhow::Result;
+    use test_case::test_case;
+    use tree_sitter::Parser;
+
+    #[test_case("byte", |result| result.is_byte())]
+    #[test_case("integer", |result| result.is_integer())]
+    #[test_case("real", |result| result.is_real())]
+    #[test_case("doubleprecision", |result| result.is_double_precision())]
+    #[test_case("double precision", |result| result.is_double_precision())]
+    #[test_case("complex", |result| result.is_complex())]
+    #[test_case("doublecomplex", |result| result.is_double_complex())]
+    #[test_case("double complex", |result| result.is_double_complex())]
+    #[test_case("logical", |result| result.is_logical())]
+    #[test_case("character", |result| result.is_character())]
+    fn intrinsic_type(type_: &str, check: impl FnOnce(IntrinsicType) -> bool) -> Result<()> {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+            .expect("Error loading Fortran grammar");
+
+        let code = format!("{type_} :: foo\nend");
+
+        let tree = parser.parse(&code, None).expect("Failed to parse");
+        let root = tree.root_node();
+        let type_ = root
+            .named_descendants()
+            .find(|child| child.kind_id() == kind!("intrinsic_type"))
+            .expect("couldn't find intrinsic_type");
+
+        let result = IntrinsicType::from_node(type_, &code);
+
+        assert!(check(result));
+
+        Ok(())
     }
 }
