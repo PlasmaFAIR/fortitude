@@ -299,7 +299,7 @@ end program foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code));
+        symbol_table.push_table(SymbolTable::new(&root, code)?);
 
         let test_source = SourceFileBuilder::new("test.f90", code).finish();
 
@@ -360,7 +360,7 @@ end program foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code));
+        symbol_table.push_table(SymbolTable::new(&root, code)?);
 
         let x = symbol_table.get_var("x").unwrap();
         let y = symbol_table.get_var("y").unwrap();

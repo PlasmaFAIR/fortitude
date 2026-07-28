@@ -256,13 +256,7 @@ pub fn check_only_file(
         .parse(file.source_text(), None)
         .context("Failed to parse")?;
 
-    Ok(check_path(
-        path,
-        file,
-        settings,
-        &tree,
-        ignore_allow_comments,
-    ))
+    check_path(path, file, settings, &tree, ignore_allow_comments)
 }
 
 /// Check an already parsed file. This actually does all the checking,
@@ -274,7 +268,7 @@ pub(crate) fn check_path(
     settings: &CheckSettings,
     tree: &Tree,
     ignore_allow_comments: settings::IgnoreAllowComments,
-) -> Vec<Diagnostic> {
+) -> anyhow::Result<Vec<Diagnostic>> {
     let mut violations = Vec::new();
     let mut allow_comments = Vec::new();
 
@@ -316,7 +310,7 @@ pub(crate) fn check_path(
         }
 
         if node.is_named() && BEGIN_SCOPE_NODES.contains(&node.kind()) {
-            let new_table = SymbolTable::new(&node, file.source_text());
+            let new_table = SymbolTable::new(&node, file.source_text())?;
 
             // Check for keyword reuse in this scope
             if context.rules.enabled(Rule::KeywordReuse) {
@@ -501,7 +495,7 @@ pub(crate) fn check_path(
         }
     }
 
-    violations
+    Ok(violations)
 }
 
 const MAX_ITERATIONS: usize = 100;
@@ -549,7 +543,7 @@ pub fn check_and_fix_file<'a>(
         // Map row and column locations to byte slices (lazily).
         let locator = Locator::new(transformed.source_text());
 
-        let violations = check_path(path, &transformed, settings, &tree, ignore_allow_comments);
+        let violations = check_path(path, &transformed, settings, &tree, ignore_allow_comments)?;
 
         if iterations == 0 {
             is_valid_syntax = !tree.root_node().has_error();
