@@ -57,7 +57,7 @@ correct size to avoid data loss:
 ## User derived type IO procedures
 The standard mandates assumed-size length with `intent(inout)` for the
 `iomsg` argument of user defined IO procedures for derived types, although
-it doesn't specify a minimum length. Unfortunately, Fortitude is currently
-unable to detect this use. You can use [`allow` (suppression)
+it doesn't specify a minimum length. Fortitude will try to detect this
+use. You can also use [`allow` (suppression)
 comments](https://fortitude.readthedocs.io/en/stable/linter/#error-suppression)
 to disable this rule for those uses only.

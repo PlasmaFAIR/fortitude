@@ -1,4 +1,5 @@
 use crate::ast::FortitudeNode;
+use crate::ast::symbol_table::SymbolTable;
 use crate::ast::types::{AttributeKind, HasName, Intent, Type};
 use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
 use crate::settings::FortranStandard;
@@ -6,6 +7,7 @@ use crate::traits::HasNode;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
 use itertools::Itertools;
+use log::debug;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -161,8 +163,8 @@ impl AstRule for AssumedSize {
 /// ## User derived type IO procedures
 /// The standard mandates assumed-size length with `intent(inout)` for the
 /// `iomsg` argument of user defined IO procedures for derived types, although
-/// it doesn't specify a minimum length. Unfortunately, Fortitude is currently
-/// unable to detect this use. You can use [`allow` (suppression)
+/// it doesn't specify a minimum length. Fortitude will try to detect this
+/// use. You can also use [`allow` (suppression)
 /// comments](https://fortitude.readthedocs.io/en/stable/linter/#error-suppression)
 /// to disable this rule for those uses only.
 #[derive(ViolationMetadata)]
@@ -214,6 +216,11 @@ impl AstRule for AssumedSizeCharacterIntent {
             return None;
         }
 
+        if is_user_defined_type_io_subroutine(node, current_context) {
+            debug!("Identified as user-defined-type-IO subroutine");
+            return None;
+        }
+
         // Collect all declarations on this line
         Some(
             declaration
@@ -235,4 +242,58 @@ impl AstRule for AssumedSizeCharacterIntent {
     fn entrypoints() -> Vec<u16> {
         kind_ids!["assumed_size"]
     }
+}
+
+/// This is not particularly clever, just check all the expected arguments are
+/// present and have the correct type and intent. Doesn't check there aren't
+/// more arguments than expected, and doesn't check size of `v_list`.
+fn is_user_defined_type_io_subroutine(node: &Node, table: &SymbolTable) -> bool {
+    if node
+        .ancestors()
+        .find(|ancestor| ancestor.kind_id() == kind!("subroutine"))
+        .is_none()
+    {
+        return false;
+    }
+
+    let mut has_self = false;
+    let mut has_unit = false;
+    let mut has_iotype = false;
+    let mut has_v_list = false;
+    let mut has_iostat = false;
+    let mut has_iomsg = false;
+
+    for decl in table.iter_decl_lines() {
+        let intent = decl
+            .attributes()
+            .iter()
+            .map(|attr| attr.kind())
+            .find(|attr| attr.is_intent());
+        let intent_in = intent == Some(&AttributeKind::Intent(Intent::In));
+        let intent_out = intent == Some(&AttributeKind::Intent(Intent::Out));
+        let intent_inout = intent == Some(&AttributeKind::Intent(Intent::InOut));
+
+        let names = decl
+            .names()
+            .iter()
+            .map(|name| name.name().as_str().to_ascii_lowercase())
+            .collect_vec();
+
+        let contains = |name: &str| names.contains(&name.to_string());
+
+        let (is_character, is_integer) = if let Type::Intrinsic(type_) = decl.type_() {
+            (type_.is_character(), type_.is_integer())
+        } else {
+            (false, false)
+        };
+
+        has_self = has_self || (decl.type_().is_derived() && intent_in);
+        has_unit = has_unit || (is_integer && intent_in && contains("unit"));
+        has_iotype = has_iotype || (is_character && intent_in && contains("iotype"));
+        has_v_list = has_v_list || (is_integer && intent_in && contains("v_list"));
+        has_iostat = has_iostat || (is_integer && intent_out && contains("iostat"));
+        has_iomsg = has_iomsg || (is_character && intent_inout && contains("iomsg"));
+    }
+
+    has_self && has_unit && has_iotype && has_v_list && has_iostat && has_iomsg
 }
