@@ -1,9 +1,13 @@
 use crate::ast::FortitudeNode;
-use crate::diagnostics::{Diagnostic, Violation};
+use crate::ast::symbol_table::SymbolTable;
+use crate::ast::types::{AttributeKind, HasName, Intent, Type};
+use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
 use crate::settings::FortranStandard;
+use crate::traits::HasNode;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::{ViolationMetadata, field, kind};
+use fortitude_macros::{ViolationMetadata, kind};
 use itertools::Itertools;
+use log::debug;
 use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
@@ -55,29 +59,24 @@ impl Violation for AssumedSize {
 }
 impl AstRule for AssumedSize {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        // TODO Reimplement using SymbolTable and VariableDeclaration
         let src = context.source_text();
-        let declaration = node
-            .ancestors()
-            .find(|parent| parent.kind_id() == kind!("variable_declaration"))?;
+        let declaration = context
+            .symbol_table()
+            .current()?
+            .decl_containing_node(node)?;
 
         // Deal with `character([len=]*)` elsewhere
-        if let Some(dtype) = declaration.parse_intrinsic_type() {
-            let is_character = dtype.eq_ignore_ascii_case("character");
-            let is_kind = node
+        if let Type::Intrinsic(type_) = declaration.type_()
+            && type_.is_character()
+            && node
                 .ancestors()
-                .any(|parent| parent.kind_id() == kind!("kind"));
-            if is_character && is_kind {
-                return None;
-            }
+                .any(|parent| parent.kind_id() == kind!("kind"))
+        {
+            return None;
         }
 
         // Assumed size ok for parameters
-        if declaration
-            .children_by_field_id(field!("attribute"), &mut declaration.walk())
-            .filter_map(|attr| attr.to_text(src))
-            .any(|attr_name| attr_name.eq_ignore_ascii_case("parameter"))
-        {
+        if declaration.has_attribute(AttributeKind::Parameter) {
             return None;
         }
 
@@ -94,16 +93,9 @@ impl AstRule for AssumedSize {
         // Collect things that look like `dimension(*)` -- this
         // applies to all identifiers on this line
         let all_decls = declaration
-            .children_by_field_id(field!("declarator"), &mut declaration.walk())
-            .filter_map(|declarator| {
-                let identifier = match declarator.kind_id() {
-                    kind!("identifier") => Some(declarator),
-                    kind!("sized_declarator") => declarator.child_with_id(kind!("identifier")),
-                    _ => None,
-                }?;
-                identifier.to_text(src)
-            })
-            .map(|name| name.to_string())
+            .names()
+            .iter()
+            .map(|name| name.name().to_string())
             .map(|name| context.create_diagnostic(Self { name }, node))
             .collect_vec();
 
@@ -171,8 +163,8 @@ impl AstRule for AssumedSize {
 /// ## User derived type IO procedures
 /// The standard mandates assumed-size length with `intent(inout)` for the
 /// `iomsg` argument of user defined IO procedures for derived types, although
-/// it doesn't specify a minimum length. Unfortunately, Fortitude is currently
-/// unable to detect this use. You can use [`allow` (suppression)
+/// it doesn't specify a minimum length. Fortitude will try to detect this
+/// use. You can also use [`allow` (suppression)
 /// comments](https://fortitude.readthedocs.io/en/stable/linter/#error-suppression)
 /// to disable this rule for those uses only.
 #[derive(ViolationMetadata)]
@@ -189,25 +181,22 @@ impl Violation for AssumedSizeCharacterIntent {
 }
 impl AstRule for AssumedSizeCharacterIntent {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        // TODO Reimplement using SymbolTable and VariableDeclaration
-
         // The recommended fix to this is only possible in Fortran 2003 and later.
         // Those still writing Fortran 95 code are on their own!
         if context.settings().target_std < FortranStandard::F2003 {
             return None;
         }
-        let src = context.source_text();
+
         // TODO: This warning will also catch:
         // - non-dummy arguments -- these are always invalid, should be a separate warning?
 
-        let declaration = node
-            .ancestors()
-            .find(|parent| parent.kind_id() == kind!("variable_declaration"))?;
+        // Find the declaration containing this node
+        let current_context = context.symbol_table().current()?;
+        let declaration = current_context.decl_containing_node(node)?;
 
         // Only applies to `character`
-        if !declaration
-            .parse_intrinsic_type()?
-            .eq_ignore_ascii_case("character")
+        if let Type::Intrinsic(type_) = declaration.type_()
+            && !type_.is_character()
         {
             return None;
         }
@@ -220,44 +209,91 @@ impl AstRule for AssumedSizeCharacterIntent {
             return None;
         }
 
-        let attrs_as_text = declaration
-            .children_by_field_id(field!("attribute"), &mut declaration.walk())
-            .filter_map(|attr| attr.to_text(src))
-            .map(|attr| attr.to_lowercase())
-            .collect_vec();
-
-        // Assumed size ok for parameters
-        if attrs_as_text.iter().any(|attr| attr == "parameter") {
+        // Assumed size ok for parameters and `intent(in)` only
+        if declaration
+            .has_any_attributes(&[AttributeKind::Parameter, AttributeKind::Intent(Intent::In)])
+        {
             return None;
         }
 
-        // Ok for `intent(in)` only
-        if let Some(intent) = attrs_as_text.iter().find(|attr| attr.starts_with("intent")) {
-            let intent = intent.split_whitespace().collect_vec().join("");
-            if intent == "intent(in)" {
-                return None;
-            }
+        if is_user_defined_type_io_subroutine(node, current_context) {
+            debug!("Identified as user-defined-type-IO subroutine");
+            return None;
         }
 
         // Collect all declarations on this line
-        let all_decls = declaration
-            .children_by_field_name("declarator", &mut declaration.walk())
-            .filter_map(|declarator| {
-                let identifier = match declarator.kind_id() {
-                    kind!("identifier") => Some(declarator),
-                    kind!("sized_declarator") => declarator.child_with_id(kind!("identifier")),
-                    _ => None,
-                }?;
-                identifier.to_text(src)
-            })
-            .map(|name| name.to_string())
-            .map(|name| context.create_diagnostic(Self { name }, node))
-            .collect_vec();
-
-        Some(all_decls)
+        Some(
+            declaration
+                .names()
+                .iter()
+                .map(|name| {
+                    let annotation = Annotation::secondary(
+                        Span::from(context.source_file().clone()).with_range(name.node()),
+                    );
+                    let name = name.name().to_string();
+                    let mut diagnostic = context.create_diagnostic(Self { name }, node);
+                    diagnostic.annotate(annotation);
+                    diagnostic
+                })
+                .collect_vec(),
+        )
     }
 
     fn entrypoints() -> Vec<u16> {
         kind_ids!["assumed_size"]
     }
+}
+
+/// This is not particularly clever, just check all the expected arguments are
+/// present and have the correct type and intent. Doesn't check there aren't
+/// more arguments than expected, and doesn't check size of `v_list`.
+fn is_user_defined_type_io_subroutine(node: &Node, table: &SymbolTable) -> bool {
+    if node
+        .ancestors()
+        .find(|ancestor| ancestor.kind_id() == kind!("subroutine"))
+        .is_none()
+    {
+        return false;
+    }
+
+    let mut has_self = false;
+    let mut has_unit = false;
+    let mut has_iotype = false;
+    let mut has_v_list = false;
+    let mut has_iostat = false;
+    let mut has_iomsg = false;
+
+    for decl in table.iter_decl_lines() {
+        let intent = decl
+            .attributes()
+            .iter()
+            .map(|attr| attr.kind())
+            .find(|attr| attr.is_intent());
+        let intent_in = intent == Some(&AttributeKind::Intent(Intent::In));
+        let intent_out = intent == Some(&AttributeKind::Intent(Intent::Out));
+        let intent_inout = intent == Some(&AttributeKind::Intent(Intent::InOut));
+
+        let names = decl
+            .names()
+            .iter()
+            .map(|name| name.name().as_str().to_ascii_lowercase())
+            .collect_vec();
+
+        let contains = |name: &str| names.contains(&name.to_string());
+
+        let (is_character, is_integer) = if let Type::Intrinsic(type_) = decl.type_() {
+            (type_.is_character(), type_.is_integer())
+        } else {
+            (false, false)
+        };
+
+        has_self = has_self || (decl.type_().is_derived() && intent_in);
+        has_unit = has_unit || (is_integer && intent_in && contains("unit"));
+        has_iotype = has_iotype || (is_character && intent_in && contains("iotype"));
+        has_v_list = has_v_list || (is_integer && intent_in && contains("v_list"));
+        has_iostat = has_iostat || (is_integer && intent_out && contains("iostat"));
+        has_iomsg = has_iomsg || (is_character && intent_inout && contains("iomsg"));
+    }
+
+    has_self && has_unit && has_iotype && has_v_list && has_iostat && has_iomsg
 }

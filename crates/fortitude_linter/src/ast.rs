@@ -115,10 +115,6 @@ pub trait FortitudeNode<'tree> {
     /// Convert a node to text, collapsing any raised errors to None.
     fn to_text<'a>(&self, src: &'a str) -> Option<&'a str>;
 
-    /// Given a variable declaration or function statement, return its type if it's an intrinsic type,
-    /// or None otherwise.
-    fn parse_intrinsic_type(&self) -> Option<String>;
-
     /// Get the current indentation level of the node.
     fn indentation(&self, source_file: &SourceFile) -> String;
 
@@ -234,14 +230,6 @@ impl<'tree1> FortitudeNode<'tree1> for Node<'tree1> {
 
     fn to_text<'a>(&self, src: &'a str) -> Option<&'a str> {
         self.utf8_text(src.as_bytes()).ok()
-    }
-
-    fn parse_intrinsic_type(&self) -> Option<String> {
-        if let Some(child) = self.child_with_name("intrinsic_type") {
-            let grandchild = child.child(0)?;
-            return Some(grandchild.kind().to_string());
-        }
-        None
     }
 
     fn indentation(&self, source_file: &SourceFile) -> String {

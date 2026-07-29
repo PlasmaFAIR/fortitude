@@ -5,7 +5,7 @@ use itertools::Itertools;
 use strum_macros::EnumIs;
 use tree_sitter::Node;
 
-use crate::traits::HasNode;
+use crate::traits::{HasNode, TextRanged};
 
 use super::{
     FortitudeNode,
@@ -88,7 +88,7 @@ pub struct SymbolTable<'a> {
 impl<'a> SymbolTable<'a> {
     /// Create a new [`SymbolTable`] for a node which is a scope (that is,
     /// contains variable declarations)
-    pub fn new(scope: &Node<'a>, src: &str) -> anyhow::Result<Self> {
+    pub fn new(scope: &Node<'a>, src: &'a str) -> anyhow::Result<Self> {
         let mut new_table = Self::default();
 
         // If this is a procedure, collect a list of dummy arg names
@@ -239,6 +239,13 @@ impl<'a> SymbolTable<'a> {
     pub fn iter(&self) -> impl Iterator<Item = (&String, &Symbol<'_>)> {
         self.inner.iter()
     }
+
+    /// Find declaration containing the given node
+    pub fn decl_containing_node(&self, node: &Node) -> Option<&Rc<VariableDeclaration<'_>>> {
+        self.decl_lines
+            .iter()
+            .find(|decl| decl.node().textrange().contains(node.start_textsize()))
+    }
 }
 
 /// A stack of [`SymbolTable`]
@@ -257,6 +264,11 @@ impl<'a> SymbolTables<'a> {
 
     pub fn pop_table(&mut self) -> Option<SymbolTable<'a>> {
         self.inner.pop()
+    }
+
+    /// Return the current most inner symbol table
+    pub fn current(&self) -> Option<&SymbolTable<'a>> {
+        self.inner.last()
     }
 
     /// Return the symbol with the given name if it exists and is a variable
