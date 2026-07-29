@@ -559,8 +559,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     scope_indents.pop();
                     current_expected_indent = *scope_indents.last().unwrap_or(&0usize);
                 } else if PREPROC_NODES.contains(&node_kind) {
-                    edit_is_activated = edit_is_activated
-                        || context.is_rule_enabled(Rule::InvalidPreprocIndentation);
+                    edit_is_activated = context.is_rule_enabled(Rule::InvalidPreprocIndentation);
                     is_preproc_violation = true;
                     current_expected_indent = 0usize;
                 } else if SCOPED_ZERO_INDENT_NODES.contains(&node_kind) {
@@ -632,7 +631,13 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             let range = TextRange::new(line.start(), visual_end);
             let fix = Fix::safe_edit(Edit::range_replacement(edit_string, line.range()));
 
-            if let Some(diagnostic) = context.create_diagnostic_if_enabled(
+            if is_preproc_violation {
+                if let Some(diagnostic) =
+                    context.create_diagnostic_if_enabled(InvalidPreprocIndentation, range)
+                {
+                    violations.push(diagnostic.with_fix(fix));
+                };
+            } else if let Some(diagnostic) = context.create_diagnostic_if_enabled(
                 IncorrectIndentation {
                     expected_indent,
                     semicolon_found: line_contains_semicolon,
@@ -640,12 +645,6 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 range,
             ) {
                 violations.push(diagnostic.with_fix(fix));
-            } else if is_preproc_violation {
-                if let Some(diagnostic) =
-                    context.create_diagnostic_if_enabled(InvalidPreprocIndentation, range)
-                {
-                    violations.push(diagnostic.with_fix(fix));
-                };
             }
         }
     }

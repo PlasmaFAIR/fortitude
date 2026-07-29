@@ -18,25 +18,6 @@ help: Replace with the correct number of spaces, 0
 4 |   use mpi
 
 S105 [*] Incorrect indentation
- --> ./resources/test/fixtures/style/S105.f90:3:1
-  |
-1 |   !> my module
-2 | module mmod
-3 |   #if USE_MPI==1
-  | ^^
-4 |   use mpi
-5 | #endif
-  |
-help: Replace with the correct number of spaces, 0
-1 |   !> my module
-2 | module mmod
-  -   #if USE_MPI==1
-3 + #if USE_MPI==1
-4 |   use mpi
-5 | #endif
-6 | implicit none
-
-S105 [*] Incorrect indentation
  --> ./resources/test/fixtures/style/S105.f90:4:1
   |
 2 | module mmod
