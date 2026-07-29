@@ -1,0 +1,19 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+C012 Missing default class may not handle all types
+  --> ./resources/test/fixtures/correctness/C012.f90:5:3
+   |
+ 4 |     ! This should be flagged by C012
+ 5 | /   select type(pet)
+ 6 | |   type is (dog_t)
+ 7 | |     print *, "Dog"
+ 8 | |   class is (animal_t)
+ 9 | |     print *, "Animal"
+10 | |   end select
+   | |____________^
+11 |
+12 |     ! This should pass C012
+   |
+help: Add 'class default'

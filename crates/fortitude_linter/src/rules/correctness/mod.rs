@@ -43,6 +43,7 @@ mod tests {
     #[test_case(Rule::InterfaceImplicitTyping, Path::new("C002.f90"))]
     #[test_case(Rule::ImplicitExternalProcedures, Path::new("C003.f90"))]
     #[test_case(Rule::MissingDefaultCase, Path::new("C011.f90"))]
+    #[test_case(Rule::MissingDefaultType, Path::new("C012.f90"))]
     #[test_case(Rule::NoRealSuffix, Path::new("C021.f90"))]
     #[test_case(Rule::ImplicitRealKind, Path::new("C022.f90"))]
     #[test_case(Rule::MagicNumberInArraySize, Path::new("C031.f90"))]

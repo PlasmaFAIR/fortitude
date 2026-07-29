@@ -118,6 +118,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "002") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::InterfaceImplicitTyping),
         (Correctness, "003") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitExternalProcedures),
         (Correctness, "011") => (RuleGroup::Stable, Ast, Default, correctness::select_default::MissingDefaultCase),
+        (Correctness, "012") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultType),
         (Correctness, "021") => (RuleGroup::Stable, Ast, Optional, correctness::kind_suffixes::NoRealSuffix),
         (Correctness, "022") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_kinds::ImplicitRealKind),
         (Correctness, "031") => (RuleGroup::Stable, Ast, Optional, correctness::magic_numbers::MagicNumberInArraySize),
