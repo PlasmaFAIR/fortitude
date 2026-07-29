@@ -451,22 +451,30 @@ const END_SCOPE_NODES: [&str; 12] = [
     "end_associate_statement",
 ];
 
+fn update_enclosing_quote(ch: &char, enclosing_quote: Option<char>) -> Option<char> {
+    if ['\'', '"'].contains(&ch) {
+        if let Some(quote) = enclosing_quote {
+            if quote == ch.clone() {
+                return None;
+            }
+        } else {
+            return Some(*ch);
+        }
+    }
+    return enclosing_quote;
+}
+
 fn split_segments_outside_quotes(line: &str) -> Vec<&str> {
     let mut segments = Vec::new();
     let mut start = 0;
-    let mut in_quotes = false;
     let mut chars = line.char_indices();
 
+    let mut enclosing_quote: Option<char> = None;
     while let Some((idx, ch)) = chars.next() {
-        if in_quotes {
-            if ['\'', '"'].contains(&ch) {
-                in_quotes = false;
-            }
-        } else if ch == ';' {
+        enclosing_quote = update_enclosing_quote(&ch, enclosing_quote);
+        if enclosing_quote.is_none() && ch == ';' {
             segments.push(&line[start..idx + ch.len_utf8()]);
             start = idx + ch.len_utf8();
-        } else if ['\'', '"'].contains(&ch) {
-            in_quotes = true;
         }
     }
 
@@ -611,14 +619,12 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     edit_string = format!("{}\n{}{}", edit_string, new_indent, line_segment.trim());
                 }
                 // Remove semicolons that are not inside quotes
-                let mut in_quotes = false;
+                let mut enclosing_quote: Option<char> = None;
                 edit_string = edit_string
                     .chars()
-                    .filter(|c| {
-                        if ['\'', '"'].contains(c) {
-                            in_quotes = !in_quotes;
-                        }
-                        !(matches!(c, ';') && !in_quotes)
+                    .filter(|ch| {
+                        enclosing_quote = update_enclosing_quote(ch, enclosing_quote);
+                        !matches!(ch, ';') || enclosing_quote.is_some()
                     })
                     .collect();
             }

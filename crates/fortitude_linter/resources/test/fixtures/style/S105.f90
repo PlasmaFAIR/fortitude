@@ -88,6 +88,8 @@ program mprog
 
             print "Semicolon ; in string"
             print "Semicolon ; in string with ; not in string"; print "hello"
+            print "semicolon in a quote within a quote ';'"
+            print 'same as above but reversed quotes ";"'
 
 call do_something()
 
