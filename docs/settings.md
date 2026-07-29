@@ -1105,42 +1105,10 @@ Default behaviour is to keep the current method.
 
 ### `check.incorrect-indentation`
 
-#### [`num-indents-for-associate-contents`](#check_incorrect-indentation_num-indents-for-associate-contents) {: #check_incorrect-indentation_num-indents-for-associate-contents }
-<span id="num-indents-for-associate-contents"></span>
+#### [`control-flow-indents`](#check_incorrect-indentation_control-flow-indents) {: #check_incorrect-indentation_control-flow-indents }
+<span id="control-flow-indents"></span>
 
-The number of full indents to use for the contents of a associate
-
-**Default value**: `1`
-
-**Type**: `int`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-associate-contents = 2
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    num-indents-for-associate-contents = 2
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-associate-contents = 2
-    ```
-
----
-
-#### [`num-indents-for-block-contents`](#check_incorrect-indentation_num-indents-for-block-contents) {: #check_incorrect-indentation_num-indents-for-block-contents }
-<span id="num-indents-for-block-contents"></span>
-
-The number of full indents to use for the contents of a block
+The number of full indents to use for the contents of control flow units (i.e. `block`, `if`, `associate`, `do`, `select`)
 
 **Default value**: `1`
 
@@ -1152,25 +1120,25 @@ The number of full indents to use for the contents of a block
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-block-contents = 2
+    control-flow-indents = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    num-indents-for-block-contents = 2
+    control-flow-indents = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-block-contents = 2
+    control-flow-indents = 2
     ```
 
 ---
 
-#### [`num-indents-for-derived-type-contents`](#check_incorrect-indentation_num-indents-for-derived-type-contents) {: #check_incorrect-indentation_num-indents-for-derived-type-contents }
-<span id="num-indents-for-derived-type-contents"></span>
+#### [`derived-type-indents`](#check_incorrect-indentation_derived-type-indents) {: #check_incorrect-indentation_derived-type-indents }
+<span id="derived-type-indents"></span>
 
 The number of full indents to use for the contents of a derived type
 
@@ -1184,31 +1152,31 @@ The number of full indents to use for the contents of a derived type
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-derived-type-contents = 2
+    derived-type-indents = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    num-indents-for-derived-type-contents = 2
+    derived-type-indents = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-derived-type-contents = 2
+    derived-type-indents = 2
     ```
 
 ---
 
-#### [`num-indents-for-do-contents`](#check_incorrect-indentation_num-indents-for-do-contents) {: #check_incorrect-indentation_num-indents-for-do-contents }
-<span id="num-indents-for-do-contents"></span>
+#### [`ignore-semicolons`](#check_incorrect-indentation_ignore-semicolons) {: #check_incorrect-indentation_ignore-semicolons }
+<span id="ignore-semicolons"></span>
 
-The number of full indents to use for the contents of a do block
+Whether lines containing semicolons should be ignored
 
-**Default value**: `1`
+**Default value**: `true`
 
-**Type**: `usize`
+**Type**: `bool`
 
 **Example usage**:
 
@@ -1216,89 +1184,25 @@ The number of full indents to use for the contents of a do block
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-do-contents = 2
+    ignore-semicolons = false
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    num-indents-for-do-contents = 2
+    ignore-semicolons = false
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-do-contents = 2
+    ignore-semicolons = false
     ```
 
 ---
 
-#### [`num-indents-for-function-contents`](#check_incorrect-indentation_num-indents-for-function-contents) {: #check_incorrect-indentation_num-indents-for-function-contents }
-<span id="num-indents-for-function-contents"></span>
-
-The number of full indents to use for the contents of a function
-
-**Default value**: `1`
-
-**Type**: `usize`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-function-contents = 2
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    num-indents-for-function-contents = 2
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-function-contents = 2
-    ```
-
----
-
-#### [`num-indents-for-if-contents`](#check_incorrect-indentation_num-indents-for-if-contents) {: #check_incorrect-indentation_num-indents-for-if-contents }
-<span id="num-indents-for-if-contents"></span>
-
-The number of full indents to use for the contents of a if block
-
-**Default value**: `1`
-
-**Type**: `usize`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-if-contents = 2
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    num-indents-for-if-contents = 2
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-if-contents = 2
-    ```
-
----
-
-#### [`num-indents-for-interface-contents`](#check_incorrect-indentation_num-indents-for-interface-contents) {: #check_incorrect-indentation_num-indents-for-interface-contents }
-<span id="num-indents-for-interface-contents"></span>
+#### [`interface-indents`](#check_incorrect-indentation_interface-indents) {: #check_incorrect-indentation_interface-indents }
+<span id="interface-indents"></span>
 
 The number of full indents to use for the contents of a interface
 
@@ -1312,25 +1216,25 @@ The number of full indents to use for the contents of a interface
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-interface-contents = 2
+    interface-indents = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    num-indents-for-interface-contents = 2
+    interface-indents = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-interface-contents = 2
+    interface-indents = 2
     ```
 
 ---
 
-#### [`num-indents-for-line-continuation`](#check_incorrect-indentation_num-indents-for-line-continuation) {: #check_incorrect-indentation_num-indents-for-line-continuation }
-<span id="num-indents-for-line-continuation"></span>
+#### [`line-continuation-indents`](#check_incorrect-indentation_line-continuation-indents) {: #check_incorrect-indentation_line-continuation-indents }
+<span id="line-continuation-indents"></span>
 
 The number of full indents to use after a line continuation (`&`)
 
@@ -1344,27 +1248,27 @@ The number of full indents to use after a line continuation (`&`)
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-line-continuation = 2
+    line-continuation-indents = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    num-indents-for-line-continuation = 2
+    line-continuation-indents = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-line-continuation = 2
+    line-continuation-indents = 2
     ```
 
 ---
 
-#### [`num-indents-for-module-contents`](#check_incorrect-indentation_num-indents-for-module-contents) {: #check_incorrect-indentation_num-indents-for-module-contents }
-<span id="num-indents-for-module-contents"></span>
+#### [`module-indents`](#check_incorrect-indentation_module-indents) {: #check_incorrect-indentation_module-indents }
+<span id="module-indents"></span>
 
-The number of full indents to use for the contents of a module
+The number of full indents to use for the contents of modules and submodules
 
 **Default value**: `1`
 
@@ -1376,25 +1280,57 @@ The number of full indents to use for the contents of a module
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-module-contents = 2
+    module-indents = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    num-indents-for-module-contents = 2
+    module-indents = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-module-contents = 2
+    module-indents = 2
     ```
 
 ---
 
-#### [`num-indents-for-program-contents`](#check_incorrect-indentation_num-indents-for-program-contents) {: #check_incorrect-indentation_num-indents-for-program-contents }
-<span id="num-indents-for-program-contents"></span>
+#### [`procedure-indents`](#check_incorrect-indentation_procedure-indents) {: #check_incorrect-indentation_procedure-indents }
+<span id="procedure-indents"></span>
+
+The number of full indents to use for the contents of subroutines and functions
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    procedure-indents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    procedure-indents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    procedure-indents = 2
+    ```
+
+---
+
+#### [`program-indents`](#check_incorrect-indentation_program-indents) {: #check_incorrect-indentation_program-indents }
+<span id="program-indents"></span>
 
 The number of full indents to use for the contents of a program
 
@@ -1408,115 +1344,19 @@ The number of full indents to use for the contents of a program
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-program-contents = 2
+    program-indents = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    num-indents-for-program-contents = 2
+    program-indents = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-program-contents = 2
-    ```
-
----
-
-#### [`num-indents-for-select-contents`](#check_incorrect-indentation_num-indents-for-select-contents) {: #check_incorrect-indentation_num-indents-for-select-contents }
-<span id="num-indents-for-select-contents"></span>
-
-The number of full indents to use for the contents of a select case construct
-
-**Default value**: `1`
-
-**Type**: `usize`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-select-contents = 2
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    num-indents-for-select-contents = 2
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-select-contents = 2
-    ```
-
----
-
-#### [`num-indents-for-submodule-contents`](#check_incorrect-indentation_num-indents-for-submodule-contents) {: #check_incorrect-indentation_num-indents-for-submodule-contents }
-<span id="num-indents-for-submodule-contents"></span>
-
-The number of full indents to use for the contents of a submodule
-
-**Default value**: `1`
-
-**Type**: `usize`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-submodule-contents = 2
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    num-indents-for-submodule-contents = 2
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-submodule-contents = 2
-    ```
-
----
-
-#### [`num-indents-for-subroutine-contents`](#check_incorrect-indentation_num-indents-for-subroutine-contents) {: #check_incorrect-indentation_num-indents-for-subroutine-contents }
-<span id="num-indents-for-subroutine-contents"></span>
-
-The number of full indents to use for the contents of a subroutine
-
-**Default value**: `1`
-
-**Type**: `usize`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    num-indents-for-subroutine-contents = 2
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    num-indents-for-subroutine-contents = 2
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    num-indents-for-subroutine-contents = 2
+    program-indents = 2
     ```
 
 ---

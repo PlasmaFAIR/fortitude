@@ -347,13 +347,13 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// ## Options
 /// - `check.indent-width`
 /// - `check.incorrect-indentation.ignore-semicolons`
-/// - `check.incorrect-indentation.program_indents
-/// - `check.incorrect-indentation.module_indents
-/// - `check.incorrect-indentation.procedure_indents
-/// - `check.incorrect-indentation.derived_type_indents
-/// - `check.incorrect-indentation.control_flow_indents
-/// - `check.incorrect-indentation.interface_indents
-/// - `check.incorrect-indentation.line_continuation_indents
+/// - `check.incorrect-indentation.program-indents
+/// - `check.incorrect-indentation.module-indents
+/// - `check.incorrect-indentation.procedure-indents
+/// - `check.incorrect-indentation.derived-type-indents
+/// - `check.incorrect-indentation.control-flow-indents
+/// - `check.incorrect-indentation.interface-indents
+/// - `check.incorrect-indentation.line-continuation-indents
 #[derive(ViolationMetadata)]
 pub(crate) struct IncorrectIndentation {
     expected_indent: usize,
