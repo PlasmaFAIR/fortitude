@@ -186,9 +186,8 @@ mod tests {
 
         let mut incorrect_indentation_settings =
             whitespace::settings::IncorrectIndentationSettings {
-                num_indents_for_associate_contents: 0,
-                num_indents_for_if_contents: 0,
-                num_indents_for_subroutine_contents: 2,
+                control_flow_indents: 0,
+                procedure_indents: 2,
                 ..Default::default()
             };
 

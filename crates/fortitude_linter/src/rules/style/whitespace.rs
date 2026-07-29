@@ -347,19 +347,13 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// ## Options
 /// - `check.indent-width`
 /// - `check.incorrect-indentation.ignore-semicolons`
-/// - `check.incorrect-indentation.num-indents-for-associate-contents`
-/// - `check.incorrect-indentation.num-indents-for-block-contents`
-/// - `check.incorrect-indentation.num-indents-for-derived-type-contents`
-/// - `check.incorrect-indentation.num-indents-for-do-contents`
-/// - `check.incorrect-indentation.num-indents-for-function-contents`
-/// - `check.incorrect-indentation.num-indents-for-if-contents`
-/// - `check.incorrect-indentation.num-indents-for-interface-contents`
-/// - `check.incorrect-indentation.num-indents-for-module-contents`
-/// - `check.incorrect-indentation.num-indents-for-program-contents`
-/// - `check.incorrect-indentation.num-indents-for-select-contents`
-/// - `check.incorrect-indentation.num-indents-for-submodule-contents`
-/// - `check.incorrect-indentation.num-indents-for-line-continuation`
-/// - `check.incorrect-indentation.num-indents-for-subroutine-contents`
+/// - `check.incorrect-indentation.program_indents
+/// - `check.incorrect-indentation.module_indents
+/// - `check.incorrect-indentation.procedure_indents
+/// - `check.incorrect-indentation.derived_type_indents
+/// - `check.incorrect-indentation.control_flow_indents
+/// - `check.incorrect-indentation.interface_indents
+/// - `check.incorrect-indentation.line_continuation_indents
 #[derive(ViolationMetadata)]
 pub(crate) struct IncorrectIndentation {
     expected_indent: usize,
@@ -674,19 +668,13 @@ pub mod settings {
     pub struct IncorrectIndentationSettings {
         pub ignore_semicolons: bool,
         pub construct_to_indent_map: HashMap<String, usize>,
-        pub num_indents_for_program_contents: usize,
-        pub num_indents_for_module_contents: usize,
-        pub num_indents_for_submodule_contents: usize,
-        pub num_indents_for_subroutine_contents: usize,
-        pub num_indents_for_function_contents: usize,
-        pub num_indents_for_derived_type_contents: usize,
-        pub num_indents_for_block_contents: usize,
-        pub num_indents_for_if_contents: usize,
-        pub num_indents_for_interface_contents: usize,
-        pub num_indents_for_select_contents: usize,
-        pub num_indents_for_do_contents: usize,
-        pub num_indents_for_associate_contents: usize,
-        pub num_indents_for_line_continuation: usize,
+        pub program_indents: usize,
+        pub module_indents: usize,
+        pub procedure_indents: usize,
+        pub derived_type_indents: usize,
+        pub control_flow_indents: usize,
+        pub interface_indents: usize,
+        pub line_continuation_indents: usize,
     }
 
     impl Default for IncorrectIndentationSettings {
@@ -695,19 +683,13 @@ pub mod settings {
             let mut settings = Self {
                 ignore_semicolons: true,
                 construct_to_indent_map,
-                num_indents_for_program_contents: 1usize,
-                num_indents_for_module_contents: 1usize,
-                num_indents_for_submodule_contents: 1usize,
-                num_indents_for_subroutine_contents: 1usize,
-                num_indents_for_function_contents: 1usize,
-                num_indents_for_derived_type_contents: 1usize,
-                num_indents_for_block_contents: 1usize,
-                num_indents_for_if_contents: 1usize,
-                num_indents_for_interface_contents: 1usize,
-                num_indents_for_select_contents: 1usize,
-                num_indents_for_do_contents: 1usize,
-                num_indents_for_associate_contents: 1usize,
-                num_indents_for_line_continuation: 1usize,
+                program_indents: 1usize,
+                module_indents: 1usize,
+                procedure_indents: 1usize,
+                derived_type_indents: 1usize,
+                control_flow_indents: 1usize,
+                interface_indents: 1usize,
+                line_continuation_indents: 1usize,
             };
             settings.populate_construct_to_indent_map()
         }
@@ -715,71 +697,53 @@ pub mod settings {
 
     impl IncorrectIndentationSettings {
         pub fn populate_construct_to_indent_map(&mut self) -> Self {
-            self.construct_to_indent_map.insert(
-                "program_statement".to_string(),
-                self.num_indents_for_program_contents,
-            );
+            self.construct_to_indent_map
+                .insert("program_statement".to_string(), self.program_indents);
 
-            self.construct_to_indent_map.insert(
-                "module_statement".to_string(),
-                self.num_indents_for_module_contents,
-            );
+            self.construct_to_indent_map
+                .insert("module_statement".to_string(), self.module_indents);
 
-            self.construct_to_indent_map.insert(
-                "submodule_statement".to_string(),
-                self.num_indents_for_submodule_contents,
-            );
+            self.construct_to_indent_map
+                .insert("submodule_statement".to_string(), self.module_indents);
 
-            self.construct_to_indent_map.insert(
-                "subroutine_statement".to_string(),
-                self.num_indents_for_subroutine_contents,
-            );
+            self.construct_to_indent_map
+                .insert("subroutine_statement".to_string(), self.procedure_indents);
 
-            self.construct_to_indent_map.insert(
-                "function_statement".to_string(),
-                self.num_indents_for_function_contents,
-            );
-            self.construct_to_indent_map.insert(
-                "function".to_string(),
-                self.num_indents_for_function_contents,
-            );
+            self.construct_to_indent_map
+                .insert("function_statement".to_string(), self.procedure_indents);
+            self.construct_to_indent_map
+                .insert("function".to_string(), self.procedure_indents);
 
             self.construct_to_indent_map.insert(
                 "derived_type_statement".to_string(),
-                self.num_indents_for_derived_type_contents,
-            );
-
-            self.construct_to_indent_map.insert(
-                "block_construct".to_string(),
-                self.num_indents_for_block_contents,
+                self.derived_type_indents,
             );
 
             self.construct_to_indent_map
-                .insert("if_statement".to_string(), self.num_indents_for_if_contents);
+                .insert("block_construct".to_string(), self.control_flow_indents);
 
-            self.construct_to_indent_map.insert(
-                "interface_statement".to_string(),
-                self.num_indents_for_interface_contents,
-            );
+            self.construct_to_indent_map
+                .insert("if_statement".to_string(), self.control_flow_indents);
+
+            self.construct_to_indent_map
+                .insert("interface_statement".to_string(), self.interface_indents);
 
             self.construct_to_indent_map.insert(
                 "select_case_statement".to_string(),
-                self.num_indents_for_select_contents,
+                self.control_flow_indents,
             );
 
             self.construct_to_indent_map
-                .insert("do_loop".to_string(), self.num_indents_for_do_contents);
+                .insert("do_loop".to_string(), self.control_flow_indents);
             self.construct_to_indent_map
-                .insert("do_statement".to_string(), self.num_indents_for_do_contents);
+                .insert("do_statement".to_string(), self.control_flow_indents);
 
-            self.construct_to_indent_map.insert(
-                "associate_statement".to_string(),
-                self.num_indents_for_associate_contents,
-            );
+            self.construct_to_indent_map
+                .insert("associate_statement".to_string(), self.control_flow_indents);
 
             self.construct_to_indent_map.insert(
                 "line_continuation".to_string(),
-                self.num_indents_for_line_continuation,
+                self.line_continuation_indents,
             );
 
             self.clone()
@@ -793,19 +757,13 @@ pub mod settings {
                 namespace = "check.incorrect-indentation",
                 fields = [
                     self.ignore_semicolons,
-                    self.num_indents_for_program_contents,
-                    self.num_indents_for_module_contents,
-                    self.num_indents_for_submodule_contents,
-                    self.num_indents_for_subroutine_contents,
-                    self.num_indents_for_function_contents,
-                    self.num_indents_for_derived_type_contents,
-                    self.num_indents_for_block_contents,
-                    self.num_indents_for_if_contents,
-                    self.num_indents_for_interface_contents,
-                    self.num_indents_for_select_contents,
-                    self.num_indents_for_do_contents,
-                    self.num_indents_for_associate_contents,
-                    self.num_indents_for_line_continuation,
+                    self.program_indents,
+                    self.module_indents,
+                    self.procedure_indents,
+                    self.derived_type_indents,
+                    self.control_flow_indents,
+                    self.interface_indents,
+                    self.line_continuation_indents,
                 ]
             }
             Ok(())
@@ -831,7 +789,7 @@ mod tests {
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-program-contents = {}
+            program-indents = {}
             "#,
             num_indents,
         );
@@ -852,7 +810,7 @@ mod tests {
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-module-contents = {}
+            module-indents = {}
             "#,
             num_indents,
         );
@@ -874,7 +832,7 @@ mod tests {
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-submodule-contents = {}
+            module-indents = {}
             "#,
             num_indents,
         );
@@ -895,7 +853,7 @@ mod tests {
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-subroutine-contents = {}
+            procedure-indents = {}
             "#,
             num_indents,
         );
@@ -967,7 +925,7 @@ end submodule msubmodule"#
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-function-contents = {}
+            procedure-indents = {}
             "#,
             num_indents,
         );
@@ -1012,7 +970,7 @@ end module mmod"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-derived-type-contents = {}
+            derived-type-indents = {}
             "#,
             num_indents,
         );
@@ -1066,7 +1024,7 @@ end program mprog"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-block-contents = {}
+            control-flow-indents = {}
             "#,
             num_indents,
         );
@@ -1161,7 +1119,7 @@ end subroutine msub"#;
             r#"
             [check.incorrect-indentation]
             ignore-semicolons = {}
-            num-indents-for-if-contents = {}
+            control-flow-indents = {}
             "#,
             ignore_semicolons, num_indents,
         );
@@ -1212,7 +1170,7 @@ end module mmod"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-interface-contents = {}
+            interface-indents = {}
             "#,
             num_indents,
         );
@@ -1263,7 +1221,7 @@ end subroutine select_cases"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-select-contents = {}
+            control-flow-indents = {}
             "#,
             num_indents,
         );
@@ -1317,7 +1275,7 @@ end function do_construct"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-do-contents = {}
+            control-flow-indents = {}
             "#,
             num_indents,
         );
@@ -1365,7 +1323,7 @@ end subroutine associates"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-associate-contents = {}
+            control-flow-indents = {}
             "#,
             num_indents,
         );
@@ -1413,7 +1371,7 @@ end function wrapped_function"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            num-indents-for-line-continuation = {}
+            line-continuation-indents = {}
             "#,
             num_indents,
         );

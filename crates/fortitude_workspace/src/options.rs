@@ -546,108 +546,44 @@ pub struct IncorrectIndentationOptions {
     pub ignore_semicolons: Option<bool>,
 
     /// The number of full indents to use for the contents of a program
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-program-contents = 2"
-    )]
-    pub num_indents_for_program_contents: Option<usize>,
+    #[option(default = "1", value_type = "usize", example = "program-indents = 2")]
+    pub program_indents: Option<usize>,
 
-    /// The number of full indents to use for the contents of a module
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-module-contents = 2"
-    )]
-    pub num_indents_for_module_contents: Option<usize>,
+    /// The number of full indents to use for the contents of modules and submodules
+    #[option(default = "1", value_type = "usize", example = "module-indents = 2")]
+    pub module_indents: Option<usize>,
 
-    /// The number of full indents to use for the contents of a submodule
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-submodule-contents = 2"
-    )]
-    pub num_indents_for_submodule_contents: Option<usize>,
-
-    /// The number of full indents to use for the contents of a subroutine
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-subroutine-contents = 2"
-    )]
-    pub num_indents_for_subroutine_contents: Option<usize>,
-
-    /// The number of full indents to use for the contents of a function
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-function-contents = 2"
-    )]
-    pub num_indents_for_function_contents: Option<usize>,
+    /// The number of full indents to use for the contents of subroutines and functions
+    #[option(default = "1", value_type = "usize", example = "procedure-indents = 2")]
+    pub procedure_indents: Option<usize>,
 
     /// The number of full indents to use for the contents of a derived type
     #[option(
         default = "1",
         value_type = "usize",
-        example = "num-indents-for-derived-type-contents = 2"
+        example = "derived-type-indents = 2"
     )]
-    pub num_indents_for_derived_type_contents: Option<usize>,
+    pub derived_type_indents: Option<usize>,
 
-    /// The number of full indents to use for the contents of a block
+    /// The number of full indents to use for the contents of control flow units (i.e. `block`, `if`, `associate`, `do`, `select`)
     #[option(
         default = "1",
         value_type = "usize",
-        example = "num-indents-for-block-contents = 2"
+        example = "control-flow-indents = 2"
     )]
-    pub num_indents_for_block_contents: Option<usize>,
-
-    /// The number of full indents to use for the contents of a if block
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-if-contents = 2"
-    )]
-    pub num_indents_for_if_contents: Option<usize>,
+    pub control_flow_indents: Option<usize>,
 
     /// The number of full indents to use for the contents of a interface
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-interface-contents = 2"
-    )]
-    pub num_indents_for_interface_contents: Option<usize>,
-
-    /// The number of full indents to use for the contents of a select case construct
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-select-contents = 2"
-    )]
-    pub num_indents_for_select_contents: Option<usize>,
-
-    /// The number of full indents to use for the contents of a do block
-    #[option(
-        default = "1",
-        value_type = "usize",
-        example = "num-indents-for-do-contents = 2"
-    )]
-    pub num_indents_for_do_contents: Option<usize>,
-
-    /// The number of full indents to use for the contents of a associate
-    #[option(
-        default = "1",
-        value_type = "int",
-        example = "num-indents-for-associate-contents = 2"
-    )]
-    pub num_indents_for_associate_contents: Option<usize>,
+    #[option(default = "1", value_type = "usize", example = "interface-indents = 2")]
+    pub interface_indents: Option<usize>,
 
     /// The number of full indents to use after a line continuation (`&`)
     #[option(
         default = "1",
         value_type = "int",
-        example = "num-indents-for-line-continuation = 2"
+        example = "line-continuation-indents = 2"
     )]
-    pub num_indents_for_line_continuation: Option<usize>,
+    pub line_continuation_indents: Option<usize>,
 }
 
 impl IncorrectIndentationOptions {
@@ -657,45 +593,27 @@ impl IncorrectIndentationOptions {
         settings_to_return.ignore_semicolons = self
             .ignore_semicolons
             .unwrap_or(settings_to_return.ignore_semicolons);
-        settings_to_return.num_indents_for_program_contents = self
-            .num_indents_for_program_contents
-            .unwrap_or(settings_to_return.num_indents_for_program_contents);
-        settings_to_return.num_indents_for_module_contents = self
-            .num_indents_for_module_contents
-            .unwrap_or(settings_to_return.num_indents_for_module_contents);
-        settings_to_return.num_indents_for_submodule_contents = self
-            .num_indents_for_submodule_contents
-            .unwrap_or(settings_to_return.num_indents_for_submodule_contents);
-        settings_to_return.num_indents_for_subroutine_contents = self
-            .num_indents_for_subroutine_contents
-            .unwrap_or(settings_to_return.num_indents_for_subroutine_contents);
-        settings_to_return.num_indents_for_function_contents = self
-            .num_indents_for_function_contents
-            .unwrap_or(settings_to_return.num_indents_for_function_contents);
-        settings_to_return.num_indents_for_derived_type_contents = self
-            .num_indents_for_derived_type_contents
-            .unwrap_or(settings_to_return.num_indents_for_derived_type_contents);
-        settings_to_return.num_indents_for_block_contents = self
-            .num_indents_for_block_contents
-            .unwrap_or(settings_to_return.num_indents_for_block_contents);
-        settings_to_return.num_indents_for_if_contents = self
-            .num_indents_for_if_contents
-            .unwrap_or(settings_to_return.num_indents_for_if_contents);
-        settings_to_return.num_indents_for_interface_contents = self
-            .num_indents_for_interface_contents
-            .unwrap_or(settings_to_return.num_indents_for_interface_contents);
-        settings_to_return.num_indents_for_select_contents = self
-            .num_indents_for_select_contents
-            .unwrap_or(settings_to_return.num_indents_for_select_contents);
-        settings_to_return.num_indents_for_do_contents = self
-            .num_indents_for_do_contents
-            .unwrap_or(settings_to_return.num_indents_for_do_contents);
-        settings_to_return.num_indents_for_associate_contents = self
-            .num_indents_for_associate_contents
-            .unwrap_or(settings_to_return.num_indents_for_associate_contents);
-        settings_to_return.num_indents_for_line_continuation = self
-            .num_indents_for_line_continuation
-            .unwrap_or(settings_to_return.num_indents_for_line_continuation);
+        settings_to_return.program_indents = self
+            .program_indents
+            .unwrap_or(settings_to_return.program_indents);
+        settings_to_return.module_indents = self
+            .module_indents
+            .unwrap_or(settings_to_return.module_indents);
+        settings_to_return.procedure_indents = self
+            .procedure_indents
+            .unwrap_or(settings_to_return.procedure_indents);
+        settings_to_return.derived_type_indents = self
+            .derived_type_indents
+            .unwrap_or(settings_to_return.derived_type_indents);
+        settings_to_return.control_flow_indents = self
+            .control_flow_indents
+            .unwrap_or(settings_to_return.control_flow_indents);
+        settings_to_return.interface_indents = self
+            .interface_indents
+            .unwrap_or(settings_to_return.interface_indents);
+        settings_to_return.line_continuation_indents = self
+            .line_continuation_indents
+            .unwrap_or(settings_to_return.line_continuation_indents);
 
         settings_to_return = settings_to_return.populate_construct_to_indent_map();
 
