@@ -819,28 +819,6 @@ help: Replace with the correct number of spaces, 12
 62 | if (i == 4) then
 63 |             i = 2
 
-S105 [*] Incorrect indentation and semicolon found
-  --> ./resources/test/fixtures/style/S105.f90:61:1
-   |
-59 |     i = i + 1
-60 | if (i == 1) i = 2
-61 |   if (i == 2) then; i = 3; end if;
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-62 | if (i == 4) then
-63 |             i = 2
-   |
-help: Remove semicolons and indent correctly
-58 | integer :: i
-59 |     i = i + 1
-60 | if (i == 1) i = 2
-   -   if (i == 2) then; i = 3; end if;
-61 +             if (i == 2) then
-62 +             i = 3
-63 +             end if
-64 | if (i == 4) then
-65 |             i = 2
-66 |             end if
-
 S105 [*] Incorrect indentation
   --> ./resources/test/fixtures/style/S105.f90:62:1
    |
@@ -1073,26 +1051,6 @@ help: Replace with the correct number of spaces, 4
 90 |             print "Semicolon ; in string with ; not in string"; print "hello"
 91 |
 92 | call do_something()
-
-S105 [*] Incorrect indentation and semicolon found
-  --> ./resources/test/fixtures/style/S105.f90:90:1
-   |
-89 |             print "Semicolon ; in string"
-90 |             print "Semicolon ; in string with ; not in string"; print "hello"
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-91 |
-92 | call do_something()
-   |
-help: Remove semicolons and indent correctly
-87 |     implicit none
-88 |
-89 |             print "Semicolon ; in string"
-   -             print "Semicolon ; in string with ; not in string"; print "hello"
-90 +     print "Semicolon ; in string with ; not in string"
-91 +     print "hello"
-92 |
-93 | call do_something()
-94 |
 
 S105 [*] Incorrect indentation
   --> ./resources/test/fixtures/style/S105.f90:92:1

@@ -336,7 +336,9 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// Checks that the correct indentation has been used
 ///
 /// The complexity of handling semicolons requires that this
-/// rule removes any semicolons used midway through a line
+/// rule either removes any semicolons used midway through a line
+/// or ignores any lines containing a semicolon. This logic can be
+/// toggled using the `ignore-semicolons` option.
 ///
 /// ## Why is this bad?
 /// Inconsistent indentation makes Fortran less readable and difficult to
@@ -344,6 +346,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 ///
 /// ## Options
 /// - `check.indent-width`
+/// - `check.incorrect-indentation.ignore-semicolons`
 /// - `check.incorrect-indentation.num-indents-for-associate-contents`
 /// - `check.incorrect-indentation.num-indents-for-block-contents`
 /// - `check.incorrect-indentation.num-indents-for-derived-type-contents`
@@ -479,6 +482,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
     let indent_width = context.settings().indent_width;
 
+    let ignore_semicolons = context.settings().incorrect_indentation.ignore_semicolons;
     let constructs_to_indent_map = &context
         .settings()
         .incorrect_indentation
@@ -595,8 +599,11 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 line_segment_start
             };
 
-            // Compare with the expected number of leading spaces
-            if leading_spaces != current_expected_indent || line_contains_semicolon {
+            // Populate the new replacement string if a violation has been found
+            let indentation_mismatch = leading_spaces != current_expected_indent;
+            if (ignore_semicolons && indentation_mismatch && !line_contains_semicolon)
+                || (!ignore_semicolons && (indentation_mismatch || line_contains_semicolon))
+            {
                 let new_indent = " ".repeat(current_expected_indent);
                 if is_first_segment {
                     edit_string = format!("{}{}{}", edit_string, new_indent, line_segment.trim());
@@ -659,6 +666,7 @@ pub mod settings {
 
     #[derive(Debug, Clone, CacheKey)]
     pub struct IncorrectIndentationSettings {
+        pub ignore_semicolons: bool,
         pub construct_to_indent_map: HashMap<String, usize>,
         pub num_indents_for_program_contents: usize,
         pub num_indents_for_module_contents: usize,
@@ -679,6 +687,7 @@ pub mod settings {
         fn default() -> Self {
             let construct_to_indent_map: HashMap<String, usize> = HashMap::new();
             let mut settings = Self {
+                ignore_semicolons: true,
                 construct_to_indent_map,
                 num_indents_for_program_contents: 1usize,
                 num_indents_for_module_contents: 1usize,
@@ -777,6 +786,7 @@ pub mod settings {
                 formatter = f,
                 namespace = "check.incorrect-indentation",
                 fields = [
+                    self.ignore_semicolons,
                     self.num_indents_for_program_contents,
                     self.num_indents_for_module_contents,
                     self.num_indents_for_submodule_contents,
@@ -1058,8 +1068,9 @@ end program mprog"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(  // All types of if with zero indent
-        3,
+    #[test_case::test_case(  // All types of if with one indent and including semicolons
+        false,
+        1,
         r#"
 subroutine msub()
     integer :: i
@@ -1068,8 +1079,28 @@ subroutine msub()
     if (i == 1) i = 2
     ! Semicolons
     if (i == 2) then
-                i = 3
+        i = 3
     end if
+    if (i == 4) then
+        i = 2
+    end if
+    ! Named if block
+    named_if: if (i == 1) then
+        i = i + 1
+    end if
+end subroutine msub"#
+    )]
+    #[test_case::test_case(  // All types of if with three indent and ignoring semicolons
+        true,
+        3,
+        r#"
+subroutine msub()
+    integer :: i
+    i = i + 1
+    ! inline if
+    if (i == 1) i = 2
+    ! Semicolons
+if (i == 2) then; i = 3; end if;
     if (i == 4) then
                 i = 2
     end if
@@ -1079,7 +1110,8 @@ subroutine msub()
     end if
 end subroutine msub"#
     )]
-    #[test_case::test_case(
+    #[test_case::test_case( // All types of if with zero indent and ignoring semicolons
+        true,
         0,
         r#"
 subroutine msub()
@@ -1088,9 +1120,7 @@ subroutine msub()
     ! inline if
     if (i == 1) i = 2
     ! Semicolons
-    if (i == 2) then
-    i = 3
-    end if
+if (i == 2) then; i = 3; end if;
     if (i == 4) then
     i = 2
     end if
@@ -1100,7 +1130,11 @@ subroutine msub()
     end if
 end subroutine msub"#
     )]
-    fn test_s105_if_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn test_s105_if_indentation(
+        ignore_semicolons: bool,
+        num_indents: i8,
+        fixed_snippet: &str,
+    ) -> Result<()> {
         let snippet = r#"
 subroutine msub()
 integer :: i
@@ -1120,9 +1154,10 @@ end subroutine msub"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
+            ignore-semicolons = {}
             num-indents-for-if-contents = {}
             "#,
-            num_indents,
+            ignore_semicolons, num_indents,
         );
 
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)

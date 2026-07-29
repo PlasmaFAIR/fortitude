@@ -537,6 +537,14 @@ impl KeywordWhitespaceOptions {
 )]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct IncorrectIndentationOptions {
+    /// Whether lines containing semicolons should be ignored
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "ignore-semicolons = false"
+    )]
+    pub ignore_semicolons: Option<bool>,
+
     /// The number of full indents to use for the contents of a program
     #[option(
         default = "1",
@@ -646,6 +654,9 @@ impl IncorrectIndentationOptions {
     pub fn into_settings(self) -> whitespace::settings::IncorrectIndentationSettings {
         let mut settings_to_return = whitespace::settings::IncorrectIndentationSettings::default();
 
+        settings_to_return.ignore_semicolons = self
+            .ignore_semicolons
+            .unwrap_or(settings_to_return.ignore_semicolons);
         settings_to_return.num_indents_for_program_contents = self
             .num_indents_for_program_contents
             .unwrap_or(settings_to_return.num_indents_for_program_contents);
