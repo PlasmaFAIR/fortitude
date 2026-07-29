@@ -185,3 +185,96 @@ impl AstRule for MissingDefaultType {
         kind_ids!["select_type_statement"]
     }
 }
+
+/// ## What it does
+/// Checks that `select rank` statements have a `rank default`.
+///
+/// ## Why is this bad?
+/// Select statements without a default can lead to incomplete handling of
+/// the possible options. If the given rank isn't handled by any of the cases, the
+/// program will continue execution, which may lead to surprising results. This
+/// is a common source of bugs if the processing is rank-specific, and especially
+/// if the variable is part of the arguments to a function/subroutine. Having a
+/// default allows for the program to gracefully handle errors.
+///
+/// ## Examples
+///
+/// Instead of:
+///
+/// ```f90
+/// select rank(A)
+/// rank (0)
+///     ! Scalar
+///     call scalarVersion(A)
+/// rank (1)
+///     call vectorVersion(A)
+/// end select
+/// ```
+///
+/// use:
+///
+/// ```f90
+/// select rank(A)
+/// rank (0)
+///     ! Scalar
+///     call scalarVersion(A)
+/// rank (1)
+///     call vectorVersion(A)
+/// rank default
+///     call handle_error("Unsupported rank: ", rank(A))
+/// end select
+/// ```
+///
+/// If you do only intend to handle a subset of ranks, you can use a `continue`
+/// statement with an explanatory comment:
+///
+/// ```f90
+/// select rank(A)
+/// rank (0)
+///     ! Scalar
+///     call scalarVersion(A)
+/// rank (1)
+///     call vectorVersion(A)
+/// rank default
+///     ! Other ranks handled elsewhere
+///     continue
+/// end select
+/// ```
+///
+/// You may also consider instead using an `if` statement. This can make your
+/// intention more obvious.
+#[derive(ViolationMetadata)]
+pub(crate) struct MissingDefaultRank {}
+
+impl Violation for MissingDefaultRank {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        "Missing default rank may not handle all ranks".to_string()
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        Some("Add 'rank default'".to_string())
+    }
+}
+
+impl AstRule for MissingDefaultRank {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        let has_default = node
+            .named_children(&mut node.walk())
+            .filter(|child| child.kind_id() == kind!("rank_statement"))
+            .any(|case| {
+                case.named_children(&mut case.walk())
+                    .any(|child| child.kind_id() == kind!("default"))
+            });
+
+        if has_default {
+            None
+        } else {
+            some_vec!(context.create_diagnostic(Self {}, node))
+        }
+    }
+
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["select_rank_statement"]
+    }
+}
