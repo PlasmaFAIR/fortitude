@@ -51,7 +51,7 @@ mod tests {
     #[test_case(Rule::IncorrectSpaceAroundDoubleColon, Path::new("S103.f90"))]
     #[test_case(Rule::IncorrectSpaceBetweenBrackets, Path::new("S104.f90"))]
     #[test_case(Rule::IncorrectIndentation, Path::new("S105.f90"))]
-    #[test_case(Rule::InvalidPreprocIndentation, Path::new("S106.f90"))]
+    #[test_case(Rule::IndentedPreprocessorStatement, Path::new("S106.f90"))]
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201.f90"))]
     #[test_case(Rule::MultipleModules, Path::new("S211.f90"))]
     #[test_case(Rule::ProgramWithModule, Path::new("S212.f90"))]

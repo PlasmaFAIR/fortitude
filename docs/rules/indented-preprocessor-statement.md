@@ -1,4 +1,4 @@
-# invalid-preproc-indentation (S106)
+# indented-preprocessor-statement (S106)
 Fix is always available.
 
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.

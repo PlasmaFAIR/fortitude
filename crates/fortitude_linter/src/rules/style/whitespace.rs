@@ -389,9 +389,9 @@ impl AlwaysFixableViolation for IncorrectIndentation {
 /// ## Why is this bad?
 /// Preprocessor statements with indentation are invalid fortran
 #[derive(ViolationMetadata)]
-pub(crate) struct InvalidPreprocIndentation;
+pub(crate) struct IndentedPreprocessorStatement;
 
-impl AlwaysFixableViolation for InvalidPreprocIndentation {
+impl AlwaysFixableViolation for IndentedPreprocessorStatement {
     #[derive_message_formats]
     fn message(&self) -> String {
         "Preprocessor statements should have zero indentation".to_string()
@@ -566,7 +566,8 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     scope_indents.pop();
                     current_expected_indent = *scope_indents.last().unwrap_or(&0usize);
                 } else if PREPROC_NODES.contains(&node_kind) {
-                    edit_is_activated = context.is_rule_enabled(Rule::InvalidPreprocIndentation);
+                    edit_is_activated =
+                        context.is_rule_enabled(Rule::IndentedPreprocessorStatement);
                     is_preproc_violation = true;
                     current_expected_indent = 0usize;
                 } else if SCOPED_ZERO_INDENT_NODES.contains(&node_kind) {
@@ -641,7 +642,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
             if is_preproc_violation {
                 if let Some(diagnostic) =
-                    context.create_diagnostic_if_enabled(InvalidPreprocIndentation, range)
+                    context.create_diagnostic_if_enabled(IndentedPreprocessorStatement, range)
                 {
                     violations.push(diagnostic.with_fix(fix));
                 };
