@@ -15,6 +15,7 @@ mod tests {
     use test_case::test_case;
 
     use crate::apply_common_filters;
+    use crate::line_width::IndentWidth;
     use crate::registry::Rule;
     use crate::rules::portability;
     use crate::settings::CheckSettings;
@@ -49,9 +50,9 @@ mod tests {
         );
 
         let settings = CheckSettings {
-            indent_width: 4,
+            indent_width: IndentWidth::from(4),
             invalid_tab: portability::invalid_tab::settings::Settings {
-                indent_width: 2usize.into(),
+                indent_width: IndentWidth::from(2),
             },
             ..CheckSettings::for_rule(rule_code)
         };

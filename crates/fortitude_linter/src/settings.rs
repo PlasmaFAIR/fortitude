@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use crate::diagnostics::Applicability;
+use crate::line_width::IndentWidth;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_macros::CacheKey;
@@ -63,7 +64,7 @@ pub struct CheckSettings {
     pub per_file_ignores: CompiledPerFileIgnoreList,
 
     pub line_length: usize,
-    pub indent_width: usize,
+    pub indent_width: IndentWidth,
 
     pub fix: bool,
     pub fix_only: bool,
@@ -105,7 +106,7 @@ impl CheckSettings {
                 .collect(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
-            indent_width: 4,
+            indent_width: IndentWidth::from(4),
             fix: false,
             fix_only: false,
             show_fixes: false,

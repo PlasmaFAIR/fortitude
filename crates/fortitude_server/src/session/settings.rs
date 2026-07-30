@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use thiserror::Error;
 
-use fortitude_linter::RuleSelector;
+use fortitude_linter::{RuleSelector, line_width::IndentWidth};
 use fortitude_workspace::options::Options;
 
 use crate::{
@@ -82,7 +82,7 @@ pub(crate) struct EditorSettings {
     pub(super) ignore: Option<Vec<RuleSelector>>,
     pub(super) exclude: Option<Vec<String>>,
     pub(super) line_length: Option<usize>,
-    pub(super) indent_width: Option<usize>,
+    pub(super) indent_width: Option<IndentWidth>,
     pub(super) configuration_preference: ConfigurationPreference,
 }
 

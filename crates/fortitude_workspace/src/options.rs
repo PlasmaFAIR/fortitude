@@ -362,7 +362,7 @@ pub struct CheckOptions {
         indent-width = 4
         "#
     )]
-    pub indent_width: Option<usize>,
+    pub indent_width: Option<IndentWidth>,
 
     /// By default disable ignore-comment-length behavior when running `fortitude`.
     #[option(

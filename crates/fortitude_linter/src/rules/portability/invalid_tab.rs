@@ -51,7 +51,7 @@ pub(crate) fn check_invalid_tab(context: &CheckContext, root: &Node) -> Vec<Diag
             let start = TextSize::try_from(index).unwrap();
             let range = TextRange::new(start, start + TextSize::new(1));
             let width = if context.settings().invalid_tab.indent_width.as_usize() == 0usize {
-                context.settings().indent_width
+                context.settings().indent_width.as_usize()
             } else {
                 context.settings().invalid_tab.indent_width.as_usize()
             };

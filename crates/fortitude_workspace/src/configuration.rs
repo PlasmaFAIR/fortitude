@@ -7,6 +7,7 @@ use crate::options::{
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
 };
+use fortitude_linter::line_width::IndentWidth;
 use fortitude_linter::registry::RuleNamespace;
 use fortitude_linter::rule_redirects::get_redirect;
 use fortitude_linter::rule_selector::{
@@ -232,7 +233,7 @@ pub struct Configuration {
     pub per_file_ignores: Option<Vec<PerFileIgnore>>,
     pub extend_per_file_ignores: Vec<PerFileIgnore>,
     pub line_length: Option<usize>,
-    pub indent_width: Option<usize>,
+    pub indent_width: Option<IndentWidth>,
     pub fix: Option<bool>,
     pub fix_only: Option<bool>,
     pub show_fixes: Option<bool>,

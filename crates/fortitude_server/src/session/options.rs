@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
-use fortitude_linter::{RuleSelector, rule_selector::ParseError};
+use fortitude_linter::{RuleSelector, line_width::IndentWidth, rule_selector::ParseError};
 
 use crate::session::{
     Client,
@@ -83,7 +83,7 @@ pub struct ClientOptions {
     code_action: Option<CodeActionOptions>,
     exclude: Option<Vec<String>>,
     line_length: Option<usize>,
-    indent_width: Option<usize>,
+    indent_width: Option<IndentWidth>,
     configuration_preference: Option<ConfigurationPreference>,
 }
 
@@ -197,6 +197,12 @@ impl Combine for ClientOptions {
         self.indent_width.combine_with(other.indent_width);
         self.configuration_preference
             .combine_with(other.configuration_preference);
+    }
+}
+
+impl Combine for IndentWidth {
+    fn combine_with(&mut self, other: Self) {
+        self.combine_with(other);
     }
 }
 
@@ -462,6 +468,7 @@ impl_noop_combine!(ClientConfiguration);
 
 #[cfg(test)]
 mod tests {
+    use fortitude_linter::line_width::IndentWidth;
     use fortitude_workspace::options::{CheckOptions, Options};
     use insta::assert_debug_snapshot;
     use serde::de::DeserializeOwned;
@@ -740,7 +747,9 @@ mod tests {
                         80,
                     ),
                     indent_width: Some(
-                        2,
+                        IndentWidth(
+                            2,
+                        ),
                     ),
                     configuration_preference: None,
                 },
@@ -778,7 +787,7 @@ mod tests {
                     ignore: Some(vec![RuleSelector::from_str("FORT001").unwrap()]),
                     exclude: Some(vec!["third_party".into()]),
                     line_length: Some(80),
-                    indent_width: Some(2),
+                    indent_width: Some(IndentWidth::from(2)),
                     configuration_preference: ConfigurationPreference::EditorFirst,
                 },
             }
@@ -848,7 +857,7 @@ mod tests {
                         check: Some(CheckOptions {
                             extend_select: Some(vec![RuleSelector::from_str("C032").unwrap()]),
                             line_length: Some(100),
-                            indent_width: Some(2),
+                            indent_width: Some(IndentWidth::from(2)),
                             ..Default::default()
                         }),
                         ..Default::default()

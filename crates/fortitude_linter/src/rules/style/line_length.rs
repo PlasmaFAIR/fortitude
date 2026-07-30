@@ -86,7 +86,7 @@ impl LineTooLong {
 
         // Default to general indent_width but use the invalid_tab specific value if provided
         let tab_size = if context.settings().invalid_tab.indent_width.as_usize() == 0usize {
-            context.settings().indent_width
+            context.settings().indent_width.as_usize()
         } else {
             context.settings().invalid_tab.indent_width.as_usize()
         };

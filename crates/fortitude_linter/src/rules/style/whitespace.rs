@@ -522,7 +522,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
             // Count leading spaces
             let leading_spaces = line_segment.chars().take_while(|c| *c == ' ').count()
-                + indent_width * line_segment.chars().take_while(|c| *c == '\t').count();
+                + indent_width.as_usize() * line_segment.chars().take_while(|c| *c == '\t').count();
 
             // Get the first none whitespace node
             let content_start =
@@ -556,7 +556,8 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     if edit_is_activated {
                         scope_indents.push(
                             current_expected_indent
-                                + indent_width * constructs_to_indent_map.get(node_kind).unwrap(),
+                                + indent_width.as_usize()
+                                    * constructs_to_indent_map.get(node_kind).unwrap(),
                         );
                     } else {
                         scope_indents.push(leading_spaces);
@@ -578,7 +579,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                         in_line_continuation = true;
                         scope_indents.push(
                             current_expected_indent
-                                + indent_width
+                                + indent_width.as_usize()
                                     * constructs_to_indent_map.get("line_continuation").unwrap(),
                         );
                     } else if in_line_continuation && !line_segment_has_continuation {

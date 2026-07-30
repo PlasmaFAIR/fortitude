@@ -28,6 +28,7 @@ mod tests {
     use test_case::test_case;
 
     use crate::apply_common_filters;
+    use crate::line_width::IndentWidth;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
     use crate::rules::style::{
@@ -137,7 +138,7 @@ mod tests {
         );
 
         let settings = CheckSettings {
-            indent_width: 2,
+            indent_width: IndentWidth::from(2),
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
