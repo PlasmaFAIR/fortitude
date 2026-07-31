@@ -61,6 +61,10 @@ if (i == 1) i = 2
   if (i == 2) then; i = 3; end if;
 if (i == 4) then
             i = 2
+else if (i == 2) then
+i = 4
+      else
+    i = 1
             end if
 
         named_if: if (i == 1) then

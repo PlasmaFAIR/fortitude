@@ -429,7 +429,12 @@ const PREPROC_NODES: [&str; 7] = [
     "preproc_def",
     "preproc_function_def",
 ];
-const SCOPED_ZERO_INDENT_NODES: [&str; 2] = ["contains_statement", "case_statement"];
+const SCOPED_ZERO_INDENT_NODES: [&str; 4] = [
+    "contains_statement",
+    "case_statement",
+    "else_clause",
+    "elseif_clause",
+];
 const END_SCOPE_NODES: [&str; 12] = [
     "end_program_statement",
     "end_module_statement",
@@ -1049,6 +1054,10 @@ subroutine msub()
     end if
     if (i == 4) then
         i = 2
+    else if (i == 2) then
+        i = 4
+    else
+        i = 1
     end if
     ! Named if block
     named_if: if (i == 1) then
@@ -1069,6 +1078,10 @@ subroutine msub()
 if (i == 2) then; i = 3; end if;
     if (i == 4) then
                 i = 2
+    else if (i == 2) then
+                i = 4
+    else
+                i = 1
     end if
     ! Named if block
     named_if: if (i == 1) then
@@ -1089,6 +1102,10 @@ subroutine msub()
 if (i == 2) then; i = 3; end if;
     if (i == 4) then
     i = 2
+    else if (i == 2) then
+    i = 4
+    else
+    i = 1
     end if
     ! Named if block
     named_if: if (i == 1) then
@@ -1111,6 +1128,10 @@ if (i == 1) i = 2
 if (i == 2) then; i = 3; end if;
 if (i == 4) then
 i = 2
+else if (i == 2) then
+i = 4
+else
+i = 1
 end if
 ! Named if block
 named_if: if (i == 1) then
