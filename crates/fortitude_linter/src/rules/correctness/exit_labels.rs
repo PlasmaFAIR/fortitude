@@ -1,12 +1,11 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{
     AlwaysFixableViolation, Annotation, Diagnostic, Edit, Fix, FixAvailability, Span, Violation,
 };
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What does it do?
 /// When using `exit` or `cycle` in a named `do` loop, the `exit`/`cycle` statement

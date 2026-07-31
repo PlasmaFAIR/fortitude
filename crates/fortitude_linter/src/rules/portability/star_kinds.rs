@@ -1,9 +1,10 @@
-use crate::ast::{FortitudeNode, dtype_is_plain_number, strip_line_breaks};
 use crate::diagnostics::{Diagnostic, Fix, FixAvailability, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+use fortitude_sitter::ast::types::dtype_is_plain_number;
+use fortitude_sitter::strip_line_breaks;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for non-standard kind specifiers such as `int*4` or `real*8`

@@ -1,12 +1,12 @@
 use std::{borrow::Cow, cell::OnceCell, fmt, ops::Deref};
 
+use fortitude_sitter::Node;
 use ruff_macros::CacheKey;
 use ruff_source_file::{LineEnding, SourceFile, find_newline};
 use ruff_text_size::TextSize;
 use serde::{Deserialize, Serialize};
-use tree_sitter::Node;
 
-use crate::{ast::FortitudeNode, traits::TextRanged};
+use fortitude_sitter::traits::TextRanged;
 
 #[derive(Debug, Clone)]
 pub struct Stylist<'a> {
@@ -51,11 +51,7 @@ impl<'a> Stylist<'a> {
     pub fn from_ast(root: &Node, source: &'a SourceFile) -> Self {
         let first_statement = find_keyword(root);
         let capitalisation: Capitalisation = first_statement
-            .map(|node| {
-                node.to_text(source.source_text())
-                    .unwrap_or_default()
-                    .into()
-            })
+            .map(|node| node.text().into())
             .unwrap_or_default();
         let indentation = detect_indentation(&first_statement, source);
         let src = source.source_text();
@@ -306,17 +302,15 @@ fn push_titlecase_word(buf: &mut String, word: &str) {
 #[cfg(test)]
 mod tests {
     use anyhow::{Context, Result};
+    use fortitude_sitter::{Parser, Tree};
     use ruff_source_file::{LineEnding, SourceFile, SourceFileBuilder, find_newline};
-    use tree_sitter::{Parser, Tree};
 
     use crate::stylist::{Capitalisation, ToCapitalisation, titlecase};
 
     use super::{Indentation, Quote, Stylist};
 
     fn parse_snippet(code: &str) -> Result<(Tree, SourceFile)> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let file = SourceFileBuilder::new("test.f90", code).finish();

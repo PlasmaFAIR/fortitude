@@ -1,6 +1,5 @@
-use crate::ast::FortitudeNode;
+use fortitude_sitter::Node;
 use ruff_source_file::SourceFile;
-use tree_sitter::Node;
 
 pub fn match_original_case(original: &str, new: &str) -> Option<String> {
     let first_ch = original.chars().next()?;

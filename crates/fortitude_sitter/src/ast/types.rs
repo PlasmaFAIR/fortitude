@@ -4,12 +4,14 @@ use std::{rc::Rc, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use bitflags::bitflags;
-use fortitude_macros::{HasName, HasNode, field, kind, kw};
 use itertools::Itertools;
+use ruff_text_size::TextRange;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
-use tree_sitter::Node;
 
-use crate::{ast::FortitudeNode, traits::HasNode};
+use fortitude_macros::{HasName, HasNode, field, kind, kw};
+
+use crate::Node;
+use crate::traits::{HasNode, TextRanged};
 
 #[derive(Clone, Debug)]
 pub struct ParameterStatement<'a> {
@@ -658,7 +660,7 @@ impl<'a> HasNode<'a> for Variable<'a> {
 
 #[derive(EnumString, Display)]
 #[strum(ascii_case_insensitive)]
-pub(crate) enum BlockExit {
+pub enum BlockExit {
     Return,
     Cycle,
     Exit,
@@ -675,7 +677,7 @@ bitflags! {
 }
 
 #[derive(Clone, Debug, HasNode)]
-pub(crate) struct ImplicitStatement<'a> {
+pub struct ImplicitStatement<'a> {
     node: Node<'a>,
     none_type: ImplicitNoneType,
 }
@@ -1068,13 +1070,161 @@ impl<'a> HasNode<'a> for UsedItem<'a> {
     }
 }
 
+/// Returns true if the type passed to it is number-like, and of a kind that can be modified using
+/// kinds. 'double precision' and 'double complex' are not included.
+pub fn dtype_is_plain_number(dtype: &str) -> bool {
+    matches!(
+        dtype.to_lowercase().as_str(),
+        "integer" | "real" | "logical" | "complex"
+    )
+}
+
+/// A block of consecutive comments (no blank lines)
+#[derive(Debug, Clone)]
+pub struct CommentBlock {
+    text_range: TextRange,
+    start_row: usize,
+    end_row: usize,
+    text: String,
+}
+
+impl CommentBlock {
+    pub fn try_from_node_range(nodes: Vec<Node>, src: &str) -> Result<Self> {
+        if let Some(non_comment) = nodes.iter().find(|node| node.kind() != "comment") {
+            return Err(anyhow!(
+                "Unexpected non-comment '{non_comment:?}' in comment block"
+            ));
+        }
+        if nodes.is_empty() {
+            return Err(anyhow!("CommentBlock requires at least one node"));
+        }
+        // Have at least one, so can get first and last
+        let first = nodes.first().unwrap();
+        let last = nodes.last().unwrap();
+
+        let start_textsize = first.start_textsize();
+        let end_textsize = last.end_textsize();
+        let text_range = TextRange::new(start_textsize, end_textsize);
+
+        let start_row = first.start_position().row;
+        let end_row = last.end_position().row;
+
+        let text = nodes
+            .iter()
+            .map(|node| node.text())
+            .collect_vec()
+            .join("\n");
+
+        Ok(Self {
+            text_range,
+            start_row,
+            end_row,
+            text,
+        })
+    }
+
+    pub fn start_row(&self) -> usize {
+        self.start_row
+    }
+
+    pub fn end_row(&self) -> usize {
+        self.end_row
+    }
+
+    pub fn text(&self) -> &str {
+        self.text.as_ref()
+    }
+}
+
+impl TextRanged for CommentBlock {
+    fn textrange(&self) -> TextRange {
+        self.text_range
+    }
+}
+
+/// A control flow keyword
+#[derive(Clone, Debug, EnumIs)]
+pub enum ControlFlow {
+    Continue,
+    Cycle,
+    Exit,
+    GoTo(String),
+    Return,
+    Stop,
+}
+
+impl ControlFlow {
+    pub fn maybe_from(value: &Node, src: &str) -> Option<Self> {
+        if value.kind_id() != kind!("keyword_statement") {
+            return None;
+        }
+        match value.child(0)?.kind_id() {
+            kw!("continue") => Some(Self::Continue),
+            kw!("cycle") => Some(Self::Cycle),
+            kw!("exit") => Some(Self::Exit),
+            kw!("return") => Some(Self::Return),
+            kw!("stop") => Some(Self::Stop),
+            kw!("error") => Some(Self::Stop),
+            keyword => Self::parse_goto(keyword, value, src),
+        }
+    }
+
+    fn parse_goto(keyword: u16, value: &Node, src: &str) -> Option<Self> {
+        if !matches!(keyword, kw!("go") | kw!("goto")) {
+            return None;
+        }
+
+        // We expect either `go to N` or `goto N`.
+        // Don't bother with assigned or computed gotos for now
+        let expected_ref_index = if keyword == kw!("go") { 2 } else { 1 };
+        if value.child_count() > expected_ref_index + 1 {
+            return None;
+        }
+
+        Some(Self::GoTo(
+            value.child(expected_ref_index)?.to_text(src)?.to_string(),
+        ))
+    }
+}
+
+/// A control flow node
+#[derive(Clone, Debug)]
+pub struct ControlFlowNode<'a> {
+    control_flow: ControlFlow,
+    node: Node<'a>,
+}
+
+impl<'a> ControlFlowNode<'a> {
+    pub fn maybe_from(node: Node<'a>, src: &str) -> Option<Self> {
+        ControlFlow::maybe_from(&node, src).map(|control_flow| Self { control_flow, node })
+    }
+
+    pub fn goto_ref(&'a self) -> Option<&'a str> {
+        match self.control_flow {
+            ControlFlow::GoTo(ref ref_) => Some(ref_),
+            _ => None,
+        }
+    }
+
+    pub fn control_flow(&self) -> ControlFlow {
+        self.control_flow.clone()
+    }
+
+    pub fn node(&'a self) -> Node<'a> {
+        self.node
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::FortitudeNode;
-    use anyhow::Result;
+    use crate::Parser;
+
+    use anyhow::{Context, Result};
+    use ruff_text_size::TextSize;
     use test_case::test_case;
-    use tree_sitter::Parser;
+    use textwrap::dedent;
+    use tree_sitter::Point;
 
     #[test_case("byte", |result| result.is_byte())]
     #[test_case("integer", |result| result.is_integer())]
@@ -1087,9 +1237,7 @@ mod tests {
     #[test_case("logical", |result| result.is_logical())]
     #[test_case("character", |result| result.is_character())]
     fn intrinsic_type(type_: &str, check: impl FnOnce(IntrinsicType) -> bool) -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .expect("Error loading Fortran grammar");
 
         let code = format!("{type_} :: foo\nend");
@@ -1104,6 +1252,164 @@ mod tests {
         let result = IntrinsicType::from_node(type_, &code);
 
         assert!(check(result));
+
+        Ok(())
+    }
+
+    #[test]
+    fn decls() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .expect("Error loading Fortran grammar");
+
+        let code = "real, dimension(2) :: x, y = [4, 2], z(3)\nend";
+
+        let tree = parser.parse(code, None).expect("Failed to parse");
+        let root = tree.root_node();
+        let type_ = root
+            .named_descendants()
+            .find(|child| child.kind_id() == kind!("variable_declaration"))
+            .expect("couldn't find variable_declaration");
+
+        let result = VariableDeclaration::try_from_node(&type_, code)?;
+
+        assert_eq!(result.names().len(), 3);
+
+        let mut iter = result.names().iter();
+        let x = iter.next().unwrap();
+        let y = iter.next().unwrap();
+        let z = iter.next().unwrap();
+
+        let x_size = x.size();
+        let y_size = y.size();
+        let z_size = z.size();
+        assert!(x_size.is_none());
+        assert!(y_size.is_none());
+        assert!(z_size.is_some());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_comment_block() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          ! one
+          ! two
+          program foo
+
+          contains
+
+            ! not this
+
+            ! but this
+            subroutine bar()
+            end subroutine bar
+          end program foo
+
+          ! not this either
+
+          module zing
+          end module zing
+
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+
+        let program_node = tree
+            .root_node()
+            .child_with_name("program")
+            .context("Missing program node")?;
+        let program_comments = program_node
+            .prev_attached_comment_block(&code)
+            .context("Couldn't find program comment block")?;
+
+        let expected_text = "! one\n! two";
+        assert_eq!(
+            program_comments.textrange(),
+            TextRange::new(
+                TextSize::new(1),
+                TextSize::new(expected_text.len().saturating_add(1).try_into()?)
+            )
+        );
+        assert_eq!(program_comments.text(), expected_text);
+
+        let subroutine_node = program_node
+            .descendants()
+            .find(|node| node.kind() == "subroutine")
+            .context("Missing subroutine node")?;
+        let subroutine_comments = subroutine_node
+            .prev_attached_comment_block(&code)
+            .context("Couldn't find subroutine comment block")?;
+        let expected_text = "! but this";
+        assert_eq!(subroutine_comments.text(), expected_text);
+
+        let module_node = tree
+            .root_node()
+            .child_with_name("module")
+            .context("Missing module node")?;
+        assert!(module_node.prev_attached_comment_block(&code).is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn prev_line_continuation() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            do &
+              while (.true.)
+            end do
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "while_statement")
+            .context("missing 'while'")?;
+
+        let ampersand = node.prev_line_continuation();
+        assert!(ampersand.is_some());
+        assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
+
+        Ok(())
+    }
+
+    #[test]
+    fn next_line_continuation() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            do &
+              while (.true.)
+            end do
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "do")
+            .context("missing 'do'")?;
+
+        let ampersand = node.next_line_continuation();
+        assert!(ampersand.is_some());
+        assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
 
         Ok(())
     }

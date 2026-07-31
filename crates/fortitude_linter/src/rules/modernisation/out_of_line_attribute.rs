@@ -1,19 +1,20 @@
-use crate::ast::types::{ParameterStatement, Variable, get_name_node_of_declarator};
-use crate::ast::{FortitudeNode, types::HasName};
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,
 };
-use crate::traits::{HasNode, TextRanged};
 use crate::{AstRule, CheckContext, kind_ids};
 
 use anyhow::{Context, Result};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::{
+    Node,
+    ast::types::{HasName, ParameterStatement, Variable, get_name_node_of_declarator},
+    traits::{HasNode, TextRanged},
+};
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for variable attributes which are specified separately to the
@@ -285,15 +286,13 @@ impl AstRule for OutOfLineAttribute {
 mod tests {
     use super::*;
     use anyhow::{Context, Result};
+    use fortitude_sitter::Parser;
     use ruff_source_file::SourceFileBuilder;
     use ruff_text_size::TextSize;
-    use tree_sitter::Parser;
 
     #[test]
     fn test_remove_from_parameter_stmt() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -344,9 +343,7 @@ end program foo
 
     #[test]
     fn test_remove_from_dimension_stmt() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"

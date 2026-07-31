@@ -1,10 +1,10 @@
-/// Defines rules that raise errors if implicit typing is in use.
-use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+/// Defines rules that raise errors if implicit typing is in use.
+use fortitude_sitter::ast::types::ImplicitStatement;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for unnecessary `implicit none` in module procedures

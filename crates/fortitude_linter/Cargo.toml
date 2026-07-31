@@ -12,6 +12,7 @@ license = { workspace = true }
 
 [dependencies]
 fortitude_macros = { workspace = true }
+fortitude_sitter = { workspace = true }
 
 anyhow = { workspace = true }
 anstyle = { workspace = true }

@@ -1,12 +1,11 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for use of a variable in the same logical expression as "definedness" inquiry.

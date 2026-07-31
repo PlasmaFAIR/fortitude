@@ -1,21 +1,21 @@
 use crate::CheckContext;
-use crate::ast::FortitudeNode;
+
 use crate::rule_redirects::get_redirect_target;
 use crate::rules::Rule;
 use crate::rules::fortitude::allow_comments::{
     DisabledAllowComment, DuplicatedAllowComment, InvalidRuleCodeOrName, RedirectedAllowComment,
     UnusedAllowComment,
 };
-use crate::traits::TextRanged;
+use fortitude_sitter::traits::TextRanged;
 
 use crate::diagnostics::{Diagnostic, Edit, Fix};
+use fortitude_sitter::Node;
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashSet;
 use std::str::FromStr;
-use tree_sitter::Node;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Code<'a> {
@@ -45,10 +45,10 @@ pub struct AllowComment<'a, 'b> {
 }
 
 /// If this node is an `allow` comment, get all the rules allowed on the next line
-pub fn gather_allow_comments<'a, 'b>(
-    node: &Node<'b>,
+pub fn gather_allow_comments<'a>(
+    node: &Node<'a>,
     file: &'a SourceFile,
-) -> Option<AllowComment<'a, 'b>> {
+) -> Option<AllowComment<'a, 'a>> {
     if node.kind() != "comment" {
         return None;
     }

@@ -1,14 +1,13 @@
 use std::iter::once;
 
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use anyhow::{Context, Result, anyhow};
 use fortitude_macros::{ViolationMetadata, field, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 #[derive(
     Debug,

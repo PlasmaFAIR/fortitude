@@ -1,13 +1,15 @@
-use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_sitter::{
+    Node,
+    ast::types::{ControlFlow, ControlFlowNode},
+    traits::TextRanged,
+};
 use log::debug;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for uses of the obsolescent labelled `do` statements.

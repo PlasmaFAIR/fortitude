@@ -1,16 +1,16 @@
-use crate::ast::{FortitudeNode, types::BlockExit};
 use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
 use crate::fix::edits::redent;
 use crate::stylist::ToCapitalisation;
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::ast::types::BlockExit;
+use fortitude_sitter::traits::TextRanged;
 use log::debug;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for unnecessary `return` statements
@@ -447,15 +447,12 @@ fn fix_superfluous_return<'a>(context: &'a CheckContext, branch: &'a Node) -> Op
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use anyhow::{Context, Result};
-    use tree_sitter::Parser;
+    use fortitude_sitter::Parser;
 
     #[test]
     fn test_next_non_comment_sibling() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -475,9 +472,7 @@ end subroutine foo
 
     #[test]
     fn test_next_non_comment_statement() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"

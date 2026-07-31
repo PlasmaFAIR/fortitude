@@ -1,20 +1,17 @@
 //! Interface for generating fix edits from higher-level actions (e.g., "remove an argument").
 
-use crate::{
-    diagnostics::Edit,
-    whitespace::{has_leading_content, has_trailing_content},
-};
+use crate::diagnostics::Edit;
 use anyhow::{Result, anyhow};
+use fortitude_sitter::Node;
 use itertools::Itertools;
 use lazy_regex::lazy_regex;
 use ruff_source_file::{LineEnding, LineRanges, SourceFile};
 use ruff_text_size::{Ranged, TextSize};
-use tree_sitter::Node;
 
-use crate::{
-    ast::FortitudeNode,
+use fortitude_sitter::{
     ast::types::VariableDeclaration,
     traits::{HasNode, TextRanged},
+    whitespace::{has_leading_content, has_trailing_content},
 };
 
 /// Return the [`Edit`] to delete the declaration of a variable
@@ -264,26 +261,24 @@ pub fn redent(s: &str, indentation: &str, line_ending: LineEnding) -> String {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ast::symbol_table::{SymbolTable, SymbolTables},
-        diagnostics::Violation,
-        fix::apply_fixes,
-        locator::Locator,
+        diagnostics::Violation, fix::apply_fixes, locator::Locator,
         rules::style::whitespace::TrailingWhitespace,
     };
 
     use super::*;
     use anyhow::{Context, Result};
+    use fortitude_sitter::{
+        Parser,
+        ast::symbol_table::{SymbolTable, SymbolTables},
+    };
     use ruff_diagnostics::Fix;
     use ruff_source_file::SourceFileBuilder;
     use ruff_text_size::{TextRange, TextSize};
     use test_case::test_case;
-    use tree_sitter::Parser;
 
     #[test]
     fn remove_from_variable_stmt() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -344,9 +339,7 @@ end program foo
 
     #[test]
     fn add_attr() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -568,9 +561,7 @@ end program foo
     #[test_case("&\n  & while(.true.) ! comment", " ! comment"; "trailing comment")]
     #[test_case("& ! first\n  & while(.true.) ! second", " ! first\n ! second"; "two comments")]
     fn edit_delete(snippet: &str, replacement: &str) -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = &format!(

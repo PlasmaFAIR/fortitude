@@ -3,10 +3,10 @@ use crate::{
     diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation},
 };
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::{TextRange, TextSize};
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for the use of tab characters as whitespace

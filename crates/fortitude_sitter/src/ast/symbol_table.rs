@@ -1,18 +1,16 @@
 use std::{collections::HashMap, rc::Rc};
 
+use crate::Node;
+
 use fortitude_macros::kind;
 use itertools::Itertools;
 use strum_macros::EnumIs;
-use tree_sitter::Node;
 
 use crate::traits::{HasNode, TextRanged};
 
-use super::{
-    FortitudeNode,
-    types::{
-        HasName, Module, Name, Procedure, Program, TypeDefinition, UseStatement, UsedItem,
-        Variable, VariableDeclaration,
-    },
+use super::types::{
+    HasName, Module, Name, Procedure, Program, TypeDefinition, UseStatement, UsedItem, Variable,
+    VariableDeclaration,
 };
 
 pub const BEGIN_SCOPE_NODES: &[&str] = &[
@@ -312,22 +310,17 @@ impl<'a> SymbolTables<'a> {
 mod tests {
     use super::*;
     use crate::{
-        ast::{
-            FortitudeNode,
-            types::{AttributeKind, Intent},
-        },
+        Parser,
+        ast::types::{AttributeKind, Intent},
         traits::TextRanged,
     };
     use anyhow::{Context, Result};
     use itertools::Itertools;
     use ruff_text_size::{TextRange, TextSize};
-    use tree_sitter::Parser;
 
     #[test]
     fn new_symbol_table() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -398,9 +391,7 @@ end program foo
 
     #[test]
     fn new_symbol_table_outer_scope_only() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -424,9 +415,7 @@ end program foo
 
     #[test]
     fn symbol_table_get_case_insensitive() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -453,9 +442,7 @@ end program foo
 
     #[test]
     fn symbol_table_get_outer_scope() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -499,9 +486,7 @@ end program foo
 
     #[test]
     fn attribute_intent() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -544,9 +529,7 @@ end subroutine foo
 
     #[test]
     fn function_variable_with_attributes() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -579,9 +562,7 @@ end function foo
 
     #[test]
     fn function_variable() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -606,9 +587,7 @@ end function foo
 
     #[test]
     fn function_result() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -633,9 +612,7 @@ end function foo
 
     #[test]
     fn internal_procedures() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -670,9 +647,7 @@ end program foo
 
     #[test]
     fn used_items() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -749,9 +724,7 @@ end program foo
 
     #[test]
     fn all_symbols() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"

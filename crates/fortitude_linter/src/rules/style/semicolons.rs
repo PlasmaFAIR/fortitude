@@ -1,10 +1,9 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextSize;
-use tree_sitter::Node;
 
-use crate::ast::FortitudeNode;
 use crate::{AstRule, CheckContext, kind_ids};
 
 fn semicolon_is_superfluous(node: &Node) -> bool {

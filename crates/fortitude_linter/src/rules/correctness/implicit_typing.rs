@@ -1,13 +1,15 @@
 /// Defines rules that raise errors if implicit typing is in use.
-use crate::ast::{FortitudeNode, types::ImplicitStatement};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
 use crate::settings::FortranStandard;
-use crate::traits::{HasNode, TextRanged};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_sitter::ast::types::ImplicitStatement;
+use fortitude_sitter::{
+    Node,
+    traits::{HasNode, TextRanged},
+};
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
-use tree_sitter::Node;
 
 /// Inserts `implicit none` in the current scope. Should be called on a program,
 /// module, submodule, function, or subroutine.

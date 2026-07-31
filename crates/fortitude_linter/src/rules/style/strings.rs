@@ -2,14 +2,13 @@ use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::{TextLen, TextSize};
-use tree_sitter::Node;
 
-use crate::ast::FortitudeNode;
 use crate::stylist::Quote;
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
+use fortitude_sitter::traits::TextRanged;
 
 /// ## What does it do?
 /// Catches use of single- or double-quoted strings, depending on the value of

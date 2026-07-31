@@ -1,10 +1,9 @@
-use crate::ast::FortitudeNode;
-use crate::ast::types::{AttributeKind, get_name_node_of_declarator};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::ast::types::{AttributeKind, get_name_node_of_declarator};
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for local variables with implicit `save`

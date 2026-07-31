@@ -24,10 +24,8 @@ use ruff_annotate_snippets::Level as AnnotateLevel;
 use ruff_text_size::{Ranged, TextRange};
 use serde::Serialize;
 
-use crate::{
-    diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat,
-    traits::TextRanged,
-};
+use crate::{diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat};
+use fortitude_sitter::traits::TextRanged;
 
 pub use message::{DisplayDiagnostic, DisplayDiagnostics, render_diagnostics};
 pub use violation::{AlwaysFixableViolation, FixAvailability, Violation, ViolationMetadata};

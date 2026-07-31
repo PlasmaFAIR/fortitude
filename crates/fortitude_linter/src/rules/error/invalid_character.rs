@@ -3,10 +3,10 @@ use crate::{
     diagnostics::{Diagnostic, FixAvailability, Violation},
 };
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::{TextRange, TextSize};
-use tree_sitter::Node;
 
 const FORTRAN_VALID_CHARACTERS: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_ =+-*/\\()[]{},.:;!\"%&~<>?\'`^|$#@\n\r\t";
 

@@ -5,7 +5,6 @@ use rule_table::RuleTable;
 pub use settings::Settings;
 
 pub mod allow_comments;
-pub mod ast;
 pub mod diagnostics;
 pub mod fix;
 pub mod fs;
@@ -26,11 +25,8 @@ pub mod stylist;
 #[cfg(test)]
 mod test;
 pub mod text_helpers;
-pub mod traits;
-pub mod whitespace;
 
 use allow_comments::{check_allow_comments, gather_allow_comments};
-use ast::FortitudeNode;
 use diagnostics::{Diagnostic, Diagnostics, FixMap, Violation};
 use fix::{FixResult, fix_file};
 use locator::Locator;
@@ -49,11 +45,13 @@ use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
 use settings::{CheckSettings, FixMode};
 use stylist::Stylist;
-use traits::TextRanged;
 
 use anyhow::{Context, anyhow};
-use ast::symbol_table::{BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables};
 use colored::Colorize;
+use fortitude_sitter::ast::symbol_table::{
+    BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables,
+};
+use fortitude_sitter::{Node, Parser, Tree, traits::TextRanged};
 use itertools::Itertools;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 use rustc_hash::FxHashMap;
@@ -64,7 +62,6 @@ use std::fs::File;
 use std::io::{self, Write};
 use std::iter::once;
 use std::path::Path;
-use tree_sitter::{Node, Parser, Tree};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -248,9 +245,7 @@ pub fn check_only_file(
     settings: &CheckSettings,
     ignore_allow_comments: settings::IgnoreAllowComments,
 ) -> anyhow::Result<Vec<Diagnostic>> {
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_fortran::LANGUAGE.into())
+    let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
         .context("Error loading Fortran grammar")?;
     let tree = parser
         .parse(file.source_text(), None)
@@ -529,9 +524,7 @@ pub fn check_and_fix_file<'a>(
     // Track whether the _initial_ source code is valid syntax.
     let mut is_valid_syntax = false;
 
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_fortran::LANGUAGE.into())
+    let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
         .context("Error loading Fortran grammar")?;
 
     // Continuously fix until the source code stabilizes.

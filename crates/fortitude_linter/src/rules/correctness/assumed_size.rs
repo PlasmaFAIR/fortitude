@@ -1,15 +1,14 @@
-use crate::ast::FortitudeNode;
-use crate::ast::symbol_table::SymbolTable;
-use crate::ast::types::{AttributeKind, HasName, Intent, Type};
 use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
 use crate::settings::FortranStandard;
-use crate::traits::HasNode;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::ast::symbol_table::SymbolTable;
+use fortitude_sitter::ast::types::{AttributeKind, HasName, Intent, Type};
+use fortitude_sitter::traits::HasNode;
 use itertools::Itertools;
 use log::debug;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What does it do?
 /// Checks for assumed size variables

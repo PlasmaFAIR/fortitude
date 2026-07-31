@@ -1,17 +1,17 @@
-/// Defines rules that govern the use of keywords.
-use crate::ast::{FortitudeNode, symbol_table::SymbolTable};
 use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
 use crate::stylist::ToCapitalisation;
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+/// Defines rules that govern the use of keywords.
+use fortitude_sitter::ast::symbol_table::SymbolTable;
+use fortitude_sitter::traits::TextRanged;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::{TextRange, TextSize};
 use std::str::FromStr;
-use tree_sitter::Node;
 
 // TODO Support for `endfile`/`end file`
 

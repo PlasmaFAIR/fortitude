@@ -1,9 +1,9 @@
 use crate::diagnostics::{Diagnostic, Violation};
 use fortitude_macros::{ViolationMetadata, field, kind, kw};
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
-use crate::{AstRule, CheckContext, ast::FortitudeNode, kind_ids};
+use crate::{AstRule, CheckContext, kind_ids};
 
 /// ## What does it do?
 /// Checks for procedures declared with just `external`

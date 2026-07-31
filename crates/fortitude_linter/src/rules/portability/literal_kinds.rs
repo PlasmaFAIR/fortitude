@@ -1,10 +1,10 @@
-use crate::ast::{FortitudeNode, dtype_is_plain_number};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+use fortitude_sitter::ast::types::dtype_is_plain_number;
 use lazy_regex::regex_is_match;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 fn iso_fortran_env_param<S: AsRef<str>>(dtype: S, literal: u8) -> Option<String> {
     match dtype.as_ref() {

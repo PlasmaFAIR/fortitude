@@ -1,12 +1,14 @@
 use crate::CheckContext;
 use crate::Rule;
-use crate::ast::FortitudeNode;
-use crate::ast::types::{HasName, NameDecl, VariableDeclaration};
+
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::remove_variable_decl;
-use crate::traits::{HasNode, TextRanged};
 use anyhow::{Context, Result};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::{
+    ast::types::{HasName, NameDecl, VariableDeclaration},
+    traits::{HasNode, TextRanged},
+};
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
