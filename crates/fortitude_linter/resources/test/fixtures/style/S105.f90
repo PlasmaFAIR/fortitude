@@ -145,4 +145,10 @@ end block inner
   print *, x
     end associate named_associate
   end subroutine associates
+
+subroutine labels(x)
+integer, intent(inout) :: x
+20        x = 3
+x = 1;20   x = 4
+end subroutine labels
   end program mprog

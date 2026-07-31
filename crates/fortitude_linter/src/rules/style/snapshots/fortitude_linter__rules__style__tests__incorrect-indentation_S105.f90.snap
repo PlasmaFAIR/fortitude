@@ -1897,7 +1897,7 @@ help: Replace with the correct number of spaces, 12
 145 +             print *, x
 146 |     end associate named_associate
 147 |   end subroutine associates
-148 |   end program mprog
+148 |
 
 S105 [*] Incorrect indentation
    --> ./resources/test/fixtures/style/S105.f90:146:1
@@ -1907,7 +1907,6 @@ S105 [*] Incorrect indentation
 146 |     end associate named_associate
     | ^^^^
 147 |   end subroutine associates
-148 |   end program mprog
     |
 help: Replace with the correct number of spaces, 8
 143 |
@@ -1916,7 +1915,8 @@ help: Replace with the correct number of spaces, 8
     -     end associate named_associate
 146 +         end associate named_associate
 147 |   end subroutine associates
-148 |   end program mprog
+148 |
+149 | subroutine labels(x)
 
 S105 [*] Incorrect indentation
    --> ./resources/test/fixtures/style/S105.f90:147:1
@@ -1925,7 +1925,8 @@ S105 [*] Incorrect indentation
 146 |     end associate named_associate
 147 |   end subroutine associates
     | ^^
-148 |   end program mprog
+148 |
+149 | subroutine labels(x)
     |
 help: Replace with the correct number of spaces, 4
 144 |     named_associate: associate(x => i)
@@ -1933,19 +1934,97 @@ help: Replace with the correct number of spaces, 4
 146 |     end associate named_associate
     -   end subroutine associates
 147 +     end subroutine associates
-148 |   end program mprog
+148 |
+149 | subroutine labels(x)
+150 | integer, intent(inout) :: x
 
 S105 [*] Incorrect indentation
-   --> ./resources/test/fixtures/style/S105.f90:148:1
+   --> ./resources/test/fixtures/style/S105.f90:149:1
     |
+147 |   end subroutine associates
+148 |
+149 | subroutine labels(x)
+    | ^
+150 | integer, intent(inout) :: x
+151 | 20        x = 3
+    |
+help: Replace with the correct number of spaces, 4
 146 |     end associate named_associate
 147 |   end subroutine associates
-148 |   end program mprog
+148 |
+    - subroutine labels(x)
+149 +     subroutine labels(x)
+150 | integer, intent(inout) :: x
+151 | 20        x = 3
+152 | x = 1;20   x = 4
+
+S105 [*] Incorrect indentation
+   --> ./resources/test/fixtures/style/S105.f90:150:1
+    |
+149 | subroutine labels(x)
+150 | integer, intent(inout) :: x
+    | ^
+151 | 20        x = 3
+152 | x = 1;20   x = 4
+    |
+help: Replace with the correct number of spaces, 8
+147 |   end subroutine associates
+148 |
+149 | subroutine labels(x)
+    - integer, intent(inout) :: x
+150 +         integer, intent(inout) :: x
+151 | 20        x = 3
+152 | x = 1;20   x = 4
+153 | end subroutine labels
+
+S105 [*] Incorrect indentation
+   --> ./resources/test/fixtures/style/S105.f90:151:1
+    |
+149 | subroutine labels(x)
+150 | integer, intent(inout) :: x
+151 | 20        x = 3
+    | ^^^^^^^^^^
+152 | x = 1;20   x = 4
+153 | end subroutine labels
+    |
+help: Replace with correct indentation
+148 |
+149 | subroutine labels(x)
+150 | integer, intent(inout) :: x
+    - 20        x = 3
+151 + 20      x = 3
+152 | x = 1;20   x = 4
+153 | end subroutine labels
+154 |   end program mprog
+
+S105 [*] Incorrect indentation
+   --> ./resources/test/fixtures/style/S105.f90:153:1
+    |
+151 | 20        x = 3
+152 | x = 1;20   x = 4
+153 | end subroutine labels
+    | ^
+154 |   end program mprog
+    |
+help: Replace with the correct number of spaces, 4
+150 | integer, intent(inout) :: x
+151 | 20        x = 3
+152 | x = 1;20   x = 4
+    - end subroutine labels
+153 +     end subroutine labels
+154 |   end program mprog
+
+S105 [*] Incorrect indentation
+   --> ./resources/test/fixtures/style/S105.f90:154:1
+    |
+152 | x = 1;20   x = 4
+153 | end subroutine labels
+154 |   end program mprog
     | ^^
     |
 help: Replace with the correct number of spaces, 0
-145 |   print *, x
-146 |     end associate named_associate
-147 |   end subroutine associates
+151 | 20        x = 3
+152 | x = 1;20   x = 4
+153 | end subroutine labels
     -   end program mprog
-148 + end program mprog
+154 + end program mprog

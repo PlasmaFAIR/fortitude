@@ -358,6 +358,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 pub(crate) struct IncorrectIndentation {
     expected_indent: usize,
     semicolon_found: bool,
+    label_found: bool,
 }
 
 impl AlwaysFixableViolation for IncorrectIndentation {
@@ -373,6 +374,8 @@ impl AlwaysFixableViolation for IncorrectIndentation {
     fn fix_title(&self) -> String {
         if self.semicolon_found {
             "Remove semicolons and indent correctly".to_string()
+        } else if self.label_found {
+            "Replace with correct indentation".to_string()
         } else {
             format!(
                 "Replace with the correct number of spaces, {}",
@@ -487,8 +490,8 @@ fn split_segments_outside_quotes(line: &str) -> Vec<&str> {
 pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec<Diagnostic> {
     let mut violations = Vec::new();
 
+    // Store settings
     let indent_width = context.settings().indent_width;
-
     let ignore_semicolons = context.settings().incorrect_indentation.ignore_semicolons;
     let constructs_to_indent_map = &context
         .settings()
@@ -505,13 +508,12 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             continue;
         }
 
-        // Get current indent for line
-        let line_indent = line.chars().take_while(|c| [' ', '\t'].contains(c)).count();
-
-        // Booleans to determine the rule that has been broken
+        // Boolean to determine the rule that has been broken
         let mut is_preproc_violation = false;
         // boolean to track if a line should be updated based on the users selected rules
         let mut edit_is_activated = context.is_rule_enabled(Rule::IncorrectIndentation);
+        // Get current indent for line to be used displaying the text range to be updated to the user.
+        let mut visual_region_length = line.chars().take_while(|c| [' ', '\t'].contains(c)).count();
 
         // Loop through line until all semicolons outside quoted strings have been accounted for
         let mut line_segment_start = line.start();
@@ -520,7 +522,9 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
         let mut edit_string: String = "".to_string();
         let line_segments = split_segments_outside_quotes(&line);
         let line_contains_semicolon = line_segments.iter().any(|segment| segment.ends_with(';'));
+        let mut line_has_label = false;
         for line_segment in line_segments {
+            let mut label_text: String = "".to_string();
             // Get the range which defines the location of the previous semicolon plus whitespace
             line_segment_start = line_segment_end;
             line_segment_end = line_segment_end + TextSize::from(line_segment.len() as u32);
@@ -554,8 +558,15 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 } else {
                     line_segment_node.clone()
                 };
-                let node_kind = node.kind();
 
+                // Handle statement_labels by taking their child
+                if matches!(node.kind(), "statement_label") {
+                    line_has_label = true;
+                    label_text = context.source_text()[node.textrange()].to_string();
+                    node.descendants().next().unwrap_or(node);
+                };
+
+                let node_kind = node.kind();
                 // Determine expected indent bases on tree-sitter node kind
                 if BEGIN_SCOPE_NODES.contains(&node_kind) && !node.inline_if_statement() {
                     if edit_is_activated {
@@ -613,11 +624,40 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             if (ignore_semicolons && indentation_mismatch && !line_contains_semicolon)
                 || (!ignore_semicolons && (indentation_mismatch || line_contains_semicolon))
             {
-                let new_indent = " ".repeat(current_expected_indent);
-                if is_first_segment {
-                    edit_string = format!("{}{}{}", edit_string, new_indent, line_segment.trim());
-                } else {
-                    edit_string = format!("{}\n{}{}", edit_string, new_indent, line_segment.trim());
+                let mut new_line_segment = format!(
+                    "{}{}",
+                    " ".repeat(current_expected_indent),
+                    line_segment.trim()
+                );
+
+                // Account for statement_labels
+                if !label_text.is_empty() {
+                    let mut new_indent_size = current_expected_indent;
+                    let label_size = label_text.chars().count();
+                    // If the label size matches the indent size add extra indent after label
+                    new_indent_size = if new_indent_size <= label_size + 2 {
+                        2
+                    } else {
+                        new_indent_size - label_size
+                    };
+                    let new_indent = format!("{}{}", label_text, " ".repeat(new_indent_size));
+                    let line_segment_after_label = line_segment.trim().get(label_size..).unwrap();
+                    new_line_segment = format!("{}{}", new_indent, line_segment_after_label.trim());
+
+                    visual_region_length = label_size
+                        + line_segment_after_label
+                            .chars()
+                            .take_while(|c| *c == ' ')
+                            .count();
+                }
+
+                // Only populate edit string if the line_segment has changed
+                if line_segment != new_line_segment.clone() {
+                    if is_first_segment {
+                        edit_string = new_line_segment;
+                    } else {
+                        edit_string = format!("{}\n{}", edit_string, new_line_segment);
+                    }
                 }
                 // Remove semicolons that are not inside quotes
                 let mut enclosing_quote: Option<char> = None;
@@ -637,7 +677,8 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             let expected_indent = edit_string.chars().take_while(|c| *c == ' ').count();
 
             let visual_end = if !line_contains_semicolon {
-                line_segment_start + TextSize::try_from(std::cmp::max(line_indent, 1)).unwrap()
+                line_segment_start
+                    + TextSize::try_from(std::cmp::max(visual_region_length, 1)).unwrap()
             } else {
                 line.end()
             };
@@ -655,6 +696,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 IncorrectIndentation {
                     expected_indent,
                     semicolon_found: line_contains_semicolon,
+                    label_found: line_has_label,
                 },
                 range,
             ) {
