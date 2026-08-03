@@ -101,10 +101,7 @@ impl AstRule for MissingDefaultPointerInitalisation {
                 Some(parent) => parent.kind_id() == kind!("variable_declaration"),
             })
             .map(|node| {
-                let var_name = node
-                    .to_text(context.source_text())
-                    .unwrap_or("")
-                    .to_string();
+                let var_name = node.text().to_string();
 
                 let init_var = format!(" => null()");
                 let start_pos = node.end_textsize();

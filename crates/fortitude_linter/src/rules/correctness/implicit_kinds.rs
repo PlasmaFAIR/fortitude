@@ -52,10 +52,7 @@ impl Violation for ImplicitRealKind {
 
 impl AstRule for ImplicitRealKind {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let dtype = node
-            .child(0)?
-            .to_text(context.source_text())?
-            .to_lowercase();
+        let dtype = node.child(0)?.text().to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
             return None;

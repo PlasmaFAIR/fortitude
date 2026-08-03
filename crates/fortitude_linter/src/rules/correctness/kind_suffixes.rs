@@ -73,7 +73,7 @@ impl AstRule for NoRealSuffix {
         // an exponentiation e or E. There should not be an underscore present.
         // Exponentiation with d or D are ignored, and should be handled with the
         // rule `double_precision_literal`.
-        let txt = node.to_text(context.source_text())?;
+        let txt = node.text();
         if !regex_is_match!(r"^(\d*\.\d*|\d*\.*\d*[eE]-?\d+)$", txt) {
             return None;
         }
@@ -109,7 +109,7 @@ impl AstRule for NoRealSuffix {
         if grandparent.kind() == "call_expression"
             && let Some(identifier) = grandparent.child_with_name("identifier")
         {
-            let name = identifier.to_text(context.source_text())?.to_lowercase();
+            let name = identifier.text().to_lowercase();
             if name == "kind"
                 || (no_loss
                     && matches!(name.as_str(), "real" | "cmplx" | "dbl" | "int" | "logical"))

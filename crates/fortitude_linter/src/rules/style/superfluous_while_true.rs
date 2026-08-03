@@ -55,7 +55,7 @@ impl AstRule for SuperfluousWhileTrue {
         //   or a single entity like a boolean literal.
         if !parenth_exp
             .child_with_name("boolean_literal")?
-            .to_text(context.source_text())?
+            .text()
             .eq_ignore_ascii_case(".true.")
         {
             return None;

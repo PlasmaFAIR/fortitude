@@ -1,9 +1,8 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Fix, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, field};
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for use of the non-portable `system` call for running programs.
@@ -39,10 +38,7 @@ impl AstRule for NonPortableSystemCall {
         let identifier = node.child_by_field_id(field!("subroutine").into()).unwrap();
 
         // Skip subroutines with other names
-        if !(identifier
-            .to_text(context.source_text())?
-            .eq_ignore_ascii_case("system"))
-        {
+        if !(identifier.text().eq_ignore_ascii_case("system")) {
             return None;
         }
 
@@ -51,7 +47,7 @@ impl AstRule for NonPortableSystemCall {
             return None;
         }
 
-        let edit = identifier.edit_replacement(&context.file, "execute_command_line".to_string());
+        let edit = identifier.edit_replacement("execute_command_line".to_string());
 
         some_vec!(
             context

@@ -48,7 +48,7 @@ impl AlwaysFixableViolation for WholeArrayIndexing {
     }
 }
 
-fn has_only_whole_array_extents(node: &Node, src: &str) -> bool {
+fn has_only_whole_array_extents(node: &Node) -> bool {
     let Some(argument_list) = node.child_with_name("argument_list") else {
         return false;
     };
@@ -59,10 +59,8 @@ fn has_only_whole_array_extents(node: &Node, src: &str) -> bool {
         return false;
     };
 
-    let is_extent_specifier = |argument: &Node| {
-        argument.kind() == "extent_specifier"
-            && argument.to_text(src).is_some_and(|text| text.trim() == ":")
-    };
+    let is_extent_specifier =
+        |argument: &Node| argument.kind() == "extent_specifier" && argument.text().trim() == ":";
 
     is_extent_specifier(&first) && arguments.all(|argument| is_extent_specifier(&argument))
 }
@@ -83,12 +81,12 @@ fn is_assignment_lhs(node: &Node) -> bool {
 
 impl AstRule for WholeArrayIndexing {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if is_assignment_lhs(node) || !has_only_whole_array_extents(node, context.source_text()) {
+        if is_assignment_lhs(node) || !has_only_whole_array_extents(node) {
             return None;
         }
 
-        let name = node.named_child(0)?.to_text(context.source_text())?;
-        let fix = Fix::safe_edit(node.edit_replacement(context.source_file(), name.to_string()));
+        let name = node.named_child(0)?.text();
+        let fix = Fix::safe_edit(node.edit_replacement(name.to_string()));
 
         some_vec!(
             context

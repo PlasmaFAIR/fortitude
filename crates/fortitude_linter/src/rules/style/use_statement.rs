@@ -174,21 +174,21 @@ impl TextRanged for UseStatementData {
 
 fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData {
     let module_name = node
-        .module_name(src.source_text())
+        .module_name()
         // Fortran is case-insensitive, normalize to lowercase for consistent sorting
         .map(|s| s.to_lowercase())
         .unwrap_or_default();
 
     let is_intrinsic = node
         .children(&mut node.walk())
-        .any(|child| child.to_text(src.source_text()) == Some("intrinsic"));
+        .any(|child| child.text().eq_ignore_ascii_case("intrinsic"));
 
     let mut text_range = node.textrange();
     let mut start_position_row = node.start_position().row;
 
     // If there's a preceding block of comments, then keep those attached to
     // this statement
-    if let Some(comments) = node.prev_attached_comment_block(src.source_text()) {
+    if let Some(comments) = node.prev_attached_comment_block() {
         text_range = TextRange::new(comments.start_textsize(), node.end_textsize());
         start_position_row = comments.start_row();
     }

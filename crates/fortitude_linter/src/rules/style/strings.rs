@@ -64,7 +64,7 @@ impl AstRule for BadQuoteString {
         let preferred_quote: Quote = context.settings().strings.quotes.into();
         let bad_quote = preferred_quote.opposite();
 
-        let text = node.to_text(context.source_text())?;
+        let text = node.text();
         if text.starts_with(bad_quote.as_char())
             && text.ends_with(bad_quote.as_char())
             && !text.contains(preferred_quote.as_char())
@@ -146,7 +146,7 @@ impl AlwaysFixableViolation for AvoidableEscapedQuote {
 
 impl AstRule for AvoidableEscapedQuote {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let text = node.to_text(context.source_text())?;
+        let text = node.text();
         if text.len() <= 2 {
             return None;
         }
@@ -160,7 +160,7 @@ impl AstRule for AvoidableEscapedQuote {
         // Because the kind appears as a child node, the interesting
         // literal bit doesn't start at the beginning of the node
         let (start, kind) = if let Some(kind) = node.child_by_field_name("kind") {
-            let kind_text = kind.to_text(context.source_text())?;
+            let kind_text = kind.text();
             (kind_text.len() + 1, format!("{kind_text}_"))
         } else {
             (0, "".to_string())
@@ -174,7 +174,7 @@ impl AstRule for AvoidableEscapedQuote {
             value = unescape_string(contents, quote_style.as_char())
         );
 
-        let edit = node.edit_replacement(context.source_file(), fixed);
+        let edit = node.edit_replacement(fixed);
         // Offset start of node by kind, if any
         let range = node
             .textrange()

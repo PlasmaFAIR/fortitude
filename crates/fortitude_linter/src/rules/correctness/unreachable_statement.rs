@@ -67,7 +67,7 @@ impl AstRule for UnreachableStatement {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // TODO: Not catching returns at the end of block, associate, etc.
         // This will require going up the tree before finding the next statement.
-        let text = node.child(0)?.to_text(context.source_text())?;
+        let text = node.child(0)?.text();
         let _ = BlockExit::try_from(text).ok()?;
         let sibling = node.next_non_comment_sibling()?;
         if EXECUTABLE_STATEMENTS.contains(&sibling.kind_id()) {

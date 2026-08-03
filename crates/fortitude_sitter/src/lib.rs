@@ -12,7 +12,7 @@ use tree_sitter::Point;
 use anyhow::Result;
 use fortitude_macros::{field, kind};
 use ruff_diagnostics::Edit;
-use ruff_source_file::{LineRanges, SourceFile};
+use ruff_source_file::LineRanges;
 use ruff_text_size::{TextRange, TextSize};
 
 pub mod ast;
@@ -603,50 +603,43 @@ impl<'tree> Node<'tree> {
             .find(|x| x.kind_id() == kind_id)
     }
 
-    pub fn kwarg<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>> {
+    pub fn kwarg<S: AsRef<str>>(&self, keyword: S) -> Option<Node<'_>> {
         let keyword = keyword.as_ref();
         self.named_children(&mut self.walk()).find(|child| {
             child.kind_id() == kind!("keyword_argument")
                 && child
                     .child_by_field_id(field!("name").into())
-                    .is_some_and(|n| {
-                        n.to_text(src)
-                            .is_some_and(|s| s.eq_ignore_ascii_case(keyword))
-                    })
+                    .is_some_and(|n| n.text().eq_ignore_ascii_case(keyword))
         })
     }
 
-    pub fn kwarg_value<S: AsRef<str>>(&self, keyword: S, src: &str) -> Option<Node<'_>> {
-        self.kwarg(keyword, src)?
+    pub fn kwarg_value<S: AsRef<str>>(&self, keyword: S) -> Option<Node<'_>> {
+        self.kwarg(keyword)?
             .child_by_field_id(field!("value").into())
     }
 
-    pub fn kwarg_exists<S: AsRef<str>>(&self, keyword: S, src: &str) -> bool {
-        self.kwarg(keyword, src).is_some()
+    pub fn kwarg_exists<S: AsRef<str>>(&self, keyword: S) -> bool {
+        self.kwarg(keyword).is_some()
     }
 
-    pub fn to_text(&self, src: &'tree str) -> Option<&'tree str> {
-        Some(self.text())
-    }
-
-    pub fn indentation(&self, source_file: &SourceFile) -> String {
-        let src = source_file.source_text();
+    pub fn indentation(&self) -> String {
+        let src = self.tree.text();
         let offset = self.start_textsize();
         let line_start = src.line_start(offset);
         let line = &src[TextRange::new(line_start, offset)];
         line.chars().take_while(|&c| c.is_whitespace()).collect()
     }
 
-    pub fn indentation_ignore_stmt_label(&self, source_file: &SourceFile) -> String {
-        let src = source_file.source_text();
+    pub fn indentation_ignore_stmt_label(&self) -> String {
+        let src = self.tree.text();
         let start_byte = self.start_textsize();
         let start_line = src.line_start(start_byte);
         let width = (start_byte - start_line).to_usize();
         format!("{:width$}", " ")
     }
 
-    pub fn edit_delete(&self, source_file: &SourceFile) -> Edit {
-        let src = source_file.source_text();
+    pub fn edit_delete(&self) -> Edit {
+        let src = self.tree.text();
         if has_leading_content(self.start_textsize(), src)
             || has_trailing_content(self.end_textsize(), src)
         {
@@ -657,11 +650,11 @@ impl<'tree> Node<'tree> {
         }
     }
 
-    pub fn edit_replacement(&self, original: &SourceFile, content: String) -> Edit {
+    pub fn edit_replacement(&self, content: String) -> Edit {
         // The node might include the newline as part of the
         // end-of-statement child, so don't include trailing
         // whitespace in the replacement
-        let text = self.to_text(original.source_text()).unwrap();
+        let text = self.text();
         let len = text.trim().len();
         let start = self.start_textsize();
         let end = start + TextSize::try_from(len).unwrap();
@@ -710,15 +703,11 @@ impl<'tree> Node<'tree> {
         None
     }
 
-    pub fn next_statement_label_sibling<S: AsRef<str>>(
-        &self,
-        label: S,
-        src: &str,
-    ) -> Option<Node<'tree>> {
+    pub fn next_statement_label_sibling<S: AsRef<str>>(&self, label: S) -> Option<Node<'tree>> {
         let mut sibling = self.next_named_sibling();
         while let Some(next_sibling) = sibling {
             if next_sibling.kind_id() == kind!("statement_label")
-                && next_sibling.to_text(src) == Some(label.as_ref())
+                && next_sibling.text() == label.as_ref()
             {
                 return Some(next_sibling);
             }
@@ -727,13 +716,13 @@ impl<'tree> Node<'tree> {
         None
     }
 
-    pub fn next_statement_label<S: AsRef<str>>(&self, label: S, src: &str) -> Option<Node<'tree>> {
-        if let Some(next) = self.next_statement_label_sibling(label.as_ref(), src) {
+    pub fn next_statement_label<S: AsRef<str>>(&self, label: S) -> Option<Node<'tree>> {
+        if let Some(next) = self.next_statement_label_sibling(label.as_ref()) {
             return Some(next);
         }
         let mut current = *self;
         while let Some(parent) = current.parent() {
-            if let Some(sibling) = parent.next_statement_label_sibling(label.as_ref(), src) {
+            if let Some(sibling) = parent.next_statement_label_sibling(label.as_ref()) {
                 return Some(sibling);
             }
             current = parent;
@@ -741,16 +730,14 @@ impl<'tree> Node<'tree> {
         None
     }
 
-    pub fn module_name(&self, src: &str) -> Option<String> {
+    pub fn module_name(&self) -> Option<&'tree str> {
         if self.kind_id() != kind!("use_statement") {
             return None;
         }
-        self.child_with_id(kind!("module_name"))?
-            .to_text(src)
-            .map(|s| s.to_string())
+        Some(self.child_with_id(kind!("module_name"))?.text())
     }
 
-    pub fn prev_attached_comment_block(&self, src: &str) -> Option<CommentBlock> {
+    pub fn prev_attached_comment_block(&self) -> Option<CommentBlock> {
         let mut comments = Vec::new();
         let mut prev_comment = *self;
 
@@ -767,11 +754,11 @@ impl<'tree> Node<'tree> {
 
         // We've worked backwards, so reverse to get in correct order
         comments.reverse();
-        CommentBlock::try_from_node_range(comments, src).ok()
+        CommentBlock::try_from_node_range(comments).ok()
     }
 
-    pub fn try_to_controlflow(self, source_file: &SourceFile) -> Option<ControlFlowNode<'tree>> {
-        ControlFlowNode::maybe_from(self, source_file.source_text())
+    pub fn try_to_controlflow(self) -> Option<ControlFlowNode<'tree>> {
+        ControlFlowNode::maybe_from(self)
     }
 
     pub fn prev_line_continuation(&self) -> Option<Node<'tree>> {

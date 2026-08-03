@@ -1,5 +1,4 @@
 use fortitude_sitter::Node;
-use ruff_source_file::SourceFile;
 
 pub fn match_original_case(original: &str, new: &str) -> Option<String> {
     let first_ch = original.chars().next()?;
@@ -11,11 +10,11 @@ pub fn match_original_case(original: &str, new: &str) -> Option<String> {
     }
 }
 
-pub fn literal_as_io_unit<'a>(node: &'a Node, src: &SourceFile) -> Option<Node<'a>> {
+pub fn literal_as_io_unit<'a>(node: &'a Node) -> Option<Node<'a>> {
     let unit = if let Some(unit) = node.child_with_name("unit_identifier") {
         unit.child(0)?
     } else {
-        node.kwarg_value("unit", src.source_text())?
+        node.kwarg_value("unit")?
     };
 
     if unit.kind() == "number_literal" {

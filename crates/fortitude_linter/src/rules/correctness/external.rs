@@ -39,7 +39,7 @@ impl AstRule for ExternalProcedure {
 
         let name = node
             .child_by_field_id(field!("declarator").into())?
-            .to_text(context.source_text())?
+            .text()
             .to_string();
         some_vec!(context.create_diagnostic(Self { name }, node))
     }

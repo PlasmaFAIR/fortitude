@@ -263,7 +263,7 @@ impl AlwaysFixableViolation for IncorrectSpaceBetweenBrackets {
 }
 impl AstRule for IncorrectSpaceBetweenBrackets {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let node_as_str = node.to_text(context.source_text())?;
+        let node_as_str = node.text();
 
         let source = context.source_file().to_source_code();
         let bracket_start = node.start_textsize();

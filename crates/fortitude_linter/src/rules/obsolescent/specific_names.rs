@@ -88,14 +88,12 @@ impl Violation for SpecificName {
 impl AstRule for SpecificName {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let name_node = node.child_with_name("identifier")?;
-        let func = name_node.to_text(context.source_text())?;
+        let func = name_node.text();
 
         let new_func = map_specific_intrinsic_functions(func.to_uppercase().as_str())?;
         let matched_case = utilities::match_original_case(func, new_func)?;
 
-        let fix = Fix::unsafe_edit(
-            name_node.edit_replacement(context.source_file(), matched_case.clone()),
-        );
+        let fix = Fix::unsafe_edit(name_node.edit_replacement(matched_case.clone()));
         some_vec![
             context
                 .create_diagnostic(

@@ -88,7 +88,7 @@ impl Violation for OldMPIModule {
 
 impl AstRule for OldMPIModule {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let module_name = node.module_name(context.source_text())?.to_lowercase();
+        let module_name = node.module_name()?.to_lowercase();
 
         if module_name == "mpi" {
             return some_vec![context.create_diagnostic(OldMPIModule {}, node)];

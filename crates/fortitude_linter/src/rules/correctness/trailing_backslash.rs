@@ -58,7 +58,7 @@ impl AstRule for TrailingBackslash {
         // Preprocessor might ignore trailing whitespace
         let trailing_backslash_re = regex!(r#".*(\\)\s*$"#);
 
-        let comment = node.to_text(context.source_text())?;
+        let comment = node.text();
         let captures = trailing_backslash_re.captures(comment)?;
 
         let trailing_backslash = captures.get(1)?;

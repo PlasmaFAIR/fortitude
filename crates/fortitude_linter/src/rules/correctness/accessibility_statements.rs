@@ -48,10 +48,7 @@ impl AstRule for MissingAccessibilityStatement {
 
         // No statement whatsoever
         if !bare_private_statement && !bare_public_statement {
-            let name = node
-                .named_child(0)?
-                .to_text(context.source_text())?
-                .to_string();
+            let name = node.named_child(0)?.text().to_string();
             return some_vec![
                 context.create_diagnostic(MissingAccessibilityStatement { name }, node)
             ];
@@ -93,10 +90,7 @@ impl AstRule for DefaultPublicAccessibility {
         if node.named_child(0).is_none() {
             let module = node.parent()?;
             let statement = module.child_with_id(kind!("module_statement"))?;
-            let name = statement
-                .child_with_id(kind!("name"))?
-                .to_text(context.source_text())?
-                .to_string();
+            let name = statement.child_with_id(kind!("name"))?.text().to_string();
             return some_vec![context.create_diagnostic(DefaultPublicAccessibility { name }, node)];
         }
 

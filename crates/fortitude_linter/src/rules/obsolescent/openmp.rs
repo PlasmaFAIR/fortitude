@@ -31,10 +31,7 @@ impl Violation for DeprecatedOmpInclude {
 
 impl AstRule for DeprecatedOmpInclude {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let include_file = node
-            .child_with_name("filename")?
-            .to_text(context.source_text())?
-            .to_lowercase();
+        let include_file = node.child_with_name("filename")?.text().to_lowercase();
 
         // Strip quotes from the include file name
         let include_file = include_file.trim_matches('"').trim_matches('\'');

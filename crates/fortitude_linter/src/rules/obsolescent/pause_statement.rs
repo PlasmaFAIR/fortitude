@@ -35,9 +35,7 @@ impl AstRule for PauseStatement {
             return None;
         }
 
-        let fix = Fix::unsafe_edit(
-            node.edit_replacement(context.source_file(), "read(*, *)".to_string()),
-        );
+        let fix = Fix::unsafe_edit(node.edit_replacement("read(*, *)".to_string()));
         some_vec![
             context
                 .create_diagnostic(PauseStatement {}, node)

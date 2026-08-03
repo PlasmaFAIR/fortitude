@@ -305,7 +305,7 @@ pub(crate) fn check_path(
         }
 
         if node.is_named() && BEGIN_SCOPE_NODES.contains(&node.kind()) {
-            let new_table = SymbolTable::new(&node, file.source_text())?;
+            let new_table = SymbolTable::new(&node)?;
 
             // Check for keyword reuse in this scope
             if context.rules.enabled(Rule::KeywordReuse) {

@@ -21,19 +21,17 @@ pub struct ParameterStatement<'a> {
 }
 
 impl<'a> ParameterStatement<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
         Ok(Self {
             name: node
                 .child_with_id(kind!("identifier"))
                 .context("expected identifier in 'parameter_statement'")?
-                .to_text(src)
-                .context("expected text")?
+                .text()
                 .to_string(),
             expression: node
                 .child(2)
                 .context("expected expression in 'parameter_statement'")?
-                .to_text(src)
-                .context("expected text")?
+                .text()
                 .to_string(),
             node,
         })
@@ -49,10 +47,10 @@ pub struct Name<'a> {
 }
 
 impl<'a> Name<'a> {
-    pub fn from_node(node: &Node<'a>, src: &str) -> Self {
+    pub fn from_node(node: &Node<'a>) -> Self {
         let node = get_name_node_of_declarator(node);
         Self {
-            name: node.to_text(src).unwrap_or("<unknown>").to_string(),
+            name: node.text().to_string(),
             node,
         }
     }
@@ -95,9 +93,9 @@ pub struct NameDecl<'a> {
 }
 
 impl<'a> NameDecl<'a> {
-    pub fn from_node(node: &Node<'a>, src: &str) -> Self {
+    pub fn from_node(node: &Node<'a>) -> Self {
         Self {
-            name: Name::from_node(node, src),
+            name: Name::from_node(node),
             node: *node,
         }
     }
@@ -331,7 +329,7 @@ pub enum IntrinsicType<'a> {
 }
 
 impl<'a> IntrinsicType<'a> {
-    pub fn from_node(node: Node<'a>, src: &'a str) -> Self {
+    pub fn from_node(node: Node<'a>) -> Self {
         if node.kind_id() != kind!("intrinsic_type") {
             panic!(
                 "IntrinsicType can only be created from `intrinsic_type`, got {}",
@@ -339,7 +337,7 @@ impl<'a> IntrinsicType<'a> {
             );
         }
         let type_node = node.child(0).expect("must have zeroth child");
-        let name = type_node.to_text(src).expect("must have text");
+        let name = type_node.text();
         match type_node.kind_id() {
             kw!("byte") => IntrinsicType::Byte(TypeInner { node, name }),
             kw!("integer") => IntrinsicType::Integer(TypeInner { node, name }),
@@ -407,11 +405,11 @@ pub enum Type<'a> {
 }
 
 impl<'a> Type<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
         let kind = node.kind_id();
-        let name = node.to_text(src).context("expected text")?;
+        let name = node.text();
         match kind {
-            kind!("intrinsic_type") => Ok(Type::Intrinsic(IntrinsicType::from_node(node, src))),
+            kind!("intrinsic_type") => Ok(Type::Intrinsic(IntrinsicType::from_node(node))),
             kind!("derived_type") => Ok(Type::Derived(TypeInner { node, name })),
             kind!("procedure") => Ok(Type::Procedure(TypeInner { node, name })),
             kind!("declared_type") => Ok(Type::Declared(TypeInner { node, name })),
@@ -453,7 +451,7 @@ pub struct VariableDeclaration<'a> {
 
 impl<'a> VariableDeclaration<'a> {
     /// Create from `variable_declaration` node
-    pub fn try_from_node(node: &Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("variable_declaration") {
             return Err(anyhow!("wrong node type"));
         }
@@ -461,7 +459,6 @@ impl<'a> VariableDeclaration<'a> {
         let type_ = Type::try_from_node(
             node.child_by_field_id(field!("type").into())
                 .context("expected type")?,
-            src,
         )?;
 
         let attributes: Result<Vec<_>> = node
@@ -471,12 +468,12 @@ impl<'a> VariableDeclaration<'a> {
 
         let names = node
             .children_by_field_id(field!("declarator"), &mut node.walk())
-            .map(|decl| NameDecl::from_node(&decl, src))
+            .map(|decl| NameDecl::from_node(&decl))
             .collect_vec();
 
         let has_colon = node
             .children(&mut node.walk())
-            .filter_map(|child| child.to_text(src))
+            .map(|child| child.text())
             .any(|child| child == "::");
 
         Ok(Self {
@@ -490,7 +487,7 @@ impl<'a> VariableDeclaration<'a> {
     }
 
     /// Create from `function_statement`. Will fail if the statement has no `type`
-    pub fn try_from_fn_stmt(node: &Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_fn_stmt(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("function_statement") {
             return Err(anyhow!("wrong node type"));
         }
@@ -498,7 +495,6 @@ impl<'a> VariableDeclaration<'a> {
         let type_ = Type::try_from_node(
             node.child_by_field_id(field!("type").into())
                 .context("expected type")?,
-            src,
         )?;
 
         let id = if let Some(result) = node.child_with_id(kind!("function_result")) {
@@ -509,7 +505,7 @@ impl<'a> VariableDeclaration<'a> {
             node.child_by_field_id(field!("name").into())
                 .expect("`function_statement` must have `name` field")
         };
-        let name = NameDecl::from_node(&id, src);
+        let name = NameDecl::from_node(&id);
 
         Ok(Self {
             type_,
@@ -793,7 +789,7 @@ pub struct Procedure<'a> {
 }
 
 impl<'a> Procedure<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if !matches!(node.kind_id(), kind!("function") | kind!("subroutine")) {
             return Err(anyhow!("not a procedure"));
         }
@@ -804,7 +800,7 @@ impl<'a> Procedure<'a> {
         let stmt = node.child(0).context("expected child")?;
 
         let type_ = if let Some(child) = stmt.child_by_field_name("type") {
-            Some(Type::try_from_node(child, src)?)
+            Some(Type::try_from_node(child)?)
         } else {
             None
         };
@@ -820,15 +816,14 @@ impl<'a> Procedure<'a> {
         let name = stmt
             .child_by_field_id(field!("name").into())
             .context("procedure should have `name` field")?;
-        let name = Name::from_node(&name, src);
+        let name = Name::from_node(&name);
 
         let args = stmt
             .child_with_id(kind!("parameters"))
             .map(|params| {
                 params
                     .named_children(&mut params.walk())
-                    .flat_map(|param| param.to_text(src))
-                    .map(|param| param.to_ascii_lowercase())
+                    .map(|param| param.text().to_ascii_lowercase())
                     .collect_vec()
             })
             .unwrap_or_default();
@@ -878,7 +873,7 @@ pub struct TypeDefinition<'a> {
 }
 
 impl<'a> TypeDefinition<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("derived_type_definition") {
             return Err(anyhow!("not a derived type"));
         }
@@ -889,7 +884,7 @@ impl<'a> TypeDefinition<'a> {
         let name_node = stmt
             .child_with_id(kind!("type_name"))
             .context("expected type_name")?;
-        let name = Name::from_node(&name_node, src);
+        let name = Name::from_node(&name_node);
 
         Ok(Self { name, node: *node })
     }
@@ -905,7 +900,7 @@ pub struct Module<'a> {
 }
 
 impl<'a> Module<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("module") {
             return Err(anyhow!("not a module"));
         }
@@ -914,7 +909,7 @@ impl<'a> Module<'a> {
             .child_with_id(kind!("module_statement"))
             .context("expected module_statement")?;
         let name_node = stmt.child_with_id(kind!("name")).context("expected name")?;
-        let name = Name::from_node(&name_node, src);
+        let name = Name::from_node(&name_node);
 
         Ok(Self { name, node: *node })
     }
@@ -930,7 +925,7 @@ pub struct Program<'a> {
 }
 
 impl<'a> Program<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("program") {
             return Err(anyhow!("not a program"));
         }
@@ -939,7 +934,7 @@ impl<'a> Program<'a> {
             .child_with_id(kind!("program_statement"))
             .context("expected program_statement")?;
         let name_node = stmt.child_with_id(kind!("name")).context("expected name")?;
-        let name = Name::from_node(&name_node, src);
+        let name = Name::from_node(&name_node);
 
         Ok(Self { name, node: *node })
     }
@@ -957,7 +952,7 @@ pub struct UseStatement<'a> {
 
 impl<'a> UseStatement<'a> {
     /// Create from `use_statement` node
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("use_statement") {
             return Err(anyhow!("wrong node type"));
         }
@@ -966,7 +961,6 @@ impl<'a> UseStatement<'a> {
             &node
                 .child_with_id(kind!("module_name"))
                 .context("expected module_name in 'use_statement'")?,
-            src,
         );
 
         let has_only = node.child_with_id(kind!("included_items")).is_some();
@@ -1019,9 +1013,9 @@ pub struct UsedItem<'a> {
 }
 
 impl<'a> UsedItem<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &str, decl: Rc<UseStatement<'a>>) -> Option<Self> {
+    pub fn try_from_node(node: Node<'a>, decl: Rc<UseStatement<'a>>) -> Option<Self> {
         if node.kind_id() == kind!("identifier") {
-            let name = Name::from_node(&node, src);
+            let name = Name::from_node(&node);
             Some(Self {
                 name,
                 alias_of: None,
@@ -1032,13 +1026,11 @@ impl<'a> UsedItem<'a> {
                 &node
                     .child_with_id(kind!("local_name"))
                     .expect("use_alias should have local_name child"),
-                src,
             );
             let alias_of = Name::from_node(
                 &node
                     .child_with_id(kind!("identifier"))
                     .expect("use_alias should have identifier child"),
-                src,
             );
             Some(Self {
                 name,
@@ -1089,7 +1081,7 @@ pub struct CommentBlock {
 }
 
 impl CommentBlock {
-    pub fn try_from_node_range(nodes: Vec<Node>, src: &str) -> Result<Self> {
+    pub fn try_from_node_range(nodes: Vec<Node>) -> Result<Self> {
         if let Some(non_comment) = nodes.iter().find(|node| node.kind() != "comment") {
             return Err(anyhow!(
                 "Unexpected non-comment '{non_comment:?}' in comment block"
@@ -1154,7 +1146,7 @@ pub enum ControlFlow {
 }
 
 impl ControlFlow {
-    pub fn maybe_from(value: &Node, src: &str) -> Option<Self> {
+    pub fn maybe_from(value: &Node) -> Option<Self> {
         if value.kind_id() != kind!("keyword_statement") {
             return None;
         }
@@ -1165,11 +1157,11 @@ impl ControlFlow {
             kw!("return") => Some(Self::Return),
             kw!("stop") => Some(Self::Stop),
             kw!("error") => Some(Self::Stop),
-            keyword => Self::parse_goto(keyword, value, src),
+            keyword => Self::parse_goto(keyword, value),
         }
     }
 
-    fn parse_goto(keyword: u16, value: &Node, src: &str) -> Option<Self> {
+    fn parse_goto(keyword: u16, value: &Node) -> Option<Self> {
         if !matches!(keyword, kw!("go") | kw!("goto")) {
             return None;
         }
@@ -1182,7 +1174,7 @@ impl ControlFlow {
         }
 
         Some(Self::GoTo(
-            value.child(expected_ref_index)?.to_text(src)?.to_string(),
+            value.child(expected_ref_index)?.text().to_string(),
         ))
     }
 }
@@ -1195,8 +1187,8 @@ pub struct ControlFlowNode<'a> {
 }
 
 impl<'a> ControlFlowNode<'a> {
-    pub fn maybe_from(node: Node<'a>, src: &str) -> Option<Self> {
-        ControlFlow::maybe_from(&node, src).map(|control_flow| Self { control_flow, node })
+    pub fn maybe_from(node: Node<'a>) -> Option<Self> {
+        ControlFlow::maybe_from(&node).map(|control_flow| Self { control_flow, node })
     }
 
     pub fn goto_ref(&'a self) -> Option<&'a str> {
@@ -1249,7 +1241,7 @@ mod tests {
             .find(|child| child.kind_id() == kind!("intrinsic_type"))
             .expect("couldn't find intrinsic_type");
 
-        let result = IntrinsicType::from_node(type_, &code);
+        let result = IntrinsicType::from_node(type_);
 
         assert!(check(result));
 
@@ -1270,7 +1262,7 @@ mod tests {
             .find(|child| child.kind_id() == kind!("variable_declaration"))
             .expect("couldn't find variable_declaration");
 
-        let result = VariableDeclaration::try_from_node(&type_, code)?;
+        let result = VariableDeclaration::try_from_node(&type_)?;
 
         assert_eq!(result.names().len(), 3);
 
@@ -1324,7 +1316,7 @@ mod tests {
             .child_with_name("program")
             .context("Missing program node")?;
         let program_comments = program_node
-            .prev_attached_comment_block(&code)
+            .prev_attached_comment_block()
             .context("Couldn't find program comment block")?;
 
         let expected_text = "! one\n! two";
@@ -1342,7 +1334,7 @@ mod tests {
             .find(|node| node.kind() == "subroutine")
             .context("Missing subroutine node")?;
         let subroutine_comments = subroutine_node
-            .prev_attached_comment_block(&code)
+            .prev_attached_comment_block()
             .context("Couldn't find subroutine comment block")?;
         let expected_text = "! but this";
         assert_eq!(subroutine_comments.text(), expected_text);
@@ -1351,7 +1343,7 @@ mod tests {
             .root_node()
             .child_with_name("module")
             .context("Missing module node")?;
-        assert!(module_node.prev_attached_comment_block(&code).is_none());
+        assert!(module_node.prev_attached_comment_block().is_none());
 
         Ok(())
     }

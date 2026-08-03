@@ -74,7 +74,7 @@ impl AlwaysFixableViolation for SuperfluousSemicolon {
 impl AstRule for SuperfluousSemicolon {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if semicolon_is_superfluous(node) {
-            let edit = node.edit_delete(context.source_file());
+            let edit = node.edit_delete();
             return some_vec!(
                 context
                     .create_diagnostic(Self {}, node)
@@ -113,7 +113,7 @@ impl AstRule for MultipleStatementsPerLine {
         if semicolon_is_superfluous(node) {
             return None;
         }
-        let indentation = node.indentation(context.source_file());
+        let indentation = node.indentation();
         let start = node.start_byte();
         let mut end = node.end_byte();
         let text = context.source_text().as_bytes();

@@ -77,10 +77,7 @@ impl AstRule for MagicNumberInArraySize {
             })
             .flatten()
             .filter_map(|literal| {
-                let value = literal
-                    .to_text(context.source_text())?
-                    .parse::<i32>()
-                    .unwrap();
+                let value = literal.text().parse::<i32>().unwrap();
                 if DEFAULT_ALLOWED_LITERALS.contains(&value) {
                     None
                 } else {
@@ -141,12 +138,9 @@ impl Violation for MagicIoUnit {
 
 impl AstRule for MagicIoUnit {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let unit = literal_as_io_unit(node, context.source_file())?;
+        let unit = literal_as_io_unit(node)?;
 
-        let value = unit
-            .to_text(context.source_text())?
-            .parse::<i32>()
-            .unwrap_or_default();
+        let value = unit.text().parse::<i32>().unwrap_or_default();
 
         some_vec!(context.create_diagnostic(Self { value }, unit))
     }

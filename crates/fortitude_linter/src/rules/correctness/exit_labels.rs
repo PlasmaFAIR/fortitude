@@ -43,11 +43,10 @@ impl Violation for MissingExitOrCycleLabel {
 }
 impl AstRule for MissingExitOrCycleLabel {
     fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
         // Skip unlabelled loops
         let label = node
             .child_with_id(kind!("block_label_start_expression"))?
-            .to_text(src)?
+            .text()
             .trim_end_matches(':');
 
         let violations: Vec<Diagnostic> = node
@@ -124,8 +123,7 @@ impl Violation for ExitOrCycleInUnlabelledLoop {
 
 impl AstRule for ExitOrCycleInUnlabelledLoop {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
-        let name = node.to_text(src)?.to_lowercase();
+        let name = node.text().to_lowercase();
         // This filters to the keywords we want that _also_ don't have a label
         if !matches!(name.as_str(), "exit" | "cycle") {
             return None;
@@ -226,11 +224,10 @@ fn start_end_names(node_kind: &str) -> (&'static str, &'static str) {
 
 impl AstRule for MissingEndLabel {
     fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
         // Skip unlabelled loops
         let label = node
             .child_with_id(kind!("block_label_start_expression"))?
-            .to_text(src)?
+            .text()
             .trim_end_matches(':');
 
         let end = match node.kind_id() {

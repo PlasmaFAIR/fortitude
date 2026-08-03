@@ -28,7 +28,7 @@ impl Violation for MissingActionSpecifier {
 
 impl AstRule for MissingActionSpecifier {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if node.kwarg_exists("action", context.source_text()) {
+        if node.kwarg_exists("action") {
             return None;
         }
         some_vec![context.create_diagnostic(Self {}, node)]

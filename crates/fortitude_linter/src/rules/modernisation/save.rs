@@ -68,7 +68,7 @@ impl AstRule for SuperfluousSave {
             let save_qualifier = node
                 .named_children(&mut node.walk())
                 .filter(|c| c.grammar_name() == "type_qualifier")
-                .find(|c| c.to_text(context.source_text()) == Some("save"))?;
+                .find(|c| c.text() == "save")?;
 
             let start_node = match save_qualifier.prev_sibling() {
                 None => save_qualifier,
@@ -105,9 +105,7 @@ impl AstRule for SuperfluousSave {
                         },
                         save_statement
                     )
-                    .with_fix(Fix::safe_edit(
-                        save_statement.edit_delete(context.source_file())
-                    ))
+                    .with_fix(Fix::safe_edit(save_statement.edit_delete()))
             ]
         }
     }

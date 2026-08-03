@@ -33,8 +33,6 @@ impl AlwaysFixableViolation for DeprecatedCharacterSyntax {
 
 impl AstRule for DeprecatedCharacterSyntax {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
-
         // Rule only applies to `character`.
         // Expect child(0) to always be present.
         let dtype = node.child(0)?;
@@ -44,7 +42,7 @@ impl AstRule for DeprecatedCharacterSyntax {
 
         // If 'kind' field isn't present, exit early
         let kind = node.child_by_field_name("kind")?;
-        let kind_text = kind.to_text(src)?;
+        let kind_text = kind.text();
 
         // If kind does not start with '*', exit early
         if !kind_text.starts_with('*') {
@@ -61,15 +59,15 @@ impl AstRule for DeprecatedCharacterSyntax {
         // number_literal, a math_expression, or another assumed_size).
         let child = kind.named_child(0)?;
         let length = if child.kind() == "assumed_size" {
-            kind.named_child(1)?.to_text(src)?.to_string()
+            kind.named_child(1)?.text().to_string()
         } else {
-            child.to_text(src)?.to_string()
+            child.text().to_string()
         };
 
-        let original = node.to_text(src)?.to_string();
-        let dtype = dtype.to_text(src)?.to_string();
+        let original = node.text().to_string();
+        let dtype = dtype.text().to_string();
         let replacement = format!("{dtype}(len={length})");
-        let fix = Fix::safe_edit(node.edit_replacement(context.source_file(), replacement));
+        let fix = Fix::safe_edit(node.edit_replacement(replacement));
         some_vec![
             context
                 .create_diagnostic(

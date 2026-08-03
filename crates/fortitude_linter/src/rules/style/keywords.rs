@@ -125,7 +125,7 @@ impl AstRule for KeywordsMissingSpace {
         } else {
             node.child(0)?
         };
-        let text = first_child.to_text(context.source_text())?;
+        let text = first_child.text();
         let keywords = DoubleKeyword::from_str(text).ok()?;
 
         // Exit early if the keyword is permitted
@@ -254,12 +254,12 @@ impl AstRule for KeywordHasWhitespace {
             )
         };
         // Verify that the node is 'in' / 'go'
-        if first_child.to_text(context.source_text())?.to_lowercase() != first {
+        if first_child.text().to_lowercase() != first {
             return None;
         }
         // Check if immediate sibling is 'out'/'to'
         let sibling = first_child.next_sibling()?;
-        if sibling.to_text(context.source_text())?.to_lowercase() == second {
+        if sibling.text().to_lowercase() == second {
             let start = first_child.start_textsize();
             let end = sibling.end_textsize();
             let fix_start = first_child.end_textsize();
@@ -390,7 +390,7 @@ impl AstRule for IncorrectKeywordCase {
             return None;
         }
 
-        let text = node.to_text(context.source_text())?;
+        let text = node.text();
 
         let expected =
             text.to_capitalisation(context.settings().incorrect_keyword_case.keyword_case);
@@ -528,7 +528,7 @@ impl AstRule for KeywordReuse {
             return None;
         }
         let name_node = node.child(0)?;
-        let name = name_node.to_text(context.source_text())?;
+        let name = name_node.text();
         if tree_sitter_fortran::KEYWORDS.contains(&name) {
             return some_vec![context.create_diagnostic(
                 KeywordReuse {

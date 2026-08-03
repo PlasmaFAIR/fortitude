@@ -58,7 +58,6 @@ impl Violation for AssumedSize {
 }
 impl AstRule for AssumedSize {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
         let declaration = context
             .symbol_table()
             .current()?
@@ -85,7 +84,7 @@ impl AstRule for AssumedSize {
             .find(|parent| parent.kind_id() == kind!("sized_declarator"))
         {
             let identifier = sized_decl.child_with_id(kind!("identifier"))?;
-            let name = identifier.to_text(src)?.to_string();
+            let name = identifier.text().to_string();
             return some_vec![context.create_diagnostic(Self { name }, node)];
         }
 

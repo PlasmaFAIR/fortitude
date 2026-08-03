@@ -65,7 +65,7 @@ impl Violation for DoublePrecision {
 
 impl AstRule for DoublePrecision {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let txt = node.to_text(context.source_text())?.to_lowercase();
+        let txt = node.text().to_lowercase();
         some_vec![context.create_diagnostic(DoublePrecision::try_new(txt)?, node)]
     }
 
@@ -122,7 +122,7 @@ impl Violation for DoublePrecisionLiteral {
 
 impl AstRule for DoublePrecisionLiteral {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let txt = node.to_text(context.source_text())?;
+        let txt = node.text();
         if let Some((original, mantissa, exponent)) =
             regex_captures!(r"^(\d*\.*\d*)[dD](-?\d+)$", txt)
         {
@@ -143,7 +143,7 @@ impl AstRule for DoublePrecisionLiteral {
             if grandparent.kind() == "call_expression"
                 && let Some(identifier) = grandparent.child_with_name("identifier")
             {
-                let name = identifier.to_text(context.source_text())?.to_lowercase();
+                let name = identifier.text().to_lowercase();
                 if name == "kind"
                     || matches!(name.as_str(), "real" | "cmplx" | "dbl" | "int" | "logical")
                 {

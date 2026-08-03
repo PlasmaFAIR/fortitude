@@ -43,7 +43,7 @@ impl Violation for UseAll {
 impl AstRule for UseAll {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // TODO rewrite to use UseStatements when added to SymbolTable
-        let module_name = node.module_name(context.source_text())?.to_lowercase();
+        let module_name = node.module_name()?.to_lowercase();
 
         if !context
             .settings()
@@ -114,7 +114,7 @@ impl AstRule for MissingIntrinsic {
         if context.settings().target_std < FortranStandard::F2003 {
             return None;
         }
-        let module_name = node.module_name(context.source_text())?.to_lowercase();
+        let module_name = node.module_name()?.to_lowercase();
 
         if INTRINSIC_MODULES.iter().any(|&m| m == module_name)
             && node

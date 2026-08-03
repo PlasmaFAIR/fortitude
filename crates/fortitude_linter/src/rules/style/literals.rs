@@ -43,7 +43,7 @@ impl AlwaysFixableViolation for BareDecimal {
 
 impl AstRule for BareDecimal {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let txt = node.to_text(context.source_text())?;
+        let txt = node.text();
         // Three cases to match:
         // 1. Leading decimal point, e.g. `.5`
         // 2. Trailing decimal point, e.g. `2.`

@@ -91,17 +91,15 @@ enum LabelRefCmp {
 /// - ends in a `keyword_statement` (except above case)
 ///    - these are always controlflow redirection, e.g. `return` or other `goto`
 fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
-    let src = source.source_text();
-
     // First, we get the three label references
     let mut cursor = node.walk();
     let mut refs = node
         .named_children(&mut cursor)
         .filter(|child| child.kind() == "statement_label_reference");
 
-    let less_than = refs.next()?.to_text(src)?;
-    let equal = refs.next()?.to_text(src)?;
-    let greater_than = refs.next()?.to_text(src)?;
+    let less_than = refs.next()?.text();
+    let equal = refs.next()?.text();
+    let greater_than = refs.next()?.text();
 
     // Check if the `equal` branch is the same as one of the others.
     // Probably don't need to worry about the other two being identical?
@@ -136,7 +134,7 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
     // ...and get them in the order that they appear
     let mut labels = refs
         .iter()
-        .filter_map(|label| Some((node.next_statement_label(label.0, src)?, label.1)))
+        .filter_map(|label| Some((node.next_statement_label(label.0)?, label.1)))
         .sorted_by_key(|label| label.0.start_byte());
 
     if labels.len() < 2 {
@@ -163,14 +161,14 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
     let condition = node
         .child_with_name("parenthesized_expression")?
         .named_child(0)?
-        .to_text(src)?;
+        .text();
 
     // TODO: indentation really needs Stylist
     // TODO: need to indent all lines in block?
-    let base_indentation = node.indentation_ignore_stmt_label(source);
+    let base_indentation = node.indentation_ignore_stmt_label();
 
     // Replace the `if` statement itself
-    let (end_size, whitespace) = end_of_replacement(&first.0, src, &base_indentation);
+    let (end_size, whitespace) = end_of_replacement(&first.0, &base_indentation);
     let first_edit = Edit::replacement(
         format!("if ({condition} {} 0) then{whitespace}", first.1),
         node.start_textsize(),
@@ -184,9 +182,9 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
     // and then we're done!
     if third.is_none() {
         // Check if we need an `else` block or not
-        let end_node = if let Some(end_node) = get_end_of_else_block(&second.0, src) {
+        let end_node = if let Some(end_node) = get_end_of_else_block(&second.0) {
             // Replace second label target with `else`
-            let (end_size, whitespace) = end_of_replacement(&second.0, src, &base_indentation);
+            let (end_size, whitespace) = end_of_replacement(&second.0, &base_indentation);
             edits.push(Edit::replacement(
                 format!("else{whitespace}"),
                 second.0.prev_non_comment_sibling()?.start_textsize(),
@@ -207,15 +205,9 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
     let third = third.unwrap();
 
     // Node that ends the first block
-    let end_first = second
-        .0
-        .prev_non_comment_sibling()?
-        .try_to_controlflow(source);
+    let end_first = second.0.prev_non_comment_sibling()?.try_to_controlflow();
     // Node that ends the second block
-    let end_second = third
-        .0
-        .prev_non_comment_sibling()?
-        .try_to_controlflow(source);
+    let end_second = third.0.prev_non_comment_sibling()?.try_to_controlflow();
 
     debug!("end_first = {end_first:?}");
     debug!("end_second = {end_second:?}");
@@ -236,14 +228,14 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
     let end_if_node = if let Some(final_block_last_node) = end_second {
         // Second block ends in a goto, so find its target
         match final_block_last_node.goto_ref() {
-            Some(ref_) => second.0.next_statement_label_sibling(ref_, src),
+            Some(ref_) => second.0.next_statement_label_sibling(ref_),
             _ => Some(third.0),
         }
     } else if let Some(end_first) = end_first {
         match end_first.goto_ref() {
             Some(ref_) => {
                 // First block ends in a goto that points to the third target
-                if ref_ == third.0.to_text(src)? {
+                if ref_ == third.0.text() {
                     Some(third.0)
                 } else {
                     None
@@ -263,8 +255,8 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
     };
 
     // Replace the second label target
-    let (start_size, else_) = start_of_replacement(&second.0, src, &base_indentation);
-    let (end_size, whitespace) = end_of_replacement(&second.0, src, &base_indentation);
+    let (start_size, else_) = start_of_replacement(&second.0, &base_indentation);
+    let (end_size, whitespace) = end_of_replacement(&second.0, &base_indentation);
     edits.push(Edit::replacement(
         format!("{else_}if ({condition} {} 0) then{whitespace}", second.1),
         start_size,
@@ -273,8 +265,8 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
 
     // Change the third label target to an `else` block if needed
     if end_if_node.start_textsize() > third.0.end_textsize() {
-        let (start_size, _) = start_of_replacement(&third.0, src, &base_indentation);
-        let (end_size, whitespace) = end_of_replacement(&third.0, src, &base_indentation);
+        let (start_size, _) = start_of_replacement(&third.0, &base_indentation);
+        let (end_size, whitespace) = end_of_replacement(&third.0, &base_indentation);
         edits.push(Edit::replacement(
             format!("else{whitespace}"),
             start_size,
@@ -289,8 +281,7 @@ fn fix_arithmetic_if(node: &Node, source: &SourceFile) -> Option<Fix> {
 }
 
 fn fix_end_if(node: &Node, source: &SourceFile, base_indentation: &str) -> Edit {
-    let src = source.source_text();
-    let (end_size, whitespace) = end_of_replacement(node, src, base_indentation);
+    let (end_size, whitespace) = end_of_replacement(node, base_indentation);
     let start_byte = node.start_textsize();
     let start_index = source.to_source_code().line_index(start_byte);
     let start_line = source.to_source_code().line_start(start_index);
@@ -306,21 +297,21 @@ fn fix_end_if(node: &Node, source: &SourceFile, base_indentation: &str) -> Edit 
 ///
 /// If ``node`` is a ``goto`` and its target is a sibling, get the node of its
 /// target.
-fn get_end_of_else_block<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
+fn get_end_of_else_block<'a>(node: &'a Node) -> Option<Node<'a>> {
     let prev_node = node.prev_non_comment_sibling()?;
-    let control = ControlFlow::maybe_from(&prev_node, src)?;
+    let control = ControlFlow::maybe_from(&prev_node)?;
     match control {
-        ControlFlow::GoTo(ref_) => node.next_statement_label_sibling(ref_, src),
+        ControlFlow::GoTo(ref_) => node.next_statement_label_sibling(ref_),
         _ => None,
     }
 }
 
 /// Find start of replacement, and if we should close the block or use `else`
-fn start_of_replacement(node: &Node, src: &str, base_indentation: &str) -> (TextSize, String) {
+fn start_of_replacement(node: &Node, base_indentation: &str) -> (TextSize, String) {
     // We should always have a previous node at this point!
     // TODO: This will consume any interleaving comments!
     let prev_node = node.prev_non_comment_sibling().unwrap();
-    let control = ControlFlow::maybe_from(&prev_node, src);
+    let control = ControlFlow::maybe_from(&prev_node);
     match control {
         Some(ControlFlow::GoTo(_)) | Some(ControlFlow::Continue) => {
             (prev_node.start_textsize(), "else ".to_string())
@@ -333,9 +324,9 @@ fn start_of_replacement(node: &Node, src: &str, base_indentation: &str) -> (Text
 }
 
 /// Find where we need to replace upto, and what whitespace is needed
-fn end_of_replacement(node: &Node, src: &str, base_indentation: &str) -> (TextSize, String) {
+fn end_of_replacement(node: &Node, base_indentation: &str) -> (TextSize, String) {
     let next_node = node.next_sibling().unwrap();
-    if let Some(control) = ControlFlowNode::maybe_from(next_node, src)
+    if let Some(control) = ControlFlowNode::maybe_from(next_node)
         && control.control_flow().is_continue()
     {
         // We've got a `continue` node that we can eat up to the end of

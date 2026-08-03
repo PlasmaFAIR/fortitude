@@ -5,7 +5,7 @@ use anyhow::{Result, anyhow};
 use fortitude_sitter::Node;
 use itertools::Itertools;
 use lazy_regex::lazy_regex;
-use ruff_source_file::{LineEnding, LineRanges, SourceFile};
+use ruff_source_file::{LineEnding, LineRanges};
 use ruff_text_size::{Ranged, TextSize};
 
 use fortitude_sitter::{
@@ -20,16 +20,11 @@ use fortitude_sitter::{
 /// taking care of:
 /// - commas if there are multiple declarations in the same statement
 /// - removing the whole statement if this is the only variable
-pub(crate) fn remove_variable_decl(
-    var: &Node,
-    decl: &VariableDeclaration,
-    src: &SourceFile,
-) -> Result<Edit> {
+pub(crate) fn remove_variable_decl(var: &Node, decl: &VariableDeclaration) -> Result<Edit> {
     remove_from_comma_sep_stmt(
         var,
         decl.node(),
         &decl.names().iter().map(|name| *name.node()).collect_vec(),
-        src,
     )
 }
 
@@ -48,7 +43,6 @@ pub(crate) fn remove_from_comma_sep_stmt(
     item: &Node,
     stmt: &Node,
     children: &[impl TextRanged],
-    src: &SourceFile,
 ) -> Result<Edit> {
     let (before, after): (Vec<_>, Vec<_>) = children
         .iter()
@@ -67,7 +61,7 @@ pub(crate) fn remove_from_comma_sep_stmt(
         Ok(Edit::deletion(previous, item.end_textsize()))
     } else {
         // Case 3: variable is the only declaration
-        Ok(stmt.edit_delete(src))
+        Ok(stmt.edit_delete())
     }
 }
 
@@ -294,9 +288,7 @@ end program foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
-
-        let test_source = SourceFileBuilder::new("test.f90", code).finish();
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let x = symbol_table.get_var("x").unwrap();
         let y = symbol_table.get_var("y").unwrap();
@@ -304,31 +296,31 @@ end program foo
         let a = symbol_table.get_var("a").unwrap();
         let e = symbol_table.get_var("e").unwrap();
 
-        let remove_x = remove_variable_decl(x.node(), x.decl_statement(), &test_source)?;
+        let remove_x = remove_variable_decl(x.node(), x.decl_statement())?;
         assert_eq!(
             remove_x,
             Edit::deletion(TextSize::new(26), TextSize::new(28))
         );
 
-        let remove_y = remove_variable_decl(y.node(), y.decl_statement(), &test_source)?;
+        let remove_y = remove_variable_decl(y.node(), y.decl_statement())?;
         assert_eq!(
             remove_y,
             Edit::deletion(TextSize::new(29), TextSize::new(34))
         );
 
-        let remove_z = remove_variable_decl(z.node(), z.decl_statement(), &test_source)?;
+        let remove_z = remove_variable_decl(z.node(), z.decl_statement())?;
         assert_eq!(
             remove_z,
             Edit::deletion(TextSize::new(33), TextSize::new(40))
         );
 
-        let remove_a = remove_variable_decl(a.node(), a.decl_statement(), &test_source)?;
+        let remove_a = remove_variable_decl(a.node(), a.decl_statement())?;
         assert_eq!(
             remove_a,
             Edit::deletion(TextSize::new(41), TextSize::new(72))
         );
 
-        let remove_e = remove_variable_decl(e.node(), e.decl_statement(), &test_source)?;
+        let remove_e = remove_variable_decl(e.node(), e.decl_statement())?;
         assert_eq!(
             remove_e,
             Edit::deletion(TextSize::new(95), TextSize::new(105))
@@ -353,7 +345,7 @@ end program foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let x = symbol_table.get_var("x").unwrap();
         let y = symbol_table.get_var("y").unwrap();

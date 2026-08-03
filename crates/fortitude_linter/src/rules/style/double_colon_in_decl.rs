@@ -28,7 +28,7 @@ impl AstRule for MissingDoubleColon {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if node
             .children(&mut node.walk())
-            .filter_map(|child| child.to_text(context.source_text()))
+            .map(|child| child.text())
             .all(|child| child != "::")
         {
             let first_decl = node.child_by_field_name("declarator")?;

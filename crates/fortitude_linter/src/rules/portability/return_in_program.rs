@@ -40,11 +40,7 @@ impl AlwaysFixableViolation for ReturnInProgram {
 
 impl AstRule for ReturnInProgram {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if !node
-            .child(0)?
-            .to_text(context.source_text())?
-            .eq_ignore_ascii_case("return")
-        {
+        if !node.child(0)?.text().eq_ignore_ascii_case("return") {
             return None;
         }
 
@@ -57,7 +53,7 @@ impl AstRule for ReturnInProgram {
             }
         }
 
-        let fix = Fix::safe_edit(node.edit_replacement(context.source_file(), "stop".to_string()));
+        let fix = Fix::safe_edit(node.edit_replacement("stop".to_string()));
         some_vec!(context.create_diagnostic(Self {}, node).with_fix(fix))
     }
 

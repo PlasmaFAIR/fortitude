@@ -44,12 +44,9 @@ impl Violation for NonPortableIoUnit {
 
 impl AstRule for NonPortableIoUnit {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let unit = literal_as_io_unit(node, context.source_file())?;
+        let unit = literal_as_io_unit(node)?;
 
-        let value = unit
-            .to_text(context.source_text())?
-            .parse::<i32>()
-            .unwrap_or_default();
+        let value = unit.text().parse::<i32>().unwrap_or_default();
         let is_read = node.kind() == "read_statement";
         let is_write = node.kind() == "write_statement";
 

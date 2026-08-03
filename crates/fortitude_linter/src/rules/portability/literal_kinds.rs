@@ -104,16 +104,15 @@ impl Violation for LiteralKind {
 
 impl AstRule for LiteralKind {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
-        let dtype = node.child(0)?.to_text(src)?.to_lowercase();
+        let dtype = node.child(0)?.text().to_lowercase();
         // TODO: Deal with characters
         if !dtype_is_plain_number(dtype.as_str()) {
             return None;
         }
 
         let kind_node = node.child_by_field_name("kind")?;
-        let literal_node = integer_literal_kind(&kind_node, src)?;
-        let literal: u8 = literal_node.to_text(src)?.parse().ok()?;
+        let literal_node = integer_literal_kind(&kind_node)?;
+        let literal: u8 = literal_node.text().parse().ok()?;
         some_vec![context.create_diagnostic(Self { dtype, literal }, literal_node)]
     }
 
@@ -123,12 +122,12 @@ impl AstRule for LiteralKind {
 }
 
 /// Return any kind spec that is a number literal
-fn integer_literal_kind<'a>(node: &'a Node, src: &str) -> Option<Node<'a>> {
+fn integer_literal_kind<'a>(node: &'a Node) -> Option<Node<'a>> {
     if let Some(literal) = node.child_with_name("number_literal") {
         return Some(literal);
     }
     if let Some(literal) = node
-        .kwarg_value("kind", src)
+        .kwarg_value("kind")
         .filter(|v| v.kind() == "number_literal")
     {
         return Some(literal);
@@ -188,13 +187,12 @@ impl Violation for LiteralKindSuffix {
 
 impl AstRule for LiteralKindSuffix {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
         let kind = node.child_by_field_name("kind")?;
         if kind.kind() != "number_literal" {
             return None;
         }
-        let literal = node.to_text(src)?.to_string();
-        let suffix: u8 = kind.to_text(src)?.parse().ok()?;
+        let literal = node.text().to_string();
+        let suffix: u8 = kind.text().parse().ok()?;
         some_vec![context.create_diagnostic(Self { literal, suffix }, kind)]
     }
 

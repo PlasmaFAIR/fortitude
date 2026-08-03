@@ -29,14 +29,10 @@ impl AstRule for OldStyleArrayLiteral {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let open_bracket = node.child(0)?;
 
-        if open_bracket
-            .to_text(context.source_text())?
-            .starts_with("(/")
-        {
+        if open_bracket.text().starts_with("(/") {
             let close_bracket = node.children(&mut node.walk()).last()?;
-            let src = context.source_file();
-            let edit_open = open_bracket.edit_replacement(src, "[".to_string());
-            let edit_close = close_bracket.edit_replacement(src, "]".to_string());
+            let edit_open = open_bracket.edit_replacement("[".to_string());
+            let edit_close = close_bracket.edit_replacement("]".to_string());
             let fix = Fix::safe_edits(edit_open, [edit_close]);
 
             return some_vec!(context.create_diagnostic(Self {}, node).with_fix(fix));

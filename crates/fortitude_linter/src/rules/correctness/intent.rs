@@ -58,9 +58,7 @@ impl AstRule for MissingIntent {
                 .named_children(&mut node.walk())
                 .filter_map(|param| {
                     // Get variable declaration
-                    context
-                        .symbol_table()
-                        .get_var(param.to_text(context.source_text())?)
+                    context.symbol_table().get_var(param.text())
                 })
                 .filter(|param| {
                     // Procedures are not allowed intent

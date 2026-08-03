@@ -42,8 +42,8 @@ fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
 
 /// Replaces an existing implicit statement with `implicit none`. Used when
 /// there is an implicit statement such as `implicit real(a-z)`.
-fn replace_with_implicit_none(node: &Node, src: &SourceFile) -> Edit {
-    node.edit_replacement(src, "implicit none".to_owned())
+fn replace_with_implicit_none(node: &Node) -> Edit {
+    node.edit_replacement("implicit none".to_owned())
 }
 
 /// Assuming we have `implicit none (external)` for some cursed reason, adds
@@ -108,7 +108,7 @@ impl ImplicitTypingEdit {
                 // not `implicit none`. Should replace the whole statement with
                 // `implicit none`.
                 let error_type = ImplicitTypingErrorType::NotImplicitNone;
-                let edit = replace_with_implicit_none(stmt.node(), src);
+                let edit = replace_with_implicit_none(stmt.node());
                 Some(Self { edit, error_type })
             }
             None => {

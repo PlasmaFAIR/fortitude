@@ -45,14 +45,10 @@ impl AlwaysFixableViolation for DeprecatedRelationalOperator {
 impl AstRule for DeprecatedRelationalOperator {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
-        let symbol = relation
-            .to_text(context.source_text())?
-            .to_lowercase()
-            .to_string();
+        let symbol = relation.text().to_lowercase().to_string();
         let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
 
-        let fix =
-            Fix::safe_edit(relation.edit_replacement(context.source_file(), new_symbol.clone()));
+        let fix = Fix::safe_edit(relation.edit_replacement(new_symbol.clone()));
 
         some_vec![
             context
