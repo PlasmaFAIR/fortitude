@@ -214,6 +214,40 @@ impl<'a> Dimension<'a> {
     }
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Bind<'a> {
+    language: &'a str,
+    name: Option<&'a str>,
+}
+
+impl<'a> Bind<'a> {
+    pub fn try_from_node(node: &Node<'a>, src: &'a str) -> Result<Self> {
+        // Identifier is a required node in a bind() attribute
+        let lang_node = node
+            .child_with_id(kind!("identifier"))
+            .expect("must have identifier child");
+        let lang = lang_node.to_text(src).expect("must have text");
+
+        // The name node is an optional one
+        let name_kw_node = node.child_with_id(kind!("keyword_argument"));
+        if name_kw_node.is_some() {
+            let name_node = name_kw_node.unwrap().child_with_id(kw!("value"));
+            if name_node.is_some() {
+                let name = name_node.unwrap().to_text(src);
+                return Ok(Self {
+                    language: lang,
+                    name: name,
+                });
+            }
+        }
+
+        Ok(Self {
+            language: lang,
+            name: None,
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, EnumIs, IntoStaticStr, PartialEq)]
 pub enum Intent {
     In,
@@ -247,6 +281,7 @@ pub enum AttributeKind<'a> {
     Allocatable,
     Asynchronous,
     Automatic,
+    Bind(Bind<'a>),
     Codimension,
     Dimension(Dimension<'a>),
     Constant,
@@ -275,7 +310,7 @@ pub enum AttributeKind<'a> {
 }
 
 impl<'a> AttributeKind<'a> {
-    pub fn try_from_node(value: &Node<'a>) -> Result<Self> {
+    pub fn try_from_node(value: &Node<'a>, src: &'a str) -> Result<Self> {
         let first_child = value.child(0).unwrap().kind();
         // TODO: handle codimension properly
         let attr = AttributeKind::from_str(first_child)
@@ -288,6 +323,7 @@ impl<'a> AttributeKind<'a> {
                     .child(1)
                     .context("expected more than one child for 'dimension'")?,
             )?)),
+            AttributeKind::Bind(_) => Ok(AttributeKind::Bind(Bind::try_from_node(value, src)?)),
             _ => Ok(attr),
         }
     }
@@ -301,9 +337,9 @@ pub struct Attribute<'a> {
 }
 
 impl<'a> Attribute<'a> {
-    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
+    pub fn try_from_node(node: Node<'a>, src: &'a str) -> Result<Self> {
         Ok(Self {
-            kind: AttributeKind::try_from_node(&node)?,
+            kind: AttributeKind::try_from_node(&node, src)?,
             node,
         })
     }
@@ -463,7 +499,7 @@ impl<'a> VariableDeclaration<'a> {
 
         let attributes: Result<Vec<_>> = node
             .children_by_field_id(field!("attribute"), &mut node.walk())
-            .map(Attribute::try_from_node)
+            .map(|decl| Attribute::try_from_node(decl, src))
             .collect();
 
         let names = node
