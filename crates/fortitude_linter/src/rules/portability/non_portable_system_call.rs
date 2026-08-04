@@ -6,7 +6,7 @@ use ruff_macros::derive_message_formats;
 use tree_sitter::Node;
 
 /// ## What it does
-/// Checks for use of the non-portable `system` call.
+/// Checks for use of the non-portable `system` call for running programs.
 ///
 /// ## Why is this bad?
 /// `system` is a GFortran extension and isn't available as part of other compilers.
@@ -26,7 +26,11 @@ pub(crate) struct NonPortableSystemCall;
 impl Violation for NonPortableSystemCall {
     #[derive_message_formats]
     fn message(&self) -> String {
-        "Use of non-portable system call".to_string()
+        "Use of non-portable `system` call".to_string()
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        Some("Replace with `execute_command_line`".to_string())
     }
 }
 
@@ -34,6 +38,7 @@ impl AstRule for NonPortableSystemCall {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let identifier = node.child_by_field_id(field!("subroutine").into()).unwrap();
 
+        // Skip subroutines with other names
         if !(identifier
             .to_text(context.source_text())?
             .eq_ignore_ascii_case("system"))
@@ -41,6 +46,7 @@ impl AstRule for NonPortableSystemCall {
             return None;
         }
 
+        // Exit early if there is a user-defined symbol called 'system'
         if context.symbol_table().get("system").is_some() {
             return None;
         }
