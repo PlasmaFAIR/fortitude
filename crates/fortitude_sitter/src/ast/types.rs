@@ -229,14 +229,12 @@ impl<'a> Bind<'a> {
         let lang = lang_node.to_text(src).expect("must have text");
 
         // The name node is an optional one
-        let name_kw_node = node.child_with_id(kind!("keyword_argument"));
-        if name_kw_node.is_some() {
-            let name_node = name_kw_node.unwrap().child_with_id(kw!("value"));
-            if name_node.is_some() {
-                let name = name_node.unwrap().to_text(src);
+        if let Some(name_kw_node) = node.child_with_id(kind!("keyword_argument")) {
+            if let Some(name_node) = name_kw_node.child_with_id(kw!("value")) {
+                let name = name_node.to_text(src).expect("must have text for name");
                 return Ok(Self {
                     language: lang,
-                    name: name,
+                    name: Some(name),
                 });
             }
         }
