@@ -25,6 +25,9 @@ authors:
 - family-names: "Vanlaer"
   given-names: "Vincent"
   orcid: "https://orcid.org/0000-0003-4923-6199"
+- family-names: "Longdin"
+  given-names: "Drew"
+  orcid: ""
 title: "fortitude"
 version: 0.9.2
 date-released: 2026-07-22
