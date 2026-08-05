@@ -171,12 +171,12 @@ impl<'a> SymbolTable<'a> {
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>, dummy_vars: &[String]) {
         let decl = Rc::new(decl);
         for name in decl.names().iter() {
-            let name_lower = name.name().as_str().to_ascii_lowercase();
-            let is_dummy_var = dummy_vars.contains(&name_lower);
-            self.inner.insert(
-                name_lower,
-                Symbol::Variable(Variable::new(name.clone(), is_dummy_var, decl.clone())),
-            );
+            let is_dummy_var = dummy_vars.contains(&name.name().as_str().to_ascii_lowercase());
+            self.insert_symbol(Symbol::Variable(Variable::new(
+                name.clone(),
+                is_dummy_var,
+                decl.clone(),
+            )));
         }
         self.decl_lines.push(decl);
     }
@@ -188,22 +188,23 @@ impl<'a> SymbolTable<'a> {
             for item in items.named_children(&mut items.walk()) {
                 // Other nodes such as comments can be found in the list
                 if let Some(item) = UsedItem::try_from_node(item, stmt.clone()) {
-                    let symbol = Symbol::UsedItem(item);
-                    let name = symbol.name().as_str().to_ascii_lowercase();
-                    self.inner.insert(name, symbol);
+                    self.insert_symbol(Symbol::UsedItem(item));
                 }
             }
         }
         self.use_statements.push(stmt);
     }
 
+    /// Insert a symbol into the table, taking care to lowercase the name for case-insensitive lookup.
+    /// This should always be used instead of inserting directly into the inner hashmap.
     pub fn insert_symbol(&mut self, symbol: Symbol<'a>) {
-        self.inner.insert(symbol.name().to_string(), symbol);
+        self.inner
+            .insert(symbol.name().as_str().to_ascii_lowercase(), symbol);
     }
 
     /// Return the symbol with the given name if it exists
     pub fn get(&self, name: &str) -> Option<&Symbol<'_>> {
-        self.inner.get(name)
+        self.inner.get(&name.to_ascii_lowercase())
     }
 
     /// Iterator over the variable declaration lines
@@ -264,11 +265,9 @@ impl<'a> SymbolTables<'a> {
 
     /// Return the symbol with the given name if it exists and is a variable
     pub fn get_var(&'_ self, name: &str) -> Option<&Variable<'_>> {
-        let name = name.to_ascii_lowercase();
-
         // Check the most recently inserted table first
         for table in self.inner.iter().rev() {
-            match table.get(&name) {
+            match table.get(name) {
                 Some(Symbol::Variable(var)) => {
                     return Some(var);
                 }
@@ -287,11 +286,9 @@ impl<'a> SymbolTables<'a> {
 
     /// Return the symbol with the given name if it exists
     pub fn get(&'_ self, name: &str) -> Option<&Symbol<'_>> {
-        let name = name.to_ascii_lowercase();
-
         // Check the most recently inserted table first
         for table in self.inner.iter().rev() {
-            if let Some(var) = table.get(&name) {
+            if let Some(var) = table.get(name) {
                 return Some(var);
             }
         }
@@ -741,6 +738,63 @@ end program foo
         let count = symbol_table.iter_symbols().count();
         assert_eq!(count, 6);
 
+        Ok(())
+    }
+
+    #[test]
+    fn mixed_case() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+module mod
+  use :: some_module, only: foo, BaR => baz
+  implicit none (type, external)
+  Integer :: Idx, count
+contains
+  subroutine sub(x)
+    integer, intent(in) :: x
+  end subroutine sub
+  function FuNc(x) result(y)
+    integer, intent(in) :: x
+  end function FuNc
+end module mod
+}
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let symbol_table = SymbolTable::new(&root)?;
+
+        let foo = symbol_table.get("Foo");
+        assert!(foo.is_some());
+        let foo = foo.unwrap();
+        assert!(foo.name().as_str() == "foo");
+
+        let bar = symbol_table.get("bar");
+        assert!(bar.is_some());
+        let bar = bar.unwrap();
+        assert!(bar.name().as_str() == "BaR");
+
+        let idx = symbol_table.get("idx");
+        assert!(idx.is_some());
+        let idx = idx.unwrap();
+        assert!(idx.name().as_str() == "Idx");
+
+        let count = symbol_table.get("COUNT");
+        assert!(count.is_some());
+        let count = count.unwrap();
+        assert!(count.name().as_str() == "count");
+
+        let sub = symbol_table.get("SUB");
+        assert!(sub.is_some());
+        let sub = sub.unwrap();
+        assert!(sub.name().as_str() == "sub");
+
+        let func = symbol_table.get("func");
+        assert!(func.is_some());
+        let func = func.unwrap();
+        assert!(func.name().as_str() == "FuNc");
         Ok(())
     }
 }
