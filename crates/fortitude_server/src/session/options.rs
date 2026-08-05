@@ -200,12 +200,6 @@ impl Combine for ClientOptions {
     }
 }
 
-impl Combine for IndentWidth {
-    fn combine_with(&mut self, other: Self) {
-        self.combine_with(other);
-    }
-}
-
 /// Settings needed to initialize tracing. These will only be
 /// read from the global configuration.
 #[derive(Debug, Deserialize, Default)]
@@ -465,6 +459,7 @@ impl_noop_combine!(String);
 // Custom types
 impl_noop_combine!(ConfigurationPreference);
 impl_noop_combine!(ClientConfiguration);
+impl_noop_combine!(IndentWidth);
 
 #[cfg(test)]
 mod tests {
