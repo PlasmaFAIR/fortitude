@@ -568,8 +568,22 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 };
 
                 let node_kind = node.kind();
-                // Determine expected indent bases on tree-sitter node kind
-                if BEGIN_SCOPE_NODES.contains(&node_kind) && !node.inline_if_statement() {
+
+                // Determine expected indent based on tree-sitter node kind and line continuations '&'.
+                // If we are in a line continuation, we just indent once.
+                if in_line_continuation {
+                    // If we are at the end of the line continuation, we remove the last indent for future lines.
+                    if !line_segment_has_continuation {
+                        in_line_continuation = false;
+                        scope_indents.pop();
+                        // Align single closing brace with the outer indent
+                        if [")", "]", "}", r"\)"].contains(&line_segment.trim()) {
+                            current_expected_indent =
+                                *scope_indents.iter().rev().nth(1).unwrap_or(&0usize);
+                        }
+                    }
+                // Otherwise, we indent based on the type of node which starts this line segment
+                } else if BEGIN_SCOPE_NODES.contains(&node_kind) && !node.inline_if_statement() {
                     if edit_is_activated {
                         scope_indents.push(
                             current_expected_indent
@@ -591,24 +605,14 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     current_expected_indent = *scope_indents.iter().rev().nth(1).unwrap_or(&0usize);
                 }
 
-                // Determine indent change based on line continuation char "&"
-                if edit_is_activated {
-                    if !in_line_continuation && line_segment_has_continuation {
-                        in_line_continuation = true;
-                        scope_indents.push(
-                            current_expected_indent
-                                + indent_width.as_usize()
-                                    * constructs_to_indent_map.get("line_continuation").unwrap(),
-                        );
-                    } else if in_line_continuation && !line_segment_has_continuation {
-                        in_line_continuation = false;
-                        scope_indents.pop();
-                        // Align single closing brace with the outer indent
-                        if [")", "]", "}", r"\)"].contains(&line_segment.trim()) {
-                            current_expected_indent =
-                                *scope_indents.iter().rev().nth(1).unwrap_or(&0usize);
-                        }
-                    }
+                // Account for entering a line continuation by adding one extra indent
+                if !in_line_continuation && line_segment_has_continuation {
+                    in_line_continuation = true;
+                    scope_indents.push(
+                        current_expected_indent
+                            + indent_width.as_usize()
+                                * constructs_to_indent_map.get("line_continuation").unwrap(),
+                    );
                 }
             }
 
