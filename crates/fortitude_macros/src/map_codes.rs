@@ -479,7 +479,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     quote! {
         use std::path::Path;
         use ruff_source_file::SourceFile;
-        use tree_sitter::Node;
+        use fortitude_sitter::Node;
         use crate::{AstRule, CheckContext, kind_ids};
         use crate::diagnostics::{Diagnostic, Violation};
 

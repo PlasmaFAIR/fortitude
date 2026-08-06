@@ -1,5 +1,5 @@
+use crate::Node;
 use ruff_text_size::{TextRange, TextSize};
-use tree_sitter::Node;
 
 /// Something with a [`tree_sitter::Node`]
 pub trait HasNode<'a> {

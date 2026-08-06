@@ -4,12 +4,14 @@ use std::{rc::Rc, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use bitflags::bitflags;
-use fortitude_macros::{HasName, HasNode, field, kind, kw};
 use itertools::Itertools;
+use ruff_text_size::TextRange;
 use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
-use tree_sitter::Node;
 
-use crate::{ast::FortitudeNode, traits::HasNode};
+use fortitude_macros::{HasName, HasNode, field, kind, kw};
+
+use crate::Node;
+use crate::traits::{HasNode, TextRanged};
 
 #[derive(Clone, Debug)]
 pub struct ParameterStatement<'a> {
@@ -19,19 +21,17 @@ pub struct ParameterStatement<'a> {
 }
 
 impl<'a> ParameterStatement<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
         Ok(Self {
             name: node
                 .child_with_id(kind!("identifier"))
                 .context("expected identifier in 'parameter_statement'")?
-                .to_text(src)
-                .context("expected text")?
+                .text()
                 .to_string(),
             expression: node
                 .child(2)
                 .context("expected expression in 'parameter_statement'")?
-                .to_text(src)
-                .context("expected text")?
+                .text()
                 .to_string(),
             node,
         })
@@ -47,10 +47,10 @@ pub struct Name<'a> {
 }
 
 impl<'a> Name<'a> {
-    pub fn from_node(node: &Node<'a>, src: &str) -> Self {
+    pub fn from_node(node: &Node<'a>) -> Self {
         let node = get_name_node_of_declarator(node);
         Self {
-            name: node.to_text(src).unwrap_or("<unknown>").to_string(),
+            name: node.text().to_string(),
             node,
         }
     }
@@ -93,9 +93,9 @@ pub struct NameDecl<'a> {
 }
 
 impl<'a> NameDecl<'a> {
-    pub fn from_node(node: &Node<'a>, src: &str) -> Self {
+    pub fn from_node(node: &Node<'a>) -> Self {
         Self {
-            name: Name::from_node(node, src),
+            name: Name::from_node(node),
             node: *node,
         }
     }
@@ -329,7 +329,7 @@ pub enum IntrinsicType<'a> {
 }
 
 impl<'a> IntrinsicType<'a> {
-    pub fn from_node(node: Node<'a>, src: &'a str) -> Self {
+    pub fn from_node(node: Node<'a>) -> Self {
         if node.kind_id() != kind!("intrinsic_type") {
             panic!(
                 "IntrinsicType can only be created from `intrinsic_type`, got {}",
@@ -337,7 +337,7 @@ impl<'a> IntrinsicType<'a> {
             );
         }
         let type_node = node.child(0).expect("must have zeroth child");
-        let name = type_node.to_text(src).expect("must have text");
+        let name = type_node.text();
         match type_node.kind_id() {
             kw!("byte") => IntrinsicType::Byte(TypeInner { node, name }),
             kw!("integer") => IntrinsicType::Integer(TypeInner { node, name }),
@@ -405,11 +405,11 @@ pub enum Type<'a> {
 }
 
 impl<'a> Type<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
         let kind = node.kind_id();
-        let name = node.to_text(src).context("expected text")?;
+        let name = node.text();
         match kind {
-            kind!("intrinsic_type") => Ok(Type::Intrinsic(IntrinsicType::from_node(node, src))),
+            kind!("intrinsic_type") => Ok(Type::Intrinsic(IntrinsicType::from_node(node))),
             kind!("derived_type") => Ok(Type::Derived(TypeInner { node, name })),
             kind!("procedure") => Ok(Type::Procedure(TypeInner { node, name })),
             kind!("declared_type") => Ok(Type::Declared(TypeInner { node, name })),
@@ -451,7 +451,7 @@ pub struct VariableDeclaration<'a> {
 
 impl<'a> VariableDeclaration<'a> {
     /// Create from `variable_declaration` node
-    pub fn try_from_node(node: &Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("variable_declaration") {
             return Err(anyhow!("wrong node type"));
         }
@@ -459,7 +459,6 @@ impl<'a> VariableDeclaration<'a> {
         let type_ = Type::try_from_node(
             node.child_by_field_id(field!("type").into())
                 .context("expected type")?,
-            src,
         )?;
 
         let attributes: Result<Vec<_>> = node
@@ -469,12 +468,12 @@ impl<'a> VariableDeclaration<'a> {
 
         let names = node
             .children_by_field_id(field!("declarator"), &mut node.walk())
-            .map(|decl| NameDecl::from_node(&decl, src))
+            .map(|decl| NameDecl::from_node(&decl))
             .collect_vec();
 
         let has_colon = node
             .children(&mut node.walk())
-            .filter_map(|child| child.to_text(src))
+            .map(|child| child.text())
             .any(|child| child == "::");
 
         Ok(Self {
@@ -488,7 +487,7 @@ impl<'a> VariableDeclaration<'a> {
     }
 
     /// Create from `function_statement`. Will fail if the statement has no `type`
-    pub fn try_from_fn_stmt(node: &Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_fn_stmt(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("function_statement") {
             return Err(anyhow!("wrong node type"));
         }
@@ -496,7 +495,6 @@ impl<'a> VariableDeclaration<'a> {
         let type_ = Type::try_from_node(
             node.child_by_field_id(field!("type").into())
                 .context("expected type")?,
-            src,
         )?;
 
         let id = if let Some(result) = node.child_with_id(kind!("function_result")) {
@@ -507,7 +505,7 @@ impl<'a> VariableDeclaration<'a> {
             node.child_by_field_id(field!("name").into())
                 .expect("`function_statement` must have `name` field")
         };
-        let name = NameDecl::from_node(&id, src);
+        let name = NameDecl::from_node(&id);
 
         Ok(Self {
             type_,
@@ -658,7 +656,7 @@ impl<'a> HasNode<'a> for Variable<'a> {
 
 #[derive(EnumString, Display)]
 #[strum(ascii_case_insensitive)]
-pub(crate) enum BlockExit {
+pub enum BlockExit {
     Return,
     Cycle,
     Exit,
@@ -675,7 +673,7 @@ bitflags! {
 }
 
 #[derive(Clone, Debug, HasNode)]
-pub(crate) struct ImplicitStatement<'a> {
+pub struct ImplicitStatement<'a> {
     node: Node<'a>,
     none_type: ImplicitNoneType,
 }
@@ -791,7 +789,7 @@ pub struct Procedure<'a> {
 }
 
 impl<'a> Procedure<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if !matches!(node.kind_id(), kind!("function") | kind!("subroutine")) {
             return Err(anyhow!("not a procedure"));
         }
@@ -802,7 +800,7 @@ impl<'a> Procedure<'a> {
         let stmt = node.child(0).context("expected child")?;
 
         let type_ = if let Some(child) = stmt.child_by_field_name("type") {
-            Some(Type::try_from_node(child, src)?)
+            Some(Type::try_from_node(child)?)
         } else {
             None
         };
@@ -818,15 +816,14 @@ impl<'a> Procedure<'a> {
         let name = stmt
             .child_by_field_id(field!("name").into())
             .context("procedure should have `name` field")?;
-        let name = Name::from_node(&name, src);
+        let name = Name::from_node(&name);
 
         let args = stmt
             .child_with_id(kind!("parameters"))
             .map(|params| {
                 params
                     .named_children(&mut params.walk())
-                    .flat_map(|param| param.to_text(src))
-                    .map(|param| param.to_ascii_lowercase())
+                    .map(|param| param.text().to_ascii_lowercase())
                     .collect_vec()
             })
             .unwrap_or_default();
@@ -876,7 +873,7 @@ pub struct TypeDefinition<'a> {
 }
 
 impl<'a> TypeDefinition<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("derived_type_definition") {
             return Err(anyhow!("not a derived type"));
         }
@@ -887,7 +884,7 @@ impl<'a> TypeDefinition<'a> {
         let name_node = stmt
             .child_with_id(kind!("type_name"))
             .context("expected type_name")?;
-        let name = Name::from_node(&name_node, src);
+        let name = Name::from_node(&name_node);
 
         Ok(Self { name, node: *node })
     }
@@ -903,7 +900,7 @@ pub struct Module<'a> {
 }
 
 impl<'a> Module<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("module") {
             return Err(anyhow!("not a module"));
         }
@@ -912,7 +909,7 @@ impl<'a> Module<'a> {
             .child_with_id(kind!("module_statement"))
             .context("expected module_statement")?;
         let name_node = stmt.child_with_id(kind!("name")).context("expected name")?;
-        let name = Name::from_node(&name_node, src);
+        let name = Name::from_node(&name_node);
 
         Ok(Self { name, node: *node })
     }
@@ -928,7 +925,7 @@ pub struct Program<'a> {
 }
 
 impl<'a> Program<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("program") {
             return Err(anyhow!("not a program"));
         }
@@ -937,7 +934,7 @@ impl<'a> Program<'a> {
             .child_with_id(kind!("program_statement"))
             .context("expected program_statement")?;
         let name_node = stmt.child_with_id(kind!("name")).context("expected name")?;
-        let name = Name::from_node(&name_node, src);
+        let name = Name::from_node(&name_node);
 
         Ok(Self { name, node: *node })
     }
@@ -955,7 +952,7 @@ pub struct UseStatement<'a> {
 
 impl<'a> UseStatement<'a> {
     /// Create from `use_statement` node
-    pub fn try_from_node(node: &Node<'a>, src: &str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         if node.kind_id() != kind!("use_statement") {
             return Err(anyhow!("wrong node type"));
         }
@@ -964,7 +961,6 @@ impl<'a> UseStatement<'a> {
             &node
                 .child_with_id(kind!("module_name"))
                 .context("expected module_name in 'use_statement'")?,
-            src,
         );
 
         let has_only = node.child_with_id(kind!("included_items")).is_some();
@@ -1017,9 +1013,9 @@ pub struct UsedItem<'a> {
 }
 
 impl<'a> UsedItem<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &str, decl: Rc<UseStatement<'a>>) -> Option<Self> {
+    pub fn try_from_node(node: Node<'a>, decl: Rc<UseStatement<'a>>) -> Option<Self> {
         if node.kind_id() == kind!("identifier") {
-            let name = Name::from_node(&node, src);
+            let name = Name::from_node(&node);
             Some(Self {
                 name,
                 alias_of: None,
@@ -1030,13 +1026,11 @@ impl<'a> UsedItem<'a> {
                 &node
                     .child_with_id(kind!("local_name"))
                     .expect("use_alias should have local_name child"),
-                src,
             );
             let alias_of = Name::from_node(
                 &node
                     .child_with_id(kind!("identifier"))
                     .expect("use_alias should have identifier child"),
-                src,
             );
             Some(Self {
                 name,
@@ -1068,13 +1062,161 @@ impl<'a> HasNode<'a> for UsedItem<'a> {
     }
 }
 
+/// Returns true if the type passed to it is number-like, and of a kind that can be modified using
+/// kinds. 'double precision' and 'double complex' are not included.
+pub fn dtype_is_plain_number(dtype: &str) -> bool {
+    matches!(
+        dtype.to_lowercase().as_str(),
+        "integer" | "real" | "logical" | "complex"
+    )
+}
+
+/// A block of consecutive comments (no blank lines)
+#[derive(Debug, Clone)]
+pub struct CommentBlock {
+    text_range: TextRange,
+    start_row: usize,
+    end_row: usize,
+    text: String,
+}
+
+impl CommentBlock {
+    pub fn try_from_node_range(nodes: Vec<Node>) -> Result<Self> {
+        if let Some(non_comment) = nodes.iter().find(|node| node.kind() != "comment") {
+            return Err(anyhow!(
+                "Unexpected non-comment '{non_comment:?}' in comment block"
+            ));
+        }
+        if nodes.is_empty() {
+            return Err(anyhow!("CommentBlock requires at least one node"));
+        }
+        // Have at least one, so can get first and last
+        let first = nodes.first().unwrap();
+        let last = nodes.last().unwrap();
+
+        let start_textsize = first.start_textsize();
+        let end_textsize = last.end_textsize();
+        let text_range = TextRange::new(start_textsize, end_textsize);
+
+        let start_row = first.start_position().row;
+        let end_row = last.end_position().row;
+
+        let text = nodes
+            .iter()
+            .map(|node| node.text())
+            .collect_vec()
+            .join("\n");
+
+        Ok(Self {
+            text_range,
+            start_row,
+            end_row,
+            text,
+        })
+    }
+
+    pub fn start_row(&self) -> usize {
+        self.start_row
+    }
+
+    pub fn end_row(&self) -> usize {
+        self.end_row
+    }
+
+    pub fn text(&self) -> &str {
+        self.text.as_ref()
+    }
+}
+
+impl TextRanged for CommentBlock {
+    fn textrange(&self) -> TextRange {
+        self.text_range
+    }
+}
+
+/// A control flow keyword
+#[derive(Clone, Debug, EnumIs)]
+pub enum ControlFlow {
+    Continue,
+    Cycle,
+    Exit,
+    GoTo(String),
+    Return,
+    Stop,
+}
+
+impl ControlFlow {
+    pub fn maybe_from(value: &Node) -> Option<Self> {
+        if value.kind_id() != kind!("keyword_statement") {
+            return None;
+        }
+        match value.child(0)?.kind_id() {
+            kw!("continue") => Some(Self::Continue),
+            kw!("cycle") => Some(Self::Cycle),
+            kw!("exit") => Some(Self::Exit),
+            kw!("return") => Some(Self::Return),
+            kw!("stop") => Some(Self::Stop),
+            kw!("error") => Some(Self::Stop),
+            keyword => Self::parse_goto(keyword, value),
+        }
+    }
+
+    fn parse_goto(keyword: u16, value: &Node) -> Option<Self> {
+        if !matches!(keyword, kw!("go") | kw!("goto")) {
+            return None;
+        }
+
+        // We expect either `go to N` or `goto N`.
+        // Don't bother with assigned or computed gotos for now
+        let expected_ref_index = if keyword == kw!("go") { 2 } else { 1 };
+        if value.child_count() > expected_ref_index + 1 {
+            return None;
+        }
+
+        Some(Self::GoTo(
+            value.child(expected_ref_index)?.text().to_string(),
+        ))
+    }
+}
+
+/// A control flow node
+#[derive(Clone, Debug)]
+pub struct ControlFlowNode<'a> {
+    control_flow: ControlFlow,
+    node: Node<'a>,
+}
+
+impl<'a> ControlFlowNode<'a> {
+    pub fn maybe_from(node: Node<'a>) -> Option<Self> {
+        ControlFlow::maybe_from(&node).map(|control_flow| Self { control_flow, node })
+    }
+
+    pub fn goto_ref(&'a self) -> Option<&'a str> {
+        match self.control_flow {
+            ControlFlow::GoTo(ref ref_) => Some(ref_),
+            _ => None,
+        }
+    }
+
+    pub fn control_flow(&self) -> ControlFlow {
+        self.control_flow.clone()
+    }
+
+    pub fn node(&'a self) -> Node<'a> {
+        self.node
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::FortitudeNode;
-    use anyhow::Result;
+    use crate::Parser;
+
+    use anyhow::{Context, Result};
+    use ruff_text_size::TextSize;
     use test_case::test_case;
-    use tree_sitter::Parser;
+    use textwrap::dedent;
+    use tree_sitter::Point;
 
     #[test_case("byte", |result| result.is_byte())]
     #[test_case("integer", |result| result.is_integer())]
@@ -1087,9 +1229,7 @@ mod tests {
     #[test_case("logical", |result| result.is_logical())]
     #[test_case("character", |result| result.is_character())]
     fn intrinsic_type(type_: &str, check: impl FnOnce(IntrinsicType) -> bool) -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .expect("Error loading Fortran grammar");
 
         let code = format!("{type_} :: foo\nend");
@@ -1101,9 +1241,167 @@ mod tests {
             .find(|child| child.kind_id() == kind!("intrinsic_type"))
             .expect("couldn't find intrinsic_type");
 
-        let result = IntrinsicType::from_node(type_, &code);
+        let result = IntrinsicType::from_node(type_);
 
         assert!(check(result));
+
+        Ok(())
+    }
+
+    #[test]
+    fn decls() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .expect("Error loading Fortran grammar");
+
+        let code = "real, dimension(2) :: x, y = [4, 2], z(3)\nend";
+
+        let tree = parser.parse(code, None).expect("Failed to parse");
+        let root = tree.root_node();
+        let type_ = root
+            .named_descendants()
+            .find(|child| child.kind_id() == kind!("variable_declaration"))
+            .expect("couldn't find variable_declaration");
+
+        let result = VariableDeclaration::try_from_node(&type_)?;
+
+        assert_eq!(result.names().len(), 3);
+
+        let mut iter = result.names().iter();
+        let x = iter.next().unwrap();
+        let y = iter.next().unwrap();
+        let z = iter.next().unwrap();
+
+        let x_size = x.size();
+        let y_size = y.size();
+        let z_size = z.size();
+        assert!(x_size.is_none());
+        assert!(y_size.is_none());
+        assert!(z_size.is_some());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_comment_block() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          ! one
+          ! two
+          program foo
+
+          contains
+
+            ! not this
+
+            ! but this
+            subroutine bar()
+            end subroutine bar
+          end program foo
+
+          ! not this either
+
+          module zing
+          end module zing
+
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+
+        let program_node = tree
+            .root_node()
+            .child_with_name("program")
+            .context("Missing program node")?;
+        let program_comments = program_node
+            .prev_attached_comment_block()
+            .context("Couldn't find program comment block")?;
+
+        let expected_text = "! one\n! two";
+        assert_eq!(
+            program_comments.textrange(),
+            TextRange::new(
+                TextSize::new(1),
+                TextSize::new(expected_text.len().saturating_add(1).try_into()?)
+            )
+        );
+        assert_eq!(program_comments.text(), expected_text);
+
+        let subroutine_node = program_node
+            .descendants()
+            .find(|node| node.kind() == "subroutine")
+            .context("Missing subroutine node")?;
+        let subroutine_comments = subroutine_node
+            .prev_attached_comment_block()
+            .context("Couldn't find subroutine comment block")?;
+        let expected_text = "! but this";
+        assert_eq!(subroutine_comments.text(), expected_text);
+
+        let module_node = tree
+            .root_node()
+            .child_with_name("module")
+            .context("Missing module node")?;
+        assert!(module_node.prev_attached_comment_block().is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn prev_line_continuation() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            do &
+              while (.true.)
+            end do
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "while_statement")
+            .context("missing 'while'")?;
+
+        let ampersand = node.prev_line_continuation();
+        assert!(ampersand.is_some());
+        assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
+
+        Ok(())
+    }
+
+    #[test]
+    fn next_line_continuation() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            do &
+              while (.true.)
+            end do
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let node = root
+            .descendants()
+            .find(|node| node.kind() == "do")
+            .context("missing 'do'")?;
+
+        let ampersand = node.next_line_continuation();
+        assert!(ampersand.is_some());
+        assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
 
         Ok(())
     }

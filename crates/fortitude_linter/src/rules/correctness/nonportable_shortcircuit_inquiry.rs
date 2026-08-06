@@ -1,12 +1,11 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for use of a variable in the same logical expression as "definedness" inquiry.
@@ -92,11 +91,11 @@ struct PresentCall {
     pub arg: String,
 }
 
-fn present_call(expr: &Node, src: &str, function: &str) -> Option<PresentCall> {
+fn present_call(expr: &Node, function: &str) -> Option<PresentCall> {
     if expr.kind_id() != kind!("call_expression") {
         return None;
     }
-    if !expr.child(0)?.to_text(src)?.eq_ignore_ascii_case(function) {
+    if !expr.child(0)?.text().eq_ignore_ascii_case(function) {
         return None;
     }
     let arg_list = expr.child_with_id(kind!("argument_list"))?;
@@ -107,7 +106,7 @@ fn present_call(expr: &Node, src: &str, function: &str) -> Option<PresentCall> {
     }
 
     let identifier = arg_list.child_with_id(kind!("identifier"))?;
-    let arg = identifier.to_text(src)?.to_lowercase().to_string();
+    let arg = identifier.text().to_lowercase().to_string();
 
     Some(PresentCall {
         range: expr.textrange(),
@@ -137,12 +136,10 @@ fn find_nonportable_shortcircuits(
     node: &Node,
     function: &str,
 ) -> Vec<Diagnostic> {
-    let text = context.source_text();
-
     // First find all the `present(foo)` calls
     let calls = node
         .descendants()
-        .filter_map(|e| present_call(&e, text, function))
+        .filter_map(|e| present_call(&e, function))
         .collect_vec();
 
     // Now check if any identifier appears in this `if` statement
@@ -159,7 +156,7 @@ fn find_nonportable_shortcircuits(
         .filter(|expr| expr.kind_id() == kind!("identifier"))
         .filter_map(|expr| {
             // Now check if this identifier matches any in the `present()` calls
-            let id = expr.to_text(text).unwrap_or_default().to_lowercase();
+            let id = expr.text().to_lowercase();
             if let Some(PresentCall { range, .. }) = calls.iter().find(|call| call.arg == id) {
                 Some((expr, id, range))
             } else {

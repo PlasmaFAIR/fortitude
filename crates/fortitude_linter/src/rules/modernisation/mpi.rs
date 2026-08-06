@@ -1,9 +1,8 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for the use of the old not-recommended `mpi` module.
@@ -89,7 +88,7 @@ impl Violation for OldMPIModule {
 
 impl AstRule for OldMPIModule {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let module_name = node.module_name(context.source_text())?.to_lowercase();
+        let module_name = node.module_name()?.to_lowercase();
 
         if module_name == "mpi" {
             return some_vec![context.create_diagnostic(OldMPIModule {}, node)];

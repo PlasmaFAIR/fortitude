@@ -1,11 +1,10 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for procedures with a cyclomatic complexity that exceeds a
@@ -242,12 +241,8 @@ impl AstRule for TooManyArguments {
             return None;
         }
 
-        let src = context.source_text();
         let procedure_stmt = node.named_child(0)?;
-        let procedure_name = procedure_stmt
-            .child_with_name("name")?
-            .to_text(src)?
-            .to_string();
+        let procedure_name = procedure_stmt.child_with_name("name")?.text().to_string();
         let parameters = procedure_stmt.child_with_name("parameters")?;
         let args: Vec<_> = parameters
             .named_descendants()
@@ -259,8 +254,8 @@ impl AstRule for TooManyArguments {
                 if idx > 0 {
                     return Some(node);
                 }
-                let name = node.to_text(src).map(|s| s.to_ascii_lowercase());
-                if matches!(name.as_deref(), Some("self") | Some("this")) {
+                let name = node.text().to_ascii_lowercase();
+                if matches!(name.as_ref(), "self" | "this") {
                     None
                 } else {
                     Some(node)

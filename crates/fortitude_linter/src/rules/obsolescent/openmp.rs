@@ -1,10 +1,9 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 use std::path::Path;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for the use of the deprecated `omp_lib.h` include.
@@ -32,10 +31,7 @@ impl Violation for DeprecatedOmpInclude {
 
 impl AstRule for DeprecatedOmpInclude {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let include_file = node
-            .child_with_name("filename")?
-            .to_text(context.source_text())?
-            .to_lowercase();
+        let include_file = node.child_with_name("filename")?.text().to_lowercase();
 
         // Strip quotes from the include file name
         let include_file = include_file.trim_matches('"').trim_matches('\'');

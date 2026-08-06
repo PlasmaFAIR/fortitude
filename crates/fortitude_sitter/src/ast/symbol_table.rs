@@ -1,18 +1,16 @@
 use std::{collections::HashMap, rc::Rc};
 
+use crate::Node;
+
 use fortitude_macros::kind;
 use itertools::Itertools;
 use strum_macros::EnumIs;
-use tree_sitter::Node;
 
 use crate::traits::{HasNode, TextRanged};
 
-use super::{
-    FortitudeNode,
-    types::{
-        HasName, Module, Name, Procedure, Program, TypeDefinition, UseStatement, UsedItem,
-        Variable, VariableDeclaration,
-    },
+use super::types::{
+    HasName, Module, Name, Procedure, Program, TypeDefinition, UseStatement, UsedItem, Variable,
+    VariableDeclaration,
 };
 
 pub const BEGIN_SCOPE_NODES: &[&str] = &[
@@ -88,7 +86,7 @@ pub struct SymbolTable<'a> {
 impl<'a> SymbolTable<'a> {
     /// Create a new [`SymbolTable`] for a node which is a scope (that is,
     /// contains variable declarations)
-    pub fn new(scope: &Node<'a>, src: &'a str) -> anyhow::Result<Self> {
+    pub fn new(scope: &Node<'a>) -> anyhow::Result<Self> {
         let mut new_table = Self::default();
 
         // If this is a procedure, collect a list of dummy arg names
@@ -101,12 +99,7 @@ impl<'a> SymbolTable<'a> {
                     params
                         .named_children(&mut params.walk())
                         .filter(|child| child.kind() == "identifier")
-                        .map(|child| {
-                            child
-                                .to_text(src)
-                                .unwrap_or("<unknown>")
-                                .to_ascii_lowercase()
-                        })
+                        .map(|child| child.text().to_ascii_lowercase())
                         .collect_vec()
                 })
         } else {
@@ -116,21 +109,19 @@ impl<'a> SymbolTable<'a> {
         for child in scope.named_children(&mut scope.walk()) {
             match child.kind_id() {
                 kind!("use_statement") => {
-                    let use_statement = UseStatement::try_from_node(&child, src)?;
-                    new_table.insert_from_use_statement(use_statement, src);
+                    let use_statement = UseStatement::try_from_node(&child)?;
+                    new_table.insert_from_use_statement(use_statement);
                 }
                 kind!("variable_declaration") => {
-                    let decl = VariableDeclaration::try_from_node(&child, src)?;
+                    let decl = VariableDeclaration::try_from_node(&child)?;
                     new_table.insert_from_decl_line(decl, &dummy_vars);
                 }
                 kind!("internal_procedures") => {
                     for proc in child.named_children(&mut child.walk()) {
                         let procedure = match proc.kind_id() {
-                            kind!("function") => {
-                                Symbol::Function(Procedure::try_from_node(&proc, src)?)
-                            }
+                            kind!("function") => Symbol::Function(Procedure::try_from_node(&proc)?),
                             kind!("subroutine") => {
-                                Symbol::Subroutine(Procedure::try_from_node(&proc, src)?)
+                                Symbol::Subroutine(Procedure::try_from_node(&proc)?)
                             }
                             _ => continue,
                         };
@@ -140,10 +131,10 @@ impl<'a> SymbolTable<'a> {
                 _ => {
                     let symbol = match child.kind_id() {
                         kind!("derived_type_definition") => {
-                            Symbol::Type(TypeDefinition::try_from_node(&child, src)?)
+                            Symbol::Type(TypeDefinition::try_from_node(&child)?)
                         }
-                        kind!("module") => Symbol::Module(Module::try_from_node(&child, src)?),
-                        kind!("program") => Symbol::Program(Program::try_from_node(&child, src)?),
+                        kind!("module") => Symbol::Module(Module::try_from_node(&child)?),
+                        kind!("program") => Symbol::Program(Program::try_from_node(&child)?),
                         _ => {
                             continue;
                         }
@@ -161,7 +152,7 @@ impl<'a> SymbolTable<'a> {
             let stmt = scope
                 .child(0)
                 .expect("`function` must have `function_statement` as zeroth child");
-            if let Ok(decl) = VariableDeclaration::try_from_fn_stmt(&stmt, src) {
+            if let Ok(decl) = VariableDeclaration::try_from_fn_stmt(&stmt) {
                 let name = decl
                     .names()
                     .first()
@@ -191,12 +182,12 @@ impl<'a> SymbolTable<'a> {
     }
 
     /// Insert all symbols found in a single use statement
-    pub fn insert_from_use_statement(&mut self, stmt: UseStatement<'a>, src: &str) {
+    pub fn insert_from_use_statement(&mut self, stmt: UseStatement<'a>) {
         let stmt = Rc::new(stmt);
         if let Some(items) = stmt.included_items() {
             for item in items.named_children(&mut items.walk()) {
                 // Other nodes such as comments can be found in the list
-                if let Some(item) = UsedItem::try_from_node(item, src, stmt.clone()) {
+                if let Some(item) = UsedItem::try_from_node(item, stmt.clone()) {
                     let symbol = Symbol::UsedItem(item);
                     let name = symbol.name().as_str().to_ascii_lowercase();
                     self.inner.insert(name, symbol);
@@ -312,22 +303,17 @@ impl<'a> SymbolTables<'a> {
 mod tests {
     use super::*;
     use crate::{
-        ast::{
-            FortitudeNode,
-            types::{AttributeKind, Intent},
-        },
+        Parser,
+        ast::types::{AttributeKind, Intent},
         traits::TextRanged,
     };
     use anyhow::{Context, Result};
     use itertools::Itertools;
     use ruff_text_size::{TextRange, TextSize};
-    use tree_sitter::Parser;
 
     #[test]
     fn new_symbol_table() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -343,7 +329,7 @@ end program foo
         let second_decl_range = TextRange::new(TextSize::new(43), TextSize::new(71));
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let x = symbol_table.get_var("x");
         let y = symbol_table.get_var("y");
@@ -398,9 +384,7 @@ end program foo
 
     #[test]
     fn new_symbol_table_outer_scope_only() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -414,7 +398,7 @@ end program foo
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let root = tree.root_node().child(0).context("Missing child")?;
 
-        let symbol_table = SymbolTable::new(&root, code)?;
+        let symbol_table = SymbolTable::new(&root)?;
 
         assert!(symbol_table.get("x").is_some());
         assert!(symbol_table.get("a").is_none());
@@ -424,9 +408,7 @@ end program foo
 
     #[test]
     fn symbol_table_get_case_insensitive() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -439,7 +421,7 @@ end program foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let x = symbol_table.get_var("X");
         assert!(x.is_some());
@@ -453,9 +435,7 @@ end program foo
 
     #[test]
     fn symbol_table_get_outer_scope() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -470,12 +450,12 @@ end program foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let block = root
             .child_with_name("block_construct")
             .context("Missing block")?;
-        symbol_table.push_table(SymbolTable::new(&block, code)?);
+        symbol_table.push_table(SymbolTable::new(&block)?);
 
         let x = symbol_table.get_var("X");
         assert!(x.is_some());
@@ -499,9 +479,7 @@ end program foo
 
     #[test]
     fn attribute_intent() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -514,7 +492,7 @@ end subroutine foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let x = symbol_table.get_var("x");
         assert!(x.is_some());
@@ -544,9 +522,7 @@ end subroutine foo
 
     #[test]
     fn function_variable_with_attributes() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -559,7 +535,7 @@ end function foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let foo = symbol_table.get_var("foo");
         assert!(foo.is_some());
@@ -579,9 +555,7 @@ end function foo
 
     #[test]
     fn function_variable() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -593,7 +567,7 @@ end function foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let foo = symbol_table.get_var("foo");
         assert!(foo.is_some());
@@ -606,9 +580,7 @@ end function foo
 
     #[test]
     fn function_result() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -620,7 +592,7 @@ end function foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let y = symbol_table.get_var("y");
         assert!(y.is_some());
@@ -633,9 +605,7 @@ end function foo
 
     #[test]
     fn internal_procedures() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -653,7 +623,7 @@ end program foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let bar = symbol_table.get("bar");
         assert!(bar.is_some());
@@ -670,9 +640,7 @@ end program foo
 
     #[test]
     fn used_items() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -686,7 +654,7 @@ end program foo
         let root = tree.root_node().child(0).context("Missing child")?;
 
         let mut symbol_table = SymbolTables::default();
-        symbol_table.push_table(SymbolTable::new(&root, code)?);
+        symbol_table.push_table(SymbolTable::new(&root)?);
 
         let i8 = symbol_table.get("i8");
         assert!(i8.is_some());
@@ -749,9 +717,7 @@ end program foo
 
     #[test]
     fn all_symbols() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -770,7 +736,7 @@ end program foo
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let root = tree.root_node().child(0).context("Missing child")?;
 
-        let symbol_table = SymbolTable::new(&root, code)?;
+        let symbol_table = SymbolTable::new(&root)?;
 
         let count = symbol_table.iter_symbols().count();
         assert_eq!(count, 6);

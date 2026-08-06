@@ -1,10 +1,9 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::rules::utilities::literal_as_io_unit;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for certain literals as units in `read`/`write` statements.
@@ -45,12 +44,9 @@ impl Violation for NonPortableIoUnit {
 
 impl AstRule for NonPortableIoUnit {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let unit = literal_as_io_unit(node, context.source_file())?;
+        let unit = literal_as_io_unit(node)?;
 
-        let value = unit
-            .to_text(context.source_text())?
-            .parse::<i32>()
-            .unwrap_or_default();
+        let value = unit.text().parse::<i32>().unwrap_or_default();
         let is_read = node.kind() == "read_statement";
         let is_write = node.kind() == "write_statement";
 

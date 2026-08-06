@@ -1,10 +1,9 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use crate::{AstRule, CheckContext, kind_ids};
 
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 fn map_relational_symbols(name: &str) -> Option<&'static str> {
     match name {
@@ -46,14 +45,10 @@ impl AlwaysFixableViolation for DeprecatedRelationalOperator {
 impl AstRule for DeprecatedRelationalOperator {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let relation = node.child(1)?;
-        let symbol = relation
-            .to_text(context.source_text())?
-            .to_lowercase()
-            .to_string();
+        let symbol = relation.text().to_lowercase().to_string();
         let new_symbol = map_relational_symbols(symbol.as_str())?.to_string();
 
-        let fix =
-            Fix::safe_edit(relation.edit_replacement(context.source_file(), new_symbol.clone()));
+        let fix = Fix::safe_edit(relation.edit_replacement(new_symbol.clone()));
 
         some_vec![
             context
