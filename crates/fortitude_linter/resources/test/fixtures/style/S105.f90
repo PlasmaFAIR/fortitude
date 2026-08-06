@@ -126,6 +126,7 @@ end block inner
 
       do i = 1, 10
   do j = i, 10
+! Zero indented comment after control flow
     x = i * j
   end do
       end do
