@@ -404,6 +404,7 @@ impl<'a> IntrinsicType<'a> {
                 let second = node
                     .child(1)
                     .expect("`double` must be followed by either `complex` or `precision`");
+                let name = node.text();
                 match second.kind_id() {
                     kw!("complex") => IntrinsicType::DoubleComplex(TypeInner { node, name }),
                     kw!("precision") => IntrinsicType::DoublePrecision(TypeInner { node, name }),
@@ -414,7 +415,8 @@ impl<'a> IntrinsicType<'a> {
         }
     }
 
-    pub fn as_str(&self) -> &str {
+    /// The type name as it appears in the source
+    pub fn name(&self) -> &str {
         match self {
             Self::Byte(TypeInner { name, .. }) => name,
             Self::Integer(TypeInner { name, .. }) => name,
@@ -470,9 +472,10 @@ impl<'a> Type<'a> {
         }
     }
 
-    pub fn as_str(&self) -> &str {
+    /// The type name as it appears in the source
+    pub fn name(&self) -> &str {
         match self {
-            Self::Intrinsic(inner) => inner.as_str(),
+            Self::Intrinsic(inner) => inner.name(),
             Self::Derived(TypeInner { name, .. }) => name,
             Self::Procedure(TypeInner { name, .. }) => name,
             Self::Declared(TypeInner { name, .. }) => name,
