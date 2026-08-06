@@ -171,7 +171,10 @@ impl<'a> SymbolTable<'a> {
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>, dummy_vars: &[String]) {
         let decl = Rc::new(decl);
         for name in decl.names().iter() {
-            let is_dummy_var = dummy_vars.contains(&name.name().as_str().to_ascii_lowercase());
+            let is_dummy_var = dummy_vars
+                .iter()
+                .find(|val| val.eq_ignore_ascii_case(name.name().as_str()))
+                .is_some();
             self.insert_symbol(Symbol::Variable(Variable::new(
                 name.clone(),
                 is_dummy_var,
