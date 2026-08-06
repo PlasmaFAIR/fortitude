@@ -29,6 +29,11 @@ contains
       x = 1
       end function get_x
 
+      integer function get_x_continued_line() &
+    result(x)
+      x = 1
+      end function get_x
+
         function minterface_i(x)
           integer :: x
           print *, x
