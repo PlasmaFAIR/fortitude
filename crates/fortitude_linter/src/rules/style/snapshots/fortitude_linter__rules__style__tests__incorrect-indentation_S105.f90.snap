@@ -869,12 +869,12 @@ S105 [*] Incorrect indentation
 66 |       else
 67 |     i = 1
    |
-help: Replace with the correct number of spaces, 8
+help: Replace with the correct number of spaces, 12
 62 | if (i == 4) then
 63 |             i = 2
 64 | else if (i == 2) then
    - i = 4
-65 +         i = 4
+65 +             i = 4
 66 |       else
 67 |     i = 1
 68 |             end if

@@ -542,9 +542,10 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
             // Determine what the indentation should be for this line segment using the first node for this line and the current scope
             let mut current_expected_indent = *scope_indents.last().unwrap_or(&0usize);
-            if let Some(line_segment_node) = root
-                .named_descendant_for_byte_range(content_start.to_usize(), content_start.to_usize())
-            {
+            if let Some(line_segment_node) = root.named_descendant_for_byte_range(
+                content_start.to_usize(),
+                content_start.to_usize() + 1,
+            ) {
                 // Handle block labels, module procedures and functions beginning with their return type by taking their parent
                 let node = if (matches!(line_segment_node.kind(), "block_label_start_expression"))
                     || (matches!(line_segment_node.kind(), "intrinsic_type")
