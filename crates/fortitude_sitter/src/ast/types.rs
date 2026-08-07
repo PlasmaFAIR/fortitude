@@ -223,7 +223,7 @@ pub enum BindLanguage {
 
 impl BindLanguage {
     pub fn from_node(node: &Node) -> Self {
-        if node.text().to_uppercase().eq("C") {
+        if node.text().eq_ignore_ascii_case("C") {
             Self::C
         } else {
             Self::Other
@@ -242,7 +242,7 @@ impl<'a> Bind<'a> {
         // Identifier is a required node in a bind() attribute
         let lang_node = node
             .child_with_id(kind!("identifier"))
-            .expect("must have identifier child");
+            .context("must have identifier child")?;
         let lang = BindLanguage::from_node(&lang_node);
 
         // The name node is an optional one
@@ -250,7 +250,7 @@ impl<'a> Bind<'a> {
             && let Some(name_node) = name_kw_node.child_with_id(kind!("string_literal"))
         {
             // Remove the quotes from the string literal
-            let name = name_node.text().trim_matches('\"');
+            let name = name_node.text().trim_matches(&['\"', '\'']);
 
             return Ok(Self {
                 language: lang,
