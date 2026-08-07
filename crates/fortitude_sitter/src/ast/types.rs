@@ -214,29 +214,48 @@ impl<'a> Dimension<'a> {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, EnumIs, IntoStaticStr, PartialEq)]
+pub enum BindLanguage {
+    #[default]
+    C,
+    Other,
+}
+
+impl BindLanguage {
+    pub fn from_node(node: &Node) -> Self {
+        if node.text().to_uppercase().eq("C") {
+            Self::C
+        } else {
+            Self::Other
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Bind<'a> {
-    language: &'a str,
+    language: BindLanguage,
     name: Option<&'a str>,
 }
 
 impl<'a> Bind<'a> {
-    pub fn try_from_node(node: &Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
         // Identifier is a required node in a bind() attribute
         let lang_node = node
             .child_with_id(kind!("identifier"))
             .expect("must have identifier child");
-        let lang = lang_node.to_text(src).expect("must have text");
+        let lang = BindLanguage::from_node(&lang_node);
 
         // The name node is an optional one
-        if let Some(name_kw_node) = node.child_with_id(kind!("keyword_argument")) {
-            if let Some(name_node) = name_kw_node.child_with_id(kw!("value")) {
-                let name = name_node.to_text(src).expect("must have text for name");
-                return Ok(Self {
-                    language: lang,
-                    name: Some(name),
-                });
-            }
+        if let Some(name_kw_node) = node.child_with_id(kind!("keyword_argument"))
+            && let Some(name_node) = name_kw_node.child_with_id(kind!("string_literal"))
+        {
+            // Remove the quotes from the string literal
+            let name = name_node.text().trim_matches('\"');
+
+            return Ok(Self {
+                language: lang,
+                name: Some(name),
+            });
         }
 
         Ok(Self {
@@ -308,7 +327,7 @@ pub enum AttributeKind<'a> {
 }
 
 impl<'a> AttributeKind<'a> {
-    pub fn try_from_node(value: &Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(value: &Node<'a>) -> Result<Self> {
         let first_child = value.child(0).unwrap().kind();
         // TODO: handle codimension properly
         let attr = AttributeKind::from_str(first_child)
@@ -321,7 +340,7 @@ impl<'a> AttributeKind<'a> {
                     .child(1)
                     .context("expected more than one child for 'dimension'")?,
             )?)),
-            AttributeKind::Bind(_) => Ok(AttributeKind::Bind(Bind::try_from_node(value, src)?)),
+            AttributeKind::Bind(_) => Ok(AttributeKind::Bind(Bind::try_from_node(value)?)),
             _ => Ok(attr),
         }
     }
@@ -335,9 +354,9 @@ pub struct Attribute<'a> {
 }
 
 impl<'a> Attribute<'a> {
-    pub fn try_from_node(node: Node<'a>, src: &'a str) -> Result<Self> {
+    pub fn try_from_node(node: Node<'a>) -> Result<Self> {
         Ok(Self {
-            kind: AttributeKind::try_from_node(&node, src)?,
+            kind: AttributeKind::try_from_node(&node)?,
             node,
         })
     }
@@ -497,7 +516,7 @@ impl<'a> VariableDeclaration<'a> {
 
         let attributes: Result<Vec<_>> = node
             .children_by_field_id(field!("attribute"), &mut node.walk())
-            .map(|decl| Attribute::try_from_node(decl, src))
+            .map(Attribute::try_from_node)
             .collect();
 
         let names = node
@@ -1311,6 +1330,54 @@ mod tests {
         assert!(x_size.is_none());
         assert!(y_size.is_none());
         assert!(z_size.is_some());
+
+        Ok(())
+    }
+
+    #[test]
+    fn attribute_bind() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .expect("Error loading Fortran grammar");
+
+        // Testcase for handling a bind with a name given in the attribute
+        {
+            let code = "integer(c_int), public, bind(C, name=\"int3\") :: int3\nend";
+            let exp_bind = Bind {
+                language: BindLanguage::C,
+                name: Some("int3"),
+            };
+
+            let tree = parser.parse(code, None).expect("Failed to parse");
+            let root = tree.root_node();
+            let type_ = root
+                .named_descendants()
+                .find(|child| child.kind_id() == kind!("variable_declaration"))
+                .expect("couldn't find variable_declaration");
+
+            let result = VariableDeclaration::try_from_node(&type_)?;
+
+            assert!(result.has_attribute(AttributeKind::Bind(exp_bind)));
+        }
+
+        // Testcase for handling a bind with no explicit name given in the attribute
+        {
+            let code = "integer(c_int), public, bind(C) :: int3\nend";
+            let exp_bind = Bind {
+                language: BindLanguage::C,
+                name: None,
+            };
+
+            let tree = parser.parse(code, None).expect("Failed to parse");
+            let root = tree.root_node();
+            let type_ = root
+                .named_descendants()
+                .find(|child| child.kind_id() == kind!("variable_declaration"))
+                .expect("couldn't find variable_declaration");
+
+            let result = VariableDeclaration::try_from_node(&type_)?;
+
+            assert!(result.has_attribute(AttributeKind::Bind(exp_bind)));
+        }
 
         Ok(())
     }
