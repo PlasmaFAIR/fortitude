@@ -173,8 +173,7 @@ impl<'a> SymbolTable<'a> {
         for name in decl.names().iter() {
             let is_dummy_var = dummy_vars
                 .iter()
-                .find(|val| val.eq_ignore_ascii_case(name.name().as_str()))
-                .is_some();
+                .any(|val| val.eq_ignore_ascii_case(name.name().as_str()));
             self.insert_symbol(Symbol::Variable(Variable::new(
                 name.clone(),
                 is_dummy_var,
