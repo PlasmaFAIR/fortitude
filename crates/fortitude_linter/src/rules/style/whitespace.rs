@@ -454,25 +454,25 @@ const END_SCOPE_NODES: [&str; 12] = [
 ];
 
 fn update_enclosing_quote(ch: &char, enclosing_quote: Option<char>) -> Option<char> {
-    if ['\'', '"'].contains(&ch) {
+    if ['\'', '"'].contains(ch) {
         if let Some(quote) = enclosing_quote {
-            if quote == ch.clone() {
+            if quote == *ch {
                 return None;
             }
         } else {
             return Some(*ch);
         }
     }
-    return enclosing_quote;
+    enclosing_quote
 }
 
 fn split_segments_outside_quotes(line: &str) -> Vec<&str> {
     let mut segments = Vec::new();
     let mut start = 0;
-    let mut chars = line.char_indices();
+    let chars = line.char_indices();
 
     let mut enclosing_quote: Option<char> = None;
-    while let Some((idx, ch)) = chars.next() {
+    for (idx, ch) in chars {
         enclosing_quote = update_enclosing_quote(&ch, enclosing_quote);
         if enclosing_quote.is_none() && ch == ';' {
             segments.push(&line[start..idx + ch.len_utf8()]);
@@ -527,15 +527,14 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             let mut label_text: String = "".to_string();
             // Get the range which defines the location of the previous semicolon plus whitespace
             line_segment_start = line_segment_end;
-            line_segment_end = line_segment_end + TextSize::from(line_segment.len() as u32);
+            line_segment_end += TextSize::from(line_segment.len() as u32);
 
             // Count leading spaces
             let leading_spaces = line_segment.chars().take_while(|c| *c == ' ').count()
                 + indent_width.as_usize() * line_segment.chars().take_while(|c| *c == '\t').count();
 
             // Get the first none whitespace node
-            let content_start =
-                line_segment_start + TextSize::try_from(leading_spaces as u32).unwrap();
+            let content_start = line_segment_start + TextSize::from(leading_spaces as u32);
 
             // Boolean to track if this line segment continued onto the next line via a '&'
             let line_segment_has_continuation = line_segment.trim().ends_with('&');
@@ -557,7 +556,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                         .next()
                         .unwrap_or(line_segment_node)
                 } else {
-                    line_segment_node.clone()
+                    line_segment_node
                 };
 
                 // Handle statement_labels by taking their child
