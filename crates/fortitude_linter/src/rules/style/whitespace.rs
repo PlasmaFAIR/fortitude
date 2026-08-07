@@ -616,8 +616,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
             }
 
             // Include previous semicolon if present
-            line_segment_start = if (is_first_segment && line.starts_with(';')) || !is_first_segment
-            {
+            line_segment_start = if !is_first_segment || line.starts_with(';') {
                 line_segment_start - TextSize::new(1)
             } else {
                 line_segment_start
@@ -625,8 +624,9 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
             // Populate the new replacement string if a violation has been found
             let indentation_mismatch = leading_spaces != current_expected_indent;
-            if (ignore_semicolons && indentation_mismatch && !line_contains_semicolon)
-                || (!ignore_semicolons && (indentation_mismatch || line_contains_semicolon))
+            #[allow(clippy::nonminimal_bool)] // Allow non-minimal bool to keep logic clear
+            if (line_contains_semicolon && !ignore_semicolons)
+                || (indentation_mismatch && (!line_contains_semicolon || !ignore_semicolons))
             {
                 let mut new_line_segment = format!(
                     "{}{}",
