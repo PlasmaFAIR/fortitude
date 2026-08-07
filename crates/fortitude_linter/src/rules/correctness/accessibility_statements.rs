@@ -1,9 +1,8 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for missing `private` or `public` accessibility statements in modules
@@ -49,10 +48,7 @@ impl AstRule for MissingAccessibilityStatement {
 
         // No statement whatsoever
         if !bare_private_statement && !bare_public_statement {
-            let name = node
-                .named_child(0)?
-                .to_text(context.source_text())?
-                .to_string();
+            let name = node.named_child(0)?.text().to_string();
             return some_vec![
                 context.create_diagnostic(MissingAccessibilityStatement { name }, node)
             ];
@@ -94,10 +90,7 @@ impl AstRule for DefaultPublicAccessibility {
         if node.named_child(0).is_none() {
             let module = node.parent()?;
             let statement = module.child_with_id(kind!("module_statement"))?;
-            let name = statement
-                .child_with_id(kind!("name"))?
-                .to_text(context.source_text())?
-                .to_string();
+            let name = statement.child_with_id(kind!("name"))?.text().to_string();
             return some_vec![context.create_diagnostic(DefaultPublicAccessibility { name }, node)];
         }
 

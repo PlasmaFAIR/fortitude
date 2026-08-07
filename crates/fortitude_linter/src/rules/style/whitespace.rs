@@ -2,14 +2,13 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::rules::Rule;
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::UniversalNewlines;
 use ruff_text_size::{TextLen, TextRange, TextSize};
-use tree_sitter::Node;
 
-use crate::ast::FortitudeNode;
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
+use fortitude_sitter::traits::TextRanged;
 
 /// ## What does it do?
 /// Checks for trailing whitespace.
@@ -265,7 +264,7 @@ impl AlwaysFixableViolation for IncorrectSpaceBetweenBrackets {
 }
 impl AstRule for IncorrectSpaceBetweenBrackets {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let node_as_str = node.to_text(context.source_text())?;
+        let node_as_str = node.text();
 
         let source = context.source_file().to_source_code();
         let bracket_start = node.start_textsize();

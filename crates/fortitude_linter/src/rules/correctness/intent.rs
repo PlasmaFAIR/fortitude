@@ -1,13 +1,13 @@
-use crate::ast::types::AttributeKind;
-use crate::ast::{FortitudeNode, types::HasName};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::settings::FortranStandard;
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, field};
+use fortitude_sitter::Node;
+use fortitude_sitter::ast::types::AttributeKind;
+use fortitude_sitter::ast::types::HasName;
+use fortitude_sitter::traits::TextRanged;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for missing `intent` on dummy arguments
@@ -58,9 +58,7 @@ impl AstRule for MissingIntent {
                 .named_children(&mut node.walk())
                 .filter_map(|param| {
                     // Get variable declaration
-                    context
-                        .symbol_table()
-                        .get_var(param.to_text(context.source_text())?)
+                    context.symbol_table().get_var(param.text())
                 })
                 .filter(|param| {
                     // Procedures are not allowed intent

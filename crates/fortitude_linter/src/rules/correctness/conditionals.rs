@@ -1,12 +1,11 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::{LineEnding, SourceFile, find_newline};
+use ruff_source_file::{LineEnding, find_newline};
 use ruff_text_size::TextSize;
-use tree_sitter::Node;
 
 /// ## What does it do?
 /// Checks for misleading semicolons in `if` statements.
@@ -85,7 +84,7 @@ impl AstRule for MisleadingInlineIfSemicolon {
                 end += 1;
             }
             let end = TextSize::try_from(end).unwrap();
-            let indentation = node.indentation(context.source_file());
+            let indentation = node.indentation();
             let edit = Edit::replacement(format!("\n{indentation}"), start, end);
             return some_vec!(
                 context
@@ -156,7 +155,7 @@ impl AstRule for MisleadingInlineIfContinuation {
             .child_with_id(kind!("parenthesized_expression"))?
             .next_sibling()?;
         if body_start.kind_id() == kw!("&") {
-            let content = ifthenify(node, context.source_file())?;
+            let content = ifthenify(node)?;
             let start_byte = node.start_textsize();
             let end_byte = node.end_textsize();
             let edit = Edit::replacement(content, start_byte, end_byte);
@@ -177,12 +176,12 @@ impl AstRule for MisleadingInlineIfContinuation {
 /// Given an if statement node, convert it from a one-line if statement
 /// to a block if statement.
 /// Returns None if the node is already a block if statement.
-pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
+pub fn ifthenify(node: &Node) -> Option<String> {
     // check that the node is an if statement without an end if statement
     if !node.inline_if_statement() {
         return None;
     }
-    let text = node.to_text(src.source_text())?.trim();
+    let text = node.text().trim();
     let bytes = text.as_bytes();
     // If CrLf line endings are used, be careful to keep them in the fix
     let nl = find_newline(text)
@@ -204,7 +203,7 @@ pub fn ifthenify(node: &Node, src: &SourceFile) -> Option<String> {
     // Build the new if statement.
     let prelude = &text[..condition_end_byte];
     let body = &text[body_start_byte..];
-    let indentation = node.indentation(src);
+    let indentation = node.indentation();
     // Assume two-space indent for the if body
     Some(format!(
         "{prelude} then{nl}{indentation}  {body}{nl}{indentation}end if"

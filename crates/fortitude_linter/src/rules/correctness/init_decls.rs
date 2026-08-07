@@ -1,10 +1,9 @@
-use crate::ast::FortitudeNode;
-use crate::ast::types::{AttributeKind, get_name_node_of_declarator};
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::ast::types::{AttributeKind, get_name_node_of_declarator};
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for local variables with implicit `save`
@@ -82,7 +81,6 @@ impl Violation for InitialisationInDeclaration {
 
 impl AstRule for InitialisationInDeclaration {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
             matches!(
@@ -91,7 +89,7 @@ impl AstRule for InitialisationInDeclaration {
             )
         })?;
 
-        let name = get_name_node_of_declarator(node).to_text(src)?.to_string();
+        let name = get_name_node_of_declarator(node).text().to_string();
         let decl = context.symbol_table().get_var(name.as_str())?;
         if decl.has_any_attributes(&[AttributeKind::Save, AttributeKind::Parameter]) {
             return None;
@@ -204,7 +202,6 @@ impl Violation for PointerInitialisationInDeclaration {
 
 impl AstRule for PointerInitialisationInDeclaration {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
         // Only check in procedures
         node.ancestors().find(|parent| {
             matches!(
@@ -214,7 +211,7 @@ impl AstRule for PointerInitialisationInDeclaration {
         })?;
 
         let var = get_name_node_of_declarator(node);
-        let name = var.to_text(src)?.to_string();
+        let name = var.text().to_string();
         let decl = context.symbol_table().get_var(name.as_str())?;
         if decl.has_attribute(AttributeKind::Save) {
             return None;
@@ -222,7 +219,7 @@ impl AstRule for PointerInitialisationInDeclaration {
 
         // Array syntax on the variable name
         if let Some(arr) = var.child_with_id(kind!("identifier")) {
-            let name = arr.to_text(src)?.to_string();
+            let name = arr.text().to_string();
             return some_vec![context.create_diagnostic(Self { name }, node)];
         }
 

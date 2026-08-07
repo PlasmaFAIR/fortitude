@@ -1,13 +1,14 @@
-use crate::ast::{ControlFlow, ControlFlowNode, FortitudeNode};
 use crate::diagnostics::{Diagnostic, Edit, Fix, FixAvailability, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_sitter::{
+    Node,
+    ast::types::{ControlFlow, ControlFlowNode},
+    traits::TextRanged,
+};
 use log::debug;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for uses of the obsolescent labelled `do` statements.
@@ -55,7 +56,7 @@ impl AstRule for LabelledDoLoop {
         let do_loop = node.parent()?;
 
         let mut diagnostic = context.create_diagnostic(LabelledDoLoop {}, label);
-        if let Some(fix) = fix_labelled_do(&do_loop, &label, context.source_file()) {
+        if let Some(fix) = fix_labelled_do(&do_loop, &label) {
             diagnostic.set_fix(fix);
         }
         some_vec![diagnostic]
@@ -111,7 +112,7 @@ impl AstRule for SharedDoTermination {
         // statement label. For multiple shared terminations, only first gets
         // the label, and the others get the following whitespace (something
         // about non-overlapping nodes).
-        if node.to_text(context.source_text())?.is_empty() {
+        if node.text().is_empty() {
             return None;
         }
 
@@ -121,7 +122,7 @@ impl AstRule for SharedDoTermination {
         let range = TextRange::new(start, end);
 
         let mut diagnostic = context.create_diagnostic(Self {}, range);
-        if let Some(fix) = fix_shared_termination(node, context.source_file()) {
+        if let Some(fix) = fix_shared_termination(node) {
             diagnostic.set_fix(fix);
         }
         some_vec![diagnostic]
@@ -178,17 +179,12 @@ impl AstRule for BadDoTermination {
 
         let mut diagnostics = Vec::new();
 
-        let src = context.source_text();
-
         match end_action.kind_id() {
             kw!("end") | kw!("enddo") => {}
-            kind!("keyword_statement")
-                if ControlFlow::maybe_from(&end_action, src)?.is_continue() => {}
+            kind!("keyword_statement") if ControlFlow::maybe_from(&end_action)?.is_continue() => {}
             _ => {
                 let mut diagnostic = context.create_diagnostic(Self {}, end_action);
-                if let Some(fix) =
-                    fix_bad_do_termination(node, &end_action, &end_do_label, context.source_file())
-                {
+                if let Some(fix) = fix_bad_do_termination(node, &end_action, &end_do_label) {
                     diagnostic.set_fix(fix);
                 }
 
@@ -251,12 +247,10 @@ impl Violation for GotoEndDo {
 
 impl AstRule for GotoEndDo {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
-
-        let goto = ControlFlowNode::maybe_from(*node, src)?;
+        let goto = ControlFlowNode::maybe_from(*node)?;
         let label_ref = goto.goto_ref()?;
 
-        let label_node = next_statement_label(node, label_ref, src)?;
+        let label_node = next_statement_label(node, label_ref)?;
 
         if label_node.parent()?.kind() != "end_do_label_loop_statement"
             && let Some(sibling) = label_node.next_named_sibling()
@@ -267,7 +261,7 @@ impl AstRule for GotoEndDo {
         }
         // TODO: extra annotation with `goto` target
         let mut diagnostic = context.create_diagnostic(Self {}, node);
-        if let Some(fix) = fix_goto_end_do(node, &label_node, context.source_file()) {
+        if let Some(fix) = fix_goto_end_do(node, &label_node) {
             diagnostic.set_fix(fix);
         }
 
@@ -282,16 +276,10 @@ impl AstRule for GotoEndDo {
 // These are like the versions in the FortitudeNode trait, but also find
 // statement labels in labelled `end do`. Can't have them in the trait, because
 // they'll mess up the arithmetic `if` rule :(
-fn next_statement_label_sibling<'a, S: AsRef<str>>(
-    node: &Node<'a>,
-    label: S,
-    src: &str,
-) -> Option<Node<'a>> {
+fn next_statement_label_sibling<'a, S: AsRef<str>>(node: &Node<'a>, label: S) -> Option<Node<'a>> {
     let mut sibling = node.next_named_sibling();
     while let Some(next_sibling) = sibling {
-        if next_sibling.kind() == "statement_label"
-            && next_sibling.to_text(src) == Some(label.as_ref())
-        {
+        if next_sibling.kind() == "statement_label" && next_sibling.text() == label.as_ref() {
             return Some(next_sibling);
         }
         // For labelled `do` loops, the label is child, but this should
@@ -299,7 +287,7 @@ fn next_statement_label_sibling<'a, S: AsRef<str>>(
         if next_sibling.kind() == "end_do_label_loop_statement"
             && let Some(do_label) = next_sibling.child_by_field_name("do_label")
             && do_label.kind() == "statement_label"
-            && do_label.to_text(src) == Some(label.as_ref())
+            && do_label.text() == label.as_ref()
         {
             return Some(do_label);
         }
@@ -309,17 +297,13 @@ fn next_statement_label_sibling<'a, S: AsRef<str>>(
     None
 }
 
-fn next_statement_label<'a, S: AsRef<str>>(
-    node: &Node<'a>,
-    label: S,
-    src: &str,
-) -> Option<Node<'a>> {
-    if let Some(next) = next_statement_label_sibling(node, label.as_ref(), src) {
+fn next_statement_label<'a, S: AsRef<str>>(node: &Node<'a>, label: S) -> Option<Node<'a>> {
+    if let Some(next) = next_statement_label_sibling(node, label.as_ref()) {
         return Some(next);
     }
     let mut current = *node;
     while let Some(parent) = current.parent() {
-        if let Some(sibling) = next_statement_label_sibling(&parent, label.as_ref(), src) {
+        if let Some(sibling) = next_statement_label_sibling(&parent, label.as_ref()) {
             return Some(sibling);
         }
         current = parent;
@@ -334,13 +318,12 @@ fn edit_remove_label(label_node: &Node) -> Option<Edit> {
 }
 
 // TODO: needs Stylist for indentation/captialisation
-fn fix_labelled_do(do_loop: &Node, label_node: &Node, source: &SourceFile) -> Option<Fix> {
-    let src = source.source_text();
-    let label_ref = label_node.to_text(src)?;
+fn fix_labelled_do(do_loop: &Node, label_node: &Node) -> Option<Fix> {
+    let label_ref = label_node.text();
     debug!("label_ref = {label_ref:?}");
 
     // 0. check if shared termination label -> bail
-    if loop_has_shared_termination(do_loop, label_ref, src) {
+    if loop_has_shared_termination(do_loop, label_ref) {
         debug!("** Can't fix, has shared termination");
         return None;
     }
@@ -353,7 +336,7 @@ fn fix_labelled_do(do_loop: &Node, label_node: &Node, source: &SourceFile) -> Op
     // 2. check for gotos to label
     //    - yes -> need to keep label
     //    - no  -> remove label
-    let keep_label = loop_has_branch_to_end(do_loop, label_ref, source);
+    let keep_label = loop_has_branch_to_end(do_loop, label_ref);
 
     // 3. check termination statement
     //    - `end do` -> done
@@ -368,7 +351,7 @@ fn fix_labelled_do(do_loop: &Node, label_node: &Node, source: &SourceFile) -> Op
         return None;
     }
 
-    let end_label = end_do_label.to_text(src)?;
+    let end_label = end_do_label.text();
     if end_label != label_ref {
         debug!("** Can't fix, didn't find correct end of loop");
         debug!("end_statement = {end_statement:?}");
@@ -382,12 +365,12 @@ fn fix_labelled_do(do_loop: &Node, label_node: &Node, source: &SourceFile) -> Op
     // move it to a new statement
     let move_label = match end_action.kind() {
         "end" | "enddo" => false,
-        "keyword_statement" if ControlFlow::maybe_from(&end_action, src)?.is_continue() => {
-            edits.push(end_action.edit_replacement(source, "end do".to_string()));
+        "keyword_statement" if ControlFlow::maybe_from(&end_action)?.is_continue() => {
+            edits.push(end_action.edit_replacement("end do".to_string()));
             false
         }
         _ => {
-            edits.push(add_new_end_do(&end_action, keep_label, end_label, source));
+            edits.push(add_new_end_do(&end_action, keep_label, end_label));
             true
         }
     };
@@ -395,25 +378,23 @@ fn fix_labelled_do(do_loop: &Node, label_node: &Node, source: &SourceFile) -> Op
     // Remove the label from the original end statement
     if !keep_label || move_label {
         let width = end_label.len();
-        edits.push(end_do_label.edit_replacement(source, format!("{:width$}", " ")));
+        edits.push(end_do_label.edit_replacement(format!("{:width$}", " ")));
     }
 
     Some(Fix::unsafe_edits(first_edit, edits))
 }
 
-fn fix_shared_termination(do_label_virtual: &Node, source: &SourceFile) -> Option<Fix> {
-    let src = source.source_text();
-
+fn fix_shared_termination(do_label_virtual: &Node) -> Option<Fix> {
     let do_loop = do_label_virtual.parent()?.parent()?;
     let label_node = do_loop.child(0)?.child_by_field_name("do_label")?;
-    let label_ref = label_node.to_text(src)?;
+    let label_ref = label_node.text();
 
-    if loop_has_branch_to_end(&do_loop, label_ref, source) {
+    if loop_has_branch_to_end(&do_loop, label_ref) {
         debug!("** Can't fix, contains branch to termination");
         return None;
     }
 
-    let indentation = do_loop.indentation(source);
+    let indentation = do_loop.indentation();
     let first_edit = edit_remove_label(&label_node)?;
 
     let end_statement = do_loop.children(&mut label_node.walk()).last()?;
@@ -424,7 +405,7 @@ fn fix_shared_termination(do_label_virtual: &Node, source: &SourceFile) -> Optio
         return None;
     }
 
-    let end_label = end_do_label.to_text(src)?;
+    let end_label = end_do_label.text();
     if end_label != label_ref {
         debug!("** Can't fix, didn't find correct end of loop");
         debug!("end_statement = {end_statement:?}");
@@ -443,7 +424,7 @@ fn fix_shared_termination(do_label_virtual: &Node, source: &SourceFile) -> Optio
     let end_action = find_real_end_do_loop(&do_loop)?;
     match end_action.kind() {
         "end" | "enddo" => rest.push(new_end_do),
-        "keyword_statement" if ControlFlow::maybe_from(&end_action, src)?.is_continue() => {
+        "keyword_statement" if ControlFlow::maybe_from(&end_action)?.is_continue() => {
             rest.push(new_end_do)
         }
         _ => {
@@ -451,10 +432,10 @@ fn fix_shared_termination(do_label_virtual: &Node, source: &SourceFile) -> Optio
                 format!("\n{indentation}end do"),
                 end_action.end_textsize(),
             ));
-            rest.push(add_new_end_do(&end_action, true, end_label, source));
+            rest.push(add_new_end_do(&end_action, true, end_label));
 
             let width = end_label.len();
-            rest.push(end_do_label.edit_replacement(source, format!("{:width$}", " ")));
+            rest.push(end_do_label.edit_replacement(format!("{:width$}", " ")));
         }
     };
 
@@ -482,15 +463,13 @@ fn find_real_end_do_loop<'a>(do_loop: &'a Node) -> Option<Node<'a>> {
 /// This might leave the statement label on the `end do`, but it's quite
 /// complicated to work out if we still need it. Instead, use a separate rule to
 /// check for unused statement labels
-fn fix_goto_end_do(node: &Node, label_node: &Node, source: &SourceFile) -> Option<Fix> {
+fn fix_goto_end_do(node: &Node, label_node: &Node) -> Option<Fix> {
     // This can't be fixed if goto is in inner loop and targets outer loop
     if containing_loop(node)? != containing_loop(label_node)? {
         return None;
     }
 
-    Some(Fix::safe_edit(
-        node.edit_replacement(source, "cycle".to_string()),
-    ))
+    Some(Fix::safe_edit(node.edit_replacement("cycle".to_string())))
 }
 
 /// Find the first loop that contains `node`
@@ -505,57 +484,49 @@ fn containing_loop<'a>(node: &'a Node) -> Option<Node<'a>> {
     None
 }
 
-fn fix_bad_do_termination(
-    node: &Node,
-    end_action: &Node,
-    end_do_label: &Node,
-    source: &SourceFile,
-) -> Option<Fix> {
+fn fix_bad_do_termination(node: &Node, end_action: &Node, end_do_label: &Node) -> Option<Fix> {
     let do_loop = node.parent()?;
-    let src = source.source_text();
 
-    let end_label = end_do_label.to_text(source.source_text())?;
+    let end_label = end_do_label.text();
 
     // Empty label usually means this is the end of a shared termination chain.
     // But let's also double check
-    if end_label.is_empty() || loop_has_shared_termination(&do_loop, end_label, src) {
+    if end_label.is_empty() || loop_has_shared_termination(&do_loop, end_label) {
         debug!("** Can't fix, has shared termination");
         return None;
     }
 
-    let first_edit = add_new_end_do(end_action, true, end_label, source);
+    let first_edit = add_new_end_do(end_action, true, end_label);
 
     let width = end_label.len();
-    let edits = vec![end_do_label.edit_replacement(source, format!("{:width$}", " "))];
+    let edits = vec![end_do_label.edit_replacement(format!("{:width$}", " "))];
 
     Some(Fix::safe_edits(first_edit, edits))
 }
 
-fn loop_has_branch_to_end(do_loop: &Node, label_ref: &str, source: &SourceFile) -> bool {
-    let src = source.source_text();
+fn loop_has_branch_to_end(do_loop: &Node, label_ref: &str) -> bool {
     do_loop.named_descendants().any(|child| {
         child
-            .try_to_controlflow(source)
+            .try_to_controlflow()
             .is_some_and(|control| control.goto_ref().is_some_and(|label| label == label_ref))
             || (child.kind() == "arithmetic_if_statement"
                 && child.named_children(&mut child.walk()).any(|label| {
-                    label.kind() == "statement_label_reference"
-                        && label.to_text(src).is_some_and(|label| label == label_ref)
+                    label.kind() == "statement_label_reference" && label.text() == label_ref
                 }))
     })
 }
 
-fn loop_has_shared_termination(do_loop: &Node, label_ref: &str, src: &str) -> bool {
-    do_loop.named_descendants().any(|child| {
-        child.kind() == "do_label_virtual" && child.to_text(src).unwrap_or_default() == label_ref
-    })
+fn loop_has_shared_termination(do_loop: &Node, label_ref: &str) -> bool {
+    do_loop
+        .named_descendants()
+        .any(|child| child.kind() == "do_label_virtual" && child.text() == label_ref)
 }
 
-fn add_new_end_do(node: &Node, keep_label: bool, label: &str, source: &SourceFile) -> Edit {
+fn add_new_end_do(node: &Node, keep_label: bool, label: &str) -> Edit {
     let moved_label = if keep_label {
         format!(" {label} ")
     } else {
-        node.indentation_ignore_stmt_label(source)
+        node.indentation_ignore_stmt_label()
     };
 
     Edit::insertion(format!("\n{moved_label}end do"), node.end_textsize())

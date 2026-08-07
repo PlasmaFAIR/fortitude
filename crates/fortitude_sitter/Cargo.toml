@@ -1,0 +1,28 @@
+[package]
+name = "fortitude_sitter"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+fortitude_macros = { workspace = true }
+
+anyhow = { workspace = true }
+bitflags = { workspace = true }
+itertools = { workspace = true }
+ruff_diagnostics = { workspace = true }
+ruff_source_file = { workspace = true }
+ruff_text_size = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+textwrap = { workspace = true }
+tree-sitter = { workspace = true }
+tree-sitter-fortran = { workspace = true }
+
+[dev-dependencies]
+test-case = "3.3.1"

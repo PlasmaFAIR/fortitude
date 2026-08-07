@@ -1,10 +1,10 @@
 use crate::diagnostics::{Diagnostic, FixAvailability, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_diagnostics::{Edit, Fix};
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for use of a unary expression following an arithmetic operator.

@@ -1,11 +1,10 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Edit, Fix, Violation};
 use crate::settings::FortranStandard;
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 // TODO Check that 'used' entity is actually used somewhere
 
@@ -44,7 +43,7 @@ impl Violation for UseAll {
 impl AstRule for UseAll {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // TODO rewrite to use UseStatements when added to SymbolTable
-        let module_name = node.module_name(context.source_text())?.to_lowercase();
+        let module_name = node.module_name()?.to_lowercase();
 
         if !context
             .settings()
@@ -115,7 +114,7 @@ impl AstRule for MissingIntrinsic {
         if context.settings().target_std < FortranStandard::F2003 {
             return None;
         }
-        let module_name = node.module_name(context.source_text())?.to_lowercase();
+        let module_name = node.module_name()?.to_lowercase();
 
         if INTRINSIC_MODULES.iter().any(|&m| m == module_name)
             && node

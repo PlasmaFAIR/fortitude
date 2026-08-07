@@ -1,12 +1,12 @@
 use std::{borrow::Cow, cell::OnceCell, fmt, ops::Deref};
 
+use fortitude_sitter::Node;
 use ruff_macros::CacheKey;
 use ruff_source_file::{LineEnding, SourceFile, find_newline};
 use ruff_text_size::TextSize;
 use serde::{Deserialize, Serialize};
-use tree_sitter::Node;
 
-use crate::{ast::FortitudeNode, traits::TextRanged};
+use fortitude_sitter::traits::TextRanged;
 
 #[derive(Debug, Clone)]
 pub struct Stylist<'a> {
@@ -51,15 +51,11 @@ impl<'a> Stylist<'a> {
     pub fn from_ast(root: &Node, source: &'a SourceFile) -> Self {
         let first_statement = find_keyword(root);
         let capitalisation: Capitalisation = first_statement
-            .map(|node| {
-                node.to_text(source.source_text())
-                    .unwrap_or_default()
-                    .into()
-            })
+            .map(|node| node.text().into())
             .unwrap_or_default();
-        let indentation = detect_indentation(&first_statement, source);
+        let indentation = detect_indentation(&first_statement);
         let src = source.source_text();
-        let quote = detect_quote(root, src);
+        let quote = detect_quote(root);
 
         Self {
             source: Cow::Borrowed(src),
@@ -71,10 +67,10 @@ impl<'a> Stylist<'a> {
     }
 }
 
-fn detect_quote(root: &Node, src: &str) -> Quote {
+fn detect_quote(root: &Node) -> Quote {
     root.descendants()
         .find(|node| node.kind() == "string_literal")
-        .map(|node| Quote::from_literal(&node, node.to_text(src).unwrap_or_default()))
+        .map(|node| Quote::from_literal(&node, node.text()))
         .unwrap_or_default()
 }
 
@@ -91,19 +87,19 @@ fn find_keyword<'a>(root: &'a Node) -> Option<Node<'a>> {
 /// Given a top-level entity, and then find the first statement that has
 /// indentation longer than the indentation on that entity, and use the
 /// difference
-fn detect_indentation(first_statement: &Option<Node>, src: &SourceFile) -> Indentation {
+fn detect_indentation(first_statement: &Option<Node>) -> Indentation {
     if first_statement.is_none() {
         return Indentation::default();
     }
 
     let first_statement = first_statement.unwrap();
 
-    let current_indentation = first_statement.indentation(src);
+    let current_indentation = first_statement.indentation();
 
     let indentation = first_statement
         .named_children(&mut first_statement.walk())
         .find_map(|node| {
-            let new_indentation = node.indentation(src);
+            let new_indentation = node.indentation();
             if new_indentation.len() > current_indentation.len() {
                 Some(new_indentation)
             } else {
@@ -306,17 +302,15 @@ fn push_titlecase_word(buf: &mut String, word: &str) {
 #[cfg(test)]
 mod tests {
     use anyhow::{Context, Result};
+    use fortitude_sitter::{Parser, Tree};
     use ruff_source_file::{LineEnding, SourceFile, SourceFileBuilder, find_newline};
-    use tree_sitter::{Parser, Tree};
 
     use crate::stylist::{Capitalisation, ToCapitalisation, titlecase};
 
     use super::{Indentation, Quote, Stylist};
 
-    fn parse_snippet(code: &str) -> Result<(Tree, SourceFile)> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+    fn parse_snippet(code: &str) -> Result<(Tree<'_>, SourceFile)> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let file = SourceFileBuilder::new("test.f90", code).finish();

@@ -1,16 +1,16 @@
-use crate::ast::{FortitudeNode, types::BlockExit};
 use crate::diagnostics::{
     AlwaysFixableViolation, Diagnostic, Edit, Fix, FixAvailability, Violation,
 };
 use crate::fix::edits::redent;
 use crate::stylist::ToCapitalisation;
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::ast::types::BlockExit;
+use fortitude_sitter::traits::TextRanged;
 use log::debug;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for unnecessary `return` statements
@@ -70,7 +70,7 @@ impl AstRule for UselessReturn {
         ) {
             return None;
         }
-        let edit = node.edit_delete(context.source_file());
+        let edit = node.edit_delete();
         some_vec!(
             context
                 .create_diagnostic(Self, node)
@@ -308,8 +308,7 @@ pub(crate) fn check_superfluous_returns<'a>(
     context: &'a CheckContext,
     node: &'a Node,
 ) -> Option<Diagnostic> {
-    let src = context.source_text();
-    let text = node.child(0)?.to_text(src)?;
+    let text = node.child(0)?.text();
     let kind = BlockExit::try_from(text).ok()?;
 
     // Skip this node if it's inside an inline IF, because the rule does not apply
@@ -369,17 +368,14 @@ fn fix_superfluous_return<'a>(context: &'a CheckContext, branch: &'a Node) -> Op
         // branch contains a reference to the block label. If not, we could move
         // it from the original `end if` to the newly inserted one. We could
         // probably also handle it if the label _only_ appears in this branch
-        let label_text = block_label
-            .child(0)?
-            .to_text(src.source_text())?
-            .to_lowercase();
+        let label_text = block_label.child(0)?.text().to_lowercase();
         debug!("Can't fix superfluous `else` due to block label '{label_text}'");
         return None;
     }
 
     let mut rest = Vec::new();
 
-    let indentation = branch.indentation(src);
+    let indentation = branch.indentation();
 
     let keyword = branch.child(0)?;
     let edit = if keyword.kind() == "elseif" {
@@ -389,7 +385,7 @@ fn fix_superfluous_return<'a>(context: &'a CheckContext, branch: &'a Node) -> Op
         replacement.push_str(&indentation);
         replacement.push_str(&"if".to_capitalisation(stylist.capitalisation()));
 
-        keyword.edit_replacement(src, replacement)
+        keyword.edit_replacement(replacement)
     } else {
         // Indent the `if`
         if branch.kind() == "elseif_clause" {
@@ -404,14 +400,14 @@ fn fix_superfluous_return<'a>(context: &'a CheckContext, branch: &'a Node) -> Op
         let mut replacement = String::new();
         replacement.push_str(&"end if".to_capitalisation(stylist.capitalisation()));
         replacement.push_str(stylist.line_ending().as_str());
-        keyword.edit_replacement(src, replacement)
+        keyword.edit_replacement(replacement)
     };
 
     // for `else`, we need to also remove the existing `end if`, and then
     // unindent the block one level
     if branch.kind() == "else_clause" {
         let end_if = parent_if.named_children(&mut parent_if.walk()).last()?;
-        rest.push(end_if.edit_delete(src));
+        rest.push(end_if.edit_delete());
 
         // Start reindenting from start of next line
         let lines = src.to_source_code();
@@ -447,15 +443,12 @@ fn fix_superfluous_return<'a>(context: &'a CheckContext, branch: &'a Node) -> Op
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use anyhow::{Context, Result};
-    use tree_sitter::Parser;
+    use fortitude_sitter::Parser;
 
     #[test]
     fn test_next_non_comment_sibling() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -475,9 +468,7 @@ end subroutine foo
 
     #[test]
     fn test_next_non_comment_statement() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -491,7 +482,7 @@ end subroutine bar
         let first_end_sub = tree.root_node().child(0).unwrap().child(1).unwrap();
 
         assert_eq!(first_end_sub.kind(), "end_subroutine_statement");
-        println!("{first_end_sub:?} {}", first_end_sub.to_text(code).unwrap());
+        println!("{first_end_sub:?} {}", first_end_sub.text());
 
         let next = first_end_sub
             .next_non_comment_statement()
@@ -502,8 +493,8 @@ end subroutine bar
             .unwrap()
             .child_by_field_name("name")
             .context("Missing name")?
-            .to_text(code)
-            .unwrap();
+            .text();
+
         assert_eq!(text, "bar");
 
         Ok(())

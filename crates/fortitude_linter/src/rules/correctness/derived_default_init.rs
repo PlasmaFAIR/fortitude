@@ -1,11 +1,10 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Edit, Fix, Violation};
 use crate::settings::FortranStandard;
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for uninitialised pointer variables inside derived types
@@ -102,10 +101,7 @@ impl AstRule for MissingDefaultPointerInitalisation {
                 Some(parent) => parent.kind_id() == kind!("variable_declaration"),
             })
             .map(|node| {
-                let var_name = node
-                    .to_text(context.source_text())
-                    .unwrap_or("")
-                    .to_string();
+                let var_name = node.text().to_string();
 
                 let init_var = format!(" => null()");
                 let start_pos = node.end_textsize();

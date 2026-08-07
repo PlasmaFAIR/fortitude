@@ -1,10 +1,9 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use crate::fix::edits::delete_stmt_part;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for `while` statements that only evaluate the boolean literal `.true.` in `do`
@@ -56,7 +55,7 @@ impl AstRule for SuperfluousWhileTrue {
         //   or a single entity like a boolean literal.
         if !parenth_exp
             .child_with_name("boolean_literal")?
-            .to_text(context.source_text())?
+            .text()
             .eq_ignore_ascii_case(".true.")
         {
             return None;

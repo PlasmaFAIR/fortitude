@@ -77,14 +77,14 @@ def main(*, name: str, prefix: str, code: str, category: str) -> None:
     with (rules_dir / f"{rule_name_snake}.rs").open("w") as fp:
         fp.write(
             f"""\
-use crate::ast::FortitudeNode;
+
 use crate::{{AstRule, CheckContext, kind_ids}};
 use crate::diagnostics::{{Diagnostic, Edit, Fix, FixAvailability, Violation}};
 use fortitude_macros::ViolationMetadata;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::SourceFile;
 use ruff_text_size::TextSize;
-use tree_sitter::Node;
+use fortitude_sitter::Node;
 
 /// ## What it does
 ///

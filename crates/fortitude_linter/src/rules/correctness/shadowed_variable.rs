@@ -1,8 +1,8 @@
 use crate::CheckContext;
-use crate::ast::symbol_table::{Symbol, SymbolTable};
 use crate::diagnostics::{Annotation, Diagnostic, FixAvailability, Span, Violation};
-use crate::traits::TextRanged;
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::ast::symbol_table::{Symbol, SymbolTable};
+use fortitude_sitter::traits::TextRanged;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
 

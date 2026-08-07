@@ -1,14 +1,13 @@
 use std::iter::once;
 
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use anyhow::{Context, Result, anyhow};
 use fortitude_macros::{ViolationMetadata, field, kind};
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 #[derive(
     Debug,
@@ -28,7 +27,7 @@ enum StatType {
 }
 
 impl StatType {
-    fn from_node(node: &Node, src: &str) -> Result<Self> {
+    fn from_node(node: &Node) -> Result<Self> {
         match node.kind_id() {
             kind!("allocate_statement") | kind!("deallocate_statement") => Ok(StatType::Stat),
             kind!("open_statement")
@@ -42,9 +41,7 @@ impl StatType {
                 let subroutine_node = node
                     .child_by_field_id(field!("subroutine").into())
                     .context("Could not retrieve subroutine name")?;
-                let subroutine_text = subroutine_node
-                    .to_text(src)
-                    .context("Failed to parse subroutine text")?;
+                let subroutine_text = subroutine_node.text();
                 if "execute_command_line".eq_ignore_ascii_case(subroutine_text) {
                     Ok(StatType::CmdStat)
                 } else {
@@ -117,10 +114,8 @@ impl Violation for UncheckedStat {
 
 impl AstRule for UncheckedStat {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
-
         // Check this is an error checking statement, and get the stat type
-        let stat_type = StatType::from_node(node, src).ok()?;
+        let stat_type = StatType::from_node(node).ok()?;
         let stat_name: &'static str = stat_type.into();
 
         // Find a 'stat' argument in the allocate statement
@@ -129,11 +124,9 @@ impl AstRule for UncheckedStat {
         } else {
             *node
         };
-        let stat_node = arg_list.kwarg(stat_name, src)?;
+        let stat_node = arg_list.kwarg(stat_name)?;
 
-        let name = stat_node
-            .child_by_field_id(field!("value").into())?
-            .to_text(src)?;
+        let name = stat_node.child_by_field_id(field!("value").into())?.text();
 
         // Check if the 'stat' variable is checked.
         //
@@ -168,7 +161,7 @@ impl AstRule for UncheckedStat {
             .chain(node.ancestors())
             .take_while(not_scope_boundary)
         {
-            match find_stat_in_siblings(&ancestor, name, src) {
+            match find_stat_in_siblings(&ancestor, name) {
                 Ok(CheckStatus::Checked) => {
                     // Found the variable, so stop checking.
                     return None;
@@ -229,7 +222,7 @@ impl AstRule for UncheckedStat {
     }
 }
 
-fn find_stat_in_siblings(node: &Node, stat_name: &str, src: &str) -> Result<CheckStatus> {
+fn find_stat_in_siblings(node: &Node, stat_name: &str) -> Result<CheckStatus> {
     let mut sibling = *node;
 
     while let Some(node) = sibling.next_sibling() {
@@ -242,17 +235,15 @@ fn find_stat_in_siblings(node: &Node, stat_name: &str, src: &str) -> Result<Chec
         }
 
         if let Some(stat_node) = once(sibling).chain(sibling.descendants()).find(|d| {
-            d.kind_id() == kind!("identifier")
-                && d.to_text(src)
-                    .is_some_and(|d| d.eq_ignore_ascii_case(stat_name))
+            d.kind_id() == kind!("identifier") && d.text().eq_ignore_ascii_case(stat_name)
         }) {
-            return stat_check_status(&stat_node, stat_name, src);
+            return stat_check_status(&stat_node, stat_name);
         }
     }
     Ok(CheckStatus::Unchecked)
 }
 
-fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckStatus> {
+fn stat_check_status(node: &Node, stat_name: &str) -> Result<CheckStatus> {
     let ancestor = node.parent().context("Node should have a parent")?;
 
     // Two cases to consider:
@@ -266,7 +257,7 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
     if ancestor.kind_id() == kind!("assignment_statement")
         && let Some(lhs) = ancestor.child_by_field_id(field!("left").into())
     {
-        let lhs_text = lhs.to_text(src).context("to_text error")?;
+        let lhs_text = lhs.text();
         if lhs_text.eq_ignore_ascii_case(stat_name) {
             return Ok(CheckStatus::Overwritten(lhs.textrange()));
         }
@@ -284,13 +275,12 @@ fn stat_check_status(node: &Node, stat_name: &str, src: &str) -> Result<CheckSta
         } else {
             routine
         };
-        let is_in_error_checking_routine = StatType::from_node(&routine, src).is_ok();
+        let is_in_error_checking_routine = StatType::from_node(&routine).is_ok();
         let kwarg_name_is_stat_type = StatType::try_from(
             ancestor
                 .child_by_field_id(field!("name").into())
                 .context("Keyword argument should have a name")?
-                .to_text(src)
-                .context("to_text error")?,
+                .text(),
         )
         .is_ok();
         if is_in_error_checking_routine && kwarg_name_is_stat_type {
@@ -362,10 +352,8 @@ impl Violation for MultipleAllocationsWithStat {
 
 impl AstRule for MultipleAllocationsWithStat {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
-
         // Check this has a stat parameter
-        let stat_node = node.kwarg("stat", src)?;
+        let stat_node = node.kwarg("stat")?;
 
         // Count allocations
         let count = if node.kind_id() == kind!("allocate_statement") {
@@ -435,17 +423,15 @@ impl Violation for StatWithoutMessage {
 
 impl AstRule for StatWithoutMessage {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let src = context.source_text();
-
-        let stat_type = StatType::from_node(node, src).ok()?;
+        let stat_type = StatType::from_node(node).ok()?;
         let stat_name: &'static str = stat_type.into();
         let arg_list = if node.kind_id() == kind!("subroutine_call") {
             node.child_with_id(kind!("argument_list"))?
         } else {
             *node
         };
-        if let Some(kwarg) = arg_list.kwarg(stat_name, src)
-            && !arg_list.kwarg_exists(stat_type.errmsg(), src)
+        if let Some(kwarg) = arg_list.kwarg(stat_name)
+            && !arg_list.kwarg_exists(stat_type.errmsg())
         {
             return some_vec!(context.create_diagnostic(Self { stat_type }, kwarg));
         }

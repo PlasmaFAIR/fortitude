@@ -1,9 +1,8 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for `real` variables that don't have their kind explicitly specified.
@@ -53,10 +52,7 @@ impl Violation for ImplicitRealKind {
 
 impl AstRule for ImplicitRealKind {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let dtype = node
-            .child(0)?
-            .to_text(context.source_text())?
-            .to_lowercase();
+        let dtype = node.child(0)?.text().to_lowercase();
 
         if !matches!(dtype.as_str(), "real" | "complex") {
             return None;

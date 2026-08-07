@@ -1,13 +1,12 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic};
 use crate::diagnostics::{Edit, Fix};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::{LineRanges, SourceFile};
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks that `use` statements are sorted alphabetically within contiguous blocks.
@@ -175,21 +174,21 @@ impl TextRanged for UseStatementData {
 
 fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData {
     let module_name = node
-        .module_name(src.source_text())
+        .module_name()
         // Fortran is case-insensitive, normalize to lowercase for consistent sorting
         .map(|s| s.to_lowercase())
         .unwrap_or_default();
 
     let is_intrinsic = node
         .children(&mut node.walk())
-        .any(|child| child.to_text(src.source_text()) == Some("intrinsic"));
+        .any(|child| child.text().eq_ignore_ascii_case("intrinsic"));
 
     let mut text_range = node.textrange();
     let mut start_position_row = node.start_position().row;
 
     // If there's a preceding block of comments, then keep those attached to
     // this statement
-    if let Some(comments) = node.prev_attached_comment_block(src.source_text()) {
+    if let Some(comments) = node.prev_attached_comment_block() {
         text_range = TextRange::new(comments.start_textsize(), node.end_textsize());
         start_position_row = comments.start_row();
     }
@@ -219,8 +218,8 @@ fn compare_use_statements(a: &UseStatementData, b: &UseStatementData) -> std::cm
 #[cfg(test)]
 mod tests {
     use anyhow::{Context, Result};
+    use fortitude_sitter::Parser;
     use ruff_source_file::SourceFileBuilder;
-    use tree_sitter::Parser;
 
     use crate::rules::style::use_statement::{
         UseStatementData, extract_use_statement_data, group_use_statements_into_blocks,
@@ -228,9 +227,7 @@ mod tests {
 
     #[test]
     fn test_group_use_statements_into_blocks() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         // Block 1: alpha, beta
@@ -281,9 +278,7 @@ mod tests {
     }
     #[test]
     fn test_extract_use_statement_data() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = {
