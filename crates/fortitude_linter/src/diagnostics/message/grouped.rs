@@ -17,13 +17,20 @@ use crate::fs::relativize_path;
 
 use crate::Diagnostic;
 
+pub(crate) enum GroupedMode {
+    Full,
+    Name,
+    Count,
+}
+
 pub struct GroupedRenderer<'a> {
     config: &'a DisplayDiagnosticConfig,
+    mode: GroupedMode,
 }
 
 impl<'a> GroupedRenderer<'a> {
-    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
-        Self { config }
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig, mode: GroupedMode) -> Self {
+        Self { config, mode }
     }
 
     pub(super) fn render(
@@ -47,25 +54,35 @@ impl<'a> GroupedRenderer<'a> {
             let column_length = max_column_length.digits();
 
             // Print the filename.
-            writeln!(f, "{}:", relativize_path(filename).underline())?;
-
-            // Print each message.
-            for message in messages {
-                write!(
-                    f,
-                    "{}",
-                    DisplayGroupedMessage {
-                        message,
-                        show_fix_status: self.config.show_fix_status(),
-                        applicability: self.config.fix_applicability(),
-                        row_length,
-                        column_length,
+            let filename = relativize_path(filename);
+            match self.mode {
+                GroupedMode::Name => {
+                    writeln!(f, "{}", filename.red().bold())?;
+                }
+                GroupedMode::Count => {
+                    writeln!(f, "{}:{}", filename.red().bold(), messages.len())?;
+                }
+                GroupedMode::Full => {
+                    writeln!(f, "{}:", relativize_path(filename).underline())?;
+                    // Print each message.
+                    for message in messages {
+                        write!(
+                            f,
+                            "{}",
+                            DisplayGroupedMessage {
+                                message,
+                                show_fix_status: self.config.show_fix_status(),
+                                applicability: self.config.fix_applicability(),
+                                row_length,
+                                column_length,
+                            }
+                        )?;
                     }
-                )?;
-            }
 
-            // Print a blank line between files
-            writeln!(f)?;
+                    // Print a blank line between files
+                    writeln!(f)?;
+                }
+            }
         }
 
         Ok(())

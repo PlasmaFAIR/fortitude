@@ -526,6 +526,11 @@ pub enum OutputFormat {
     Azure,
 
     Sarif,
+
+    /// Print only names of files with violations
+    Name,
+    /// Print only count violations per file
+    Count,
 }
 
 impl fmt::Display for OutputFormat {
@@ -543,6 +548,8 @@ impl fmt::Display for OutputFormat {
             Self::Rdjson => write!(f, "rdjson"),
             Self::Azure => write!(f, "azure"),
             Self::Sarif => write!(f, "sarif"),
+            Self::Name => write!(f, "name"),
+            Self::Count => write!(f, "count"),
         }
     }
 }

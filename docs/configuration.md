@@ -308,7 +308,7 @@ Options:
       --ignore-allow-comments
           Ignore any `allow` comments
       --output-format <OUTPUT_FORMAT>
-          Output serialization format for violations. The default serialization format is "full" [env: FORTITUDE_OUTPUT_FORMAT=] [possible values: concise, full, json, json-lines, junit, grouped, github, gitlab, pylint, rdjson, azure, sarif]
+          Output serialization format for violations. The default serialization format is "full" [env: FORTITUDE_OUTPUT_FORMAT=] [possible values: concise, full, json, json-lines, junit, grouped, github, gitlab, pylint, rdjson, azure, sarif, name, count]
   -o, --output-file <OUTPUT_FILE>
           Specify file to write the linter output to (default: stdout) [env: FORTITUDE_OUTPUT_FILE=]
       --preview

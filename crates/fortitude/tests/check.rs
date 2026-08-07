@@ -2294,6 +2294,8 @@ fn git_since() -> anyhow::Result<()> {
 #[test_case::test_case("rdjson")]
 #[test_case::test_case("azure")]
 #[test_case::test_case("sarif")]
+#[test_case::test_case("name")]
+#[test_case::test_case("count")]
 fn output_format(output_format: &str) -> Result<()> {
     const CONTENT: &str = "\
 program test
