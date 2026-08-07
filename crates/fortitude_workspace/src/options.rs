@@ -19,6 +19,7 @@ use fortitude_linter::{
             inconsistent_dimension::{self, settings::PreferAttribute},
             keywords, line_length,
             strings::{self, settings::Quote},
+            whitespace,
         },
     },
     settings::{FortranStandard, OutputFormat, ProgressBar},
@@ -349,6 +350,20 @@ pub struct CheckOptions {
     )]
     pub line_length: Option<usize>,
 
+    // Global Formatting options
+    /// The number of spaces to use for a single indent. Used when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
+    ///
+    /// The indentation is determined by the number of spaces (tabs are equal to one indent_width).
+    #[option(
+        default = "4",
+        value_type = "int",
+        example = r#"
+        # Enforce indentation of base 4.
+        indent-width = 4
+        "#
+    )]
+    pub indent_width: Option<IndentWidth>,
+
     /// By default disable ignore-comment-length behavior when running `fortitude`.
     #[option(
         default = "false",
@@ -419,6 +434,10 @@ pub struct CheckOptions {
     /// `too-many-arguments`, `too-many-nested-blocks`, etc.
     #[option_group]
     pub complexity: Option<ComplexityOptions>,
+
+    /// Options for `incorrect-indentation` rule
+    #[option_group]
+    pub incorrect_indentation: Option<IncorrectIndentationOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -510,6 +529,95 @@ impl KeywordWhitespaceOptions {
             inout_with_space: self.inout_with_space.unwrap_or_default(),
             goto_with_space: self.goto_with_space.unwrap_or_default(),
         }
+    }
+}
+
+#[derive(
+    Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
+)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct IncorrectIndentationOptions {
+    /// Whether lines containing semicolons should be ignored
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "ignore-semicolons = false"
+    )]
+    pub ignore_semicolons: Option<bool>,
+
+    /// The number of full indents to use for the contents of a program
+    #[option(default = "1", value_type = "usize", example = "program-indents = 2")]
+    pub program_indents: Option<usize>,
+
+    /// The number of full indents to use for the contents of modules and submodules
+    #[option(default = "1", value_type = "usize", example = "module-indents = 2")]
+    pub module_indents: Option<usize>,
+
+    /// The number of full indents to use for the contents of subroutines and functions
+    #[option(default = "1", value_type = "usize", example = "procedure-indents = 2")]
+    pub procedure_indents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a derived type
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "derived-type-indents = 2"
+    )]
+    pub derived_type_indents: Option<usize>,
+
+    /// The number of full indents to use for the contents of control flow units (i.e. `block`, `if`, `associate`, `do`, `select`)
+    #[option(
+        default = "1",
+        value_type = "usize",
+        example = "control-flow-indents = 2"
+    )]
+    pub control_flow_indents: Option<usize>,
+
+    /// The number of full indents to use for the contents of a interface
+    #[option(default = "1", value_type = "usize", example = "interface-indents = 2")]
+    pub interface_indents: Option<usize>,
+
+    /// The number of full indents to use after a line continuation (`&`)
+    #[option(
+        default = "1",
+        value_type = "int",
+        example = "line-continuation-indents = 2"
+    )]
+    pub line_continuation_indents: Option<usize>,
+}
+
+impl IncorrectIndentationOptions {
+    pub fn into_settings(self) -> whitespace::settings::IncorrectIndentationSettings {
+        let mut settings_to_return = whitespace::settings::IncorrectIndentationSettings::default();
+
+        settings_to_return.ignore_semicolons = self
+            .ignore_semicolons
+            .unwrap_or(settings_to_return.ignore_semicolons);
+        settings_to_return.program_indents = self
+            .program_indents
+            .unwrap_or(settings_to_return.program_indents);
+        settings_to_return.module_indents = self
+            .module_indents
+            .unwrap_or(settings_to_return.module_indents);
+        settings_to_return.procedure_indents = self
+            .procedure_indents
+            .unwrap_or(settings_to_return.procedure_indents);
+        settings_to_return.derived_type_indents = self
+            .derived_type_indents
+            .unwrap_or(settings_to_return.derived_type_indents);
+        settings_to_return.control_flow_indents = self
+            .control_flow_indents
+            .unwrap_or(settings_to_return.control_flow_indents);
+        settings_to_return.interface_indents = self
+            .interface_indents
+            .unwrap_or(settings_to_return.interface_indents);
+        settings_to_return.line_continuation_indents = self
+            .line_continuation_indents
+            .unwrap_or(settings_to_return.line_continuation_indents);
+
+        settings_to_return = settings_to_return.populate_construct_to_indent_map();
+
+        settings_to_return
     }
 }
 

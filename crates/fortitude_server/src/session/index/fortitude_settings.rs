@@ -465,6 +465,7 @@ impl ConfigurationTransformer for EditorConfigurationTransformer<'_> {
             ignore,
             exclude,
             line_length,
+            indent_width,
             configuration_preference,
         } = self.0.clone();
 
@@ -485,6 +486,7 @@ impl ConfigurationTransformer for EditorConfigurationTransformer<'_> {
                     .collect()
             }),
             line_length,
+            indent_width,
             ..Configuration::default()
         };
 
@@ -550,6 +552,7 @@ impl ConfigurationTransformer for IdentityTransformer {
 
 #[cfg(test)]
 mod tests {
+    use fortitude_linter::line_width::IndentWidth;
     use fortitude_workspace::options::{CheckOptions, Options};
 
     use super::*;
@@ -561,6 +564,7 @@ mod tests {
             configuration: Some(ResolvedConfiguration::Inline(Box::new(Options {
                 check: Some(CheckOptions {
                     line_length: Some(120),
+                    indent_width: Some(IndentWidth::from(1)),
                     ..Default::default()
                 }),
                 ..Default::default()
@@ -572,6 +576,7 @@ mod tests {
             .transform(Configuration::default());
 
         assert_eq!(config.line_length.unwrap(), 120);
+        assert_eq!(config.indent_width.unwrap(), IndentWidth::from(1));
     }
 
     /// This test ensures that between the inline configuration and specific settings, the specific
@@ -582,11 +587,13 @@ mod tests {
             configuration: Some(ResolvedConfiguration::Inline(Box::new(Options {
                 check: Some(CheckOptions {
                     line_length: Some(120),
+                    indent_width: Some(IndentWidth::from(1)),
                     ..Default::default()
                 }),
                 ..Default::default()
             }))),
             line_length: Some(100),
+            indent_width: Some(IndentWidth::from(3)),
             ..Default::default()
         };
 
@@ -594,5 +601,6 @@ mod tests {
             .transform(Configuration::default());
 
         assert_eq!(config.line_length.unwrap(), 100);
+        assert_eq!(config.indent_width.unwrap(), IndentWidth::from(3));
     }
 }

@@ -1,11 +1,13 @@
 use crate::options::{
     ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions,
-    IncorrectKeywordCaseOptions, InvalidTabOptions, KeywordWhitespaceOptions, LineTooLongOptions,
-    Options, PortabilityOptions, ShadowedVariableOptions, StringOptions, UseStatementsOptions,
+    IncorrectIndentationOptions, IncorrectKeywordCaseOptions, InvalidTabOptions,
+    KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions,
+    ShadowedVariableOptions, StringOptions, UseStatementsOptions,
 };
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
 };
+use fortitude_linter::line_width::IndentWidth;
 use fortitude_linter::registry::RuleNamespace;
 use fortitude_linter::rule_redirects::get_redirect;
 use fortitude_linter::rule_selector::{
@@ -231,6 +233,7 @@ pub struct Configuration {
     pub per_file_ignores: Option<Vec<PerFileIgnore>>,
     pub extend_per_file_ignores: Vec<PerFileIgnore>,
     pub line_length: Option<usize>,
+    pub indent_width: Option<IndentWidth>,
     pub fix: Option<bool>,
     pub fix_only: Option<bool>,
     pub show_fixes: Option<bool>,
@@ -259,6 +262,7 @@ pub struct Configuration {
     pub line_too_long: Option<LineTooLongOptions>,
     pub use_statements: Option<UseStatementsOptions>,
     pub complexity: Option<ComplexityOptions>,
+    pub incorrect_indentation: Option<IncorrectIndentationOptions>,
 }
 
 impl Configuration {
@@ -286,6 +290,7 @@ impl Configuration {
             }),
             extend_per_file_ignores: vec![],
             line_length: check.line_length,
+            indent_width: check.indent_width,
             fix: check.fix,
             fix_only: check.fix_only,
             show_fixes: check.show_fixes,
@@ -339,6 +344,7 @@ impl Configuration {
             line_too_long: check.line_too_long,
             use_statements: check.use_statements,
             complexity: check.complexity,
+            incorrect_indentation: check.incorrect_indentation,
         }
     }
 
@@ -372,6 +378,9 @@ impl Configuration {
                 line_length: self
                     .line_length
                     .unwrap_or(Settings::default().check.line_length),
+                indent_width: self
+                    .indent_width
+                    .unwrap_or(Settings::default().check.indent_width),
                 unsafe_fixes: self.unsafe_fixes.unwrap_or_default(),
                 preview,
                 target_std: self.target_std.unwrap_or_default(),
@@ -431,6 +440,10 @@ impl Configuration {
                     .complexity
                     .map(ComplexityOptions::into_settings)
                     .unwrap_or_default(),
+                incorrect_indentation: self
+                    .incorrect_indentation
+                    .map(IncorrectIndentationOptions::into_settings)
+                    .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {
                 project_root: project_root.to_path_buf(),
@@ -480,6 +493,7 @@ impl Configuration {
                 .chain(config.extend_per_file_ignores)
                 .collect(),
             line_length: self.line_length.or(config.line_length),
+            indent_width: self.indent_width.or(config.indent_width),
             fix: self.fix.or(config.fix),
             fix_only: self.fix_only.or(config.fix_only),
             show_fixes: self.show_fixes.or(config.show_fixes),
@@ -511,6 +525,7 @@ impl Configuration {
             line_too_long: self.line_too_long.or(config.line_too_long),
             use_statements: self.use_statements.or(config.use_statements),
             complexity: self.complexity.or(config.complexity),
+            incorrect_indentation: self.incorrect_indentation.or(config.incorrect_indentation),
         }
     }
 }

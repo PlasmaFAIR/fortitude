@@ -14,7 +14,7 @@ pub mod strings;
 pub mod superfluous_while_true;
 pub(crate) mod use_statement;
 pub mod useless_return;
-pub(crate) mod whitespace;
+pub mod whitespace;
 pub(crate) mod whole_array_indexing;
 
 #[cfg(test)]
@@ -28,9 +28,12 @@ mod tests {
     use test_case::test_case;
 
     use crate::apply_common_filters;
+    use crate::line_width::IndentWidth;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
-    use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
+    use crate::rules::style::{
+        complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
+    };
     use crate::settings::CheckSettings;
     use crate::test::{test_contents, test_path};
 
@@ -47,6 +50,8 @@ mod tests {
     #[test_case(Rule::IncorrectSpaceBeforeComment, Path::new("S102.f90"))]
     #[test_case(Rule::IncorrectSpaceAroundDoubleColon, Path::new("S103.f90"))]
     #[test_case(Rule::IncorrectSpaceBetweenBrackets, Path::new("S104.f90"))]
+    #[test_case(Rule::IncorrectIndentation, Path::new("S105.f90"))]
+    #[test_case(Rule::IndentedPreprocessorStatement, Path::new("S106.f90"))]
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201.f90"))]
     #[test_case(Rule::MultipleModules, Path::new("S211.f90"))]
     #[test_case(Rule::ProgramWithModule, Path::new("S212.f90"))]
@@ -114,6 +119,83 @@ mod tests {
             line_too_long: line_length::settings::Settings {
                 ignore_comments: true,
             },
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn incorrect_indentation_width_2() -> Result<()> {
+        let rule_code = Rule::IncorrectIndentation;
+        let path = Path::new("S105.f90");
+        let snapshot = format!(
+            "{}_{}_indent_width_2",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+
+        let settings = CheckSettings {
+            indent_width: IndentWidth::from(2),
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_indentation_include_semicolons() -> Result<()> {
+        let rule_code = Rule::IncorrectIndentation;
+        let path = Path::new("S105.f90");
+        let snapshot = format!(
+            "{}_{}_include_semicolons",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+
+        let mut incorrect_indentation_settings =
+            whitespace::settings::IncorrectIndentationSettings {
+                ignore_semicolons: false,
+                ..Default::default()
+            };
+
+        incorrect_indentation_settings.populate_construct_to_indent_map();
+
+        let settings = CheckSettings {
+            incorrect_indentation: incorrect_indentation_settings,
+            ..CheckSettings::for_rule(rule_code)
+        };
+        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_indentation_non_default_settings() -> Result<()> {
+        let rule_code = Rule::IncorrectIndentation;
+        let path = Path::new("S105.f90");
+        let snapshot = format!(
+            "{}_{}_non_default_settings",
+            rule_code.as_ref(),
+            path.to_string_lossy()
+        );
+
+        let mut incorrect_indentation_settings =
+            whitespace::settings::IncorrectIndentationSettings {
+                control_flow_indents: 0,
+                procedure_indents: 2,
+                ..Default::default()
+            };
+
+        incorrect_indentation_settings.populate_construct_to_indent_map();
+
+        let settings = CheckSettings {
+            incorrect_indentation: incorrect_indentation_settings,
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
