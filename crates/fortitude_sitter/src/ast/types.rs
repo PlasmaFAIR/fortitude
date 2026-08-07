@@ -250,7 +250,7 @@ impl<'a> Bind<'a> {
             && let Some(name_node) = name_kw_node.child_with_id(kind!("string_literal"))
         {
             // Remove the quotes from the string literal
-            let name = name_node.text().trim_matches(&['\"', '\'']);
+            let name = name_node.text().trim_matches(['\"', '\'']);
 
             return Ok(Self {
                 language: lang,
