@@ -373,9 +373,8 @@ pub mod clap_completion {
 
     use crate::{
         registry::{Category, RuleNamespace},
-        rule_selector::RuleSelector,
-        rule_selector::is_single_rule_selector,
-        rules::RuleCodePrefix,
+        rule_selector::{RuleSelector, is_single_rule_selector},
+        rules::{Rule, RuleCodePrefix},
     };
 
     #[derive(Clone)]
@@ -448,6 +447,9 @@ pub mod clap_completion {
                             }
 
                             None
+                        }))
+                        .chain(Rule::iter().map(|rule| {
+                            PossibleValue::new(rule.name()).help(rule.noqa_code().to_string())
                         })),
                 ),
             ))

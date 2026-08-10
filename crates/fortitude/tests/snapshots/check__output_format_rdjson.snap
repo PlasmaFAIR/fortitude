@@ -18,7 +18,7 @@ exit_code: 1
   "diagnostics": [
     {
       "code": {
-        "url": "https://fortitude.readthedocs.io//en/stable/rules/ImplicitTyping",
+        "url": "https://fortitude.readthedocs.io//en/stable/rules/implicit-typing",
         "value": "C001"
       },
       "location": {
@@ -53,7 +53,7 @@ exit_code: 1
     },
     {
       "code": {
-        "url": "https://fortitude.readthedocs.io//en/stable/rules/StarKind",
+        "url": "https://fortitude.readthedocs.io//en/stable/rules/star-kind",
         "value": "PORT021"
       },
       "location": {
@@ -88,7 +88,7 @@ exit_code: 1
     },
     {
       "code": {
-        "url": "https://fortitude.readthedocs.io//en/stable/rules/LiteralKind",
+        "url": "https://fortitude.readthedocs.io//en/stable/rules/literal-kind",
         "value": "PORT011"
       },
       "location": {
@@ -108,7 +108,7 @@ exit_code: 1
     },
     {
       "code": {
-        "url": "https://fortitude.readthedocs.io//en/stable/rules/UnnamedEndStatement",
+        "url": "https://fortitude.readthedocs.io//en/stable/rules/unnamed-end-statement",
         "value": "S061"
       },
       "location": {
