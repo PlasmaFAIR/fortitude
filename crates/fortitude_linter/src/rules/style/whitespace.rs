@@ -404,7 +404,7 @@ impl AlwaysFixableViolation for IndentedPreprocessorStatement {
     }
 }
 
-const BEGIN_SCOPE_NODES: [&str; 15] = [
+const BEGIN_SCOPE_NODES: [&str; 18] = [
     "program_statement",
     "module_statement",
     "submodule_statement",
@@ -417,10 +417,13 @@ const BEGIN_SCOPE_NODES: [&str; 15] = [
     "interface_statement",
     "procedure_qualifier",
     "select_case_statement",
+    "select_type_statement",
+    "select_rank_statement",
     // loop and statement needed to catch case of checking parent of block_label_start_expression
     "do_loop",
     "do_statement",
     "associate_statement",
+    "where_statement",
 ];
 const PREPROC_NODES: [&str; 7] = [
     "preproc_if",
@@ -431,13 +434,16 @@ const PREPROC_NODES: [&str; 7] = [
     "preproc_def",
     "preproc_function_def",
 ];
-const SCOPED_ZERO_INDENT_NODES: [&str; 4] = [
+const SCOPED_ZERO_INDENT_NODES: [&str; 7] = [
     "contains_statement",
     "case_statement",
+    "type_statement",
+    "rank_statement",
     "else_clause",
     "elseif_clause",
+    "elsewhere_clause",
 ];
-const END_SCOPE_NODES: [&str; 12] = [
+const END_SCOPE_NODES: [&str; 13] = [
     "end_program_statement",
     "end_module_statement",
     "end_submodule_statement",
@@ -450,6 +456,7 @@ const END_SCOPE_NODES: [&str; 12] = [
     "end_select_statement",
     "end_do_loop_statement",
     "end_associate_statement",
+    "end_where_statement",
 ];
 
 fn update_enclosing_quote(ch: &char, enclosing_quote: Option<char>) -> Option<char> {
@@ -776,12 +783,22 @@ pub mod settings {
 
             self.construct_to_indent_map
                 .insert("if_statement".to_string(), self.control_flow_indents);
+            self.construct_to_indent_map
+                .insert("where_statement".to_string(), self.control_flow_indents);
 
             self.construct_to_indent_map
                 .insert("interface_statement".to_string(), self.interface_indents);
 
             self.construct_to_indent_map.insert(
                 "select_case_statement".to_string(),
+                self.control_flow_indents,
+            );
+            self.construct_to_indent_map.insert(
+                "select_type_statement".to_string(),
+                self.control_flow_indents,
+            );
+            self.construct_to_indent_map.insert(
+                "select_rank_statement".to_string(),
                 self.control_flow_indents,
             );
 
@@ -830,12 +847,14 @@ mod tests {
     use std::fs;
     use std::process::Command;
     use tempfile::TempDir;
+    use test_case::test_case;
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         "!> My program\nprogram test\n        implicit none\nend program test"
+        ; "indent 2"
     )]
-    #[test_case::test_case(0, "!> My program\nprogram test\nimplicit none\nend program test")]
+    #[test_case(0, "!> My program\nprogram test\nimplicit none\nend program test"; "indent 0" )]
     fn test_s105_program_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My program\nprogram test\nimplicit none\nend program test";
         let toml_contents = format!(
@@ -849,13 +868,15 @@ mod tests {
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         "!> My module\nmodule test\n        implicit none\ncontains\nend module test"
+        ; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         "!> My module\nmodule test\nimplicit none\ncontains\nend module test"
+        ; "indent 0"
     )]
     fn test_s105_module_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My module\nmodule test\nimplicit none\ncontains\nend module test";
@@ -870,13 +891,13 @@ mod tests {
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
-        "!> My submodule\nsubmodule (mmod) test\n        implicit none\ncontains\nend submodule test"
+        "!> My submodule\nsubmodule (mmod) test\n        implicit none\ncontains\nend submodule test"; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
-        "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test"
+        "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test"; "indent 0"
     )]
     fn test_s105_submodule_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet =
@@ -892,13 +913,13 @@ mod tests {
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
-        "!> My subroutine\nsubroutine test\n        implicit none\nend subroutine test"
+        "!> My subroutine\nsubroutine test\n        implicit none\nend subroutine test"; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
-        "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test"
+        "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test"; "indent 0"
     )]
     fn test_s105_subroutine_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test";
@@ -913,27 +934,31 @@ mod tests {
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         "!> My function\nfunction test result(output)\ninteger :: output\nend function test",
         "!> My function\nfunction test result(output)\n        integer :: output\nend function test"
+        ; "indent 2 with result"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         "!> My function\nfunction test result(output)\ninteger :: output\nend function test",
         "!> My function\nfunction test result(output)\ninteger :: output\nend function test"
+        ; "indent 0 with result"
     )]
-    #[test_case::test_case(
+    #[test_case(
         3,
         "!> My function\ninteger function test\ntest = 3\nend function test",
         "!> My function\ninteger function test\n            test = 3\nend function test"
+        ; "indent 3 no result"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         "!> My function\ninteger function test\ntest = 3\nend function test",
         "!> My function\ninteger function test\ntest = 3\nend function test"
+        ; "indent 0 no result"
     )]
-    #[test_case::test_case(  // Interfaced function with result
+    #[test_case(
         2,
         r#"
 submodule (mmod) msubmodule
@@ -951,8 +976,9 @@ contains
             x = i
     end function interfaced_function
 end submodule msubmodule"#
+; "Interfaced function with result"
     )]
-    #[test_case::test_case(  // Interfaced function with return type
+    #[test_case(
         3,
         r#"
 submodule (mmod) msubmodule
@@ -968,6 +994,7 @@ contains
                 interfaced_function = i
     end function interfaced_function
 end submodule msubmodule"#
+            ; "Interfaced function with return type"
     )]
     fn test_s105_function_indentation(
         num_indents: i8,
@@ -985,7 +1012,7 @@ end submodule msubmodule"#
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         r#"
 module mmod
@@ -995,9 +1022,9 @@ module mmod
             procedure :: mproc
     end type mtype
 contains
-end module mmod"#
+end module mmod"#; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 module mmod
@@ -1007,7 +1034,7 @@ module mmod
     procedure :: mproc
     end type mtype
 contains
-end module mmod"#
+end module mmod"#; "indent 0"
     )]
     fn test_s105_derived_type_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1030,7 +1057,7 @@ end module mmod"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         r#"
 program mprog
@@ -1043,9 +1070,9 @@ program mprog
                     print*, y
             end block inner
     end block
-end program mprog"#
+end program mprog"#; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 program mprog
@@ -1058,7 +1085,7 @@ program mprog
     print*, y
     end block inner
     end block
-end program mprog"#
+end program mprog"#; "indent 0"
     )]
     fn test_s105_block_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1084,7 +1111,7 @@ end program mprog"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(  // All types of if with one indent and including semicolons
+    #[test_case(
         false,
         1,
         r#"
@@ -1109,8 +1136,9 @@ subroutine msub()
         i = i + 1
     end if
 end subroutine msub"#
+    ; "All types of if with one indent and including semicolons"
     )]
-    #[test_case::test_case(  // All types of if with three indent and ignoring semicolons
+    #[test_case(
         true,
         3,
         r#"
@@ -1133,8 +1161,9 @@ if (i == 2) then; i = 3; end if;
                 i = i + 1
     end if
 end subroutine msub"#
+        ; "All types of if with three indent and ignoring semicolons"
     )]
-    #[test_case::test_case( // All types of if with zero indent and ignoring semicolons
+    #[test_case(
         true,
         0,
         r#"
@@ -1157,6 +1186,7 @@ if (i == 2) then; i = 3; end if;
     i = i + 1
     end if
 end subroutine msub"#
+            ; "All types of if with zero indent and ignoring semicolons"
     )]
     fn test_s105_if_indentation(
         ignore_semicolons: bool,
@@ -1195,7 +1225,7 @@ end subroutine msub"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         4,
         r#"
 module mmod
@@ -1207,9 +1237,9 @@ module mmod
     interface minterface
                     module procedure minterface_i,minterface_r
     end interface minterface
-end module mmod"#
+end module mmod"#; "indent 4"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 module mmod
@@ -1221,7 +1251,7 @@ module mmod
     interface minterface
     module procedure minterface_i,minterface_r
     end interface minterface
-end module mmod"#
+end module mmod"#; "indent 0"
     )]
     fn test_s105_interface_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1246,7 +1276,7 @@ end module mmod"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         3,
         r#"
 subroutine select_cases
@@ -1258,9 +1288,9 @@ subroutine select_cases
                 i = 1
     end select
     i = 3
-end subroutine select_cases"#
+end subroutine select_cases"#; "indent 3"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 subroutine select_cases
@@ -1272,7 +1302,7 @@ subroutine select_cases
     i = 1
     end select
     i = 3
-end subroutine select_cases"#
+end subroutine select_cases"#; "indent 0"
     )]
     fn test_s105_select_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1297,7 +1327,7 @@ end subroutine select_cases"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         4,
         r#"
 function do_construct
@@ -1310,9 +1340,9 @@ function do_construct
     named_do: do i = 1, 10
                     print *, i
     end do
-end function do_construct"#
+end function do_construct"#; "indent 4"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 function do_construct
@@ -1325,7 +1355,7 @@ function do_construct
     named_do: do i = 1, 10
     print *, i
     end do
-end function do_construct"#
+end function do_construct"#; "indent 0"
     )]
     fn test_s105_do_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1351,7 +1381,7 @@ end function do_construct"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         r#"
 subroutine associates
@@ -1362,9 +1392,9 @@ subroutine associates
     named_associate: associate(x => i)
             print *, x
     end associate named_associate
-end subroutine associates"#
+end subroutine associates"#; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 subroutine associates
@@ -1375,7 +1405,7 @@ subroutine associates
     named_associate: associate(x => i)
     print *, x
     end associate named_associate
-end subroutine associates"#
+end subroutine associates"#; "indent 0"
     )]
     fn test_s105_associate_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1399,7 +1429,7 @@ end subroutine associates"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         r#"
 function wrapped_function( &
@@ -1410,9 +1440,9 @@ function wrapped_function( &
     i = i + 1 &
             + 2 &
             + 3
-end function wrapped_function"#
+end function wrapped_function"#; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 function wrapped_function( &
@@ -1423,7 +1453,7 @@ i &
     i = i + 1 &
     + 2 &
     + 3
-end function wrapped_function"#
+end function wrapped_function"#; "indent 0"
     )]
     fn test_s105_line_continuation_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1445,6 +1475,108 @@ end function wrapped_function"#;
         );
 
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
+    }
+
+    #[test]
+    fn test_s105_where_statement() -> Result<()> {
+        let before = r#"
+subroutine wheresub
+    real :: pressure(1000), temp(1000), precepitation(1000)
+
+    where(pressure >= 1.0)
+    pressure = pressure + 1.0
+    temp = temp - 10.0
+    elsewhere
+    precepitation = .TRUE.
+    endwhere
+end subroutine wheresub
+"#;
+
+        let expected = r#"
+subroutine wheresub
+    real :: pressure(1000), temp(1000), precepitation(1000)
+
+    where(pressure >= 1.0)
+        pressure = pressure + 1.0
+        temp = temp - 10.0
+    elsewhere
+        precepitation = .TRUE.
+    endwhere
+end subroutine wheresub
+"#;
+        verify_s105_fixes(before, expected, "")
+    }
+
+    #[test]
+    fn test_s105_select_type_statement() -> Result<()> {
+        let before = r#"
+subroutine print_decorated_numbers(number)
+  class(*), intent(in) :: number
+
+  select type(number)
+   type is (integer)
+      print*, 'integer'
+      type is (real)
+          print*, 'real'
+          class is (custom_type)
+              print*, 'custom'
+            class default
+              print*, 'not a number'
+            end select
+end subroutine print_decorated_numbers
+"#;
+
+        let expected = r#"
+subroutine print_decorated_numbers(number)
+    class(*), intent(in) :: number
+
+    select type(number)
+    type is (integer)
+        print*, 'integer'
+    type is (real)
+        print*, 'real'
+    class is (custom_type)
+        print*, 'custom'
+    class default
+        print*, 'not a number'
+    end select
+end subroutine print_decorated_numbers
+"#;
+        verify_s105_fixes(before, expected, "")
+    }
+
+    #[test]
+    fn test_s105_select_rank_statement() -> Result<()> {
+        let before = r#"
+subroutine assumed_rank(A)
+  integer, intent(inout) :: A(..)
+
+select rank(A)
+   rank (0)
+      write(*, *) "scalar"
+     rank (1)
+        write(*, *) "rank 1"
+       rank default
+          error stop 'assumed_rank: only rank 0..2 is handled for now.'
+         end select
+end subroutine
+"#;
+
+        let expected = r#"
+subroutine assumed_rank(A)
+    integer, intent(inout) :: A(..)
+
+    select rank(A)
+    rank (0)
+        write(*, *) "scalar"
+    rank (1)
+        write(*, *) "rank 1"
+    rank default
+        error stop 'assumed_rank: only rank 0..2 is handled for now.'
+    end select
+end subroutine
+"#;
+        verify_s105_fixes(before, expected, "")
     }
 
     fn verify_s105_fixes(snippet: &str, fixed_snippet: &str, toml_contents: &str) -> Result<()> {
