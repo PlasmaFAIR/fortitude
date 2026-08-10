@@ -111,10 +111,11 @@ pub struct CheckOptions {
     /// (shows source), `"concise"`, `"grouped"` (group messages by file), `"json"`
     /// (machine-readable), `"junit"` (machine-readable XML), `"github"` (GitHub
     /// Actions annotations), `"gitlab"` (GitLab CI code quality report),
-    /// `"pylint"` (Pylint text format) or `"azure"` (Azure Pipeline logging commands).
+    /// `"pylint"` (Pylint text format), `"azure"` (Azure Pipeline logging commands),
+    /// `"name"` (filenames only), or `"count"` (filename + count of violations).
     #[option(
         default = r#""full""#,
-        value_type = r#""full" | "concise" | "grouped" | "json" | "junit" | "github" | "gitlab" | "pylint" | "azure""#,
+        value_type = r#""full" | "concise" | "grouped" | "json" | "junit" | "github" | "gitlab" | "pylint" | "azure" | "name" | "count""#,
         example = r#"
             # Group violations by containing file.
             output-format = "grouped"

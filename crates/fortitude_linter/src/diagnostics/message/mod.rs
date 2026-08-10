@@ -16,6 +16,7 @@ use std::collections::BTreeMap;
 use std::io::Write;
 use std::{borrow::Cow, path::Path};
 
+use grouped::GroupedMode;
 use ruff_annotate_snippets::{
     Annotation as AnnotateAnnotation, Level as AnnotateLevel, Message as AnnotateMessage,
     Snippet as AnnotateSnippet,
@@ -125,7 +126,16 @@ impl std::fmt::Display for DisplayDiagnostics<'_> {
                 github::GithubRenderer {}.render(f, self.diagnostics)?;
             }
             OutputFormat::Grouped => {
-                grouped::GroupedRenderer::new(self.config).render(f, self.diagnostics)?;
+                grouped::GroupedRenderer::new(self.config, GroupedMode::Full)
+                    .render(f, self.diagnostics)?;
+            }
+            OutputFormat::Name => {
+                grouped::GroupedRenderer::new(self.config, GroupedMode::Name)
+                    .render(f, self.diagnostics)?;
+            }
+            OutputFormat::Count => {
+                grouped::GroupedRenderer::new(self.config, GroupedMode::Count)
+                    .render(f, self.diagnostics)?;
             }
             OutputFormat::Sarif => {
                 sarif::SarifRenderer {}.render(f, self.diagnostics)?;

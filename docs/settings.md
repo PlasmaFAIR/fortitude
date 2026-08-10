@@ -581,11 +581,12 @@ The style in which violation messages should be formatted: `"full"` (default)
 (shows source), `"concise"`, `"grouped"` (group messages by file), `"json"`
 (machine-readable), `"junit"` (machine-readable XML), `"github"` (GitHub
 Actions annotations), `"gitlab"` (GitLab CI code quality report),
-`"pylint"` (Pylint text format) or `"azure"` (Azure Pipeline logging commands).
+`"pylint"` (Pylint text format), `"azure"` (Azure Pipeline logging commands),
+`"name"` (filenames only), or `"count"` (filename + count of violations).
 
 **Default value**: `"full"`
 
-**Type**: `"full" | "concise" | "grouped" | "json" | "junit" | "github" | "gitlab" | "pylint" | "azure"`
+**Type**: `"full" | "concise" | "grouped" | "json" | "junit" | "github" | "gitlab" | "pylint" | "azure" | "name" | "count"`
 
 **Example usage**:
 
