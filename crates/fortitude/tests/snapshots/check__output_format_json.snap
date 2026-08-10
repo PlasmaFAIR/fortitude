@@ -45,7 +45,7 @@ exit_code: 1
       "row": 1
     },
     "message": "program uses implicit typing",
-    "url": "https://fortitude.readthedocs.io//en/stable/rules/ImplicitTyping"
+    "url": "https://fortitude.readthedocs.io//en/stable/rules/implicit-typing"
   },
   {
     "code": "PORT021",
@@ -77,7 +77,7 @@ exit_code: 1
       "row": 2
     },
     "message": "'logical*4' uses non-standard syntax",
-    "url": "https://fortitude.readthedocs.io//en/stable/rules/StarKind"
+    "url": "https://fortitude.readthedocs.io//en/stable/rules/star-kind"
   },
   {
     "code": "PORT011",
@@ -93,7 +93,7 @@ exit_code: 1
       "row": 2
     },
     "message": "logical kind set with number literal '4'",
-    "url": "https://fortitude.readthedocs.io//en/stable/rules/LiteralKind"
+    "url": "https://fortitude.readthedocs.io//en/stable/rules/literal-kind"
   },
   {
     "code": "S061",
@@ -125,7 +125,7 @@ exit_code: 1
       "row": 3
     },
     "message": "end statement should be named.",
-    "url": "https://fortitude.readthedocs.io//en/stable/rules/UnnamedEndStatement"
+    "url": "https://fortitude.readthedocs.io//en/stable/rules/unnamed-end-statement"
   }
 ]
 ----- stderr -----

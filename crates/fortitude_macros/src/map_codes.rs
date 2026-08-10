@@ -426,7 +426,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_message_formats_match_arms = quote!();
     let mut rule_fixable_match_arms = quote!();
     let mut rule_explanation_match_arms = quote!();
-    let mut rule_name_match_arms = quote!();
 
     let mut ast_rule_variants = quote!();
     let mut ast_rule_from_match_arms = quote!();
@@ -452,7 +451,6 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             quote! {#(#attrs)* Self::#name => <#path as crate::diagnostics::Violation>::FIX_AVAILABILITY,},
         );
         rule_explanation_match_arms.extend(quote! {#(#attrs)* Self::#name => #path::explain(),});
-        rule_name_match_arms.extend(quote! {#(#attrs)* Self::#name => stringify!(#name),});
 
         // Next parts are for an enum for Ast-based rules, so that we
         // can have a consistent interface and some type safety
@@ -519,7 +517,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
             /// Returns the name for this rule.
             pub fn name(&self) -> &'static str {
-                match self { #rule_name_match_arms }
+                self.into()
             }
 
             /// Returns the fix status of this rule.
