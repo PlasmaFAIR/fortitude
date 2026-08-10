@@ -548,7 +548,6 @@ S231 [*] Missing space in 'endprogram'
 228 |   end function fff
 229 | endprogram p
     | ^^^^^^^^^^
-    |
 help: Replace with 'end program'
 226 |       out) :: x
 227 |     fff = x

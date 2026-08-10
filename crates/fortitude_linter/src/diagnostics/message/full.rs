@@ -2,7 +2,7 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use ruff_annotate_snippets::Renderer as AnnotateRenderer;
+use annotate_snippets::Renderer as AnnotateRenderer;
 
 use super::Resolved;
 use super::{Diagnostic, DisplayDiagnosticConfig};
@@ -41,7 +41,7 @@ impl<'a> FullRenderer<'a> {
             .info(stylesheet.info)
             .note(stylesheet.note)
             .help(stylesheet.help)
-            .line_no(stylesheet.line_no)
+            .line_num(stylesheet.line_no)
             .emphasis(stylesheet.emphasis)
             .none(stylesheet.none)
             .hyperlink(stylesheet.hyperlink);
@@ -50,7 +50,7 @@ impl<'a> FullRenderer<'a> {
             let resolved = Resolved::new(diag, self.config);
             let renderable = resolved.to_renderable(self.config);
             for diag in renderable.diagnostics.iter() {
-                writeln!(f, "{}", renderer.render(diag.to_annotate()))?;
+                writeln!(f, "{}", renderer.render(&[diag.to_annotate()]))?;
             }
 
             if self.config.show_fix_diff
@@ -125,7 +125,6 @@ mod tests {
           |
         1 | integer*4 foo; end
           |        ^
-          |
         ");
     }
 
@@ -202,7 +201,6 @@ mod tests {
           |
         1 | integer*4 foo; end
           |        ^
-          |
         ");
     }
 
@@ -277,7 +275,6 @@ print()
         2 | if False:
         3 | print()
           | ^
-          |
         ");
     }
 
@@ -315,9 +312,8 @@ print()
         error[stable-test-rule]: Invalid unescaped character SUB, use "\x1a" instead
          --> example.py:1:25
           |
-        1 | nested_fstrings = f'␈{f'{f'␛'}'}'
+        1 | nested_fstrings = f'␈{f'␚{f'␛'}'}'
           |                         ^
-          |
         "#);
     }
 
@@ -340,9 +336,8 @@ print()
         error[stable-test-rule]: Invalid unescaped character SUB, use "\x1a" instead
          --> example.py:1:2
           |
-        1 | ␈␛
+        1 | ␈␚␛
           |  ^
-          |
         "#);
 
         Ok(())
@@ -365,7 +360,6 @@ print()
         1 | def foo():
         2 |     return 1
           |     ^^^^^^^^
-          |
         ");
     }
 
@@ -440,7 +434,6 @@ print()
           |
         1 | import foo
           | ^
-          |
         ");
     }
 
@@ -461,7 +454,6 @@ print()
           |
         1 | import foo
           | ^
-          |
         ");
     }
 
@@ -484,11 +476,10 @@ print()
 
         insta::assert_snapshot!(env.render(&diagnostic), @r"
         error[stable-test-rule]: main diagnostic message
-         --> example.py:2:1
+         --> example.py:1:16
           |
         1 | unexpected eof
           |               ^
-          |
         ");
     }
 

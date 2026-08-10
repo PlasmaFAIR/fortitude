@@ -1,6 +1,7 @@
 ---
 source: crates/fortitude_linter/src/rules/style/mod.rs
 expression: diagnostics
+snapshot_kind: text
 ---
 S105 [*] Incorrect indentation
  --> ./resources/test/fixtures/style/S105.f90:1:1
@@ -2197,7 +2198,6 @@ S105 [*] Incorrect indentation
 164 | end subroutine labels
 165 |   end program mprog
     | ^^
-    |
 help: Replace with the correct number of spaces, 0
 162 | 20        x = 3
 163 | x = 1;20   x = 4

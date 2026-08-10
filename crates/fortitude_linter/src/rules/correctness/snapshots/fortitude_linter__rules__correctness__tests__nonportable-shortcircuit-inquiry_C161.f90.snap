@@ -1,9 +1,10 @@
 ---
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
+snapshot_kind: text
 ---
 C161 variable inquiry `present(arg1)` and use in same logical expression
-  --> ./resources/test/fixtures/correctness/C161.f90:13:9
+  --> ./resources/test/fixtures/correctness/C161.f90:13:29
    |
 11 |     end if
 12 |
@@ -16,7 +17,7 @@ C161 variable inquiry `present(arg1)` and use in same logical expression
    |
 
 C161 variable inquiry `present(arg2)` and use in same logical expression
-  --> ./resources/test/fixtures/correctness/C161.f90:21:9
+  --> ./resources/test/fixtures/correctness/C161.f90:21:35
    |
 19 |     end if
 20 |
@@ -29,7 +30,7 @@ C161 variable inquiry `present(arg2)` and use in same logical expression
    |
 
 C161 variable inquiry `present(arg1)` and use in same logical expression
-  --> ./resources/test/fixtures/correctness/C161.f90:33:9
+  --> ./resources/test/fixtures/correctness/C161.f90:33:40
    |
 31 |     end if
 32 |
@@ -55,7 +56,7 @@ C161 variable inquiry `associated(arg1)` and use in same logical expression
    |
 
 C161 variable inquiry `associated(arg1)` and use in same logical expression
-  --> ./resources/test/fixtures/correctness/C161.f90:42:9
+  --> ./resources/test/fixtures/correctness/C161.f90:42:32
    |
 40 |     end if
 41 |
@@ -81,7 +82,7 @@ C161 variable inquiry `present(arg2)` and use in same logical expression
    |
 
 C161 variable inquiry `allocated(arg2)` and use in same logical expression
-  --> ./resources/test/fixtures/correctness/C161.f90:46:16
+  --> ./resources/test/fixtures/correctness/C161.f90:46:53
    |
 44 |     end if
 45 |
@@ -94,7 +95,7 @@ C161 variable inquiry `allocated(arg2)` and use in same logical expression
    |
 
 C161 variable inquiry `allocated(arg2)` and use in same logical expression
-  --> ./resources/test/fixtures/correctness/C161.f90:50:9
+  --> ./resources/test/fixtures/correctness/C161.f90:50:36
    |
 48 |     end if
 49 |
