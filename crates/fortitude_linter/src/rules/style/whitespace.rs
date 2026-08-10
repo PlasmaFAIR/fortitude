@@ -847,12 +847,14 @@ mod tests {
     use std::fs;
     use std::process::Command;
     use tempfile::TempDir;
+    use test_case::test_case;
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         "!> My program\nprogram test\n        implicit none\nend program test"
+        ; "indent 2"
     )]
-    #[test_case::test_case(0, "!> My program\nprogram test\nimplicit none\nend program test")]
+    #[test_case(0, "!> My program\nprogram test\nimplicit none\nend program test"; "indent 0" )]
     fn test_s105_program_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My program\nprogram test\nimplicit none\nend program test";
         let toml_contents = format!(
@@ -866,13 +868,15 @@ mod tests {
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         "!> My module\nmodule test\n        implicit none\ncontains\nend module test"
+        ; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         "!> My module\nmodule test\nimplicit none\ncontains\nend module test"
+        ; "indent 0"
     )]
     fn test_s105_module_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My module\nmodule test\nimplicit none\ncontains\nend module test";
@@ -887,13 +891,13 @@ mod tests {
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
-        "!> My submodule\nsubmodule (mmod) test\n        implicit none\ncontains\nend submodule test"
+        "!> My submodule\nsubmodule (mmod) test\n        implicit none\ncontains\nend submodule test"; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
-        "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test"
+        "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test"; "indent 0"
     )]
     fn test_s105_submodule_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet =
@@ -909,13 +913,13 @@ mod tests {
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
-        "!> My subroutine\nsubroutine test\n        implicit none\nend subroutine test"
+        "!> My subroutine\nsubroutine test\n        implicit none\nend subroutine test"; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
-        "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test"
+        "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test"; "indent 0"
     )]
     fn test_s105_subroutine_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test";
@@ -930,27 +934,31 @@ mod tests {
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         "!> My function\nfunction test result(output)\ninteger :: output\nend function test",
         "!> My function\nfunction test result(output)\n        integer :: output\nend function test"
+        ; "indent 2 with result"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         "!> My function\nfunction test result(output)\ninteger :: output\nend function test",
         "!> My function\nfunction test result(output)\ninteger :: output\nend function test"
+        ; "indent 0 with result"
     )]
-    #[test_case::test_case(
+    #[test_case(
         3,
         "!> My function\ninteger function test\ntest = 3\nend function test",
         "!> My function\ninteger function test\n            test = 3\nend function test"
+        ; "indent 3 no result"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         "!> My function\ninteger function test\ntest = 3\nend function test",
         "!> My function\ninteger function test\ntest = 3\nend function test"
+        ; "indent 0 no result"
     )]
-    #[test_case::test_case(  // Interfaced function with result
+    #[test_case(
         2,
         r#"
 submodule (mmod) msubmodule
@@ -968,8 +976,9 @@ contains
             x = i
     end function interfaced_function
 end submodule msubmodule"#
+; "Interfaced function with result"
     )]
-    #[test_case::test_case(  // Interfaced function with return type
+    #[test_case(
         3,
         r#"
 submodule (mmod) msubmodule
@@ -985,6 +994,7 @@ contains
                 interfaced_function = i
     end function interfaced_function
 end submodule msubmodule"#
+            ; "Interfaced function with return type"
     )]
     fn test_s105_function_indentation(
         num_indents: i8,
@@ -1002,7 +1012,7 @@ end submodule msubmodule"#
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         r#"
 module mmod
@@ -1012,9 +1022,9 @@ module mmod
             procedure :: mproc
     end type mtype
 contains
-end module mmod"#
+end module mmod"#; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 module mmod
@@ -1024,7 +1034,7 @@ module mmod
     procedure :: mproc
     end type mtype
 contains
-end module mmod"#
+end module mmod"#; "indent 0"
     )]
     fn test_s105_derived_type_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1047,7 +1057,7 @@ end module mmod"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         r#"
 program mprog
@@ -1060,9 +1070,9 @@ program mprog
                     print*, y
             end block inner
     end block
-end program mprog"#
+end program mprog"#; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 program mprog
@@ -1075,7 +1085,7 @@ program mprog
     print*, y
     end block inner
     end block
-end program mprog"#
+end program mprog"#; "indent 0"
     )]
     fn test_s105_block_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1101,7 +1111,7 @@ end program mprog"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(  // All types of if with one indent and including semicolons
+    #[test_case(
         false,
         1,
         r#"
@@ -1126,8 +1136,9 @@ subroutine msub()
         i = i + 1
     end if
 end subroutine msub"#
+    ; "All types of if with one indent and including semicolons"
     )]
-    #[test_case::test_case(  // All types of if with three indent and ignoring semicolons
+    #[test_case(
         true,
         3,
         r#"
@@ -1150,8 +1161,9 @@ if (i == 2) then; i = 3; end if;
                 i = i + 1
     end if
 end subroutine msub"#
+        ; "All types of if with three indent and ignoring semicolons"
     )]
-    #[test_case::test_case( // All types of if with zero indent and ignoring semicolons
+    #[test_case(
         true,
         0,
         r#"
@@ -1174,6 +1186,7 @@ if (i == 2) then; i = 3; end if;
     i = i + 1
     end if
 end subroutine msub"#
+            ; "All types of if with zero indent and ignoring semicolons"
     )]
     fn test_s105_if_indentation(
         ignore_semicolons: bool,
@@ -1212,7 +1225,7 @@ end subroutine msub"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         4,
         r#"
 module mmod
@@ -1224,9 +1237,9 @@ module mmod
     interface minterface
                     module procedure minterface_i,minterface_r
     end interface minterface
-end module mmod"#
+end module mmod"#; "indent 4"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 module mmod
@@ -1238,7 +1251,7 @@ module mmod
     interface minterface
     module procedure minterface_i,minterface_r
     end interface minterface
-end module mmod"#
+end module mmod"#; "indent 0"
     )]
     fn test_s105_interface_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1263,7 +1276,7 @@ end module mmod"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         3,
         r#"
 subroutine select_cases
@@ -1275,9 +1288,9 @@ subroutine select_cases
                 i = 1
     end select
     i = 3
-end subroutine select_cases"#
+end subroutine select_cases"#; "indent 3"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 subroutine select_cases
@@ -1289,7 +1302,7 @@ subroutine select_cases
     i = 1
     end select
     i = 3
-end subroutine select_cases"#
+end subroutine select_cases"#; "indent 0"
     )]
     fn test_s105_select_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1314,7 +1327,7 @@ end subroutine select_cases"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         4,
         r#"
 function do_construct
@@ -1327,9 +1340,9 @@ function do_construct
     named_do: do i = 1, 10
                     print *, i
     end do
-end function do_construct"#
+end function do_construct"#; "indent 4"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 function do_construct
@@ -1342,7 +1355,7 @@ function do_construct
     named_do: do i = 1, 10
     print *, i
     end do
-end function do_construct"#
+end function do_construct"#; "indent 0"
     )]
     fn test_s105_do_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1368,7 +1381,7 @@ end function do_construct"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         r#"
 subroutine associates
@@ -1379,9 +1392,9 @@ subroutine associates
     named_associate: associate(x => i)
             print *, x
     end associate named_associate
-end subroutine associates"#
+end subroutine associates"#; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 subroutine associates
@@ -1392,7 +1405,7 @@ subroutine associates
     named_associate: associate(x => i)
     print *, x
     end associate named_associate
-end subroutine associates"#
+end subroutine associates"#; "indent 0"
     )]
     fn test_s105_associate_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
@@ -1416,7 +1429,7 @@ end subroutine associates"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case::test_case(
+    #[test_case(
         2,
         r#"
 function wrapped_function( &
@@ -1427,9 +1440,9 @@ function wrapped_function( &
     i = i + 1 &
             + 2 &
             + 3
-end function wrapped_function"#
+end function wrapped_function"#; "indent 2"
     )]
-    #[test_case::test_case(
+    #[test_case(
         0,
         r#"
 function wrapped_function( &
@@ -1440,7 +1453,7 @@ i &
     i = i + 1 &
     + 2 &
     + 3
-end function wrapped_function"#
+end function wrapped_function"#; "indent 0"
     )]
     fn test_s105_line_continuation_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
