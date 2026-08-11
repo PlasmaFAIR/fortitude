@@ -2,13 +2,19 @@
 // Copyright 2022 Charles Marsh
 // SPDX-License-Identifier: MIT
 
-use crate::diagnostics::{Diagnostic, Severity};
+use crate::diagnostics::{Diagnostic, DisplayDiagnosticConfig, Severity};
 
 /// Generate error logging commands for Azure Pipelines format.
 /// See [documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#logissue-log-an-error-or-warning)
-pub(super) struct AzureRenderer {}
+pub(super) struct AzureRenderer<'a> {
+    config: &'a DisplayDiagnosticConfig,
+}
 
-impl AzureRenderer {
+impl<'a> AzureRenderer<'a> {
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
+        Self { config }
+    }
+
     pub(super) fn render(
         &self,
         f: &mut std::fmt::Formatter,
@@ -36,7 +42,7 @@ impl AzureRenderer {
             writeln!(
                 f,
                 "code={code};]{body}",
-                code = diag.secondary_code_or_id(),
+                code = self.config.format_rule_id(diag),
                 body = diag.concise_message(),
             )?;
         }

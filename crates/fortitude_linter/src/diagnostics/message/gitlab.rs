@@ -12,15 +12,21 @@ use ruff_source_file::LineColumn;
 use serde::{Serialize, Serializer, ser::SerializeSeq};
 
 use crate::{
-    diagnostics::{Diagnostic, Severity},
+    diagnostics::{Diagnostic, DisplayDiagnosticConfig, Severity},
     fs,
 };
 
 /// Generate JSON with violations in GitLab CI format
 /// https://docs.gitlab.com/ee/ci/testing/code_quality.html#implement-a-custom-tool
-pub(super) struct GitlabRenderer {}
+pub(super) struct GitlabRenderer<'a> {
+    config: &'a DisplayDiagnosticConfig,
+}
 
-impl GitlabRenderer {
+impl<'a> GitlabRenderer<'a> {
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
+        Self { config }
+    }
+
     pub(super) fn render(
         &self,
         f: &mut std::fmt::Formatter,
@@ -32,6 +38,7 @@ impl GitlabRenderer {
             serde_json::to_string_pretty(&SerializedMessages {
                 diagnostics,
                 project_dir: std::env::var("CI_PROJECT_DIR").ok().as_deref(),
+                config: self.config,
             })
             .unwrap()
         )
@@ -41,6 +48,7 @@ impl GitlabRenderer {
 struct SerializedMessages<'a> {
     diagnostics: &'a [Diagnostic],
     project_dir: Option<&'a str>,
+    config: &'a DisplayDiagnosticConfig,
 }
 
 impl Serialize for SerializedMessages<'_> {
@@ -85,7 +93,7 @@ impl Serialize for SerializedMessages<'_> {
             fingerprints.insert(message_fingerprint);
 
             let description = diagnostic.concise_message();
-            let check_name = diagnostic.secondary_code_or_id();
+            let check_name = &self.config.format_rule_id(diagnostic);
             let severity = match diagnostic.severity() {
                 Severity::Info => "info",
                 Severity::Warning => "minor",

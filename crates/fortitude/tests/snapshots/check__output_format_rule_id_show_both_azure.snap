@@ -1,0 +1,22 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - azure
+    - "--preview"
+    - "--select"
+    - implicit-typing
+    - test.f90
+    - "--config"
+    - "check.output-rule-id-format='both'"
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+##vso[task.logissue type=error;sourcepath=[TMP]/test.f90;linenumber=1;columnnumber=1;code=implicit-typing (C001);]program uses implicit typing
+
+----- stderr -----

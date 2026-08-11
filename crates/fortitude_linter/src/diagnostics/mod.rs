@@ -22,7 +22,8 @@ use rustc_hash::FxHashMap;
 use annotate_snippets::Level as AnnotateLevel;
 use anyhow::Result;
 use ruff_text_size::{Ranged, TextRange};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumIs, EnumString};
 
 use crate::{diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat};
 use fortitude_sitter::traits::TextRanged;
@@ -1251,6 +1252,29 @@ impl Display for SubDiagnosticSeverity {
     }
 }
 
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Deserialize,
+    Display,
+    EnumIs,
+    EnumString,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize,
+)]
+#[serde(rename_all = "lowercase")]
+#[strum(serialize_all = "lowercase")]
+pub enum OutputRuleIdFormat {
+    Code,
+    #[default]
+    Name,
+    Both,
+}
+
 /// Configuration for rendering diagnostics.
 #[derive(Clone, Debug)]
 pub struct DisplayDiagnosticConfig {
@@ -1278,6 +1302,8 @@ pub struct DisplayDiagnosticConfig {
     merge_window: usize,
     /// Whether to use preview formatting for Ruff diagnostics.
     preview: bool,
+    /// Whether to prefer rule codes, human-readable rule names, or both in the diagnostic output.
+    rule_id_format: OutputRuleIdFormat,
     /// Whether to hide the real `Severity` of diagnostics.
     ///
     /// This is intended for temporary use by Ruff, which only has a single `error` severity at the
@@ -1307,6 +1333,7 @@ impl DisplayDiagnosticConfig {
             context: 2,
             merge_window: 2,
             preview: false,
+            rule_id_format: OutputRuleIdFormat::default(),
             hide_severity: false,
             show_fix_status: false,
             show_fix_diff: false,
@@ -1385,6 +1412,31 @@ impl DisplayDiagnosticConfig {
         DisplayDiagnosticConfig {
             fix_applicability: applicability,
             ..self
+        }
+    }
+
+    /// Set the format of the rule id (name/code/both)
+    pub fn with_output_rule_id_format(
+        self,
+        name_format: OutputRuleIdFormat,
+    ) -> DisplayDiagnosticConfig {
+        DisplayDiagnosticConfig {
+            rule_id_format: name_format,
+            ..self
+        }
+    }
+
+    /// Format the rule id according the setting and preview mode
+    pub fn format_rule_id(&self, diag: &Diagnostic) -> String {
+        if !self.preview {
+            return diag.secondary_code_or_id().to_string();
+        }
+        match self.rule_id_format {
+            OutputRuleIdFormat::Both if let Some(code) = diag.secondary_code() => {
+                format!("{} ({code})", diag.id())
+            }
+            OutputRuleIdFormat::Name | OutputRuleIdFormat::Both => diag.id().to_string(),
+            OutputRuleIdFormat::Code => diag.secondary_code_or_id().to_string(),
         }
     }
 

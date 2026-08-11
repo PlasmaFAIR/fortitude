@@ -7,7 +7,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use crate::diagnostics::Applicability;
+use crate::diagnostics::{Applicability, OutputRuleIdFormat};
 use crate::line_width::IndentWidth;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
@@ -71,6 +71,7 @@ pub struct CheckSettings {
     pub show_fixes: bool,
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
+    pub output_rule_id_format: OutputRuleIdFormat,
     pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
@@ -112,6 +113,7 @@ impl CheckSettings {
             show_fixes: false,
             unsafe_fixes: UnsafeFixes::default(),
             output_format: OutputFormat::default(),
+            output_rule_id_format: OutputRuleIdFormat::default(),
             target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
@@ -161,6 +163,7 @@ impl fmt::Display for CheckSettings {
                 self.show_fixes,
                 self.unsafe_fixes,
                 self.output_format,
+                self.output_rule_id_format,
                 self.target_std,
                 self.progress_bar,
                 self.preview,

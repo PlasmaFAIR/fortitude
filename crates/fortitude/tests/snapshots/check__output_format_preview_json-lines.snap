@@ -1,0 +1,20 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - json-lines
+    - "--preview"
+    - "--select"
+    - implicit-typing
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+{"code":"C001","name":"implicit-typing","severity":"error","end_location":{"column":1,"row":2},"filename":"[TMP]/test.f90","fix":{"applicability":"unsafe","edits":[{"content":"implicit none\n","end_location":{"column":1,"row":2},"location":{"column":1,"row":2}}],"message":"Insert `implicit none`"},"location":{"column":1,"row":1},"message":"program uses implicit typing","url":"https://fortitude.readthedocs.io//en/stable/rules/implicit-typing"}
+
+----- stderr -----

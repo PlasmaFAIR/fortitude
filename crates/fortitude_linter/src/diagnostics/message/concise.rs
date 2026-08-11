@@ -54,8 +54,13 @@ impl<'a> ConciseRenderer<'a> {
                 write!(f, "{sep} ")?;
             }
 
+            let id = self.config.format_rule_id(diag);
+            let id = fmt_with_hyperlink(&id, diag.documentation_url(), &stylesheet);
+
             if self.config.hide_severity {
-                if let Some(code) = diag.secondary_code() {
+                if !self.config.preview
+                    && let Some(code) = diag.secondary_code()
+                {
                     write!(
                         f,
                         "{code} ",
@@ -65,18 +70,7 @@ impl<'a> ConciseRenderer<'a> {
                         )
                     )?;
                 } else {
-                    write!(
-                        f,
-                        "{id}: ",
-                        id = fmt_styled(
-                            fmt_with_hyperlink(
-                                &diag.inner.id,
-                                diag.documentation_url(),
-                                &stylesheet
-                            ),
-                            stylesheet.secondary_code
-                        )
-                    )?;
+                    write!(f, "{id}: ", id = fmt_styled(id, stylesheet.secondary_code))?;
                 }
             } else {
                 let (severity, severity_style) = match diag.severity() {
@@ -87,16 +81,9 @@ impl<'a> ConciseRenderer<'a> {
                 };
                 write!(
                     f,
-                    "{severity}[{id}] ",
-                    severity = fmt_styled(severity, severity_style),
-                    id = fmt_styled(
-                        fmt_with_hyperlink(
-                            &diag.secondary_code_or_id(),
-                            diag.documentation_url(),
-                            &stylesheet
-                        ),
-                        stylesheet.emphasis
-                    )
+                    "{start}{severity}[{id}]{end} ",
+                    start = severity_style.render(),
+                    end = severity_style.render_reset(),
                 )?;
             }
             if self.config.show_fix_status {
@@ -153,9 +140,9 @@ mod tests {
         env.fix_applicability(Applicability::DisplayOnly);
         env.preview(true);
         insta::assert_snapshot!(env.render_diagnostics(&diagnostics), @r"
-        test.f90:6:5: S201 [*] 'implicit none' set on the enclosing module
-        test.f90:7:3: S061 [*] end statement should read 'end subroutine foo'
-        star_kind.f90:1:8: PORT021 integer*4 is non-standard, use integer(4)
+        test.f90:6:5: superfluous-implicit-none: [*] 'implicit none' set on the enclosing module
+        test.f90:7:3: unnamed-end-statement: [*] end statement should read 'end subroutine foo'
+        star_kind.f90:1:8: star-kind: integer*4 is non-standard, use integer(4)
         ");
     }
 
