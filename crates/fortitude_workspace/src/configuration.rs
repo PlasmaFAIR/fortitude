@@ -4,6 +4,7 @@ use crate::options::{
     KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions,
     ShadowedVariableOptions, StringOptions, UseStatementsOptions,
 };
+use fortitude_linter::diagnostics::OutputRuleIdFormat;
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
 };
@@ -239,6 +240,7 @@ pub struct Configuration {
     pub show_fixes: Option<bool>,
     pub unsafe_fixes: Option<UnsafeFixes>,
     pub output_format: Option<OutputFormat>,
+    pub output_rule_id_format: Option<OutputRuleIdFormat>,
     pub target_std: Option<FortranStandard>,
     pub progress_bar: Option<ProgressBar>,
     pub preview: Option<PreviewMode>,
@@ -296,6 +298,7 @@ impl Configuration {
             show_fixes: check.show_fixes,
             unsafe_fixes: check.unsafe_fixes.map(UnsafeFixes::from),
             output_format: check.output_format,
+            output_rule_id_format: check.output_rule_id_format,
             target_std: check.target_std,
             progress_bar: check.progress_bar,
             preview: check.preview.map(PreviewMode::from),
@@ -386,6 +389,7 @@ impl Configuration {
                 target_std: self.target_std.unwrap_or_default(),
                 progress_bar,
                 output_format: self.output_format.unwrap_or_default(),
+                output_rule_id_format: self.output_rule_id_format.unwrap_or_default(),
                 show_fixes: self.show_fixes.unwrap_or_default(),
                 per_file_ignores: CompiledPerFileIgnoreList::resolve(
                     self.per_file_ignores
@@ -499,6 +503,7 @@ impl Configuration {
             show_fixes: self.show_fixes.or(config.show_fixes),
             unsafe_fixes: self.unsafe_fixes.or(config.unsafe_fixes),
             output_format: self.output_format.or(config.output_format),
+            output_rule_id_format: self.output_rule_id_format.or(config.output_rule_id_format),
             progress_bar: self.progress_bar.or(config.progress_bar),
             preview: self.preview.or(config.preview),
             exclude: self.exclude.or(config.exclude),

@@ -9,7 +9,6 @@ use std::ops::Deref;
 
 use colored::Colorize;
 
-use ruff_diagnostics::Applicability;
 use ruff_source_file::{LineColumn, OneIndexed};
 
 use crate::diagnostics::DisplayDiagnosticConfig;
@@ -71,8 +70,7 @@ impl<'a> GroupedRenderer<'a> {
                             "{}",
                             DisplayGroupedMessage {
                                 message,
-                                show_fix_status: self.config.show_fix_status(),
-                                applicability: self.config.fix_applicability(),
+                                config: self.config,
                                 row_length,
                                 column_length,
                             }
@@ -120,8 +118,7 @@ pub(super) fn group_diagnostics_by_filename<'a>(
 
 struct DisplayGroupedMessage<'a> {
     message: DiagnosticWithLocation<'a>,
-    show_fix_status: bool,
-    applicability: Applicability,
+    config: &'a DisplayDiagnosticConfig,
     row_length: NonZeroUsize,
     column_length: NonZeroUsize,
 }
@@ -150,8 +147,7 @@ impl Display for DisplayGroupedMessage<'_> {
                 " ".repeat(self.column_length.get() - start_location.column.digits().get()),
             code_and_body = RuleCodeAndBody {
                 diagnostic,
-                show_fix_status: self.show_fix_status,
-                applicability: self.applicability
+                config: self.config
             },
         )?;
 
@@ -161,20 +157,19 @@ impl Display for DisplayGroupedMessage<'_> {
 
 pub(super) struct RuleCodeAndBody<'a> {
     pub(crate) diagnostic: &'a Diagnostic,
-    pub(crate) show_fix_status: bool,
-    pub(crate) applicability: Applicability,
+    pub(crate) config: &'a DisplayDiagnosticConfig,
 }
 
 impl Display for RuleCodeAndBody<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if self.show_fix_status
+        let code = self.config.format_rule_id(self.diagnostic);
+
+        if self.config.show_fix_status()
             && let Some(fix) = self.diagnostic.fix()
         {
             // Do not display an indicator for inapplicable fixes
-            if fix.applies(self.applicability) {
-                if let Some(code) = self.diagnostic.secondary_code() {
-                    write!(f, "{} ", code.red().bold())?;
-                }
+            if fix.applies(self.config.fix_applicability()) {
+                write!(f, "{} ", code.red().bold())?;
                 return write!(
                     f,
                     "{fix}{body}",
@@ -184,21 +179,12 @@ impl Display for RuleCodeAndBody<'_> {
             }
         };
 
-        if let Some(code) = self.diagnostic.secondary_code() {
-            write!(
-                f,
-                "{code} {body}",
-                code = code.red().bold(),
-                body = self.diagnostic.concise_message(),
-            )
-        } else {
-            write!(
-                f,
-                "{code}: {body}",
-                code = self.diagnostic.id().as_str().red().bold(),
-                body = self.diagnostic.concise_message(),
-            )
-        }
+        write!(
+            f,
+            "{code} {body}",
+            code = code.red().bold(),
+            body = self.diagnostic.concise_message(),
+        )
     }
 }
 

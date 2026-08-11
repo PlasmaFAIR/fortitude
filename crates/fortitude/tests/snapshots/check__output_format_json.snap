@@ -17,6 +17,7 @@ exit_code: 1
 [
   {
     "code": "C001",
+    "name": "implicit-typing",
     "severity": "error",
     "end_location": {
       "column": 1,
@@ -49,6 +50,7 @@ exit_code: 1
   },
   {
     "code": "PORT021",
+    "name": "star-kind",
     "severity": "error",
     "end_location": {
       "column": 12,
@@ -81,6 +83,7 @@ exit_code: 1
   },
   {
     "code": "PORT011",
+    "name": "literal-kind",
     "severity": "error",
     "end_location": {
       "column": 12,
@@ -97,6 +100,7 @@ exit_code: 1
   },
   {
     "code": "S061",
+    "name": "unnamed-end-statement",
     "severity": "error",
     "end_location": {
       "column": 12,

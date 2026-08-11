@@ -210,7 +210,7 @@ mod tests {
         env.hide_severity(true);
 
         insta::assert_snapshot!(env.render_diagnostics(&diagnostics), @r"
-        invalid-syntax: Expected one or more symbol names after import
+        invalid-syntax Expected one or more symbol names after import
          --> syntax_errors.py:1:15
           |
         1 | from os import
@@ -219,7 +219,7 @@ mod tests {
         3 | if call(foo
           |
 
-        invalid-syntax: Expected ')', found newline
+        invalid-syntax Expected ')', found newline
          --> syntax_errors.py:3:12
           |
         1 | from os import

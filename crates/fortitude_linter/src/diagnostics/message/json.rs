@@ -79,30 +79,26 @@ pub(super) fn diagnostic_to_json<'a>(
         },
     });
 
-    // In preview, the locations and filename can be optional
-    // and the severity is displayed.
-    if config.preview {
-        JsonDiagnostic {
-            code: diagnostic.secondary_code_or_id(),
-            severity: diagnostic.severity(),
-            url: diagnostic.documentation_url(),
-            message: diagnostic.concise_message(),
-            fix,
-            location: start_location.map(JsonLocation::from),
-            end_location: end_location.map(JsonLocation::from),
-            filename,
-        }
+    // In preview, the code can be optional and the severity is displayed.
+    let (code, severity) = if config.preview {
+        (
+            diagnostic.secondary_code().map(|code| code.as_str()),
+            diagnostic.severity(),
+        )
     } else {
-        JsonDiagnostic {
-            code: diagnostic.secondary_code_or_id(),
-            severity: Severity::Error,
-            url: diagnostic.documentation_url(),
-            message: diagnostic.concise_message(),
-            fix,
-            location: Some(start_location.unwrap_or_default().into()),
-            end_location: Some(end_location.unwrap_or_default().into()),
-            filename: Some(filename.unwrap_or_default()),
-        }
+        (Some(diagnostic.secondary_code_or_id()), Severity::Error)
+    };
+
+    JsonDiagnostic {
+        code,
+        name: diagnostic.id().as_str(),
+        severity,
+        url: diagnostic.documentation_url(),
+        message: diagnostic.concise_message(),
+        fix,
+        location: start_location.map(JsonLocation::from),
+        end_location: end_location.map(JsonLocation::from),
+        filename,
     }
 }
 
@@ -156,7 +152,8 @@ impl Serialize for ExpandedEdits<'_> {
 /// A serializable version of `Diagnostic`.
 #[derive(Serialize)]
 pub(crate) struct JsonDiagnostic<'a> {
-    code: &'a str,
+    code: Option<&'a str>,
+    name: &'a str,
     severity: Severity,
     end_location: Option<JsonLocation>,
     filename: Option<&'a str>,
@@ -231,17 +228,12 @@ mod tests {
         [
           {
             "code": "stable-test-rule",
+            "name": "stable-test-rule",
             "severity": "error",
-            "end_location": {
-              "column": 1,
-              "row": 1
-            },
-            "filename": "",
+            "end_location": null,
+            "filename": null,
             "fix": null,
-            "location": {
-              "column": 1,
-              "row": 1
-            },
+            "location": null,
             "message": "main diagnostic message",
             "url": "https://docs.astral.sh/ruff/rules/test-diagnostic"
           }
@@ -266,7 +258,8 @@ mod tests {
             @r#"
         [
           {
-            "code": "stable-test-rule",
+            "code": null,
+            "name": "stable-test-rule",
             "severity": "error",
             "end_location": null,
             "filename": null,

@@ -1,0 +1,41 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - gitlab
+    - "--preview"
+    - "--select"
+    - implicit-typing
+    - test.f90
+    - "--config"
+    - "check.output-rule-id-format='both'"
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+[
+  {
+    "check_name": "implicit-typing (C001)",
+    "description": "implicit-typing (C001): program uses implicit typing",
+    "severity": "major",
+    "fingerprint": "fcf683c4c4180fca",
+    "location": {
+      "path": "test.f90",
+      "positions": {
+        "begin": {
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "line": 2,
+          "column": 1
+        }
+      }
+    }
+  }
+]
+----- stderr -----
