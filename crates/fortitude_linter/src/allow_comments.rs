@@ -55,7 +55,7 @@ pub fn gather_allow_comments<'a>(
 
     let mut codes = Vec::new();
 
-    let (_, allow_comment) = regex_captures!(r#"! allow\((.*)\)\s*"#, node.text())?;
+    let (_, allow_comment) = regex_captures!(r#"! *allow\((.*)\)\s*"#, node.text())?;
     let range = {
         let next_node = node.next_named_sibling()?;
         let start_byte = next_node.start_textsize();
