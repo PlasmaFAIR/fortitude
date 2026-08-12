@@ -28,11 +28,6 @@ help: Insert `implicit none`
 
 fortitude: 1 files scanned.
 Number of errors: 1
-
-For more information about specific rules, run:
-
-    fortitude explain X001,Y002,...
-
 No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
 ----- stderr -----

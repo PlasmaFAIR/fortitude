@@ -271,7 +271,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     );
 
     if cli.statistics {
-        printer.write_statistics(&results, &mut summary_writer)?;
+        printer.write_statistics(&results, &mut summary_writer, preview)?;
     } else {
         printer.write_once(&results, &mut summary_writer, preview)?;
     }

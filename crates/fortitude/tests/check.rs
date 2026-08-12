@@ -246,11 +246,6 @@ end program test
     fortitude: 1 files scanned.
     Number of errors: 2
 
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
-
     ----- stderr -----
     warning: The selector `bugprone` refers to a deprecated rule category.
     warning: `B001` has been remapped to `C011`.
@@ -541,11 +536,6 @@ end program foo
     test.f90:4:3: error[implicit-real-kind] real has implicit kind
     fortitude: 1 files scanned.
     Number of errors: 4 (2 fixed, 2 remaining)
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
     No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
@@ -596,11 +586,6 @@ end program foo
     test.f90:4:3: error[implicit-real-kind] real has implicit kind
     fortitude: 1 files scanned.
     Number of errors: 4 (3 fixed, 1 remaining)
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     ");
@@ -928,11 +913,6 @@ end program foo
     fortitude: 1 files scanned.
     Number of errors: 3
 
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
-
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding subsequent violations from the AST and all fixes.
     ",);
@@ -966,11 +946,6 @@ end program foo
     test.f90:8:13: error[superfluous-semicolon] unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 2
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
@@ -1007,11 +982,6 @@ end program foo
     fortitude: 1 files scanned.
     Number of errors: 2
 
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
-
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding subsequent violations from the AST and all fixes.
     ",);
@@ -1044,11 +1014,6 @@ end program foo
     test.f90:8:13: error[superfluous-semicolon] unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 1
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
@@ -1380,7 +1345,6 @@ fn check_force_exclude() -> anyhow::Result<()> {
     fortitude: 0 files scanned.
     All checks passed!
 
-
     ----- stderr -----
     ");
     Ok(())
@@ -1431,7 +1395,6 @@ fn check_force_exclude_builtin() -> anyhow::Result<()> {
     ----- stdout -----
     fortitude: 0 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     ");
@@ -1546,7 +1509,6 @@ end program foo
     ----- stdout -----
     fortitude: 1 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     ");
@@ -1738,11 +1700,6 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
     -:1:1: error[redirected-to-test-rule] Hey this is a test rule that was redirected from another.
     fortitude: 1 files scanned.
     Number of errors: 6
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
     [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
@@ -1762,7 +1719,6 @@ fn preview_disabled_direct() -> anyhow::Result<()> {
     ----- stdout -----
     fortitude: 1 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     warning: Selection `FORT9911` has no effect because preview is not enabled.
@@ -1983,7 +1939,6 @@ end program foo
     ----- stdout -----
     fortitude: 1 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
@@ -2702,7 +2657,6 @@ fn complex_config_setting_overridden_via_cli() -> Result<()> {
     ----- stdout -----
     fortitude: 1 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     ");
