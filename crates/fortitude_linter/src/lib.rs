@@ -13,6 +13,7 @@ pub mod line_width;
 pub mod locator;
 #[macro_use]
 pub mod logging;
+pub mod logical_lines;
 pub mod preview;
 pub mod registry;
 pub mod rule_redirects;
