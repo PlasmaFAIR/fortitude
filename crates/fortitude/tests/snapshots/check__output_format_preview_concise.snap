@@ -1,0 +1,23 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - concise
+    - "--preview"
+    - "--select"
+    - implicit-typing
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+test.f90:1:1: error[implicit-typing] program uses implicit typing
+fortitude: 1 files scanned.
+Number of errors: 1
+No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+----- stderr -----

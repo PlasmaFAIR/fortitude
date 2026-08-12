@@ -6,6 +6,7 @@ snapshot_kind: text
 [
   {
     "code": "S201",
+    "name": "superfluous-implicit-none",
     "severity": "error",
     "end_location": {
       "column": 18,
@@ -38,6 +39,7 @@ snapshot_kind: text
   },
   {
     "code": "S061",
+    "name": "unnamed-end-statement",
     "severity": "error",
     "end_location": {
       "column": 17,
@@ -70,6 +72,7 @@ snapshot_kind: text
   },
   {
     "code": "PORT021",
+    "name": "star-kind",
     "severity": "error",
     "end_location": {
       "column": 9,

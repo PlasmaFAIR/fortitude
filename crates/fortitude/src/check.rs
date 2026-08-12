@@ -263,6 +263,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
 
     let printer = Printer::new(
         output_format,
+        file_configuration.settings.check.output_rule_id_format,
         config_arguments.log_level,
         printer_flags,
         fix_mode,
@@ -270,7 +271,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     );
 
     if cli.statistics {
-        printer.write_statistics(&results, &mut summary_writer)?;
+        printer.write_statistics(&results, &mut summary_writer, preview)?;
     } else {
         printer.write_once(&results, &mut summary_writer, preview)?;
     }

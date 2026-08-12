@@ -13,7 +13,7 @@ use ruff_source_file::{OneIndexed, SourceFile};
 use ruff_text_size::{Ranged, TextRange};
 
 use crate::VERSION;
-use crate::diagnostics::{Diagnostic, SecondaryCode, Severity};
+use crate::diagnostics::{Diagnostic, DisplayDiagnosticConfig, SecondaryCode, Severity};
 use crate::fs::normalize_path;
 use crate::registry::{Category, RuleNamespace};
 
@@ -22,9 +22,15 @@ use crate::registry::{Category, RuleNamespace};
 /// Static Analysis Results Interchange Format (SARIF) is a standard format
 /// for static analysis results. For full specification, see:
 /// [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
-pub struct SarifRenderer;
+pub struct SarifRenderer<'a> {
+    config: &'a DisplayDiagnosticConfig,
+}
 
-impl SarifRenderer {
+impl<'a> SarifRenderer<'a> {
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
+        Self { config }
+    }
+
     pub(super) fn render(
         &self,
         f: &mut std::fmt::Formatter,
@@ -32,7 +38,7 @@ impl SarifRenderer {
     ) -> std::fmt::Result {
         let results = diagnostics
             .iter()
-            .map(SarifResult::from_message)
+            .map(|diag| SarifResult::from_message(diag, self.config))
             .collect::<Result<Vec<_>>>()
             .map_err(|_| std::fmt::Error)?;
 
@@ -43,9 +49,9 @@ impl SarifRenderer {
             // to locally change the severity of a diagnostic we will have to
             // refactor in such a way that we know the _configured_ severity at
             // this point (rather than just the severities of each diagnostic).
-            .filter_map(|result| {
-                let code = result.rule_id.as_secondary_code()?;
-                Some((code, result.level))
+            .map(|result| {
+                let code = result.rule_id.as_str();
+                (code, result.level)
             })
             .collect();
         let mut rules: Vec<SarifRule> = unique_rules_and_severities
@@ -117,13 +123,13 @@ struct SarifRule<'a> {
     help: SarifMessage<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     help_uri: Option<String>,
-    id: &'a SecondaryCode,
+    id: &'a str,
     properties: SarifProperties<'a>,
     short_description: SarifMessage<'a>,
 }
 
-impl<'a> From<(&'a SecondaryCode, SarifLevel)> for SarifRule<'a> {
-    fn from(code_and_level: (&'a SecondaryCode, SarifLevel)) -> Self {
+impl<'a> From<(&'a str, SarifLevel)> for SarifRule<'a> {
+    fn from(code_and_level: (&'a str, SarifLevel)) -> Self {
         let (code, level) = code_and_level;
         // This is a manual re-implementation of Rule::from_code, but we also want the Linter. This
         // avoids calling Linter::parse_code twice.
@@ -161,13 +167,6 @@ enum RuleCode<'a> {
 }
 
 impl RuleCode<'_> {
-    fn as_secondary_code(&self) -> Option<&SecondaryCode> {
-        match self {
-            RuleCode::SecondaryCode(code) => Some(code),
-            RuleCode::LintId(_) => None,
-        }
-    }
-
     fn as_str(&self) -> &str {
         match self {
             RuleCode::SecondaryCode(code) => code.as_str(),
@@ -185,11 +184,13 @@ impl Serialize for RuleCode<'_> {
     }
 }
 
-impl<'a> From<&'a Diagnostic> for RuleCode<'a> {
-    fn from(code: &'a Diagnostic) -> Self {
+impl<'a> RuleCode<'a> {
+    fn from_diagnostic(code: &'a Diagnostic, config: &'a DisplayDiagnosticConfig) -> Self {
         match code.secondary_code() {
-            Some(diagnostic) => Self::SecondaryCode(diagnostic),
-            None => Self::LintId(code.id().as_str()),
+            Some(diagnostic) if !config.preview || config.rule_id_format.is_code() => {
+                Self::SecondaryCode(diagnostic)
+            }
+            _ => Self::LintId(code.id().as_str()),
         }
     }
 }
@@ -279,7 +280,7 @@ struct SarifRegion {
 
 #[derive(Debug, Clone, Serialize)]
 struct SarifProperties<'a> {
-    id: &'a SecondaryCode,
+    id: &'a str,
     kind: &'a str,
     name: &'a str,
     #[serde(rename = "problem.severity")]
@@ -380,7 +381,10 @@ impl<'a> SarifResult<'a> {
         return Ok(format!("file://{}", path.display()));
     }
 
-    fn from_message(diagnostic: &'a Diagnostic) -> Result<Self> {
+    fn from_message(
+        diagnostic: &'a Diagnostic,
+        config: &'a DisplayDiagnosticConfig,
+    ) -> Result<Self> {
         let start_location = diagnostic.start_location().unwrap_or_default();
         let end_location = diagnostic.end_location().unwrap_or_default();
         let region = SarifRegion {
@@ -393,7 +397,7 @@ impl<'a> SarifResult<'a> {
         let uri = Self::uri(diagnostic)?;
 
         Ok(Self {
-            rule_id: RuleCode::from(diagnostic),
+            rule_id: RuleCode::from_diagnostic(diagnostic, config),
             level: SarifLevel::from(diagnostic.severity()),
             message: SarifMessage {
                 text: diagnostic.concise_message().to_str(),

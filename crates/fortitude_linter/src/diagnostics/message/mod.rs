@@ -102,7 +102,7 @@ impl std::fmt::Display for DisplayDiagnostics<'_> {
                 full::FullRenderer::new(self.config).render(f, self.diagnostics)?;
             }
             OutputFormat::Azure => {
-                azure::AzureRenderer {}.render(f, self.diagnostics)?;
+                azure::AzureRenderer::new(self.config).render(f, self.diagnostics)?;
             }
             OutputFormat::Json => {
                 json::JsonRenderer::new(self.config).render(f, self.diagnostics)?;
@@ -111,19 +111,19 @@ impl std::fmt::Display for DisplayDiagnostics<'_> {
                 json_lines::JsonLinesRenderer::new(self.config).render(f, self.diagnostics)?;
             }
             OutputFormat::Rdjson => {
-                rdjson::RdjsonRenderer {}.render(f, self.diagnostics)?;
+                rdjson::RdjsonRenderer::new(self.config).render(f, self.diagnostics)?;
             }
             OutputFormat::Pylint => {
-                pylint::PylintRenderer {}.render(f, self.diagnostics)?;
+                pylint::PylintRenderer::new(self.config).render(f, self.diagnostics)?;
             }
             OutputFormat::Junit => {
-                junit::JunitRenderer {}.render(f, self.diagnostics)?;
+                junit::JunitRenderer::new(self.config).render(f, self.diagnostics)?;
             }
             OutputFormat::Gitlab => {
-                gitlab::GitlabRenderer {}.render(f, self.diagnostics)?;
+                gitlab::GitlabRenderer::new(self.config).render(f, self.diagnostics)?;
             }
             OutputFormat::Github => {
-                github::GithubRenderer {}.render(f, self.diagnostics)?;
+                github::GithubRenderer::new(self.config).render(f, self.diagnostics)?;
             }
             OutputFormat::Grouped => {
                 grouped::GroupedRenderer::new(self.config, GroupedMode::Full)
@@ -138,7 +138,7 @@ impl std::fmt::Display for DisplayDiagnostics<'_> {
                     .render(f, self.diagnostics)?;
             }
             OutputFormat::Sarif => {
-                sarif::SarifRenderer {}.render(f, self.diagnostics)?;
+                sarif::SarifRenderer::new(self.config).render(f, self.diagnostics)?;
             }
         }
 
@@ -220,19 +220,7 @@ impl<'a> ResolvedDiagnostic<'a> {
             })
             .collect();
 
-        let id = if config.hide_severity {
-            // Either the rule code alone (e.g. `F401`), or the lint id with a colon (e.g.
-            // `invalid-syntax:`). When Ruff gets real severities, we should put the colon back in
-            // `DisplaySet::format_annotation` for both cases, but this is a small hack to improve
-            // the formatting of syntax errors for now. This should also be kept consistent with the
-            // concise formatting.
-            diag.secondary_code().map_or_else(
-                || format!("{id}:", id = diag.inner.id),
-                |code| code.to_string(),
-            )
-        } else {
-            diag.secondary_code_or_id().to_string()
-        };
+        let id = Some(config.format_rule_id(diag));
 
         let level = diag.inner.severity.to_annotate();
         let level = if config.hide_severity {
@@ -243,7 +231,7 @@ impl<'a> ResolvedDiagnostic<'a> {
 
         ResolvedDiagnostic {
             level,
-            id: Some(id),
+            id,
             documentation_url: diag.documentation_url().map(ToString::to_string),
             message: diag.inner.message.as_str().to_string(),
             annotations,

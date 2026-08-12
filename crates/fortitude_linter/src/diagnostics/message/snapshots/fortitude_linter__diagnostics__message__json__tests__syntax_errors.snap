@@ -6,6 +6,7 @@ snapshot_kind: text
 [
   {
     "code": "invalid-syntax",
+    "name": "invalid-syntax",
     "severity": "error",
     "end_location": {
       "column": 1,
@@ -22,6 +23,7 @@ snapshot_kind: text
   },
   {
     "code": "invalid-syntax",
+    "name": "invalid-syntax",
     "severity": "error",
     "end_location": {
       "column": 1,

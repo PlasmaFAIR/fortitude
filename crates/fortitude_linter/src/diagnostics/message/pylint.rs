@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{
-    diagnostics::{Diagnostic, SecondaryCode},
+    diagnostics::{Diagnostic, DisplayDiagnosticConfig},
     fs::relativize_path,
 };
 
@@ -16,9 +16,15 @@ use crate::{
 /// ```
 ///
 /// See: [Flake8 documentation](https://flake8.pycqa.org/en/latest/internal/formatters.html#pylint-formatter)
-pub(super) struct PylintRenderer {}
+pub(super) struct PylintRenderer<'a> {
+    config: &'a DisplayDiagnosticConfig,
+}
 
-impl PylintRenderer {
+impl<'a> PylintRenderer<'a> {
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
+        Self { config }
+    }
+
     pub(super) fn render(
         &self,
         f: &mut std::fmt::Formatter,
@@ -38,9 +44,11 @@ impl PylintRenderer {
                 })
                 .unwrap_or_default();
 
-            let code = diagnostic
-                .secondary_code()
-                .map_or_else(|| diagnostic.name(), SecondaryCode::as_str);
+            let code = if self.config.preview && !self.config.rule_id_format.is_code() {
+                diagnostic.id().as_str()
+            } else {
+                diagnostic.secondary_code_or_id()
+            };
 
             let row = row.unwrap_or_default();
 

@@ -1,0 +1,20 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - pylint
+    - "--preview"
+    - "--select"
+    - implicit-typing
+    - test.f90
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+test.f90:1: [implicit-typing] program uses implicit typing
+
+----- stderr -----

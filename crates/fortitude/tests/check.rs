@@ -241,15 +241,10 @@ end program test
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:5:43: error[C051] Trailing backslash
-    test.f90:6:5: error[C011] Missing default case may not handle all values
+    test.f90:5:43: error[trailing-backslash] Trailing backslash
+    test.f90:6:5: error[missing-default-case] Missing default case may not handle all values
     fortitude: 1 files scanned.
     Number of errors: 2
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     warning: The selector `bugprone` refers to a deprecated rule category.
@@ -537,15 +532,10 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:3:3: error[C003] 'implicit none' missing 'external'
-    test.f90:4:3: error[C022] real has implicit kind
+    test.f90:3:3: error[implicit-external-procedures] 'implicit none' missing 'external'
+    test.f90:4:3: error[implicit-real-kind] real has implicit kind
     fortitude: 1 files scanned.
     Number of errors: 4 (2 fixed, 2 remaining)
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
     No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
@@ -593,14 +583,9 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:4:3: error[C022] real has implicit kind
+    test.f90:4:3: error[implicit-real-kind] real has implicit kind
     fortitude: 1 files scanned.
     Number of errors: 4 (3 fixed, 1 remaining)
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     ");
@@ -922,16 +907,11 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:6:8: error[S081] unnecessary semicolon
-    test.f90:7:9: error[E001] Syntax error
-    test.f90:9:51: error[S001] line length of 52, exceeds maximum 50
+    test.f90:6:8: error[superfluous-semicolon] unnecessary semicolon
+    test.f90:7:9: error[syntax-error] Syntax error
+    test.f90:9:51: error[line-too-long] line length of 52, exceeds maximum 50
     fortitude: 1 files scanned.
     Number of errors: 3
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding subsequent violations from the AST and all fixes.
@@ -962,15 +942,10 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:6:8: error[S081] unnecessary semicolon
-    test.f90:8:13: error[S081] unnecessary semicolon
+    test.f90:6:8: error[superfluous-semicolon] unnecessary semicolon
+    test.f90:8:13: error[superfluous-semicolon] unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 2
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
@@ -1002,15 +977,10 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:6:8: error[S081] unnecessary semicolon
-    test.f90:9:13: error[S081] unnecessary semicolon
+    test.f90:6:8: error[superfluous-semicolon] unnecessary semicolon
+    test.f90:9:13: error[superfluous-semicolon] unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 2
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding subsequent violations from the AST and all fixes.
@@ -1041,14 +1011,9 @@ end program foo
     success: false
     exit_code: 1
     ----- stdout -----
-    test.f90:8:13: error[S081] unnecessary semicolon
+    test.f90:8:13: error[superfluous-semicolon] unnecessary semicolon
     fortitude: 1 files scanned.
     Number of errors: 1
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
 
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
@@ -1380,7 +1345,6 @@ fn check_force_exclude() -> anyhow::Result<()> {
     fortitude: 0 files scanned.
     All checks passed!
 
-
     ----- stderr -----
     ");
     Ok(())
@@ -1431,7 +1395,6 @@ fn check_force_exclude_builtin() -> anyhow::Result<()> {
     ----- stdout -----
     fortitude: 0 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     ");
@@ -1546,7 +1509,6 @@ end program foo
     ----- stdout -----
     fortitude: 1 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     ");
@@ -1730,19 +1692,14 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
     success: false
     exit_code: 1
     ----- stdout -----
-    -:1:1: error[FORT9900] Hey this is a stable test rule.
-    -:1:1: error[FORT9901] [*] Hey this is a stable test rule with a safe fix.
-    -:1:1: error[FORT9902] Hey this is a stable test rule with an unsafe fix.
-    -:1:1: error[FORT9903] Hey this is a stable test rule with a display only fix.
-    -:1:1: error[FORT9911] Hey this is a preview test rule.
-    -:1:1: error[FORT9950] Hey this is a test rule that was redirected from another.
+    -:1:1: error[stable-test-rule] Hey this is a stable test rule.
+    -:1:1: error[stable-test-rule-safe-fix] [*] Hey this is a stable test rule with a safe fix.
+    -:1:1: error[stable-test-rule-unsafe-fix] Hey this is a stable test rule with an unsafe fix.
+    -:1:1: error[stable-test-rule-display-only-fix] Hey this is a stable test rule with a display only fix.
+    -:1:1: error[preview-test-rule] Hey this is a preview test rule.
+    -:1:1: error[redirected-to-test-rule] Hey this is a test rule that was redirected from another.
     fortitude: 1 files scanned.
     Number of errors: 6
-
-    For more information about specific rules, run:
-
-        fortitude explain X001,Y002,...
-
     [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
     ----- stderr -----
@@ -1762,7 +1719,6 @@ fn preview_disabled_direct() -> anyhow::Result<()> {
     ----- stdout -----
     fortitude: 1 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     warning: Selection `FORT9911` has no effect because preview is not enabled.
@@ -1983,7 +1939,6 @@ end program foo
     ----- stdout -----
     fortitude: 1 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     warning: Syntax errors detected in file: [TMP]/test.f90. Discarding all fixes. Some violations from the AST may be unreliable.
@@ -2328,6 +2283,86 @@ end program
     Ok(())
 }
 
+#[test_case::test_case("concise")]
+#[test_case::test_case("full")]
+#[test_case::test_case("json")]
+#[test_case::test_case("json-lines")]
+#[test_case::test_case("junit")]
+#[test_case::test_case("grouped")]
+#[test_case::test_case("github")]
+#[test_case::test_case("gitlab")]
+#[test_case::test_case("pylint")]
+#[test_case::test_case("rdjson")]
+#[test_case::test_case("azure")]
+#[test_case::test_case("sarif")]
+fn output_format_preview(output_format: &str) -> Result<()> {
+    let cmd = FortitudeCheck::with_settings(|_project_dir, mut settings| {
+        // JSON double escapes backslashes
+        settings.add_filter(r#""[^"]+\\?/?test.f90"#, r#""[TMP]/test.f90"#);
+
+        settings
+    })?;
+
+    cmd.write_file("test.f90", "program foo\nend program foo")?;
+
+    let snapshot = format!("output_format_preview_{output_format}");
+
+    assert_cmd_snapshot!(
+        snapshot,
+        cmd.check_command_plain().args([
+            "--output-format",
+            output_format,
+            "--preview",
+            "--select",
+            "implicit-typing",
+            "test.f90",
+        ])
+    );
+
+    Ok(())
+}
+
+#[test_case::test_case("concise")]
+#[test_case::test_case("full")]
+#[test_case::test_case("json")]
+#[test_case::test_case("json-lines")]
+#[test_case::test_case("junit")]
+#[test_case::test_case("grouped")]
+#[test_case::test_case("github")]
+#[test_case::test_case("gitlab")]
+#[test_case::test_case("pylint")]
+#[test_case::test_case("rdjson")]
+#[test_case::test_case("azure")]
+#[test_case::test_case("sarif")]
+fn output_format_rule_id_show_both(output_format: &str) -> Result<()> {
+    let cmd = FortitudeCheck::with_settings(|_project_dir, mut settings| {
+        // JSON double escapes backslashes
+        settings.add_filter(r#""[^"]+\\?/?test.f90"#, r#""[TMP]/test.f90"#);
+
+        settings
+    })?;
+
+    cmd.write_file("test.f90", "program foo\nend program foo")?;
+
+    let snapshot = format!("output_format_rule_id_show_both_{output_format}");
+
+    assert_cmd_snapshot!(
+        snapshot,
+        cmd.check_command_plain().args([
+            "--output-format",
+            output_format,
+            "--preview",
+            "--select",
+            "implicit-typing",
+            "test.f90",
+            "--config",
+            "check.output-rule-id-format='both'",
+        ])
+    );
+
+    Ok(())
+}
+
 #[test_case::test_case("concise"; "concise_show_fixes")]
 #[test_case::test_case("full"; "full_show_fixes")]
 #[test_case::test_case("grouped"; "grouped_show_fixes")]
@@ -2622,7 +2657,6 @@ fn complex_config_setting_overridden_via_cli() -> Result<()> {
     ----- stdout -----
     fortitude: 1 files scanned.
     All checks passed!
-
 
     ----- stderr -----
     ");
