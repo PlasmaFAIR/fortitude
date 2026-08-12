@@ -68,7 +68,7 @@ path-slash = { version = "0.2.1" }
 predicates = "3.1.2"
 pretty_assertions = "1.4.1"
 regex = { version = "1.10.2" }
-ruff_annotate_snippets = { git = "https://github.com/astral-sh/ruff.git", tag = "0.15.6", version = "0.1.0" }
+ruff_annotate_snippets = { git = "https://github.com/astral-sh/ruff.git", tag = "0.16.2" }
 ruff_cache = { git = "https://github.com/astral-sh/ruff.git", tag = "0.15.6", version = "0.0.0" }
 ruff_diagnostics = { git = "https://github.com/astral-sh/ruff.git", tag = "0.15.6", version = "0.0.0" }
 ruff_macros = { git = "https://github.com/astral-sh/ruff.git", tag = "0.15.6", version = "0.0.0" }

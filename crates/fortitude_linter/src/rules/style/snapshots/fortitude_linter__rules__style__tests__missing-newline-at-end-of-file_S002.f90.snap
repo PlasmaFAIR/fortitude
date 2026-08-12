@@ -9,7 +9,6 @@ S002 [*] missing newline at end of file
 1 | program p
 2 | end program p ! Missing newline, be careful with tools that might add one!
   |                                                                           ^
-  |
 help: Add newline at end of file
 1 | program p
   - end program p ! Missing newline, be careful with tools that might add one!

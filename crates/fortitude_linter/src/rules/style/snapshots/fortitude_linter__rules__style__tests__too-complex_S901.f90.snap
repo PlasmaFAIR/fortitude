@@ -117,7 +117,7 @@ S901 cyclomatic complexity of 14, exceeds maximum 5
 231 |     !! Full test example, should trigger
 232 | /   subroutine classify_orbit(semi_major, eccentricity, inclination, &
 233 | |                             period, body_mass, orbit_type, stability)
-    | |______________________________________________________________________^
+    | |_____________________________________________________________________^
 234 |       real, intent(in)               :: semi_major, eccentricity
 235 |       real, intent(in)               :: inclination, period, body_mass
     |

@@ -16,11 +16,11 @@ use std::collections::BTreeMap;
 use std::io::Write;
 use std::{borrow::Cow, path::Path};
 
-use grouped::GroupedMode;
-use ruff_annotate_snippets::{
-    Annotation as AnnotateAnnotation, Level as AnnotateLevel, Message as AnnotateMessage,
-    Snippet as AnnotateSnippet,
+use annotate_snippets::{
+    Annotation as AnnotateAnnotation, AnnotationKind, Group as AnnotateGroup,
+    Level as AnnotateLevel, Snippet as AnnotateSnippet,
 };
+use grouped::GroupedMode;
 use ruff_source_file::{OneIndexed, SourceCode, SourceFile};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 
@@ -185,7 +185,7 @@ impl<'a> Resolved<'a> {
 /// A single resolved diagnostic.
 #[derive(Debug)]
 struct ResolvedDiagnostic<'a> {
-    level: AnnotateLevel,
+    level: AnnotateLevel<'static>,
     id: Option<String>,
     documentation_url: Option<String>,
     message: String,
@@ -234,10 +234,11 @@ impl<'a> ResolvedDiagnostic<'a> {
             diag.secondary_code_or_id().to_string()
         };
 
+        let level = diag.inner.severity.to_annotate();
         let level = if config.hide_severity {
-            AnnotateLevel::None
+            level.no_name()
         } else {
-            diag.inner.severity.to_annotate()
+            level
         };
 
         ResolvedDiagnostic {
@@ -340,7 +341,7 @@ impl<'a> ResolvedDiagnostic<'a> {
         snippets_by_input
             .sort_by(|snips1, snips2| snips1.has_primary.cmp(&snips2.has_primary).reverse());
         RenderableDiagnostic {
-            level: self.level,
+            level: self.level.clone(),
             id: self.id.as_deref(),
             documentation_url: self.documentation_url.as_deref(),
             message: &self.message,
@@ -433,7 +434,7 @@ struct Renderable<'r> {
 #[derive(Debug)]
 struct RenderableDiagnostic<'r> {
     /// The severity of the diagnostic.
-    level: AnnotateLevel,
+    level: AnnotateLevel<'static>,
     /// The ID of the diagnostic. The ID can usually be used on the CLI or in a
     /// config file to change the severity of a lint.
     ///
@@ -461,7 +462,7 @@ struct RenderableDiagnostic<'r> {
 
 impl RenderableDiagnostic<'_> {
     /// Convert this to an "annotate" snippet.
-    fn to_annotate(&self) -> AnnotateMessage<'_> {
+    fn to_annotate(&self) -> AnnotateGroup<'_> {
         let snippets = self.snippets_by_input.iter().flat_map(|snippets| {
             let path = snippets.path;
             snippets
@@ -469,15 +470,18 @@ impl RenderableDiagnostic<'_> {
                 .iter()
                 .map(|snippet| snippet.to_annotate(path))
         });
-        let mut message = self
+        let mut title = self
             .level
-            .title(self.message)
-            .is_fixable(self.is_fixable)
-            .lineno_offset(self.header_offset);
+            .clone()
+            .primary_title(self.message)
+            .is_fixable(self.is_fixable);
         if let Some(id) = self.id {
-            message = message.id_with_url(id, self.documentation_url);
+            title = title.id(id);
+            if let Some(url) = self.documentation_url {
+                title = title.id_url(url);
+            }
         }
-        message.snippets(snippets)
+        title.elements(snippets).lineno_offset(self.header_offset)
     }
 }
 
@@ -632,10 +636,11 @@ impl<'r> RenderableSnippet<'r> {
     }
 
     /// Convert this to an "annotate" snippet.
-    fn to_annotate<'a>(&'a self, path: &'a str) -> AnnotateSnippet<'a> {
-        AnnotateSnippet::source(&self.snippet)
-            .origin(path)
+    fn to_annotate<'a>(&'a self, path: &'a str) -> AnnotateSnippet<'a, AnnotateAnnotation<'a>> {
+        AnnotateSnippet::source(self.snippet.as_ref())
+            .path(path)
             .line_start(self.line_start.get())
+            .fold(false)
             .annotations(
                 self.annotations
                     .iter()
@@ -684,23 +689,12 @@ impl<'r> RenderableAnnotation<'r> {
 
     /// Convert this to an "annotate" annotation.
     fn to_annotate(&self) -> AnnotateAnnotation<'_> {
-        // This is not really semantically meaningful, but
-        // it does currently result in roughly the message
-        // we want to convey.
-        //
-        // TODO: While this means primary annotations use `^` and
-        // secondary annotations use `-` (which is fine), this does
-        // result in coloring for primary annotations that looks like
-        // an error (red) and coloring for secondary annotations that
-        // looks like a warning (yellow). This is perhaps not quite in
-        // line with what we want, but fixing this probably requires
-        // changes to `ruff_annotate_snippets`, so we punt for now.
-        let level = if self.is_primary {
-            AnnotateLevel::Error
+        let kind = if self.is_primary {
+            AnnotationKind::Primary
         } else {
-            AnnotateLevel::Warning
+            AnnotationKind::Context
         };
-        let mut ann = level.span(self.range.into());
+        let mut ann = kind.span(self.range.into());
         if let Some(message) = self.message {
             ann = ann.label(message);
         }
@@ -1120,13 +1114,12 @@ watermelon
         env.context(0);
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:5:1
           |
         5 | elephant
           | ^^^^^^^^
-          |
         ",
         );
 
@@ -1152,7 +1145,7 @@ watermelon
         env.context(2);
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
           --> animals:11:1
            |
@@ -1160,7 +1153,6 @@ watermelon
         10 | jackrabbit
         11 | kangaroo
            | ^^^^^^^^
-           |
         ",
         );
 
@@ -1202,7 +1194,7 @@ watermelon
             .build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
           --> animals:1:1
            |
@@ -1217,7 +1209,6 @@ watermelon
         10 | jackrabbit
         11 | kangaroo
            | ^^^^^^^^
-           |
         ",
         );
     }
@@ -1496,7 +1487,7 @@ watermelon
         // instead of special casing the snippet assembly.
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> spacey-animals:3:1
           |
@@ -1507,7 +1498,6 @@ watermelon
           |
         5 | canary
           | ^^^^^^
-          |
         ",
         );
     }
@@ -1663,7 +1653,7 @@ watermelon
         diag.sub(env.sub_warn().primary("animals", "11", "11", "").build());
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:3:1
           |
@@ -1691,7 +1681,6 @@ watermelon
         10 | jackrabbit
         11 | kangaroo
            | ^^^^^^^^
-           |
         ",
         );
 
@@ -1702,7 +1691,7 @@ watermelon
         diag.sub(env.sub_warn().primary("fruits", "3", "3", "").build());
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:3:1
           |
@@ -1720,7 +1709,6 @@ watermelon
         10 | jackrabbit
         11 | kangaroo
            | ^^^^^^^^
-           |
         warning: sub-diagnostic message
          --> fruits:3:1
           |
@@ -1809,7 +1797,7 @@ watermelon
         let diag = env.err().primary("animals", "5", "7:0", "").build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:5:1
           |
@@ -1817,7 +1805,7 @@ watermelon
         4 |   dog
         5 | / elephant
         6 | | finch
-          | |______^
+          | |_____^
         7 |   gorilla
         8 |   hippopotamus
           |
@@ -1903,16 +1891,14 @@ watermelon
             .build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:4:1
           |
         2 |    beetle
         3 |    canary
-        4 |    dog
-          |  __^
-        5 | |  elephant
-          | | _^
+        4 | /  dog
+        5 | |/ elephant
         6 | || finch
           | ||_____^
         7 | |  gorilla
@@ -1932,16 +1918,14 @@ watermelon
             .build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:4:1
           |
         2 |    beetle
         3 |    canary
-        4 |    dog
-          |  __^
-        5 | |  elephant
-          | | _^
+        4 | /  dog
+        5 | |/ elephant
         6 | || finch
           | ||_____^
         7 | |  gorilla
@@ -1963,16 +1947,14 @@ watermelon
             .build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:5:1
           |
         3 |    canary
         4 |    dog
-        5 |    elephant
-          |  __^
-        6 | |  finch
-          | | _^
+        5 | /  elephant
+        6 | |/ finch
         7 | || gorilla
           | ||_______^
           |  |_______|
@@ -1998,19 +1980,17 @@ watermelon
         // better using only ASCII art.
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:5:1
           |
         3 |    canary
         4 |    dog
-        5 |    elephant
-          |   _^
-          |  |_|
+        5 | // elephant
         6 | || finch
           | ||_____^
-        7 |  | gorilla
-          |  |_______^
+        7 | |  gorilla
+          | |________^
         8 |    hippopotamus
         9 |    inchworm
           |
@@ -2026,14 +2006,13 @@ watermelon
             .build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:5:1
           |
         3 |    canary
         4 |    dog
-        5 |    elephant
-          |  __^
+        5 | /  elephant
         6 | |  finch
           | |__^___^
           |   _|
@@ -2080,14 +2059,14 @@ watermelon
             .build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:5:3
           |
         3 | canary
         4 | dog
         5 | elephant
-          |   ----
+          |   ^^^^
           |   |
           |   giant land mammal
           |   but afraid of mice
@@ -2153,7 +2132,7 @@ watermelon
             .build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
          --> animals:5:1
           |
@@ -2179,7 +2158,6 @@ watermelon
           |
         7 | gorilla
           | ------- secondary 7
-          |
         ",
         );
     }
@@ -2232,7 +2210,7 @@ watermelon
             .build();
         insta::assert_snapshot!(
             env.render(&diag),
-            @"
+            @r"
         error[stable-test-rule]: main diagnostic message
           --> animals:11:1
            |
@@ -2263,7 +2241,6 @@ watermelon
            |
          2 | banana
            | ------ secondary fruits 2
-           |
         ",
         );
     }

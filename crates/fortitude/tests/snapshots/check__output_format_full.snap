@@ -51,7 +51,6 @@ S061 [*] end statement should be named.
 2 |   logical*4, parameter :: true = .true.
 3 | end program
   | ^^^^^^^^^^^
-  |
 help: Write as 'end program test'.
 
 fortitude: 1 files scanned.
