@@ -1,15 +1,73 @@
+use fortitude_macros::kind;
 use fortitude_sitter::{Node, traits::TextRanged};
 use ruff_source_file::{OneIndexed, SourceCode};
 use ruff_text_size::{TextRange, TextSize};
+
+const POST_INDENTORS: [u16; 24] = [
+    kind!("program_statement"),
+    kind!("module_statement"),
+    kind!("submodule_statement"),
+    kind!("subroutine_statement"),
+    kind!("function_statement"),
+    kind!("function"),
+    kind!("derived_type_statement"),
+    kind!("block_construct"),
+    kind!("if_statement"),
+    kind!("interface_statement"),
+    kind!("procedure_qualifier"),
+    kind!("select_case_statement"),
+    kind!("select_type_statement"),
+    kind!("select_rank_statement"),
+    kind!("do_statement"),
+    kind!("associate_statement"),
+    kind!("where_statement"),
+    kind!("contains_statement"),
+    kind!("case_statement"),
+    kind!("type_statement"),
+    kind!("rank_statement"),
+    kind!("else_clause"),
+    kind!("elseif_clause"),
+    kind!("elsewhere_clause"),
+];
+
+#[allow(dead_code)]
+const PREPROC_NODES: [u16; 7] = [
+    kind!("preproc_if"),
+    kind!("preproc_ifdef"),
+    kind!("preproc_elifdef"),
+    kind!("preproc_else"),
+    kind!("preproc_include"),
+    kind!("preproc_def"),
+    kind!("preproc_function_def"),
+];
+
+const DEDENTORS: [u16; 20] = [
+    kind!("end_program_statement"),
+    kind!("end_module_statement"),
+    kind!("end_submodule_statement"),
+    kind!("end_subroutine_statement"),
+    kind!("end_function_statement"),
+    kind!("end_type_statement"),
+    kind!("end_block_construct_statement"),
+    kind!("end_if_statement"),
+    kind!("end_interface_statement"),
+    kind!("end_select_statement"),
+    kind!("end_do_loop_statement"),
+    kind!("end_associate_statement"),
+    kind!("end_where_statement"),
+    kind!("contains_statement"),
+    kind!("case_statement"),
+    kind!("type_statement"),
+    kind!("rank_statement"),
+    kind!("else_clause"),
+    kind!("elseif_clause"),
+    kind!("elsewhere_clause"),
+];
 
 #[allow(dead_code)]
 enum LogicalLineEnding {
     Newline,
     Semicolon,
-    /// A logical line that is not present in the source code, but is inferred
-    /// from the context. For example, a nested non-block do loop terminated by
-    /// `continue`.
-    Virtual,
 }
 
 #[allow(dead_code)]
@@ -119,22 +177,43 @@ impl<'source> LogicalLinesBuilder<'source> {
         let start_byte = node.start_textsize();
         let end_byte = node.end_textsize();
         let line_number = source.line_index(start_byte);
+        let kind_id = node.kind_id();
+
+        // TODO: handle preproc
+
         if line_number > self.current_line_number {
             // The node starts on a new line, so we need to finish the current logical line
             let line = LogicalLine {
-                expected_indent: 0,
                 line: &self.source
                     [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)],
                 range: TextRange::new(self.current_start_byte, self.current_end_byte),
                 ending: LogicalLineEnding::Newline,
+                expected_indent: self.current_expected_indent,
             };
             self.lines.push(line);
             self.current_line_number = line_number;
-            self.current_start_byte = start_byte;
+            self.current_start_byte = source.line_start(line_number);
             self.current_end_byte = end_byte;
+            self.current_expected_indent = self.next_expected_indent;
         } else {
             // The node is on the same line, so we extend the current logical line
             self.current_end_byte = end_byte;
+        }
+
+        // Dedentors and post-indentors affect the expected indentation of the
+        // next logical line, so this must be performed after the current
+        // logical line has been finalised.
+        if DEDENTORS.contains(&kind_id) {
+            self.current_expected_indent = self.current_expected_indent.saturating_sub(1);
+            self.next_expected_indent = self.next_expected_indent.saturating_sub(1);
+        }
+        if POST_INDENTORS.contains(&kind_id) {
+            // Edge case: one-line if statements
+            let one_line_if = kind_id == kind!("if_statement")
+                && node.child_with_id(kind!("end_if_statement")).is_none();
+            if !one_line_if {
+                self.next_expected_indent = self.current_expected_indent.saturating_add(1);
+            }
         }
     }
 }
@@ -174,6 +253,114 @@ end program test
         for line in lines {
             assert!(matches!(line.ending, LogicalLineEnding::Newline));
             assert_eq!(line.expected_indent, 0);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_indents() -> Result<()> {
+        let source = r#"
+module test
+  implicit none
+contains
+  subroutine sub(i)
+    integer, intent(in) :: i
+    if (i > 0) then
+      print *, "Positive"
+    else if (i < 0) then
+      print *, "Negative"
+    else
+      print *, "Zero"
+    end if
+    if (i == 0) print *, "Still zero"
+  end subroutine sub
+end module test
+"#;
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+        let tree = parser.parse(source, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let line_index = LineIndex::from_source_text(source);
+        let source_code = SourceCode::new(source, &line_index);
+        let mut builder = LogicalLinesBuilder::new(source);
+        for node in root.descendants() {
+            builder.add_node(node, &source_code);
+        }
+        let logical_lines = builder.finish();
+
+        assert_eq!(logical_lines.inner.len(), 15);
+        let lines = logical_lines.iter().collect_vec();
+        assert_eq!(lines[0].line, "module test");
+        assert_eq!(lines[1].line, "  implicit none");
+        assert_eq!(lines[2].line, "contains");
+        assert_eq!(lines[3].line, "  subroutine sub(i)");
+        assert_eq!(lines[4].line, "    integer, intent(in) :: i");
+        assert_eq!(lines[5].line, "    if (i > 0) then");
+        assert_eq!(lines[6].line, "      print *, \"Positive\"");
+        assert_eq!(lines[7].line, "    else if (i < 0) then");
+        assert_eq!(lines[8].line, "      print *, \"Negative\"");
+        assert_eq!(lines[9].line, "    else");
+        assert_eq!(lines[10].line, "      print *, \"Zero\"");
+        assert_eq!(lines[11].line, "    end if");
+        assert_eq!(lines[12].line, "    if (i == 0) print *, \"Still zero\"");
+        assert_eq!(lines[13].line, "  end subroutine sub");
+        assert_eq!(lines[14].line, "end module test");
+        assert_eq!(lines[0].expected_indent, 0);
+        assert_eq!(lines[1].expected_indent, 1);
+        assert_eq!(lines[2].expected_indent, 0);
+        assert_eq!(lines[3].expected_indent, 1);
+        assert_eq!(lines[4].expected_indent, 2);
+        assert_eq!(lines[5].expected_indent, 2);
+        assert_eq!(lines[6].expected_indent, 3);
+        assert_eq!(lines[7].expected_indent, 2);
+        assert_eq!(lines[8].expected_indent, 3);
+        assert_eq!(lines[9].expected_indent, 2);
+        assert_eq!(lines[10].expected_indent, 3);
+        assert_eq!(lines[11].expected_indent, 2);
+        assert_eq!(lines[12].expected_indent, 2);
+        assert_eq!(lines[13].expected_indent, 1);
+        assert_eq!(lines[14].expected_indent, 0);
+        for line in lines {
+            assert!(matches!(line.ending, LogicalLineEnding::Newline));
+        }
+        Ok(())
+    }
+
+    /// Test that a nested non-block do loop terminated by `continue` is handled
+    /// correctly. This should work, as the tree-sitter grammar defines a 'virtual'
+    /// end_do_loop_statement node for this case, which is a dedentor.
+    #[test]
+    fn test_do_continue() -> Result<()> {
+        let source = r#"
+function f()
+  do 10 i = 1, n
+    do 10 j = 1, m
+      print *, i, j
+  10 continue
+end function f
+"#;
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+        let tree = parser.parse(source, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let line_index = LineIndex::from_source_text(source);
+        let source_code = SourceCode::new(source, &line_index);
+        let mut builder = LogicalLinesBuilder::new(source);
+        for node in root.descendants() {
+            builder.add_node(node, &source_code);
+        }
+        let logical_lines = builder.finish();
+
+        assert_eq!(logical_lines.inner.len(), 6);
+        let lines = logical_lines.iter().collect_vec();
+        assert_eq!(lines[0].line, "function f()");
+        assert_eq!(lines[1].line, "  do 10 i = 1, n");
+        assert_eq!(lines[2].line, "    do 10 j = 1, m");
+        assert_eq!(lines[3].line, "      print *, i, j");
+        assert_eq!(lines[4].line, "  10 continue");
+        assert_eq!(lines[5].line, "end function f");
+        for line in lines {
+            assert!(matches!(line.ending, LogicalLineEnding::Newline));
         }
         Ok(())
     }
