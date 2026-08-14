@@ -192,7 +192,9 @@ impl<'source> LogicalLinesBuilder<'source> {
             // We can also check for preprocessor line continuations by checking
             // if the current line ends with a backslash.
             let continued = node.kind_id() == kw!("&");
-            let last_physical_line = source.line_text(self.current_line_number);
+            // As line number must be greater than current_line_number, we can
+            // safely subtract 1 to get the previous line.
+            let last_physical_line = source.line_text(line_number.saturating_sub(1));
             let preproc_continued = last_physical_line
                 .chars()
                 .rev()
@@ -297,6 +299,7 @@ mod tests {
         let source = r#"
 ! Empty program
 program test
+
 end program test
 "#;
         let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
@@ -439,8 +442,9 @@ function &
     print *, &
 "Hello &
 ! mid string comment
-       & World"
-end &
+       & World"\
+
+end \
 & function &
 f
 "#;
@@ -463,7 +467,7 @@ f
             lines[1].line,
             "    print *, &\n\"Hello &\n! mid string comment\n       & World\""
         );
-        assert_eq!(lines[2].line, "end &\n& function &\nf");
+        assert_eq!(lines[2].line, "end \\\n& function &\nf");
         assert_eq!(lines[0].expected_indent, 0);
         assert_eq!(lines[1].expected_indent, 1);
         assert_eq!(lines[2].expected_indent, 0);
