@@ -4,7 +4,6 @@ use ruff_source_file::{OneIndexed, SourceCode};
 use ruff_text_size::{TextRange, TextSize};
 
 // TODO: handle preproc
-// TODO: handle semicolons
 
 const POST_INDENTORS: [u16; 24] = [
     kind!("program_statement"),
@@ -166,7 +165,7 @@ impl<'source> LogicalLinesBuilder<'source> {
         let start_byte = node.start_textsize();
         let line_number = source.line_index(start_byte);
         self.current_line_number = line_number;
-        self.current_start_byte = start_byte;
+        self.current_start_byte = source.line_start(line_number);
         self.current_end_byte = start_byte;
         self.initialised = true;
     }
@@ -189,19 +188,49 @@ impl<'source> LogicalLinesBuilder<'source> {
             // If this is found on a new line, the current logical line is extended
             // to include the next line.
             if node.kind_id() != kw!("&") {
-                // The node starts on a new line, so we need to finish the current logical line
-                let line = LogicalLine {
-                    line: &self.source
-                        [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)],
-                    range: TextRange::new(self.current_start_byte, self.current_end_byte),
-                    ending: LogicalLineEnding::Newline,
-                    expected_indent: self.current_expected_indent,
-                };
-                self.lines.push(line);
+                // The node starts on a new line, so we need to finish the
+                // current logical line.
+                // It is possible for the current logical line to be empty if
+                // the previous line ended with a semicolon, so we check that
+                // the start and end bytes are not equal before adding the line.
+                if self.current_start_byte != self.current_end_byte {
+                    let line = LogicalLine {
+                        line: &self.source[usize::from(self.current_start_byte)
+                            ..usize::from(self.current_end_byte)],
+                        range: TextRange::new(self.current_start_byte, self.current_end_byte),
+                        ending: LogicalLineEnding::Newline,
+                        expected_indent: self.current_expected_indent,
+                    };
+                    self.lines.push(line);
+                }
                 self.current_start_byte = source.line_start(line_number);
                 self.current_expected_indent = self.next_expected_indent;
             }
             self.current_line_number = line_number;
+        }
+
+        // If the node is a semicolon, we need to finish the current logical
+        // line and start a new one. Note that this can happen at the very
+        // start of a new line, so it must be checked after the new line check
+        // above.
+        // Semicolons can also really mess with indentation! Here, we assume
+        // that the indentation of the next logical line is the same as if the
+        // semicolon were not there, otherwise it's easy to find yourself in
+        // a situation where the indentation is off by one for the rest of
+        // the file.
+        if kind_id == kw!(";") {
+            // End byte is extended immediately to include the semicolon
+            self.current_end_byte = end_byte;
+            let line = LogicalLine {
+                line: &self.source
+                    [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)],
+                range: TextRange::new(self.current_start_byte, self.current_end_byte),
+                ending: LogicalLineEnding::Semicolon,
+                expected_indent: self.current_expected_indent,
+            };
+            self.lines.push(line);
+            self.current_start_byte = end_byte;
+            self.current_expected_indent = self.next_expected_indent;
         }
 
         // Dedentors and post-indentors affect the expected indentation of the
@@ -221,6 +250,8 @@ impl<'source> LogicalLinesBuilder<'source> {
         }
 
         // Regardless of what happened, the current logical line is extended.
+        // In the case of finding a semicolon, this action is repeated twice,
+        // but this is harmless.
         self.current_end_byte = end_byte;
     }
 }
@@ -400,7 +431,10 @@ f
         assert_eq!(logical_lines.inner.len(), 3);
         let lines = logical_lines.iter().collect_vec();
         assert_eq!(lines[0].line, "function &\n    f()");
-        assert_eq!(lines[1].line, "    print *, &\n\"Hello &\n! mid string comment\n       & World\"");
+        assert_eq!(
+            lines[1].line,
+            "    print *, &\n\"Hello &\n! mid string comment\n       & World\""
+        );
         assert_eq!(lines[2].line, "end &\n& function &\nf");
         assert_eq!(lines[0].expected_indent, 0);
         assert_eq!(lines[1].expected_indent, 1);
@@ -408,6 +442,44 @@ f
         for line in lines {
             assert!(matches!(line.ending, LogicalLineEnding::Newline));
         }
+        Ok(())
+    }
+
+    #[test]
+    fn test_semicolons() -> Result<()> {
+        let source = r#"
+function f();
+; ;  print *, "Hello"  ;;print *, "World"
+end function f
+"#;
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+        let tree = parser.parse(source, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let line_index = LineIndex::from_source_text(source);
+        let source_code = SourceCode::new(source, &line_index);
+        let mut builder = LogicalLinesBuilder::new(source);
+        for node in root.descendants() {
+            builder.add_node(node, &source_code);
+        }
+        let logical_lines = builder.finish();
+
+        assert_eq!(logical_lines.inner.len(), 7);
+        let lines = logical_lines.iter().collect_vec();
+        assert_eq!(lines[0].line, "function f();");
+        assert_eq!(lines[1].line, ";"); // First superfluous semicolon on second line
+        assert_eq!(lines[2].line, " ;"); // Second superfluous semicolon on second line
+        assert_eq!(lines[3].line, "  print *, \"Hello\"  ;");
+        assert_eq!(lines[4].line, ";"); // Third superfluous semicolon on second line
+        assert_eq!(lines[5].line, "print *, \"World\"");
+        assert_eq!(lines[6].line, "end function f");
+        assert!(matches!(lines[0].ending, LogicalLineEnding::Semicolon));
+        assert!(matches!(lines[1].ending, LogicalLineEnding::Semicolon));
+        assert!(matches!(lines[2].ending, LogicalLineEnding::Semicolon));
+        assert!(matches!(lines[3].ending, LogicalLineEnding::Semicolon));
+        assert!(matches!(lines[4].ending, LogicalLineEnding::Semicolon));
+        assert!(matches!(lines[5].ending, LogicalLineEnding::Newline));
+        assert!(matches!(lines[6].ending, LogicalLineEnding::Newline));
         Ok(())
     }
 
