@@ -241,10 +241,12 @@ impl<'source> LogicalLinesBuilder<'source> {
             self.next_expected_indent = self.next_expected_indent.saturating_sub(1);
         }
         if POST_INDENTORS.contains(&kind_id) {
-            // Edge case: one-line if statements
+            // Edge case: one-line if statements and where statements
             let one_line_if = kind_id == kind!("if_statement")
                 && node.child_with_id(kind!("end_if_statement")).is_none();
-            if !one_line_if {
+            let one_line_where = kind_id == kind!("where_statement")
+                && node.child_with_id(kind!("end_where_statement")).is_none();
+            if !one_line_if && !one_line_where {
                 self.next_expected_indent = self.current_expected_indent.saturating_add(1);
             }
         }
