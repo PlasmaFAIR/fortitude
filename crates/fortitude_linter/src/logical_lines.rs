@@ -192,7 +192,8 @@ impl<'source> LogicalLinesBuilder<'source> {
             // We can also check for preprocessor line continuations by checking
             // if the current line ends with a backslash.
             let continued = node.kind_id() == kw!("&");
-            let preproc_continued = self.source[..usize::from(start_byte)]
+            let last_physical_line = source.line_text(self.current_line_number);
+            let preproc_continued = last_physical_line
                 .chars()
                 .rev()
                 .find(|c| !c.is_ascii_whitespace())
@@ -524,7 +525,8 @@ function f()
     print *, "Baz"
 #endif
 end function f
-#undef FOO
+#undef \
+FOO
 "#;
         let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
@@ -550,7 +552,7 @@ end function f
         assert_eq!(lines[7].line, "    print *, \"Baz\"");
         assert_eq!(lines[8].line, "#endif");
         assert_eq!(lines[9].line, "end function f");
-        assert_eq!(lines[10].line, "#undef FOO");
+        assert_eq!(lines[10].line, "#undef \\\nFOO");
         assert_eq!(lines[0].expected_indent, 0);
         assert_eq!(lines[1].expected_indent, 0);
         assert_eq!(lines[2].expected_indent, 0);
