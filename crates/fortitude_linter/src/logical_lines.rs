@@ -53,36 +53,48 @@ const DEDENTORS: [u16; 20] = [
     kind!("elsewhere_clause"),
 ];
 
-#[allow(dead_code)]
-enum LogicalLineEnding {
+pub enum LogicalLineEnding {
     Newline,
     Semicolon,
 }
 
-#[allow(dead_code)]
-struct LogicalLine<'source> {
+pub struct LogicalLine<'source> {
     line: &'source str,
     range: TextRange,
     expected_indent: u8,
     ending: LogicalLineEnding,
 }
 
-#[allow(dead_code)]
-struct LogicalLines<'source> {
-    source: &'source str,
+impl<'source> LogicalLine<'source> {
+    pub fn line(&self) -> &'source str {
+        self.line
+    }
+
+    pub fn range(&self) -> TextRange {
+        self.range
+    }
+
+    pub fn expected_indent(&self) -> u8 {
+        self.expected_indent
+    }
+
+    pub fn ending(&self) -> &LogicalLineEnding {
+        &self.ending
+    }
+}
+
+pub struct LogicalLines<'source> {
     inner: Vec<LogicalLine<'source>>,
 }
 
 impl<'source> LogicalLines<'source> {
     /// Returns an iterator over the logical lines
-    #[allow(dead_code)]
     pub fn iter(&self) -> impl Iterator<Item = &LogicalLine<'source>> {
         self.inner.iter()
     }
 
     /// Returns the number of lines
     #[inline]
-    #[allow(dead_code)]
     pub fn line_count(&self) -> usize {
         self.inner.len()
     }
@@ -95,14 +107,12 @@ impl<'source> LogicalLines<'source> {
 /// list of completed logical lines. When all nodes have been processed, the
 /// `finish` method is called to finalise the construction and return the
 /// `LogicalLines` object.
-#[allow(dead_code)]
-struct LogicalLinesBuilder<'source> {
+pub struct LogicalLinesBuilder<'source> {
     source: &'source str,
     lines: Vec<LogicalLine<'source>>,
     current_line_number: OneIndexed,
     current_start_byte: TextSize,
     current_end_byte: TextSize,
-    last_line_continued: bool,
     current_expected_indent: u8,
     next_expected_indent: u8,
     initialised: bool,
@@ -110,15 +120,13 @@ struct LogicalLinesBuilder<'source> {
 
 impl<'source> LogicalLinesBuilder<'source> {
     /// Create a new builder for the given source code.
-    #[allow(dead_code)]
-    fn new(source: &'source str) -> Self {
+    pub fn new(source: &'source str) -> Self {
         Self {
             source,
             lines: Vec::new(),
             current_line_number: OneIndexed::from_zero_indexed(0),
             current_start_byte: TextSize::from(0),
             current_end_byte: TextSize::from(0),
-            last_line_continued: false,
             current_expected_indent: 0,
             next_expected_indent: 0,
             initialised: false,
@@ -126,8 +134,7 @@ impl<'source> LogicalLinesBuilder<'source> {
     }
 
     /// Consume the builder and returns the constructed `LogicalLines`.
-    #[allow(dead_code)]
-    fn finish(self) -> LogicalLines<'source> {
+    pub fn finish(self) -> LogicalLines<'source> {
         let mut lines = self.lines;
         // If the last logical line has not been added, add it now
         if self.current_start_byte != self.current_end_byte {
@@ -155,14 +162,10 @@ impl<'source> LogicalLinesBuilder<'source> {
             };
             lines.push(last_line);
         }
-        LogicalLines {
-            source: self.source,
-            inner: lines,
-        }
+        LogicalLines { inner: lines }
     }
 
     /// Called by `add_node` on first encountering a node.
-    #[allow(dead_code)]
     fn initialise(&mut self, node: Node<'source>, source: &'source SourceCode) {
         let start_byte = node.start_textsize();
         let line_number = source.line_index(start_byte);
@@ -172,8 +175,7 @@ impl<'source> LogicalLinesBuilder<'source> {
         self.initialised = true;
     }
 
-    #[allow(dead_code)]
-    fn add_node(&mut self, node: Node<'source>, source: &'source SourceCode) {
+    pub fn add_node(&mut self, node: Node<'source>, source: &'source SourceCode) {
         if !self.initialised {
             self.initialise(node, source);
         }
