@@ -30,7 +30,7 @@ const POST_INDENTORS: [u16; 24] = [
     kind!("elsewhere_clause"),
 ];
 
-const DEDENTORS: [u16; 20] = [
+const DEDENTORS: [u16; 21] = [
     kind!("end_program_statement"),
     kind!("end_module_statement"),
     kind!("end_submodule_statement"),
@@ -42,6 +42,7 @@ const DEDENTORS: [u16; 20] = [
     kind!("end_interface_statement"),
     kind!("end_select_statement"),
     kind!("end_do_loop_statement"),
+    kind!("end_do_label_loop_statement"),
     kind!("end_associate_statement"),
     kind!("end_where_statement"),
     kind!("contains_statement"),
@@ -59,23 +60,40 @@ pub enum LogicalLineEnding {
 }
 
 pub struct LogicalLine<'source> {
-    line: &'source str,
+    text: &'source str,
     range: TextRange,
     expected_indent: u8,
     ending: LogicalLineEnding,
 }
 
 impl<'source> LogicalLine<'source> {
-    pub fn line(&self) -> &'source str {
-        self.line
+    pub fn text(&self) -> &'source str {
+        self.text
     }
 
     pub fn range(&self) -> TextRange {
         self.range
     }
 
-    pub fn expected_indent(&self) -> u8 {
-        self.expected_indent
+    pub fn start_byte(&self) -> TextSize {
+        self.range.start()
+    }
+
+    pub fn end_byte(&self) -> TextSize {
+        self.range.end()
+    }
+
+    pub fn expected_indent(&self, indent_width: u8) -> u8 {
+        self.expected_indent * indent_width
+    }
+
+    pub fn indentation(&self) -> &'source str {
+        let count = self
+            .text
+            .chars()
+            .take_while(|c| c.is_ascii_whitespace())
+            .count();
+        &self.text[..count]
     }
 
     pub fn ending(&self) -> &LogicalLineEnding {
@@ -155,7 +173,7 @@ impl<'source> LogicalLinesBuilder<'source> {
                 self.current_expected_indent
             };
             let last_line = LogicalLine {
-                line,
+                text: line,
                 range,
                 ending,
                 expected_indent,
@@ -226,7 +244,7 @@ impl<'source> LogicalLinesBuilder<'source> {
                         self.current_expected_indent
                     };
                     let logical_line = LogicalLine {
-                        line,
+                        text: line,
                         range,
                         ending,
                         expected_indent,
@@ -252,7 +270,7 @@ impl<'source> LogicalLinesBuilder<'source> {
             // End byte is extended immediately to include the semicolon
             self.current_end_byte = end_byte;
             let logical_line = LogicalLine {
-                line: &self.source
+                text: &self.source
                     [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)],
                 range: TextRange::new(self.current_start_byte, self.current_end_byte),
                 ending: LogicalLineEnding::Semicolon,
@@ -318,9 +336,9 @@ end program test
 
         assert_eq!(logical_lines.inner.len(), 3);
         let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].line, "! Empty program");
-        assert_eq!(lines[1].line, "program test");
-        assert_eq!(lines[2].line, "end program test");
+        assert_eq!(lines[0].text, "! Empty program");
+        assert_eq!(lines[1].text, "program test");
+        assert_eq!(lines[2].text, "end program test");
         for line in lines {
             assert!(matches!(line.ending, LogicalLineEnding::Newline));
             assert_eq!(line.expected_indent, 0);
@@ -361,21 +379,21 @@ end module test
 
         assert_eq!(logical_lines.inner.len(), 15);
         let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].line, "module test");
-        assert_eq!(lines[1].line, "  implicit none");
-        assert_eq!(lines[2].line, "contains");
-        assert_eq!(lines[3].line, "  subroutine sub(i)");
-        assert_eq!(lines[4].line, "    integer, intent(in) :: i");
-        assert_eq!(lines[5].line, "    if (i > 0) then");
-        assert_eq!(lines[6].line, "      print *, \"Positive\"");
-        assert_eq!(lines[7].line, "    else if (i < 0) then");
-        assert_eq!(lines[8].line, "      print *, \"Negative\"");
-        assert_eq!(lines[9].line, "    else");
-        assert_eq!(lines[10].line, "      print *, \"Zero\"");
-        assert_eq!(lines[11].line, "    end if");
-        assert_eq!(lines[12].line, "    if (i == 0) print *, \"Still zero\"");
-        assert_eq!(lines[13].line, "  end subroutine sub");
-        assert_eq!(lines[14].line, "end module test");
+        assert_eq!(lines[0].text, "module test");
+        assert_eq!(lines[1].text, "  implicit none");
+        assert_eq!(lines[2].text, "contains");
+        assert_eq!(lines[3].text, "  subroutine sub(i)");
+        assert_eq!(lines[4].text, "    integer, intent(in) :: i");
+        assert_eq!(lines[5].text, "    if (i > 0) then");
+        assert_eq!(lines[6].text, "      print *, \"Positive\"");
+        assert_eq!(lines[7].text, "    else if (i < 0) then");
+        assert_eq!(lines[8].text, "      print *, \"Negative\"");
+        assert_eq!(lines[9].text, "    else");
+        assert_eq!(lines[10].text, "      print *, \"Zero\"");
+        assert_eq!(lines[11].text, "    end if");
+        assert_eq!(lines[12].text, "    if (i == 0) print *, \"Still zero\"");
+        assert_eq!(lines[13].text, "  end subroutine sub");
+        assert_eq!(lines[14].text, "end module test");
         assert_eq!(lines[0].expected_indent, 0);
         assert_eq!(lines[1].expected_indent, 1);
         assert_eq!(lines[2].expected_indent, 0);
@@ -424,12 +442,18 @@ end function f
 
         assert_eq!(logical_lines.inner.len(), 6);
         let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].line, "function f()");
-        assert_eq!(lines[1].line, "  do 10 i = 1, n");
-        assert_eq!(lines[2].line, "    do 10 j = 1, m");
-        assert_eq!(lines[3].line, "      print *, i, j");
-        assert_eq!(lines[4].line, "  10 continue");
-        assert_eq!(lines[5].line, "end function f");
+        assert_eq!(lines[0].text, "function f()");
+        assert_eq!(lines[1].text, "  do 10 i = 1, n");
+        assert_eq!(lines[2].text, "    do 10 j = 1, m");
+        assert_eq!(lines[3].text, "      print *, i, j");
+        assert_eq!(lines[4].text, "  10 continue");
+        assert_eq!(lines[5].text, "end function f");
+        assert_eq!(lines[0].expected_indent, 0);
+        assert_eq!(lines[1].expected_indent, 1);
+        assert_eq!(lines[2].expected_indent, 2);
+        assert_eq!(lines[3].expected_indent, 3);
+        assert_eq!(lines[4].expected_indent, 1);
+        assert_eq!(lines[5].expected_indent, 0);
         for line in lines {
             assert!(matches!(line.ending, LogicalLineEnding::Newline));
         }
@@ -464,12 +488,12 @@ f
 
         assert_eq!(logical_lines.inner.len(), 3);
         let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].line, "function &\n    f()");
+        assert_eq!(lines[0].text, "function &\n    f()");
         assert_eq!(
-            lines[1].line,
+            lines[1].text,
             "    print *, &\n\"Hello &\n! mid string comment\n       & World\""
         );
-        assert_eq!(lines[2].line, "end \\\n& function &\nf");
+        assert_eq!(lines[2].text, "end \\\n& function &\nf");
         assert_eq!(lines[0].expected_indent, 0);
         assert_eq!(lines[1].expected_indent, 1);
         assert_eq!(lines[2].expected_indent, 0);
@@ -500,13 +524,13 @@ end function f
 
         assert_eq!(logical_lines.inner.len(), 7);
         let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].line, "function f();");
-        assert_eq!(lines[1].line, ";"); // First superfluous semicolon on second line
-        assert_eq!(lines[2].line, " ;"); // Second superfluous semicolon on second line
-        assert_eq!(lines[3].line, "  print *, \"Hello\"  ;");
-        assert_eq!(lines[4].line, ";"); // Third superfluous semicolon on second line
-        assert_eq!(lines[5].line, "print *, \"World\"");
-        assert_eq!(lines[6].line, "end function f");
+        assert_eq!(lines[0].text, "function f();");
+        assert_eq!(lines[1].text, ";"); // First superfluous semicolon on second line
+        assert_eq!(lines[2].text, " ;"); // Second superfluous semicolon on second line
+        assert_eq!(lines[3].text, "  print *, \"Hello\"  ;");
+        assert_eq!(lines[4].text, ";"); // Third superfluous semicolon on second line
+        assert_eq!(lines[5].text, "print *, \"World\"");
+        assert_eq!(lines[6].text, "end function f");
         assert!(matches!(lines[0].ending, LogicalLineEnding::Semicolon));
         assert!(matches!(lines[1].ending, LogicalLineEnding::Semicolon));
         assert!(matches!(lines[2].ending, LogicalLineEnding::Semicolon));
@@ -548,17 +572,17 @@ FOO
 
         assert_eq!(logical_lines.inner.len(), 11);
         let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].line, "#define FOO 1");
-        assert_eq!(lines[1].line, "function f()");
-        assert_eq!(lines[2].line, "#if FOO \\\n    == 1\n");
-        assert_eq!(lines[3].line, "    print *, \"Foo\"");
-        assert_eq!(lines[4].line, "#elif FOO == 2\n");
-        assert_eq!(lines[5].line, "    print *, \"Bar\"");
-        assert_eq!(lines[6].line, "#else");
-        assert_eq!(lines[7].line, "    print *, \"Baz\"");
-        assert_eq!(lines[8].line, "#endif");
-        assert_eq!(lines[9].line, "end function f");
-        assert_eq!(lines[10].line, "#undef \\\nFOO");
+        assert_eq!(lines[0].text, "#define FOO 1");
+        assert_eq!(lines[1].text, "function f()");
+        assert_eq!(lines[2].text, "#if FOO \\\n    == 1\n");
+        assert_eq!(lines[3].text, "    print *, \"Foo\"");
+        assert_eq!(lines[4].text, "#elif FOO == 2\n");
+        assert_eq!(lines[5].text, "    print *, \"Bar\"");
+        assert_eq!(lines[6].text, "#else");
+        assert_eq!(lines[7].text, "    print *, \"Baz\"");
+        assert_eq!(lines[8].text, "#endif");
+        assert_eq!(lines[9].text, "end function f");
+        assert_eq!(lines[10].text, "#undef \\\nFOO");
         assert_eq!(lines[0].expected_indent, 0);
         assert_eq!(lines[1].expected_indent, 0);
         assert_eq!(lines[2].expected_indent, 0);
@@ -604,17 +628,17 @@ end &
         let logical_lines = builder.finish();
 
         assert_eq!(logical_lines.inner.len(), 11);
-        assert_eq!(logical_lines.inner[0].line, "!  line1");
-        assert_eq!(logical_lines.inner[1].line, "module mod;");
-        assert_eq!(logical_lines.inner[2].line, " implicit &\nnone;");
-        assert_eq!(logical_lines.inner[3].line, "    contains ! comment");
-        assert_eq!(logical_lines.inner[4].line, "function func() result(res)");
-        assert_eq!(logical_lines.inner[5].line, "    integer :: res");
-        assert_eq!(logical_lines.inner[6].line, "#if FOO \\\n    == 1\n");
-        assert_eq!(logical_lines.inner[7].line, "    res = 1");
-        assert_eq!(logical_lines.inner[8].line, "#endif");
-        assert_eq!(logical_lines.inner[9].line, "end &\n  & function func;");
-        assert_eq!(logical_lines.inner[10].line, "end module mod");
+        assert_eq!(logical_lines.inner[0].text, "!  line1");
+        assert_eq!(logical_lines.inner[1].text, "module mod;");
+        assert_eq!(logical_lines.inner[2].text, " implicit &\nnone;");
+        assert_eq!(logical_lines.inner[3].text, "    contains ! comment");
+        assert_eq!(logical_lines.inner[4].text, "function func() result(res)");
+        assert_eq!(logical_lines.inner[5].text, "    integer :: res");
+        assert_eq!(logical_lines.inner[6].text, "#if FOO \\\n    == 1\n");
+        assert_eq!(logical_lines.inner[7].text, "    res = 1");
+        assert_eq!(logical_lines.inner[8].text, "#endif");
+        assert_eq!(logical_lines.inner[9].text, "end &\n  & function func;");
+        assert_eq!(logical_lines.inner[10].text, "end module mod");
         assert_eq!(logical_lines.inner[0].expected_indent, 0);
         assert_eq!(logical_lines.inner[1].expected_indent, 0);
         assert_eq!(logical_lines.inner[2].expected_indent, 1);

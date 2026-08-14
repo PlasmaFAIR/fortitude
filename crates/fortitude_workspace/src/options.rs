@@ -562,87 +562,66 @@ impl KeywordWhitespaceOptions {
 )]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct IncorrectIndentationOptions {
-    /// Whether lines containing semicolons should be ignored
+    /// Whether to indent the contents of a program
     #[option(
         default = "true",
         value_type = "bool",
-        example = "ignore-semicolons = false"
+        example = "indent-programs = false"
     )]
-    pub ignore_semicolons: Option<bool>,
+    pub indent_programs: Option<bool>,
 
-    /// The number of full indents to use for the contents of a program
-    #[option(default = "1", value_type = "usize", example = "program-indents = 2")]
-    pub program_indents: Option<usize>,
-
-    /// The number of full indents to use for the contents of modules and submodules
-    #[option(default = "1", value_type = "usize", example = "module-indents = 2")]
-    pub module_indents: Option<usize>,
-
-    /// The number of full indents to use for the contents of subroutines and functions
-    #[option(default = "1", value_type = "usize", example = "procedure-indents = 2")]
-    pub procedure_indents: Option<usize>,
-
-    /// The number of full indents to use for the contents of a derived type
+    /// Whether to indent the contents of modules and submodules
     #[option(
-        default = "1",
-        value_type = "usize",
-        example = "derived-type-indents = 2"
+        default = "true",
+        value_type = "bool",
+        example = "indent-modules = false"
     )]
-    pub derived_type_indents: Option<usize>,
+    pub indent_modules: Option<bool>,
 
-    /// The number of full indents to use for the contents of control flow units (i.e. `block`, `if`, `associate`, `do`, `select`)
+    /// Whether to indent the contents of subroutines and functions
     #[option(
-        default = "1",
-        value_type = "usize",
-        example = "control-flow-indents = 2"
+        default = "true",
+        value_type = "bool",
+        example = "indent-procedures = false"
     )]
-    pub control_flow_indents: Option<usize>,
+    pub indent_procedures: Option<bool>,
 
-    /// The number of full indents to use for the contents of a interface
-    #[option(default = "1", value_type = "usize", example = "interface-indents = 2")]
-    pub interface_indents: Option<usize>,
-
-    /// The number of full indents to use after a line continuation (`&`)
+    /// Whether to indent the contents of a derived type
     #[option(
-        default = "1",
-        value_type = "int",
-        example = "line-continuation-indents = 2"
+        default = "true",
+        value_type = "bool",
+        example = "indent-derived-types = false"
     )]
-    pub line_continuation_indents: Option<usize>,
+    pub indent_derived_types: Option<bool>,
+
+    /// Whether to indent the contents of control flow units (i.e. `block`,
+    /// `if`, `associate`, `do`, `select`)
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "indent-control-flow = false"
+    )]
+    pub indent_control_flow: Option<bool>,
+
+    /// Whether to indent the contents of an interface
+    #[option(
+        default = "true",
+        value_type = "bool",
+        example = "indent-interfaces = false"
+    )]
+    pub indent_interfaces: Option<bool>,
 }
 
 impl IncorrectIndentationOptions {
     pub fn into_settings(self) -> whitespace::settings::IncorrectIndentationSettings {
-        let mut settings_to_return = whitespace::settings::IncorrectIndentationSettings::default();
-
-        settings_to_return.ignore_semicolons = self
-            .ignore_semicolons
-            .unwrap_or(settings_to_return.ignore_semicolons);
-        settings_to_return.program_indents = self
-            .program_indents
-            .unwrap_or(settings_to_return.program_indents);
-        settings_to_return.module_indents = self
-            .module_indents
-            .unwrap_or(settings_to_return.module_indents);
-        settings_to_return.procedure_indents = self
-            .procedure_indents
-            .unwrap_or(settings_to_return.procedure_indents);
-        settings_to_return.derived_type_indents = self
-            .derived_type_indents
-            .unwrap_or(settings_to_return.derived_type_indents);
-        settings_to_return.control_flow_indents = self
-            .control_flow_indents
-            .unwrap_or(settings_to_return.control_flow_indents);
-        settings_to_return.interface_indents = self
-            .interface_indents
-            .unwrap_or(settings_to_return.interface_indents);
-        settings_to_return.line_continuation_indents = self
-            .line_continuation_indents
-            .unwrap_or(settings_to_return.line_continuation_indents);
-
-        settings_to_return = settings_to_return.populate_construct_to_indent_map();
-
-        settings_to_return
+        whitespace::settings::IncorrectIndentationSettings {
+            indent_programs: self.indent_programs.unwrap_or(true),
+            indent_modules: self.indent_modules.unwrap_or(true),
+            indent_procedures: self.indent_procedures.unwrap_or(true),
+            indent_derived_types: self.indent_derived_types.unwrap_or(true),
+            indent_control_flow: self.indent_control_flow.unwrap_or(true),
+            indent_interfaces: self.indent_interfaces.unwrap_or(true),
+        }
     }
 }
 
