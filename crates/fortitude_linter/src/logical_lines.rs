@@ -3,8 +3,6 @@ use fortitude_sitter::{Node, traits::TextRanged};
 use ruff_source_file::{OneIndexed, SourceCode};
 use ruff_text_size::{TextRange, TextSize};
 
-// TODO: handle preproc
-
 const POST_INDENTORS: [u16; 24] = [
     kind!("program_statement"),
     kind!("module_statement"),
@@ -30,17 +28,6 @@ const POST_INDENTORS: [u16; 24] = [
     kind!("else_clause"),
     kind!("elseif_clause"),
     kind!("elsewhere_clause"),
-];
-
-#[allow(dead_code)]
-const PREPROC_NODES: [u16; 7] = [
-    kind!("preproc_if"),
-    kind!("preproc_ifdef"),
-    kind!("preproc_elifdef"),
-    kind!("preproc_else"),
-    kind!("preproc_include"),
-    kind!("preproc_def"),
-    kind!("preproc_function_def"),
 ];
 
 const DEDENTORS: [u16; 20] = [
@@ -142,14 +129,29 @@ impl<'source> LogicalLinesBuilder<'source> {
     #[allow(dead_code)]
     fn finish(self) -> LogicalLines<'source> {
         let mut lines = self.lines;
+        // If the last logical line has not been added, add it now
         if self.current_start_byte != self.current_end_byte {
-            // If the last logical line has not been added, add it now
+            let line = &self.source
+                [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)];
+            let range = TextRange::new(self.current_start_byte, self.current_end_byte);
+            let ending = LogicalLineEnding::Newline;
+            // If the first non-whitespace character on the line is a '#',
+            // it is a preprocessor directive, so the expected indentation
+            // is zero.
+            let first_non_whitespace = line
+                .chars()
+                .find(|c| !c.is_ascii_whitespace())
+                .unwrap_or('\0');
+            let expected_indent = if first_non_whitespace == '#' {
+                0
+            } else {
+                self.current_expected_indent
+            };
             let last_line = LogicalLine {
-                line: &self.source
-                    [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)],
-                range: TextRange::new(self.current_start_byte, self.current_end_byte),
-                ending: LogicalLineEnding::Newline,
-                expected_indent: self.current_expected_indent,
+                line,
+                range,
+                ending,
+                expected_indent,
             };
             lines.push(last_line);
         }
@@ -183,25 +185,48 @@ impl<'source> LogicalLinesBuilder<'source> {
 
         // If the node starts on a new line, we might write out the previous line.
         if line_number > self.current_line_number {
-            // Continued lines begin with a real '&' node or a virtual one of zero
-            // width located at the beginning of the first node on the line.
-            // If this is found on a new line, the current logical line is extended
-            // to include the next line.
-            if node.kind_id() != kw!("&") {
+            // Continued lines begin with a real '&' node or a virtual one of
+            // zero width located at the beginning of the first node on the
+            // line. If this is found on a new line, the current logical line is
+            // extended to include the next line.
+            // We can also check for preprocessor line continuations by checking
+            // if the current line ends with a backslash.
+            let continued = node.kind_id() == kw!("&");
+            let preproc_continued = self.source[..usize::from(start_byte)]
+                .chars()
+                .rev()
+                .find(|c| !c.is_ascii_whitespace())
+                == Some('\\');
+            if !continued && !preproc_continued {
                 // The node starts on a new line, so we need to finish the
                 // current logical line.
                 // It is possible for the current logical line to be empty if
                 // the previous line ended with a semicolon, so we check that
                 // the start and end bytes are not equal before adding the line.
                 if self.current_start_byte != self.current_end_byte {
-                    let line = LogicalLine {
-                        line: &self.source[usize::from(self.current_start_byte)
-                            ..usize::from(self.current_end_byte)],
-                        range: TextRange::new(self.current_start_byte, self.current_end_byte),
-                        ending: LogicalLineEnding::Newline,
-                        expected_indent: self.current_expected_indent,
+                    let line = &self.source
+                        [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)];
+                    let range = TextRange::new(self.current_start_byte, self.current_end_byte);
+                    let ending = LogicalLineEnding::Newline;
+                    // If the first non-whitespace character on the line is a '#',
+                    // it is a preprocessor directive, so the expected indentation
+                    // is zero.
+                    let first_non_whitespace = line
+                        .chars()
+                        .find(|c| !c.is_ascii_whitespace())
+                        .unwrap_or('\0');
+                    let expected_indent = if first_non_whitespace == '#' {
+                        0
+                    } else {
+                        self.current_expected_indent
                     };
-                    self.lines.push(line);
+                    let logical_line = LogicalLine {
+                        line,
+                        range,
+                        ending,
+                        expected_indent,
+                    };
+                    self.lines.push(logical_line);
                 }
                 self.current_start_byte = source.line_start(line_number);
                 self.current_expected_indent = self.next_expected_indent;
@@ -221,14 +246,14 @@ impl<'source> LogicalLinesBuilder<'source> {
         if kind_id == kw!(";") {
             // End byte is extended immediately to include the semicolon
             self.current_end_byte = end_byte;
-            let line = LogicalLine {
+            let logical_line = LogicalLine {
                 line: &self.source
                     [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)],
                 range: TextRange::new(self.current_start_byte, self.current_end_byte),
                 ending: LogicalLineEnding::Semicolon,
                 expected_indent: self.current_expected_indent,
             };
-            self.lines.push(line);
+            self.lines.push(logical_line);
             self.current_start_byte = end_byte;
             self.current_expected_indent = self.next_expected_indent;
         }
@@ -485,29 +510,159 @@ end function f
         Ok(())
     }
 
-    //     #[test]
-    //     fn test_logical_lines() -> Result<()> {
-    //         let code = r#"
-    // !  line1
-    // module mod; implicit &
-    // none;    contains ! comment
-    // function func() result(res)
-    //     integer :: res
-    //     res = 1
-    // end &
-    //   function func;end module mod
-    // "#;
-    //         let logical_lines = build_logical_lines(code)?;
+    #[test]
+    fn test_preprocessor() -> Result<()> {
+        let source = r#"
+#define FOO 1
+function f()
+#if FOO \
+    == 1
+    print *, "Foo"
+#elif FOO == 2
+    print *, "Bar"
+#else
+    print *, "Baz"
+#endif
+end function f
+#undef FOO
+"#;
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+        let tree = parser.parse(source, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let line_index = LineIndex::from_source_text(source);
+        let source_code = SourceCode::new(source, &line_index);
+        let mut builder = LogicalLinesBuilder::new(source);
+        for node in root.descendants() {
+            builder.add_node(node, &source_code);
+        }
+        let logical_lines = builder.finish();
 
-    //         assert_eq!(logical_lines.inner.len(), 8);
-    //         assert_eq!(logical_lines.inner[0].line, "!  line1\n");
-    //         assert_eq!(logical_lines.inner[1].line, " implicit &\nnone;");
-    //         assert_eq!(logical_lines.inner[2].line, "    contains ! comment\n");
-    //         assert_eq!(logical_lines.inner[3].line, "function func() result(res)\n");
-    //         assert_eq!(logical_lines.inner[4].line, "    integer :: res\n");
-    //         assert_eq!(logical_lines.inner[5].line, "    res = 1\n");
-    //         assert_eq!(logical_lines.inner[6].line, "end &\n  function func;");
-    //         assert_eq!(logical_lines.inner[7].line, "end module mod\n");
-    //         Ok(())
-    //     }
+        assert_eq!(logical_lines.inner.len(), 11);
+        let lines = logical_lines.iter().collect_vec();
+        assert_eq!(lines[0].line, "#define FOO 1");
+        assert_eq!(lines[1].line, "function f()");
+        assert_eq!(lines[2].line, "#if FOO \\\n    == 1\n");
+        assert_eq!(lines[3].line, "    print *, \"Foo\"");
+        assert_eq!(lines[4].line, "#elif FOO == 2\n");
+        assert_eq!(lines[5].line, "    print *, \"Bar\"");
+        assert_eq!(lines[6].line, "#else");
+        assert_eq!(lines[7].line, "    print *, \"Baz\"");
+        assert_eq!(lines[8].line, "#endif");
+        assert_eq!(lines[9].line, "end function f");
+        assert_eq!(lines[10].line, "#undef FOO");
+        assert_eq!(lines[0].expected_indent, 0);
+        assert_eq!(lines[1].expected_indent, 0);
+        assert_eq!(lines[2].expected_indent, 0);
+        assert_eq!(lines[3].expected_indent, 1);
+        assert_eq!(lines[4].expected_indent, 0);
+        assert_eq!(lines[5].expected_indent, 1);
+        assert_eq!(lines[6].expected_indent, 0);
+        assert_eq!(lines[7].expected_indent, 1);
+        assert_eq!(lines[8].expected_indent, 0);
+        assert_eq!(lines[9].expected_indent, 0);
+        assert_eq!(lines[10].expected_indent, 0);
+        for line in lines {
+            assert!(matches!(line.ending, LogicalLineEnding::Newline));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_complex() -> Result<()> {
+        let source = r#"
+!  line1
+module mod; implicit &
+none;    contains ! comment
+function func() result(res)
+    integer :: res
+#if FOO \
+    == 1
+    res = 1
+#endif
+end &
+  & function func;end module mod
+"#;
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+        let tree = parser.parse(source, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let line_index = LineIndex::from_source_text(source);
+        let source_code = SourceCode::new(source, &line_index);
+        let mut builder = LogicalLinesBuilder::new(source);
+        for node in root.descendants() {
+            builder.add_node(node, &source_code);
+        }
+        let logical_lines = builder.finish();
+
+        assert_eq!(logical_lines.inner.len(), 11);
+        assert_eq!(logical_lines.inner[0].line, "!  line1");
+        assert_eq!(logical_lines.inner[1].line, "module mod;");
+        assert_eq!(logical_lines.inner[2].line, " implicit &\nnone;");
+        assert_eq!(logical_lines.inner[3].line, "    contains ! comment");
+        assert_eq!(logical_lines.inner[4].line, "function func() result(res)");
+        assert_eq!(logical_lines.inner[5].line, "    integer :: res");
+        assert_eq!(logical_lines.inner[6].line, "#if FOO \\\n    == 1\n");
+        assert_eq!(logical_lines.inner[7].line, "    res = 1");
+        assert_eq!(logical_lines.inner[8].line, "#endif");
+        assert_eq!(logical_lines.inner[9].line, "end &\n  & function func;");
+        assert_eq!(logical_lines.inner[10].line, "end module mod");
+        assert_eq!(logical_lines.inner[0].expected_indent, 0);
+        assert_eq!(logical_lines.inner[1].expected_indent, 0);
+        assert_eq!(logical_lines.inner[2].expected_indent, 1);
+        assert_eq!(logical_lines.inner[3].expected_indent, 0);
+        assert_eq!(logical_lines.inner[4].expected_indent, 1);
+        assert_eq!(logical_lines.inner[5].expected_indent, 2);
+        assert_eq!(logical_lines.inner[6].expected_indent, 0);
+        assert_eq!(logical_lines.inner[7].expected_indent, 2);
+        assert_eq!(logical_lines.inner[8].expected_indent, 0);
+        assert_eq!(logical_lines.inner[9].expected_indent, 1);
+        assert_eq!(logical_lines.inner[10].expected_indent, 0);
+        assert!(matches!(
+            logical_lines.inner[0].ending,
+            LogicalLineEnding::Newline
+        ));
+        assert!(matches!(
+            logical_lines.inner[1].ending,
+            LogicalLineEnding::Semicolon
+        ));
+        assert!(matches!(
+            logical_lines.inner[2].ending,
+            LogicalLineEnding::Semicolon
+        ));
+        assert!(matches!(
+            logical_lines.inner[3].ending,
+            LogicalLineEnding::Newline
+        ));
+        assert!(matches!(
+            logical_lines.inner[4].ending,
+            LogicalLineEnding::Newline
+        ));
+        assert!(matches!(
+            logical_lines.inner[5].ending,
+            LogicalLineEnding::Newline
+        ));
+        assert!(matches!(
+            logical_lines.inner[6].ending,
+            LogicalLineEnding::Newline
+        ));
+        assert!(matches!(
+            logical_lines.inner[7].ending,
+            LogicalLineEnding::Newline
+        ));
+        assert!(matches!(
+            logical_lines.inner[8].ending,
+            LogicalLineEnding::Newline
+        ));
+        assert!(matches!(
+            logical_lines.inner[9].ending,
+            LogicalLineEnding::Semicolon
+        ));
+        assert!(matches!(
+            logical_lines.inner[10].ending,
+            LogicalLineEnding::Newline
+        ));
+
+        Ok(())
+    }
 }
