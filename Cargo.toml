@@ -118,3 +118,7 @@ codegen-units = 1
 [profile.profiling]
 inherits = "release"
 debug = true
+
+[profile.samply]
+inherits = "release"
+debug = true
