@@ -7,7 +7,7 @@ use std::path::Path;
 use quick_junit::{NonSuccessKind, Report, TestCase, TestCaseStatus, TestSuite, XmlString};
 
 use crate::diagnostics::message::grouped::DiagnosticWithLocation;
-use crate::diagnostics::{Diagnostic, SecondaryCode};
+use crate::diagnostics::{Diagnostic, DisplayDiagnosticConfig};
 
 use super::grouped::group_diagnostics_by_filename;
 
@@ -19,9 +19,15 @@ use super::grouped::group_diagnostics_by_filename;
 /// [`junit.xsd`]: https://github.com/junit-team/junit-framework/blob/2870b7d8fd5bf7c1efe489d3991d3ed3900e82bb/platform-tests/src/test/resources/jenkins-junit.xsd
 /// [version]: https://llg.cubic.org/docs/junit/
 /// [`quick_junit`]: https://docs.rs/quick-junit/latest/quick_junit/
-pub(super) struct JunitRenderer {}
+pub(super) struct JunitRenderer<'a> {
+    config: &'a DisplayDiagnosticConfig,
+}
 
-impl JunitRenderer {
+impl<'a> JunitRenderer<'a> {
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
+        Self { config }
+    }
+
     pub(super) fn render(
         &self,
         f: &mut std::fmt::Formatter,
@@ -54,9 +60,11 @@ impl JunitRenderer {
                         start_location: location,
                     } = diagnostic;
 
-                    let code = diagnostic
-                        .secondary_code()
-                        .map_or_else(|| diagnostic.name(), SecondaryCode::as_str);
+                    let code = if self.config.preview && !self.config.rule_id_format.is_code() {
+                        diagnostic.id().as_str()
+                    } else {
+                        diagnostic.secondary_code_or_id()
+                    };
                     let mut status = TestCaseStatus::non_success(NonSuccessKind::Failure);
                     status.set_message(diagnostic.concise_message().to_str());
 

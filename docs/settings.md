@@ -614,6 +614,53 @@ Actions annotations), `"gitlab"` (GitLab CI code quality report),
 
 ---
 
+#### [`output-rule-id-format`](#check_output-rule-id-format) {: #check_output-rule-id-format }
+<span id="output-rule-id-format"></span>
+
+Whether to prefer rule codes, human-readable rule names, or both, in
+diagnostic output, even when preview mode is enabled.
+
+In preview mode, we now prefer to use human-readable rule names by
+default, but you can switch back to the older style with just a short
+code, or get both:
+
+```console
+$ fortitude check --preview --config 'check.output-rule-id-format = "both"' --output-format=concise example.f90
+example.f90:1:8: error[implicit-typing (C001)] program uses implicit typing
+$ fortitude check --preview --config 'check.output-rule-id-format = "code"' --output-format=concise example.f90
+example.f90:1:8: error[C001] program uses implicit typing
+```
+
+**Default value**: `"name"`
+
+**Type**: `"name" | "code" | "both"`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Display rule codes instead of human-readable rule names.
+    output-format-rule-id = "code"
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Display rule codes instead of human-readable rule names.
+    output-format-rule-id = "code"
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Display rule codes instead of human-readable rule names.
+    output-format-rule-id = "code"
+    ```
+
+---
+
 #### [`per-file-ignores`](#check_per-file-ignores) {: #check_per-file-ignores }
 <span id="per-file-ignores"></span>
 

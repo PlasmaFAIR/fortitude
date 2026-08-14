@@ -1,0 +1,22 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - github
+    - "--preview"
+    - "--select"
+    - implicit-typing
+    - test.f90
+    - "--config"
+    - "check.output-rule-id-format='both'"
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+::error title=fortitude (implicit-typing (C001)),file=[TMP]/test.f90,line=1,endLine=2::test.f90:1:1: C001 program uses implicit typing%0A  help: Insert `implicit none`
+
+----- stderr -----

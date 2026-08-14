@@ -1,0 +1,32 @@
+---
+source: crates/fortitude/tests/check.rs
+info:
+  program: fortitude
+  args:
+    - check
+    - "--output-format"
+    - grouped
+    - "--preview"
+    - "--select"
+    - implicit-typing
+    - test.f90
+    - "--config"
+    - "check.output-rule-id-format='both'"
+snapshot_kind: text
+---
+success: false
+exit_code: 1
+----- stdout -----
+test.f90:
+  1:1 implicit-typing (C001) program uses implicit typing
+
+fortitude: 1 files scanned.
+Number of errors: 1
+
+For more information about specific rules, run:
+
+    fortitude explain X001,Y002,...
+
+No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+----- stderr -----

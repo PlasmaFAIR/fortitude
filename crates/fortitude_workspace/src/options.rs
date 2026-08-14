@@ -9,6 +9,7 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use fortitude_linter::{
+    diagnostics::OutputRuleIdFormat,
     line_width::IndentWidth,
     rule_selector::RuleSelector,
     rules::{
@@ -122,6 +123,29 @@ pub struct CheckOptions {
         "#
     )]
     pub output_format: Option<OutputFormat>,
+
+    /// Whether to prefer rule codes, human-readable rule names, or both, in
+    /// diagnostic output, even when preview mode is enabled.
+    ///
+    /// In preview mode, we now prefer to use human-readable rule names by
+    /// default, but you can switch back to the older style with just a short
+    /// code, or get both:
+    ///
+    /// ```console
+    /// $ fortitude check --preview --config 'check.output-rule-id-format = "both"' --output-format=concise example.f90
+    /// example.f90:1:8: error[implicit-typing (C001)] program uses implicit typing
+    /// $ fortitude check --preview --config 'check.output-rule-id-format = "code"' --output-format=concise example.f90
+    /// example.f90:1:8: error[C001] program uses implicit typing
+    /// ```
+    #[option(
+        default = r#""name""#,
+        value_type = r#""name" | "code" | "both""#,
+        example = r#"
+            # Display rule codes instead of human-readable rule names.
+            output-format-rule-id = "code"
+        "#
+    )]
+    pub output_rule_id_format: Option<OutputRuleIdFormat>,
 
     /// Whether to enable preview mode. When preview mode is enabled, Fortitude will
     /// use unstable rules, fixes, and formatting.
