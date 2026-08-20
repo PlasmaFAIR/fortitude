@@ -195,7 +195,7 @@ contains
     if (y < 0.0) y = 0.0
   end subroutine test_do_while
 
-  subroutine test_select_case(x, y, z, w, tol) ! should trigger
+  subroutine test_select_case(x, y, z, w, tol) ! should not trigger
     CHARACTER(LEN=4) :: Title
     INTEGER, save :: DrMD = 0, PhD = 0, MS = 0, BS = 0, MR = 0, Others = 0
     SELECT CASE (Title)
@@ -243,12 +243,12 @@ contains
     orbit_type = "unknown"
 
     ! Classify by eccentricity
-    select case (nint(eccentricity*10))
-    case (0)                                              ! case +1 = 2
+    select case (nint(eccentricity*10)) ! case +1 = 2
+    case (0)
       orbit_type = "circular"
-    case (1:6)                                            ! case +1 = 3
+    case (1:6)
       orbit_type = "elliptical"
-    case (7:9)                                            ! case +1 = 4
+    case (7:9)
       orbit_type = "highly_elliptical"
     case default
       orbit_type = "hyperbolic"
@@ -260,7 +260,7 @@ contains
     escape_vel = sqrt(2.0*6.674e-11*body_mass/semi_major)
     velocity = sqrt(6.674e-11*body_mass/semi_major)
 
-    if (eccentricity >= 1.0 .or. semi_major < 0.0) then    ! if +1, .or. +1 = 6
+    if (eccentricity >= 1.0 .or. semi_major < 0.0) then    ! if +1, .or. +1 = 4
       stability = .false.
       orbit_type = "escape_trajectory"
       return
@@ -268,11 +268,11 @@ contains
 
     ! Inclination classification
     inc_class = 0
-    if (inclination < 30.0) then                           ! if +1 = 7
+    if (inclination < 30.0) then                           ! if +1 = 5
       inc_class = 1
-    else if (inclination < 90.0) then                      ! elseif +1 = 8
+    else if (inclination < 90.0) then                      ! elseif +1 = 6
       inc_class = 2
-    else if (inclination < 150.0) then                     ! elseif +1 = 9
+    else if (inclination < 150.0) then                     ! elseif +1 = 7
       inc_class = 3
     else
       inc_class = 4
@@ -280,17 +280,17 @@ contains
 
     ! Resonance check with simple iteration
     do while (velocity > escape_vel*0.1 .and. &
-              hill_radius > semi_major*0.01)             ! do +1, .and. +1 = 11
+              hill_radius > semi_major*0.01)             ! do +1, .and. +1 = 9
       velocity = velocity*0.99
       hill_radius = hill_radius*0.99
-      if (velocity < escape_vel*0.05) then               ! if +1 = 12
+      if (velocity < escape_vel*0.05) then               ! if +1 = 10
         stability = .false.
         exit
       end if
     end do
 
     ! Final stability check based on inclination class
-    if (inc_class == 4 .and. eccentricity > 0.8) then      ! if +1, .and. +1 = 14
+    if (inc_class == 4 .and. eccentricity > 0.8) then      ! if +1, .and. +1 = 12
       stability = .false.
     end if
 
