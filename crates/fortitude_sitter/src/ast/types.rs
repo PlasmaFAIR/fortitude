@@ -1,5 +1,6 @@
 //! Strong types for working with the tree-sitter AST
 
+use std::fmt::Display;
 use std::{rc::Rc, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
@@ -166,7 +167,7 @@ impl<'a> Extent<'a> {
 }
 
 /// One rank of a dimension's array-spec
-#[derive(Clone, Copy, Debug, EnumIs, PartialEq)]
+#[derive(Clone, Copy, Debug, EnumIs, PartialEq, Display, IntoStaticStr)]
 pub enum DimensionArraySpec<'a> {
     Expression(Node<'a>),
     Extent(Extent<'a>),
@@ -211,6 +212,16 @@ impl<'a> Dimension<'a> {
             .collect();
 
         Ok(Self { ranks: ranks? })
+    }
+}
+
+impl<'a> Display for Dimension<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "({})",
+            self.ranks.iter().map(|rank| rank.to_string()).join(", ")
+        )
     }
 }
 
@@ -265,7 +276,8 @@ impl<'a> Bind<'a> {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, EnumIs, IntoStaticStr, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, EnumIs, IntoStaticStr, PartialEq, Display)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum Intent {
     In,
     Out,
@@ -291,7 +303,7 @@ impl Intent {
     }
 }
 
-#[derive(Clone, Debug, EnumIs, EnumString, IntoStaticStr, PartialEq)]
+#[derive(Clone, Debug, EnumIs, EnumString, IntoStaticStr, PartialEq, Display)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum AttributeKind<'a> {
     Abstract,
@@ -366,7 +378,19 @@ impl<'a> Attribute<'a> {
     }
 }
 
-#[derive(Clone, Debug, EnumIs, IntoStaticStr)]
+impl<'a> From<Attribute<'a>> for &'static str {
+    fn from(value: Attribute<'a>) -> Self {
+        value.kind.into()
+    }
+}
+
+impl<'a> From<&'a Attribute<'a>> for &'static str {
+    fn from(value: &'a Attribute<'a>) -> Self {
+        value.kind().into()
+    }
+}
+
+#[derive(Clone, Debug, EnumIs, IntoStaticStr, Display)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum IntrinsicType<'a> {
     Byte(TypeInner<'a>),
@@ -404,6 +428,7 @@ impl<'a> IntrinsicType<'a> {
                 let second = node
                     .child(1)
                     .expect("`double` must be followed by either `complex` or `precision`");
+                let name = node.text();
                 match second.kind_id() {
                     kw!("complex") => IntrinsicType::DoubleComplex(TypeInner { node, name }),
                     kw!("precision") => IntrinsicType::DoublePrecision(TypeInner { node, name }),
@@ -414,7 +439,8 @@ impl<'a> IntrinsicType<'a> {
         }
     }
 
-    pub fn as_str(&self) -> &str {
+    /// The type name as it appears in the source
+    pub fn name(&self) -> &str {
         match self {
             Self::Byte(TypeInner { name, .. }) => name,
             Self::Integer(TypeInner { name, .. }) => name,
@@ -449,8 +475,9 @@ pub struct TypeInner<'a> {
     name: &'a str,
 }
 
-#[derive(Clone, Debug, EnumIs)]
+#[derive(Clone, Debug, EnumIs, IntoStaticStr, Display)]
 pub enum Type<'a> {
+    #[strum(serialize = "Intrinsic({0})")]
     Intrinsic(IntrinsicType<'a>),
     Derived(TypeInner<'a>),
     Procedure(TypeInner<'a>),
@@ -470,9 +497,10 @@ impl<'a> Type<'a> {
         }
     }
 
-    pub fn as_str(&self) -> &str {
+    /// The type name as it appears in the source
+    pub fn name(&self) -> &str {
         match self {
-            Self::Intrinsic(inner) => inner.as_str(),
+            Self::Intrinsic(inner) => inner.name(),
             Self::Derived(TypeInner { name, .. }) => name,
             Self::Procedure(TypeInner { name, .. }) => name,
             Self::Declared(TypeInner { name, .. }) => name,
