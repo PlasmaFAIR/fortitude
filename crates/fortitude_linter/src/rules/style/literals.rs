@@ -1,11 +1,10 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextSize;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for floating point literals that begin or end in a bare decimal point,
@@ -44,7 +43,7 @@ impl AlwaysFixableViolation for BareDecimal {
 
 impl AstRule for BareDecimal {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let txt = node.to_text(context.source_text())?;
+        let txt = node.text();
         // Three cases to match:
         // 1. Leading decimal point, e.g. `.5`
         // 2. Trailing decimal point, e.g. `2.`

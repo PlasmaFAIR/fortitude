@@ -7,7 +7,9 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use crate::diagnostics::{Applicability, OutputRuleIdFormat};
 use crate::diagnostics::{Applicability, RuleSeverityOverrides, Severity};
+use crate::line_width::IndentWidth;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_macros::CacheKey;
@@ -21,7 +23,9 @@ use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelect
 use crate::rule_table::RuleTable;
 use crate::rules::correctness::{exit_labels, shadowed_variable, use_statements};
 use crate::rules::portability::{self, invalid_tab};
-use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
+use crate::rules::style::{
+    complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
+};
 
 #[derive(Debug)]
 pub struct Settings {
@@ -61,6 +65,7 @@ pub struct CheckSettings {
     pub per_file_ignores: CompiledPerFileIgnoreList,
 
     pub line_length: usize,
+    pub indent_width: IndentWidth,
 
     pub fix: bool,
     pub fix_only: bool,
@@ -69,6 +74,7 @@ pub struct CheckSettings {
     pub output_format: OutputFormat,
     pub severity_default: Severity,
     pub severity_overrides: Vec<RuleSeverityOverrides>,
+    pub output_rule_id_format: OutputRuleIdFormat,
     pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
     pub preview: PreviewMode,
@@ -85,6 +91,7 @@ pub struct CheckSettings {
     pub line_too_long: line_length::settings::Settings,
     pub use_statements: use_statements::settings::Settings,
     pub complexity: complexity::settings::Settings,
+    pub incorrect_indentation: whitespace::settings::IncorrectIndentationSettings,
 }
 
 impl Default for CheckSettings {
@@ -103,6 +110,7 @@ impl CheckSettings {
                 .collect(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
+            indent_width: IndentWidth::from(4),
             fix: false,
             fix_only: false,
             show_fixes: false,
@@ -110,6 +118,7 @@ impl CheckSettings {
             output_format: OutputFormat::default(),
             severity_default: Severity::default(),
             severity_overrides: Vec::default(),
+            output_rule_id_format: OutputRuleIdFormat::default(),
             target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),
             preview: PreviewMode::default(),
@@ -124,6 +133,7 @@ impl CheckSettings {
             line_too_long: line_length::settings::Settings::default(),
             use_statements: use_statements::settings::Settings::default(),
             complexity: complexity::settings::Settings::default(),
+            incorrect_indentation: whitespace::settings::IncorrectIndentationSettings::default(),
         }
     }
 
@@ -172,11 +182,13 @@ impl fmt::Display for CheckSettings {
                 self.rules | nested,
                 self.per_file_ignores,
                 self.line_length,
+                self.indent_width,
                 self.fix,
                 self.fix_only,
                 self.show_fixes,
                 self.unsafe_fixes,
                 self.output_format,
+                self.output_rule_id_format,
                 self.target_std,
                 self.progress_bar,
                 self.preview,
@@ -542,6 +554,11 @@ pub enum OutputFormat {
     Azure,
 
     Sarif,
+
+    /// Print only names of files with violations
+    Name,
+    /// Print only count violations per file
+    Count,
 }
 
 impl fmt::Display for OutputFormat {
@@ -559,6 +576,8 @@ impl fmt::Display for OutputFormat {
             Self::Rdjson => write!(f, "rdjson"),
             Self::Azure => write!(f, "azure"),
             Self::Sarif => write!(f, "sarif"),
+            Self::Name => write!(f, "name"),
+            Self::Count => write!(f, "count"),
         }
     }
 }

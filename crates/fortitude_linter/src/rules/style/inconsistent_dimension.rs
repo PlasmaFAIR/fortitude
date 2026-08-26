@@ -1,15 +1,16 @@
 use crate::CheckContext;
 use crate::Rule;
-use crate::ast::FortitudeNode;
-use crate::ast::types::{HasName, NameDecl, VariableDeclaration};
+
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::remove_variable_decl;
-use crate::traits::{HasNode, TextRanged};
 use anyhow::{Context, Result};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::{
+    ast::types::{HasName, NameDecl, VariableDeclaration},
+    traits::{HasNode, TextRanged},
+};
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 use settings::PreferAttribute;
 
 /// ## What it does
@@ -62,14 +63,10 @@ impl AlwaysFixableViolation for InconsistentArrayDeclaration {
 fn dimension_attribute_and_shape(
     var: &NameDecl,
     decl: &VariableDeclaration,
-    src: &SourceFile,
     add_attribute: bool,
 ) -> Result<(String, String)> {
     // Get the shape, if declared on the variable name
-    let size = var
-        .size()
-        .map(|s| s.to_text(src.source_text()).context("expected text"))
-        .transpose()?;
+    let size = var.size().map(|s| s.text());
 
     if add_attribute {
         // Adding dimension attribute, removing decl size
@@ -85,9 +82,7 @@ fn dimension_attribute_and_shape(
                     .iter()
                     .find(|attr| attr.kind().is_dimension());
 
-                dim?.node()
-                    .child_with_name("argument_list")?
-                    .to_text(src.source_text())
+                Some(dim?.node().child_with_name("argument_list")?.text())
             })
             .context("expected either size or dimension attribute")?;
         Ok(("".to_string(), format!("{}{size}", var.name())))
@@ -102,17 +97,17 @@ fn fix_inconsistent_dimension(
     let prefer_attribute = context.settings().inconsistent_dimension.prefer_attribute;
     let src = context.source_file();
 
-    let mut edits = vec![remove_variable_decl(var.node(), decl, src)?];
+    let mut edits = vec![remove_variable_decl(var.node(), decl)?];
 
     let (new_attr, var_str) =
-        dimension_attribute_and_shape(var, decl, src, prefer_attribute.is_always())?;
+        dimension_attribute_and_shape(var, decl, prefer_attribute.is_always())?;
 
     let type_ = decl.type_().as_str();
     let attrs = decl
         .attributes()
         .iter()
         .filter(|attr| !attr.kind().is_dimension())
-        .filter_map(|attr| attr.node().to_text(src.source_text()))
+        .map(|attr| attr.node().text())
         .join(", ");
     let first = if attrs.is_empty() {
         type_.to_string()
@@ -120,13 +115,13 @@ fn fix_inconsistent_dimension(
         format!("{type_}, {attrs}")
     };
     let init = if let Some(init) = var.init() {
-        let init_value = init.to_text(src.source_text()).context("expected text")?;
+        let init_value = init.text();
         format!(" = {init_value}")
     } else {
         "".to_string()
     };
 
-    let indent = decl.node().indentation(src);
+    let indent = decl.node().indentation();
     let line = format!("{indent}{first}{new_attr} :: {var_str}{init}\n");
 
     let source_code = src.to_source_code();

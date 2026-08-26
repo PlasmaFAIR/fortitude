@@ -1,19 +1,20 @@
-use crate::ast::types::{ParameterStatement, Variable, get_name_node_of_declarator};
-use crate::ast::{FortitudeNode, types::HasName};
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::fix::edits::{
     add_attribute_to_var_decl, remove_from_comma_sep_stmt, remove_variable_decl,
 };
-use crate::traits::{HasNode, TextRanged};
 use crate::{AstRule, CheckContext, kind_ids};
 
 use anyhow::{Context, Result};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::{
+    Node,
+    ast::types::{HasName, ParameterStatement, Variable, get_name_node_of_declarator},
+    traits::{HasNode, TextRanged},
+};
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::{OneIndexed, SourceFile};
+use ruff_source_file::OneIndexed;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for variable attributes which are specified separately to the
@@ -69,39 +70,34 @@ impl AlwaysFixableViolation for OutOfLineAttribute {
     }
 }
 
-fn remove_from_parameter_stmt(var: &Node, stmt: &Node, src: &SourceFile) -> Result<Edit> {
+fn remove_from_parameter_stmt(var: &Node, stmt: &Node) -> Result<Edit> {
     let params = stmt
         .named_children(&mut stmt.walk())
         .filter(|child| child.kind() == "parameter_assignment")
         .collect_vec();
 
-    remove_from_comma_sep_stmt(var, stmt, &params, src)
+    remove_from_comma_sep_stmt(var, stmt, &params)
 }
 
-fn remove_from_attribute_stmt(var: &Node, stmt: &Node, src: &SourceFile) -> Result<Edit> {
+fn remove_from_attribute_stmt(var: &Node, stmt: &Node) -> Result<Edit> {
     let params = stmt
         .children_by_field_name("declarator", &mut stmt.walk())
         .collect_vec();
 
-    remove_from_comma_sep_stmt(var, stmt, &params, src)
+    remove_from_comma_sep_stmt(var, stmt, &params)
 }
 
 fn fix_out_of_line_parameter(
     attr_node: &Node,
     var_in_attr: &ParameterStatement,
     var: &Variable,
-    src: &SourceFile,
 ) -> Result<Vec<Edit>> {
     // Remove from variable_modification
-    let mut edits = vec![remove_from_parameter_stmt(
-        &var_in_attr.node,
-        attr_node,
-        src,
-    )?];
+    let mut edits = vec![remove_from_parameter_stmt(&var_in_attr.node, attr_node)?];
 
     let extra = format!(" = {}", var_in_attr.expression);
 
-    edits.extend(make_fix(var, "parameter", extra, src)?);
+    edits.extend(make_fix(var, "parameter", extra)?);
     Ok(edits)
 }
 
@@ -109,26 +105,17 @@ fn fix_out_of_line_attribute(
     attr_node: &Node,
     var_in_attr: &Node,
     var: &Variable,
-    src: &SourceFile,
 ) -> Result<Vec<Edit>> {
     // Remove from variable_modification
-    let mut edits = vec![remove_from_attribute_stmt(var_in_attr, attr_node, src)?];
+    let mut edits = vec![remove_from_attribute_stmt(var_in_attr, attr_node)?];
 
-    let attr = attr_node
-        .child(0)
-        .context("missing child 0")?
-        .to_text(src.source_text())
-        .context("missing text")?;
+    let attr = attr_node.child(0).context("missing child 0")?.text();
 
     // `dimension` and `allocatable` both need the size node, but they'll put
     // them in different places:
     // - `dimension(size) :: var
     // - `allocatable :: var(size)`
-    let size = if let Some(size) = var_in_attr.child_with_name("size") {
-        Some(size.to_text(src.source_text()).context("missing text")?)
-    } else {
-        None
-    };
+    let size = var_in_attr.child_with_name("size").map(|size| size.text());
 
     let new_attr = if attr.eq_ignore_ascii_case("dimension") {
         let size = size.context("expected 'size' for 'dimension'")?;
@@ -146,7 +133,7 @@ fn fix_out_of_line_attribute(
     }
     .to_string();
 
-    edits.extend(make_fix(var, &new_attr, extra, src)?);
+    edits.extend(make_fix(var, &new_attr, extra)?);
     Ok(edits)
 }
 
@@ -154,7 +141,7 @@ fn fix_out_of_line_attribute(
 /// declaration, removing any empty statements, and making sure we only apply
 /// the attribute to one variable, and not any others declared in the same
 /// statement
-fn make_fix(var: &Variable, new_attr: &str, extra: String, src: &SourceFile) -> Result<Vec<Edit>> {
+fn make_fix(var: &Variable, new_attr: &str, extra: String) -> Result<Vec<Edit>> {
     let mut edits = Vec::new();
 
     let decl = var.decl_statement();
@@ -168,20 +155,20 @@ fn make_fix(var: &Variable, new_attr: &str, extra: String, src: &SourceFile) -> 
     } else {
         // Otherwise:
         //   -> remove variable from decl statement
-        edits.push(remove_variable_decl(var.node(), decl, src)?);
+        edits.push(remove_variable_decl(var.node(), decl)?);
         //   -> add new decl statement with attribute
         let type_ = decl.type_().as_str();
         let attrs = decl
             .attributes()
             .iter()
-            .filter_map(|attr| attr.node().to_text(src.source_text()))
+            .map(|attr| attr.node().text())
             .join(", ");
         let first = if attrs.is_empty() {
             type_.to_string()
         } else {
             format!("{type_}, {attrs}")
         };
-        let indent = decl.node().indentation(src);
+        let indent = decl.node().indentation();
         let line = format!("\n{indent}{first}, {new_attr} :: {}{extra}", var.name(),);
         edits.push(Edit::insertion(line, decl.node().end_textsize()));
     }
@@ -198,19 +185,12 @@ impl AstRule for OutOfLineAttribute {
             // different nodes in the AST, so handle separately
             let diagnostics = node
                 .named_children(&mut node.walk())
-                .filter_map(|parameter| {
-                    ParameterStatement::try_from_node(parameter, context.source_text()).ok()
-                })
+                .filter_map(|parameter| ParameterStatement::try_from_node(parameter).ok())
                 .filter_map(
                     |parameter| match context.symbol_table().get_var(&parameter.name) {
                         Some(var) => {
-                            let mut edit = fix_out_of_line_parameter(
-                                node,
-                                &parameter,
-                                var,
-                                context.source_file(),
-                            )
-                            .unwrap();
+                            let mut edit =
+                                fix_out_of_line_parameter(node, &parameter, var).unwrap();
                             Some(
                                 context
                                     .create_diagnostic(
@@ -232,9 +212,7 @@ impl AstRule for OutOfLineAttribute {
             return Some(diagnostics);
         }
 
-        let attribute_str = node
-            .child_with_name("type_qualifier")?
-            .to_text(context.source_text())?;
+        let attribute_str = node.child_with_name("type_qualifier")?.text();
 
         if attribute_str.eq_ignore_ascii_case("external")
             || attribute_str.eq_ignore_ascii_case("intrinsic")
@@ -245,20 +223,10 @@ impl AstRule for OutOfLineAttribute {
 
         Some(
             node.children_by_field_name("declarator", &mut node.walk())
-                .map(|decl| {
-                    (
-                        decl,
-                        get_name_node_of_declarator(&decl)
-                            .to_text(context.source_text())
-                            .unwrap_or_default()
-                            .to_string(),
-                    )
-                })
+                .map(|decl| (decl, get_name_node_of_declarator(&decl).text().to_string()))
                 .filter_map(|(decl, name)| {
                     context.symbol_table().get_var(&name).map(|var| {
-                        let mut edit =
-                            fix_out_of_line_attribute(node, &decl, var, context.source_file())
-                                .unwrap();
+                        let mut edit = fix_out_of_line_attribute(node, &decl, var).unwrap();
 
                         context
                             .create_diagnostic(
@@ -285,15 +253,12 @@ impl AstRule for OutOfLineAttribute {
 mod tests {
     use super::*;
     use anyhow::{Context, Result};
-    use ruff_source_file::SourceFileBuilder;
+    use fortitude_sitter::Parser;
     use ruff_text_size::TextSize;
-    use tree_sitter::Parser;
 
     #[test]
     fn test_remove_from_parameter_stmt() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -305,7 +270,6 @@ end program foo
 "#;
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let root = tree.root_node().child(0).context("Missing child")?;
-        let test_source = SourceFileBuilder::new("test.f90", code).finish();
 
         let parameter_stmt_0 = root.child(1).unwrap();
         let x = parameter_stmt_0.named_child(0).unwrap();
@@ -315,25 +279,25 @@ end program foo
         let b = parameter_stmt_1.named_child(1).unwrap();
         let c = parameter_stmt_1.named_child(2).unwrap();
 
-        let remove_x = remove_from_parameter_stmt(&x, &parameter_stmt_0, &test_source)?;
+        let remove_x = remove_from_parameter_stmt(&x, &parameter_stmt_0)?;
         assert_eq!(
             remove_x,
             Edit::deletion(TextSize::new(13), TextSize::new(32))
         );
 
-        let remove_a = remove_from_parameter_stmt(&a, &parameter_stmt_1, &test_source)?;
+        let remove_a = remove_from_parameter_stmt(&a, &parameter_stmt_1)?;
         assert_eq!(
             remove_a,
             Edit::deletion(TextSize::new(44), TextSize::new(50))
         );
 
-        let remove_b = remove_from_parameter_stmt(&b, &parameter_stmt_1, &test_source)?;
+        let remove_b = remove_from_parameter_stmt(&b, &parameter_stmt_1)?;
         assert_eq!(
             remove_b,
             Edit::deletion(TextSize::new(51), TextSize::new(55))
         );
 
-        let remove_c = remove_from_parameter_stmt(&c, &parameter_stmt_1, &test_source)?;
+        let remove_c = remove_from_parameter_stmt(&c, &parameter_stmt_1)?;
         assert_eq!(
             remove_c,
             Edit::deletion(TextSize::new(54), TextSize::new(64))
@@ -344,9 +308,7 @@ end program foo
 
     #[test]
     fn test_remove_from_dimension_stmt() -> Result<()> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_fortran::LANGUAGE.into())
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
 
         let code = r#"
@@ -358,7 +320,6 @@ end program foo
 "#;
         let tree = parser.parse(code, None).context("Failed to parse")?;
         let root = tree.root_node().child(0).context("Missing child")?;
-        let test_source = SourceFileBuilder::new("test.f90", code).finish();
 
         let dimension_stmt_0 = root.child(1).unwrap();
         let x = dimension_stmt_0.named_child(1).unwrap();
@@ -368,25 +329,25 @@ end program foo
         let b = dimension_stmt_1.named_child(2).unwrap();
         let c = dimension_stmt_1.named_child(3).unwrap();
 
-        let remove_x = remove_from_attribute_stmt(&x, &dimension_stmt_0, &test_source)?;
+        let remove_x = remove_from_attribute_stmt(&x, &dimension_stmt_0)?;
         assert_eq!(
             remove_x,
             Edit::deletion(TextSize::new(13), TextSize::new(30))
         );
 
-        let remove_a = remove_from_attribute_stmt(&a, &dimension_stmt_1, &test_source)?;
+        let remove_a = remove_from_attribute_stmt(&a, &dimension_stmt_1)?;
         assert_eq!(
             remove_a,
             Edit::deletion(TextSize::new(42), TextSize::new(47))
         );
 
-        let remove_b = remove_from_attribute_stmt(&b, &dimension_stmt_1, &test_source)?;
+        let remove_b = remove_from_attribute_stmt(&b, &dimension_stmt_1)?;
         assert_eq!(
             remove_b,
             Edit::deletion(TextSize::new(48), TextSize::new(62))
         );
 
-        let remove_c = remove_from_attribute_stmt(&c, &dimension_stmt_1, &test_source)?;
+        let remove_c = remove_from_attribute_stmt(&c, &dimension_stmt_1)?;
         assert_eq!(
             remove_c,
             Edit::deletion(TextSize::new(52), TextSize::new(66))

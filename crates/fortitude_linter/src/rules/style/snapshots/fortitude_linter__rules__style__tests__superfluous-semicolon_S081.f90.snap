@@ -176,7 +176,6 @@ S081 [*] unnecessary semicolon
 12 |   i = i + j; write (*, *) i;;
 13 | end program p;
    |              ^
-   |
 help: Remove this character
 10 |   integer :: j;
 11 |   i = 1;; j = 2;

@@ -1,11 +1,10 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::rules::utilities::literal_as_io_unit;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_sitter::Node;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for use of literals when specifying array sizes
@@ -78,10 +77,7 @@ impl AstRule for MagicNumberInArraySize {
             })
             .flatten()
             .filter_map(|literal| {
-                let value = literal
-                    .to_text(context.source_text())?
-                    .parse::<i32>()
-                    .unwrap();
+                let value = literal.text().parse::<i32>().unwrap();
                 if DEFAULT_ALLOWED_LITERALS.contains(&value) {
                     None
                 } else {
@@ -142,12 +138,9 @@ impl Violation for MagicIoUnit {
 
 impl AstRule for MagicIoUnit {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let unit = literal_as_io_unit(node, context.source_file())?;
+        let unit = literal_as_io_unit(node)?;
 
-        let value = unit
-            .to_text(context.source_text())?
-            .parse::<i32>()
-            .unwrap_or_default();
+        let value = unit.text().parse::<i32>().unwrap_or_default();
 
         some_vec!(context.create_diagnostic(Self { value }, unit))
     }

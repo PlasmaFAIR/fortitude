@@ -31,6 +31,12 @@ impl From<NonZeroU8> for IndentWidth {
     }
 }
 
+impl From<usize> for IndentWidth {
+    fn from(tab_size: usize) -> Self {
+        Self(NonZeroU8::new(tab_size as u8).unwrap())
+    }
+}
+
 impl From<IndentWidth> for NonZeroU8 {
     fn from(value: IndentWidth) -> Self {
         value.0

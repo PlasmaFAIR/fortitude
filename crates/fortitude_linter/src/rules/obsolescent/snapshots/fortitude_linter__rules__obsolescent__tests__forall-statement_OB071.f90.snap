@@ -22,7 +22,6 @@ OB071 `forall` statements are obsolescent in F2018, prefer `do concurrent` inste
 8 |
 9 | FORALL(J=1:8)  PATTERN(J)%P => OBJECT(1+IEOR(J-1,2))
   | ^^^^^^
-  |
 help: Use `do concurrent` instead
 
 OB071 `forall` statements are obsolescent in F2018, prefer `do concurrent` instead

@@ -1,9 +1,8 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What does it do?
 /// Checks for old style array literals
@@ -30,14 +29,10 @@ impl AstRule for OldStyleArrayLiteral {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let open_bracket = node.child(0)?;
 
-        if open_bracket
-            .to_text(context.source_text())?
-            .starts_with("(/")
-        {
+        if open_bracket.text().starts_with("(/") {
             let close_bracket = node.children(&mut node.walk()).last()?;
-            let src = context.source_file();
-            let edit_open = open_bracket.edit_replacement(src, "[".to_string());
-            let edit_close = close_bracket.edit_replacement(src, "]".to_string());
+            let edit_open = open_bracket.edit_replacement("[".to_string());
+            let edit_close = close_bracket.edit_replacement("]".to_string());
             let fix = Fix::safe_edits(edit_open, [edit_close]);
 
             return some_vec!(context.create_diagnostic(Self {}, node).with_fix(fix));

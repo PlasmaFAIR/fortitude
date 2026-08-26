@@ -4,15 +4,17 @@ use crate::resolve;
 use crate::show_files::show_files;
 use crate::show_settings::show_settings;
 use crate::stdin::read_from_stdin;
-use fortitude_linter::diagnostics::{Diagnostics, FixMap, Violation};
+use fortitude_linter::diagnostics::{
+    Diagnostics, FixMap, Violation, create_panic_diagnostic, panic::catch_unwind,
+};
 use fortitude_linter::fs::{self, read_to_string};
-use fortitude_linter::line_filter::{FilterMap, git_since, git_staged_files};
+use fortitude_linter::line_filter::{FilterMap, FilterSet, git_since, git_staged_files};
 use fortitude_linter::rules::Rule;
 use fortitude_linter::rules::error::ioerror::IoError;
 use fortitude_linter::settings::{self, CheckSettings, FixMode, ProgressBar, Settings};
 use fortitude_linter::source_kind::SourceKindDiff;
 use fortitude_linter::warn_user_once;
-use fortitude_linter::{FixerResult, check_and_fix_file, check_file, check_only_file};
+use fortitude_linter::{FixerResult, check_and_fix_file, check_only_file};
 
 use anyhow::Result;
 use colored::Colorize;
@@ -21,7 +23,7 @@ use ignore::Error;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use log::{debug, warn};
 use rayon::prelude::*;
-use ruff_source_file::SourceFileBuilder;
+use ruff_source_file::{SourceFile, SourceFileBuilder};
 use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
 use std::fmt::Write;
@@ -263,6 +265,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     let printer = Printer::new(
         output_format,
         severity_default,
+        file_configuration.settings.check.output_rule_id_format,
         config_arguments.log_level,
         printer_flags,
         fix_mode,
@@ -466,6 +469,34 @@ fn check_files(
     );
 
     Ok(results)
+}
+
+pub fn check_file(
+    path: &Path,
+    file: &SourceFile,
+    line_filter: &Option<FilterSet>,
+    settings: &CheckSettings,
+    fix_mode: FixMode,
+    ignore_allow_comments: settings::IgnoreAllowComments,
+) -> anyhow::Result<Diagnostics> {
+    let result = catch_unwind(|| {
+        fortitude_linter::check_file(
+            path,
+            file,
+            line_filter,
+            settings,
+            fix_mode,
+            ignore_allow_comments,
+        )
+    });
+
+    match result {
+        Ok(inner) => inner,
+        Err(error) => {
+            let diagnostic = create_panic_diagnostic(&error, Some(path));
+            Ok(Diagnostics::new(vec![diagnostic]))
+        }
+    }
 }
 
 fn check_stdin(

@@ -9,11 +9,17 @@ use ruff_diagnostics::{Edit, Fix};
 use ruff_source_file::{LineColumn, SourceCode};
 use ruff_text_size::Ranged;
 
-use crate::diagnostics::{ConciseMessage, Diagnostic};
+use crate::diagnostics::{ConciseMessage, Diagnostic, DisplayDiagnosticConfig};
 
-pub struct RdjsonRenderer {}
+pub struct RdjsonRenderer<'a> {
+    config: &'a DisplayDiagnosticConfig,
+}
 
-impl RdjsonRenderer {
+impl<'a> RdjsonRenderer<'a> {
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
+        Self { config }
+    }
+
     pub(super) fn render(
         &self,
         f: &mut std::fmt::Formatter,
@@ -22,13 +28,14 @@ impl RdjsonRenderer {
         write!(
             f,
             "{:#}",
-            serde_json::json!(RdjsonDiagnostics::new(diagnostics))
+            serde_json::json!(RdjsonDiagnostics::new(diagnostics, self.config))
         )
     }
 }
 
 struct ExpandedDiagnostics<'a> {
     diagnostics: &'a [Diagnostic],
+    config: &'a DisplayDiagnosticConfig,
 }
 
 impl Serialize for ExpandedDiagnostics<'_> {
@@ -39,7 +46,7 @@ impl Serialize for ExpandedDiagnostics<'_> {
         let mut s = serializer.serialize_seq(Some(self.diagnostics.len()))?;
 
         for diagnostic in self.diagnostics {
-            let value = diagnostic_to_rdjson(diagnostic);
+            let value = diagnostic_to_rdjson(diagnostic, self.config);
             s.serialize_element(&value)?;
         }
 
@@ -47,7 +54,10 @@ impl Serialize for ExpandedDiagnostics<'_> {
     }
 }
 
-fn diagnostic_to_rdjson<'a>(diagnostic: &'a Diagnostic) -> RdjsonDiagnostic<'a> {
+fn diagnostic_to_rdjson<'a>(
+    diagnostic: &'a Diagnostic,
+    config: &'a DisplayDiagnosticConfig,
+) -> RdjsonDiagnostic<'a> {
     let span = diagnostic.primary_span_ref();
     let source_file = span.map(|span| {
         let file = span.file();
@@ -67,13 +77,17 @@ fn diagnostic_to_rdjson<'a>(diagnostic: &'a Diagnostic) -> RdjsonDiagnostic<'a> 
 
     let edits = diagnostic.fix().map(Fix::edits).unwrap_or_default();
 
+    let code = if config.preview && !config.rule_id_format.is_code() {
+        diagnostic.id().as_str()
+    } else {
+        diagnostic.secondary_code_or_id()
+    };
+
     RdjsonDiagnostic {
         message: diagnostic.concise_message(),
         location,
         code: RdjsonCode {
-            value: diagnostic
-                .secondary_code()
-                .map_or_else(|| diagnostic.name(), |code| code.as_str()),
+            value: code,
             url: diagnostic.documentation_url(),
         },
         suggestions: rdjson_suggestions(
@@ -121,14 +135,17 @@ struct RdjsonDiagnostics<'a> {
 }
 
 impl<'a> RdjsonDiagnostics<'a> {
-    fn new(diagnostics: &'a [Diagnostic]) -> Self {
+    fn new(diagnostics: &'a [Diagnostic], config: &'a DisplayDiagnosticConfig) -> Self {
         Self {
             source: RdjsonSource {
                 name: "fortitude",
                 url: env!("CARGO_PKG_HOMEPAGE"),
             },
             severity: "WARNING",
-            diagnostics: ExpandedDiagnostics { diagnostics },
+            diagnostics: ExpandedDiagnostics {
+                diagnostics,
+                config,
+            },
         }
     }
 }

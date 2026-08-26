@@ -3,13 +3,16 @@
 // SPDX-License-Identifier: MIT
 
 mod message;
+pub mod panic;
 mod stylesheet;
 pub mod violation;
 
 use std::{
+    backtrace::BacktraceStatus,
     borrow::Cow,
     fmt::{Display, Formatter},
     ops::{Add, AddAssign},
+    path::Path,
     str::FromStr,
     sync::Arc,
 };
@@ -17,14 +20,18 @@ use std::{
 use clap::builder::{TypedValueParser, ValueParserFactory};
 use colored::Color;
 use ruff_source_file::{LineColumn, SourceFile};
+use ruff_source_file::{LineColumn, SourceFile, SourceFileBuilder};
 use rustc_hash::FxHashMap;
 
+use annotate_snippets::Level as AnnotateLevel;
 use anyhow::Result;
-use ruff_annotate_snippets::Level as AnnotateLevel;
 use ruff_text_size::{Ranged, TextRange};
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumIs, EnumString};
 
 use crate::{RuleSelector, fix::FixTable, rules::Rule, settings::OutputFormat, traits::TextRanged};
+use crate::{diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat};
+use fortitude_sitter::traits::TextRanged;
 
 pub use message::{DisplayDiagnostic, DisplayDiagnostics, render_diagnostics};
 pub use violation::{AlwaysFixableViolation, FixAvailability, Violation, ViolationMetadata};
@@ -1199,12 +1206,12 @@ pub enum Severity {
 }
 
 impl Severity {
-    fn to_annotate(self) -> AnnotateLevel {
+    fn to_annotate(self) -> AnnotateLevel<'static> {
         match self {
-            Severity::None => AnnotateLevel::None,
-            Severity::Info => AnnotateLevel::Info,
-            Severity::Warning => AnnotateLevel::Warning,
-            Severity::Error => AnnotateLevel::Error,
+            Severity::None => AnnotateLevel::NONE,
+            Severity::Info => AnnotateLevel::INFO,
+            Severity::Warning => AnnotateLevel::WARNING,
+            Severity::Error => AnnotateLevel::ERROR,
             // NOTE: Should we really collapse this to "error"?
             //
             // After collapsing this, the snapshot tests seem to reveal that we
@@ -1212,7 +1219,7 @@ impl Severity {
             // And maybe *rendering* this as just an `error` is fine. If we
             // really do need different rendering, then I think we can add a
             // `Level::Fatal`. ---AG
-            Severity::Fatal => AnnotateLevel::Error,
+            Severity::Fatal => AnnotateLevel::ERROR,
         }
     }
 
@@ -1374,13 +1381,13 @@ pub enum SubDiagnosticSeverity {
 }
 
 impl SubDiagnosticSeverity {
-    fn to_annotate(self) -> AnnotateLevel {
+    fn to_annotate(self) -> AnnotateLevel<'static> {
         match self {
-            SubDiagnosticSeverity::Help => AnnotateLevel::Help,
-            SubDiagnosticSeverity::Info => AnnotateLevel::Info,
-            SubDiagnosticSeverity::Warning => AnnotateLevel::Warning,
-            SubDiagnosticSeverity::Error => AnnotateLevel::Error,
-            SubDiagnosticSeverity::Fatal => AnnotateLevel::Error,
+            SubDiagnosticSeverity::Help => AnnotateLevel::HELP,
+            SubDiagnosticSeverity::Info => AnnotateLevel::INFO,
+            SubDiagnosticSeverity::Warning => AnnotateLevel::WARNING,
+            SubDiagnosticSeverity::Error => AnnotateLevel::ERROR,
+            SubDiagnosticSeverity::Fatal => AnnotateLevel::ERROR,
         }
     }
 }
@@ -1396,6 +1403,29 @@ impl Display for SubDiagnosticSeverity {
         };
         f.write_str(s)
     }
+}
+
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Deserialize,
+    Display,
+    EnumIs,
+    EnumString,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize,
+)]
+#[serde(rename_all = "lowercase")]
+#[strum(serialize_all = "lowercase")]
+pub enum OutputRuleIdFormat {
+    Code,
+    #[default]
+    Name,
+    Both,
 }
 
 /// Configuration for rendering diagnostics.
@@ -1425,6 +1455,8 @@ pub struct DisplayDiagnosticConfig {
     merge_window: usize,
     /// Whether to use preview formatting for Ruff diagnostics.
     preview: bool,
+    /// Whether to prefer rule codes, human-readable rule names, or both in the diagnostic output.
+    rule_id_format: OutputRuleIdFormat,
     /// Whether to hide the real `Severity` of diagnostics.
     ///
     /// This is intended for temporary use by Ruff, which only has a single `error` severity at the
@@ -1454,6 +1486,7 @@ impl DisplayDiagnosticConfig {
             context: 2,
             merge_window: 2,
             preview: false,
+            rule_id_format: OutputRuleIdFormat::default(),
             hide_severity: false,
             show_fix_status: false,
             show_fix_diff: false,
@@ -1532,6 +1565,31 @@ impl DisplayDiagnosticConfig {
         DisplayDiagnosticConfig {
             fix_applicability: applicability,
             ..self
+        }
+    }
+
+    /// Set the format of the rule id (name/code/both)
+    pub fn with_output_rule_id_format(
+        self,
+        name_format: OutputRuleIdFormat,
+    ) -> DisplayDiagnosticConfig {
+        DisplayDiagnosticConfig {
+            rule_id_format: name_format,
+            ..self
+        }
+    }
+
+    /// Format the rule id according the setting and preview mode
+    pub fn format_rule_id(&self, diag: &Diagnostic) -> String {
+        if !self.preview {
+            return diag.secondary_code_or_id().to_string();
+        }
+        match self.rule_id_format {
+            OutputRuleIdFormat::Both if let Some(code) = diag.secondary_code() => {
+                format!("{} ({code})", diag.id())
+            }
+            OutputRuleIdFormat::Name | OutputRuleIdFormat::Both => diag.id().to_string(),
+            OutputRuleIdFormat::Code => diag.secondary_code_or_id().to_string(),
         }
     }
 
@@ -1751,6 +1809,55 @@ where
         env!("CARGO_PKG_HOMEPAGE"),
         rule.name()
     )));
+
+    diagnostic
+}
+
+/// Create a `Diagnostic` from a panic.
+pub fn create_panic_diagnostic(error: &PanicError, path: Option<&Path>) -> Diagnostic {
+    let mut diagnostic = Diagnostic::new(
+        DiagnosticId::Panic,
+        Severity::Fatal,
+        error.to_diagnostic_message(path.as_ref().map(|path| path.display())),
+    );
+
+    diagnostic.sub(SubDiagnostic::new(
+        SubDiagnosticSeverity::Info,
+        "This indicates a bug in Fortitude.",
+    ));
+    let report_message = "If you could open an issue at \
+                            https://github.com/PlasmaFAIR/fortitude/issues/new?title=%5Bpanic%5D, \
+                            we'd be very appreciative!";
+    diagnostic.sub(SubDiagnostic::new(
+        SubDiagnosticSeverity::Info,
+        report_message,
+    ));
+
+    if let Some(backtrace) = &error.backtrace {
+        match backtrace.status() {
+            BacktraceStatus::Disabled => {
+                diagnostic.sub(SubDiagnostic::new(
+                            SubDiagnosticSeverity::Info,
+                            "run with `RUST_BACKTRACE=1` environment variable to show the full backtrace information",
+                        ));
+            }
+            BacktraceStatus::Captured => {
+                diagnostic.sub(SubDiagnostic::new(
+                    SubDiagnosticSeverity::Info,
+                    format!("Backtrace:\n{backtrace}"),
+                ));
+            }
+            _ => {}
+        }
+    }
+
+    if let Some(path) = path {
+        let file = SourceFileBuilder::new(path.to_string_lossy(), "").finish();
+        let span = Span::from(file);
+        let mut annotation = Annotation::primary(span);
+        annotation.hide_snippet(true);
+        diagnostic.annotate(annotation);
+    }
 
     diagnostic
 }

@@ -1,0 +1,20 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+C013 Missing default rank may not handle all ranks
+  --> ./resources/test/fixtures/correctness/C013.f90:5:3
+   |
+ 4 |     ! This should be flagged by C013
+ 5 | /   select rank(A)
+ 6 | |   rank (0)
+ 7 | |     ! Scalar
+ 8 | |     call scalarVersion(A)
+ 9 | |   rank (1)
+10 | |     call vectorVersion(A)
+11 | |   end select
+   | |____________^
+12 |
+13 |     ! This should pass C013
+   |
+help: Add 'rank default'

@@ -1,9 +1,8 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for missing action specifier when opening files.
@@ -29,7 +28,7 @@ impl Violation for MissingActionSpecifier {
 
 impl AstRule for MissingActionSpecifier {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if node.kwarg_exists("action", context.source_text()) {
+        if node.kwarg_exists("action") {
             return None;
         }
         some_vec![context.create_diagnostic(Self {}, node)]

@@ -270,7 +270,6 @@ S061 [*] end statement should be named.
 114 |   ! CATCH THIS
 115 | END MODULE
     | ^^^^^^^^^^
-    |
 help: Write as 'END MODULE MYMOD2_UPPER'.
 112 |     ! IGNORE THIS
 113 |   END FUNCTION MYFUNC2

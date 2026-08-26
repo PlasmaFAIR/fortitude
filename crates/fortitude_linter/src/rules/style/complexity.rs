@@ -1,11 +1,10 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextRange;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for procedures with a cyclomatic complexity that exceeds a
@@ -135,17 +134,14 @@ fn cyclomatic_complexity(node: &Node) -> usize {
         match child.kind() {
             // if-then and else-if each create an independent branch
             "if_statement" | "elseif_clause" => complexity += 1,
-            // Each case branch counts individually; default is excluded
-            // as it does not create an independent path
-            "case_statement" => {
-                let is_default = child
-                    .named_child(0)
-                    .map(|c| c.kind() == "default")
-                    .unwrap_or(false);
-                if !is_default {
-                    complexity += 1;
-                }
-            }
+            // The whole select/case construct counts as +1, regardless of the number
+            // of case branches. This departs from a strict McCabe interpretation
+            // (which would count each branch independently) in favor of a more
+            // pragmatic approach aligned with SonarSource's Cognitive Complexity model:
+            // see G. Ann Campbell, "Cognitive Complexity: A new way of measuring
+            // understandability" (SonarSource, 2023), p.5, where a 4-branch switch
+            // is scored as a single structural increment.
+            "select_case_statement" => complexity += 1,
             // do and do-while loops both appear as do_loop in the AST
             "do_loop" => complexity += 1,
             // where construct is an array-level conditional branch
@@ -242,12 +238,8 @@ impl AstRule for TooManyArguments {
             return None;
         }
 
-        let src = context.source_text();
         let procedure_stmt = node.named_child(0)?;
-        let procedure_name = procedure_stmt
-            .child_with_name("name")?
-            .to_text(src)?
-            .to_string();
+        let procedure_name = procedure_stmt.child_with_name("name")?.text().to_string();
         let parameters = procedure_stmt.child_with_name("parameters")?;
         let args: Vec<_> = parameters
             .named_descendants()
@@ -259,8 +251,8 @@ impl AstRule for TooManyArguments {
                 if idx > 0 {
                     return Some(node);
                 }
-                let name = node.to_text(src).map(|s| s.to_ascii_lowercase());
-                if matches!(name.as_deref(), Some("self") | Some("this")) {
+                let name = node.text().to_ascii_lowercase();
+                if matches!(name.as_ref(), "self" | "this") {
                     None
                 } else {
                     Some(node)

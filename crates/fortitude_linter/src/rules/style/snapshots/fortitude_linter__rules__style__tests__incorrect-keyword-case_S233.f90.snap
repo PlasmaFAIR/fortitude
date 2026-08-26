@@ -1294,7 +1294,6 @@ S233 [*] Keyword 'END' should be 'end'
 50 |
 51 | END MODULE MY_MODULE
    | ^^^
-   |
 help: Change to 'end'
 48 |     END IF
 49 | END FUNCTION FACT
@@ -1312,7 +1311,6 @@ S233 [*] Keyword 'MODULE' should be 'module'
 50 |
 51 | END MODULE MY_MODULE
    |     ^^^^^^
-   |
 help: Change to 'module'
 48 |     END IF
 49 | END FUNCTION FACT
@@ -3487,7 +3485,6 @@ S233 [*] Keyword 'END' should be 'end'
 165 | STOP
 166 | END PROGRAM KEYWORD_ZOO
     | ^^^
-    |
 help: Change to 'end'
 163 | DEALLOCATE(ARR)
 164 |
@@ -3501,7 +3498,6 @@ S233 [*] Keyword 'PROGRAM' should be 'program'
 165 | STOP
 166 | END PROGRAM KEYWORD_ZOO
     |     ^^^^^^^
-    |
 help: Change to 'program'
 163 | DEALLOCATE(ARR)
 164 |

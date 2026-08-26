@@ -1,9 +1,8 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What does it do?
 /// Checks that `end` statements include the type of construct they're ending
@@ -84,11 +83,11 @@ impl AstRule for UnnamedEndStatement {
         };
         let name = statement_node
             .child_with_name(name_kind)?
-            .to_text(context.source_text())?
+            .text()
             .to_string();
 
         // Preserve existing case of end statement
-        let text = node.to_text(context.source_text())?;
+        let text = node.text();
         let is_lower_case = text == text.to_lowercase();
         let end_statement = if is_lower_case {
             format!("end {statement}")
@@ -97,7 +96,7 @@ impl AstRule for UnnamedEndStatement {
         };
 
         let replacement = format!("{end_statement} {name}");
-        let fix = Fix::safe_edit(node.edit_replacement(context.source_file(), replacement.clone()));
+        let fix = Fix::safe_edit(node.edit_replacement(replacement.clone()));
         some_vec![
             context
                 .create_diagnostic(Self { replacement }, node)

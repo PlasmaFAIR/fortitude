@@ -119,6 +119,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "002") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::InterfaceImplicitTyping),
         (Correctness, "003") => (RuleGroup::Stable, Ast, Default, correctness::implicit_typing::ImplicitExternalProcedures),
         (Correctness, "011") => (RuleGroup::Stable, Ast, Default, correctness::select_default::MissingDefaultCase),
+        (Correctness, "012") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultType),
+        (Correctness, "013") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultRank),
         (Correctness, "021") => (RuleGroup::Stable, Ast, Optional, correctness::kind_suffixes::NoRealSuffix),
         (Correctness, "022") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_kinds::ImplicitRealKind),
         (Correctness, "031") => (RuleGroup::Stable, Ast, Optional, correctness::magic_numbers::MagicNumberInArraySize),
@@ -168,6 +170,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Portability, "031") => (RuleGroup::Stable, None, Default, portability::invalid_tab::InvalidTab),
         (Portability, "041") => (RuleGroup::Preview, Ast, Optional, portability::return_in_program::ReturnInProgram),
         (Portability, "051") => (RuleGroup::Preview, Ast, Optional, portability::unary_following_arithmetic::UnaryFollowingArithmetic),
+        (Portability, "061") => (RuleGroup::Preview, Ast, Optional, portability::non_portable_system_call::NonPortableSystemCall),
 
         // style
         (Style, "001") => (RuleGroup::Stable, None, Default, style::line_length::LineTooLong),
@@ -182,6 +185,8 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "102") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBeforeComment),
         (Style, "103") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceAroundDoubleColon),
         (Style, "104") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBetweenBrackets),
+        (Style, "105") => (RuleGroup::Preview, None, Optional, style::whitespace::IncorrectIndentation),
+        (Style, "106") => (RuleGroup::Preview, None, Optional, style::whitespace::IndentedPreprocessorStatement),
         (Style, "201") => (RuleGroup::Stable, Ast, Optional, style::implicit_none::SuperfluousImplicitNone),
         (Style, "211") => (RuleGroup::Stable, Ast, Optional, style::file_contents::MultipleModules),
         (Style, "212") => (RuleGroup::Stable, Ast, Optional, style::file_contents::ProgramWithModule),

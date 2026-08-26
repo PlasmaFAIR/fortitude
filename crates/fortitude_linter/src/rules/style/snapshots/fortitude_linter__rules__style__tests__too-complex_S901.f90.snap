@@ -89,17 +89,6 @@ S901 cyclomatic complexity of 7, exceeds maximum 5
 181 |     real, intent(in) :: tol
     |
 
-S901 cyclomatic complexity of 6, exceeds maximum 5
-   --> ./resources/test/fixtures/style/S901.f90:198:3
-    |
-196 |   end subroutine test_do_while
-197 |
-198 |   subroutine test_select_case(x, y, z, w, tol) ! should trigger
-    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-199 |     CHARACTER(LEN=4) :: Title
-200 |     INTEGER, save :: DrMD = 0, PhD = 0, MS = 0, BS = 0, MR = 0, Others = 0
-    |
-
 S901 cyclomatic complexity of 10, exceeds maximum 5
    --> ./resources/test/fixtures/style/S901.f90:217:3
     |
@@ -111,13 +100,13 @@ S901 cyclomatic complexity of 10, exceeds maximum 5
 219 |     integer, intent(out) :: x
     |
 
-S901 cyclomatic complexity of 14, exceeds maximum 5
+S901 cyclomatic complexity of 12, exceeds maximum 5
    --> ./resources/test/fixtures/style/S901.f90:232:3
     |
 231 |     !! Full test example, should trigger
 232 | /   subroutine classify_orbit(semi_major, eccentricity, inclination, &
 233 | |                             period, body_mass, orbit_type, stability)
-    | |______________________________________________________________________^
+    | |_____________________________________________________________________^
 234 |       real, intent(in)               :: semi_major, eccentricity
 235 |       real, intent(in)               :: inclination, period, body_mass
     |

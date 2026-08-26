@@ -10,8 +10,8 @@ use serde::Serialize;
 
 use crate::check::CheckResults;
 use fortitude_linter::diagnostics::{
-    Diagnostic, Diagnostics, DisplayDiagnosticConfig, FixMap, SecondaryCode, Severity,
-    render_diagnostics,
+    Diagnostic, Diagnostics, DisplayDiagnosticConfig, FixMap, OutputRuleIdFormat, SecondaryCode,
+    Severity, render_diagnostics,
 };
 use fortitude_linter::fs::relativize_path;
 use fortitude_linter::logging::LogLevel;
@@ -52,6 +52,7 @@ type DiagnosticGroup<'a> = (Option<&'a SecondaryCode>, &'a Diagnostic, usize, us
 pub(crate) struct Printer {
     format: OutputFormat,
     severity_default: Severity,
+    name_format: OutputRuleIdFormat,
     log_level: LogLevel,
     flags: Flags,
     fix_mode: FixMode,
@@ -62,6 +63,7 @@ impl Printer {
     pub(crate) fn new(
         format: OutputFormat,
         severity_default: Severity,
+        name_format: OutputRuleIdFormat,
         log_level: LogLevel,
         flags: Flags,
         fix_mode: FixMode,
@@ -70,6 +72,7 @@ impl Printer {
         Self {
             format,
             severity_default,
+            name_format,
             log_level,
             flags,
             fix_mode,
@@ -268,7 +271,8 @@ impl Printer {
             .color(!cfg!(test) && colored::control::SHOULD_COLORIZE.should_colorize())
             .with_show_fix_status(show_fix_status(self.fix_mode, fixables.as_ref()))
             .with_fix_applicability(self.unsafe_fixes.required_applicability())
-            .show_fix_diff(is_show_diff_enabled(preview));
+            .show_fix_diff(is_show_diff_enabled(preview))
+            .with_output_rule_id_format(self.name_format);
 
         render_diagnostics(writer, self.format, config, &diagnostics.messages)?;
 

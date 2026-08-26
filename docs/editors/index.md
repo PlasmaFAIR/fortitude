@@ -15,4 +15,4 @@ written in Rust and is available as part of the `fortitude` CLI via `fortitude s
 The server supports surfacing Fortitude diagnostics, providing Code Actions to fix
 them. Currently, the server is intended to be used alongside another Fortran Language
 Server (such as [`fortls`](https://github.com/fortran-lang/fortls/) in order to support
-features like navigation and autocompletion.
+features like navigation and autocompletion).

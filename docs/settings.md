@@ -499,6 +499,43 @@ By default disable ignore-comment-length behavior when running `fortitude`.
 
 ---
 
+#### [`indent-width`](#check_indent-width) {: #check_indent-width }
+<span id="indent-width"></span>
+
+The number of spaces to use for a single indent. Used when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
+
+The indentation is determined by the number of spaces (tabs are equal to one indent_width).
+
+**Default value**: `4`
+
+**Type**: `int`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Enforce indentation of base 4.
+    indent-width = 4
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Enforce indentation of base 4.
+    indent-width = 4
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Enforce indentation of base 4.
+    indent-width = 4
+    ```
+
+---
+
 #### [`line-length`](#check_line-length) {: #check_line-length }
 <span id="line-length"></span>
 
@@ -544,11 +581,12 @@ The style in which violation messages should be formatted: `"full"` (default)
 (shows source), `"concise"`, `"grouped"` (group messages by file), `"json"`
 (machine-readable), `"junit"` (machine-readable XML), `"github"` (GitHub
 Actions annotations), `"gitlab"` (GitLab CI code quality report),
-`"pylint"` (Pylint text format) or `"azure"` (Azure Pipeline logging commands).
+`"pylint"` (Pylint text format), `"azure"` (Azure Pipeline logging commands),
+`"name"` (filenames only), or `"count"` (filename + count of violations).
 
 **Default value**: `"full"`
 
-**Type**: `"full" | "concise" | "grouped" | "json" | "junit" | "github" | "gitlab" | "pylint" | "azure"`
+**Type**: `"full" | "concise" | "grouped" | "json" | "junit" | "github" | "gitlab" | "pylint" | "azure" | "name" | "count"`
 
 **Example usage**:
 
@@ -572,6 +610,53 @@ Actions annotations), `"gitlab"` (GitLab CI code quality report),
     [tool.fortitude.check]
     # Group violations by containing file.
     output-format = "grouped"
+    ```
+
+---
+
+#### [`output-rule-id-format`](#check_output-rule-id-format) {: #check_output-rule-id-format }
+<span id="output-rule-id-format"></span>
+
+Whether to prefer rule codes, human-readable rule names, or both, in
+diagnostic output, even when preview mode is enabled.
+
+In preview mode, we now prefer to use human-readable rule names by
+default, but you can switch back to the older style with just a short
+code, or get both:
+
+```console
+$ fortitude check --preview --config 'check.output-rule-id-format = "both"' --output-format=concise example.f90
+example.f90:1:8: error[implicit-typing (C001)] program uses implicit typing
+$ fortitude check --preview --config 'check.output-rule-id-format = "code"' --output-format=concise example.f90
+example.f90:1:8: error[C001] program uses implicit typing
+```
+
+**Default value**: `"name"`
+
+**Type**: `"name" | "code" | "both"`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Display rule codes instead of human-readable rule names.
+    output-format-rule-id = "code"
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Display rule codes instead of human-readable rule names.
+    output-format-rule-id = "code"
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Display rule codes instead of human-readable rule names.
+    output-format-rule-id = "code"
     ```
 
 ---
@@ -1062,6 +1147,264 @@ Default behaviour is to keep the current method.
     ```toml
     [tool.fortitude.check.inconsistent-dimensions]
     prefer-attribute = "always"
+    ```
+
+---
+
+### `check.incorrect-indentation`
+
+#### [`control-flow-indents`](#check_incorrect-indentation_control-flow-indents) {: #check_incorrect-indentation_control-flow-indents }
+<span id="control-flow-indents"></span>
+
+The number of full indents to use for the contents of control flow units (i.e. `block`, `if`, `associate`, `do`, `select`)
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    control-flow-indents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    control-flow-indents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    control-flow-indents = 2
+    ```
+
+---
+
+#### [`derived-type-indents`](#check_incorrect-indentation_derived-type-indents) {: #check_incorrect-indentation_derived-type-indents }
+<span id="derived-type-indents"></span>
+
+The number of full indents to use for the contents of a derived type
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    derived-type-indents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    derived-type-indents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    derived-type-indents = 2
+    ```
+
+---
+
+#### [`ignore-semicolons`](#check_incorrect-indentation_ignore-semicolons) {: #check_incorrect-indentation_ignore-semicolons }
+<span id="ignore-semicolons"></span>
+
+Whether lines containing semicolons should be ignored
+
+**Default value**: `true`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    ignore-semicolons = false
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    ignore-semicolons = false
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    ignore-semicolons = false
+    ```
+
+---
+
+#### [`interface-indents`](#check_incorrect-indentation_interface-indents) {: #check_incorrect-indentation_interface-indents }
+<span id="interface-indents"></span>
+
+The number of full indents to use for the contents of a interface
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    interface-indents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    interface-indents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    interface-indents = 2
+    ```
+
+---
+
+#### [`line-continuation-indents`](#check_incorrect-indentation_line-continuation-indents) {: #check_incorrect-indentation_line-continuation-indents }
+<span id="line-continuation-indents"></span>
+
+The number of full indents to use after a line continuation (`&`)
+
+**Default value**: `1`
+
+**Type**: `int`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    line-continuation-indents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    line-continuation-indents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    line-continuation-indents = 2
+    ```
+
+---
+
+#### [`module-indents`](#check_incorrect-indentation_module-indents) {: #check_incorrect-indentation_module-indents }
+<span id="module-indents"></span>
+
+The number of full indents to use for the contents of modules and submodules
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    module-indents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    module-indents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    module-indents = 2
+    ```
+
+---
+
+#### [`procedure-indents`](#check_incorrect-indentation_procedure-indents) {: #check_incorrect-indentation_procedure-indents }
+<span id="procedure-indents"></span>
+
+The number of full indents to use for the contents of subroutines and functions
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    procedure-indents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    procedure-indents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    procedure-indents = 2
+    ```
+
+---
+
+#### [`program-indents`](#check_incorrect-indentation_program-indents) {: #check_incorrect-indentation_program-indents }
+<span id="program-indents"></span>
+
+The number of full indents to use for the contents of a program
+
+**Default value**: `1`
+
+**Type**: `usize`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    program-indents = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    program-indents = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    program-indents = 2
     ```
 
 ---

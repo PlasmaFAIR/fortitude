@@ -6,15 +6,23 @@ use ruff_source_file::SourceFile;
 use ruff_text_size::TextRange;
 
 use crate::{
-    diagnostics::{Annotation, Diagnostic, Severity, SubDiagnosticSeverity},
+    diagnostics::{
+        Annotation, Diagnostic, DisplayDiagnosticConfig, Severity, SubDiagnosticSeverity,
+    },
     fs::relativize_path,
 };
 
 /// Generate error workflow command in GitHub Actions format.
 /// See: [GitHub documentation](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message)
-pub(super) struct GithubRenderer {}
+pub(super) struct GithubRenderer<'a> {
+    config: &'a DisplayDiagnosticConfig,
+}
 
-impl GithubRenderer {
+impl<'a> GithubRenderer<'a> {
+    pub(super) fn new(config: &'a DisplayDiagnosticConfig) -> Self {
+        Self { config }
+    }
+
     pub(super) fn render(
         &self,
         f: &mut std::fmt::Formatter,
@@ -29,7 +37,7 @@ impl GithubRenderer {
             write!(
                 f,
                 "::{severity} title=fortitude ({code})",
-                code = diagnostic.secondary_code_or_id()
+                code = self.config.format_rule_id(diagnostic)
             )?;
 
             if let Some(span) = diagnostic.primary_span() {

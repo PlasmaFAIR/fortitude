@@ -1,10 +1,9 @@
-use crate::ast::FortitudeNode;
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use crate::traits::TextRanged;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What does it do?
 /// Checks for missing double-colon separator in variable declarations.
@@ -29,7 +28,7 @@ impl AstRule for MissingDoubleColon {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if node
             .children(&mut node.walk())
-            .filter_map(|child| child.to_text(context.source_text()))
+            .map(|child| child.text())
             .all(|child| child != "::")
         {
             let first_decl = node.child_by_field_name("declarator")?;

@@ -3,8 +3,8 @@ use crate::settings::FortranStandard;
 use crate::{AstRule, CheckContext, kind_ids};
 
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use tree_sitter::Node;
 
 /// ## What it does
 /// Checks for `block data` constructs.

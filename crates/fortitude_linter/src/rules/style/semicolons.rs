@@ -1,10 +1,9 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::TextSize;
-use tree_sitter::Node;
 
-use crate::ast::FortitudeNode;
 use crate::{AstRule, CheckContext, kind_ids};
 
 fn semicolon_is_superfluous(node: &Node) -> bool {
@@ -75,7 +74,7 @@ impl AlwaysFixableViolation for SuperfluousSemicolon {
 impl AstRule for SuperfluousSemicolon {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         if semicolon_is_superfluous(node) {
-            let edit = node.edit_delete(context.source_file());
+            let edit = node.edit_delete();
             return some_vec!(
                 context
                     .create_diagnostic(Self {}, node)
@@ -114,7 +113,7 @@ impl AstRule for MultipleStatementsPerLine {
         if semicolon_is_superfluous(node) {
             return None;
         }
-        let indentation = node.indentation(context.source_file());
+        let indentation = node.indentation();
         let start = node.start_byte();
         let mut end = node.end_byte();
         let text = context.source_text().as_bytes();

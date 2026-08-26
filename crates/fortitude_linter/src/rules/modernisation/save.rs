@@ -1,11 +1,10 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use fortitude_macros::ViolationMetadata;
+use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 
-use crate::{
-    AstRule, CheckContext, ast::FortitudeNode, kind_ids, settings::FortranStandard,
-    traits::TextRanged,
-};
+use crate::{AstRule, CheckContext, kind_ids, settings::FortranStandard};
+use fortitude_sitter::traits::TextRanged;
 
 /// ## What it does
 /// Checks for unnecessary `save` statements and qualifiers
@@ -52,7 +51,7 @@ impl AlwaysFixableViolation for SuperfluousSave {
 }
 
 impl AstRule for SuperfluousSave {
-    fn check(context: &CheckContext, node: &tree_sitter::Node) -> Option<Vec<Diagnostic>> {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         // Only F2008 and later made `save` at the module level implicit
         if context.settings().target_std < FortranStandard::F2008 {
             return None;
@@ -69,7 +68,7 @@ impl AstRule for SuperfluousSave {
             let save_qualifier = node
                 .named_children(&mut node.walk())
                 .filter(|c| c.grammar_name() == "type_qualifier")
-                .find(|c| c.to_text(context.source_text()) == Some("save"))?;
+                .find(|c| c.text() == "save")?;
 
             let start_node = match save_qualifier.prev_sibling() {
                 None => save_qualifier,
@@ -106,9 +105,7 @@ impl AstRule for SuperfluousSave {
                         },
                         save_statement
                     )
-                    .with_fix(Fix::safe_edit(
-                        save_statement.edit_delete(context.source_file())
-                    ))
+                    .with_fix(Fix::safe_edit(save_statement.edit_delete()))
             ]
         }
     }

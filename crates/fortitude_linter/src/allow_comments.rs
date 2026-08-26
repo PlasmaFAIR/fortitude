@@ -1,21 +1,21 @@
 use crate::CheckContext;
-use crate::ast::FortitudeNode;
+
 use crate::rule_redirects::get_redirect_target;
 use crate::rules::Rule;
 use crate::rules::fortitude::allow_comments::{
     DisabledAllowComment, DuplicatedAllowComment, InvalidRuleCodeOrName, RedirectedAllowComment,
     UnusedAllowComment,
 };
-use crate::traits::TextRanged;
+use fortitude_sitter::traits::TextRanged;
 
 use crate::diagnostics::{Diagnostic, Edit, Fix};
+use fortitude_sitter::Node;
 use itertools::Itertools;
 use lazy_regex::{regex, regex_captures};
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashSet;
 use std::str::FromStr;
-use tree_sitter::Node;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Code<'a> {
@@ -45,21 +45,19 @@ pub struct AllowComment<'a, 'b> {
 }
 
 /// If this node is an `allow` comment, get all the rules allowed on the next line
-pub fn gather_allow_comments<'a, 'b>(
-    node: &Node<'b>,
+pub fn gather_allow_comments<'a>(
+    node: &Node<'a>,
     file: &'a SourceFile,
-) -> Option<AllowComment<'a, 'b>> {
+) -> Option<AllowComment<'a, 'a>> {
     if node.kind() != "comment" {
         return None;
     }
 
     let mut codes = Vec::new();
 
-    let (_, allow_comment) = regex_captures!(
-        r#"! allow\((.*)\)\s*"#,
-        node.to_text(file.source_text()).unwrap()
-    )?;
-    let range = if let Some(next_node) = node.next_named_sibling() {
+    let (_, allow_comment) = regex_captures!(r#"! *allow\((.*)\)\s*"#, node.text())?;
+    let range = {
+        let next_node = node.next_named_sibling()?;
         let start_byte = next_node.start_textsize();
         let end_byte = next_node.end_textsize();
 
@@ -74,8 +72,6 @@ pub fn gather_allow_comments<'a, 'b>(
         let end_line = src.line_end(end_index);
 
         TextRange::new(start_line, end_line)
-    } else {
-        return None;
     };
 
     // Partition the found selectors into valid and invalid
@@ -161,7 +157,7 @@ pub(crate) fn check_allow_comments(
             }
 
             let rule = code.code.to_string();
-            let edit = remove_code_from_allow_comment(comment, code, context.source_file());
+            let edit = remove_code_from_allow_comment(comment, code);
 
             let diagnostic = match code.rule {
                 None => context.create_diagnostic_if_enabled(InvalidRuleCodeOrName { rule }, code),
@@ -190,11 +186,7 @@ pub(crate) fn check_allow_comments(
     ignored_diagnostics
 }
 
-fn remove_code_from_allow_comment(
-    comment: &AllowComment,
-    code_to_remove: &Code,
-    file: &SourceFile,
-) -> Edit {
+fn remove_code_from_allow_comment(comment: &AllowComment, code_to_remove: &Code) -> Edit {
     let remaining_codes = comment
         .codes
         .iter()
@@ -203,10 +195,10 @@ fn remove_code_from_allow_comment(
         .join(", ");
 
     if remaining_codes.is_empty() {
-        comment.node.edit_delete(file)
+        comment.node.edit_delete()
     } else {
         comment
             .node
-            .edit_replacement(file, format!("! allow({remaining_codes})"))
+            .edit_replacement(format!("! allow({remaining_codes})"))
     }
 }
