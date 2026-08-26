@@ -279,11 +279,19 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     }
 
     let diagnostics = results.diagnostics;
+    let has_blocking_diagnostics = diagnostics
+        .messages
+        .iter()
+        .any(|v| v.severity().is_blocking());
+    let has_blocking_fixes = diagnostics
+        .fixed
+        .values()
+        .any(|fixes| fixes.iter().any(|v| v.0.severity().is_blocking()));
     if !cli.exit_zero {
         if fix_only {
             // If we're only fixing, we want to exit zero (since we've fixed all fixable
             // violations), unless we're explicitly asked to exit non-zero on fix.
-            if cli.exit_non_zero_on_fix && !diagnostics.fixed.is_empty() {
+            if cli.exit_non_zero_on_fix && !diagnostics.fixed.is_empty() && has_blocking_fixes {
                 return Ok(ExitCode::FAILURE);
             }
         } else {
@@ -291,10 +299,12 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
             // there are any violations, unless we're explicitly asked to exit zero on
             // fix.
             if cli.exit_non_zero_on_fix {
-                if !diagnostics.fixed.is_empty() || !diagnostics.messages.is_empty() {
+                if (!diagnostics.fixed.is_empty() || !diagnostics.messages.is_empty())
+                    && (has_blocking_fixes || has_blocking_diagnostics)
+                {
                     return Ok(ExitCode::FAILURE);
                 }
-            } else if !diagnostics.messages.is_empty() {
+            } else if !diagnostics.messages.is_empty() && has_blocking_diagnostics {
                 return Ok(ExitCode::FAILURE);
             }
         }

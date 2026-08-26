@@ -1223,6 +1223,10 @@ impl Severity {
     pub const fn is_fatal(self) -> bool {
         matches!(self, Severity::Fatal)
     }
+
+    pub const fn is_blocking(self) -> bool {
+        matches!(self, Severity::Error | Severity::Fatal)
+    }
 }
 
 impl From<Severity> for Color {
