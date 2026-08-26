@@ -1194,7 +1194,6 @@ impl From<SourceFile> for Span {
 )]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
-    None,
     Info,
     Warning,
     #[default]
@@ -1205,7 +1204,6 @@ pub enum Severity {
 impl Severity {
     fn to_annotate(self) -> AnnotateLevel<'static> {
         match self {
-            Severity::None => AnnotateLevel::INFO,
             Severity::Info => AnnotateLevel::INFO,
             Severity::Warning => AnnotateLevel::WARNING,
             Severity::Error => AnnotateLevel::ERROR,
@@ -1232,7 +1230,6 @@ impl Severity {
 impl From<Severity> for Color {
     fn from(severity: Severity) -> Self {
         match severity {
-            Severity::None => Color::White,
             Severity::Info => Color::Blue,
             Severity::Warning => Color::Yellow,
             Severity::Error => Color::Red,
@@ -1246,13 +1243,12 @@ impl FromStr for Severity {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "none" => Ok(Severity::None),
             "info" => Ok(Severity::Info),
             "warning" => Ok(Severity::Warning),
             "error" => Ok(Severity::Error),
             "fatal" => Ok(Severity::Fatal),
             _ => Err(anyhow::anyhow!(
-                "Expected one of 'none', 'info', 'warning', 'error', or 'fatal', got {s:?}"
+                "Expected one of 'info', 'warning', 'error', or 'fatal', got {s:?}"
             )),
         }
     }
@@ -1261,7 +1257,6 @@ impl FromStr for Severity {
 impl Display for Severity {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Severity::None => "none",
             Severity::Info => "info",
             Severity::Warning => "warning",
             Severity::Error => "error",
@@ -1686,7 +1681,11 @@ where
     B: Display,
     S: Display,
 {
-    let mut diagnostic = Diagnostic::new(DiagnosticId::Lint(rule), rule.severity(), body);
+    let mut diagnostic = Diagnostic::new(
+        DiagnosticId::Lint(rule),
+        rule.severity().unwrap_or_default(),
+        body,
+    );
 
     let span = Span::from(file).with_range(range);
     let mut annotation = Annotation::primary(span);

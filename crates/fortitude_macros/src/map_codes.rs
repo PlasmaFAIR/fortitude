@@ -455,8 +455,8 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         rule_severity_match_arms.extend(quote! {
             #(#attrs)*
             Self::#name => match Category::#category {
-                Category::Error => Severity::Error,
-                _ => Severity::None,
+                Category::Error => Some(Severity::Error),
+                _ => None,
             },
         });
         rule_explanation_match_arms.extend(quote! {#(#attrs)* Self::#name => #path::explain(),});
@@ -535,7 +535,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
             }
 
             /// Returns the severity of this rule.
-            pub fn severity(&self) -> crate::diagnostics::Severity {
+            pub fn severity(&self) -> Option<crate::diagnostics::Severity> {
                 match self { #rule_severity_match_arms }
             }
         }

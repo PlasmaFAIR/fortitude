@@ -150,7 +150,7 @@ impl CheckSettings {
         }
     }
 
-    pub fn resolve_severity(&self, rule: Rule, severity: Severity) -> Severity {
+    pub fn resolve_severity(&self, rule: Rule, severity: Option<Severity>) -> Severity {
         if let Some(override_severity) = self
             .severity_overrides
             .iter()
@@ -158,16 +158,10 @@ impl CheckSettings {
             .max_by_key(|(selector, _)| selector.specificity())
             .map(|(_, severity)| *severity)
         {
-            return match override_severity {
-                Severity::None => self.severity_default,
-                other => other,
-            };
+            return override_severity;
         }
 
-        match severity {
-            Severity::None => self.severity_default,
-            other => other,
-        }
+        severity.unwrap_or(self.severity_default)
     }
 }
 
@@ -188,8 +182,21 @@ mod tests {
         };
 
         assert_eq!(
-            settings.resolve_severity(Rule::ImplicitTyping, Severity::Error),
+            settings.resolve_severity(Rule::ImplicitTyping, Rule::ImplicitTyping.severity()),
             Severity::Info
+        );
+    }
+
+    #[test]
+    fn configured_default_severity_is_used_when_rule_has_no_severity() {
+        let settings = CheckSettings {
+            severity_default: Severity::Warning,
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::ImplicitTyping, Rule::ImplicitTyping.severity()),
+            Severity::Warning
         );
     }
 }

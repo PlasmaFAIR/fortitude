@@ -22,7 +22,7 @@ impl<'a> AzureRenderer<'a> {
     ) -> std::fmt::Result {
         for diag in diagnostics {
             let severity = match diag.severity() {
-                Severity::None | Severity::Info => "debug",
+                Severity::Info => "debug",
                 Severity::Warning => "warning",
                 Severity::Error | Severity::Fatal => "error",
             };

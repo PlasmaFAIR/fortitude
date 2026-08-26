@@ -36,8 +36,8 @@ pub trait ViolationMetadata {
     fn explain() -> Option<&'static str>;
 
     /// Returns the severity of this violation.
-    fn severity() -> Severity {
-        Severity::None
+    fn severity() -> Option<Severity> {
+        None
     }
 }
 

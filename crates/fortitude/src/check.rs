@@ -283,10 +283,15 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
         .messages
         .iter()
         .any(|v| v.severity().is_blocking());
-    let has_blocking_fixes = diagnostics
-        .fixed
-        .values()
-        .any(|fixes| fixes.iter().any(|v| v.0.severity().is_blocking()));
+    let has_blocking_fixes = diagnostics.fixed.values().any(|fixes| {
+        fixes.iter().any(|(rule, _)| {
+            file_configuration
+                .settings
+                .check
+                .resolve_severity(*rule, rule.severity())
+                .is_blocking()
+        })
+    });
     if !cli.exit_zero {
         if fix_only {
             // If we're only fixing, we want to exit zero (since we've fixed all fixable

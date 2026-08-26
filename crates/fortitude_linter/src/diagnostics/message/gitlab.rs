@@ -95,7 +95,7 @@ impl Serialize for SerializedMessages<'_> {
             let description = diagnostic.concise_message();
             let check_name = &self.config.format_rule_id(diagnostic);
             let severity = match diagnostic.severity() {
-                Severity::Info | Severity::None => "info",
+                Severity::Info => "info",
                 Severity::Warning => "minor",
                 Severity::Error => "major",
                 // Another option here is `blocker`

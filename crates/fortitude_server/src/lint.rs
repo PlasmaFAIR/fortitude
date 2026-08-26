@@ -161,8 +161,7 @@ fn to_lsp_diagnostic(
     } else {
         (
             match diagnostic.severity() {
-                fortitude_linter::diagnostics::Severity::Info
-                | fortitude_linter::diagnostics::Severity::None => {
+                fortitude_linter::diagnostics::Severity::Info => {
                     lsp_types::DiagnosticSeverity::INFORMATION
                 }
                 fortitude_linter::diagnostics::Severity::Warning => {
