@@ -5,7 +5,7 @@ use crate::options::{
     ShadowedVariableOptions, StringOptions, UseStatementsOptions,
 };
 use fortitude_linter::diagnostics::OutputRuleIdFormat;
-use fortitude_linter::diagnostics::{RuleSeverityOverrides, Severity};
+use fortitude_linter::diagnostics::Severity;
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
 };
@@ -242,7 +242,7 @@ pub struct Configuration {
     pub unsafe_fixes: Option<UnsafeFixes>,
     pub output_format: Option<OutputFormat>,
     pub severity_default: Option<Severity>,
-    pub severity_overrides: Option<RuleSeverityOverrides>,
+    pub severity_overrides: Option<FxHashMap<RuleSelector, Severity>>,
     pub output_rule_id_format: Option<OutputRuleIdFormat>,
     pub target_std: Option<FortranStandard>,
     pub progress_bar: Option<ProgressBar>,

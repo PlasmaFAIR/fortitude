@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use fortitude_linter::{
     diagnostics::OutputRuleIdFormat,
-    diagnostics::{RuleSeverityOverrides, Severity},
+    diagnostics::Severity,
     line_width::IndentWidth,
     rule_selector::RuleSelector,
     rules::{
@@ -147,7 +147,7 @@ pub struct CheckOptions {
                severity-overrides = { C001 = "error", C003 = "info" }
            "#
     )]
-    pub severity_overrides: Option<RuleSeverityOverrides>,
+    pub severity_overrides: Option<FxHashMap<RuleSelector, Severity>>,
 
     /// Whether to prefer rule codes, human-readable rule names, or both, in
     /// diagnostic output, even when preview mode is enabled.

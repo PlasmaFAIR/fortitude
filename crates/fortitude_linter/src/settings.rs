@@ -7,11 +7,12 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use crate::diagnostics::{Applicability, OutputRuleIdFormat, RuleSeverityOverrides, Severity};
+use crate::diagnostics::{Applicability, OutputRuleIdFormat, Severity};
 use crate::line_width::IndentWidth;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_macros::CacheKey;
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Deserializer, Serialize, de};
 use strum::IntoEnumIterator;
 
@@ -72,7 +73,7 @@ pub struct CheckSettings {
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
     pub severity_default: Severity,
-    pub severity_overrides: RuleSeverityOverrides,
+    pub severity_overrides: FxHashMap<RuleSelector, Severity>,
     pub output_rule_id_format: OutputRuleIdFormat,
     pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
@@ -116,7 +117,7 @@ impl CheckSettings {
             unsafe_fixes: UnsafeFixes::default(),
             output_format: OutputFormat::default(),
             severity_default: Severity::default(),
-            severity_overrides: RuleSeverityOverrides::default(),
+            severity_overrides: FxHashMap::default(),
             output_rule_id_format: OutputRuleIdFormat::default(),
             target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),

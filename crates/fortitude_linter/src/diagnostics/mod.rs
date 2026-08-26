@@ -27,10 +27,7 @@ use ruff_text_size::{Ranged, TextRange};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIs, EnumString};
 
-use crate::{
-    RuleSelector, diagnostics::panic::PanicError, fix::FixTable, rules::Rule,
-    settings::OutputFormat,
-};
+use crate::{diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat};
 use fortitude_sitter::traits::TextRanged;
 
 pub use message::{DisplayDiagnostic, DisplayDiagnostics, render_diagnostics};
@@ -1269,8 +1266,6 @@ impl Display for Severity {
         f.write_str(s)
     }
 }
-
-pub type RuleSeverityOverrides = FxHashMap<RuleSelector, Severity>;
 
 /// Like [`Severity`] but exclusively for sub-diagnostics.
 ///
