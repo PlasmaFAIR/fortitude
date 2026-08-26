@@ -129,10 +129,10 @@ impl Printer {
             if fixed > 0 {
                 writeln!(
                     writer,
-                    "Number of errors: {total_txt} ({fixed_txt} fixed, {remaining_txt} remaining)\n\n{info}"
+                    "Number of diagnostics: {total_txt} ({fixed_txt} fixed, {remaining_txt} remaining)\n\n{info}"
                 )?;
             } else if remaining > 0 {
-                writeln!(writer, "Number of errors: {remaining_txt}\n\n{info}")?;
+                writeln!(writer, "Number of diagnostics: {remaining_txt}\n\n{info}")?;
             } else {
                 let success = "All checks passed!".bright_green();
                 writeln!(writer, "{success}\n")?;
