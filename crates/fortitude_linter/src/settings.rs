@@ -72,7 +72,7 @@ pub struct CheckSettings {
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
     pub severity_default: Severity,
-    pub severity_overrides: Vec<RuleSeverityOverrides>,
+    pub severity_overrides: RuleSeverityOverrides,
     pub output_rule_id_format: OutputRuleIdFormat,
     pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
@@ -116,7 +116,7 @@ impl CheckSettings {
             unsafe_fixes: UnsafeFixes::default(),
             output_format: OutputFormat::default(),
             severity_default: Severity::default(),
-            severity_overrides: Vec::default(),
+            severity_overrides: RuleSeverityOverrides::default(),
             output_rule_id_format: OutputRuleIdFormat::default(),
             target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),
@@ -153,9 +153,9 @@ impl CheckSettings {
         if let Some(override_severity) = self
             .severity_overrides
             .iter()
-            .rev() // Last override takes precedence
-            .find(|override_| override_.matches(rule))
-            .map(|override_| override_.severity)
+            .filter(|(selector, _)| selector.all_rules().any(|candidate| candidate == rule))
+            .max_by_key(|(selector, _)| selector.specificity())
+            .map(|(_, severity)| *severity)
         {
             return match override_severity {
                 Severity::None => self.severity_default,
@@ -167,6 +167,29 @@ impl CheckSettings {
             Severity::None => self.severity_default,
             other => other,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn more_specific_severity_override_takes_precedence() {
+        let settings = CheckSettings {
+            severity_overrides: [
+                ("C".parse().unwrap(), Severity::Warning),
+                ("C001".parse().unwrap(), Severity::Info),
+            ]
+            .into_iter()
+            .collect(),
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::ImplicitTyping, Severity::Error),
+            Severity::Info
+        );
     }
 }
 

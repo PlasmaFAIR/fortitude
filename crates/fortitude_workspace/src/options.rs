@@ -140,14 +140,15 @@ pub struct CheckOptions {
 
     /// Override the severity for specific rules.
     #[option(
-        default = "[]",
-        value_type = "list[str]",
+        default = "{}",
+        value_type = "dict[RuleSelector, str]",
         example = r#"
                # Treat `C001` as an error and `C003` as informational.
-               severity-overrides = ["C001:error", "C003:info"]
+               severity-overrides = { C001 = "error", C003 = "info" }
            "#
     )]
-    pub severity_overrides: Option<Vec<RuleSeverityOverrides>>,
+    pub severity_overrides: Option<RuleSeverityOverrides>,
+
     /// Whether to prefer rule codes, human-readable rule names, or both, in
     /// diagnostic output, even when preview mode is enabled.
     ///

@@ -242,7 +242,7 @@ pub struct Configuration {
     pub unsafe_fixes: Option<UnsafeFixes>,
     pub output_format: Option<OutputFormat>,
     pub severity_default: Option<Severity>,
-    pub severity_overrides: Option<Vec<RuleSeverityOverrides>>,
+    pub severity_overrides: Option<RuleSeverityOverrides>,
     pub output_rule_id_format: Option<OutputRuleIdFormat>,
     pub target_std: Option<FortranStandard>,
     pub progress_bar: Option<ProgressBar>,
