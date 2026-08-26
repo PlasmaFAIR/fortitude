@@ -7,8 +7,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use crate::diagnostics::{Applicability, OutputRuleIdFormat};
-use crate::diagnostics::{Applicability, RuleSeverityOverrides, Severity};
+use crate::diagnostics::{Applicability, OutputRuleIdFormat, RuleSeverityOverrides, Severity};
 use crate::line_width::IndentWidth;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;

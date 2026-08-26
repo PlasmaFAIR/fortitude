@@ -9,8 +9,8 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use fortitude_linter::{
-    diagnostics::{RuleSeverityOverrides, Severity},
     diagnostics::OutputRuleIdFormat,
+    diagnostics::{RuleSeverityOverrides, Severity},
     line_width::IndentWidth,
     rule_selector::RuleSelector,
     rules::{

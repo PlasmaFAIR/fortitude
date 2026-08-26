@@ -19,7 +19,6 @@ use std::{
 
 use clap::builder::{TypedValueParser, ValueParserFactory};
 use colored::Color;
-use ruff_source_file::{LineColumn, SourceFile};
 use ruff_source_file::{LineColumn, SourceFile, SourceFileBuilder};
 use rustc_hash::FxHashMap;
 
@@ -29,8 +28,10 @@ use ruff_text_size::{Ranged, TextRange};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIs, EnumString};
 
-use crate::{RuleSelector, fix::FixTable, rules::Rule, settings::OutputFormat, traits::TextRanged};
-use crate::{diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat};
+use crate::{
+    RuleSelector, diagnostics::panic::PanicError, fix::FixTable, rules::Rule,
+    settings::OutputFormat,
+};
 use fortitude_sitter::traits::TextRanged;
 
 pub use message::{DisplayDiagnostic, DisplayDiagnostics, render_diagnostics};
@@ -1208,7 +1209,7 @@ pub enum Severity {
 impl Severity {
     fn to_annotate(self) -> AnnotateLevel<'static> {
         match self {
-            Severity::None => AnnotateLevel::NONE,
+            Severity::None => AnnotateLevel::INFO,
             Severity::Info => AnnotateLevel::INFO,
             Severity::Warning => AnnotateLevel::WARNING,
             Severity::Error => AnnotateLevel::ERROR,
