@@ -110,6 +110,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+*.snap.new
 
 # Translations
 *.mo
