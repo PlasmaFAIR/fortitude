@@ -9,7 +9,7 @@ use crate::{
 };
 use fortitude_linter::{
     check_only_file,
-    diagnostics::{Applicability, Diagnostic, Fix},
+    diagnostics::{Applicability, Diagnostic, Fix, Severity},
     locator::Locator,
 };
 use ruff_source_file::{LineIndex, SourceFileBuilder};
@@ -80,7 +80,16 @@ pub(crate) fn check(query: &DocumentQuery, encoding: PositionEncoding) -> Diagno
     let locator = Locator::new(&source);
 
     let lsp_diagnostics = diagnostics.into_iter().map(|message| {
-        to_lsp_diagnostic(&message, file.source_text(), locator.to_index(), encoding)
+        let severity_override = message
+            .rule()
+            .and_then(|rule| settings.check.severity_override(rule));
+        to_lsp_diagnostic(
+            &message,
+            file.source_text(),
+            locator.to_index(),
+            encoding,
+            severity_override,
+        )
     });
 
     diagnostics_map
@@ -124,6 +133,7 @@ fn to_lsp_diagnostic(
     source: &str,
     index: &LineIndex,
     encoding: PositionEncoding,
+    severity_override: Option<Severity>,
 ) -> lsp_types::Diagnostic {
     let diagnostic_range = diagnostic.range().unwrap_or_default();
     let name = diagnostic.name();
@@ -156,27 +166,17 @@ fn to_lsp_diagnostic(
 
     let range = diagnostic_range.to_range(source, index, encoding);
 
-    let (severity, code) = if let Some(code) = code {
-        (severity(code), code.to_string())
-    } else {
-        (
-            match diagnostic.severity() {
-                fortitude_linter::diagnostics::Severity::Info => {
-                    lsp_types::DiagnosticSeverity::INFORMATION
-                }
-                fortitude_linter::diagnostics::Severity::Warning => {
-                    lsp_types::DiagnosticSeverity::WARNING
-                }
-                fortitude_linter::diagnostics::Severity::Error => {
-                    lsp_types::DiagnosticSeverity::ERROR
-                }
-                fortitude_linter::diagnostics::Severity::Fatal => {
-                    lsp_types::DiagnosticSeverity::ERROR
-                }
-            },
-            diagnostic.secondary_code_or_id().to_string(),
-        )
+    let severity = match (severity_override, diagnostic.rule()) {
+        (Some(severity), _) => severity,
+        (None, Some(rule)) => rule.severity().unwrap_or(Severity::Warning),
+        (None, None) => diagnostic.severity(),
     };
+    let severity = match severity {
+        Severity::Info => lsp_types::DiagnosticSeverity::INFORMATION,
+        Severity::Warning => lsp_types::DiagnosticSeverity::WARNING,
+        Severity::Error | Severity::Fatal => lsp_types::DiagnosticSeverity::ERROR,
+    };
+    let code = diagnostic.secondary_code_or_id().to_string();
 
     lsp_types::Diagnostic {
         range,
@@ -204,17 +204,6 @@ fn diagnostic_edit_range(
     range.to_range(source, index, encoding)
 }
 
-/// Map from rule code to LSP severity
-fn severity(code: &str) -> lsp_types::DiagnosticSeverity {
-    match code {
-        // E000: io-error
-        // E001: syntax-error
-        // E011: invalid-character
-        "E000" | "E001" | "E011" => lsp_types::DiagnosticSeverity::ERROR,
-        _ => lsp_types::DiagnosticSeverity::WARNING,
-    }
-}
-
 /// Map from rule code to LSP "unnecessary" or "deprecated"
 fn tags(diagnostic: &Diagnostic) -> Option<Vec<lsp_types::DiagnosticTag>> {
     diagnostic.primary_tags().map(|tags| {
@@ -229,4 +218,76 @@ fn tags(diagnostic: &Diagnostic) -> Option<Vec<lsp_types::DiagnosticTag>> {
             })
             .collect()
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use fortitude_linter::{
+        diagnostics::{Severity, create_lint_diagnostic},
+        registry::Rule,
+        settings::CheckSettings,
+    };
+
+    use super::*;
+
+    fn severities(
+        rule: Rule,
+        severity_override: Option<Severity>,
+    ) -> (Severity, lsp_types::DiagnosticSeverity) {
+        let source = "program test\nend program test\n";
+        let file = SourceFileBuilder::new("test.f90", source).finish();
+        let index = LineIndex::from_source_text(source);
+        let diagnostic = create_lint_diagnostic(
+            "diagnostic",
+            Option::<&str>::None,
+            TextRange::default(),
+            None,
+            file,
+            rule,
+        );
+        let lsp_diagnostic = to_lsp_diagnostic(
+            &diagnostic,
+            source,
+            &index,
+            PositionEncoding::UTF8,
+            severity_override,
+        );
+
+        (diagnostic.severity(), lsp_diagnostic.severity.unwrap())
+    }
+
+    #[test]
+    fn ordinary_rules_are_lsp_warnings_by_default() {
+        assert_eq!(
+            severities(Rule::ImplicitTyping, None),
+            (Severity::Error, lsp_types::DiagnosticSeverity::WARNING)
+        );
+    }
+
+    #[test]
+    fn error_rules_are_lsp_errors_by_default() {
+        for rule in [Rule::IoError, Rule::SyntaxError, Rule::InvalidCharacter] {
+            assert_eq!(
+                severities(rule, None),
+                (Severity::Error, lsp_types::DiagnosticSeverity::ERROR)
+            );
+        }
+    }
+
+    #[test]
+    fn severity_override_changes_lsp_severity() {
+        let settings = CheckSettings {
+            severity_overrides: [("C001".parse().unwrap(), Severity::Error)]
+                .into_iter()
+                .collect(),
+            ..CheckSettings::default()
+        };
+        assert_eq!(
+            severities(
+                Rule::ImplicitTyping,
+                settings.severity_override(Rule::ImplicitTyping)
+            ),
+            (Severity::Error, lsp_types::DiagnosticSeverity::ERROR)
+        );
+    }
 }

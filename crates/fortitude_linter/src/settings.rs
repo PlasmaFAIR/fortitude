@@ -150,18 +150,18 @@ impl CheckSettings {
         }
     }
 
-    pub fn resolve_severity(&self, rule: Rule, severity: Option<Severity>) -> Severity {
-        if let Some(override_severity) = self
-            .severity_overrides
+    pub fn severity_override(&self, rule: Rule) -> Option<Severity> {
+        self.severity_overrides
             .iter()
             .filter(|(selector, _)| selector.all_rules().any(|candidate| candidate == rule))
             .max_by_key(|(selector, _)| selector.specificity())
             .map(|(_, severity)| *severity)
-        {
-            return override_severity;
-        }
+    }
 
-        severity.unwrap_or(self.severity_default)
+    pub fn resolve_severity(&self, rule: Rule, severity: Option<Severity>) -> Severity {
+        self.severity_override(rule)
+            .or(severity)
+            .unwrap_or(self.severity_default)
     }
 }
 
