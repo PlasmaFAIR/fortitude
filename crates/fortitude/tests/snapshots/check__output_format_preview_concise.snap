@@ -10,14 +10,13 @@ info:
     - "--select"
     - implicit-typing
     - test.f90
-snapshot_kind: text
 ---
 success: false
 exit_code: 1
 ----- stdout -----
 test.f90:1:1: error[implicit-typing] program uses implicit typing
 fortitude: 1 files scanned.
-Number of errors: 1
+Number of diagnostics: 1
 
 For more information about specific rules, run:
 

@@ -12,7 +12,6 @@ info:
     - "--unsafe-fixes"
     - "--show-fixes"
     - test.f90
-snapshot_kind: text
 ---
 success: true
 exit_code: 0
@@ -23,7 +22,7 @@ Fixed 1 error:
     1 × C001 (implicit-typing)
 
 fortitude: 1 files scanned.
-Number of errors: 1 (1 fixed, 0 remaining)
+Number of diagnostics: 1 (1 fixed, 0 remaining)
 
 For more information about specific rules, run:
 
