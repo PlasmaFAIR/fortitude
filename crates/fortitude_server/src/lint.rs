@@ -83,12 +83,17 @@ pub(crate) fn check(query: &DocumentQuery, encoding: PositionEncoding) -> Diagno
         let severity_override = message
             .rule()
             .and_then(|rule| settings.check.severity_override(rule));
+        let severity_default = settings
+            .check
+            .severity_default_explicit
+            .then_some(settings.check.severity_default);
         to_lsp_diagnostic(
             &message,
             file.source_text(),
             locator.to_index(),
             encoding,
             severity_override,
+            severity_default,
         )
     });
 
@@ -134,6 +139,7 @@ fn to_lsp_diagnostic(
     index: &LineIndex,
     encoding: PositionEncoding,
     severity_override: Option<Severity>,
+    severity_default: Option<Severity>,
 ) -> lsp_types::Diagnostic {
     let diagnostic_range = diagnostic.range().unwrap_or_default();
     let name = diagnostic.name();
@@ -166,10 +172,13 @@ fn to_lsp_diagnostic(
 
     let range = diagnostic_range.to_range(source, index, encoding);
 
-    let severity = match (severity_override, diagnostic.rule()) {
-        (Some(severity), _) => severity,
-        (None, Some(rule)) => rule.severity().unwrap_or(Severity::Warning),
-        (None, None) => diagnostic.severity(),
+    let severity = match (severity_override, severity_default, diagnostic.rule()) {
+        (Some(severity), _, _) => severity,
+        (None, Some(Severity::Info), _) => Severity::Info,
+        (None, Some(Severity::Warning), _) => Severity::Warning,
+        (None, Some(Severity::Error), _) => Severity::Error,
+        (None, _, Some(rule)) => rule.severity().unwrap_or(Severity::Warning),
+        (None, _, None) => diagnostic.severity(),
     };
     let severity = match severity {
         Severity::Info => lsp_types::DiagnosticSeverity::INFORMATION,
@@ -233,6 +242,7 @@ mod tests {
     fn severities(
         rule: Rule,
         severity_override: Option<Severity>,
+        severity_default: Option<Severity>,
     ) -> (Severity, lsp_types::DiagnosticSeverity) {
         let source = "program test\nend program test\n";
         let file = SourceFileBuilder::new("test.f90", source).finish();
@@ -251,6 +261,7 @@ mod tests {
             &index,
             PositionEncoding::UTF8,
             severity_override,
+            severity_default,
         );
 
         (diagnostic.severity(), lsp_diagnostic.severity.unwrap())
@@ -259,7 +270,7 @@ mod tests {
     #[test]
     fn ordinary_rules_are_lsp_warnings_by_default() {
         assert_eq!(
-            severities(Rule::ImplicitTyping, None),
+            severities(Rule::ImplicitTyping, None, None),
             (Severity::Error, lsp_types::DiagnosticSeverity::WARNING)
         );
     }
@@ -268,7 +279,7 @@ mod tests {
     fn error_rules_are_lsp_errors_by_default() {
         for rule in [Rule::IoError, Rule::SyntaxError, Rule::InvalidCharacter] {
             assert_eq!(
-                severities(rule, None),
+                severities(rule, None, None),
                 (Severity::Error, lsp_types::DiagnosticSeverity::ERROR)
             );
         }
@@ -285,8 +296,33 @@ mod tests {
         assert_eq!(
             severities(
                 Rule::ImplicitTyping,
-                settings.severity_override(Rule::ImplicitTyping)
+                settings.severity_override(Rule::ImplicitTyping),
+                None,
             ),
+            (Severity::Error, lsp_types::DiagnosticSeverity::ERROR)
+        );
+    }
+
+    #[test]
+    fn explicit_info_default_downgrades_lsp_severity() {
+        assert_eq!(
+            severities(Rule::SyntaxError, None, Some(Severity::Info)),
+            (Severity::Error, lsp_types::DiagnosticSeverity::INFORMATION)
+        );
+    }
+
+    #[test]
+    fn explicit_warning_default_downgrades_lsp_severity() {
+        assert_eq!(
+            severities(Rule::SyntaxError, None, Some(Severity::Warning)),
+            (Severity::Error, lsp_types::DiagnosticSeverity::WARNING)
+        );
+    }
+
+    #[test]
+    fn explicit_error_default_upgrades_lsp_severity() {
+        assert_eq!(
+            severities(Rule::ImplicitTyping, None, Some(Severity::Error)),
             (Severity::Error, lsp_types::DiagnosticSeverity::ERROR)
         );
     }

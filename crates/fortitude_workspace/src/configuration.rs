@@ -395,6 +395,7 @@ impl Configuration {
                 progress_bar,
                 output_format: self.output_format.unwrap_or_default(),
                 severity_default: self.severity_default.unwrap_or_default(),
+                severity_default_explicit: self.severity_default.is_some(),
                 severity_overrides: self.severity_overrides.unwrap_or_default(),
                 output_rule_id_format: self.output_rule_id_format.unwrap_or_default(),
                 show_fixes: self.show_fixes.unwrap_or_default(),
