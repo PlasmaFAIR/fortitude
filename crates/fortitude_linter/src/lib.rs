@@ -159,7 +159,7 @@ impl<'a> CheckContext<'a> {
     pub fn create_diagnostic<T: Violation, R: TextRanged>(&self, kind: T, range: R) -> Diagnostic {
         let mut diagnostic = kind.into_diagnostic(range.textrange(), &self.file);
         if let Some(rule) = diagnostic.rule() {
-            let severity = self.settings.resolve_severity(rule, rule.severity());
+            let severity = self.settings.resolve_severity(rule);
             diagnostic.set_severity(severity);
         }
         diagnostic

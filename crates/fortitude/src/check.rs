@@ -288,7 +288,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
             file_configuration
                 .settings
                 .check
-                .resolve_severity(*rule, rule.severity())
+                .resolve_severity(*rule)
                 .is_blocking()
         })
     });
@@ -376,9 +376,7 @@ fn check_files(
                                     TextRange::default(),
                                     &SourceFileBuilder::new(filename.as_ref(), "").finish(),
                                 );
-                                let severity = settings
-                                    .check
-                                    .resolve_severity(Rule::IoError, Rule::IoError.severity());
+                                let severity = settings.check.resolve_severity(Rule::IoError);
                                 diagnostic.set_severity(severity);
                                 let diagnostics = vec![diagnostic];
                                 return CheckStatus::Skipped(Diagnostics::new(diagnostics));
@@ -450,9 +448,7 @@ fn check_files(
                                 TextRange::default(),
                                 &SourceFileBuilder::new(filename.as_ref(), "").finish(),
                             );
-                            let severity = settings
-                                .check
-                                .resolve_severity(Rule::IoError, Rule::IoError.severity());
+                            let severity = settings.check.resolve_severity(Rule::IoError);
                             diagnostic.set_severity(severity);
                             let diagnostics = vec![diagnostic];
                             CheckStatus::Skipped(Diagnostics::new(diagnostics))

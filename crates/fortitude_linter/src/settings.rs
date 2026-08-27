@@ -158,9 +158,8 @@ impl CheckSettings {
             .map(|(_, severity)| *severity)
     }
 
-    pub fn resolve_severity(&self, rule: Rule, severity: Option<Severity>) -> Severity {
+    pub fn resolve_severity(&self, rule: Rule) -> Severity {
         self.severity_override(rule)
-            .or(severity)
             .unwrap_or(self.severity_default)
     }
 }
@@ -182,7 +181,7 @@ mod tests {
         };
 
         assert_eq!(
-            settings.resolve_severity(Rule::ImplicitTyping, Rule::ImplicitTyping.severity()),
+            settings.resolve_severity(Rule::ImplicitTyping),
             Severity::Info
         );
     }
@@ -195,7 +194,20 @@ mod tests {
         };
 
         assert_eq!(
-            settings.resolve_severity(Rule::ImplicitTyping, Rule::ImplicitTyping.severity()),
+            settings.resolve_severity(Rule::ImplicitTyping),
+            Severity::Warning
+        );
+    }
+
+    #[test]
+    fn configured_default_severity_downgrades_error_rules() {
+        let settings = CheckSettings {
+            severity_default: Severity::Warning,
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::SyntaxError),
             Severity::Warning
         );
     }
@@ -218,6 +230,8 @@ impl fmt::Display for CheckSettings {
                 self.show_fixes,
                 self.unsafe_fixes,
                 self.output_format,
+                self.severity_default,
+                self.severity_overrides | map,
                 self.output_rule_id_format,
                 self.target_std,
                 self.progress_bar,

@@ -161,6 +161,13 @@ impl RuleSelector {
     }
 }
 
+impl Display for RuleSelector {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let (prefix, code) = self.prefix_and_code();
+        write!(f, "{prefix}{code}")
+    }
+}
+
 impl Serialize for RuleSelector {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
