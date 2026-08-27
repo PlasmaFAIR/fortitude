@@ -283,15 +283,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
         .messages
         .iter()
         .any(|v| v.severity().is_blocking());
-    let has_blocking_fixes = diagnostics.fixed.values().any(|fixes| {
-        fixes.iter().any(|(rule, _)| {
-            file_configuration
-                .settings
-                .check
-                .resolve_severity(*rule)
-                .is_blocking()
-        })
-    });
+    let has_blocking_fixes = diagnostics.blocking_fixes;
     if !cli.exit_zero {
         if fix_only {
             // If we're only fixing, we want to exit zero (since we've fixed all fixable
@@ -573,9 +565,13 @@ fn check_stdin(
         (result, fixed)
     };
 
+    let blocking_fixes = fixed
+        .keys()
+        .any(|rule| settings.check.resolve_severity(*rule).is_blocking());
     let diagnostics = Diagnostics {
         messages,
         fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
+        blocking_fixes,
     };
     Ok(CheckResults::from_stdin(diagnostics))
 }

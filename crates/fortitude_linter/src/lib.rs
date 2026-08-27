@@ -239,9 +239,13 @@ pub fn check_file(
         });
     }
 
+    let blocking_fixes = fixed
+        .keys()
+        .any(|rule| settings.resolve_severity(*rule).is_blocking());
     Ok(Diagnostics {
         messages,
         fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
+        blocking_fixes,
     })
 }
 

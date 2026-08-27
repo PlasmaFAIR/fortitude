@@ -40,6 +40,7 @@ pub use ruff_diagnostics::{Applicability, Edit, Fix, IsolationLevel, SourceMap, 
 pub struct Diagnostics {
     pub messages: Vec<Diagnostic>,
     pub fixed: FixMap,
+    pub blocking_fixes: bool,
 }
 
 impl Diagnostics {
@@ -47,6 +48,7 @@ impl Diagnostics {
         Self {
             messages,
             fixed: FixMap::default(),
+            blocking_fixes: false,
         }
     }
 
@@ -68,6 +70,23 @@ impl AddAssign for Diagnostics {
     fn add_assign(&mut self, other: Self) {
         self.messages.extend(other.messages);
         self.fixed += other.fixed;
+        self.blocking_fixes |= other.blocking_fixes;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Diagnostics;
+
+    #[test]
+    fn blocking_fix_status_is_preserved_when_diagnostics_are_merged() {
+        let mut diagnostics = Diagnostics::new(Vec::new());
+        let mut other = Diagnostics::new(Vec::new());
+        other.blocking_fixes = true;
+
+        diagnostics += other;
+
+        assert!(diagnostics.blocking_fixes);
     }
 }
 
