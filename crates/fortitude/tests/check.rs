@@ -198,13 +198,13 @@ fn check_file_doesnt_exist() -> anyhow::Result<()> {
     let cmd = FortitudeCheck::new()?;
     assert_cmd_snapshot!(cmd
                          .check_command().arg("test/file/doesnt/exist.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test/file/doesnt/exist.f90:1:1: E000 Error opening file: [OS_ERROR]
     fortitude: 0 files scanned, 1 could not be read.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 
@@ -237,14 +237,14 @@ end program test
                          .check_command()
                          .args(["--select=bugprone", "--preview"])
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:5:43: error[trailing-backslash] Trailing backslash
     test.f90:6:5: error[missing-default-case] Missing default case may not handle all values
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -317,14 +317,14 @@ end program
                          .check_command()
                          .arg("test.f90")
                          .args(["--select=C001,style"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:2:1: C001 program uses implicit typing
     test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -361,14 +361,14 @@ select = ["C001", "style"]
                          .check_command()
                          .args(["--config", "fortitude.toml"])
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:2:1: C001 program uses implicit typing
     test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -406,14 +406,14 @@ select = ["C001"]
                          .args(["--config", "fortitude.toml"])
                          .arg("test.f90")
                          .args(["--extend-select", "style"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:2:1: C001 program uses implicit typing
     test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -449,14 +449,14 @@ select = ["C001", "style"]
     assert_cmd_snapshot!(cmd
                          .check_command()
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:2:1: C001 program uses implicit typing
     test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -492,14 +492,14 @@ select = ["C001", "style"]
     assert_cmd_snapshot!(cmd
                          .check_command()
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:2:1: C001 program uses implicit typing
     test.f90:4:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -533,14 +533,14 @@ end program foo
                          .check_command()
                          .arg("test.f90")
                          .args(["--select=S071,C022,S201,C003", "--preview", "--fix"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:3:3: error[implicit-external-procedures] 'implicit none' missing 'external'
     test.f90:4:3: error[implicit-real-kind] real has implicit kind
     fortitude: 1 files scanned.
-    Number of errors: 4 (2 fixed, 2 remaining)
+    Number of diagnostics: 4 (2 fixed, 2 remaining)
 
     For more information about specific rules, run:
 
@@ -589,13 +589,13 @@ end program foo
                          .check_command()
                          .arg("test.f90")
                          .args(["--select=S071,C022,S201,C003", "--preview", "--fix", "--unsafe-fixes"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:4:3: error[implicit-real-kind] real has implicit kind
     fortitude: 1 files scanned.
-    Number of errors: 4 (3 fixed, 1 remaining)
+    Number of diagnostics: 4 (3 fixed, 1 remaining)
 
     For more information about specific rules, run:
 
@@ -639,12 +639,12 @@ endprogram
                          .arg("--unsafe-fixes")
                          .arg("--fix")
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: true
     exit_code: 0
     ----- stdout -----
     fortitude: 1 files scanned.
-    Number of errors: 2 (2 fixed, 0 remaining)
+    Number of diagnostics: 2 (2 fixed, 0 remaining)
 
     For more information about specific rules, run:
 
@@ -684,13 +684,13 @@ endprogram
                          .arg("--fix")
                          .arg("--fixable=S061")
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:3:3: C003 'implicit none' missing 'external'
     fortitude: 1 files scanned.
-    Number of errors: 2 (1 fixed, 1 remaining)
+    Number of diagnostics: 2 (1 fixed, 1 remaining)
 
     For more information about specific rules, run:
 
@@ -729,13 +729,13 @@ endprogram
                          .arg("--fix")
                          .arg("--unfixable=C003")
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:3:3: C003 'implicit none' missing 'external'
     fortitude: 1 files scanned.
-    Number of errors: 2 (1 fixed, 1 remaining)
+    Number of diagnostics: 2 (1 fixed, 1 remaining)
 
     For more information about specific rules, run:
 
@@ -785,12 +785,12 @@ fixable = ["C003"]
                          .arg("--extend-fixable=S061")
                          .args(["--config", "fortitude.toml"])
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: true
     exit_code: 0
     ----- stdout -----
     fortitude: 1 files scanned.
-    Number of errors: 2 (2 fixed, 0 remaining)
+    Number of diagnostics: 2 (2 fixed, 0 remaining)
 
     For more information about specific rules, run:
 
@@ -829,13 +829,13 @@ fixable = ["C003"]
                          .arg("--fixable=S061")
                          .args(["--config", "fortitude.toml"])
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:3:3: C003 'implicit none' missing 'external'
     fortitude: 1 files scanned.
-    Number of errors: 2 (1 fixed, 1 remaining)
+    Number of diagnostics: 2 (1 fixed, 1 remaining)
 
     For more information about specific rules, run:
 
@@ -875,13 +875,13 @@ fixable = ["S061"]
                          .arg("--extend-fixable=C003")
                          .args(["--config", "fortitude.toml"])
                          .arg("test.f90"),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:4:1: S061 end statement should be named.
     fortitude: 1 files scanned.
-    Number of errors: 2 (1 fixed, 1 remaining)
+    Number of diagnostics: 2 (1 fixed, 1 remaining)
 
     For more information about specific rules, run:
 
@@ -918,7 +918,7 @@ end program foo
                          .check_command()
                          .arg("test.f90")
                          .args(["--select=syntax-error,superfluous-semicolon,line-too-long", "--line-length=50", "--preview"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -926,7 +926,7 @@ end program foo
     test.f90:7:9: error[syntax-error] Syntax error
     test.f90:9:51: error[line-too-long] line length of 52, exceeds maximum 50
     fortitude: 1 files scanned.
-    Number of errors: 3
+    Number of diagnostics: 3
 
     For more information about specific rules, run:
 
@@ -958,14 +958,14 @@ end program foo
     assert_cmd_snapshot!(cmd.check_command()
                          .arg("test.f90")
                          .args(["--select=superfluous-semicolon", "--preview"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:6:8: error[superfluous-semicolon] unnecessary semicolon
     test.f90:8:13: error[superfluous-semicolon] unnecessary semicolon
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -998,14 +998,14 @@ end program foo
     assert_cmd_snapshot!(cmd.check_command()
                          .arg("test.f90")
                          .args(["--select=syntax-error,superfluous-semicolon", "--preview"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:6:8: error[superfluous-semicolon] unnecessary semicolon
     test.f90:9:13: error[superfluous-semicolon] unnecessary semicolon
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -1037,13 +1037,13 @@ end program foo
     assert_cmd_snapshot!(cmd.check_command()
                          .arg("test.f90")
                          .args(["--select=superfluous-semicolon", "--preview", "--fix"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:8:13: error[superfluous-semicolon] unnecessary semicolon
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 
@@ -1080,7 +1080,7 @@ end program test
     assert_cmd_snapshot!(cmd.check_command()
                          .arg("test.f90")
                          .args(["--select=trailing-whitespace,line-too-long", "--line-length=60"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1092,7 +1092,7 @@ end program test
     test.f90:9:27: S101 [*] trailing whitespace
     test.f90:11:29: S101 [*] trailing whitespace
     fortitude: 1 files scanned.
-    Number of errors: 7
+    Number of diagnostics: 7
 
     For more information about specific rules, run:
 
@@ -1146,7 +1146,7 @@ end module {file}{idx}
                          .arg("--select=implicit-typing")
                          .arg("--per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1157,7 +1157,7 @@ end module {file}{idx}
     nested/baz1.f90:2:1: C001 module uses implicit typing
     nested/foo1.f90:2:1: C001 module uses implicit typing
     fortitude: 9 files scanned.
-    Number of errors: 6
+    Number of diagnostics: 6
 
     For more information about specific rules, run:
 
@@ -1211,7 +1211,7 @@ end module {file}{idx}
                          .arg("--select=implicit-typing")
                          .arg("--extend-per-file-ignores=**/double_nested/*.f90:implicit-typing")
                          .current_dir(path),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1220,7 +1220,7 @@ end module {file}{idx}
     nested/baz1.f90:2:1: C001 module uses implicit typing
     nested/foo1.f90:2:1: C001 module uses implicit typing
     fortitude: 9 files scanned.
-    Number of errors: 4
+    Number of diagnostics: 4
 
     For more information about specific rules, run:
 
@@ -1282,7 +1282,7 @@ fn check_exclude() -> anyhow::Result<()> {
                          .arg("--exclude=bar")
                          .arg(".")
                          .current_dir(exclude_test_path(cmd.root())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1290,7 +1290,7 @@ fn check_exclude() -> anyhow::Result<()> {
     base.f90:2:1: C001 module uses implicit typing
     foo/foo.f90:2:1: C001 module uses implicit typing
     fortitude: 3 files scanned.
-    Number of errors: 3
+    Number of diagnostics: 3
 
     For more information about specific rules, run:
 
@@ -1313,13 +1313,13 @@ fn check_extend_exclude() -> anyhow::Result<()> {
                          .arg("--select=implicit-typing")
                          .arg("--extend-exclude=bar")
                          .current_dir(exclude_test_path(cmd.root())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     base.f90:2:1: C001 module uses implicit typing
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 
@@ -1343,13 +1343,13 @@ fn check_no_force_exclude() -> anyhow::Result<()> {
                          .arg("foo/foo.f90")
                          .args(["--select=implicit-typing"])
                          .current_dir(exclude_test_path(cmd.root())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     foo/foo.f90:2:1: C001 module uses implicit typing
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 
@@ -1396,13 +1396,13 @@ fn check_exclude_builtin() -> anyhow::Result<()> {
                          .arg(".venv/lib/site-packages/")
                          .args(["--select=implicit-typing"])
                          .current_dir(exclude_test_path(cmd.root())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     .venv/lib/site-packages/scipy/scipy.f90:2:1: C001 module uses implicit typing
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 
@@ -1456,13 +1456,13 @@ end program
     assert_cmd_snapshot!(cmd.check_command()
                          .arg("test.f90")
                          .args(["--select=C001,S061,PORT011,PORT021,S101"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:7:10: PORT021 'logical*4' uses non-standard syntax
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 
@@ -1494,7 +1494,7 @@ end program
     assert_cmd_snapshot!(cmd.check_command()
                          .arg("test.f90")
                          .args(["--select=C001,S061,PORT011,PORT021,S101", "--ignore-allow-comments"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1506,7 +1506,7 @@ end program
     test.f90:7:42: S101 [*] trailing whitespace
     test.f90:8:1: S061 [*] end statement should be named.
     fortitude: 1 files scanned.
-    Number of errors: 7
+    Number of diagnostics: 7
 
     For more information about specific rules, run:
 
@@ -1595,7 +1595,7 @@ end program myprogram
                          .args(["--config", "fortitude.toml"])
                          .arg("myfile.ff")
                          .args(["--select=S001,S091,C001"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1604,7 +1604,7 @@ end program myprogram
     myfile.ff:2:11: S001 line length of 17, exceeds maximum 10
     myfile.ff:3:11: S001 line length of 21, exceeds maximum 10
     fortitude: 1 files scanned.
-    Number of errors: 4
+    Number of diagnostics: 4
 
     For more information about specific rules, run:
 
@@ -1664,14 +1664,14 @@ fn check_gitignore() -> anyhow::Result<()> {
                          .arg(".")
                          .args(["--select=implicit-typing"])
                          .current_dir(gitignore_test_path(cmd.root())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     include.f90:2:1: C001 module uses implicit typing
     include/include.f90:2:1: C001 module uses implicit typing
     fortitude: 2 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -1694,7 +1694,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
                          .arg("--select=implicit-typing")
                          .arg("--no-respect-gitignore")
                          .current_dir(gitignore_test_path(cmd.root())),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1707,7 +1707,7 @@ fn check_no_respect_gitignore() -> anyhow::Result<()> {
     include/exclude/include.f90:2:1: C001 module uses implicit typing
     include/include.f90:2:1: C001 module uses implicit typing
     fortitude: 8 files scanned.
-    Number of errors: 8
+    Number of diagnostics: 8
 
     For more information about specific rules, run:
 
@@ -1726,7 +1726,7 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
     assert_cmd_snapshot!(FortitudeCheck::new()?
                          .check_command()
                          .args(["--select=FORT99", "--preview"])
-                         .arg("-"), @r"
+                         .arg("-"), @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1737,7 +1737,7 @@ fn preview_enabled_prefix() -> anyhow::Result<()> {
     -:1:1: error[preview-test-rule] Hey this is a preview test rule.
     -:1:1: error[redirected-to-test-rule] Hey this is a test rule that was redirected from another.
     fortitude: 1 files scanned.
-    Number of errors: 6
+    Number of diagnostics: 6
 
     For more information about specific rules, run:
 
@@ -1785,7 +1785,7 @@ end program test
     assert_cmd_snapshot!(cmd.check_command()
                          .arg("test.f90")
                          .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1794,7 +1794,7 @@ end program test
     1	C001   	[ ] implicit-typing
     1	S101   	[*] trailing-whitespace
     fortitude: 1 files scanned.
-    Number of errors: 6
+    Number of diagnostics: 6
 
     For more information about specific rules, run:
 
@@ -1823,7 +1823,7 @@ end program test
     assert_cmd_snapshot!(cmd.check_command()
                          .arg("test.f90")
                          .args(["--select=C001,S061,PORT011,PORT021,S101", "--statistics", "--unsafe-fixes"]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -1832,7 +1832,7 @@ end program test
     1	C001   	[*] implicit-typing
     1	S101   	[*] trailing-whitespace
     fortitude: 1 files scanned.
-    Number of errors: 6
+    Number of diagnostics: 6
 
     For more information about specific rules, run:
 
@@ -2111,14 +2111,14 @@ end program test
                              &filter_arg,
                              "--select=PORT011",
                          ]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:3:11: PORT011 logical kind set with number literal '4'
     test.f90:8:11: PORT011 logical kind set with number literal '4'
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -2213,13 +2213,13 @@ fn git_staged() -> anyhow::Result<()> {
                              "--git-staged",
                              "--select=PORT011",
                          ]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:13:11: PORT011 logical kind set with number literal '4'
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 
@@ -2263,13 +2263,13 @@ fn git_since() -> anyhow::Result<()> {
                              "test-branch",
                              "--select=PORT011",
                          ]),
-                         @r"
+                         @"
     success: false
     exit_code: 1
     ----- stdout -----
     test.f90:13:11: PORT011 logical kind set with number literal '4'
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 
@@ -2538,14 +2538,14 @@ end
         .args(["--config", "check.extend-select=['S001', 'S263']"])
         .args(["--config", "check.inconsistent-dimensions.prefer-attribute = \"never\""])
         .arg("-")
-        .pass_stdin(test_code), @r"
+        .pass_stdin(test_code), @"
     success: false
     exit_code: 1
     ----- stdout -----
     -:3:26: S263 Bad declaration of array
     -:5:91: S001 line length of 97, exceeds maximum 90
     fortitude: 1 files scanned.
-    Number of errors: 2
+    Number of diagnostics: 2
 
     For more information about specific rules, run:
 
@@ -2667,13 +2667,13 @@ select=["S001"]
         .arg("fortitude.toml")
         .args(["--config", "check.line-length=110"])
         .arg("-")
-        .pass_stdin(test_code), @r"
+        .pass_stdin(test_code), @"
     success: false
     exit_code: 1
     ----- stdout -----
     -:2:91: S001 line length of 97, exceeds maximum 90
     fortitude: 1 files scanned.
-    Number of errors: 1
+    Number of diagnostics: 1
 
     For more information about specific rules, run:
 

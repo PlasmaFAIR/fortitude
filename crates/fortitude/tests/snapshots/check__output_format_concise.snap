@@ -9,7 +9,6 @@ info:
     - "--select"
     - "S061,C001,PORT011,PORT021"
     - test.f90
-snapshot_kind: text
 ---
 success: false
 exit_code: 1
@@ -19,7 +18,7 @@ test.f90:2:10: PORT021 'logical*4' uses non-standard syntax
 test.f90:2:11: PORT011 logical kind set with number literal '4'
 test.f90:3:1: S061 [*] end statement should be named.
 fortitude: 1 files scanned.
-Number of errors: 4
+Number of diagnostics: 4
 
 For more information about specific rules, run:
 
