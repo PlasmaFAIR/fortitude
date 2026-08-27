@@ -128,6 +128,11 @@ pub struct CheckOptions {
     /// The default severity for violations. `"error"` (default) will report
     /// violations as errors. `"warning"` will report them as warnings, and
     /// `"info"` will report them as informational messages.
+    ///
+    /// Note that the LSP server instead, by default, reports all violations as
+    /// `"warning"` except for violation of type `"error"` (`E`). Explicitly
+    /// setting `severity-default` to `"warning"` will also downgrade `"error"`
+    /// violations to `"warning"` in the LSP server.
     #[option(
         default = r#""error""#,
         value_type = r#""info" | "warning" | "error""#,
