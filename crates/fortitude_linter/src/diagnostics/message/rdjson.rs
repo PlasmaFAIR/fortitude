@@ -9,7 +9,7 @@ use ruff_diagnostics::{Edit, Fix};
 use ruff_source_file::{LineColumn, SourceCode};
 use ruff_text_size::Ranged;
 
-use crate::diagnostics::{ConciseMessage, Diagnostic, DisplayDiagnosticConfig};
+use crate::diagnostics::{ConciseMessage, Diagnostic, DisplayDiagnosticConfig, Severity};
 
 pub struct RdjsonRenderer<'a> {
     config: &'a DisplayDiagnosticConfig,
@@ -85,6 +85,7 @@ fn diagnostic_to_rdjson<'a>(
 
     RdjsonDiagnostic {
         message: diagnostic.concise_message(),
+        severity: severity(diagnostic.severity()),
         location,
         code: RdjsonCode {
             value: code,
@@ -96,6 +97,14 @@ fn diagnostic_to_rdjson<'a>(
                 .as_ref()
                 .map(|(_, source)| source.to_source_code()),
         ),
+    }
+}
+
+const fn severity(severity: Severity) -> &'static str {
+    match severity {
+        Severity::Info => "INFO",
+        Severity::Warning => "WARNING",
+        Severity::Error | Severity::Fatal => "ERROR",
     }
 }
 
@@ -159,6 +168,7 @@ struct RdjsonSource {
 #[derive(Serialize)]
 struct RdjsonDiagnostic<'a> {
     code: RdjsonCode<'a>,
+    severity: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
     location: Option<RdjsonLocation<'a>>,
     message: ConciseMessage<'a>,
@@ -208,7 +218,33 @@ mod tests {
     #[test]
     fn output() {
         let (env, diagnostics) = create_diagnostics(OutputFormat::Rdjson);
-        insta::assert_snapshot!(env.render_diagnostics(&diagnostics));
+        let output = env.render_diagnostics(&diagnostics);
+        assert!(output.contains("\"severity\": \"ERROR\""));
+        insta::assert_snapshot!(output);
+    }
+
+    #[test]
+    fn diagnostic_severity_is_serialized() {
+        let mut env = TestEnvironment::new();
+        env.format(OutputFormat::Rdjson);
+        let diagnostics = vec![
+            env.builder(
+                crate::registry::Rule::StableTestRule,
+                crate::diagnostics::Severity::Info,
+                "info",
+            )
+            .build(),
+            env.builder(
+                crate::registry::Rule::StableTestRule,
+                crate::diagnostics::Severity::Warning,
+                "warning",
+            )
+            .build(),
+        ];
+
+        let output = env.render_diagnostics(&diagnostics);
+        assert!(output.contains("\"severity\": \"INFO\""));
+        assert!(output.contains("\"severity\": \"WARNING\""));
     }
 
     #[test]

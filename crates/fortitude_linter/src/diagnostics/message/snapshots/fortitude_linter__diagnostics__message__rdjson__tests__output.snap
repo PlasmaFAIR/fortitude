@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/diagnostics/message/rdjson.rs
-expression: env.render_diagnostics(&diagnostics)
-snapshot_kind: text
+expression: output
 ---
 {
   "diagnostics": [
@@ -10,6 +9,7 @@ snapshot_kind: text
         "url": "https://fortitude.readthedocs.io/rules/superfluous-implicit-none",
         "value": "S201"
       },
+      "severity": "ERROR",
       "location": {
         "path": "test.f90",
         "range": {
@@ -45,6 +45,7 @@ snapshot_kind: text
         "url": "https://fortitude.readthedocs.io/rules/unnamed-end-statement",
         "value": "S061"
       },
+      "severity": "ERROR",
       "location": {
         "path": "test.f90",
         "range": {
@@ -80,6 +81,7 @@ snapshot_kind: text
         "url": "https://fortitude.readthedocs.io/rules/star-kind",
         "value": "PORT021"
       },
+      "severity": "ERROR",
       "location": {
         "path": "star_kind.f90",
         "range": {

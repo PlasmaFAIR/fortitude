@@ -10,7 +10,6 @@ info:
     - "--select"
     - implicit-typing
     - test.f90
-snapshot_kind: text
 ---
 success: false
 exit_code: 1
@@ -22,6 +21,7 @@ exit_code: 1
         "url": "https://fortitude.readthedocs.io//en/stable/rules/implicit-typing",
         "value": "implicit-typing"
       },
+      "severity": "ERROR",
       "location": {
         "path": "[TMP]/test.f90",
         "range": {
