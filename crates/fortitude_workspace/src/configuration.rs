@@ -242,7 +242,7 @@ pub struct Configuration {
     pub unsafe_fixes: Option<UnsafeFixes>,
     pub output_format: Option<OutputFormat>,
     pub severity_default: Option<Severity>,
-    pub severity_overrides: Option<FxHashMap<RuleSelector, Severity>>,
+    pub severity_overrides: FxHashMap<RuleSelector, Severity>,
     pub output_rule_id_format: Option<OutputRuleIdFormat>,
     pub target_std: Option<FortranStandard>,
     pub progress_bar: Option<ProgressBar>,
@@ -302,7 +302,7 @@ impl Configuration {
             unsafe_fixes: check.unsafe_fixes.map(UnsafeFixes::from),
             output_format: check.output_format,
             severity_default: check.severity_default,
-            severity_overrides: check.severity_overrides,
+            severity_overrides: check.severity_overrides.unwrap_or_default(),
             output_rule_id_format: check.output_rule_id_format,
             target_std: check.target_std,
             progress_bar: check.progress_bar,
@@ -396,7 +396,7 @@ impl Configuration {
                 output_format: self.output_format.unwrap_or_default(),
                 severity_default: self.severity_default.unwrap_or_default(),
                 severity_default_explicit: self.severity_default.is_some(),
-                severity_overrides: self.severity_overrides.unwrap_or_default(),
+                severity_overrides: self.severity_overrides,
                 output_rule_id_format: self.output_rule_id_format.unwrap_or_default(),
                 show_fixes: self.show_fixes.unwrap_or_default(),
                 per_file_ignores: CompiledPerFileIgnoreList::resolve(
@@ -512,14 +512,10 @@ impl Configuration {
             unsafe_fixes: self.unsafe_fixes.or(config.unsafe_fixes),
             output_format: self.output_format.or(config.output_format),
             severity_default: self.severity_default.or(config.severity_default),
-            severity_overrides: match (self.severity_overrides, config.severity_overrides) {
-                (Some(self_overrides), Some(mut config_overrides)) => {
-                    config_overrides.extend(self_overrides);
-                    Some(config_overrides)
-                }
-                (Some(self_overrides), None) => Some(self_overrides),
-                (None, Some(config_overrides)) => Some(config_overrides),
-                (None, None) => None,
+            severity_overrides: {
+                let mut severity_overrides = config.severity_overrides;
+                severity_overrides.extend(self.severity_overrides);
+                severity_overrides
             },
             output_rule_id_format: self.output_rule_id_format.or(config.output_rule_id_format),
             progress_bar: self.progress_bar.or(config.progress_bar),
