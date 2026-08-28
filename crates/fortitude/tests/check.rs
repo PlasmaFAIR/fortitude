@@ -2708,3 +2708,63 @@ fn complex_config_setting_overridden_via_cli() -> Result<()> {
     ");
     Ok(())
 }
+
+#[test]
+fn severity_default_override_to_warning_exits_zero() -> Result<()> {
+    let fixture = FortitudeCheck::with_file("fortitude.toml", "check.select = ['C001']")?;
+    let test_code = "program violates_c001; end";
+    assert_cmd_snapshot!(fixture
+        .check_command()
+        .arg("--config")
+        .arg("fortitude.toml")
+        .args(["--config", "check.severity-default = 'warning'"])
+        .args(["--stdin-filename", "test.f90"])
+        .arg("-")
+        .pass_stdin(test_code), @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    test.f90:1:1: C001 program uses implicit typing
+    fortitude: 1 files scanned.
+    Number of diagnostics: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
+
+#[test]
+fn severity_default_ovveride_to_info_exits_zero() -> Result<()> {
+    let fixture = FortitudeCheck::with_file("fortitude.toml", "check.select = ['C001']")?;
+    let test_code = "program violates_c001; end";
+    assert_cmd_snapshot!(fixture
+        .check_command()
+        .arg("--config")
+        .arg("fortitude.toml")
+        .args(["--config", "check.severity-default = 'info'"])
+        .args(["--stdin-filename", "test.f90"])
+        .arg("-")
+        .pass_stdin(test_code), @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    test.f90:1:1: C001 program uses implicit typing
+    fortitude: 1 files scanned.
+    Number of diagnostics: 1
+
+    For more information about specific rules, run:
+
+        fortitude explain X001,Y002,...
+
+    No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+    ----- stderr -----
+    ");
+    Ok(())
+}
