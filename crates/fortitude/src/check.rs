@@ -370,8 +370,7 @@ fn check_files(
                                 );
                                 let severity = settings.check.resolve_severity(Rule::IoError);
                                 diagnostic.set_severity(severity);
-                                let diagnostics = vec![diagnostic];
-                                return CheckStatus::Skipped(Diagnostics::new(diagnostics));
+                                return CheckStatus::Skipped(Diagnostics::new(vec![diagnostic]));
                             } else {
                                 warn!(
                                     "{}{}{} {error}",
@@ -442,8 +441,7 @@ fn check_files(
                             );
                             let severity = settings.check.resolve_severity(Rule::IoError);
                             diagnostic.set_severity(severity);
-                            let diagnostics = vec![diagnostic];
-                            CheckStatus::Skipped(Diagnostics::new(diagnostics))
+                            CheckStatus::Skipped(Diagnostics::new(vec![diagnostic]))
                         } else {
                             warn!(
                                 "{}{}{} {message}",
