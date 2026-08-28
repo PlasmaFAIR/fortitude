@@ -74,22 +74,6 @@ impl AddAssign for Diagnostics {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::Diagnostics;
-
-    #[test]
-    fn blocking_fix_status_is_preserved_when_diagnostics_are_merged() {
-        let mut diagnostics = Diagnostics::new(Vec::new());
-        let mut other = Diagnostics::new(Vec::new());
-        other.blocking_fixes = true;
-
-        diagnostics += other;
-
-        assert!(diagnostics.blocking_fixes);
-    }
-}
-
 /// A collection of fixes indexed by file path.
 #[derive(Debug, Default, PartialEq)]
 pub struct FixMap(FxHashMap<String, FixTable>);
@@ -1783,4 +1767,20 @@ pub fn create_panic_diagnostic(error: &PanicError, path: Option<&Path>) -> Diagn
     }
 
     diagnostic
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Diagnostics;
+
+    #[test]
+    fn blocking_fix_status_is_preserved_when_diagnostics_are_merged() {
+        let mut diagnostics = Diagnostics::new(Vec::new());
+        let mut other = Diagnostics::new(Vec::new());
+        other.blocking_fixes = true;
+
+        diagnostics += other;
+
+        assert!(diagnostics.blocking_fixes);
+    }
 }
