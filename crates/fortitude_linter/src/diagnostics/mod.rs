@@ -13,7 +13,6 @@ use std::{
     fmt::{Display, Formatter},
     ops::{Add, AddAssign},
     path::Path,
-    str::FromStr,
     sync::Arc,
 };
 
@@ -25,7 +24,7 @@ use annotate_snippets::Level as AnnotateLevel;
 use anyhow::Result;
 use ruff_text_size::{Ranged, TextRange};
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumIs, EnumString};
+use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
 
 use crate::{diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat};
 use fortitude_sitter::traits::TextRanged;
@@ -1193,8 +1192,22 @@ impl From<SourceFile> for Span {
 }
 
 #[derive(
-    Debug, Clone, Copy, Default, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize,
+    Display,
+    EnumString,
+    IntoStaticStr,
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Serialize,
+    Deserialize,
 )]
+#[strum(serialize_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Info,
@@ -1238,34 +1251,6 @@ impl From<Severity> for Color {
             Severity::Error => Color::Red,
             Severity::Fatal => Color::Red,
         }
-    }
-}
-
-impl FromStr for Severity {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "info" => Ok(Severity::Info),
-            "warning" => Ok(Severity::Warning),
-            "error" => Ok(Severity::Error),
-            "fatal" => Ok(Severity::Fatal),
-            _ => Err(anyhow::anyhow!(
-                "Expected one of 'info', 'warning', 'error', or 'fatal', got {s:?}"
-            )),
-        }
-    }
-}
-
-impl Display for Severity {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Severity::Info => "info",
-            Severity::Warning => "warning",
-            Severity::Error => "error",
-            Severity::Fatal => "fatal",
-        };
-        f.write_str(s)
     }
 }
 
