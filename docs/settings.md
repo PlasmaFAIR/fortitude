@@ -1229,14 +1229,16 @@ Default behaviour is to keep the current method.
 
 ### `check.incorrect-indentation`
 
-#### [`control-flow-indents`](#check_incorrect-indentation_control-flow-indents) {: #check_incorrect-indentation_control-flow-indents }
-<span id="control-flow-indents"></span>
+Options for the `incorrect-indentation` rule. The indent widths all default to using [`check.indent-width`](#check_indent-width)
 
-The number of full indents to use for the contents of control flow units (i.e. `block`, `if`, `associate`, `do`, `select`)
+#### [`control-flow-indent`](#check_incorrect-indentation_control-flow-indent) {: #check_incorrect-indentation_control-flow-indent }
+<span id="control-flow-indent"></span>
 
-**Default value**: `1`
+The number of spaces to indent the contents of control flow units (i.e. `block`, `if`, `associate`, `do`, `select`)
 
-**Type**: `usize`
+**Default value**: ``check.indent-width``
+
+**Type**: `int`
 
 **Example usage**:
 
@@ -1244,31 +1246,31 @@ The number of full indents to use for the contents of control flow units (i.e. `
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    control-flow-indents = 2
+    control-flow-indent = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    control-flow-indents = 2
+    control-flow-indent = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    control-flow-indents = 2
+    control-flow-indent = 2
     ```
 
 ---
 
-#### [`derived-type-indents`](#check_incorrect-indentation_derived-type-indents) {: #check_incorrect-indentation_derived-type-indents }
-<span id="derived-type-indents"></span>
+#### [`derived-type-indent`](#check_incorrect-indentation_derived-type-indent) {: #check_incorrect-indentation_derived-type-indent }
+<span id="derived-type-indent"></span>
 
-The number of full indents to use for the contents of a derived type
+The number of spaces to indent the contents of a derived type
 
-**Default value**: `1`
+**Default value**: ``check.indent-width``
 
-**Type**: `usize`
+**Type**: `int`
 
 **Example usage**:
 
@@ -1276,19 +1278,19 @@ The number of full indents to use for the contents of a derived type
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    derived-type-indents = 2
+    derived-type-indent = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    derived-type-indents = 2
+    derived-type-indent = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    derived-type-indents = 2
+    derived-type-indent = 2
     ```
 
 ---
@@ -1325,44 +1327,12 @@ Whether lines containing semicolons should be ignored
 
 ---
 
-#### [`interface-indents`](#check_incorrect-indentation_interface-indents) {: #check_incorrect-indentation_interface-indents }
-<span id="interface-indents"></span>
+#### [`interface-indent`](#check_incorrect-indentation_interface-indent) {: #check_incorrect-indentation_interface-indent }
+<span id="interface-indent"></span>
 
-The number of full indents to use for the contents of a interface
+The number of spaces to indent the contents of a interface
 
-**Default value**: `1`
-
-**Type**: `usize`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    interface-indents = 2
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    interface-indents = 2
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    interface-indents = 2
-    ```
-
----
-
-#### [`line-continuation-indents`](#check_incorrect-indentation_line-continuation-indents) {: #check_incorrect-indentation_line-continuation-indents }
-<span id="line-continuation-indents"></span>
-
-The number of full indents to use after a line continuation (`&`)
-
-**Default value**: `1`
+**Default value**: ``check.indent-width``
 
 **Type**: `int`
 
@@ -1372,31 +1342,31 @@ The number of full indents to use after a line continuation (`&`)
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    line-continuation-indents = 2
+    interface-indent = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    line-continuation-indents = 2
+    interface-indent = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    line-continuation-indents = 2
+    interface-indent = 2
     ```
 
 ---
 
-#### [`module-indents`](#check_incorrect-indentation_module-indents) {: #check_incorrect-indentation_module-indents }
-<span id="module-indents"></span>
+#### [`line-continuation-indent`](#check_incorrect-indentation_line-continuation-indent) {: #check_incorrect-indentation_line-continuation-indent }
+<span id="line-continuation-indent"></span>
 
-The number of full indents to use for the contents of modules and submodules
+The number of spaces to indent after a line continuation (`&`)
 
-**Default value**: `1`
+**Default value**: ``check.indent-width``
 
-**Type**: `usize`
+**Type**: `int`
 
 **Example usage**:
 
@@ -1404,31 +1374,31 @@ The number of full indents to use for the contents of modules and submodules
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    module-indents = 2
+    line-continuation-indent = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    module-indents = 2
+    line-continuation-indent = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    module-indents = 2
+    line-continuation-indent = 2
     ```
 
 ---
 
-#### [`procedure-indents`](#check_incorrect-indentation_procedure-indents) {: #check_incorrect-indentation_procedure-indents }
-<span id="procedure-indents"></span>
+#### [`module-indent`](#check_incorrect-indentation_module-indent) {: #check_incorrect-indentation_module-indent }
+<span id="module-indent"></span>
 
-The number of full indents to use for the contents of subroutines and functions
+The number of spaces to indent the contents of modules and submodules
 
-**Default value**: `1`
+**Default value**: ``check.indent-width``
 
-**Type**: `usize`
+**Type**: `int`
 
 **Example usage**:
 
@@ -1436,31 +1406,31 @@ The number of full indents to use for the contents of subroutines and functions
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    procedure-indents = 2
+    module-indent = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    procedure-indents = 2
+    module-indent = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    procedure-indents = 2
+    module-indent = 2
     ```
 
 ---
 
-#### [`program-indents`](#check_incorrect-indentation_program-indents) {: #check_incorrect-indentation_program-indents }
-<span id="program-indents"></span>
+#### [`procedure-indent`](#check_incorrect-indentation_procedure-indent) {: #check_incorrect-indentation_procedure-indent }
+<span id="procedure-indent"></span>
 
-The number of full indents to use for the contents of a program
+The number of spaces to indent the contents of subroutines and functions
 
-**Default value**: `1`
+**Default value**: ``check.indent-width``
 
-**Type**: `usize`
+**Type**: `int`
 
 **Example usage**:
 
@@ -1468,19 +1438,51 @@ The number of full indents to use for the contents of a program
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    program-indents = 2
+    procedure-indent = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    program-indents = 2
+    procedure-indent = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    program-indents = 2
+    procedure-indent = 2
+    ```
+
+---
+
+#### [`program-indent`](#check_incorrect-indentation_program-indent) {: #check_incorrect-indentation_program-indent }
+<span id="program-indent"></span>
+
+The number of spaces to indent the contents of a program
+
+**Default value**: ``check.indent-width``
+
+**Type**: `int`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.incorrect-indentation]
+    program-indent = 2
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.incorrect-indentation]
+    program-indent = 2
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.incorrect-indentation]
+    program-indent = 2
     ```
 
 ---

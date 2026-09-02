@@ -394,6 +394,10 @@ impl Configuration {
             progress_bar = ProgressBar::Ascii;
         }
 
+        let indent_width = self
+            .indent_width
+            .unwrap_or(Settings::default().check.indent_width);
+
         Ok(Settings {
             check: CheckSettings {
                 project_root: project_root.to_path_buf(),
@@ -403,9 +407,7 @@ impl Configuration {
                 line_length: self
                     .line_length
                     .unwrap_or(Settings::default().check.line_length),
-                indent_width: self
-                    .indent_width
-                    .unwrap_or(Settings::default().check.indent_width),
+                indent_width,
                 unsafe_fixes: self.unsafe_fixes.unwrap_or_default(),
                 preview,
                 target_std: self.target_std.unwrap_or_default(),
@@ -467,7 +469,9 @@ impl Configuration {
                     .unwrap_or_default(),
                 incorrect_indentation: self
                     .incorrect_indentation
-                    .map(IncorrectIndentationOptions::into_settings)
+                    .map(|options| {
+                        IncorrectIndentationOptions::into_settings(options, indent_width.as_usize())
+                    })
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {

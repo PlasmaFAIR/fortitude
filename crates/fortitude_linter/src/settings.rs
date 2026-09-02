@@ -102,6 +102,8 @@ impl Default for CheckSettings {
 
 impl CheckSettings {
     fn new(project_root: &Path) -> Self {
+        let indent_width = IndentWidth::from(4);
+
         Self {
             project_root: project_root.to_path_buf(),
             rules: DEFAULT_SELECTORS
@@ -110,7 +112,7 @@ impl CheckSettings {
                 .collect(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
-            indent_width: IndentWidth::from(4),
+            indent_width,
             fix: false,
             fix_only: false,
             show_fixes: false,
@@ -133,7 +135,10 @@ impl CheckSettings {
             line_too_long: line_length::settings::Settings::default(),
             use_statements: use_statements::settings::Settings::default(),
             complexity: complexity::settings::Settings::default(),
-            incorrect_indentation: whitespace::settings::IncorrectIndentationSettings::default(),
+            incorrect_indentation:
+                whitespace::settings::IncorrectIndentationSettings::default_from_indent_width(
+                    indent_width.as_usize(),
+                ),
         }
     }
 
