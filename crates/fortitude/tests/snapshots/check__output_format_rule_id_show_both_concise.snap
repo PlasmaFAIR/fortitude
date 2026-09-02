@@ -12,14 +12,13 @@ info:
     - test.f90
     - "--config"
     - "check.output-rule-id-format='both'"
-snapshot_kind: text
 ---
 success: false
 exit_code: 1
 ----- stdout -----
 test.f90:1:1: error[implicit-typing (C001)] program uses implicit typing
 fortitude: 1 files scanned.
-Number of errors: 1
+Number of diagnostics: 1
 
 For more information about specific rules, run:
 

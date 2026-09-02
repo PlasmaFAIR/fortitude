@@ -13,6 +13,7 @@ pub mod style;
 pub mod testing;
 pub mod utilities;
 
+use crate::diagnostics::Severity;
 use crate::registry::Category;
 
 use std::fmt::Formatter;

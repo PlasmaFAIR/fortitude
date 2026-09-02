@@ -9,7 +9,6 @@ info:
     - "--select"
     - "S061,C001,PORT011,PORT021"
     - test.f90
-snapshot_kind: text
 ---
 success: false
 exit_code: 1
@@ -21,6 +20,7 @@ exit_code: 1
         "url": "https://fortitude.readthedocs.io//en/stable/rules/implicit-typing",
         "value": "C001"
       },
+      "severity": "ERROR",
       "location": {
         "path": "[TMP]/test.f90",
         "range": {
@@ -56,6 +56,7 @@ exit_code: 1
         "url": "https://fortitude.readthedocs.io//en/stable/rules/star-kind",
         "value": "PORT021"
       },
+      "severity": "ERROR",
       "location": {
         "path": "[TMP]/test.f90",
         "range": {
@@ -91,6 +92,7 @@ exit_code: 1
         "url": "https://fortitude.readthedocs.io//en/stable/rules/literal-kind",
         "value": "PORT011"
       },
+      "severity": "ERROR",
       "location": {
         "path": "[TMP]/test.f90",
         "range": {
@@ -111,6 +113,7 @@ exit_code: 1
         "url": "https://fortitude.readthedocs.io//en/stable/rules/unnamed-end-statement",
         "value": "S061"
       },
+      "severity": "ERROR",
       "location": {
         "path": "[TMP]/test.f90",
         "range": {

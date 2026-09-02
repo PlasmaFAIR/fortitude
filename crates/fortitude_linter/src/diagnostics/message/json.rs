@@ -80,19 +80,16 @@ pub(super) fn diagnostic_to_json<'a>(
     });
 
     // In preview, the code can be optional and the severity is displayed.
-    let (code, severity) = if config.preview {
-        (
-            diagnostic.secondary_code().map(|code| code.as_str()),
-            diagnostic.severity(),
-        )
+    let code = if config.preview {
+        diagnostic.secondary_code().map(|code| code.as_str())
     } else {
-        (Some(diagnostic.secondary_code_or_id()), Severity::Error)
+        Some(diagnostic.secondary_code_or_id())
     };
 
     JsonDiagnostic {
         code,
         name: diagnostic.id().as_str(),
-        severity,
+        severity: diagnostic.severity(),
         url: diagnostic.documentation_url(),
         message: diagnostic.concise_message(),
         fix,

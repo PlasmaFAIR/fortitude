@@ -204,6 +204,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
         unsafe_fixes,
         show_fixes,
         output_format,
+        severity_default,
         preview,
         ..
     } = file_configuration.settings.check;
@@ -263,6 +264,7 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
 
     let printer = Printer::new(
         output_format,
+        severity_default,
         file_configuration.settings.check.output_rule_id_format,
         config_arguments.log_level,
         printer_flags,
@@ -277,11 +279,16 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
     }
 
     let diagnostics = results.diagnostics;
+    let has_blocking_diagnostics = diagnostics
+        .messages
+        .iter()
+        .any(|v| v.severity().is_blocking());
+    let has_blocking_fixes = diagnostics.blocking_fixes;
     if !cli.exit_zero {
         if fix_only {
             // If we're only fixing, we want to exit zero (since we've fixed all fixable
             // violations), unless we're explicitly asked to exit non-zero on fix.
-            if cli.exit_non_zero_on_fix && !diagnostics.fixed.is_empty() {
+            if cli.exit_non_zero_on_fix && !diagnostics.fixed.is_empty() && has_blocking_fixes {
                 return Ok(ExitCode::FAILURE);
             }
         } else {
@@ -289,10 +296,12 @@ pub fn check(args: CheckCommand, global_options: GlobalConfigArgs) -> Result<Exi
             // there are any violations, unless we're explicitly asked to exit zero on
             // fix.
             if cli.exit_non_zero_on_fix {
-                if !diagnostics.fixed.is_empty() || !diagnostics.messages.is_empty() {
+                if (!diagnostics.fixed.is_empty() || !diagnostics.messages.is_empty())
+                    && (has_blocking_fixes || has_blocking_diagnostics)
+                {
                     return Ok(ExitCode::FAILURE);
                 }
-            } else if !diagnostics.messages.is_empty() {
+            } else if !diagnostics.messages.is_empty() && has_blocking_diagnostics {
                 return Ok(ExitCode::FAILURE);
             }
         }
@@ -355,11 +364,13 @@ fn check_files(
                             if settings.check.rules.enabled(Rule::IoError) {
                                 let message = format!("Error opening file: {error}");
                                 let filename = resolved_file.file_name().to_string_lossy();
-                                let diagnostics = vec![IoError { message }.into_diagnostic(
+                                let mut diagnostic = IoError { message }.into_diagnostic(
                                     TextRange::default(),
                                     &SourceFileBuilder::new(filename.as_ref(), "").finish(),
-                                )];
-                                return CheckStatus::Skipped(Diagnostics::new(diagnostics));
+                                );
+                                let severity = settings.check.resolve_severity(Rule::IoError);
+                                diagnostic.set_severity(severity);
+                                return CheckStatus::Skipped(Diagnostics::new(vec![diagnostic]));
                             } else {
                                 warn!(
                                     "{}{}{} {error}",
@@ -424,11 +435,13 @@ fn check_files(
                         if settings.check.rules.enabled(Rule::IoError) {
                             let message = format!("Error opening file: {message}");
                             let filename = path.to_string_lossy();
-                            let diagnostics = vec![IoError { message }.into_diagnostic(
+                            let mut diagnostic = IoError { message }.into_diagnostic(
                                 TextRange::default(),
                                 &SourceFileBuilder::new(filename.as_ref(), "").finish(),
-                            )];
-                            CheckStatus::Skipped(Diagnostics::new(diagnostics))
+                            );
+                            let severity = settings.check.resolve_severity(Rule::IoError);
+                            diagnostic.set_severity(severity);
+                            CheckStatus::Skipped(Diagnostics::new(vec![diagnostic]))
                         } else {
                             warn!(
                                 "{}{}{} {message}",
@@ -550,9 +563,13 @@ fn check_stdin(
         (result, fixed)
     };
 
+    let blocking_fixes = fixed
+        .keys()
+        .any(|rule| settings.check.resolve_severity(*rule).is_blocking());
     let diagnostics = Diagnostics {
         messages,
         fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
+        blocking_fixes,
     };
     Ok(CheckResults::from_stdin(diagnostics))
 }

@@ -857,6 +857,83 @@ specific prefixes.
 
 ---
 
+#### [`severity-default`](#check_severity-default) {: #check_severity-default }
+<span id="severity-default"></span>
+
+The default severity for violations. `"error"` (default) will report
+violations as errors. `"warning"` will report them as warnings, and
+`"info"` will report them as informational messages.
+
+Note that the LSP server instead, by default, reports all violations as
+`"warning"` except for violation of type `"error"` (`E`). Explicitly
+setting `severity-default` to `"warning"` will also downgrade `"error"`
+violations to `"warning"` in the LSP server.
+
+**Default value**: `"error"`
+
+**Type**: `"info" | "warning" | "error"`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Treat all violations only as informational messages.
+    severity-default = "info"
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Treat all violations only as informational messages.
+    severity-default = "info"
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Treat all violations only as informational messages.
+    severity-default = "info"
+    ```
+
+---
+
+#### [`severity-overrides`](#check_severity-overrides) {: #check_severity-overrides }
+<span id="severity-overrides"></span>
+
+Override the severity for specific rules.
+
+**Default value**: `{}`
+
+**Type**: `dict[RuleSelector, str]`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check]
+    # Treat `C001` as an error and `C003` as informational.
+    severity-overrides = { C001 = "error", C003 = "info" }
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check]
+    # Treat `C001` as an error and `C003` as informational.
+    severity-overrides = { C001 = "error", C003 = "info" }
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check]
+    # Treat `C001` as an error and `C003` as informational.
+    severity-overrides = { C001 = "error", C003 = "info" }
+    ```
+
+---
+
 #### [`show-fixes`](#check_show-fixes) {: #check_show-fixes }
 <span id="show-fixes"></span>
 

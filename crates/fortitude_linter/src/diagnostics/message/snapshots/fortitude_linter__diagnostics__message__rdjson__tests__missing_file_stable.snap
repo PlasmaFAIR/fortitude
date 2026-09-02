@@ -1,7 +1,6 @@
 ---
-source: crates/fortitude_linter/src/diagnostics/render/rdjson.rs
+source: crates/fortitude_linter/src/diagnostics/message/rdjson.rs
 expression: env.render(&diag)
-snapshot_kind: text
 ---
 {
   "diagnostics": [
@@ -10,6 +9,7 @@ snapshot_kind: text
         "url": "https://docs.astral.sh/ruff/rules/test-diagnostic",
         "value": "stable-test-rule"
       },
+      "severity": "ERROR",
       "message": "main diagnostic message"
     }
   ],

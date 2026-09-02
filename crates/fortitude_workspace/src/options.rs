@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use fortitude_linter::{
     diagnostics::OutputRuleIdFormat,
+    diagnostics::Severity,
     line_width::IndentWidth,
     rule_selector::RuleSelector,
     rules::{
@@ -123,6 +124,35 @@ pub struct CheckOptions {
         "#
     )]
     pub output_format: Option<OutputFormat>,
+
+    /// The default severity for violations. `"error"` (default) will report
+    /// violations as errors. `"warning"` will report them as warnings, and
+    /// `"info"` will report them as informational messages.
+    ///
+    /// Note that the LSP server instead, by default, reports all violations as
+    /// `"warning"` except for violation of type `"error"` (`E`). Explicitly
+    /// setting `severity-default` to `"warning"` will also downgrade `"error"`
+    /// violations to `"warning"` in the LSP server.
+    #[option(
+        default = r#""error""#,
+        value_type = r#""info" | "warning" | "error""#,
+        example = r#"
+               # Treat all violations only as informational messages.
+               severity-default = "info"
+            "#
+    )]
+    pub severity_default: Option<Severity>,
+
+    /// Override the severity for specific rules.
+    #[option(
+        default = "{}",
+        value_type = "dict[RuleSelector, str]",
+        example = r#"
+               # Treat `C001` as an error and `C003` as informational.
+               severity-overrides = { C001 = "error", C003 = "info" }
+           "#
+    )]
+    pub severity_overrides: Option<FxHashMap<RuleSelector, Severity>>,
 
     /// Whether to prefer rule codes, human-readable rule names, or both, in
     /// diagnostic output, even when preview mode is enabled.

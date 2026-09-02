@@ -426,6 +426,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
     let mut rule_message_formats_match_arms = quote!();
     let mut rule_fixable_match_arms = quote!();
     let mut rule_explanation_match_arms = quote!();
+    let mut rule_severity_match_arms = quote!();
 
     let mut ast_rule_variants = quote!();
     let mut ast_rule_from_match_arms = quote!();
@@ -434,6 +435,7 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
 
     for RuleMeta {
         name,
+        category,
         attrs,
         path,
         kind,
@@ -450,6 +452,13 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
         rule_fixable_match_arms.extend(
             quote! {#(#attrs)* Self::#name => <#path as crate::diagnostics::Violation>::FIX_AVAILABILITY,},
         );
+        rule_severity_match_arms.extend(quote! {
+            #(#attrs)*
+            Self::#name => match Category::#category {
+                Category::Error => Some(Severity::Error),
+                _ => None,
+            },
+        });
         rule_explanation_match_arms.extend(quote! {#(#attrs)* Self::#name => #path::explain(),});
 
         // Next parts are for an enum for Ast-based rules, so that we
@@ -525,6 +534,10 @@ fn register_rules<'a>(input: impl Iterator<Item = &'a RuleMeta>) -> TokenStream 
                 match self { #rule_fixable_match_arms }
             }
 
+            /// Returns the severity of this rule.
+            pub fn severity(&self) -> Option<crate::diagnostics::Severity> {
+                match self { #rule_severity_match_arms }
+            }
         }
 
         #[derive(

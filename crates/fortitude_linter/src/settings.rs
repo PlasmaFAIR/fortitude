@@ -7,11 +7,12 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use crate::diagnostics::{Applicability, OutputRuleIdFormat};
+use crate::diagnostics::{Applicability, OutputRuleIdFormat, Severity};
 use crate::line_width::IndentWidth;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_macros::CacheKey;
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Deserializer, Serialize, de};
 use strum::IntoEnumIterator;
 
@@ -71,6 +72,9 @@ pub struct CheckSettings {
     pub show_fixes: bool,
     pub unsafe_fixes: UnsafeFixes,
     pub output_format: OutputFormat,
+    pub severity_default: Severity,
+    pub severity_default_explicit: bool,
+    pub severity_overrides: FxHashMap<RuleSelector, Severity>,
     pub output_rule_id_format: OutputRuleIdFormat,
     pub target_std: FortranStandard,
     pub progress_bar: ProgressBar,
@@ -113,6 +117,9 @@ impl CheckSettings {
             show_fixes: false,
             unsafe_fixes: UnsafeFixes::default(),
             output_format: OutputFormat::default(),
+            severity_default: Severity::default(),
+            severity_default_explicit: false,
+            severity_overrides: FxHashMap::default(),
             output_rule_id_format: OutputRuleIdFormat::default(),
             target_std: FortranStandard::default(),
             progress_bar: ProgressBar::default(),
@@ -144,6 +151,19 @@ impl CheckSettings {
             ..Self::default()
         }
     }
+
+    pub fn severity_override(&self, rule: Rule) -> Option<Severity> {
+        self.severity_overrides
+            .iter()
+            .filter(|(selector, _)| selector.all_rules().any(|candidate| candidate == rule))
+            .max_by_key(|(selector, _)| selector.specificity())
+            .map(|(_, severity)| *severity)
+    }
+
+    pub fn resolve_severity(&self, rule: Rule) -> Severity {
+        self.severity_override(rule)
+            .unwrap_or(self.severity_default)
+    }
 }
 
 impl fmt::Display for CheckSettings {
@@ -163,6 +183,8 @@ impl fmt::Display for CheckSettings {
                 self.show_fixes,
                 self.unsafe_fixes,
                 self.output_format,
+                self.severity_default,
+                self.severity_overrides | map,
                 self.output_rule_id_format,
                 self.target_std,
                 self.progress_bar,
@@ -734,4 +756,53 @@ macro_rules! display_settings {
     (@field $fmt:ident, $prefix:ident, $settings:ident.$field:ident) => {
         writeln!($fmt, "{}{} = {}", $prefix, stringify!($field), $settings.$field)?;
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn more_specific_severity_override_takes_precedence() {
+        let settings = CheckSettings {
+            severity_overrides: [
+                ("C".parse().unwrap(), Severity::Warning),
+                ("C001".parse().unwrap(), Severity::Info),
+            ]
+            .into_iter()
+            .collect(),
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::ImplicitTyping),
+            Severity::Info
+        );
+    }
+
+    #[test]
+    fn configured_default_severity_is_used_when_rule_has_no_severity() {
+        let settings = CheckSettings {
+            severity_default: Severity::Warning,
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::ImplicitTyping),
+            Severity::Warning
+        );
+    }
+
+    #[test]
+    fn configured_default_severity_downgrades_error_rules() {
+        let settings = CheckSettings {
+            severity_default: Severity::Warning,
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::SyntaxError),
+            Severity::Warning
+        );
+    }
 }

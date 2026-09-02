@@ -157,7 +157,12 @@ impl<'a> CheckContext<'a> {
 
     #[must_use]
     pub fn create_diagnostic<T: Violation, R: TextRanged>(&self, kind: T, range: R) -> Diagnostic {
-        kind.into_diagnostic(range.textrange(), &self.file)
+        let mut diagnostic = kind.into_diagnostic(range.textrange(), &self.file);
+        if let Some(rule) = diagnostic.rule() {
+            let severity = self.settings.resolve_severity(rule);
+            diagnostic.set_severity(severity);
+        }
+        diagnostic
     }
 
     #[must_use]
@@ -234,9 +239,13 @@ pub fn check_file(
         });
     }
 
+    let blocking_fixes = fixed
+        .keys()
+        .any(|rule| settings.resolve_severity(*rule).is_blocking());
     Ok(Diagnostics {
         messages,
         fixed: FixMap::from_iter([(fs::relativize_path(path), fixed)]),
+        blocking_fixes,
     })
 }
 

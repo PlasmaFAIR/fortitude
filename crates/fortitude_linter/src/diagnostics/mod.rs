@@ -16,6 +16,7 @@ use std::{
     sync::Arc,
 };
 
+use colored::Color;
 use ruff_source_file::{LineColumn, SourceFile, SourceFileBuilder};
 use rustc_hash::FxHashMap;
 
@@ -23,7 +24,7 @@ use annotate_snippets::Level as AnnotateLevel;
 use anyhow::Result;
 use ruff_text_size::{Ranged, TextRange};
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumIs, EnumString};
+use strum_macros::{Display, EnumIs, EnumString, IntoStaticStr};
 
 use crate::{diagnostics::panic::PanicError, fix::FixTable, rules::Rule, settings::OutputFormat};
 use fortitude_sitter::traits::TextRanged;
@@ -38,6 +39,7 @@ pub use ruff_diagnostics::{Applicability, Edit, Fix, IsolationLevel, SourceMap, 
 pub struct Diagnostics {
     pub messages: Vec<Diagnostic>,
     pub fixed: FixMap,
+    pub blocking_fixes: bool,
 }
 
 impl Diagnostics {
@@ -45,6 +47,7 @@ impl Diagnostics {
         Self {
             messages,
             fixed: FixMap::default(),
+            blocking_fixes: false,
         }
     }
 
@@ -66,6 +69,7 @@ impl AddAssign for Diagnostics {
     fn add_assign(&mut self, other: Self) {
         self.messages.extend(other.messages);
         self.fixed += other.fixed;
+        self.blocking_fixes |= other.blocking_fixes;
     }
 }
 
@@ -303,6 +307,11 @@ impl Diagnostic {
     pub fn set_concise_message(&mut self, message: impl IntoDiagnosticMessage) {
         Arc::make_mut(&mut self.inner).custom_concise_message =
             Some(message.into_diagnostic_message());
+    }
+
+    /// Set the severity of this diagnostic.
+    pub fn set_severity(&mut self, severity: Severity) {
+        Arc::make_mut(&mut self.inner).severity = severity;
     }
 
     /// Returns the severity of this diagnostic.
@@ -1182,11 +1191,28 @@ impl From<SourceFile> for Span {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize)]
+#[derive(
+    Display,
+    EnumString,
+    IntoStaticStr,
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Serialize,
+    Deserialize,
+)]
+#[strum(serialize_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Info,
     Warning,
+    #[default]
     Error,
     Fatal,
 }
@@ -1210,6 +1236,21 @@ impl Severity {
 
     pub const fn is_fatal(self) -> bool {
         matches!(self, Severity::Fatal)
+    }
+
+    pub const fn is_blocking(self) -> bool {
+        matches!(self, Severity::Error | Severity::Fatal)
+    }
+}
+
+impl From<Severity> for Color {
+    fn from(severity: Severity) -> Self {
+        match severity {
+            Severity::Info => Color::Blue,
+            Severity::Warning => Color::Yellow,
+            Severity::Error => Color::Red,
+            Severity::Fatal => Color::Red,
+        }
     }
 }
 
@@ -1628,7 +1669,11 @@ where
     B: Display,
     S: Display,
 {
-    let mut diagnostic = Diagnostic::new(DiagnosticId::Lint(rule), Severity::Error, body);
+    let mut diagnostic = Diagnostic::new(
+        DiagnosticId::Lint(rule),
+        rule.severity().unwrap_or_default(),
+        body,
+    );
 
     let span = Span::from(file).with_range(range);
     let mut annotation = Annotation::primary(span);
@@ -1707,4 +1752,20 @@ pub fn create_panic_diagnostic(error: &PanicError, path: Option<&Path>) -> Diagn
     }
 
     diagnostic
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Diagnostics;
+
+    #[test]
+    fn blocking_fix_status_is_preserved_when_diagnostics_are_merged() {
+        let mut diagnostics = Diagnostics::new(Vec::new());
+        let mut other = Diagnostics::new(Vec::new());
+        other.blocking_fixes = true;
+
+        diagnostics += other;
+
+        assert!(diagnostics.blocking_fixes);
+    }
 }

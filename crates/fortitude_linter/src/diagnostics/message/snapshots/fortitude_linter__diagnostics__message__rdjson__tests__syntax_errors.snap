@@ -1,7 +1,6 @@
 ---
-source: crates/fortitude_linter/src/diagnostics/render/rdjson.rs
+source: crates/fortitude_linter/src/diagnostics/message/rdjson.rs
 expression: env.render_diagnostics(&diagnostics)
-snapshot_kind: text
 ---
 {
   "diagnostics": [
@@ -9,6 +8,7 @@ snapshot_kind: text
       "code": {
         "value": "invalid-syntax"
       },
+      "severity": "ERROR",
       "location": {
         "path": "syntax_errors.py",
         "range": {
@@ -28,6 +28,7 @@ snapshot_kind: text
       "code": {
         "value": "invalid-syntax"
       },
+      "severity": "ERROR",
       "location": {
         "path": "syntax_errors.py",
         "range": {

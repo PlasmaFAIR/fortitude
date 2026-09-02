@@ -10,7 +10,6 @@ info:
     - "--select"
     - implicit-typing
     - test.f90
-snapshot_kind: text
 ---
 success: false
 exit_code: 1
@@ -25,7 +24,7 @@ error[implicit-typing]: program uses implicit typing
 help: Insert `implicit none`
 
 fortitude: 1 files scanned.
-Number of errors: 1
+Number of diagnostics: 1
 
 For more information about specific rules, run:
 
