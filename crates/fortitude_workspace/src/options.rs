@@ -15,7 +15,7 @@ use fortitude_linter::{
     rule_selector::RuleSelector,
     rules::{
         correctness::{exit_labels, shadowed_variable, use_statements},
-        portability::{self, invalid_tab},
+        portability::{self},
         style::{
             complexity,
             inconsistent_dimension::{self, settings::PreferAttribute},
@@ -406,17 +406,12 @@ pub struct CheckOptions {
     pub line_length: Option<usize>,
 
     // Global Formatting options
-    /// The number of spaces to use for a single indent. Used when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
+    /// The number of spaces to use for a single indent. Used when enforcing
+    /// violations such as the use of tabs (`PORT031`) and incorrect indentation
+    /// (`S105`).
     ///
     /// The indentation is determined by the number of spaces (tabs are equal to one indent_width).
-    #[option(
-        default = "4",
-        value_type = "int",
-        example = r#"
-        # Enforce indentation of base 4.
-        indent-width = 4
-        "#
-    )]
+    #[option(default = "4", value_type = "int", example = "indent-width = 2")]
     pub indent_width: Option<IndentWidth>,
 
     /// By default disable ignore-comment-length behavior when running `fortitude`.
@@ -760,15 +755,11 @@ impl PortabilityOptions {
 pub struct InvalidTabOptions {
     /// The number of spaces to replace tabs with.
     #[option(default = "4", value_type = "int", example = "indent-width = 2")]
+    #[deprecated(
+        since = "0.10.0",
+        note = "`check.invalid-tab.indent-width` has been renamed to [`check.indent-width`](#check_indent-width). Please updated your configuration to use that instead."
+    )]
     pub indent_width: Option<IndentWidth>,
-}
-
-impl InvalidTabOptions {
-    pub fn into_settings(self) -> invalid_tab::settings::Settings {
-        invalid_tab::settings::Settings {
-            indent_width: self.indent_width.unwrap_or_default(),
-        }
-    }
 }
 
 /// Options for `inconsistent-dimension` set of rules

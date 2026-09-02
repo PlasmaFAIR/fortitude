@@ -502,7 +502,9 @@ By default disable ignore-comment-length behavior when running `fortitude`.
 #### [`indent-width`](#check_indent-width) {: #check_indent-width }
 <span id="indent-width"></span>
 
-The number of spaces to use for a single indent. Used when enforcing violations such as the use of tabs (`PORT031`) and incorrect indentation (`S105`).
+The number of spaces to use for a single indent. Used when enforcing
+violations such as the use of tabs (`PORT031`) and incorrect indentation
+(`S105`).
 
 The indentation is determined by the number of spaces (tabs are equal to one indent_width).
 
@@ -516,22 +518,19 @@ The indentation is determined by the number of spaces (tabs are equal to one ind
 
     ```toml
     [extra.fortitude.check]
-    # Enforce indentation of base 4.
-    indent-width = 4
+    indent-width = 2
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check]
-    # Enforce indentation of base 4.
-    indent-width = 4
+    indent-width = 2
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check]
-    # Enforce indentation of base 4.
-    indent-width = 4
+    indent-width = 2
     ```
 
 ---
@@ -1530,6 +1529,9 @@ Options for `invalid-tab` rule
 
 #### [`indent-width`](#check_invalid-tab_indent-width) {: #check_invalid-tab_indent-width }
 <span id="indent-width"></span>
+
+!!! warning "Deprecated"
+    This option has been deprecated in 0.10.0. `check.invalid-tab.indent-width` has been renamed to [`check.indent-width`](#check_indent-width). Please updated your configuration to use that instead.
 
 The number of spaces to replace tabs with.
 
