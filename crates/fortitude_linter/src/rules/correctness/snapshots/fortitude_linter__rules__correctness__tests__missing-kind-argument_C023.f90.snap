@@ -1,0 +1,88 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+C023 'real' call missing 'kind' argument
+  --> ./resources/test/fixtures/correctness/C023.f90:8:7
+   |
+ 6 |   complex :: z
+ 7 |
+ 8 |   x = real(i)                 ! catch
+   |       ^^^^
+ 9 |   i = int(x)                  ! catch
+10 |   z = cmplx(x)                ! catch
+   |
+
+C023 'int' call missing 'kind' argument
+  --> ./resources/test/fixtures/correctness/C023.f90:9:7
+   |
+ 8 |   x = real(i)                 ! catch
+ 9 |   i = int(x)                  ! catch
+   |       ^^^
+10 |   z = cmplx(x)                ! catch
+   |
+
+C023 'cmplx' call missing 'kind' argument
+  --> ./resources/test/fixtures/correctness/C023.f90:10:7
+   |
+ 8 |   x = real(i)                 ! catch
+ 9 |   i = int(x)                  ! catch
+10 |   z = cmplx(x)                ! catch
+   |       ^^^^^
+11 |
+12 |   x = real(i, 8)              ! catch
+   |
+
+C023 'real' call missing 'kind' argument
+  --> ./resources/test/fixtures/correctness/C023.f90:12:7
+   |
+10 |   z = cmplx(x)                ! catch
+11 |
+12 |   x = real(i, 8)              ! catch
+   |       ^^^^
+13 |   x = real(i, kind=8)         ! ignore
+14 |   i = int(x, 4)               ! catch
+   |
+
+C023 'int' call missing 'kind' argument
+  --> ./resources/test/fixtures/correctness/C023.f90:14:7
+   |
+12 |   x = real(i, 8)              ! catch
+13 |   x = real(i, kind=8)         ! ignore
+14 |   i = int(x, 4)               ! catch
+   |       ^^^
+15 |   i = int(x, kind=4)          ! ignore
+16 |   z = cmplx(x, y, 8)          ! catch
+   |
+
+C023 'cmplx' call missing 'kind' argument
+  --> ./resources/test/fixtures/correctness/C023.f90:16:7
+   |
+14 |   i = int(x, 4)               ! catch
+15 |   i = int(x, kind=4)          ! ignore
+16 |   z = cmplx(x, y, 8)          ! catch
+   |       ^^^^^
+17 |   z = cmplx(x, kind=8)        ! ignore
+18 |   z = cmplx(z, 8)             ! catch
+   |
+
+C023 'cmplx' call missing 'kind' argument
+  --> ./resources/test/fixtures/correctness/C023.f90:18:7
+   |
+16 |   z = cmplx(x, y, 8)          ! catch
+17 |   z = cmplx(x, kind=8)        ! ignore
+18 |   z = cmplx(z, 8)             ! catch
+   |       ^^^^^
+19 |   z = cmplx(x, y)             ! catch
+20 | end program intrinsic_kind
+   |
+
+C023 'cmplx' call missing 'kind' argument
+  --> ./resources/test/fixtures/correctness/C023.f90:19:7
+   |
+17 |   z = cmplx(x, kind=8)        ! ignore
+18 |   z = cmplx(z, 8)             ! catch
+19 |   z = cmplx(x, y)             ! catch
+   |       ^^^^^
+20 | end program intrinsic_kind
+   |
