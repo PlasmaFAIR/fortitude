@@ -665,8 +665,6 @@ impl IncorrectIndentationOptions {
             .line_continuation_indents
             .unwrap_or(settings_to_return.line_continuation_indents);
 
-        settings_to_return = settings_to_return.populate_construct_to_indent_map();
-
         settings_to_return
     }
 }

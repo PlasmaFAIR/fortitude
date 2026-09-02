@@ -499,10 +499,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     // Store settings
     let indent_width = context.settings().indent_width;
     let ignore_semicolons = context.settings().incorrect_indentation.ignore_semicolons;
-    let constructs_to_indent_map = &context
-        .settings()
-        .incorrect_indentation
-        .construct_to_indent_map;
+    let constructs_to_indent_map = &context.settings().incorrect_indentation.indent_map();
 
     // Array to track both the number of scopes we are inside and their respective indents
     let mut scope_indents: Vec<usize> = Vec::new();
@@ -593,7 +590,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                         scope_indents.push(
                             current_expected_indent
                                 + indent_width.as_usize()
-                                    * constructs_to_indent_map.get(node_kind).unwrap(),
+                                    * constructs_to_indent_map.get_indent(node_kind),
                         );
                     } else {
                         scope_indents.push(leading_spaces);
@@ -616,7 +613,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     scope_indents.push(
                         current_expected_indent
                             + indent_width.as_usize()
-                                * constructs_to_indent_map.get("line_continuation").unwrap(),
+                                * constructs_to_indent_map.get_indent("line_continuation"),
                     );
                 }
             }
@@ -726,7 +723,6 @@ pub mod settings {
     #[derive(Debug, Clone, CacheKey)]
     pub struct IncorrectIndentationSettings {
         pub ignore_semicolons: bool,
-        pub construct_to_indent_map: HashMap<String, usize>,
         pub program_indents: usize,
         pub module_indents: usize,
         pub procedure_indents: usize,
@@ -738,10 +734,8 @@ pub mod settings {
 
     impl Default for IncorrectIndentationSettings {
         fn default() -> Self {
-            let construct_to_indent_map: HashMap<String, usize> = HashMap::new();
-            let mut settings = Self {
+            Self {
                 ignore_semicolons: true,
-                construct_to_indent_map,
                 program_indents: 1usize,
                 module_indents: 1usize,
                 procedure_indents: 1usize,
@@ -749,73 +743,56 @@ pub mod settings {
                 control_flow_indents: 1usize,
                 interface_indents: 1usize,
                 line_continuation_indents: 1usize,
-            };
-            settings.populate_construct_to_indent_map()
+            }
         }
     }
 
+    pub struct IndentMap(HashMap<&'static str, usize>);
+
+    impl IndentMap {
+        pub fn get_indent(&self, construct: &str) -> usize {
+            *self.0.get(construct).unwrap()
+        }
+    }
+
+    static PROGRAM_STATEMENTS: &[&str] = &["program_statement"];
+    static MODULE_STATEMENTS: &[&str] = &["module_statement", "submodule_statement"];
+    static PROCEDURE_STATEMENTS: &[&str] =
+        &["subroutine_statement", "function_statement", "function"];
+    static TYPE_STATEMENTS: &[&str] = &["derived_type_statement"];
+    static CONTROL_FLOW_STATEMENTS: &[&str] = &[
+        "block_construct",
+        "if_statement",
+        "where_statement",
+        "select_case_statement",
+        "select_type_statement",
+        "select_rank_statement",
+        "do_loop",
+        "do_statement",
+        "associate_statement",
+    ];
+    static INTERFACE_STATEMENTS: &[&str] = &["interface_statement"];
+    static LINE_CONTINUATION_STATEMENTS: &[&str] = &["line_continuation"];
+
     impl IncorrectIndentationSettings {
-        pub fn populate_construct_to_indent_map(&mut self) -> Self {
-            self.construct_to_indent_map
-                .insert("program_statement".to_string(), self.program_indents);
+        pub fn indent_map(&self) -> IndentMap {
+            let mut construct_to_indent_map = HashMap::new();
 
-            self.construct_to_indent_map
-                .insert("module_statement".to_string(), self.module_indents);
+            for (statements, value) in [
+                (PROGRAM_STATEMENTS, self.program_indents),
+                (MODULE_STATEMENTS, self.module_indents),
+                (PROCEDURE_STATEMENTS, self.procedure_indents),
+                (TYPE_STATEMENTS, self.derived_type_indents),
+                (CONTROL_FLOW_STATEMENTS, self.control_flow_indents),
+                (INTERFACE_STATEMENTS, self.interface_indents),
+                (LINE_CONTINUATION_STATEMENTS, self.line_continuation_indents),
+            ] {
+                for node in statements {
+                    construct_to_indent_map.insert(*node, value);
+                }
+            }
 
-            self.construct_to_indent_map
-                .insert("submodule_statement".to_string(), self.module_indents);
-
-            self.construct_to_indent_map
-                .insert("subroutine_statement".to_string(), self.procedure_indents);
-
-            self.construct_to_indent_map
-                .insert("function_statement".to_string(), self.procedure_indents);
-            self.construct_to_indent_map
-                .insert("function".to_string(), self.procedure_indents);
-
-            self.construct_to_indent_map.insert(
-                "derived_type_statement".to_string(),
-                self.derived_type_indents,
-            );
-
-            self.construct_to_indent_map
-                .insert("block_construct".to_string(), self.control_flow_indents);
-
-            self.construct_to_indent_map
-                .insert("if_statement".to_string(), self.control_flow_indents);
-            self.construct_to_indent_map
-                .insert("where_statement".to_string(), self.control_flow_indents);
-
-            self.construct_to_indent_map
-                .insert("interface_statement".to_string(), self.interface_indents);
-
-            self.construct_to_indent_map.insert(
-                "select_case_statement".to_string(),
-                self.control_flow_indents,
-            );
-            self.construct_to_indent_map.insert(
-                "select_type_statement".to_string(),
-                self.control_flow_indents,
-            );
-            self.construct_to_indent_map.insert(
-                "select_rank_statement".to_string(),
-                self.control_flow_indents,
-            );
-
-            self.construct_to_indent_map
-                .insert("do_loop".to_string(), self.control_flow_indents);
-            self.construct_to_indent_map
-                .insert("do_statement".to_string(), self.control_flow_indents);
-
-            self.construct_to_indent_map
-                .insert("associate_statement".to_string(), self.control_flow_indents);
-
-            self.construct_to_indent_map.insert(
-                "line_continuation".to_string(),
-                self.line_continuation_indents,
-            );
-
-            self.clone()
+            IndentMap(construct_to_indent_map)
         }
     }
 
@@ -1601,3 +1578,4 @@ end subroutine
         Ok(())
     }
 }
+ 

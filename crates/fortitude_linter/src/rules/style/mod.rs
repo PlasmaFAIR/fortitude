@@ -157,13 +157,10 @@ mod tests {
             path.to_string_lossy()
         );
 
-        let mut incorrect_indentation_settings =
-            whitespace::settings::IncorrectIndentationSettings {
-                ignore_semicolons: false,
-                ..Default::default()
-            };
-
-        incorrect_indentation_settings.populate_construct_to_indent_map();
+        let incorrect_indentation_settings = whitespace::settings::IncorrectIndentationSettings {
+            ignore_semicolons: false,
+            ..Default::default()
+        };
 
         let settings = CheckSettings {
             incorrect_indentation: incorrect_indentation_settings,
@@ -185,14 +182,11 @@ mod tests {
             path.to_string_lossy()
         );
 
-        let mut incorrect_indentation_settings =
-            whitespace::settings::IncorrectIndentationSettings {
-                control_flow_indents: 0,
-                procedure_indents: 2,
-                ..Default::default()
-            };
-
-        incorrect_indentation_settings.populate_construct_to_indent_map();
+        let incorrect_indentation_settings = whitespace::settings::IncorrectIndentationSettings {
+            control_flow_indents: 0,
+            procedure_indents: 2,
+            ..Default::default()
+        };
 
         let settings = CheckSettings {
             incorrect_indentation: incorrect_indentation_settings,
