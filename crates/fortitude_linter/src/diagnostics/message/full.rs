@@ -6,7 +6,7 @@ use annotate_snippets::Renderer as AnnotateRenderer;
 
 use super::Resolved;
 use super::{Diagnostic, DisplayDiagnosticConfig};
-use crate::diagnostics::{Severity, message::diff::Diff, stylesheet::DiagnosticStylesheet};
+use crate::diagnostics::{message::diff::Diff, stylesheet::DiagnosticStylesheet};
 
 pub(super) struct FullRenderer<'a> {
     config: &'a DisplayDiagnosticConfig,
@@ -47,7 +47,6 @@ impl<'a> FullRenderer<'a> {
             .hyperlink(stylesheet.hyperlink);
 
         for diag in diagnostics {
-            renderer = renderer.line_num(line_number_style(diag.severity(), &stylesheet));
             let resolved = Resolved::new(diag, self.config);
             let renderable = resolved.to_renderable(self.config);
             for diag in renderable.diagnostics.iter() {
@@ -68,21 +67,12 @@ impl<'a> FullRenderer<'a> {
     }
 }
 
-fn line_number_style(severity: Severity, stylesheet: &DiagnosticStylesheet) -> anstyle::Style {
-    match severity {
-        Severity::Info => stylesheet.info,
-        Severity::Warning => stylesheet.warning,
-        Severity::Error | Severity::Fatal => stylesheet.error,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use ruff_diagnostics::{Applicability, Edit, Fix};
     use ruff_text_size::{TextLen, TextRange, TextSize};
 
     use crate::{
-        diagnostics::stylesheet::DiagnosticStylesheet,
         diagnostics::{
             Annotation, OutputFormat, Severity,
             message::tests::{
@@ -91,16 +81,6 @@ mod tests {
         },
         rules::Rule,
     };
-
-    #[test]
-    fn line_number_style_matches_diagnostic_severity() {
-        let stylesheet = DiagnosticStylesheet::styled();
-
-        assert_eq!(
-            super::line_number_style(Severity::Error, &stylesheet),
-            stylesheet.error
-        );
-    }
 
     #[test]
     fn output() {
