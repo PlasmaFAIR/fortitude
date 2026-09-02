@@ -22,7 +22,7 @@ use crate::registry::Rule;
 use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelector};
 use crate::rule_table::RuleTable;
 use crate::rules::correctness::{exit_labels, shadowed_variable, use_statements};
-use crate::rules::portability::{self, invalid_tab};
+use crate::rules::portability::{self};
 use crate::rules::style::{
     complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
 };
@@ -87,7 +87,6 @@ pub struct CheckSettings {
     pub keyword_whitespace: keywords::settings::Settings,
     pub strings: strings::settings::Settings,
     pub portability: portability::settings::Settings,
-    pub invalid_tab: invalid_tab::settings::Settings,
     pub inconsistent_dimension: inconsistent_dimension::settings::Settings,
     pub line_too_long: line_length::settings::Settings,
     pub use_statements: use_statements::settings::Settings,
@@ -103,6 +102,8 @@ impl Default for CheckSettings {
 
 impl CheckSettings {
     fn new(project_root: &Path) -> Self {
+        let indent_width = IndentWidth::from(4);
+
         Self {
             project_root: project_root.to_path_buf(),
             rules: DEFAULT_SELECTORS
@@ -111,7 +112,7 @@ impl CheckSettings {
                 .collect(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
-            indent_width: IndentWidth::from(4),
+            indent_width,
             fix: false,
             fix_only: false,
             show_fixes: false,
@@ -130,12 +131,14 @@ impl CheckSettings {
             keyword_whitespace: keywords::settings::Settings::default(),
             strings: strings::settings::Settings::default(),
             portability: portability::settings::Settings::default(),
-            invalid_tab: invalid_tab::settings::Settings::default(),
             inconsistent_dimension: inconsistent_dimension::settings::Settings::default(),
             line_too_long: line_length::settings::Settings::default(),
             use_statements: use_statements::settings::Settings::default(),
             complexity: complexity::settings::Settings::default(),
-            incorrect_indentation: whitespace::settings::IncorrectIndentationSettings::default(),
+            incorrect_indentation:
+                whitespace::settings::IncorrectIndentationSettings::default_from_indent_width(
+                    indent_width.as_usize(),
+                ),
         }
     }
 
@@ -202,7 +205,6 @@ impl fmt::Display for CheckSettings {
                 self.keyword_whitespace | nested,
                 self.strings | nested,
                 self.portability | nested,
-                self.invalid_tab | nested,
                 self.inconsistent_dimension | nested,
                 self.line_too_long | nested,
                 self.use_statements | nested,

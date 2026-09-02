@@ -31,6 +31,7 @@ mod tests {
     use crate::line_width::IndentWidth;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
+    use crate::rules::style::whitespace::settings::IncorrectIndentationSettings;
     use crate::rules::style::{
         complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
     };
@@ -139,6 +140,7 @@ mod tests {
 
         let settings = CheckSettings {
             indent_width: IndentWidth::from(2),
+            incorrect_indentation: IncorrectIndentationSettings::default_from_indent_width(2),
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
@@ -157,13 +159,10 @@ mod tests {
             path.to_string_lossy()
         );
 
-        let mut incorrect_indentation_settings =
-            whitespace::settings::IncorrectIndentationSettings {
-                ignore_semicolons: false,
-                ..Default::default()
-            };
-
-        incorrect_indentation_settings.populate_construct_to_indent_map();
+        let incorrect_indentation_settings = whitespace::settings::IncorrectIndentationSettings {
+            ignore_semicolons: false,
+            ..Default::default()
+        };
 
         let settings = CheckSettings {
             incorrect_indentation: incorrect_indentation_settings,
@@ -185,14 +184,11 @@ mod tests {
             path.to_string_lossy()
         );
 
-        let mut incorrect_indentation_settings =
-            whitespace::settings::IncorrectIndentationSettings {
-                control_flow_indents: 0,
-                procedure_indents: 2,
-                ..Default::default()
-            };
-
-        incorrect_indentation_settings.populate_construct_to_indent_map();
+        let incorrect_indentation_settings = whitespace::settings::IncorrectIndentationSettings {
+            control_flow_indent: 0,
+            procedure_indent: 8,
+            ..Default::default()
+        };
 
         let settings = CheckSettings {
             incorrect_indentation: incorrect_indentation_settings,

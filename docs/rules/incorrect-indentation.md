@@ -18,22 +18,22 @@ understand the scoping of logic.
 ## Options
 - [`check.indent-width`][check.indent-width]
 - [`check.incorrect-indentation.ignore-semicolons`][check.incorrect-indentation.ignore-semicolons]
-- [`check.incorrect-indentation.program-indents`][check.incorrect-indentation.program-indents]
-- [`check.incorrect-indentation.module-indents`][check.incorrect-indentation.module-indents]
-- [`check.incorrect-indentation.procedure-indents`][check.incorrect-indentation.procedure-indents]
-- [`check.incorrect-indentation.derived-type-indents`][check.incorrect-indentation.derived-type-indents]
-- [`check.incorrect-indentation.control-flow-indents`][check.incorrect-indentation.control-flow-indents]
-- [`check.incorrect-indentation.interface-indents`][check.incorrect-indentation.interface-indents]
-- [`check.incorrect-indentation.line-continuation-indents`][check.incorrect-indentation.line-continuation-indents]
+- [`check.incorrect-indentation.program-indent`][check.incorrect-indentation.program-indent]
+- [`check.incorrect-indentation.module-indent`][check.incorrect-indentation.module-indent]
+- [`check.incorrect-indentation.procedure-indent`][check.incorrect-indentation.procedure-indent]
+- [`check.incorrect-indentation.derived-type-indent`][check.incorrect-indentation.derived-type-indent]
+- [`check.incorrect-indentation.control-flow-indent`][check.incorrect-indentation.control-flow-indent]
+- [`check.incorrect-indentation.interface-indent`][check.incorrect-indentation.interface-indent]
+- [`check.incorrect-indentation.line-continuation-indent`][check.incorrect-indentation.line-continuation-indent]
 
 
 [check.indent-width]: ../settings.md#check_indent-width
 [check.incorrect-indentation.ignore-semicolons]: ../settings.md#check_incorrect-indentation_ignore-semicolons
-[check.incorrect-indentation.program-indents]: ../settings.md#check_incorrect-indentation_program-indents
-[check.incorrect-indentation.module-indents]: ../settings.md#check_incorrect-indentation_module-indents
-[check.incorrect-indentation.procedure-indents]: ../settings.md#check_incorrect-indentation_procedure-indents
-[check.incorrect-indentation.derived-type-indents]: ../settings.md#check_incorrect-indentation_derived-type-indents
-[check.incorrect-indentation.control-flow-indents]: ../settings.md#check_incorrect-indentation_control-flow-indents
-[check.incorrect-indentation.interface-indents]: ../settings.md#check_incorrect-indentation_interface-indents
-[check.incorrect-indentation.line-continuation-indents]: ../settings.md#check_incorrect-indentation_line-continuation-indents
+[check.incorrect-indentation.program-indent]: ../settings.md#check_incorrect-indentation_program-indent
+[check.incorrect-indentation.module-indent]: ../settings.md#check_incorrect-indentation_module-indent
+[check.incorrect-indentation.procedure-indent]: ../settings.md#check_incorrect-indentation_procedure-indent
+[check.incorrect-indentation.derived-type-indent]: ../settings.md#check_incorrect-indentation_derived-type-indent
+[check.incorrect-indentation.control-flow-indent]: ../settings.md#check_incorrect-indentation_control-flow-indent
+[check.incorrect-indentation.interface-indent]: ../settings.md#check_incorrect-indentation_interface-indent
+[check.incorrect-indentation.line-continuation-indent]: ../settings.md#check_incorrect-indentation_line-continuation-indent
 
