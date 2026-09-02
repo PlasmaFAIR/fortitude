@@ -272,10 +272,10 @@ pub struct Configuration {
 
 impl Configuration {
     /// Convert from config file options struct into our "known good" struct
-    #[allow(deprecated)]
     pub fn from_options(options: Options, project_root: &Path) -> Self {
         let check = options.check.unwrap_or_default();
 
+        #[expect(deprecated)]
         let include = convert_file_and_extensions_to_include(&check.files, &check.file_extensions);
 
         Self {
