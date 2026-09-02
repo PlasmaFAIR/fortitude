@@ -843,7 +843,7 @@ mod tests {
         ; "indent 2"
     )]
     #[test_case(0, "!> My program\nprogram test\nimplicit none\nend program test"; "indent 0" )]
-    fn test_s105_program_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn program_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My program\nprogram test\nimplicit none\nend program test";
         let toml_contents = format!(
             r#"
@@ -866,7 +866,7 @@ mod tests {
         "!> My module\nmodule test\nimplicit none\ncontains\nend module test"
         ; "indent 0"
     )]
-    fn test_s105_module_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn module_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My module\nmodule test\nimplicit none\ncontains\nend module test";
         let toml_contents = format!(
             r#"
@@ -887,7 +887,7 @@ mod tests {
         0,
         "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test"; "indent 0"
     )]
-    fn test_s105_submodule_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn submodule_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet =
             "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test";
         let toml_contents = format!(
@@ -909,7 +909,7 @@ mod tests {
         0,
         "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test"; "indent 0"
     )]
-    fn test_s105_subroutine_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn subroutine_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test";
         let toml_contents = format!(
             r#"
@@ -984,11 +984,7 @@ contains
 end submodule msubmodule"#
             ; "Interfaced function with return type"
     )]
-    fn test_s105_function_indentation(
-        num_indents: i8,
-        snippet: &str,
-        fixed_snippet: &str,
-    ) -> Result<()> {
+    fn function_indentation(num_indents: i8, snippet: &str, fixed_snippet: &str) -> Result<()> {
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
@@ -1024,7 +1020,7 @@ module mmod
 contains
 end module mmod"#; "indent 0"
     )]
-    fn test_s105_derived_type_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn derived_type_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 module mmod
 type :: mtype
@@ -1075,7 +1071,7 @@ program mprog
     end block
 end program mprog"#; "indent 0"
     )]
-    fn test_s105_block_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn block_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 program mprog
 block
@@ -1176,11 +1172,7 @@ if (i == 2) then; i = 3; end if;
 end subroutine msub"#
             ; "All types of if with zero indent and ignoring semicolons"
     )]
-    fn test_s105_if_indentation(
-        ignore_semicolons: bool,
-        num_indents: i8,
-        fixed_snippet: &str,
-    ) -> Result<()> {
+    fn if_indentation(ignore_semicolons: bool, num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 subroutine msub()
 integer :: i
@@ -1241,7 +1233,7 @@ module mmod
     end interface minterface
 end module mmod"#; "indent 0"
     )]
-    fn test_s105_interface_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn interface_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 module mmod
 interface
@@ -1292,7 +1284,7 @@ subroutine select_cases
     i = 3
 end subroutine select_cases"#; "indent 0"
     )]
-    fn test_s105_select_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn select_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 subroutine select_cases
 integer :: i
@@ -1345,7 +1337,7 @@ function do_construct
     end do
 end function do_construct"#; "indent 0"
     )]
-    fn test_s105_do_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn do_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 function do_construct
 integer :: i, j, x
@@ -1395,7 +1387,7 @@ subroutine associates
     end associate named_associate
 end subroutine associates"#; "indent 0"
     )]
-    fn test_s105_associate_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn associate_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 subroutine associates
 integer :: i
@@ -1443,7 +1435,7 @@ i &
     + 3
 end function wrapped_function"#; "indent 0"
     )]
-    fn test_s105_line_continuation_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn line_continuation_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 function wrapped_function( &
 i &
@@ -1466,7 +1458,7 @@ end function wrapped_function"#;
     }
 
     #[test]
-    fn test_s105_where_statement() -> Result<()> {
+    fn where_statement() -> Result<()> {
         let before = r#"
 subroutine wheresub
     real :: pressure(1000), temp(1000), precepitation(1000)
@@ -1496,7 +1488,7 @@ end subroutine wheresub
     }
 
     #[test]
-    fn test_s105_select_type_statement() -> Result<()> {
+    fn select_type_statement() -> Result<()> {
         let before = r#"
 subroutine print_decorated_numbers(number)
   class(*), intent(in) :: number
@@ -1534,7 +1526,7 @@ end subroutine print_decorated_numbers
     }
 
     #[test]
-    fn test_s105_select_rank_statement() -> Result<()> {
+    fn select_rank_statement() -> Result<()> {
         let before = r#"
 subroutine assumed_rank(A)
   integer, intent(inout) :: A(..)
