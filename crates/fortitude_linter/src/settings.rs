@@ -166,55 +166,6 @@ impl CheckSettings {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn more_specific_severity_override_takes_precedence() {
-        let settings = CheckSettings {
-            severity_overrides: [
-                ("C".parse().unwrap(), Severity::Warning),
-                ("C001".parse().unwrap(), Severity::Info),
-            ]
-            .into_iter()
-            .collect(),
-            ..CheckSettings::default()
-        };
-
-        assert_eq!(
-            settings.resolve_severity(Rule::ImplicitTyping),
-            Severity::Info
-        );
-    }
-
-    #[test]
-    fn configured_default_severity_is_used_when_rule_has_no_severity() {
-        let settings = CheckSettings {
-            severity_default: Severity::Warning,
-            ..CheckSettings::default()
-        };
-
-        assert_eq!(
-            settings.resolve_severity(Rule::ImplicitTyping),
-            Severity::Warning
-        );
-    }
-
-    #[test]
-    fn configured_default_severity_downgrades_error_rules() {
-        let settings = CheckSettings {
-            severity_default: Severity::Warning,
-            ..CheckSettings::default()
-        };
-
-        assert_eq!(
-            settings.resolve_severity(Rule::SyntaxError),
-            Severity::Warning
-        );
-    }
-}
-
 impl fmt::Display for CheckSettings {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "\n# Check Settings")?;
@@ -805,4 +756,53 @@ macro_rules! display_settings {
     (@field $fmt:ident, $prefix:ident, $settings:ident.$field:ident) => {
         writeln!($fmt, "{}{} = {}", $prefix, stringify!($field), $settings.$field)?;
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn more_specific_severity_override_takes_precedence() {
+        let settings = CheckSettings {
+            severity_overrides: [
+                ("C".parse().unwrap(), Severity::Warning),
+                ("C001".parse().unwrap(), Severity::Info),
+            ]
+            .into_iter()
+            .collect(),
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::ImplicitTyping),
+            Severity::Info
+        );
+    }
+
+    #[test]
+    fn configured_default_severity_is_used_when_rule_has_no_severity() {
+        let settings = CheckSettings {
+            severity_default: Severity::Warning,
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::ImplicitTyping),
+            Severity::Warning
+        );
+    }
+
+    #[test]
+    fn configured_default_severity_downgrades_error_rules() {
+        let settings = CheckSettings {
+            severity_default: Severity::Warning,
+            ..CheckSettings::default()
+        };
+
+        assert_eq!(
+            settings.resolve_severity(Rule::SyntaxError),
+            Severity::Warning
+        );
+    }
 }
