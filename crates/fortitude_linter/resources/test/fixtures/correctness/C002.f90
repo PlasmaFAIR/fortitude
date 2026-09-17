@@ -25,3 +25,13 @@ program my_program
   end interface
   write(*,*) 42
 end program my_program
+
+module interface_with_import
+  use, intrinsic :: iso_fortran_env, only : wp => real64
+  implicit none (type, external)
+  interface
+     subroutine sub
+       import :: wp
+     end subroutine sub
+  end interface
+end module interface_with_import

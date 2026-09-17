@@ -19,7 +19,10 @@ fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
     let last_use_statement_range = node
         .named_children(&mut node.walk())
         .filter_map(|child| {
-            if child.kind_id() == kind!("use_statement") {
+            if matches!(
+                child.kind_id(),
+                kind!("use_statement") | kind!("import_statement")
+            ) {
                 Some(child.textrange())
             } else {
                 None

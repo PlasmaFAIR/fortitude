@@ -84,3 +84,23 @@ help: Insert `implicit none`
 25 |     end subroutine mysub2
 26 |   end interface
 note: This is an unsafe fix and may change runtime behavior
+
+C002 [*] interface 'subroutine' uses implicit typing
+  --> ./resources/test/fixtures/correctness/C002.f90:33:6
+   |
+31 |   implicit none (type, external)
+32 |   interface
+33 |      subroutine sub
+   |      ^^^^^^^^^^^^^^
+34 |        import :: wp
+35 |      end subroutine sub
+   |
+help: Insert `implicit none`
+32 |   interface
+33 |      subroutine sub
+34 |        import :: wp
+35 +        implicit none
+36 |      end subroutine sub
+37 |   end interface
+38 | end module interface_with_import
+note: This is an unsafe fix and may change runtime behavior
