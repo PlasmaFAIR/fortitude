@@ -346,13 +346,13 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// ## Options
 /// - `check.indent-width`
 /// - `check.incorrect-indentation.ignore-semicolons`
-/// - `check.incorrect-indentation.program-indents
-/// - `check.incorrect-indentation.module-indents
-/// - `check.incorrect-indentation.procedure-indents
-/// - `check.incorrect-indentation.derived-type-indents
-/// - `check.incorrect-indentation.control-flow-indents
-/// - `check.incorrect-indentation.interface-indents
-/// - `check.incorrect-indentation.line-continuation-indents
+/// - `check.incorrect-indentation.program-indent`
+/// - `check.incorrect-indentation.module-indent`
+/// - `check.incorrect-indentation.procedure-indent`
+/// - `check.incorrect-indentation.derived-type-indent`
+/// - `check.incorrect-indentation.control-flow-indent`
+/// - `check.incorrect-indentation.interface-indent`
+/// - `check.incorrect-indentation.line-continuation-indent`
 #[derive(ViolationMetadata)]
 pub(crate) struct IncorrectIndentation {
     expected_indent: usize,
@@ -499,10 +499,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
     // Store settings
     let indent_width = context.settings().indent_width;
     let ignore_semicolons = context.settings().incorrect_indentation.ignore_semicolons;
-    let constructs_to_indent_map = &context
-        .settings()
-        .incorrect_indentation
-        .construct_to_indent_map;
+    let constructs_to_indent_map = &context.settings().incorrect_indentation.indent_map();
 
     // Array to track both the number of scopes we are inside and their respective indents
     let mut scope_indents: Vec<usize> = Vec::new();
@@ -592,8 +589,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     if edit_is_activated {
                         scope_indents.push(
                             current_expected_indent
-                                + indent_width.as_usize()
-                                    * constructs_to_indent_map.get(node_kind).unwrap(),
+                                + constructs_to_indent_map.get_indent(node_kind),
                         );
                     } else {
                         scope_indents.push(leading_spaces);
@@ -615,8 +611,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                     in_line_continuation = true;
                     scope_indents.push(
                         current_expected_indent
-                            + indent_width.as_usize()
-                                * constructs_to_indent_map.get("line_continuation").unwrap(),
+                            + constructs_to_indent_map.get_indent("line_continuation"),
                     );
                 }
             }
@@ -726,96 +721,89 @@ pub mod settings {
     #[derive(Debug, Clone, CacheKey)]
     pub struct IncorrectIndentationSettings {
         pub ignore_semicolons: bool,
-        pub construct_to_indent_map: HashMap<String, usize>,
-        pub program_indents: usize,
-        pub module_indents: usize,
-        pub procedure_indents: usize,
-        pub derived_type_indents: usize,
-        pub control_flow_indents: usize,
-        pub interface_indents: usize,
-        pub line_continuation_indents: usize,
+        pub program_indent: usize,
+        pub module_indent: usize,
+        pub procedure_indent: usize,
+        pub derived_type_indent: usize,
+        pub control_flow_indent: usize,
+        pub interface_indent: usize,
+        pub line_continuation_indent: usize,
     }
 
     impl Default for IncorrectIndentationSettings {
         fn default() -> Self {
-            let construct_to_indent_map: HashMap<String, usize> = HashMap::new();
-            let mut settings = Self {
+            Self {
                 ignore_semicolons: true,
-                construct_to_indent_map,
-                program_indents: 1usize,
-                module_indents: 1usize,
-                procedure_indents: 1usize,
-                derived_type_indents: 1usize,
-                control_flow_indents: 1usize,
-                interface_indents: 1usize,
-                line_continuation_indents: 1usize,
-            };
-            settings.populate_construct_to_indent_map()
+                program_indent: 4usize,
+                module_indent: 4usize,
+                procedure_indent: 4usize,
+                derived_type_indent: 4usize,
+                control_flow_indent: 4usize,
+                interface_indent: 4usize,
+                line_continuation_indent: 4usize,
+            }
         }
     }
 
+    pub struct IndentMap(HashMap<&'static str, usize>);
+
+    impl IndentMap {
+        pub fn get_indent(&self, construct: &str) -> usize {
+            *self.0.get(construct).unwrap()
+        }
+    }
+
+    static PROGRAM_STATEMENTS: &[&str] = &["program_statement"];
+    static MODULE_STATEMENTS: &[&str] = &["module_statement", "submodule_statement"];
+    static PROCEDURE_STATEMENTS: &[&str] =
+        &["subroutine_statement", "function_statement", "function"];
+    static TYPE_STATEMENTS: &[&str] = &["derived_type_statement"];
+    static CONTROL_FLOW_STATEMENTS: &[&str] = &[
+        "block_construct",
+        "if_statement",
+        "where_statement",
+        "select_case_statement",
+        "select_type_statement",
+        "select_rank_statement",
+        "do_loop",
+        "do_statement",
+        "associate_statement",
+    ];
+    static INTERFACE_STATEMENTS: &[&str] = &["interface_statement"];
+    static LINE_CONTINUATION_STATEMENTS: &[&str] = &["line_continuation"];
+
     impl IncorrectIndentationSettings {
-        pub fn populate_construct_to_indent_map(&mut self) -> Self {
-            self.construct_to_indent_map
-                .insert("program_statement".to_string(), self.program_indents);
+        pub fn default_from_indent_width(indent_width: usize) -> Self {
+            Self {
+                ignore_semicolons: true,
+                program_indent: indent_width,
+                module_indent: indent_width,
+                procedure_indent: indent_width,
+                derived_type_indent: indent_width,
+                control_flow_indent: indent_width,
+                interface_indent: indent_width,
+                line_continuation_indent: indent_width,
+            }
+        }
 
-            self.construct_to_indent_map
-                .insert("module_statement".to_string(), self.module_indents);
+        pub fn indent_map(&self) -> IndentMap {
+            let mut construct_to_indent_map = HashMap::new();
 
-            self.construct_to_indent_map
-                .insert("submodule_statement".to_string(), self.module_indents);
+            for (statements, value) in [
+                (PROGRAM_STATEMENTS, self.program_indent),
+                (MODULE_STATEMENTS, self.module_indent),
+                (PROCEDURE_STATEMENTS, self.procedure_indent),
+                (TYPE_STATEMENTS, self.derived_type_indent),
+                (CONTROL_FLOW_STATEMENTS, self.control_flow_indent),
+                (INTERFACE_STATEMENTS, self.interface_indent),
+                (LINE_CONTINUATION_STATEMENTS, self.line_continuation_indent),
+            ] {
+                for node in statements {
+                    construct_to_indent_map.insert(*node, value);
+                }
+            }
 
-            self.construct_to_indent_map
-                .insert("subroutine_statement".to_string(), self.procedure_indents);
-
-            self.construct_to_indent_map
-                .insert("function_statement".to_string(), self.procedure_indents);
-            self.construct_to_indent_map
-                .insert("function".to_string(), self.procedure_indents);
-
-            self.construct_to_indent_map.insert(
-                "derived_type_statement".to_string(),
-                self.derived_type_indents,
-            );
-
-            self.construct_to_indent_map
-                .insert("block_construct".to_string(), self.control_flow_indents);
-
-            self.construct_to_indent_map
-                .insert("if_statement".to_string(), self.control_flow_indents);
-            self.construct_to_indent_map
-                .insert("where_statement".to_string(), self.control_flow_indents);
-
-            self.construct_to_indent_map
-                .insert("interface_statement".to_string(), self.interface_indents);
-
-            self.construct_to_indent_map.insert(
-                "select_case_statement".to_string(),
-                self.control_flow_indents,
-            );
-            self.construct_to_indent_map.insert(
-                "select_type_statement".to_string(),
-                self.control_flow_indents,
-            );
-            self.construct_to_indent_map.insert(
-                "select_rank_statement".to_string(),
-                self.control_flow_indents,
-            );
-
-            self.construct_to_indent_map
-                .insert("do_loop".to_string(), self.control_flow_indents);
-            self.construct_to_indent_map
-                .insert("do_statement".to_string(), self.control_flow_indents);
-
-            self.construct_to_indent_map
-                .insert("associate_statement".to_string(), self.control_flow_indents);
-
-            self.construct_to_indent_map.insert(
-                "line_continuation".to_string(),
-                self.line_continuation_indents,
-            );
-
-            self.clone()
+            IndentMap(construct_to_indent_map)
         }
     }
 
@@ -826,13 +814,13 @@ pub mod settings {
                 namespace = "check.incorrect-indentation",
                 fields = [
                     self.ignore_semicolons,
-                    self.program_indents,
-                    self.module_indents,
-                    self.procedure_indents,
-                    self.derived_type_indents,
-                    self.control_flow_indents,
-                    self.interface_indents,
-                    self.line_continuation_indents,
+                    self.program_indent,
+                    self.module_indent,
+                    self.procedure_indent,
+                    self.derived_type_indent,
+                    self.control_flow_indent,
+                    self.interface_indent,
+                    self.line_continuation_indent,
                 ]
             }
             Ok(())
@@ -851,16 +839,16 @@ mod tests {
 
     #[test_case(
         2,
-        "!> My program\nprogram test\n        implicit none\nend program test"
+        "!> My program\nprogram test\n  implicit none\nend program test"
         ; "indent 2"
     )]
     #[test_case(0, "!> My program\nprogram test\nimplicit none\nend program test"; "indent 0" )]
-    fn test_s105_program_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn program_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My program\nprogram test\nimplicit none\nend program test";
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            program-indents = {}
+            program-indent = {}
             "#,
             num_indents,
         );
@@ -870,7 +858,7 @@ mod tests {
 
     #[test_case(
         2,
-        "!> My module\nmodule test\n        implicit none\ncontains\nend module test"
+        "!> My module\nmodule test\n  implicit none\ncontains\nend module test"
         ; "indent 2"
     )]
     #[test_case(
@@ -878,12 +866,12 @@ mod tests {
         "!> My module\nmodule test\nimplicit none\ncontains\nend module test"
         ; "indent 0"
     )]
-    fn test_s105_module_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn module_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My module\nmodule test\nimplicit none\ncontains\nend module test";
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            module-indents = {}
+            module-indent = {}
             "#,
             num_indents,
         );
@@ -893,19 +881,19 @@ mod tests {
 
     #[test_case(
         2,
-        "!> My submodule\nsubmodule (mmod) test\n        implicit none\ncontains\nend submodule test"; "indent 2"
+        "!> My submodule\nsubmodule (mmod) test\n  implicit none\ncontains\nend submodule test"; "indent 2"
     )]
     #[test_case(
         0,
         "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test"; "indent 0"
     )]
-    fn test_s105_submodule_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn submodule_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet =
             "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test";
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            module-indents = {}
+            module-indent = {}
             "#,
             num_indents,
         );
@@ -915,18 +903,18 @@ mod tests {
 
     #[test_case(
         2,
-        "!> My subroutine\nsubroutine test\n        implicit none\nend subroutine test"; "indent 2"
+        "!> My subroutine\nsubroutine test\n  implicit none\nend subroutine test"; "indent 2"
     )]
     #[test_case(
         0,
         "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test"; "indent 0"
     )]
-    fn test_s105_subroutine_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn subroutine_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test";
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            procedure-indents = {}
+            procedure-indent = {}
             "#,
             num_indents,
         );
@@ -937,7 +925,7 @@ mod tests {
     #[test_case(
         2,
         "!> My function\nfunction test result(output)\ninteger :: output\nend function test",
-        "!> My function\nfunction test result(output)\n        integer :: output\nend function test"
+        "!> My function\nfunction test result(output)\n  integer :: output\nend function test"
         ; "indent 2 with result"
     )]
     #[test_case(
@@ -949,7 +937,7 @@ mod tests {
     #[test_case(
         3,
         "!> My function\ninteger function test\ntest = 3\nend function test",
-        "!> My function\ninteger function test\n            test = 3\nend function test"
+        "!> My function\ninteger function test\n   test = 3\nend function test"
         ; "indent 3 no result"
     )]
     #[test_case(
@@ -972,8 +960,8 @@ end submodule msubmodule"#,
 submodule (mmod) msubmodule
 contains
     module function interfaced_function(i) result(x)
-            integer, intent(in) :: i
-            x = i
+      integer, intent(in) :: i
+      x = i
     end function interfaced_function
 end submodule msubmodule"#
 ; "Interfaced function with result"
@@ -991,20 +979,16 @@ end submodule msubmodule"#,
 submodule (mmod) msubmodule
 contains
     integer module function interfaced_function(i)
-                interfaced_function = i
+       interfaced_function = i
     end function interfaced_function
 end submodule msubmodule"#
             ; "Interfaced function with return type"
     )]
-    fn test_s105_function_indentation(
-        num_indents: i8,
-        snippet: &str,
-        fixed_snippet: &str,
-    ) -> Result<()> {
+    fn function_indentation(num_indents: i8, snippet: &str, fixed_snippet: &str) -> Result<()> {
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            procedure-indents = {}
+            procedure-indent = {}
             "#,
             num_indents,
         );
@@ -1017,9 +1001,9 @@ end submodule msubmodule"#
         r#"
 module mmod
     type :: mtype
-            integer :: i
+      integer :: i
     contains
-            procedure :: mproc
+      procedure :: mproc
     end type mtype
 contains
 end module mmod"#; "indent 2"
@@ -1036,7 +1020,7 @@ module mmod
 contains
 end module mmod"#; "indent 0"
     )]
-    fn test_s105_derived_type_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn derived_type_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 module mmod
 type :: mtype
@@ -1049,7 +1033,7 @@ end module mmod"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            derived-type-indents = {}
+            derived-type-indent = {}
             "#,
             num_indents,
         );
@@ -1058,7 +1042,7 @@ end module mmod"#;
     }
 
     #[test_case(
-        2,
+        8,
         r#"
 program mprog
     block
@@ -1070,7 +1054,7 @@ program mprog
                     print*, y
             end block inner
     end block
-end program mprog"#; "indent 2"
+end program mprog"#; "indent 8"
     )]
     #[test_case(
         0,
@@ -1087,7 +1071,7 @@ program mprog
     end block
 end program mprog"#; "indent 0"
     )]
-    fn test_s105_block_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn block_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 program mprog
 block
@@ -1103,7 +1087,7 @@ end program mprog"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            control-flow-indents = {}
+            control-flow-indent = {}
             "#,
             num_indents,
         );
@@ -1113,7 +1097,7 @@ end program mprog"#;
 
     #[test_case(
         false,
-        1,
+        4,
         r#"
 subroutine msub()
     integer :: i
@@ -1150,15 +1134,15 @@ subroutine msub()
     ! Semicolons
 if (i == 2) then; i = 3; end if;
     if (i == 4) then
-                i = 2
+       i = 2
     else if (i == 2) then
-                i = 4
+       i = 4
     else
-                i = 1
+       i = 1
     end if
     ! Named if block
     named_if: if (i == 1) then
-                i = i + 1
+       i = i + 1
     end if
 end subroutine msub"#
         ; "All types of if with three indent and ignoring semicolons"
@@ -1188,11 +1172,7 @@ if (i == 2) then; i = 3; end if;
 end subroutine msub"#
             ; "All types of if with zero indent and ignoring semicolons"
     )]
-    fn test_s105_if_indentation(
-        ignore_semicolons: bool,
-        num_indents: i8,
-        fixed_snippet: &str,
-    ) -> Result<()> {
+    fn if_indentation(ignore_semicolons: bool, num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 subroutine msub()
 integer :: i
@@ -1217,7 +1197,7 @@ end subroutine msub"#;
             r#"
             [check.incorrect-indentation]
             ignore-semicolons = {}
-            control-flow-indents = {}
+            control-flow-indent = {}
             "#,
             ignore_semicolons, num_indents,
         );
@@ -1226,18 +1206,18 @@ end subroutine msub"#;
     }
 
     #[test_case(
-        4,
+        2,
         r#"
 module mmod
     interface
-                    module function interfaced_function(i) result(x)
-                        integer, intent(in) :: i
-                    end function interfaced_function
+      module function interfaced_function(i) result(x)
+          integer, intent(in) :: i
+      end function interfaced_function
     end interface
     interface minterface
-                    module procedure minterface_i,minterface_r
+      module procedure minterface_i,minterface_r
     end interface minterface
-end module mmod"#; "indent 4"
+end module mmod"#; "indent 2"
     )]
     #[test_case(
         0,
@@ -1253,7 +1233,7 @@ module mmod
     end interface minterface
 end module mmod"#; "indent 0"
     )]
-    fn test_s105_interface_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn interface_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 module mmod
 interface
@@ -1268,7 +1248,7 @@ end module mmod"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            interface-indents = {}
+            interface-indent = {}
             "#,
             num_indents,
         );
@@ -1283,9 +1263,9 @@ subroutine select_cases
     integer :: i
     select case (i)
     case (1)
-                i = 2
+       i = 2
     case (2)
-                i = 1
+       i = 1
     end select
     i = 3
 end subroutine select_cases"#; "indent 3"
@@ -1304,7 +1284,7 @@ subroutine select_cases
     i = 3
 end subroutine select_cases"#; "indent 0"
     )]
-    fn test_s105_select_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn select_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 subroutine select_cases
 integer :: i
@@ -1319,7 +1299,7 @@ end subroutine select_cases"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            control-flow-indents = {}
+            control-flow-indent = {}
             "#,
             num_indents,
         );
@@ -1328,19 +1308,19 @@ end subroutine select_cases"#;
     }
 
     #[test_case(
-        4,
+        2,
         r#"
 function do_construct
     integer :: i, j, x
     do i = 1, 10
-                    do j = i, 10
-                                    x = i * j
-                    end do
+      do j = i, 10
+        x = i * j
+      end do
     end do
     named_do: do i = 1, 10
-                    print *, i
+      print *, i
     end do
-end function do_construct"#; "indent 4"
+end function do_construct"#; "indent 2"
     )]
     #[test_case(
         0,
@@ -1357,7 +1337,7 @@ function do_construct
     end do
 end function do_construct"#; "indent 0"
     )]
-    fn test_s105_do_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn do_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 function do_construct
 integer :: i, j, x
@@ -1373,7 +1353,7 @@ end function do_construct"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            control-flow-indents = {}
+            control-flow-indent = {}
             "#,
             num_indents,
         );
@@ -1387,10 +1367,10 @@ end function do_construct"#;
 subroutine associates
     integer :: i
     associate(x => i)
-            print *, x
+      print *, x
     end associate
     named_associate: associate(x => i)
-            print *, x
+      print *, x
     end associate named_associate
 end subroutine associates"#; "indent 2"
     )]
@@ -1407,7 +1387,7 @@ subroutine associates
     end associate named_associate
 end subroutine associates"#; "indent 0"
     )]
-    fn test_s105_associate_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn associate_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 subroutine associates
 integer :: i
@@ -1421,7 +1401,7 @@ end subroutine associates"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            control-flow-indents = {}
+            control-flow-indent = {}
             "#,
             num_indents,
         );
@@ -1430,7 +1410,7 @@ end subroutine associates"#;
     }
 
     #[test_case(
-        2,
+        8,
         r#"
 function wrapped_function( &
         i &
@@ -1455,7 +1435,7 @@ i &
     + 3
 end function wrapped_function"#; "indent 0"
     )]
-    fn test_s105_line_continuation_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
+    fn line_continuation_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
         let snippet = r#"
 function wrapped_function( &
 i &
@@ -1469,7 +1449,7 @@ end function wrapped_function"#;
         let toml_contents = format!(
             r#"
             [check.incorrect-indentation]
-            line-continuation-indents = {}
+            line-continuation-indent = {}
             "#,
             num_indents,
         );
@@ -1478,7 +1458,7 @@ end function wrapped_function"#;
     }
 
     #[test]
-    fn test_s105_where_statement() -> Result<()> {
+    fn where_statement() -> Result<()> {
         let before = r#"
 subroutine wheresub
     real :: pressure(1000), temp(1000), precepitation(1000)
@@ -1508,7 +1488,7 @@ end subroutine wheresub
     }
 
     #[test]
-    fn test_s105_select_type_statement() -> Result<()> {
+    fn select_type_statement() -> Result<()> {
         let before = r#"
 subroutine print_decorated_numbers(number)
   class(*), intent(in) :: number
@@ -1546,7 +1526,7 @@ end subroutine print_decorated_numbers
     }
 
     #[test]
-    fn test_s105_select_rank_statement() -> Result<()> {
+    fn select_rank_statement() -> Result<()> {
         let before = r#"
 subroutine assumed_rank(A)
   integer, intent(inout) :: A(..)
@@ -1588,7 +1568,7 @@ end subroutine
 
         Command::cargo_bin("fortitude")?
             .arg("check")
-            .arg("--config-file")
+            .arg("--config")
             .arg(toml_path.as_os_str())
             .arg("--fix")
             .arg("--preview")

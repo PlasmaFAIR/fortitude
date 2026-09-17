@@ -1,8 +1,8 @@
 use crate::options::{
     ComplexityOptions, ExitUnlabelledLoopOptions, InconsistentDimensionOptions,
-    IncorrectIndentationOptions, IncorrectKeywordCaseOptions, InvalidTabOptions,
-    KeywordWhitespaceOptions, LineTooLongOptions, Options, PortabilityOptions,
-    ShadowedVariableOptions, StringOptions, UseStatementsOptions,
+    IncorrectIndentationOptions, IncorrectKeywordCaseOptions, KeywordWhitespaceOptions,
+    LineTooLongOptions, Options, PortabilityOptions, ShadowedVariableOptions, StringOptions,
+    UseStatementsOptions,
 };
 use fortitude_linter::diagnostics::OutputRuleIdFormat;
 use fortitude_linter::diagnostics::Severity;
@@ -21,7 +21,7 @@ use fortitude_linter::settings::{
     CheckSettings, DEFAULT_SELECTORS, ExcludeMode, FileResolverSettings, FortranStandard,
     GitignoreMode, OutputFormat, PreviewMode, ProgressBar, Settings, UnsafeFixes,
 };
-use fortitude_linter::{fs, warn_user_once_by_id, warn_user_once_by_message};
+use fortitude_linter::{fs, warn_user_once, warn_user_once_by_id, warn_user_once_by_message};
 
 use anyhow::{Context, Result, anyhow};
 use itertools::Itertools;
@@ -262,7 +262,6 @@ pub struct Configuration {
     pub keyword_whitespace: Option<KeywordWhitespaceOptions>,
     pub strings: Option<StringOptions>,
     pub portability: Option<PortabilityOptions>,
-    pub invalid_tab: Option<InvalidTabOptions>,
     pub inconsistent_dimension: Option<InconsistentDimensionOptions>,
     pub line_too_long: Option<LineTooLongOptions>,
     pub use_statements: Option<UseStatementsOptions>,
@@ -272,11 +271,30 @@ pub struct Configuration {
 
 impl Configuration {
     /// Convert from config file options struct into our "known good" struct
-    #[allow(deprecated)]
     pub fn from_options(options: Options, project_root: &Path) -> Self {
         let check = options.check.unwrap_or_default();
 
+        #[expect(deprecated)]
         let include = convert_file_and_extensions_to_include(&check.files, &check.file_extensions);
+
+        #[expect(deprecated)]
+        let indent_width = if let Some(invalid_tab) = &check.invalid_tab
+            && invalid_tab.indent_width.is_some()
+        {
+            if let Some(indent_width) = check.indent_width {
+                warn_user_once!(
+                    "Both `check.indent-width` and `check.invalid-tab.indent-width` set; using value from `check.indent-width`"
+                );
+                Some(indent_width)
+            } else {
+                warn_user_once!(
+                    "`check.invalid-tab.indent-width` has been renamed to [`check.indent-width`](#check_indent-width). Use that instead."
+                );
+                invalid_tab.indent_width
+            }
+        } else {
+            check.indent_width
+        };
 
         Self {
             ignore: check.ignore.into_iter().flatten().collect(),
@@ -295,7 +313,7 @@ impl Configuration {
             }),
             extend_per_file_ignores: vec![],
             line_length: check.line_length,
-            indent_width: check.indent_width,
+            indent_width,
             fix: check.fix,
             fix_only: check.fix_only,
             show_fixes: check.show_fixes,
@@ -347,7 +365,6 @@ impl Configuration {
             keyword_whitespace: check.keyword_whitespace,
             strings: check.strings,
             portability: check.portability,
-            invalid_tab: check.invalid_tab,
             inconsistent_dimension: check.inconsistent_dimensions,
             line_too_long: check.line_too_long,
             use_statements: check.use_statements,
@@ -377,6 +394,10 @@ impl Configuration {
             progress_bar = ProgressBar::Ascii;
         }
 
+        let indent_width = self
+            .indent_width
+            .unwrap_or(Settings::default().check.indent_width);
+
         Ok(Settings {
             check: CheckSettings {
                 project_root: project_root.to_path_buf(),
@@ -386,9 +407,7 @@ impl Configuration {
                 line_length: self
                     .line_length
                     .unwrap_or(Settings::default().check.line_length),
-                indent_width: self
-                    .indent_width
-                    .unwrap_or(Settings::default().check.indent_width),
+                indent_width,
                 unsafe_fixes: self.unsafe_fixes.unwrap_or_default(),
                 preview,
                 target_std: self.target_std.unwrap_or_default(),
@@ -432,10 +451,6 @@ impl Configuration {
                     .portability
                     .map(PortabilityOptions::into_settings)
                     .unwrap_or_default(),
-                invalid_tab: self
-                    .invalid_tab
-                    .map(InvalidTabOptions::into_settings)
-                    .unwrap_or_default(),
                 inconsistent_dimension: self
                     .inconsistent_dimension
                     .map(InconsistentDimensionOptions::into_settings)
@@ -454,7 +469,9 @@ impl Configuration {
                     .unwrap_or_default(),
                 incorrect_indentation: self
                     .incorrect_indentation
-                    .map(IncorrectIndentationOptions::into_settings)
+                    .map(|options| {
+                        IncorrectIndentationOptions::into_settings(options, indent_width.as_usize())
+                    })
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {
@@ -536,7 +553,6 @@ impl Configuration {
             keyword_whitespace: self.keyword_whitespace.or(config.keyword_whitespace),
             strings: self.strings.or(config.strings),
             portability: self.portability.or(config.portability),
-            invalid_tab: self.invalid_tab.or(config.invalid_tab),
             target_std: self.target_std.or(config.target_std),
             inconsistent_dimension: self
                 .inconsistent_dimension

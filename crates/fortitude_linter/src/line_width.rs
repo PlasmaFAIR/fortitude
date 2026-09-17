@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct IndentWidth(NonZeroU8);
 
 impl IndentWidth {
-    pub(crate) fn as_usize(self) -> usize {
+    pub fn as_usize(self) -> usize {
         self.0.get() as usize
     }
 }
