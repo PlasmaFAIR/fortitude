@@ -102,7 +102,7 @@ fn fix_inconsistent_dimension(
     let (new_attr, var_str) =
         dimension_attribute_and_shape(var, decl, prefer_attribute.is_always())?;
 
-    let type_ = decl.type_().as_str();
+    let type_ = decl.type_().name();
     let attrs = decl
         .attributes()
         .iter()

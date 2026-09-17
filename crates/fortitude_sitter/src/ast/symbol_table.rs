@@ -341,7 +341,7 @@ end program foo
             TextRange::new(TextSize::new(26), TextSize::new(27))
         );
         assert_eq!(x.name().as_str(), "x");
-        assert_eq!(x.type_().as_str(), "integer");
+        assert_eq!(x.type_().name(), "integer");
         assert_eq!(x.decl_statement().textrange(), first_decl_range);
 
         assert!(y.is_some());
@@ -369,7 +369,7 @@ end program foo
             TextRange::new(TextSize::new(60), TextSize::new(71))
         );
         assert_eq!(a.name().as_str(), "a");
-        assert_eq!(a.type_().as_str(), "real");
+        assert_eq!(a.type_().name(), "real");
         let a_attrs: Vec<&'static str> = a
             .attributes()
             .iter()

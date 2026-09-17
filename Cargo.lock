@@ -927,10 +927,13 @@ dependencies = [
 name = "fortitude_dev"
 version = "0.0.0"
 dependencies = [
+ "anstyle",
  "anyhow",
  "clap",
  "fortitude",
  "fortitude_linter",
+ "fortitude_macros",
+ "fortitude_sitter",
  "fortitude_workspace",
  "itertools 0.12.1",
  "pretty_assertions",

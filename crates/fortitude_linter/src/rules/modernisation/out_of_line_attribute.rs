@@ -157,7 +157,7 @@ fn make_fix(var: &Variable, new_attr: &str, extra: String) -> Result<Vec<Edit>> 
         //   -> remove variable from decl statement
         edits.push(remove_variable_decl(var.node(), decl)?);
         //   -> add new decl statement with attribute
-        let type_ = decl.type_().as_str();
+        let type_ = decl.type_().name();
         let attrs = decl
             .attributes()
             .iter()

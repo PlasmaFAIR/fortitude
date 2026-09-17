@@ -7,7 +7,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU16;
 use std::str::Utf8Error;
-use tree_sitter::Point;
+use tree_sitter::{Point, Range};
 
 use anyhow::Result;
 use fortitude_macros::{field, kind};
@@ -306,6 +306,11 @@ impl<'tree> Node<'tree> {
     #[inline]
     pub fn byte_range(&self) -> std::ops::Range<usize> {
         self.node.byte_range()
+    }
+
+    #[inline]
+    pub fn range(&self) -> Range {
+        self.node.range()
     }
 
     /// Get the node's text.
@@ -841,7 +846,7 @@ impl<'tree> TreeCursor<'tree> {
     }
 
     /// Gets the field name of the cursor's current node
-    pub fn field_name(&mut self) -> Option<&'static str> {
+    pub fn field_name(&self) -> Option<&'static str> {
         self.cursor.field_name()
     }
 

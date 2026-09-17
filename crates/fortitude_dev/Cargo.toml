@@ -9,10 +9,13 @@ license = { workspace = true }
 
 [dependencies]
 fortitude = { workspace = true }
+fortitude_macros = { workspace = true }
 fortitude_linter = { workspace = true }
+fortitude_sitter = { workspace = true }
 fortitude_workspace = { workspace = true }
 
 anyhow = { workspace = true }
+anstyle = { workspace = true }
 clap = { workspace = true }
 itertools = { workspace = true }
 pretty_assertions = "1.3.0"
