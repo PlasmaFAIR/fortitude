@@ -13,6 +13,7 @@ pub mod line_width;
 pub mod locator;
 #[macro_use]
 pub mod logging;
+pub mod logical_lines;
 pub mod preview;
 pub mod registry;
 pub mod rule_redirects;
@@ -30,6 +31,7 @@ use allow_comments::{check_allow_comments, gather_allow_comments};
 use diagnostics::{Diagnostic, Diagnostics, FixMap, Violation};
 use fix::{FixResult, fix_file};
 use locator::Locator;
+use logical_lines::LogicalLinesBuilder;
 use rules::correctness::shadowed_variable::check_shadowed_variables;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
@@ -306,10 +308,14 @@ pub(crate) fn check_path(
     // Perform AST analysis
     let root = tree.root_node();
     let mut comment_positions = HashSet::new();
+    let mut logical_lines_builder = LogicalLinesBuilder::new(file.source_text());
+    let source_code = file.to_source_code();
     for node in once(root).chain(root.descendants()) {
         if context.is_rule_enabled(Rule::SyntaxError) && node.is_missing() {
             violations.push(context.create_diagnostic(SyntaxError {}, node));
         }
+
+        logical_lines_builder.add_node(node, &source_code);
 
         if node.kind_id() == kind!("comment") {
             comment_positions.insert(node.start_position());
@@ -373,6 +379,8 @@ pub(crate) fn check_path(
         }
     }
 
+    let logical_lines = logical_lines_builder.finish();
+
     // ignore line length in comments requires AST
     if context.is_rule_enabled(Rule::LineTooLong) {
         violations.extend(LineTooLong::check(&context, &comment_positions));
@@ -386,7 +394,7 @@ pub(crate) fn check_path(
         Rule::IncorrectIndentation,
         Rule::IndentedPreprocessorStatement,
     ]) {
-        violations.append(&mut check_incorrect_indent(&context, &root));
+        violations.append(&mut check_incorrect_indent(&context, &logical_lines));
     }
 
     if context.is_rule_enabled(Rule::InvalidCharacter) {

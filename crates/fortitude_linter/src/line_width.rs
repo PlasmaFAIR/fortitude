@@ -11,6 +11,10 @@ impl IndentWidth {
     pub(crate) fn as_usize(self) -> usize {
         self.0.get() as usize
     }
+
+    pub(crate) fn as_u8(self) -> u8 {
+        self.0.get()
+    }
 }
 
 impl Default for IndentWidth {
