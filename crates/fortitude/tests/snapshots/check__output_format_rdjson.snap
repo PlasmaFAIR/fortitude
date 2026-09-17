@@ -9,6 +9,7 @@ info:
     - "--select"
     - "S061,C001,PORT011,PORT021"
     - test.f90
+snapshot_kind: text
 ---
 success: false
 exit_code: 1
@@ -47,7 +48,7 @@ exit_code: 1
               "column": 1
             }
           },
-          "text": "implicit none\n"
+          "text": "  implicit none\n"
         }
       ]
     },

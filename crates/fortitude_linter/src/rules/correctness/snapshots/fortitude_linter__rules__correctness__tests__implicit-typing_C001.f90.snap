@@ -13,7 +13,7 @@ C001 [*] module uses implicit typing
   |
 help: Insert `implicit none`
 1 | module my_module
-2 + implicit none
+2 +   implicit none
 3 |   parameter(N = 1)
 4 | end module my_module
 5 |
@@ -73,7 +73,7 @@ help: Insert `implicit none`
 21 | end program my_program
 22 |
 23 | subroutine external_sub(x)
-24 + implicit none
+24 +   implicit none
 25 |   print*, x
 26 | end subroutine external_sub
 27 |
