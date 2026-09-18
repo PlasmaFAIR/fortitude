@@ -36,7 +36,7 @@ exit_code: 1
                         "startLine": 2
                       },
                       "insertedContent": {
-                        "text": "implicit none\n"
+                        "text": "  implicit none\n"
                       }
                     }
                   ]

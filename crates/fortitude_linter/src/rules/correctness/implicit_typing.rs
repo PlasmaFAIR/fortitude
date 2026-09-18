@@ -9,34 +9,50 @@ use fortitude_sitter::{
     traits::{HasNode, TextRanged},
 };
 use ruff_macros::derive_message_formats;
-use ruff_source_file::SourceFile;
 
 /// Inserts `implicit none` in the current scope. Should be called on a program,
 /// module, submodule, function, or subroutine.
-fn insert_implicit_none(node: &Node, src: &SourceFile) -> Option<Edit> {
+fn insert_implicit_none(node: &Node, context: &CheckContext) -> Option<Edit> {
     // Find suitable place to insert `implicit none`, the line
-    // after the last `use` statement, if any
-    let last_use_statement_range = node
+    // after the last `use`/`import` statement, if any
+    let last_use_stmt_range = node
         .named_children(&mut node.walk())
         .filter_map(|child| {
-            if child.kind_id() == kind!("use_statement") {
+            if matches!(
+                child.kind_id(),
+                kind!("use_statement") | kind!("import_statement")
+            ) {
                 Some(child.textrange())
             } else {
                 None
             }
         })
-        .last()
-        .or(Some(node.child(0)?.textrange()))?;
+        .last();
+
+    // We want to know if we found a `use/import` stmt, but then fallback to the
+    // scope stmt otherwise
+    let no_use_stmt = last_use_stmt_range.is_none();
+    let last_use_stmt_range = last_use_stmt_range.or(Some(node.child(0)?.textrange()))?;
 
     // Get the start and end of the line
-    let source_code = src.to_source_code();
-    let source_location = source_code.line_column(last_use_statement_range.start());
+    let source_code = context.source_file().to_source_code();
+    let source_location = source_code.line_column(last_use_stmt_range.start());
     let line_start = source_code.line_start(source_location.line);
     let line_end = source_code.line_end(source_location.line);
 
-    // TODO(peter): determine indentation of file using `Stylist` struct
-    let indent = (last_use_statement_range.start() - line_start).to_usize();
-    let insert = format!("{:indent$}implicit none\n", "");
+    let base_indent = (last_use_stmt_range.start() - line_start).to_usize();
+    let extra_indent = if no_use_stmt {
+        // No previous indented statement, so apply extra indentation based on
+        // the file
+        // TODO(peter): not everyone indents these stmts, we need extra config!
+        context.stylist.indentation().as_str()
+    } else {
+        ""
+    };
+    let indent = format!("{:base_indent$}{extra_indent}", "");
+
+    let nl = context.stylist.line_ending().as_str();
+    let insert = format!("{indent}implicit none{nl}");
     Some(Edit::insertion(insert, line_end))
 }
 
@@ -88,7 +104,7 @@ struct ImplicitTypingEdit {
 impl ImplicitTypingEdit {
     /// Called on the scope that should contain an `implicit none` statement.
     /// Returns an edit if a violation is found, otherwise returns `None`.
-    fn try_from_scope(node: &Node, src: &SourceFile) -> Option<Self> {
+    fn try_from_scope(node: &Node, context: &CheckContext) -> Option<Self> {
         match ImplicitStatement::try_from_scope(node) {
             Some(stmt) => {
                 if stmt.is_implicit_none_type() {
@@ -114,7 +130,7 @@ impl ImplicitTypingEdit {
             None => {
                 // Missing implicit statement -- should insert one.
                 let error_type = ImplicitTypingErrorType::NoImplicitStatement;
-                let edit = insert_implicit_none(node, src)?;
+                let edit = insert_implicit_none(node, context)?;
                 Some(Self { edit, error_type })
             }
         }
@@ -178,7 +194,7 @@ impl AstRule for ImplicitTyping {
         }
 
         let ImplicitTypingEdit { edit, error_type } =
-            ImplicitTypingEdit::try_from_scope(node, context.source_file())?;
+            ImplicitTypingEdit::try_from_scope(node, context)?;
         let entity = node.kind().to_string();
         let block_stmt = node.child(0)?;
 
@@ -229,7 +245,7 @@ impl AstRule for InterfaceImplicitTyping {
         }
 
         let ImplicitTypingEdit { edit, error_type } =
-            ImplicitTypingEdit::try_from_scope(node, context.source_file())?;
+            ImplicitTypingEdit::try_from_scope(node, context)?;
         let name = node.kind().to_string();
         let interface_stmt = node.child(0)?;
 

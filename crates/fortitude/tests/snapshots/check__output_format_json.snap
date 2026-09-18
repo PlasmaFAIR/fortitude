@@ -28,7 +28,7 @@ exit_code: 1
       "applicability": "unsafe",
       "edits": [
         {
-          "content": "implicit none\n",
+          "content": "  implicit none\n",
           "end_location": {
             "column": 1,
             "row": 2
