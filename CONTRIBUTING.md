@@ -390,9 +390,12 @@ To make a new release, the following steps must be completed in order:
 
 1. Update the tag on `main`
 
-1. Run the [release workflow](https://github.com/PlasmaFAIR/fortitude/actions/workflows/release.yml) with:
+1. Run the [release workflow](https://github.com/PlasmaFAIR/fortitude/actions/workflows/release.yml) with
+   the new version number.
 
-    - The new version number
+    - If you need to make a release candidate, note that the version should
+      be `x.y.z-rc.1` in the Rust crate and most locations, but `x.y.zrc1`
+      in `pyproject.toml`.
 
 1. The release workflow will do the following:
 
