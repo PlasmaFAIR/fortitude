@@ -8,11 +8,10 @@ TOP_LEVEL = pathlib.Path(__file__).parent.parent
 DOCS_IMAGE_DIR = TOP_LEVEL / "docs" / "assets"
 
 data = {
-    "Fortitude": 0.095,
-    "Flint": 7.387,
-    "Stylist": 10.417,
-    "Camfort": 6.609,
-    "iCode": 21.582,
+    "Fortitude": 0.4556,
+    "Flint": 12.915,
+    "Stylist": 14.830,
+    "CamFort": 25.135,
 }
 data = dict(sorted(data.items(), key=lambda item: item[1]))
 

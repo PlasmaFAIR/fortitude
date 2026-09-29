@@ -19,7 +19,7 @@ Written in Rust :crab: and installable with Python :snake:.
 </p>
 
 <p align="center">
-  <i>Linting 43 files from the GS2 repo.</i>
+  <i>Linting 72 files from the GS2 repo.</i>
 </p>
 
 - :zap: Blazingly fast, up to hundreds of times faster than other open-source Fortran
