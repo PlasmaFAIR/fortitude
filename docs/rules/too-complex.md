@@ -1,6 +1,4 @@
 # too-complex (S901)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 ## What it does
 Checks for procedures with a cyclomatic complexity that exceeds a
 configurable threshold.
