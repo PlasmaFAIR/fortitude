@@ -1,6 +1,4 @@
 # block-data-construct (OB013)
-This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
-
 This rule is turned on by default.
 
 ## What it does

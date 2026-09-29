@@ -4,6 +4,7 @@
 ![Tests](https://github.com/PlasmaFAIR/fortitude/actions/workflows/test.yml/badge.svg)
 ![Clippy](https://github.com/PlasmaFAIR/fortitude/actions/workflows/clippy.yml/badge.svg)
 [![Docs](https://readthedocs.org/projects/fortitude/badge/?version=latest)](https://fortitude.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.10570/status.svg)](https://doi.org/10.21105/joss.10570)
 
 # Fortitude
 
@@ -19,7 +20,7 @@ Written in Rust :crab: and installable with Python :snake:.
 </p>
 
 <p align="center">
-  <i>Linting 43 files from the GS2 repo.</i>
+  <i>Linting 72 files from the GS2 repo.</i>
 </p>
 
 - :zap: Blazingly fast, up to hundreds of times faster than other open-source Fortran

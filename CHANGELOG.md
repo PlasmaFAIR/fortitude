@@ -1,5 +1,70 @@
 # Changelog
 
+## 0.10.0
+
+Released on 2026-09-29.
+
+### Features
+
+- Add `name` and `count` output formats ([#715](https://github.com/PlasmaFAIR/fortitude/pull/715))
+- Allow customization of warning levels ([#693](https://github.com/PlasmaFAIR/fortitude/pull/693))
+- Allow shell completion of rule names ([#723](https://github.com/PlasmaFAIR/fortitude/pull/723))
+
+### Rules
+
+- Add rule `PORT061`/`non-portable-system-call` ([#707](https://github.com/PlasmaFAIR/fortitude/pull/707))
+- Add rules for missing default in both select type and select rank ([#704](https://github.com/PlasmaFAIR/fortitude/pull/704))
+- Add `S105`/`incorrect-indentation` to enforce consistent indentation ([#658](https://github.com/PlasmaFAIR/fortitude/pull/658))
+- Don't trigger `trailing-backslash` if the next node is a comment  ([#702](https://github.com/PlasmaFAIR/fortitude/pull/702))
+- Don't raise `C072` for UDTIO routines ([#703](https://github.com/PlasmaFAIR/fortitude/pull/703))
+- Move the following rules out of `--preview` mode:
+  - `MOD051`/`superfluous-save`
+  - `S233`/`incorrect-keyword-case`
+  - `S271`/`unsorted-uses`
+  - `S291`/`bare-decimal`
+  - `S901`/`too-complex`
+  - `S902`/`too-many-arguments`
+  - `OB012`/`equivalence-statement`
+  - `OB013`/`block-data-construct`
+  - `OB071`/`forall-statement`
+  - `OB081`/`arithmetic-if`
+  - `OB091`/`labelled-do-loop`
+  - `OB092`/`shared-do-termination`
+  - `OB093`/`bad-do-termination`
+  - `OB094`/`goto-end-do`
+- The rule `S271`/`unsorted-uses` is no longer in the default group.
+
+### Bug Fixes
+
+- Count select/case as single complexity increment, not per-branch in `S901`/`too-complex` ([#736](https://github.com/PlasmaFAIR/fortitude/pull/736))
+- Parse `bind` attributes on variables ([#708](https://github.com/PlasmaFAIR/fortitude/pull/708))
+- Fix `incorrect-keyword-case` picking up identifier aliases ([#747](https://github.com/PlasmaFAIR/fortitude/pull/747))
+- Fix parsing of `contiguous` attribute ([#699](https://github.com/PlasmaFAIR/fortitude/pull/699))
+- Fix incorrect location of inserted `implicit none` ([#742](https://github.com/PlasmaFAIR/fortitude/pull/742))
+- Fix case-sensitive `SymbolTable` lookups ([#710](https://github.com/PlasmaFAIR/fortitude/pull/710))
+
+### Deprecations
+
+- The option `check.invalid-tab.indent-width` is deprecated in favour of `check.indent-width` ([#739](https://github.com/PlasmaFAIR/fortitude/pull/739))
+
+### Other changes
+
+- Display full rule name when reporting ([#727](https://github.com/PlasmaFAIR/fortitude/pull/727))
+- Less strict `allow` comment format ([#728](https://github.com/PlasmaFAIR/fortitude/pull/728))
+- Hide `fortitude explain...` note in summary text in preview mode ([#729](https://github.com/PlasmaFAIR/fortitude/pull/729))
+- Propagate some errors better ([#700](https://github.com/PlasmaFAIR/fortitude/pull/700))
+- JOSS paper submission ([#622](https://github.com/PlasmaFAIR/fortitude/pull/622))
+
+### Contributors
+
+- [@ZedThree](https://github.com/ZedThree)
+- [@LiamPattinson](https://github.com/LiamPattinson)
+- [@connoraird](https://github.com/connoraird)
+- [@cyrilgandon](https://github.com/cyrilgandon)
+- [@eduardz1](https://github.com/eduardz1)
+- [@drewlongdin-dev](https://github.com/drewlongdin-dev)
+- [@imciner2](https://github.com/imciner2)
+
 ## 0.9.2
 
 Released on 2026-07-22. Contains only minor updates to the JOSS submission and a correction to the authors list.
