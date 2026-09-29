@@ -4,6 +4,7 @@
 ![Tests](https://github.com/PlasmaFAIR/fortitude/actions/workflows/test.yml/badge.svg)
 ![Clippy](https://github.com/PlasmaFAIR/fortitude/actions/workflows/clippy.yml/badge.svg)
 [![Docs](https://readthedocs.org/projects/fortitude/badge/?version=latest)](https://fortitude.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.10570/status.svg)](https://doi.org/10.21105/joss.10570)
 
 # Fortitude
 
