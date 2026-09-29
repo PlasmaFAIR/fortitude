@@ -3,7 +3,7 @@ use crate::diagnostics::{
 };
 use crate::stylist::ToCapitalisation;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::{ViolationMetadata, kind, kw};
+use fortitude_macros::ViolationMetadata;
 use fortitude_sitter::Node;
 /// Defines rules that govern the use of keywords.
 use fortitude_sitter::ast::symbol_table::SymbolTable;
@@ -385,22 +385,8 @@ impl AstRule for IncorrectKeywordCase {
             // Filter node that wrap other nodes, we want only leafs
             return None;
         }
-        if matches!(
-            node.parent()?.kind_id(),
-            kind!("identifier")
-                | kind!("block_label")
-                | kind!("common_block")
-                | kind!("local_name")
-                | kind!("method_name")
-                | kind!("module_name")
-                | kind!("name")
-                | kind!("procedure_interface")
-                | kind!("type_member")
-                | kind!("type_name")
-                | kw!("label")
-        ) {
+        if node.parent()?.is_identifier_alias() {
             // This is actually a name of some kind.
-            // In the grammar, these are all aliases of `identifier`
             return None;
         }
 
