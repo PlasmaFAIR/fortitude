@@ -1,8 +1,6 @@
 # unsorted-uses (S271)
 Fix is always available.
 
-This rule is turned on by default.
-
 ## What it does
 Checks that `use` statements are sorted alphabetically within contiguous blocks.
 Intrinsic modules (`use, intrinsic ::`) are always placed first.

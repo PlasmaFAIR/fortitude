@@ -32,6 +32,7 @@ Released on 2026-09-29.
   - `OB092`/`shared-do-termination`
   - `OB093`/`bad-do-termination`
   - `OB094`/`goto-end-do`
+- The rule `S271`/`unsorted-uses` is no longer in the default group.
 
 ### Bug Fixes
 
