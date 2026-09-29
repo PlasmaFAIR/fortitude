@@ -10,7 +10,7 @@ use std::str::Utf8Error;
 use tree_sitter::{Point, Range};
 
 use anyhow::Result;
-use fortitude_macros::{field, kind};
+use fortitude_macros::{field, kind, kw};
 use ruff_diagnostics::Edit;
 use ruff_source_file::LineRanges;
 use ruff_text_size::{TextRange, TextSize};
@@ -786,6 +786,24 @@ impl<'tree> Node<'tree> {
             sibling = next_sibling.next_sibling();
         }
         None
+    }
+
+    /// Match if the node is an 'identifier' or any alias of an identifier.
+    pub fn is_identifier_alias(&self) -> bool {
+        matches!(
+            self.kind_id(),
+            kind!("identifier")
+                | kind!("block_label")
+                | kind!("common_block")
+                | kind!("local_name")
+                | kind!("method_name")
+                | kind!("module_name")
+                | kind!("name")
+                | kind!("procedure_interface")
+                | kind!("type_member")
+                | kind!("type_name")
+                | kw!("label")
+        )
     }
 }
 
