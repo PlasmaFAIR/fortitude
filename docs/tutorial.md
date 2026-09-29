@@ -96,6 +96,10 @@ Fortran 90 introduced the traditional symbols for relational operators: `>`,
 so on.
 ```
 
+If your [terminal supports
+hyperlinks](https://github.com/Alhadis/OSC8-Adoption), you can also click on the
+rule name in the output to open the relevant documentation page in your browser.
+
 ## Configuration
 
 We can control Fortitude's behaviour with a configuration file, one of

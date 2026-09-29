@@ -80,7 +80,12 @@ impl Printer {
         }
     }
 
-    fn write_summary_text(&self, writer: &mut dyn Write, results: &CheckResults) -> Result<()> {
+    fn write_summary_text(
+        &self,
+        writer: &mut dyn Write,
+        results: &CheckResults,
+        preview: PreviewMode,
+    ) -> Result<()> {
         if self.log_level < LogLevel::Default {
             return Ok(());
         }
@@ -118,24 +123,28 @@ impl Printer {
             let fixed_txt = fixed.to_string().bold();
             let remaining_txt = remaining.to_string().bold();
 
-            let explain = format!(
-                "fortitude explain {},{},...",
-                "X001".bold().color(self.severity_default),
-                "Y002".bold().color(self.severity_default)
-            );
-            let info =
-                format!("For more information about specific rules, run:\n\n    {explain}\n");
+            let info = if preview.is_enabled() {
+                "".to_string()
+            } else {
+                let explain = format!(
+                    "fortitude explain {},{},...",
+                    "X001".bold().bright_red(),
+                    "Y002".bold().bright_red()
+                );
+
+                format!("\n\nFor more information about specific rules, run:\n\n    {explain}\n")
+            };
 
             if fixed > 0 {
                 writeln!(
                     writer,
-                    "Number of diagnostics: {total_txt} ({fixed_txt} fixed, {remaining_txt} remaining)\n\n{info}"
+                    "Number of diagnostics: {total_txt} ({fixed_txt} fixed, {remaining_txt} remaining){info}"
                 )?;
             } else if remaining > 0 {
-                writeln!(writer, "Number of diagnostics: {remaining_txt}\n\n{info}")?;
+                writeln!(writer, "Number of diagnostics: {remaining_txt}{info}")?;
             } else {
                 let success = "All checks passed!".bright_green();
-                writeln!(writer, "{success}\n")?;
+                writeln!(writer, "{success}")?;
             }
 
             if let Some(fixables) = fixables {
@@ -257,7 +266,7 @@ impl Printer {
                     )?;
                     writeln!(writer)?;
                 }
-                self.write_summary_text(writer, results)?;
+                self.write_summary_text(writer, results, preview)?;
             }
             return Ok(());
         }
@@ -285,7 +294,7 @@ impl Printer {
                 print_fix_summary(writer, &diagnostics.fixed, self.severity_default.into())?;
                 writeln!(writer)?;
             }
-            self.write_summary_text(writer, results)?;
+            self.write_summary_text(writer, results, preview)?;
         }
 
         writer.flush()?;
@@ -296,6 +305,7 @@ impl Printer {
         &self,
         diagnostics: &CheckResults,
         writer: &mut dyn Write,
+        preview: PreviewMode,
     ) -> Result<()> {
         let required_applicability = self.unsafe_fixes.required_applicability();
         let statistics: Vec<ExpandedStatistics> = diagnostics
@@ -389,7 +399,7 @@ impl Printer {
                     )?;
                 }
 
-                self.write_summary_text(writer, diagnostics)?;
+                self.write_summary_text(writer, diagnostics, preview)?;
                 return Ok(());
             }
             OutputFormat::Json => {

@@ -10,6 +10,7 @@ info:
     - "--select"
     - implicit-typing
     - test.f90
+snapshot_kind: text
 ---
 success: false
 exit_code: 1
@@ -25,11 +26,6 @@ help: Insert `implicit none`
 
 fortitude: 1 files scanned.
 Number of diagnostics: 1
-
-For more information about specific rules, run:
-
-    fortitude explain X001,Y002,...
-
 No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
 
 ----- stderr -----
