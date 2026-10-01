@@ -171,7 +171,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Portability, "041") => (RuleGroup::Preview, Ast, Optional, portability::return_in_program::ReturnInProgram),
         (Portability, "051") => (RuleGroup::Preview, Ast, Optional, portability::unary_following_arithmetic::UnaryFollowingArithmetic),
         (Portability, "061") => (RuleGroup::Preview, Ast, Optional, portability::non_portable_system_call::NonPortableSystemCall),
-        (Portability, "071") => (RuleGroup::Preview, Ast, Optional, portability::gfortran_extension_intrinsic::GFortranRandomExtension),
+        (Portability, "062") => (RuleGroup::Preview, Ast, Optional, portability::gfortran_extension_intrinsic::GfortranRandomExtension),
 
         // style
         (Style, "001") => (RuleGroup::Stable, None, Default, style::line_length::LineTooLong),

@@ -20,16 +20,16 @@ fn map_gfortran_extensions_to_instrinsics(name: &str) -> Option<&'static str> {
 ///
 /// ## Why is this bad?
 #[derive(ViolationMetadata)]
-pub(crate) struct GFortranRandomExtension {
+pub(crate) struct GfortranRandomExtension {
     func: String,
     new_func: String,
 }
 
-impl Violation for GFortranRandomExtension {
+impl Violation for GfortranRandomExtension {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { func, .. } = self;
-        format!("gfortran extension function'{func}'")
+        format!("gfortran extension function '{func}'")
     }
 
     fn fix_title(&self) -> Option<String> {
@@ -38,7 +38,7 @@ impl Violation for GFortranRandomExtension {
     }
 }
 
-impl AstRule for GFortranRandomExtension {
+impl AstRule for GfortranRandomExtension {
     fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.text();
