@@ -1,7 +1,7 @@
 use crate::diagnostics::{Diagnostic, Fix, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use crate::rules::utilities;
-use fortitude_macros::{ViolationMetadata, field};
+use fortitude_macros::{ViolationMetadata};
 use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 
@@ -23,7 +23,7 @@ fn map_gfortran_extensions_to_instrinsics(name: &str) -> Option<&'static str> {
 pub(crate) struct GFortranRandomExtension {
     func: String,
     new_func: String,
-};
+}
 
 impl Violation for GFortranRandomExtension {
     #[derive_message_formats]

@@ -2,6 +2,7 @@ pub mod invalid_tab;
 pub(crate) mod literal_kinds;
 pub(crate) mod non_portable_io_unit;
 pub mod non_portable_system_call;
+pub mod gfortran_extension_intrinsics;
 pub mod return_in_program;
 pub(crate) mod star_kinds;
 pub mod unary_following_arithmetic;
