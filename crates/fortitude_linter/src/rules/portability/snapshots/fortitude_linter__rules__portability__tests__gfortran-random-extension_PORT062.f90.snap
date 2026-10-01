@@ -1,0 +1,155 @@
+---
+source: crates/fortitude_linter/src/rules/portability/mod.rs
+expression: diagnostics
+---
+PORT062 [*] gfortran extension function 'rand'
+ --> ./resources/test/fixtures/portability/PORT062.f90:5:12
+  |
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+  |            ^^^^
+6 |   print *, rand(seed), rand(), rand(), rand()
+7 | end program test_rand
+  |
+help: Use standard intrinsic 'random_number'
+2 |   implicit none
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+  -   print *, rand(), rand(), rand(), rand()
+5 +   print *, random_number(), rand(), rand(), rand()
+6 |   print *, rand(seed), rand(), rand(), rand()
+7 | end program test_rand
+note: This is an unsafe fix and may change runtime behavior
+
+PORT062 [*] gfortran extension function 'rand'
+ --> ./resources/test/fixtures/portability/PORT062.f90:5:20
+  |
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+  |                    ^^^^
+6 |   print *, rand(seed), rand(), rand(), rand()
+7 | end program test_rand
+  |
+help: Use standard intrinsic 'random_number'
+2 |   implicit none
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+  -   print *, rand(), rand(), rand(), rand()
+5 +   print *, rand(), random_number(), rand(), rand()
+6 |   print *, rand(seed), rand(), rand(), rand()
+7 | end program test_rand
+note: This is an unsafe fix and may change runtime behavior
+
+PORT062 [*] gfortran extension function 'rand'
+ --> ./resources/test/fixtures/portability/PORT062.f90:5:28
+  |
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+  |                            ^^^^
+6 |   print *, rand(seed), rand(), rand(), rand()
+7 | end program test_rand
+  |
+help: Use standard intrinsic 'random_number'
+2 |   implicit none
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+  -   print *, rand(), rand(), rand(), rand()
+5 +   print *, rand(), rand(), random_number(), rand()
+6 |   print *, rand(seed), rand(), rand(), rand()
+7 | end program test_rand
+note: This is an unsafe fix and may change runtime behavior
+
+PORT062 [*] gfortran extension function 'rand'
+ --> ./resources/test/fixtures/portability/PORT062.f90:5:36
+  |
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+  |                                    ^^^^
+6 |   print *, rand(seed), rand(), rand(), rand()
+7 | end program test_rand
+  |
+help: Use standard intrinsic 'random_number'
+2 |   implicit none
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+  -   print *, rand(), rand(), rand(), rand()
+5 +   print *, rand(), rand(), rand(), random_number()
+6 |   print *, rand(seed), rand(), rand(), rand()
+7 | end program test_rand
+note: This is an unsafe fix and may change runtime behavior
+
+PORT062 [*] gfortran extension function 'rand'
+ --> ./resources/test/fixtures/portability/PORT062.f90:6:12
+  |
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+6 |   print *, rand(seed), rand(), rand(), rand()
+  |            ^^^^
+7 | end program test_rand
+  |
+help: Use standard intrinsic 'random_number'
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+  -   print *, rand(seed), rand(), rand(), rand()
+6 +   print *, random_number(seed), rand(), rand(), rand()
+7 | end program test_rand
+note: This is an unsafe fix and may change runtime behavior
+
+PORT062 [*] gfortran extension function 'rand'
+ --> ./resources/test/fixtures/portability/PORT062.f90:6:24
+  |
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+6 |   print *, rand(seed), rand(), rand(), rand()
+  |                        ^^^^
+7 | end program test_rand
+  |
+help: Use standard intrinsic 'random_number'
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+  -   print *, rand(seed), rand(), rand(), rand()
+6 +   print *, rand(seed), random_number(), rand(), rand()
+7 | end program test_rand
+note: This is an unsafe fix and may change runtime behavior
+
+PORT062 [*] gfortran extension function 'rand'
+ --> ./resources/test/fixtures/portability/PORT062.f90:6:32
+  |
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+6 |   print *, rand(seed), rand(), rand(), rand()
+  |                                ^^^^
+7 | end program test_rand
+  |
+help: Use standard intrinsic 'random_number'
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+  -   print *, rand(seed), rand(), rand(), rand()
+6 +   print *, rand(seed), rand(), random_number(), rand()
+7 | end program test_rand
+note: This is an unsafe fix and may change runtime behavior
+
+PORT062 [*] gfortran extension function 'rand'
+ --> ./resources/test/fixtures/portability/PORT062.f90:6:40
+  |
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+6 |   print *, rand(seed), rand(), rand(), rand()
+  |                                        ^^^^
+7 | end program test_rand
+  |
+help: Use standard intrinsic 'random_number'
+3 |   integer,parameter :: seed = 86456
+4 |   call srand(seed)
+5 |   print *, rand(), rand(), rand(), rand()
+  -   print *, rand(seed), rand(), rand(), rand()
+6 +   print *, rand(seed), rand(), rand(), random_number()
+7 | end program test_rand
+note: This is an unsafe fix and may change runtime behavior
