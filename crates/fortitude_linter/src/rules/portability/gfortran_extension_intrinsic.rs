@@ -60,14 +60,14 @@ impl Violation for GfortranRandomExtension {
 
     fn fix_title(&self) -> Option<String> {
         let Self { kind, .. } = self;
-        match kind {
-            GfortranExtensionKind::Srand => Some(format!(
-                "Use Fortran standard intrinsic `random_seed` instead. See docs for examples."
-            )),
-            GfortranExtensionKind::Rand => Some(format!(
-                "Use Fortran standard intrinsic `random_number` instead. See docs for examples."
-            )),
-        }
+        let replacement = match kind {
+            GfortranExtensionKind::Srand => "random_seed",
+            GfortranExtensionKind::Rand => "random_number",
+        };
+
+        Some(format!(
+            "Use Fortran standard intrinsic `{replacement}` instead. See docs for examples."
+        ))
     }
 }
 
