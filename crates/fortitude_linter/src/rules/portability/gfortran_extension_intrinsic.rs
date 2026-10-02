@@ -37,16 +37,42 @@ use ruff_macros::derive_message_formats;
 /// [GFortran docs for `rand`](https://gcc.gnu.org/onlinedocs/gfortran/RAND.html)
 /// [GFortran docs for `random_seed`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html)
 /// [GFortran docs for `random_number`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html)
+enum GfortranExtensionKind {
+    Srand,
+    Rand,
+}
+
+fn match_extension_kind(name: &str) -> Option<GfortranExtensionKind> {
+    match name {
+        "SRAND" => Some(GfortranExtensionKind::Srand),
+        "RAND" => Some(GfortranExtensionKind::Rand),
+        _ => None,
+    }
+}
+
 #[derive(ViolationMetadata)]
 pub(crate) struct GfortranRandomExtension {
     func: String,
+    kind: GfortranExtensionKind,
 }
 
 impl Violation for GfortranRandomExtension {
     #[derive_message_formats]
     fn message(&self) -> String {
         let Self { func, .. } = self;
-        format!("gfortran extension function '{func}'")
+        format!("possible gfortran extension function '{func}'")
+    }
+
+    fn fix_title(&self) -> Option<String> {
+        let Self { kind, .. } = self;
+        match kind {
+            GfortranExtensionKind::Srand => Some(format!(
+                "Use Fortran standard intrinsics `random_seed` and `random_number` instead. See docs for examples."
+            )),
+            GfortranExtensionKind::Rand => Some(format!(
+                "Use Fortran standard intrinsics `random_seed` and `random_number` instead. See docs for examples."
+            )),
+        }
     }
 }
 
@@ -54,8 +80,9 @@ impl AstRule for GfortranRandomExtension {
     fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.text().to_string();
+        let kind = match_extension_kind(name_node.text().to_uppercase().as_str())?;
 
-        some_vec![context.create_diagnostic(Self { func }, name_node)]
+        some_vec![context.create_diagnostic(Self { func, kind }, name_node)]
     }
 
     fn entrypoints() -> Vec<u16> {
