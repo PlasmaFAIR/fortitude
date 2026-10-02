@@ -44,6 +44,7 @@ use ruff_macros::derive_message_formats;
 /// - [GFortran docs for `rand`](https://gcc.gnu.org/onlinedocs/gfortran/RAND.html)
 /// - [GFortran docs for `random_seed`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html)
 /// - [GFortran docs for `random_number`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html)
+
 #[derive(ViolationMetadata)]
 pub(crate) struct GfortranRandomExtension {
     func: String,
@@ -76,7 +77,7 @@ enum GfortranExtensionKind {
 }
 
 fn match_extension_kind(name: &str) -> Option<GfortranExtensionKind> {
-    match name {
+    match name.to_uppercase().as_str() {
         "SRAND" => Some(GfortranExtensionKind::Srand),
         "RAND" => Some(GfortranExtensionKind::Rand),
         _ => None,
@@ -100,7 +101,7 @@ impl AstRule for GfortranRandomExtension {
 
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.text().to_string();
-        let kind = match_extension_kind(name_node.text().to_uppercase().as_str())?;
+        let kind = match_extension_kind(func.as_str())?;
 
         some_vec![context.create_diagnostic(Self { func, kind }, name_node)]
     }
