@@ -18,31 +18,32 @@ use ruff_macros::derive_message_formats;
 /// algorithms.
 ///
 /// ## Example
-/// ``f90
+/// ```f90
 /// call srand(seed)
 /// x = rand(seed)
-/// ``
+/// ```
 ///
 /// ## Use instead
-/// 
+/// ```f90
+/// integer, allocatable :: seed(:)
+/// integer :: n
+///
+/// call random_seed(size = n)
+/// allocate(seed(n))
+/// seed(1) = 12345
+/// call random_seed(put=seed)
+/// call random_number(x)
+/// ```
+///
+/// Prefer using the Fortran standard intrinsics `random_seed` and `random_number` instead.
+/// These are not interchangeable replacements, as for example, `random_number(x)` is a subroutine
+/// that modifies `x`, whereas `rand()` is a function that returns a single `real`.
+///
 /// ## References
 /// - [GFortran docs for `srand`](https://gcc.gnu.org/onlinedocs/gfortran/SRAND.html)
 /// - [GFortran docs for `rand`](https://gcc.gnu.org/onlinedocs/gfortran/RAND.html)
 /// - [GFortran docs for `random_seed`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html)
 /// - [GFortran docs for `random_number`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html)
-enum GfortranExtensionKind {
-    Srand,
-    Rand,
-}
-
-fn match_extension_kind(name: &str) -> Option<GfortranExtensionKind> {
-    match name {
-        "SRAND" => Some(GfortranExtensionKind::Srand),
-        "RAND" => Some(GfortranExtensionKind::Rand),
-        _ => None,
-    }
-}
-
 #[derive(ViolationMetadata)]
 pub(crate) struct GfortranRandomExtension {
     func: String,
@@ -66,6 +67,19 @@ impl Violation for GfortranRandomExtension {
                 "Use Fortran standard intrinsic `random_number` instead. See docs for examples."
             )),
         }
+    }
+}
+
+enum GfortranExtensionKind {
+    Srand,
+    Rand,
+}
+
+fn match_extension_kind(name: &str) -> Option<GfortranExtensionKind> {
+    match name {
+        "SRAND" => Some(GfortranExtensionKind::Srand),
+        "RAND" => Some(GfortranExtensionKind::Rand),
+        _ => None,
     }
 }
 
