@@ -1,5 +1,5 @@
-use crate::diagnostics::{Diagnostic, Fix, Violation};
-use crate::rules::utilities;
+use crate::diagnostics::{Diagnostic, Violation};
+use crate::rules::utilities::is_assignment_lhs;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use fortitude_sitter::Node;
@@ -76,8 +76,21 @@ impl Violation for GfortranRandomExtension {
     }
 }
 
+fn is_array_access(node: &Node) -> bool {
+    let child_node = node.child_with_name("argument_list");
+    match child_node {
+        Some(node) => node.child_with_name("extent_specifier").is_some(),
+        None => false,
+    }
+}
+
 impl AstRule for GfortranRandomExtension {
     fn check<'a>(context: &'a CheckContext, node: &'a Node) -> Option<Vec<Diagnostic>> {
+        // Check that this is not actually an array access/assignment
+        if is_assignment_lhs(node) || is_array_access(node) {
+            return None;
+        }
+
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.text().to_string();
         let kind = match_extension_kind(name_node.text().to_uppercase().as_str())?;

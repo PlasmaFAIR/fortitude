@@ -1,4 +1,5 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
+use crate::rules::utilities::is_assignment_lhs;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use fortitude_sitter::Node;
@@ -63,20 +64,6 @@ fn has_only_whole_array_extents(node: &Node) -> bool {
         |argument: &Node| argument.kind() == "extent_specifier" && argument.text().trim() == ":";
 
     is_extent_specifier(&first) && arguments.all(|argument| is_extent_specifier(&argument))
-}
-
-fn is_assignment_lhs(node: &Node) -> bool {
-    let Some(parent) = node.parent() else {
-        return false;
-    };
-
-    if parent.kind() != "assignment_statement" {
-        return false;
-    }
-
-    parent.child_by_field_name("left").is_some_and(|lhs| {
-        lhs.start_byte() == node.start_byte() && lhs.end_byte() == node.end_byte()
-    })
 }
 
 impl AstRule for WholeArrayIndexing {
