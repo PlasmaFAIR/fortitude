@@ -6,8 +6,13 @@ module test_user_defined
 
   subroutine srand(seed)
     integer, intent(in) :: seed
+    integer, allocatable :: seeds(:)
+    integer :: n
 
-    call random_seed(seed)
+    call random_seed(size = n)
+    allocate(seeds(n))
+    seeds(1) = seed
+    call random_seed(put = seeds)
   end
 
   function rand() result(x)
