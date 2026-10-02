@@ -12,7 +12,7 @@ PORT062 possible gfortran extension function 'srand'
 30 |   print *, rand(), rand()
 31 |   print *, rand(seed)
    |
-help: Use Fortran standard intrinsics `random_seed` and `random_number` instead. See docs for examples.
+help: Use Fortran standard intrinsic `random_seed` instead. See docs for examples.
 
 PORT062 possible gfortran extension function 'rand'
   --> ./resources/test/fixtures/portability/PORT062.f90:30:12
@@ -24,7 +24,7 @@ PORT062 possible gfortran extension function 'rand'
 31 |   print *, rand(seed)
 32 | end program test_rand
    |
-help: Use Fortran standard intrinsics `random_seed` and `random_number` instead. See docs for examples.
+help: Use Fortran standard intrinsic `random_number` instead. See docs for examples.
 
 PORT062 possible gfortran extension function 'rand'
   --> ./resources/test/fixtures/portability/PORT062.f90:30:20
@@ -36,7 +36,7 @@ PORT062 possible gfortran extension function 'rand'
 31 |   print *, rand(seed)
 32 | end program test_rand
    |
-help: Use Fortran standard intrinsics `random_seed` and `random_number` instead. See docs for examples.
+help: Use Fortran standard intrinsic `random_number` instead. See docs for examples.
 
 PORT062 possible gfortran extension function 'rand'
   --> ./resources/test/fixtures/portability/PORT062.f90:31:12
@@ -47,4 +47,4 @@ PORT062 possible gfortran extension function 'rand'
    |            ^^^^
 32 | end program test_rand
    |
-help: Use Fortran standard intrinsics `random_seed` and `random_number` instead. See docs for examples.
+help: Use Fortran standard intrinsic `random_number` instead. See docs for examples.
