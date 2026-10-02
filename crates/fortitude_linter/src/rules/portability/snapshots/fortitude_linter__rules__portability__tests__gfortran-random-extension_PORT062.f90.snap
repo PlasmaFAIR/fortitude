@@ -3,48 +3,48 @@ source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
 ---
 PORT062 possible gfortran extension function 'srand'
-  --> ./resources/test/fixtures/portability/PORT062.f90:29:8
+  --> ./resources/test/fixtures/portability/PORT062.f90:66:8
    |
-27 |   implicit none
-28 |   integer,parameter :: seed = 86456
-29 |   call srand(seed)
+64 |   implicit none
+65 |   integer,parameter :: seed = 86456
+66 |   call srand(seed)
    |        ^^^^^
-30 |   print *, rand(), rand()
-31 |   print *, rand(seed)
+67 |   print *, rand(), rand()
+68 |   print *, rand(seed)
    |
 help: Use Fortran standard intrinsic `random_seed` instead. See docs for examples.
 
 PORT062 possible gfortran extension function 'rand'
-  --> ./resources/test/fixtures/portability/PORT062.f90:30:12
+  --> ./resources/test/fixtures/portability/PORT062.f90:67:12
    |
-28 |   integer,parameter :: seed = 86456
-29 |   call srand(seed)
-30 |   print *, rand(), rand()
+65 |   integer,parameter :: seed = 86456
+66 |   call srand(seed)
+67 |   print *, rand(), rand()
    |            ^^^^
-31 |   print *, rand(seed)
-32 | end program test_rand
+68 |   print *, rand(seed)
+69 | end program test_rand
    |
 help: Use Fortran standard intrinsic `random_number` instead. See docs for examples.
 
 PORT062 possible gfortran extension function 'rand'
-  --> ./resources/test/fixtures/portability/PORT062.f90:30:20
+  --> ./resources/test/fixtures/portability/PORT062.f90:67:20
    |
-28 |   integer,parameter :: seed = 86456
-29 |   call srand(seed)
-30 |   print *, rand(), rand()
+65 |   integer,parameter :: seed = 86456
+66 |   call srand(seed)
+67 |   print *, rand(), rand()
    |                    ^^^^
-31 |   print *, rand(seed)
-32 | end program test_rand
+68 |   print *, rand(seed)
+69 | end program test_rand
    |
 help: Use Fortran standard intrinsic `random_number` instead. See docs for examples.
 
 PORT062 possible gfortran extension function 'rand'
-  --> ./resources/test/fixtures/portability/PORT062.f90:31:12
+  --> ./resources/test/fixtures/portability/PORT062.f90:68:12
    |
-29 |   call srand(seed)
-30 |   print *, rand(), rand()
-31 |   print *, rand(seed)
+66 |   call srand(seed)
+67 |   print *, rand(), rand()
+68 |   print *, rand(seed)
    |            ^^^^
-32 | end program test_rand
+69 | end program test_rand
    |
 help: Use Fortran standard intrinsic `random_number` instead. See docs for examples.

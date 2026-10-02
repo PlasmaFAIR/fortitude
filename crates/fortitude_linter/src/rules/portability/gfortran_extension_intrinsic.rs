@@ -103,6 +103,11 @@ impl AstRule for GfortranRandomExtension {
         let func = name_node.text().to_string();
         let kind = match_extension_kind(func.as_str())?;
 
+        // Exit early if there is a user-defined symbol with the same name as this procedure
+        if context.symbol_table().get(func.as_str()).is_some() {
+            return None;
+        }
+
         some_vec![context.create_diagnostic(Self { func, kind }, name_node)]
     }
 

@@ -1,3 +1,40 @@
+module test_user_defined
+  use, intrinsic :: iso_fortran_env, only: dp => real64
+  implicit none
+
+  contains
+
+  subroutine srand(seed)
+    integer, intent(in) :: seed
+
+    call random_seed(seed)
+  end
+
+  function rand() result(x)
+    real(dp) :: x
+    call random_number(x)
+  end
+
+  subroutine use_user_defined
+    call srand(1234)
+    print *, rand()
+  end
+
+end module test_user_defined
+
+module test_use_import
+  use test_user_defined, only: srand, rand
+  implicit none
+
+  contains
+
+  subroutine use_imported
+    call srand(1234)
+    print *, rand()
+  end
+
+end module test_use_import
+
 module test_false_positives
   use, intrinsic :: iso_fortran_env, only: dp => real64
   implicit none
