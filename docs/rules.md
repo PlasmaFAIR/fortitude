@@ -140,6 +140,7 @@
 | PORT041 | [return-in-program](rules/return-in-program.md) | 'return' statement in program body | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | PORT051 | [unary-following-arithmetic](rules/unary-following-arithmetic.md) | Unary operator following an arithmetic expression | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix available'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 | PORT061 | [non-portable-system-call](rules/non-portable-system-call.md) | Use of non-portable `system` call | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
+| PORT062 | [gfortran-random-extension](rules/gfortran-random-extension.md) | possible gfortran extension function '{func}' | <span title='Rule is in preview'>🧪</span> <span title='Automatic fix not available' style='opacity: 0.1' aria-hidden='true'>🛠️</span> <span title='Rule not on by default'>⏸️</span> |
 
 ### Fortitude (FORT)
 

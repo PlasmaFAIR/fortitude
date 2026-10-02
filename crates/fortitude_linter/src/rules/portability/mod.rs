@@ -1,3 +1,4 @@
+pub mod gfortran_extension_intrinsic;
 pub mod invalid_tab;
 pub(crate) mod literal_kinds;
 pub(crate) mod non_portable_io_unit;
@@ -29,6 +30,7 @@ mod tests {
     #[test_case(Rule::ReturnInProgram, Path::new("PORT041.f90"))]
     #[test_case(Rule::UnaryFollowingArithmetic, Path::new("PORT051.f90"))]
     #[test_case(Rule::NonPortableSystemCall, Path::new("PORT061.f90"))]
+    #[test_case(Rule::GfortranRandomExtension, Path::new("PORT062.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
