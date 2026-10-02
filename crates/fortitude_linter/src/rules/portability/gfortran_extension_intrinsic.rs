@@ -1,6 +1,6 @@
 use crate::diagnostics::{Diagnostic, Fix, Violation};
 use crate::rules::utilities;
-use crate::{kind_ids, AstRule, CheckContext};
+use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::ViolationMetadata;
 use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
@@ -55,11 +55,7 @@ impl AstRule for GfortranRandomExtension {
         let name_node = node.child_with_name("identifier")?;
         let func = name_node.text().to_string();
 
-        some_vec![context
-            .create_diagnostic(
-                Self {func},
-                name_node
-            )]
+        some_vec![context.create_diagnostic(Self { func }, name_node)]
     }
 
     fn entrypoints() -> Vec<u16> {
