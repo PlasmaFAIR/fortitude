@@ -6,8 +6,8 @@ use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 
 /// ## What does it do?
-/// Checks for gfortran random number extensions, srand and rand, and suggests
-/// to replace them with fortran standard intrinsics random_seed and random_number
+/// Checks for gfortran random number extensions, `srand` and `rand`, and suggests
+/// to replace them with the standard intrinsics `random_seed` and `random_number`
 /// respectively.
 ///
 /// ## Why is this bad?
@@ -20,23 +20,16 @@ use ruff_macros::derive_message_formats;
 /// ## Example
 /// ``f90
 /// call srand(seed)
-/// ``
-///
-/// ``f90
 /// x = rand(seed)
 /// ``
 ///
 /// ## Use instead
-/// Prefer using Fortran standard intrinsics and libraries. In the case of random
-/// number generation, use the `random_seed` and `random_number` intrinsics instead.
-/// These are not interchangable replacements, as .e.g `random_number(x)` is a subroutine
-/// that modifies `x` whereas `rand()` is a function that returns a single real.
-///
+/// 
 /// ## References
-/// [GFortran docs for `srand`](https://gcc.gnu.org/onlinedocs/gfortran/SRAND.html)
-/// [GFortran docs for `rand`](https://gcc.gnu.org/onlinedocs/gfortran/RAND.html)
-/// [GFortran docs for `random_seed`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html)
-/// [GFortran docs for `random_number`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html)
+/// - [GFortran docs for `srand`](https://gcc.gnu.org/onlinedocs/gfortran/SRAND.html)
+/// - [GFortran docs for `rand`](https://gcc.gnu.org/onlinedocs/gfortran/RAND.html)
+/// - [GFortran docs for `random_seed`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html)
+/// - [GFortran docs for `random_number`](https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html)
 enum GfortranExtensionKind {
     Srand,
     Rand,
@@ -67,10 +60,10 @@ impl Violation for GfortranRandomExtension {
         let Self { kind, .. } = self;
         match kind {
             GfortranExtensionKind::Srand => Some(format!(
-                "Use Fortran standard intrinsics `random_seed` and `random_number` instead. See docs for examples."
+                "Use Fortran standard intrinsic `random_seed` instead. See docs for examples."
             )),
             GfortranExtensionKind::Rand => Some(format!(
-                "Use Fortran standard intrinsics `random_seed` and `random_number` instead. See docs for examples."
+                "Use Fortran standard intrinsic `random_number` instead. See docs for examples."
             )),
         }
     }
