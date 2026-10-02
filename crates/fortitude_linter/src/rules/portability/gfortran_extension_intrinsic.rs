@@ -1,7 +1,7 @@
 use crate::diagnostics::{Diagnostic, Fix, Violation};
-use crate::{AstRule, CheckContext, kind_ids};
 use crate::rules::utilities;
-use fortitude_macros::{ViolationMetadata};
+use crate::{kind_ids, AstRule, CheckContext};
+use fortitude_macros::ViolationMetadata;
 use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 
@@ -46,21 +46,16 @@ impl AstRule for GfortranRandomExtension {
         let new_func = map_gfortran_extensions_to_instrinsics(func.to_uppercase().as_str())?;
         let matched_case = utilities::match_original_case(func, new_func)?;
 
-        let fix = Fix::unsafe_edit(name_node.edit_replacement(matched_case.clone()));
-
-        some_vec![
-            context
-                .create_diagnostic(
-                    Self {
-                        func: func.to_string(),
-                        new_func: matched_case
-                    },
-                    name_node
-                )
-                .with_fix(fix)
-        ]
+        some_vec![context
+            .create_diagnostic(
+                Self {
+                    func: func.to_string(),
+                    new_func: matched_case
+                },
+                name_node
+            )]
     }
-    
+
     fn entrypoints() -> Vec<u16> {
         kind_ids!["call_expression", "subroutine_call"]
     }
