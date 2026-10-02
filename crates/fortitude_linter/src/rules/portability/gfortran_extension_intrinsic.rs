@@ -62,6 +62,6 @@ impl AstRule for GfortranRandomExtension {
     }
     
     fn entrypoints() -> Vec<u16> {
-        kind_ids!["call_expression"]
+        kind_ids!["call_expression", "subroutine_call"]
     }
 }
