@@ -79,7 +79,7 @@ rustc-hash = "2.0.0"
 quick-junit = { version = "0.5.0" }
 rayon = "1.10.0"
 serde = { version = "1.0.210", features = ["derive"] }
-serde_json = { version = "1.0.113" }
+serde_json = { version = "1.0.113", features = ["preserve_order"] }
 shellexpand = { version = "3.0.0" }
 similar = { version = "3.1.0", features = ["inline"] }
 similar-asserts = "1.6.0"
