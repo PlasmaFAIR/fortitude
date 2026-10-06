@@ -1,0 +1,102 @@
+---
+source: crates/fortitude_linter/src/rules/portability/mod.rs
+expression: diagnostics
+---
+PORT071 [*] Use of non-portable `exit` subroutine
+  --> ./resources/test/fixtures/portability/PORT071.f90:19:1
+   |
+17 | integer :: ierr
+18 | ierr = 1
+19 | call exit  ! non-standard
+   | ^^^^^^^^^
+20 | call exit()  ! non-standard
+21 | call exit(1)  ! non-standard
+   |
+help: Replace with `stop`
+16 | implicit none
+17 | integer :: ierr
+18 | ierr = 1
+   - call exit  ! non-standard
+19 + stop  ! non-standard
+20 | call exit()  ! non-standard
+21 | call exit(1)  ! non-standard
+22 | call EXIT(ierr)  ! non-standard
+note: This is an unsafe fix and may change runtime behavior
+
+PORT071 [*] Use of non-portable `exit` subroutine
+  --> ./resources/test/fixtures/portability/PORT071.f90:20:1
+   |
+18 | ierr = 1
+19 | call exit  ! non-standard
+20 | call exit()  ! non-standard
+   | ^^^^^^^^^^^
+21 | call exit(1)  ! non-standard
+22 | call EXIT(ierr)  ! non-standard
+   |
+help: Replace with `stop`
+17 | integer :: ierr
+18 | ierr = 1
+19 | call exit  ! non-standard
+   - call exit()  ! non-standard
+20 + stop  ! non-standard
+21 | call exit(1)  ! non-standard
+22 | call EXIT(ierr)  ! non-standard
+23 | call exit(status=2)  ! non-standard
+note: This is an unsafe fix and may change runtime behavior
+
+PORT071 [*] Use of non-portable `exit` subroutine
+  --> ./resources/test/fixtures/portability/PORT071.f90:21:1
+   |
+19 | call exit  ! non-standard
+20 | call exit()  ! non-standard
+21 | call exit(1)  ! non-standard
+   | ^^^^^^^^^^^^
+22 | call EXIT(ierr)  ! non-standard
+23 | call exit(status=2)  ! non-standard
+   |
+help: Replace with `stop`
+18 | ierr = 1
+19 | call exit  ! non-standard
+20 | call exit()  ! non-standard
+   - call exit(1)  ! non-standard
+21 + stop 1  ! non-standard
+22 | call EXIT(ierr)  ! non-standard
+23 | call exit(status=2)  ! non-standard
+24 | call abort  ! non-standard
+note: This is an unsafe fix and may change runtime behavior
+
+PORT071 Use of non-portable `exit` subroutine
+  --> ./resources/test/fixtures/portability/PORT071.f90:22:1
+   |
+20 | call exit()  ! non-standard
+21 | call exit(1)  ! non-standard
+22 | call EXIT(ierr)  ! non-standard
+   | ^^^^^^^^^^^^^^^
+23 | call exit(status=2)  ! non-standard
+24 | call abort  ! non-standard
+   |
+help: Replace with `stop`
+
+PORT071 Use of non-portable `exit` subroutine
+  --> ./resources/test/fixtures/portability/PORT071.f90:23:1
+   |
+21 | call exit(1)  ! non-standard
+22 | call EXIT(ierr)  ! non-standard
+23 | call exit(status=2)  ! non-standard
+   | ^^^^^^^^^^^^^^^^^^^
+24 | call abort  ! non-standard
+25 | do
+   |
+help: Replace with `stop`
+
+PORT071 Use of non-portable `abort` subroutine
+  --> ./resources/test/fixtures/portability/PORT071.f90:24:1
+   |
+22 | call EXIT(ierr)  ! non-standard
+23 | call exit(status=2)  ! non-standard
+24 | call abort  ! non-standard
+   | ^^^^^^^^^^
+25 | do
+26 |   exit  ! loop exit, should not trigger
+   |
+help: Replace with `error stop`

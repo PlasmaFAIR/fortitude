@@ -1,6 +1,7 @@
 pub mod gfortran_extension_intrinsic;
 pub mod invalid_tab;
 pub(crate) mod literal_kinds;
+pub mod non_portable_exit_call;
 pub(crate) mod non_portable_io_unit;
 pub mod non_portable_system_call;
 pub mod return_in_program;
@@ -19,7 +20,7 @@ mod tests {
     use crate::apply_common_filters;
     use crate::registry::Rule;
     use crate::rules::portability;
-    use crate::settings::CheckSettings;
+    use crate::settings::{CheckSettings, FortranStandard};
     use crate::test::test_path;
 
     #[test_case(Rule::NonPortableIoUnit, Path::new("PORT001.f90"))]
@@ -31,12 +32,26 @@ mod tests {
     #[test_case(Rule::UnaryFollowingArithmetic, Path::new("PORT051.f90"))]
     #[test_case(Rule::NonPortableSystemCall, Path::new("PORT061.f90"))]
     #[test_case(Rule::GfortranRandomExtension, Path::new("PORT062.f90"))]
+    #[test_case(Rule::NonPortableExitCall, Path::new("PORT071.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
             Path::new("portability").join(path).as_path(),
             &CheckSettings::for_rule(rule_code),
         )?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, diagnostics);
+        Ok(())
+    }
+
+    #[test]
+    fn port071_fix_depends_on_standard() -> Result<()> {
+        let rule_code = Rule::NonPortableExitCall;
+        let path = Path::new("PORT071.f90");
+        let snapshot = format!("{}_{}_f95", rule_code.as_ref(), path.to_string_lossy());
+        let mut settings = CheckSettings::for_rule(rule_code);
+        settings.target_std = FortranStandard::F95;
+        let diagnostics = test_path(Path::new("portability").join(path).as_path(), &settings)?;
         apply_common_filters!();
         assert_snapshot!(snapshot, diagnostics);
         Ok(())
