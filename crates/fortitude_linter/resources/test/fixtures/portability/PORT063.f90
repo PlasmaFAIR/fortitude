@@ -19,9 +19,15 @@ ierr = 1
 call exit  ! non-standard
 call exit()  ! non-standard
 call exit(1)  ! non-standard
+call exit(123456)  ! non-standard, 6 digits: no fix below F2008
 call EXIT(ierr)  ! non-standard
 call exit(status=2)  ! non-standard
 call abort  ! non-standard
+call abort(1)  ! non-standard
+call abort(123456)  ! non-standard
+call abort("message")  ! non-standard
+call abort(ierr)  ! non-standard
+call abort(1, 2)  ! non-standard, more than one argument
 do
   exit  ! loop exit, should not trigger
 end do

@@ -32,9 +32,16 @@ use ruff_macros::derive_message_formats;
 /// abort` raises a signal and may produce a core dump. The fix also can't tell
 /// whether `exit` or `abort` refers to an external procedure of the same name.
 ///
-/// The fix is only offered when the target standard supports it: `stop` with no
-/// code or an integer literal is always offered, `stop` with any other
-/// expression requires Fortran 2018, and `error stop` requires Fortran 2008.
+/// A fix is only offered when the target standard supports it and the call has
+/// at most one positional argument. A string literal is always accepted as a
+/// stop code. An integer literal is too, except that literals with more than 5
+/// digits need Fortran 2008. Any other expression requires Fortran 2018, and
+/// `error stop` requires Fortran 2008. Some compilers (such as Intel and NAG)
+/// accept an argument to `abort`, whereas gfortran does not.
+///
+/// ## References
+/// - [GFortran docs for `exit`](https://gcc.gnu.org/onlinedocs/gfortran/EXIT.html)
+/// - [GFortran docs for `abort`](https://gcc.gnu.org/onlinedocs/gfortran/ABORT.html)
 #[derive(ViolationMetadata)]
 pub(crate) struct NonPortableExitCall {
     routine: String,
@@ -58,28 +65,44 @@ impl Violation for NonPortableExitCall {
     }
 }
 
-/// Work out the `stop` statement that replaces `call exit(...)`, if there is
-/// a safe way to write one for the targeted standard.
-fn exit_replacement(context: &CheckContext, node: &Node) -> Option<String> {
+/// Work out the `stop` or `error stop` statement that replaces a call to `exit` or
+/// `abort`, if there is a safe way to write one for the targeted standard.
+fn stop_replacement(context: &CheckContext, node: &Node, keyword: &str) -> Option<String> {
     let Some(arguments) = node.child_with_id(kind!("argument_list")) else {
-        return Some("stop".to_string());
+        return Some(keyword.to_string());
     };
-    let text = arguments.text();
-    let inner = text.trim().strip_prefix('(')?.strip_suffix(')')?.trim();
-    if inner.is_empty() {
-        return Some("stop".to_string());
-    }
-    // Keyword or multiple arguments: leave these alone
-    if inner.contains('=') || inner.contains(',') {
+
+    let mut cursor = arguments.walk();
+    let mut args = arguments
+        .named_children(&mut cursor)
+        .filter(|arg| arg.kind_id() != kind!("comment"));
+
+    let Some(arg) = args.next() else {
+        return Some(keyword.to_string());
+    };
+
+    // More than one argument: no fix
+    if args.next().is_some() {
         return None;
     }
-    // A stop code must be a constant expression before Fortran 2018. We can
-    // only be sure about plain integer literals.
-    let is_literal = inner.bytes().all(|b| b.is_ascii_digit());
-    if is_literal || context.settings().target_std >= FortranStandard::F2018 {
-        Some(format!("stop {inner}"))
-    } else {
-        None
+
+    let text = arg.text();
+    match arg.kind_id() {
+        kind!("keyword_argument") => None,
+        kind!("number_literal") => {
+            // Only plain integers: no kind suffixes, no real numbers
+            let is_integer = text.bytes().all(|b| b.is_ascii_digit());
+            // Before Fortran 2008, a stop code has at most 5 digits
+            let fits = text.len() <= 5 || context.settings().target_std >= FortranStandard::F2008;
+            (is_integer && fits).then(|| format!("{keyword} {text}"))
+        }
+        // String literals are valid stop codes in every standard
+        kind!("string_literal") => Some(format!("{keyword} {text}")),
+        // Any other expression is only allowed from Fortran 2018
+        _ if context.settings().target_std >= FortranStandard::F2018 => {
+            Some(format!("{keyword} {text}"))
+        }
+        _ => None,
     }
 }
 
@@ -100,10 +123,13 @@ impl AstRule for NonPortableExitCall {
 
         let replacement = if routine == "abort" {
             // `error stop` was added in Fortran 2008
-            (context.settings().target_std >= FortranStandard::F2008)
-                .then(|| "error stop".to_string())
+            if context.settings().target_std >= FortranStandard::F2008 {
+                stop_replacement(context, node, "error stop")
+            } else {
+                None
+            }
         } else {
-            exit_replacement(context, node)
+            stop_replacement(context, node, "stop")
         };
 
         let mut diagnostic = context.create_diagnostic(Self { routine }, node);

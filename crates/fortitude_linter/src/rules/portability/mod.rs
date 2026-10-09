@@ -32,7 +32,7 @@ mod tests {
     #[test_case(Rule::UnaryFollowingArithmetic, Path::new("PORT051.f90"))]
     #[test_case(Rule::NonPortableSystemCall, Path::new("PORT061.f90"))]
     #[test_case(Rule::GfortranRandomExtension, Path::new("PORT062.f90"))]
-    #[test_case(Rule::NonPortableExitCall, Path::new("PORT071.f90"))]
+    #[test_case(Rule::NonPortableExitCall, Path::new("PORT063.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -45,9 +45,9 @@ mod tests {
     }
 
     #[test]
-    fn port071_fix_depends_on_standard() -> Result<()> {
+    fn port063_fix_depends_on_standard() -> Result<()> {
         let rule_code = Rule::NonPortableExitCall;
-        let path = Path::new("PORT071.f90");
+        let path = Path::new("PORT063.f90");
         let snapshot = format!("{}_{}_f95", rule_code.as_ref(), path.to_string_lossy());
         let mut settings = CheckSettings::for_rule(rule_code);
         settings.target_std = FortranStandard::F95;

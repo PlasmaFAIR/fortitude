@@ -1,4 +1,4 @@
-# non-portable-exit-call (PORT071)
+# non-portable-exit-call (PORT063)
 Fix is sometimes available.
 
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
@@ -30,6 +30,13 @@ The fix is unsafe because the replacements are not exact equivalents:
 abort` raises a signal and may produce a core dump. The fix also can't tell
 whether `exit` or `abort` refers to an external procedure of the same name.
 
-The fix is only offered when the target standard supports it: `stop` with no
-code or an integer literal is always offered, `stop` with any other
-expression requires Fortran 2018, and `error stop` requires Fortran 2008.
+A fix is only offered when the target standard supports it and the call has
+at most one positional argument. A string literal is always accepted as a
+stop code. An integer literal is too, except that literals with more than 5
+digits need Fortran 2008. Any other expression requires Fortran 2018, and
+`error stop` requires Fortran 2008. Some compilers (such as Intel and NAG)
+accept an argument to `abort`, whereas gfortran does not.
+
+## References
+- [GFortran docs for `exit`](https://gcc.gnu.org/onlinedocs/gfortran/EXIT.html)
+- [GFortran docs for `abort`](https://gcc.gnu.org/onlinedocs/gfortran/ABORT.html)
