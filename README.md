@@ -99,7 +99,7 @@ for in directories with `--file-extensions`:
 fortitude check --file-extensions=f90,fpp
 ```
 
-Be default, Fortitude will ignore files and directories in your `.gitignore`.
+By default, Fortitude will ignore files and directories in your `.gitignore`.
 This can be disabled by setting `--no-respect-gitignore`. Additional excludes
 can be set using `--extend-exclude`:
 
@@ -132,6 +132,16 @@ test.f90:2:1: C111 function not contained within (sub)module or program
 test.f90:5:1: S061 end statement should read 'end function double'
 test.f90:7:1: C111 subroutine not contained within (sub)module or program
 test.f90:8:3: C022 real has implicit kind
+```
+
+Use `-o` (or `--output-file`) to write the output to a file instead of
+printing it to the terminal. This can be combined with any `--output-format`:
+
+```bash
+# Write a concise report to `report.txt`
+fortitude check --output-format=concise -o report.txt
+# Write a SARIF report, for example to upload to GitHub code scanning
+fortitude check --output-format=sarif --output-file=fortitude.sarif
 ```
 
 The `explain` command can be used to get extra information about any rules:
@@ -176,6 +186,19 @@ fortitude: 1 files scanned.
 Number of errors: 2 (2 fixed, 0 remaining)
 ```
 
+Add `--show-fixes` to list each fix that was applied, grouped by file and
+rule:
+
+```console
+$ fortitude check --fix --show-fixes
+Fixed 1 error:
+- test.f90:
+    1 × S071 (missing-double-colon)
+
+fortitude: 1 files scanned.
+Number of diagnostics: 1 (1 fixed, 0 remaining)
+```
+
 Run `fortitude explain` to see which rules have fixes available.
 
 ### Preview
@@ -217,6 +240,7 @@ under the command name:
 select = ["C", "E", "S"]
 ignore = ["S001", "S082"]
 line-length = 132
+preview = true
 ```
 
 For `fpm.toml` files, this has to be additionally nested under the
@@ -227,9 +251,18 @@ For `fpm.toml` files, this has to be additionally nested under the
 select = ["C", "E", "S"]
 ignore = ["S001", "S082"]
 line-length = 132
+preview = true
 ```
 
-while `pyproject.toml` uses `tool.fortitude`.
+while `pyproject.toml` uses the `tool.fortitude` table:
+
+```toml
+[tool.fortitude.check]
+select = ["C", "E", "S"]
+ignore = ["S001", "S082"]
+line-length = 132
+preview = true
+```
 
 You can use `--extend-select` from the command line to select additional
 rules on top of those in the configuration file.

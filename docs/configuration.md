@@ -19,6 +19,7 @@ under the `extra.fortitude` table, or `tool.fortitude` for `pyproject.toml`:
     select = ["S", "T"]
     ignore = ["S001", "S051"]
     line-length = 132
+    preview = true
     ```
 
 === "`fortitude.toml` or `.fortitude.toml`"
@@ -28,6 +29,7 @@ under the `extra.fortitude` table, or `tool.fortitude` for `pyproject.toml`:
     select = ["S", "T"]
     ignore = ["S001", "S051"]
     line-length = 132
+    preview = true
     ```
 
 === "`pyproject.toml`"
@@ -37,6 +39,7 @@ under the `extra.fortitude` table, or `tool.fortitude` for `pyproject.toml`:
     select = ["S", "T"]
     ignore = ["S001", "S051"]
     line-length = 132
+    preview = true
     ```
 
 !!! info "Support for `pyproject.toml` introduced in Fortitude 0.8.1"
