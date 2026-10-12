@@ -128,6 +128,22 @@ $ fortitude check --diff
 Would fix 1 error.
 ```
 
+Pass `--show-fixes` alongside `--fix` to get a summary of every fix that was
+applied, grouped by file and rule:
+
+```console
+$ fortitude check --fix --show-fixes
+Fixed 1 error:
+- test.f90:
+    1 × S071 (missing-double-colon)
+
+fortitude: 1 files scanned.
+Number of diagnostics: 1 (1 fixed, 0 remaining)
+```
+
+This can also be enabled permanently with the [`show-fixes`](settings.md#check_show-fixes)
+setting, and disabled again on the command line with `--no-show-fixes`.
+
 !!! note "Indentation"
     For rules such as [`superfluous-else-return`][elsereturn], where the fix may
     move code out of the `else` branch of an `if` statement for example,
@@ -256,6 +272,33 @@ $ fortitude check --git-staged subdir/
 # Run only on those lines in `foo.f90` that have been modified since `main`
 $ fortitude check --git-since main foo.f90
 ```
+
+## Output
+
+By default, `fortitude check` prints its results to the terminal. The format can be
+changed with `--output-format`, and the results can be written to a file instead with
+`-o`/`--output-file`:
+
+```console
+$ fortitude check --output-format=concise -o report.txt
+$ cat report.txt
+test.f90:1:1: C001 subroutine uses implicit typing
+test.f90:1:1: C092 subroutine not contained within (sub)module or program
+test.f90:2:3: S071 [*] variable declaration missing '::'
+test.f90:2:8: C061 subroutine argument 'x' missing 'intent' attribute
+fortitude: 1 files scanned.
+Number of diagnostics: 4
+
+For more information about specific rules, run:
+
+    fortitude explain X001,Y002,...
+
+[*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+```
+
+This works with all output formats, so machine-readable formats can be saved directly,
+for example `fortitude check --output-format=sarif -o fortitude.sarif`. The output file
+can also be set with the `FORTITUDE_OUTPUT_FILE` environment variable.
 
 ## Learning more about a rule
 
