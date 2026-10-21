@@ -14,6 +14,8 @@ end module test_user_defined
 
 program main
 implicit none
+integer :: status
 call system("dir")  ! non-standard
 call execute_command_line("dir")
+status = system("ls") ! non-standard, can't auto-fix
 end program main

@@ -2,8 +2,8 @@
 source: crates/fortitude_linter/src/rules/portability/mod.rs
 expression: diagnostics
 ---
-PORT063 [*] Use of non-portable `exit` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:19:1
+PORT061 [*] Use of non-portable `exit` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:19:1
    |
 17 | integer :: ierr
 18 | ierr = 1
@@ -23,8 +23,8 @@ help: Replace with `stop`
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
 note: This is an unsafe fix and may change runtime behavior
 
-PORT063 [*] Use of non-portable `exit` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:20:1
+PORT061 [*] Use of non-portable `exit` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:20:1
    |
 18 | ierr = 1
 19 | call exit  ! non-standard
@@ -44,8 +44,8 @@ help: Replace with `stop`
 23 | call EXIT(ierr)  ! non-standard
 note: This is an unsafe fix and may change runtime behavior
 
-PORT063 [*] Use of non-portable `exit` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:21:1
+PORT061 [*] Use of non-portable `exit` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:21:1
    |
 19 | call exit  ! non-standard
 20 | call exit()  ! non-standard
@@ -54,7 +54,7 @@ PORT063 [*] Use of non-portable `exit` subroutine
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
 23 | call EXIT(ierr)  ! non-standard
    |
-help: Replace with `stop`
+help: Replace with `stop 1`
 18 | ierr = 1
 19 | call exit  ! non-standard
 20 | call exit()  ! non-standard
@@ -65,8 +65,8 @@ help: Replace with `stop`
 24 | call exit(status=2)  ! non-standard
 note: This is an unsafe fix and may change runtime behavior
 
-PORT063 Use of non-portable `exit` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:22:1
+PORT061 Use of non-portable `exit` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:22:1
    |
 20 | call exit()  ! non-standard
 21 | call exit(1)  ! non-standard
@@ -77,8 +77,8 @@ PORT063 Use of non-portable `exit` subroutine
    |
 help: Replace with `stop`
 
-PORT063 Use of non-portable `exit` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:23:1
+PORT061 Use of non-portable `exit` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:23:1
    |
 21 | call exit(1)  ! non-standard
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
@@ -89,8 +89,8 @@ PORT063 Use of non-portable `exit` subroutine
    |
 help: Replace with `stop`
 
-PORT063 Use of non-portable `exit` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:24:1
+PORT061 Use of non-portable `exit` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:24:1
    |
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
 23 | call EXIT(ierr)  ! non-standard
@@ -101,8 +101,8 @@ PORT063 Use of non-portable `exit` subroutine
    |
 help: Replace with `stop`
 
-PORT063 Use of non-portable `abort` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:25:1
+PORT061 Use of non-portable `abort` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:25:1
    |
 23 | call EXIT(ierr)  ! non-standard
 24 | call exit(status=2)  ! non-standard
@@ -113,8 +113,8 @@ PORT063 Use of non-portable `abort` subroutine
    |
 help: Replace with `error stop`
 
-PORT063 Use of non-portable `abort` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:26:1
+PORT061 Use of non-portable `abort` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:26:1
    |
 24 | call exit(status=2)  ! non-standard
 25 | call abort  ! non-standard
@@ -125,8 +125,8 @@ PORT063 Use of non-portable `abort` subroutine
    |
 help: Replace with `error stop`
 
-PORT063 Use of non-portable `abort` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:27:1
+PORT061 Use of non-portable `abort` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:27:1
    |
 25 | call abort  ! non-standard
 26 | call abort(1)  ! non-standard
@@ -137,8 +137,8 @@ PORT063 Use of non-portable `abort` subroutine
    |
 help: Replace with `error stop`
 
-PORT063 Use of non-portable `abort` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:28:1
+PORT061 Use of non-portable `abort` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:28:1
    |
 26 | call abort(1)  ! non-standard
 27 | call abort(123456)  ! non-standard
@@ -149,8 +149,8 @@ PORT063 Use of non-portable `abort` subroutine
    |
 help: Replace with `error stop`
 
-PORT063 Use of non-portable `abort` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:29:1
+PORT061 Use of non-portable `abort` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:29:1
    |
 27 | call abort(123456)  ! non-standard
 28 | call abort("message")  ! non-standard
@@ -161,8 +161,8 @@ PORT063 Use of non-portable `abort` subroutine
    |
 help: Replace with `error stop`
 
-PORT063 Use of non-portable `abort` subroutine
-  --> ./resources/test/fixtures/portability/PORT063.f90:30:1
+PORT061 Use of non-portable `abort` call
+  --> ./resources/test/fixtures/portability/PORT061_exit.f90:30:1
    |
 28 | call abort("message")  ! non-standard
 29 | call abort(ierr)  ! non-standard

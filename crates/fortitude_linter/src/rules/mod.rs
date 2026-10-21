@@ -170,9 +170,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Portability, "031") => (RuleGroup::Stable, None, Default, portability::invalid_tab::InvalidTab),
         (Portability, "041") => (RuleGroup::Preview, Ast, Optional, portability::return_in_program::ReturnInProgram),
         (Portability, "051") => (RuleGroup::Preview, Ast, Optional, portability::unary_following_arithmetic::UnaryFollowingArithmetic),
-        (Portability, "061") => (RuleGroup::Preview, Ast, Optional, portability::non_portable_system_call::NonPortableSystemCall),
-        (Portability, "062") => (RuleGroup::Preview, Ast, Optional, portability::gfortran_extension_intrinsic::GfortranRandomExtension),
-        (Portability, "063") => (RuleGroup::Preview, Ast, Optional, portability::non_portable_exit_call::NonPortableExitCall),
+        (Portability, "061") => (RuleGroup::Preview, Ast, Optional, portability::non_portable_intrinsic_procedure::NonPortableIntrinsicProcedure),
 
         // style
         (Style, "001") => (RuleGroup::Stable, None, Default, style::line_length::LineTooLong),
