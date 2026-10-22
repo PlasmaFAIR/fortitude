@@ -209,6 +209,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "301") => (RuleGroup::Preview, Ast, Optional, style::superfluous_while_true::SuperfluousWhileTrue),
         (Style, "311") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordReuse),
         (Style, "321") => (RuleGroup::Preview, Ast, Optional, style::whole_array_indexing::WholeArrayIndexing),
+        (Style, "331") => (RuleGroup::Preview, Ast, Optional, style::print_statement::PrintStatement),
         (Style, "901") => (RuleGroup::Stable, Ast, Optional, style::complexity::TooComplex),
         (Style, "902") => (RuleGroup::Stable, Ast, Optional, style::complexity::TooManyArguments),
 
