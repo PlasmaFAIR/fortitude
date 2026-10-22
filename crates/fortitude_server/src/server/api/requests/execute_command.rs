@@ -16,7 +16,8 @@ pub(crate) struct ExecuteCommand;
 #[derive(Deserialize)]
 struct Argument {
     uri: types::Url,
-    _version: DocumentVersion,
+    #[allow(dead_code)]
+    version: DocumentVersion,
 }
 
 /// The argument schema for the `fortitude.printDebugInformation` command.
@@ -199,4 +200,20 @@ config_path = {config_path:?}
     }
 
     Ok(buffer)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Argument;
+
+    #[test]
+    fn deserialize_argument() {
+        let argument: Argument = serde_json::from_value(serde_json::json!({
+            "uri": "file:///test.f90",
+            "version": 1,
+        }))
+        .unwrap();
+        assert_eq!(argument.uri.as_str(), "file:///test.f90");
+        assert_eq!(argument.version, 1);
+    }
 }
