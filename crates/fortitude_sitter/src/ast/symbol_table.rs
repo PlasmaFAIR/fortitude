@@ -284,10 +284,10 @@ impl<'a> SymbolTables<'a> {
     }
 
     /// Return the symbol with the given name if it exists
-    pub fn get(&'_ self, name: &str) -> Option<&Symbol<'_>> {
+    pub fn get<S: AsRef<str>>(&'_ self, name: S) -> Option<&Symbol<'_>> {
         // Check the most recently inserted table first
         for table in self.inner.iter().rev() {
-            if let Some(var) = table.get(name) {
+            if let Some(var) = table.get(name.as_ref()) {
                 return Some(var);
             }
         }

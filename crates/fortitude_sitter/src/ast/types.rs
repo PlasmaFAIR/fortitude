@@ -1,6 +1,7 @@
 //! Strong types for working with the tree-sitter AST
 
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::{rc::Rc, str::FromStr};
 
@@ -980,6 +981,128 @@ impl<'a> Procedure<'a> {
 
     pub const fn is_subroutine(&self) -> bool {
         self.kind.is_subroutine()
+    }
+}
+
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct KeywordArgument<'a> {
+    /// The whole node
+    node: Node<'a>,
+    /// The argument name
+    name: Name<'a>,
+    /// The argument value
+    value: Node<'a>,
+}
+
+impl<'a> KeywordArgument<'a> {
+    pub fn from_node(node: Node<'a>) -> Self {
+        let name = Name::from_node(
+            &node
+                .child_by_field_id(field!("name").into())
+                .expect("keyword_argument should have `name` child"),
+        );
+
+        let value = node
+            .child_by_field_id(field!("value").into())
+            .expect("keyword_argument should have `value` child");
+
+        Self { node, name, value }
+    }
+
+    pub fn value(&self) -> Node<'a> {
+        self.value
+    }
+}
+
+/// A call to a subroutine or function
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct ProcedureCall<'a> {
+    name: Name<'a>,
+    node: Node<'a>,
+    kind: ProcedureKind,
+    args: Vec<Node<'a>>,
+    // TODO(peter): case-insensitive hashmap
+    kwargs: HashMap<String, KeywordArgument<'a>>,
+    // TODO: resolved procedure?
+}
+
+fn is_array_access(node: &Node) -> bool {
+    let child_node = node.child_with_name("argument_list");
+    match child_node {
+        Some(node) => node.child_with_name("extent_specifier").is_some(),
+        None => false,
+    }
+}
+
+impl<'a> ProcedureCall<'a> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
+        let is_subroutine = node.kind_id() == kind!("subroutine_call");
+
+        let (identifier, kind) = if is_subroutine {
+            (
+                node.child_by_field_id(field!("subroutine").into())
+                    .context("subroutine call missing subroutine name")?,
+                ProcedureKind::Subroutine,
+            )
+        } else if node.kind_id() == kind!("call_expression") {
+            // Check that this is not actually an array access/assignment
+            if node.is_assignment_lhs() || is_array_access(node) {
+                return Err(anyhow!("'call_expression' is not a function call"));
+            }
+
+            (
+                node.child_with_id(kind!("identifier"))
+                    .context("call_expression missing function name")?,
+                ProcedureKind::Function,
+            )
+        } else {
+            return Err(anyhow!("not a 'subroutine_call' or 'call_expression'"));
+        };
+
+        let (args, kwargs) = if let Some(args) = node.child_with_id(kind!("argument_list")) {
+            args.named_children(&mut args.walk())
+                .filter(|arg| arg.kind_id() != kind!("comment"))
+                .partition_map(|arg| match arg.kind_id() {
+                    kind!("keyword_argument") => {
+                        let kwarg = KeywordArgument::from_node(arg);
+                        let name = kwarg.name().to_lower_string();
+                        itertools::Either::Right((name, kwarg))
+                    }
+                    _ => itertools::Either::Left(arg),
+                })
+        } else {
+            (vec![], vec![])
+        };
+
+        let kwargs = HashMap::from_iter(kwargs);
+
+        Ok(Self {
+            name: Name::from_node(&identifier),
+            node: *node,
+            kind,
+            args,
+            kwargs,
+        })
+    }
+
+    pub fn kind(&self) -> ProcedureKind {
+        self.kind
+    }
+
+    pub fn args(&self) -> &Vec<Node<'a>> {
+        &self.args
+    }
+
+    pub fn arg(&self, index: usize) -> Option<Node<'a>> {
+        self.args.get(index).copied()
+    }
+
+    pub fn kwargs(&self) -> &HashMap<String, KeywordArgument<'a>> {
+        &self.kwargs
+    }
+
+    pub fn kwarg(&self, name: &str) -> Option<KeywordArgument<'a>> {
+        self.kwargs.get(name).cloned()
     }
 }
 
