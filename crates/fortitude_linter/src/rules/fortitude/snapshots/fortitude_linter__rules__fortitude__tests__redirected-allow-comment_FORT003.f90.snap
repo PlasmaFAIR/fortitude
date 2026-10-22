@@ -1,7 +1,6 @@
 ---
 source: crates/fortitude_linter/src/rules/fortitude/mod.rs
 expression: diagnostics
-snapshot_kind: text
 ---
 FORT003 [*] `T001` has been redirected to 'C001'
  --> ./resources/test/fixtures/fortitude/FORT003.f90:1:9
@@ -16,3 +15,43 @@ help: Replace with `C001` or `implicit-typing`
 1 + ! allow(implicit-typing)
 2 | program foo
 3 | end program foo
+4 |
+
+FORT003 [*] `T001` has been redirected to 'C001'
+ --> ./resources/test/fixtures/fortitude/FORT003.f90:5:8
+  |
+3 | end program foo
+4 |
+5 | !allow(T001)
+  |        ^^^^
+6 | subroutine bar()
+7 | end subroutine bar
+  |
+help: Replace with `C001` or `implicit-typing`
+2 | program foo
+3 | end program foo
+4 |
+  - !allow(T001)
+5 + !allow(implicit-typing)
+6 | subroutine bar()
+7 | end subroutine bar
+8 |
+
+FORT003 [*] `T001` has been redirected to 'C001'
+  --> ./resources/test/fixtures/fortitude/FORT003.f90:9:11
+   |
+ 7 | end subroutine bar
+ 8 |
+ 9 | !   allow(T001)
+   |           ^^^^
+10 | subroutine baz()
+11 | end subroutine baz
+   |
+help: Replace with `C001` or `implicit-typing`
+6  | subroutine bar()
+7  | end subroutine bar
+8  |
+   - !   allow(T001)
+9  + !   allow(implicit-typing)
+10 | subroutine baz()
+11 | end subroutine baz
