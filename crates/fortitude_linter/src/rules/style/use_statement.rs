@@ -181,7 +181,7 @@ fn extract_use_statement_data(node: &Node, src: &SourceFile) -> UseStatementData
 
     let is_intrinsic = node
         .children(&mut node.walk())
-        .any(|child| child.text().eq_ignore_ascii_case("intrinsic"));
+        .any(|child| child == "intrinsic");
 
     let mut text_range = node.textrange();
     let mut start_position_row = node.start_position().row;

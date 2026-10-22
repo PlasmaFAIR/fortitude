@@ -1,5 +1,6 @@
 //! Strong types for working with the tree-sitter AST
 
+use std::borrow::Cow;
 use std::fmt::Display;
 use std::{rc::Rc, str::FromStr};
 
@@ -41,23 +42,59 @@ impl<'a> ParameterStatement<'a> {
 
 /// The name node of a variable declaration, procedure declaration, type
 /// definition, etc.
+///
+/// Compares case-insensitively with strings
 #[derive(Clone, Debug, HasNode)]
 pub struct Name<'a> {
-    name: String,
+    name: &'a str,
     node: Node<'a>,
+    /// Name but lowercase
+    lower: Cow<'a, str>,
 }
 
 impl<'a> Name<'a> {
     pub fn from_node(node: &Node<'a>) -> Self {
         let node = get_name_node_of_declarator(node);
-        Self {
-            name: node.text().to_string(),
-            node,
-        }
+        let name = node.text();
+
+        let lower = if name.chars().all(|c| c.is_ascii_lowercase()) {
+            name.into()
+        } else {
+            name.to_ascii_lowercase().into()
+        };
+        Self { name, node, lower }
     }
 
+    /// Return the original name
+    #[inline]
     pub fn as_str(&self) -> &str {
-        self.name.as_str()
+        self.name
+    }
+
+    /// Return the name as lower case
+    #[inline]
+    pub fn as_lower(&self) -> &Cow<'a, str> {
+        &self.lower
+    }
+
+    /// Return a copy of the name as lower case
+    #[inline]
+    pub fn to_lower_string(&self) -> String {
+        self.lower.to_string()
+    }
+}
+
+impl<'a, S: AsRef<str> + ?Sized> PartialEq<S> for Name<'a> {
+    #[inline]
+    fn eq(&self, other: &S) -> bool {
+        self.as_lower().eq_ignore_ascii_case(other.as_ref())
+    }
+}
+
+impl<'a> AsRef<str> for Name<'a> {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.as_str()
     }
 }
 
@@ -67,6 +104,7 @@ impl std::fmt::Display for Name<'_> {
     }
 }
 
+/// Get the [`Name`] of an entity
 pub trait HasName<'a> {
     fn name(&self) -> &Name<'a>;
 }
@@ -77,12 +115,6 @@ where
 {
     fn name(&self) -> &Name<'a> {
         T::name(self)
-    }
-}
-
-impl<'a> HasName<'a> for &'a Name<'a> {
-    fn name(&self) -> &Name<'a> {
-        self
     }
 }
 
@@ -234,11 +266,7 @@ pub enum BindLanguage {
 
 impl BindLanguage {
     pub fn from_node(node: &Node) -> Self {
-        if node.text().eq_ignore_ascii_case("C") {
-            Self::C
-        } else {
-            Self::Other
-        }
+        if node == "C" { Self::C } else { Self::Other }
     }
 }
 
@@ -1533,6 +1561,34 @@ mod tests {
         let ampersand = node.next_line_continuation();
         assert!(ampersand.is_some());
         assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
+
+        Ok(())
+    }
+
+    #[test]
+    fn names() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program FOO
+          end program
+          "#,
+        );
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let names = root
+            .descendants()
+            .filter(|node| matches!(node.kind_id(), kind!("name")))
+            .map(|node| Name::from_node(&node))
+            .collect_vec();
+
+        assert_eq!(names.len(), 1);
+
+        assert_eq!(names[0].as_str(), "FOO");
+        assert_eq!(names[0].as_lower(), "foo");
+        assert_eq!(names[0], "Foo");
 
         Ok(())
     }

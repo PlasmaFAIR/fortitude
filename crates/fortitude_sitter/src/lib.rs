@@ -200,6 +200,7 @@ impl<'source> Tree<'source> {
     }
 }
 
+/// Can be compared case-insensitively to [`str`] with `==`
 impl<'tree> Node<'tree> {
     /// Wrap a [`tree_sitter::Node`]. Requires its associated [`Tree`] for convenience methods.
     ///
@@ -614,7 +615,7 @@ impl<'tree> Node<'tree> {
             child.kind_id() == kind!("keyword_argument")
                 && child
                     .child_by_field_id(field!("name").into())
-                    .is_some_and(|n| n.text().eq_ignore_ascii_case(keyword))
+                    .is_some_and(|n| n == keyword)
         })
     }
 
@@ -711,8 +712,7 @@ impl<'tree> Node<'tree> {
     pub fn next_statement_label_sibling<S: AsRef<str>>(&self, label: S) -> Option<Node<'tree>> {
         let mut sibling = self.next_named_sibling();
         while let Some(next_sibling) = sibling {
-            if next_sibling.kind_id() == kind!("statement_label")
-                && next_sibling.text() == label.as_ref()
+            if next_sibling.kind_id() == kind!("statement_label") && next_sibling == label.as_ref()
             {
                 return Some(next_sibling);
             }
@@ -811,6 +811,13 @@ impl<'tree> PartialEq for Node<'tree> {
     #[inline]
     fn eq(&self, other: &Node<'tree>) -> bool {
         self.id() == other.id()
+    }
+}
+
+impl<'tree, S: AsRef<str> + ?Sized> PartialEq<S> for Node<'tree> {
+    #[inline]
+    fn eq(&self, other: &S) -> bool {
+        self.text().eq_ignore_ascii_case(other.as_ref())
     }
 }
 
