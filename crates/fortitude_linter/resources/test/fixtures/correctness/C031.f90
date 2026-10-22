@@ -8,6 +8,7 @@ module test
   integer :: H(NUM_POINTS)
   integer, dimension(-NUM_POINTS:NUM_POINTS) :: I
   integer, dimension(0:NUM_POINTS) :: J
+  integer :: K(10_8), N(4_8), O(3000000000_8)
 contains
   subroutine foo(L, M)
     integer, dimension(8:9, 10, 11:12), intent(in) :: L

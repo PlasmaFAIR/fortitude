@@ -9,6 +9,8 @@ program test
   write (fmt=*, unit=24) i
   close(24)
 
+  write(6_4, *) i
+
   open(newunit=named_unit, file="test.txt", action="write")
   write(named_unit, *) "i =", i
   close(named_unit)
