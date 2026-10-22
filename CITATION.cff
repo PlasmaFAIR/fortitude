@@ -28,7 +28,13 @@ authors:
 - family-names: "Longdin"
   given-names: "Drew"
   orcid: ""
+- family-names: "Franklin"
+  given-names: "Jack"
+  orcid: "https://orcid.org/0009-0003-1823-0947"
+- family-names: "Mohiuddin"
+  given-names: "Ahmed"
+  orcid: ""
 title: "fortitude"
-version: 0.10.0-rc.1
-date-released: 2026-09-29
+version: 0.10.0
+date-released: 2026-10-22
 url: "https://github.com/PlasmaFAIR/fortitude"

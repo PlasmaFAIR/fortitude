@@ -2,10 +2,41 @@
 
 ## 0.10.0
 
+Released on 2026-10-22.
+
+Please see the changelog for version 0.10.0-rc.1 for the main changes between
+versions 0.9.2 and 0.10.0.
+
+### Rules
+
+- Generalise `PORT061`/`non-portable-system-call` into `non-portable-intrinsic-procedure`.
+  It now also catches the use of non-portable `call exit(...)`/`call abort(...)` and the
+  use of GFortran's `rand` and `srand` functions.
+  ([#750](https://github.com/PlasmaFAIR/fortitude/pull/750),
+  [#755](https://github.com/PlasmaFAIR/fortitude/pull/755),
+  [#764](https://github.com/PlasmaFAIR/fortitude/pull/764))
+
+### Documentation
+- Add examples for --show-fixes, -o and config files ([#756](https://github.com/PlasmaFAIR/fortitude/pull/756))
+
+### Bug fixes
+
+- Enable serde_json `preserve_order` so JSON output key order doesn't depend on build scope ([#753](https://github.com/PlasmaFAIR/fortitude/pull/753))
+- Bump `tree-sitter-fortran` to fix numerous parsing bugs ([#762](https://github.com/PlasmaFAIR/fortitude/pull/762))
+
+### Contributors
+
+- [@ZedThree](https://github.com/ZedThree)
+- [@jackdfranklin](https://github.com/jackdfranklin)
+- [@ahmedmohiduet](https://github.com/ahmedmohiduet)
+
+## 0.10.0-rc.1
+
 Released on 2026-09-29.
 
 ### Features
 
+- New default output format (under `--preview`) 
 - Add `name` and `count` output formats ([#715](https://github.com/PlasmaFAIR/fortitude/pull/715))
 - Allow customization of warning levels ([#693](https://github.com/PlasmaFAIR/fortitude/pull/693))
 - Allow shell completion of rule names ([#723](https://github.com/PlasmaFAIR/fortitude/pull/723))
