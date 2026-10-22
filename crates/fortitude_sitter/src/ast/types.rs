@@ -1,5 +1,6 @@
 //! Strong types for working with the tree-sitter AST
 
+use std::borrow::Cow;
 use std::fmt::Display;
 use std::{rc::Rc, str::FromStr};
 
@@ -41,23 +42,66 @@ impl<'a> ParameterStatement<'a> {
 
 /// The name node of a variable declaration, procedure declaration, type
 /// definition, etc.
+///
+/// Compares case-insensitively with strings
 #[derive(Clone, Debug, HasNode)]
 pub struct Name<'a> {
-    name: String,
+    name: &'a str,
     node: Node<'a>,
+    /// Name but lowercase
+    lower: Cow<'a, str>,
 }
 
 impl<'a> Name<'a> {
     pub fn from_node(node: &Node<'a>) -> Self {
         let node = get_name_node_of_declarator(node);
-        Self {
-            name: node.text().to_string(),
-            node,
-        }
+        let name = node.text();
+
+        let lower = if name.chars().all(|c| c.is_ascii_lowercase()) {
+            name.into()
+        } else {
+            name.to_ascii_lowercase().into()
+        };
+        Self { name, node, lower }
     }
 
+    /// Return the original name
+    #[inline]
     pub fn as_str(&self) -> &str {
-        self.name.as_str()
+        self.name
+    }
+
+    /// Return the name as lower case
+    #[inline]
+    pub fn as_lower(&self) -> &Cow<'a, str> {
+        &self.lower
+    }
+
+    /// Return a copy of the name as lower case
+    #[inline]
+    pub fn to_lower_string(&self) -> String {
+        self.lower.to_string()
+    }
+}
+
+impl<'a> PartialEq<Name<'a>> for Name<'a> {
+    #[inline]
+    fn eq(&self, other: &Name) -> bool {
+        self.lower == other.lower
+    }
+}
+
+impl<'a> PartialEq<str> for Name<'a> {
+    #[inline]
+    fn eq(&self, other: &str) -> bool {
+        self.as_lower().eq_ignore_ascii_case(other)
+    }
+}
+
+impl<'a> AsRef<str> for Name<'a> {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.as_str()
     }
 }
 
@@ -67,6 +111,7 @@ impl std::fmt::Display for Name<'_> {
     }
 }
 
+/// Get the [`Name`] of an entity
 pub trait HasName<'a> {
     fn name(&self) -> &Name<'a>;
 }
@@ -77,12 +122,6 @@ where
 {
     fn name(&self) -> &Name<'a> {
         T::name(self)
-    }
-}
-
-impl<'a> HasName<'a> for &'a Name<'a> {
-    fn name(&self) -> &Name<'a> {
-        self
     }
 }
 
