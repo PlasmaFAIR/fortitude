@@ -805,6 +805,21 @@ impl<'tree> Node<'tree> {
                 | kind!("block_label")
         )
     }
+
+    /// Is this node on the LHS of an assignment?
+    pub fn is_assignment_lhs(&self) -> bool {
+        let Some(parent) = self.parent() else {
+            return false;
+        };
+
+        if parent.kind() != "assignment_statement" {
+            return false;
+        }
+
+        parent.child_by_field_name("left").is_some_and(|lhs| {
+            lhs.start_byte() == self.start_byte() && lhs.end_byte() == self.end_byte()
+        })
+    }
 }
 
 impl<'tree> PartialEq for Node<'tree> {

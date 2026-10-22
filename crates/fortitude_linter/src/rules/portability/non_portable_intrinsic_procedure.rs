@@ -1,9 +1,10 @@
 use crate::diagnostics::{Diagnostic, Fix, FixAvailability, Violation};
-use crate::rules::utilities::is_assignment_lhs;
 use crate::settings::FortranStandard;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::{ViolationMetadata, field, kind};
+use fortitude_macros::{ViolationMetadata, kind};
 use fortitude_sitter::Node;
+use fortitude_sitter::ast::types::{HasName, ProcedureCall};
+use fortitude_sitter::traits::HasNode;
 use ruff_macros::derive_message_formats;
 
 /// ## What it does
@@ -120,19 +121,17 @@ impl Violation for NonPortableIntrinsicProcedure {
 /// Create diagnostic with a straight-forward replacement
 fn create_replacement(
     context: &CheckContext,
-    identifier: &Node,
-    name: String,
+    procedure: ProcedureCall,
     replacement: &str,
 ) -> Option<Vec<Diagnostic>> {
-    let edit = identifier.edit_replacement(replacement.to_string());
+    let node = procedure.name().node();
+    let edit = node.edit_replacement(replacement.to_string());
     let replacement = Some(replacement.to_string());
+    let name = procedure.name().to_string();
 
     some_vec![
         context
-            .create_diagnostic(
-                NonPortableIntrinsicProcedure { name, replacement },
-                identifier
-            )
+            .create_diagnostic(NonPortableIntrinsicProcedure { name, replacement }, node)
             .with_fix(Fix::unsafe_edit(edit)),
     ]
 }
@@ -140,18 +139,18 @@ fn create_replacement(
 /// Create diagnostic with a suggestion but no auto-fix
 fn create_non_replacement(
     context: &CheckContext,
-    identifier: &Node,
-    name: String,
+    procedure: ProcedureCall,
     replacement: &str,
 ) -> Option<Vec<Diagnostic>> {
     let help = format!(
         "The standard `{replacement}` has different semantics. See the docs for more details"
     );
     let replacement = Some(replacement.to_string());
+    let name = procedure.name().to_string();
 
     let mut diagnostic = context.create_diagnostic(
         NonPortableIntrinsicProcedure { name, replacement },
-        identifier,
+        procedure.name().node(),
     );
     diagnostic.help(help);
 
@@ -203,9 +202,10 @@ fn stop_replacement(context: &CheckContext, node: &Node, keyword: &str) -> Optio
 /// into account the target standard
 fn create_stop_replacement(
     context: &CheckContext,
-    node: &Node,
-    name: String,
+    procedure: ProcedureCall,
 ) -> Option<Vec<Diagnostic>> {
+    let name = procedure.name().as_str().to_ascii_lowercase();
+    let node = procedure.node();
     let replacement = if name == "abort" {
         // `error stop` was added in Fortran 2008
         if context.settings().target_std >= FortranStandard::F2008 {
@@ -237,50 +237,28 @@ fn create_stop_replacement(
     some_vec!(diagnostic)
 }
 
-fn is_array_access(node: &Node) -> bool {
-    let child_node = node.child_with_name("argument_list");
-    match child_node {
-        Some(node) => node.child_with_name("extent_specifier").is_some(),
-        None => false,
-    }
-}
-
 impl AstRule for NonPortableIntrinsicProcedure {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        let is_subroutine = node.kind_id() == kind!("subroutine_call");
-
-        let identifier = if is_subroutine {
-            node.child_by_field_id(field!("subroutine").into()).unwrap()
-        } else {
-            // Check that this is not actually an array access/assignment
-            if is_assignment_lhs(node) || is_array_access(node) {
-                return None;
-            }
-
-            node.child_with_name("identifier").unwrap()
+        let Ok(procedure) = ProcedureCall::try_from_node(node) else {
+            return None;
         };
 
-        let name = identifier.text().to_ascii_lowercase();
-
         // Exit early if there is a user-defined symbol with this name
-        if context.symbol_table().get(&name).is_some() {
+        if context.symbol_table().get(procedure.name()).is_some() {
             return None;
         }
+        let is_subroutine = procedure.kind().is_subroutine();
 
-        match name.as_str() {
+        match procedure.name().as_lower().as_ref() {
             "system" if is_subroutine => {
                 // TODO(peter): also handle `status` argument
-                create_replacement(context, &identifier, name, "execute_command_line")
+                create_replacement(context, procedure, "execute_command_line")
             }
             // `system` as a function -- could be replaced by subroutine if not in expression
-            "system" => create_non_replacement(context, &identifier, name, "execute_command_line"),
-            "abort" | "exit" if is_subroutine => create_stop_replacement(context, node, name),
-            "srand" if is_subroutine => {
-                create_non_replacement(context, &identifier, name, "random_seed")
-            }
-            "rand" if !is_subroutine => {
-                create_non_replacement(context, &identifier, name, "random_number")
-            }
+            "system" => create_non_replacement(context, procedure, "execute_command_line"),
+            "abort" | "exit" if is_subroutine => create_stop_replacement(context, procedure),
+            "srand" if is_subroutine => create_non_replacement(context, procedure, "random_seed"),
+            "rand" if !is_subroutine => create_non_replacement(context, procedure, "random_number"),
             _ => None,
         }
     }

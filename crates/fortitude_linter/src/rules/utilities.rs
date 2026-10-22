@@ -43,17 +43,3 @@ pub fn number_literal_text(node: &Node) -> String {
     )
     .into_owned()
 }
-
-pub fn is_assignment_lhs(node: &Node) -> bool {
-    let Some(parent) = node.parent() else {
-        return false;
-    };
-
-    if parent.kind() != "assignment_statement" {
-        return false;
-    }
-
-    parent.child_by_field_name("left").is_some_and(|lhs| {
-        lhs.start_byte() == node.start_byte() && lhs.end_byte() == node.end_byte()
-    })
-}
