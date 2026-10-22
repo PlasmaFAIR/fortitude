@@ -1,0 +1,54 @@
+---
+source: crates/fortitude_linter/src/rules/portability/mod.rs
+expression: diagnostics
+---
+PORT061 Use of non-portable `srand` call
+  --> ./resources/test/fixtures/portability/PORT061_rand.f90:71:8
+   |
+69 |   implicit none
+70 |   integer,parameter :: seed = 86456
+71 |   call srand(seed)
+   |        ^^^^^
+72 |   print *, rand(), rand()
+73 |   print *, rand(seed)
+   |
+help: Replace with `random_seed`
+help: The standard `random_seed` has different semantics. See the docs for more details
+
+PORT061 Use of non-portable `rand` call
+  --> ./resources/test/fixtures/portability/PORT061_rand.f90:72:12
+   |
+70 |   integer,parameter :: seed = 86456
+71 |   call srand(seed)
+72 |   print *, rand(), rand()
+   |            ^^^^
+73 |   print *, rand(seed)
+74 | end program test_rand
+   |
+help: Replace with `random_number`
+help: The standard `random_number` has different semantics. See the docs for more details
+
+PORT061 Use of non-portable `rand` call
+  --> ./resources/test/fixtures/portability/PORT061_rand.f90:72:20
+   |
+70 |   integer,parameter :: seed = 86456
+71 |   call srand(seed)
+72 |   print *, rand(), rand()
+   |                    ^^^^
+73 |   print *, rand(seed)
+74 | end program test_rand
+   |
+help: Replace with `random_number`
+help: The standard `random_number` has different semantics. See the docs for more details
+
+PORT061 Use of non-portable `rand` call
+  --> ./resources/test/fixtures/portability/PORT061_rand.f90:73:12
+   |
+71 |   call srand(seed)
+72 |   print *, rand(), rand()
+73 |   print *, rand(seed)
+   |            ^^^^
+74 | end program test_rand
+   |
+help: Replace with `random_number`
+help: The standard `random_number` has different semantics. See the docs for more details

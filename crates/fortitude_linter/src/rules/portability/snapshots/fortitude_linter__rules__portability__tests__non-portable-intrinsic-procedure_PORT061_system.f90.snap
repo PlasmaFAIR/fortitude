@@ -1,0 +1,36 @@
+---
+source: crates/fortitude_linter/src/rules/portability/mod.rs
+expression: diagnostics
+---
+PORT061 [*] Use of non-portable `system` call
+  --> ./resources/test/fixtures/portability/PORT061_system.f90:18:6
+   |
+16 | implicit none
+17 | integer :: status
+18 | call system("dir")  ! non-standard
+   |      ^^^^^^
+19 | call execute_command_line("dir")
+20 | status = system("ls") ! non-standard, can't auto-fix
+   |
+help: Replace with `execute_command_line`
+15 | program main
+16 | implicit none
+17 | integer :: status
+   - call system("dir")  ! non-standard
+18 + call execute_command_line("dir")  ! non-standard
+19 | call execute_command_line("dir")
+20 | status = system("ls") ! non-standard, can't auto-fix
+21 | end program main
+note: This is an unsafe fix and may change runtime behavior
+
+PORT061 Use of non-portable `system` call
+  --> ./resources/test/fixtures/portability/PORT061_system.f90:20:10
+   |
+18 | call system("dir")  ! non-standard
+19 | call execute_command_line("dir")
+20 | status = system("ls") ! non-standard, can't auto-fix
+   |          ^^^^^^
+21 | end program main
+   |
+help: Replace with `execute_command_line`
+help: The standard `execute_command_line` has different semantics. See the docs for more details

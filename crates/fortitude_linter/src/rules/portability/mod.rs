@@ -1,9 +1,7 @@
-pub mod gfortran_extension_intrinsic;
 pub mod invalid_tab;
 pub(crate) mod literal_kinds;
-pub mod non_portable_exit_call;
+pub mod non_portable_intrinsic_procedure;
 pub(crate) mod non_portable_io_unit;
-pub mod non_portable_system_call;
 pub mod return_in_program;
 pub(crate) mod star_kinds;
 pub mod unary_following_arithmetic;
@@ -30,9 +28,9 @@ mod tests {
     #[test_case(Rule::InvalidTab, Path::new("PORT031.f90"))]
     #[test_case(Rule::ReturnInProgram, Path::new("PORT041.f90"))]
     #[test_case(Rule::UnaryFollowingArithmetic, Path::new("PORT051.f90"))]
-    #[test_case(Rule::NonPortableSystemCall, Path::new("PORT061.f90"))]
-    #[test_case(Rule::GfortranRandomExtension, Path::new("PORT062.f90"))]
-    #[test_case(Rule::NonPortableExitCall, Path::new("PORT063.f90"))]
+    #[test_case(Rule::NonPortableIntrinsicProcedure, Path::new("PORT061_system.f90"))]
+    #[test_case(Rule::NonPortableIntrinsicProcedure, Path::new("PORT061_exit.f90"))]
+    #[test_case(Rule::NonPortableIntrinsicProcedure, Path::new("PORT061_rand.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
@@ -45,9 +43,9 @@ mod tests {
     }
 
     #[test]
-    fn port063_fix_depends_on_standard() -> Result<()> {
-        let rule_code = Rule::NonPortableExitCall;
-        let path = Path::new("PORT063.f90");
+    fn port061_exit_fix_depends_on_standard() -> Result<()> {
+        let rule_code = Rule::NonPortableIntrinsicProcedure;
+        let path = Path::new("PORT061_exit.f90");
         let snapshot = format!("{}_{}_f95", rule_code.as_ref(), path.to_string_lossy());
         let mut settings = CheckSettings::for_rule(rule_code);
         settings.target_std = FortranStandard::F95;
