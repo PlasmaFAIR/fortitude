@@ -319,6 +319,8 @@ pub enum AttributeKind<'a> {
     External,
     Intent(Intent),
     Intrinsic,
+    Kind,
+    Len,
     Managed,
     Optional,
     Parameter,
