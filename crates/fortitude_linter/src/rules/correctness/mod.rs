@@ -9,6 +9,7 @@ pub(crate) mod implicit_kinds;
 pub(crate) mod implicit_typing;
 pub(crate) mod init_decls;
 pub(crate) mod intent;
+pub(crate) mod intrinsic_kind;
 pub(crate) mod kind_suffixes;
 pub(crate) mod magic_numbers;
 pub(crate) mod missing_io_specifier;
@@ -47,6 +48,7 @@ mod tests {
     #[test_case(Rule::MissingDefaultRank, Path::new("C013.f90"))]
     #[test_case(Rule::NoRealSuffix, Path::new("C021.f90"))]
     #[test_case(Rule::ImplicitRealKind, Path::new("C022.f90"))]
+    #[test_case(Rule::MissingKindArgument, Path::new("C023.f90"))]
     #[test_case(Rule::MagicNumberInArraySize, Path::new("C031.f90"))]
     #[test_case(Rule::MagicIoUnit, Path::new("C032.f90"))]
     #[test_case(Rule::MissingActionSpecifier, Path::new("C041.f90"))]

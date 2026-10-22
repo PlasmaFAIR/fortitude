@@ -123,6 +123,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "013") => (RuleGroup::Preview, Ast, Default, correctness::select_default::MissingDefaultRank),
         (Correctness, "021") => (RuleGroup::Stable, Ast, Optional, correctness::kind_suffixes::NoRealSuffix),
         (Correctness, "022") => (RuleGroup::Stable, Ast, Optional, correctness::implicit_kinds::ImplicitRealKind),
+        (Correctness, "023") => (RuleGroup::Preview, Ast, Optional, correctness::intrinsic_kind::MissingKindArgument),
         (Correctness, "031") => (RuleGroup::Stable, Ast, Optional, correctness::magic_numbers::MagicNumberInArraySize),
         (Correctness, "032") => (RuleGroup::Stable, Ast, Optional, correctness::magic_numbers::MagicIoUnit),
         (Correctness, "043") => (RuleGroup::Stable, Ast, Optional, correctness::missing_io_specifier::MissingActionSpecifier),
