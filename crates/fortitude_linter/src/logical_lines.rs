@@ -384,22 +384,23 @@ function &
     print *, &
 "Hello &
 ! mid string comment
-       & World"\
+       & World"
 
 end \
-& function &
+function &
 f
 "#;
         test_logical_lines(source, |lines| {
-            assert_eq!(lines.len(), 3);
+            assert_eq!(lines.len(), 4);
             assert_logical_line!(lines[0], "function &\n    f()", 0, Newline);
+            assert_logical_line!(lines[1], "    print *, &\n\"Hello &", 4, Newline);
             assert_logical_line!(
-                lines[1],
-                "    print *, &\n\"Hello &\n! mid string comment\n       & World\"",
+                lines[2],
+                "! mid string comment\n       & World\"",
                 4,
                 Newline
             );
-            assert_logical_line!(lines[2], "end \\\n& function &\nf", 0, Newline);
+            assert_logical_line!(lines[3], "end \\\nfunction &\nf", 0, Newline);
             Ok(())
         })
     }

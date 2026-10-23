@@ -10,7 +10,7 @@ use std::str::Utf8Error;
 use tree_sitter::{Point, Range};
 
 use anyhow::Result;
-use fortitude_macros::{field, kind, kw};
+use fortitude_macros::{field, kind};
 use ruff_diagnostics::Edit;
 use ruff_source_file::LineRanges;
 use ruff_text_size::{TextRange, TextSize};
@@ -802,7 +802,7 @@ impl<'tree> Node<'tree> {
                 | kind!("procedure_interface")
                 | kind!("type_member")
                 | kind!("type_name")
-                | kw!("label")
+                | kind!("block_label")
         )
     }
 }
