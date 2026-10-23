@@ -33,10 +33,13 @@ use ruff_macros::derive_message_formats;
 /// | Extension          | Standard                       | Notes |
 /// |--------------------|--------------------------------|-------|
 /// | [`system`][system] | [`execute_command_line`][execute_command_line] | Extension can be either subroutine or function, standard version is a subroutine only |
-/// | [`exit`][exit]     | `stop`                           | Extension is a subroutine, standard version is a statement |
-/// | [`abort`][abort]   | `error stop`                     | Extension is a subroutine, standard version is a statement |
-/// | [`srand`][srand]   | [`random_seed`][random_seed]     | Standard has different semantics |
+/// | [`exit`][exit]     | `stop`                         | Extension is a subroutine, standard version is a statement |
+/// | [`abort`][abort]   | `error stop`                   | Extension is a subroutine, standard version is a statement |
+/// | [`srand`][srand]   | [`random_seed`][random_seed]   | Standard has different semantics |
 /// | [`rand`][rand]     | [`random_number`][random_number] | Standard is a subroutine rather than function |
+/// | [`iargc`[iargc]    | [`command_argument_count`][command_argument_count] | |
+/// | [`getarg`[getarg]  | [`get_command_argument`][get_command_argument] | Different compilers may support different arguments in `getarg` |
+/// | [`etime`][etime]   | No exact replacement           | See below |
 ///
 /// ## Fix safety
 /// ### `system`
@@ -84,24 +87,50 @@ use ruff_macros::derive_message_formats;
 /// These are not interchangeable replacements, as for example, `random_number(x)` is a subroutine
 /// that modifies `x`, whereas `rand()` is a function that returns a single `real`.
 ///
+/// ### `iargc` and `getarg`
+/// These are completely replaced with the standard `command_argument_count` and
+/// `get_command_argument`, and are almost always a straight replacement,
+/// although some compilers may support additional arguments to `getarg`.
+///
+/// ### `etime`
+/// Different compilers may support different semantics `etime`, including
+/// calling as either a subroutine or function, and different meanings of the
+/// return arguments. There is no straight replacement for `etime` in the
+/// standard, but the following intrinsic procedures have similar functionality:
+///
+/// - [`cpu_time`][cpu_time]: CPU time elapsed in seconds
+/// - [`date_and_time`][date_and_time]: Date and time in a standard format
+/// - [`system_clock`][system_clock]: Possibly monotonic nanosecond-resolution clock, if available
+///
+/// MPI and OpenMP also have standard facilities for getting elapsed time, which
+/// may be higher resolution.
+///
 /// ## References
 /// - [GNU Fortran intrinsic procedures](https://gcc.gnu.org/onlinedocs/gfortran/Intrinsic-Procedures.html)
+/// - [Intel Fortran language reference](https://www.intel.com/content/www/us/en/docs/fortran-compiler/developer-guide-reference/2026-1/a-to-z-reference.html)
 ///
 /// [abort]: https://gcc.gnu.org/onlinedocs/gfortran/ABORT.html
+/// [command_argument_count]: https://gcc.gnu.org/onlinedocs/gfortran/COMMAND_005fARGUMENT_005fCOUNT.html
+/// [cpu_time]: https://gcc.gnu.org/onlinedocs/gfortran/CPU_005fTIME.html
+/// [date_and_time]: https://gcc.gnu.org/onlinedocs/gfortran/DATE_005fAND_005fTIME.html
+/// [etime]: https://gcc.gnu.org/onlinedocs/gfortran/ETIME.html
 /// [execute_command_line]: https://gcc.gnu.org/onlinedocs/gfortran/EXECUTE_005fCOMMAND_005fLINE.html
 /// [exit]: https://gcc.gnu.org/onlinedocs/gfortran/EXIT.html
+/// [get_command_argument]: https://gcc.gnu.org/onlinedocs/gfortran/GET_005fCOMMAND_005fARGUMENT.html
+/// [getarg]: https://gcc.gnu.org/onlinedocs/gfortran/GETARG.html
+/// [iargc]: https://gcc.gnu.org/onlinedocs/gfortran/IARGC.html
 /// [rand]: https://gcc.gnu.org/onlinedocs/gfortran/RAND.html
 /// [random_number]: https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html
 /// [random_seed]: https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html
 /// [srand]: https://gcc.gnu.org/onlinedocs/gfortran/SRAND.html
 /// [system]: https://gcc.gnu.org/onlinedocs/gfortran/SYSTEM.html
+/// [system_clock]: https://gcc.gnu.org/onlinedocs/gfortran/SYSTEM_005fCLOCK.html
 #[derive(ViolationMetadata)]
 pub(crate) struct NonPortableIntrinsicProcedure {
     /// Extension name
     name: String,
     /// Standard name
-    // TODO(peter): make non-option
-    replacement: Option<String>,
+    replacement: String,
 }
 
 impl Violation for NonPortableIntrinsicProcedure {
@@ -114,59 +143,99 @@ impl Violation for NonPortableIntrinsicProcedure {
     }
 
     fn fix_title(&self) -> Option<String> {
-        self.replacement
-            .as_ref()
-            .map(|replacement| format!("Replace with `{replacement}`"))
+        let Self { replacement, .. } = self;
+        Some(format!("Replace with `{replacement}`"))
     }
 }
 
+/// Create a diagnostic with a possible fix that applies given a minimum Fortran standard
+fn create_diagnostic(
+    context: &CheckContext,
+    procedure: &ProcedureCall,
+    node: &Node,
+    replacement: String,
+    fix: Option<Fix>,
+    min_std: FortranStandard,
+) -> Option<Vec<Diagnostic>> {
+    let name = procedure.name().to_string();
+
+    let mut diagnostic =
+        context.create_diagnostic(NonPortableIntrinsicProcedure { name, replacement }, node);
+
+    if let Some(fix) = fix {
+        let target_std = context.settings().target_std;
+        let fix = if target_std < min_std {
+            diagnostic.info(format!(
+                "A fix is available in Fortran standard {min_std} (target standard: {target_std})"
+            ));
+            fix.with_applicability(ruff_diagnostics::Applicability::DisplayOnly)
+        } else {
+            fix
+        };
+        diagnostic = diagnostic.with_fix(fix);
+    }
+
+    some_vec![diagnostic]
+}
+
 /// Create diagnostic with a straight-forward replacement
-#[expect(dead_code)]
 fn create_replacement(
     context: &CheckContext,
-    procedure: ProcedureCall,
+    procedure: &ProcedureCall,
     replacement: &str,
+    min_std: FortranStandard,
 ) -> Option<Vec<Diagnostic>> {
     let node = procedure.name().node();
     let edit = node.edit_replacement(replacement.to_string());
-    let replacement = Some(replacement.to_string());
-    let name = procedure.name().to_string();
+    let fix = Fix::safe_edit(edit);
 
-    some_vec![
-        context
-            .create_diagnostic(NonPortableIntrinsicProcedure { name, replacement }, node)
-            .with_fix(Fix::unsafe_edit(edit)),
-    ]
+    create_diagnostic(
+        context,
+        procedure,
+        node,
+        replacement.to_string(),
+        Some(fix),
+        min_std,
+    )
 }
 
 /// Create diagnostic with a suggestion but no auto-fix
 fn create_non_replacement(
     context: &CheckContext,
-    procedure: ProcedureCall,
-    replacement: &str,
+    procedure: &ProcedureCall,
+    standard: &str,
+    min_std: FortranStandard,
 ) -> Option<Vec<Diagnostic>> {
-    let help = format!(
-        "The standard `{replacement}` has different semantics. See the docs for more details"
-    );
-    let replacement = Some(replacement.to_string());
+    let replacement = standard.to_string();
     let name = procedure.name().to_string();
 
     let mut diagnostic = context.create_diagnostic(
         NonPortableIntrinsicProcedure { name, replacement },
         procedure.name().node(),
     );
-    diagnostic.help(help);
+
+    diagnostic.help(format!(
+        "The standard `{standard}` has different semantics. See the docs for more details"
+    ));
+
+    let target_std = context.settings().target_std;
+    if target_std < min_std {
+        diagnostic.info(format!(
+            "`{standard}` requires Fortran standard {min_std} (target standard: {target_std})"
+        ));
+    }
 
     some_vec![diagnostic]
 }
 
 /// Create diagnostic with a straight-forward replacement
-fn system_replacement(context: &CheckContext, procedure: ProcedureCall) -> Option<Vec<Diagnostic>> {
+fn system_replacement(
+    context: &CheckContext,
+    procedure: &ProcedureCall,
+) -> Option<Vec<Diagnostic>> {
     let node = procedure.name().node();
     let replacement = "execute_command_line";
     let edit = node.edit_replacement(replacement.to_string());
-    let replacement = Some(replacement.to_string());
-    let name = procedure.name().to_string();
 
     let mut rest = vec![];
 
@@ -187,11 +256,14 @@ fn system_replacement(context: &CheckContext, procedure: ProcedureCall) -> Optio
 
     let fix = Fix::unsafe_edits(edit, rest);
 
-    some_vec![
-        context
-            .create_diagnostic(NonPortableIntrinsicProcedure { name, replacement }, node)
-            .with_fix(fix)
-    ]
+    create_diagnostic(
+        context,
+        procedure,
+        node,
+        replacement.to_string(),
+        Some(fix),
+        FortranStandard::F2008,
+    )
 }
 
 /// Work out the `stop` or `error stop` statement that replaces a call to `exit` or
@@ -245,45 +317,28 @@ fn stop_replacement(procedure: &ProcedureCall, keyword: &str) -> (Option<String>
 /// into account the target standard
 fn create_stop_replacement(
     context: &CheckContext,
-    procedure: ProcedureCall,
+    procedure: &ProcedureCall,
 ) -> Option<Vec<Diagnostic>> {
-    let name = procedure.name().as_str();
     let node = procedure.node();
-    let is_abort = name.eq_ignore_ascii_case("abort");
+    let is_abort = procedure.name() == "abort";
     let standard = if is_abort { "error stop" } else { "stop" };
 
-    let (replacement, min_standard) = stop_replacement(&procedure, standard);
-
-    let mut diagnostic = context.create_diagnostic(
-        NonPortableIntrinsicProcedure {
-            name: name.to_string(),
-            replacement: replacement.clone(),
-        },
-        node,
-    );
-
-    if let Some(text) = replacement {
-        let min_std = if is_abort {
-            // `error stop` was added in Fortran 2008
-            FortranStandard::F2008.max(min_standard)
-        } else {
-            min_standard
-        };
-
-        let edit = node.edit_replacement(text);
-        let target_std = context.settings().target_std;
-        let fix = if target_std < min_std {
-            diagnostic.info(format!("This fix requires Fortran standard {min_std} which is above the target standard of {target_std}"));
-            Fix::display_only_edit(edit)
-        } else {
-            Fix::unsafe_edit(edit)
-        };
-
-        diagnostic = diagnostic.with_fix(fix);
+    let (replacement, min_std) = stop_replacement(procedure, standard);
+    let min_std = if is_abort {
+        // `error stop` was added in Fortran 2008
+        FortranStandard::F2008.max(min_std)
     } else {
-        diagnostic.help(format!("Replace with `{standard}`"));
-    }
-    some_vec!(diagnostic)
+        min_std
+    };
+
+    let (fix, replacement) = if let Some(text) = replacement {
+        let edit = node.edit_replacement(text.clone());
+        (Some(Fix::unsafe_edit(edit)), text)
+    } else {
+        (None, standard.to_string())
+    };
+
+    create_diagnostic(context, procedure, node, replacement, fix, min_std)
 }
 
 impl AstRule for NonPortableIntrinsicProcedure {
@@ -299,12 +354,37 @@ impl AstRule for NonPortableIntrinsicProcedure {
         let is_subroutine = procedure.kind().is_subroutine();
 
         match procedure.name().as_lower().as_ref() {
-            "system" if is_subroutine => system_replacement(context, procedure),
+            "system" if is_subroutine => system_replacement(context, &procedure),
             // `system` as a function -- could be replaced by subroutine if not in expression
-            "system" => create_non_replacement(context, procedure, "execute_command_line"),
-            "abort" | "exit" if is_subroutine => create_stop_replacement(context, procedure),
-            "srand" if is_subroutine => create_non_replacement(context, procedure, "random_seed"),
-            "rand" if !is_subroutine => create_non_replacement(context, procedure, "random_number"),
+            "system" => create_non_replacement(
+                context,
+                &procedure,
+                "execute_command_line",
+                FortranStandard::F2008,
+            ),
+            "abort" | "exit" if is_subroutine => create_stop_replacement(context, &procedure),
+            "srand" if is_subroutine => {
+                create_non_replacement(context, &procedure, "random_seed", FortranStandard::F95)
+            }
+            "rand" if !is_subroutine => {
+                create_non_replacement(context, &procedure, "random_number", FortranStandard::F95)
+            }
+            "iargc" if !is_subroutine => create_replacement(
+                context,
+                &procedure,
+                "command_argument_count",
+                FortranStandard::F2003,
+            ),
+            // TODO(peter): Intel can have a `status` argument which has a
+            // different position in the standard
+            "getarg" if is_subroutine => create_replacement(
+                context,
+                &procedure,
+                "get_command_argument",
+                FortranStandard::F2003,
+            ),
+            // This can be subroutine/function, no exact replacement
+            "etime" => create_non_replacement(context, &procedure, "cpu_time|system_clock|date_and_time", FortranStandard::F95),
             _ => None,
         }
     }
