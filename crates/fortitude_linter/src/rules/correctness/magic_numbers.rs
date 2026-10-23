@@ -1,5 +1,5 @@
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::rules::utilities::literal_as_io_unit;
+use crate::rules::utilities::{literal_as_io_unit, number_literal_text};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
 use fortitude_sitter::Node;
@@ -31,7 +31,7 @@ use ruff_macros::derive_message_formats;
 /// ```
 #[derive(ViolationMetadata)]
 pub(crate) struct MagicNumberInArraySize {
-    value: i32,
+    value: String,
 }
 
 impl Violation for MagicNumberInArraySize {
@@ -46,7 +46,7 @@ impl Violation for MagicNumberInArraySize {
     }
 }
 
-const DEFAULT_ALLOWED_LITERALS: &[i32] = &[0, 1, 2, 3, 4];
+const DEFAULT_ALLOWED_LITERALS: &[i64] = &[0, 1, 2, 3, 4];
 
 impl AstRule for MagicNumberInArraySize {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
@@ -77,8 +77,15 @@ impl AstRule for MagicNumberInArraySize {
             })
             .flatten()
             .filter_map(|literal| {
-                let value = literal.text().parse::<i32>().unwrap();
-                if DEFAULT_ALLOWED_LITERALS.contains(&value) {
+                let value = number_literal_text(&literal);
+                // Ignore any kind suffix, e.g. `10_int64`
+                let digits = value
+                    .split_once('_')
+                    .map_or(value.as_str(), |(digits, _)| digits);
+                if digits
+                    .parse::<i64>()
+                    .is_ok_and(|value| DEFAULT_ALLOWED_LITERALS.contains(&value))
+                {
                     None
                 } else {
                     Some((literal, value))
@@ -121,7 +128,7 @@ impl AstRule for MagicNumberInArraySize {
 /// ```
 #[derive(ViolationMetadata)]
 pub(crate) struct MagicIoUnit {
-    value: i32,
+    value: String,
 }
 
 impl Violation for MagicIoUnit {
@@ -140,7 +147,7 @@ impl AstRule for MagicIoUnit {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
         let unit = literal_as_io_unit(node)?;
 
-        let value = unit.text().parse::<i32>().unwrap_or_default();
+        let value = number_literal_text(&unit);
 
         some_vec!(context.create_diagnostic(Self { value }, unit))
     }
