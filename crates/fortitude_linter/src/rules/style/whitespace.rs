@@ -1,7 +1,7 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
 use crate::rules::Rule;
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind, kw};
 use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 use ruff_source_file::UniversalNewlines;
@@ -404,58 +404,58 @@ impl AlwaysFixableViolation for IndentedPreprocessorStatement {
     }
 }
 
-const BEGIN_SCOPE_NODES: [&str; 18] = [
-    "program_statement",
-    "module_statement",
-    "submodule_statement",
-    "subroutine_statement",
-    "function_statement",
-    "function",
-    "derived_type_statement",
-    "block_construct",
-    "if_statement",
-    "interface_statement",
-    "procedure_qualifier",
-    "select_case_statement",
-    "select_type_statement",
-    "select_rank_statement",
-    "block_label",
-    "do_statement",
-    "associate_statement",
-    "where_statement",
+const BEGIN_SCOPE_NODES: [u16; 18] = [
+    kind!("program_statement"),
+    kind!("module_statement"),
+    kind!("submodule_statement"),
+    kind!("subroutine_statement"),
+    kind!("function_statement"),
+    kind!("function"),
+    kind!("derived_type_statement"),
+    kind!("block_construct"),
+    kind!("if_statement"),
+    kind!("interface_statement"),
+    kind!("procedure_qualifier"),
+    kind!("select_case_statement"),
+    kind!("select_type_statement"),
+    kind!("select_rank_statement"),
+    kind!("block_label"),
+    kind!("do_statement"),
+    kind!("associate_statement"),
+    kind!("where_statement"),
 ];
-const PREPROC_NODES: [&str; 7] = [
-    "preproc_if",
-    "preproc_ifdef",
-    "preproc_elifdef",
-    "preproc_else",
-    "preproc_include",
-    "preproc_def",
-    "preproc_function_def",
+const PREPROC_NODES: [u16; 7] = [
+    kind!("preproc_if"),
+    kind!("preproc_ifdef"),
+    kind!("preproc_elifdef"),
+    kind!("preproc_else"),
+    kind!("preproc_include"),
+    kind!("preproc_def"),
+    kind!("preproc_function_def"),
 ];
-const SCOPED_ZERO_INDENT_NODES: [&str; 7] = [
-    "contains_statement",
-    "case_statement",
-    "type_statement",
-    "rank_statement",
-    "else_clause",
-    "elseif_clause",
-    "elsewhere_clause",
+const SCOPED_ZERO_INDENT_NODES: [u16; 7] = [
+    kind!("contains_statement"),
+    kind!("case_statement"),
+    kind!("type_statement"),
+    kind!("rank_statement"),
+    kind!("else_clause"),
+    kind!("elseif_clause"),
+    kind!("elsewhere_clause"),
 ];
-const END_SCOPE_NODES: [&str; 13] = [
-    "end_program_statement",
-    "end_module_statement",
-    "end_submodule_statement",
-    "end_subroutine_statement",
-    "end_function_statement",
-    "end_type_statement",
-    "end_block_construct_statement",
-    "end_if_statement",
-    "end_interface_statement",
-    "end_select_statement",
-    "end_do_loop_statement",
-    "end_associate_statement",
-    "end_where_statement",
+const END_SCOPE_NODES: [u16; 13] = [
+    kind!("end_program_statement"),
+    kind!("end_module_statement"),
+    kind!("end_submodule_statement"),
+    kind!("end_subroutine_statement"),
+    kind!("end_function_statement"),
+    kind!("end_type_statement"),
+    kind!("end_block_construct_statement"),
+    kind!("end_if_statement"),
+    kind!("end_interface_statement"),
+    kind!("end_select_statement"),
+    kind!("end_do_loop_statement"),
+    kind!("end_associate_statement"),
+    kind!("end_where_statement"),
 ];
 
 fn update_enclosing_quote(ch: &char, enclosing_quote: Option<char>) -> Option<char> {
@@ -548,9 +548,9 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 content_start.to_usize() + 1,
             ) {
                 // Handle block labels, module procedures and functions beginning with their return type by taking their parent
-                let node = if matches!(line_segment_node.kind(), "intrinsic_type")
+                let node = if matches!(line_segment_node.kind_id(), kind!("intrinsic_type"))
                     && !line_segment.contains("::")
-                    || (matches!(line_segment_node.kind(), "procedure_qualifier"))
+                    || (matches!(line_segment_node.kind_id(), kind!("procedure_qualifier")))
                 {
                     line_segment_node
                         .ancestors()
@@ -561,13 +561,13 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 };
 
                 // Handle statement_labels by taking their child
-                if matches!(node.kind(), "statement_label") {
+                if matches!(node.kind_id(), kind!("statement_label")) {
                     line_has_label = true;
                     label_text = context.source_text()[node.textrange()].to_string();
                     node.descendants().next().unwrap_or(node);
                 };
 
-                let node_kind = node.kind();
+                let node_kind = node.kind_id();
 
                 // Determine expected indent based on tree-sitter node kind and line continuations '&'.
                 // If we are in a line continuation, we just indent once.
@@ -608,8 +608,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 if !in_line_continuation && line_segment_has_continuation {
                     in_line_continuation = true;
                     scope_indents.push(
-                        current_expected_indent
-                            + constructs_to_indent_map.get_indent("line_continuation"),
+                        current_expected_indent + constructs_to_indent_map.get_indent(kw!("&")),
                     );
                 }
             }
@@ -713,6 +712,7 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
 
 pub mod settings {
     use crate::display_settings;
+    use fortitude_macros::{kind, kw};
     use ruff_macros::CacheKey;
     use std::{collections::HashMap, fmt::Display};
 
@@ -743,32 +743,35 @@ pub mod settings {
         }
     }
 
-    pub struct IndentMap(HashMap<&'static str, usize>);
+    pub struct IndentMap(HashMap<u16, usize>);
 
     impl IndentMap {
-        pub fn get_indent(&self, construct: &str) -> usize {
-            *self.0.get(construct).unwrap()
+        pub fn get_indent(&self, construct: u16) -> usize {
+            *self.0.get(&construct).unwrap()
         }
     }
 
-    static PROGRAM_STATEMENTS: &[&str] = &["program_statement"];
-    static MODULE_STATEMENTS: &[&str] = &["module_statement", "submodule_statement"];
-    static PROCEDURE_STATEMENTS: &[&str] =
-        &["subroutine_statement", "function_statement", "function"];
-    static TYPE_STATEMENTS: &[&str] = &["derived_type_statement"];
-    static CONTROL_FLOW_STATEMENTS: &[&str] = &[
-        "block_construct",
-        "if_statement",
-        "where_statement",
-        "select_case_statement",
-        "select_type_statement",
-        "select_rank_statement",
-        "block_label",
-        "do_statement",
-        "associate_statement",
+    static PROGRAM_STATEMENTS: &[u16] = &[kind!("program_statement")];
+    static MODULE_STATEMENTS: &[u16] = &[kind!("module_statement"), kind!("submodule_statement")];
+    static PROCEDURE_STATEMENTS: &[u16] = &[
+        kind!("subroutine_statement"),
+        kind!("function_statement"),
+        kind!("function"),
     ];
-    static INTERFACE_STATEMENTS: &[&str] = &["interface_statement"];
-    static LINE_CONTINUATION_STATEMENTS: &[&str] = &["line_continuation"];
+    static TYPE_STATEMENTS: &[u16] = &[kind!("derived_type_statement")];
+    static CONTROL_FLOW_STATEMENTS: &[u16] = &[
+        kind!("block_construct"),
+        kind!("if_statement"),
+        kind!("where_statement"),
+        kind!("select_case_statement"),
+        kind!("select_type_statement"),
+        kind!("select_rank_statement"),
+        kind!("block_label"),
+        kind!("do_statement"),
+        kind!("associate_statement"),
+    ];
+    static INTERFACE_STATEMENTS: &[u16] = &[kind!("interface_statement")];
+    static LINE_CONTINUATION_STATEMENTS: &[u16] = &[kw!("&")];
 
     impl IncorrectIndentationSettings {
         pub fn default_from_indent_width(indent_width: usize) -> Self {
