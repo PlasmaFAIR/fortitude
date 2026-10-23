@@ -78,7 +78,20 @@ C032 Magic unit '6_4' in IO statement
 11 |
 12 |   write(6_4, *) i
    |         ^^^
-13 |
-14 |   open(newunit=named_unit, file="test.txt", action="write")
+13 |   write(1&
+14 |     &0, *) i
+   |
+help: Replace with named variable
+
+C032 Magic unit '10' in IO statement
+  --> ./resources/test/fixtures/correctness/C032.f90:13:9
+   |
+12 |     write(6_4, *) i
+13 |     write(1&
+   |  _________^
+14 | |     &0, *) i
+   | |______^
+15 |
+16 |     open(newunit=named_unit, file="test.txt", action="write")
    |
 help: Replace with named variable

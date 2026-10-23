@@ -117,8 +117,8 @@ C031 Magic number `10_8` in array size
 10 |   integer, dimension(0:NUM_POINTS) :: J
 11 |   integer :: K(10_8), N(4_8), O(3000000000_8)
    |                ^^^^
-12 | contains
-13 |   subroutine foo(L, M)
+12 |   integer :: P(1&
+13 |     &0), Q(4& ! comment
    |
 help: Replace with named `parameter`
 
@@ -129,79 +129,92 @@ C031 Magic number `3000000000_8` in array size
 10 |   integer, dimension(0:NUM_POINTS) :: J
 11 |   integer :: K(10_8), N(4_8), O(3000000000_8)
    |                                 ^^^^^^^^^^^^
-12 | contains
-13 |   subroutine foo(L, M)
-   |
-help: Replace with named `parameter`
-
-C031 Magic number `8` in array size
-  --> ./resources/test/fixtures/correctness/C031.f90:14:24
-   |
-12 | contains
-13 |   subroutine foo(L, M)
-14 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
-   |                        ^
-15 |     integer, intent(out) :: M(57)
-16 |   end subroutine foo
-   |
-help: Replace with named `parameter`
-
-C031 Magic number `9` in array size
-  --> ./resources/test/fixtures/correctness/C031.f90:14:26
-   |
-12 | contains
-13 |   subroutine foo(L, M)
-14 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
-   |                          ^
-15 |     integer, intent(out) :: M(57)
-16 |   end subroutine foo
+12 |   integer :: P(1&
+13 |     &0), Q(4& ! comment
    |
 help: Replace with named `parameter`
 
 C031 Magic number `10` in array size
-  --> ./resources/test/fixtures/correctness/C031.f90:14:29
+  --> ./resources/test/fixtures/correctness/C031.f90:12:16
    |
-12 | contains
-13 |   subroutine foo(L, M)
-14 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+10 |     integer, dimension(0:NUM_POINTS) :: J
+11 |     integer :: K(10_8), N(4_8), O(3000000000_8)
+12 |     integer :: P(1&
+   |  ________________^
+13 | |     &0), Q(4& ! comment
+   | |______^
+14 |       ! comment line
+   |
+help: Replace with named `parameter`
+
+C031 Magic number `8` in array size
+  --> ./resources/test/fixtures/correctness/C031.f90:19:24
+   |
+17 | contains
+18 |   subroutine foo(L, M)
+19 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                        ^
+20 |     integer, intent(out) :: M(57)
+21 |   end subroutine foo
+   |
+help: Replace with named `parameter`
+
+C031 Magic number `9` in array size
+  --> ./resources/test/fixtures/correctness/C031.f90:19:26
+   |
+17 | contains
+18 |   subroutine foo(L, M)
+19 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+   |                          ^
+20 |     integer, intent(out) :: M(57)
+21 |   end subroutine foo
+   |
+help: Replace with named `parameter`
+
+C031 Magic number `10` in array size
+  --> ./resources/test/fixtures/correctness/C031.f90:19:29
+   |
+17 | contains
+18 |   subroutine foo(L, M)
+19 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
    |                             ^^
-15 |     integer, intent(out) :: M(57)
-16 |   end subroutine foo
+20 |     integer, intent(out) :: M(57)
+21 |   end subroutine foo
    |
 help: Replace with named `parameter`
 
 C031 Magic number `11` in array size
-  --> ./resources/test/fixtures/correctness/C031.f90:14:33
+  --> ./resources/test/fixtures/correctness/C031.f90:19:33
    |
-12 | contains
-13 |   subroutine foo(L, M)
-14 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+17 | contains
+18 |   subroutine foo(L, M)
+19 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
    |                                 ^^
-15 |     integer, intent(out) :: M(57)
-16 |   end subroutine foo
+20 |     integer, intent(out) :: M(57)
+21 |   end subroutine foo
    |
 help: Replace with named `parameter`
 
 C031 Magic number `12` in array size
-  --> ./resources/test/fixtures/correctness/C031.f90:14:36
+  --> ./resources/test/fixtures/correctness/C031.f90:19:36
    |
-12 | contains
-13 |   subroutine foo(L, M)
-14 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+17 | contains
+18 |   subroutine foo(L, M)
+19 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
    |                                    ^^
-15 |     integer, intent(out) :: M(57)
-16 |   end subroutine foo
+20 |     integer, intent(out) :: M(57)
+21 |   end subroutine foo
    |
 help: Replace with named `parameter`
 
 C031 Magic number `57` in array size
-  --> ./resources/test/fixtures/correctness/C031.f90:15:31
+  --> ./resources/test/fixtures/correctness/C031.f90:20:31
    |
-13 |   subroutine foo(L, M)
-14 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
-15 |     integer, intent(out) :: M(57)
+18 |   subroutine foo(L, M)
+19 |     integer, dimension(8:9, 10, 11:12), intent(in) :: L
+20 |     integer, intent(out) :: M(57)
    |                               ^^
-16 |   end subroutine foo
-17 | end module test
+21 |   end subroutine foo
+22 | end module test
    |
 help: Replace with named `parameter`
