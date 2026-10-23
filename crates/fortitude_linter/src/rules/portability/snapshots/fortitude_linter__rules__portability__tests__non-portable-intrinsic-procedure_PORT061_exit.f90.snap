@@ -86,7 +86,7 @@ help: Replace with `stop 123456`
 25 | call abort  ! non-standard
 note: This is an unsafe fix and may change runtime behavior
 
-PORT061 [*] Use of non-portable `exit` call
+PORT061 [*] Use of non-portable `EXIT` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:23:1
    |
 21 | call exit(1)  ! non-standard
@@ -107,7 +107,7 @@ help: Replace with `stop ierr`
 26 | call abort(1)  ! non-standard
 note: This is an unsafe fix and may change runtime behavior
 
-PORT061 Use of non-portable `exit` call
+PORT061 [*] Use of non-portable `exit` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:24:1
    |
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
@@ -117,7 +117,16 @@ PORT061 Use of non-portable `exit` call
 25 | call abort  ! non-standard
 26 | call abort(1)  ! non-standard
    |
-help: Replace with `stop`
+help: Replace with `stop 2`
+21 | call exit(1)  ! non-standard
+22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
+23 | call EXIT(ierr)  ! non-standard
+   - call exit(status=2)  ! non-standard
+24 + stop 2  ! non-standard
+25 | call abort  ! non-standard
+26 | call abort(1)  ! non-standard
+27 | call abort(123456)  ! non-standard
+note: This is an unsafe fix and may change runtime behavior
 
 PORT061 [*] Use of non-portable `abort` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:25:1
