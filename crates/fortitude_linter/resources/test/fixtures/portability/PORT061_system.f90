@@ -13,9 +13,13 @@ contains
 end module test_user_defined
 
 program main
-implicit none
+implicit none(type, external)
 integer :: status
 call system("dir")  ! non-standard
 call execute_command_line("dir")
 status = system("ls") ! non-standard, can't auto-fix
+
+! non-standard, with arguments
+call system("ls", status)
+call system("ls", STATUS=status)
 end program main

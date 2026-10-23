@@ -4,7 +4,8 @@ use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
 use fortitude_sitter::Node;
 use fortitude_sitter::ast::types::{HasName, ProcedureCall};
-use fortitude_sitter::traits::HasNode;
+use fortitude_sitter::traits::{HasNode, TextRanged};
+use ruff_diagnostics::Edit;
 use ruff_macros::derive_message_formats;
 
 /// ## What it does
@@ -119,6 +120,7 @@ impl Violation for NonPortableIntrinsicProcedure {
 }
 
 /// Create diagnostic with a straight-forward replacement
+#[expect(dead_code)]
 fn create_replacement(
     context: &CheckContext,
     procedure: ProcedureCall,
@@ -155,6 +157,40 @@ fn create_non_replacement(
     diagnostic.help(help);
 
     some_vec![diagnostic]
+}
+
+/// Create diagnostic with a straight-forward replacement
+fn system_replacement(context: &CheckContext, procedure: ProcedureCall) -> Option<Vec<Diagnostic>> {
+    let node = procedure.name().node();
+    let replacement = "execute_command_line";
+    let edit = node.edit_replacement(replacement.to_string());
+    let replacement = Some(replacement.to_string());
+    let name = procedure.name().to_string();
+
+    let mut rest = vec![];
+
+    if let Some(arg) = procedure.arg(1) {
+        // if we have two positional arguments, the second one is status and needs
+        // keyword `exitstat=` appending
+
+        let arg_edit = Edit::insertion("exitstat=".to_string(), arg.start_textsize());
+        rest.push(arg_edit);
+    } else if let Some(status) = procedure.kwarg("status") {
+        // if we have kwarg status, it needs replacing with `exitstat`
+        let kwarg_edit = status
+            .name()
+            .node()
+            .edit_replacement("exitstat".to_string());
+        rest.push(kwarg_edit);
+    }
+
+    let fix = Fix::unsafe_edits(edit, rest);
+
+    some_vec![
+        context
+            .create_diagnostic(NonPortableIntrinsicProcedure { name, replacement }, node)
+            .with_fix(fix)
+    ]
 }
 
 /// Work out the `stop` or `error stop` statement that replaces a call to `exit` or
@@ -250,10 +286,7 @@ impl AstRule for NonPortableIntrinsicProcedure {
         let is_subroutine = procedure.kind().is_subroutine();
 
         match procedure.name().as_lower().as_ref() {
-            "system" if is_subroutine => {
-                // TODO(peter): also handle `status` argument
-                create_replacement(context, procedure, "execute_command_line")
-            }
+            "system" if is_subroutine => system_replacement(context, procedure),
             // `system` as a function -- could be replaced by subroutine if not in expression
             "system" => create_non_replacement(context, procedure, "execute_command_line"),
             "abort" | "exit" if is_subroutine => create_stop_replacement(context, procedure),
