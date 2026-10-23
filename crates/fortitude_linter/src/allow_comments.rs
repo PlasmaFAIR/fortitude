@@ -11,7 +11,7 @@ use fortitude_sitter::traits::TextRanged;
 use crate::diagnostics::{Diagnostic, Edit, Fix};
 use fortitude_sitter::Node;
 use itertools::Itertools;
-use lazy_regex::{regex, regex_captures};
+use lazy_regex::regex;
 use ruff_source_file::SourceFile;
 use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashSet;
@@ -55,7 +55,9 @@ pub fn gather_allow_comments<'a>(
 
     let mut codes = Vec::new();
 
-    let (_, allow_comment) = regex_captures!(r#"! *allow\((.*)\)\s*"#, node.text())?;
+    let allow_comment = regex!(r#"! *allow\((.*)\)\s*"#)
+        .captures(node.text())?
+        .get(1)?;
     let range = {
         let next_node = node.next_named_sibling()?;
         let start_byte = next_node.start_textsize();
@@ -76,9 +78,10 @@ pub fn gather_allow_comments<'a>(
 
     // Partition the found selectors into valid and invalid
     let rule_regex = regex!(r#"\w[-\w\d]*"#);
-    // 8 from length of "! allow("
-    let comment_start_offset = node.start_textsize() + TextSize::new(8);
-    for rule in rule_regex.find_iter(allow_comment) {
+    // Offset of the start of the list of codes from the start of the comment
+    let comment_start_offset =
+        node.start_textsize() + TextSize::try_from(allow_comment.start()).unwrap();
+    for rule in rule_regex.find_iter(allow_comment.as_str()) {
         let start = comment_start_offset + TextSize::try_from(rule.start()).unwrap();
         let end = comment_start_offset + TextSize::try_from(rule.end()).unwrap();
         let loc = TextRange::new(start, end);
