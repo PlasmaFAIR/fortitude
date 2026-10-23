@@ -553,6 +553,40 @@ end function foo
     }
 
     #[test]
+    fn parameterised_derived_type() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = r#"
+module foo
+  type :: bar(k, n)
+    integer, kind :: k = 4
+    integer, LEN :: n
+    real(kind=k) :: x(n)
+  end type bar
+end module foo
+"#;
+        let tree = parser.parse(code, None).context("Failed to parse")?;
+        let root = tree.root_node().child(0).context("Missing child")?;
+
+        let derived_type = root.named_child(1).context("Missing derived type")?;
+
+        let mut symbol_table = SymbolTables::default();
+        symbol_table.push_table(SymbolTable::new(&root)?);
+        symbol_table.push_table(SymbolTable::new(&derived_type)?);
+
+        let k = symbol_table.get_var("k");
+        assert!(k.is_some());
+        assert!(k.unwrap().has_attribute(AttributeKind::Kind));
+
+        let n = symbol_table.get_var("n");
+        assert!(n.is_some());
+        assert!(n.unwrap().has_attribute(AttributeKind::Len));
+
+        Ok(())
+    }
+
+    #[test]
     fn function_variable() -> Result<()> {
         let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
