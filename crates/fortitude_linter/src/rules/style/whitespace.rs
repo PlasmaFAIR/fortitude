@@ -419,8 +419,7 @@ const BEGIN_SCOPE_NODES: [&str; 18] = [
     "select_case_statement",
     "select_type_statement",
     "select_rank_statement",
-    // loop and statement needed to catch case of checking parent of block_label_start_expression
-    "do_loop",
+    "block_label",
     "do_statement",
     "associate_statement",
     "where_statement",
@@ -549,10 +548,9 @@ pub(crate) fn check_incorrect_indent(context: &CheckContext, root: &Node) -> Vec
                 content_start.to_usize() + 1,
             ) {
                 // Handle block labels, module procedures and functions beginning with their return type by taking their parent
-                let node = if (matches!(line_segment_node.kind(), "block_label_start_expression"))
-                    || (matches!(line_segment_node.kind(), "intrinsic_type")
-                        && !line_segment.contains("::")
-                        || (matches!(line_segment_node.kind(), "procedure_qualifier")))
+                let node = if matches!(line_segment_node.kind(), "intrinsic_type")
+                    && !line_segment.contains("::")
+                    || (matches!(line_segment_node.kind(), "procedure_qualifier"))
                 {
                     line_segment_node
                         .ancestors()
@@ -765,7 +763,7 @@ pub mod settings {
         "select_case_statement",
         "select_type_statement",
         "select_rank_statement",
-        "do_loop",
+        "block_label",
         "do_statement",
         "associate_statement",
     ];
