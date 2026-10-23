@@ -121,7 +121,6 @@ impl Violation for NonPortableIntrinsicProcedure {
 }
 
 /// Create diagnostic with a straight-forward replacement
-#[expect(dead_code)]
 fn create_replacement(
     context: &CheckContext,
     procedure: ProcedureCall,
@@ -298,6 +297,8 @@ impl AstRule for NonPortableIntrinsicProcedure {
         }
         let is_subroutine = procedure.kind().is_subroutine();
 
+        // TODO: add min std to all replacements
+
         match procedure.name().as_lower().as_ref() {
             "system" if is_subroutine => system_replacement(context, procedure),
             // `system` as a function -- could be replaced by subroutine if not in expression
@@ -305,6 +306,7 @@ impl AstRule for NonPortableIntrinsicProcedure {
             "abort" | "exit" if is_subroutine => create_stop_replacement(context, procedure),
             "srand" if is_subroutine => create_non_replacement(context, procedure, "random_seed"),
             "rand" if !is_subroutine => create_non_replacement(context, procedure, "random_number"),
+            "iargc" if !is_subroutine => create_replacement(context, procedure, "command_argument_count"),
             _ => None,
         }
     }
