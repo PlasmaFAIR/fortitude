@@ -100,6 +100,7 @@ pub(crate) struct NonPortableIntrinsicProcedure {
     /// Extension name
     name: String,
     /// Standard name
+    // TODO(peter): make non-option
     replacement: Option<String>,
 }
 
@@ -194,43 +195,49 @@ fn system_replacement(context: &CheckContext, procedure: ProcedureCall) -> Optio
 }
 
 /// Work out the `stop` or `error stop` statement that replaces a call to `exit` or
-/// `abort`, if there is a safe way to write one for the targeted standard.
-fn stop_replacement(context: &CheckContext, node: &Node, keyword: &str) -> Option<String> {
-    let Some(arguments) = node.child_with_id(kind!("argument_list")) else {
-        return Some(keyword.to_string());
-    };
-
-    let mut cursor = arguments.walk();
-    let mut args = arguments
-        .named_children(&mut cursor)
-        .filter(|arg| arg.kind_id() != kind!("comment"));
-
-    let Some(arg) = args.next() else {
-        return Some(keyword.to_string());
+/// `abort`, along with the minimum standard that supports the replacement
+fn stop_replacement(procedure: &ProcedureCall, keyword: &str) -> (Option<String>, FortranStandard) {
+    if procedure.args().is_empty() && procedure.kwargs().is_empty() {
+        return (Some(keyword.to_string()), FortranStandard::default());
     };
 
     // More than one argument: no fix
-    if args.next().is_some() {
-        return None;
+    if procedure.args().len() + procedure.kwargs().len() > 1 {
+        return (None, FortranStandard::default());
     }
+
+    let arg = if let Some(arg) = procedure.arg(0) {
+        arg
+    } else if let Some(kwarg) = procedure.kwarg("status") {
+        kwarg.value()
+    } else {
+        return (None, FortranStandard::default());
+    };
 
     let text = arg.text();
     match arg.kind_id() {
-        kind!("keyword_argument") => None,
         kind!("number_literal") => {
             // Only plain integers: no kind suffixes, no real numbers
             let is_integer = text.bytes().all(|b| b.is_ascii_digit());
             // Before Fortran 2008, a stop code has at most 5 digits
-            let fits = text.len() <= 5 || context.settings().target_std >= FortranStandard::F2008;
-            (is_integer && fits).then(|| format!("{keyword} {text}"))
+            let min_standard = if text.len() <= 5 {
+                FortranStandard::default()
+            } else {
+                FortranStandard::F2008
+            };
+
+            (
+                is_integer.then(|| format!("{keyword} {text}")),
+                min_standard,
+            )
         }
         // String literals are valid stop codes in every standard
-        kind!("string_literal") => Some(format!("{keyword} {text}")),
+        kind!("string_literal") => (
+            Some(format!("{keyword} {text}")),
+            FortranStandard::default(),
+        ),
         // Any other expression is only allowed from Fortran 2018
-        _ if context.settings().target_std >= FortranStandard::F2018 => {
-            Some(format!("{keyword} {text}"))
-        }
-        _ => None,
+        _ => (Some(format!("{keyword} {text}")), FortranStandard::F2018),
     }
 }
 
@@ -240,35 +247,41 @@ fn create_stop_replacement(
     context: &CheckContext,
     procedure: ProcedureCall,
 ) -> Option<Vec<Diagnostic>> {
-    let name = procedure.name().as_str().to_ascii_lowercase();
+    let name = procedure.name().as_str();
     let node = procedure.node();
-    let replacement = if name == "abort" {
-        // `error stop` was added in Fortran 2008
-        if context.settings().target_std >= FortranStandard::F2008 {
-            stop_replacement(context, node, "error stop")
-        } else {
-            None
-        }
-    } else {
-        stop_replacement(context, node, "stop")
-    };
+    let is_abort = name.eq_ignore_ascii_case("abort");
+    let standard = if is_abort { "error stop" } else { "stop" };
+
+    let (replacement, min_standard) = stop_replacement(&procedure, standard);
 
     let mut diagnostic = context.create_diagnostic(
         NonPortableIntrinsicProcedure {
-            name: name.clone(),
+            name: name.to_string(),
             replacement: replacement.clone(),
         },
         node,
     );
+
     if let Some(text) = replacement {
-        diagnostic = diagnostic.with_fix(Fix::unsafe_edit(node.edit_replacement(text)));
-    } else {
-        let replacement = if name == "abort" {
-            "error stop"
+        let min_std = if is_abort {
+            // `error stop` was added in Fortran 2008
+            FortranStandard::F2008.max(min_standard)
         } else {
-            "stop"
+            min_standard
         };
-        diagnostic.help(format!("Replace with `{replacement}`"));
+
+        let edit = node.edit_replacement(text);
+        let target_std = context.settings().target_std;
+        let fix = if target_std < min_std {
+            diagnostic.info(format!("This fix requires Fortran standard {min_std} which is above the target standard of {target_std}"));
+            Fix::display_only_edit(edit)
+        } else {
+            Fix::unsafe_edit(edit)
+        };
+
+        diagnostic = diagnostic.with_fix(fix);
+    } else {
+        diagnostic.help(format!("Replace with `{standard}`"));
     }
     some_vec!(diagnostic)
 }
