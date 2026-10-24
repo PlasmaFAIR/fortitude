@@ -1336,7 +1336,7 @@ The number of spaces to indent the contents of a derived type
 #### [`ignore-comments`](#check_indentation_ignore-comments) {: #check_indentation_ignore-comments }
 <span id="ignore-comments"></span>
 
-Whether to ignore comment lines (those beginning with `!`) when checking indentation.
+Whether to ignore comment lines when checking indentation.
 
 **Default value**: `false`
 
