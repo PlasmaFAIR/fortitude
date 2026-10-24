@@ -1333,6 +1333,38 @@ The number of spaces to indent the contents of a derived type
 
 ---
 
+#### [`ignore-comments`](#check_indentation_ignore-comments) {: #check_indentation_ignore-comments }
+<span id="ignore-comments"></span>
+
+Whether to ignore comment lines (those beginning with `!`) when checking indentation.
+
+**Default value**: `false`
+
+**Type**: `bool`
+
+**Example usage**:
+
+=== "`fpm.toml`"
+
+    ```toml
+    [extra.fortitude.check.indentation]
+    ignore-comments = true
+    ```
+=== "`fortitude.toml` or `.fortitude.toml`"
+
+    ```toml
+    [check.indentation]
+    ignore-comments = true
+    ```
+=== "`pyproject.toml`"
+
+    ```toml
+    [tool.fortitude.check.indentation]
+    ignore-comments = true
+    ```
+
+---
+
 #### [`interface-indent`](#check_indentation_interface-indent) {: #check_indentation_interface-indent }
 <span id="interface-indent"></span>
 

@@ -351,6 +351,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// - `check.indentation.derived-type-indent`
 /// - `check.indentation.control-flow-indent`
 /// - `check.indentation.interface-indent`
+/// - `check.indentation.ignore-comments`
 #[derive(ViolationMetadata)]
 pub(crate) struct IncorrectIndentation {
     actual: usize,
@@ -432,6 +433,11 @@ pub(crate) fn check_incorrect_indent(
                 );
             }
             if !preproc && context.is_rule_enabled(Rule::IncorrectIndentation) {
+                if context.settings().indentation.ignore_comments
+                    && line.text().trim_start().starts_with('!')
+                {
+                    continue;
+                }
                 let edit = if let Some(label) = label {
                     let padding = " ".repeat(expected_indent - label.len());
                     Edit::range_replacement(format!("{label}{padding}"), indentation_range)
@@ -1120,6 +1126,34 @@ subroutine assumed_rank(A)
 end subroutine
 "#;
         verify_s105_fixes(before, expected, "")
+    }
+
+    #[test_case(false, "  ! misplaced comment"; "fixed by default")]
+    #[test_case(true, "    ! misplaced comment"; "left alone when ignore-comments set")]
+    fn ignore_comments(ignore: bool, expected_comment: &str) -> Result<()> {
+        let before = r#"
+subroutine comments(x)
+  integer, intent(inout) :: x
+    ! misplaced comment
+  x = 1
+end subroutine comments
+"#;
+        let expected = format!(
+            r#"
+subroutine comments(x)
+  integer, intent(inout) :: x
+{expected_comment}
+  x = 1
+end subroutine comments
+"#
+        );
+        let toml_contents = format!(
+            r#"
+[check.indentation]
+ignore-comments = {ignore}
+"#
+        );
+        verify_s105_fixes(before, &expected, &toml_contents)
     }
 
     #[test]

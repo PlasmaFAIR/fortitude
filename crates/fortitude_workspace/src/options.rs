@@ -634,6 +634,14 @@ pub struct IndentationOptions {
         example = "interface-indent = 2"
     )]
     pub interface_indent: Option<u8>,
+
+    /// Whether to ignore comment lines when checking indentation.
+    #[option(
+        default = "false",
+        value_type = "bool",
+        example = "ignore-comments = true"
+    )]
+    pub ignore_comments: Option<bool>,
 }
 
 impl IndentationOptions {
@@ -645,6 +653,7 @@ impl IndentationOptions {
             derived_type_indent: self.derived_type_indent,
             control_flow_indent: self.control_flow_indent,
             interface_indent: self.interface_indent,
+            ignore_comments: self.ignore_comments.unwrap_or_default(),
         }
     }
 }

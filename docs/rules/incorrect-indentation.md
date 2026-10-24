@@ -22,6 +22,7 @@ they are often indented differently for readability.
 - [`check.indentation.derived-type-indent`][check.indentation.derived-type-indent]
 - [`check.indentation.control-flow-indent`][check.indentation.control-flow-indent]
 - [`check.indentation.interface-indent`][check.indentation.interface-indent]
+- [`check.indentation.ignore-comments`][check.indentation.ignore-comments]
 
 
 [check.indent-width]: ../settings.md#check_indent-width
@@ -31,4 +32,5 @@ they are often indented differently for readability.
 [check.indentation.derived-type-indent]: ../settings.md#check_indentation_derived-type-indent
 [check.indentation.control-flow-indent]: ../settings.md#check_indentation_control-flow-indent
 [check.indentation.interface-indent]: ../settings.md#check_indentation_interface-indent
+[check.indentation.ignore-comments]: ../settings.md#check_indentation_ignore-comments
 

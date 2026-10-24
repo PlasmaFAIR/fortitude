@@ -14,6 +14,7 @@ pub struct IndentationSettings {
     pub derived_type_indent: Option<u8>,
     pub control_flow_indent: Option<u8>,
     pub interface_indent: Option<u8>,
+    pub ignore_comments: bool,
 }
 
 impl fmt::Display for IndentationSettings {
@@ -28,6 +29,7 @@ impl fmt::Display for IndentationSettings {
                 self.derived_type_indent | optional,
                 self.control_flow_indent | optional,
                 self.interface_indent | optional,
+                self.ignore_comments,
             ]
         }
         Ok(())
