@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use crate::diagnostics::{Applicability, OutputRuleIdFormat, Severity};
-use crate::indentation::IndentWidth;
+use crate::indentation::{IndentWidth, IndentationSettings};
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_macros::CacheKey;
@@ -23,9 +23,7 @@ use crate::rule_selector::{CompiledPerFileIgnoreList, PreviewOptions, RuleSelect
 use crate::rule_table::RuleTable;
 use crate::rules::correctness::{exit_labels, shadowed_variable, use_statements};
 use crate::rules::portability::{self};
-use crate::rules::style::{
-    complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
-};
+use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
 
 #[derive(Debug)]
 pub struct Settings {
@@ -65,7 +63,8 @@ pub struct CheckSettings {
     pub per_file_ignores: CompiledPerFileIgnoreList,
 
     pub line_length: usize,
-    pub indent_width: IndentWidth,
+    /// `None` means the width is detected from the source by the `Stylist`.
+    pub indent_width: Option<IndentWidth>,
 
     pub fix: bool,
     pub fix_only: bool,
@@ -91,7 +90,7 @@ pub struct CheckSettings {
     pub line_too_long: line_length::settings::Settings,
     pub use_statements: use_statements::settings::Settings,
     pub complexity: complexity::settings::Settings,
-    pub incorrect_indentation: whitespace::settings::IncorrectIndentationSettings,
+    pub incorrect_indentation: IndentationSettings,
 }
 
 impl Default for CheckSettings {
@@ -102,8 +101,6 @@ impl Default for CheckSettings {
 
 impl CheckSettings {
     fn new(project_root: &Path) -> Self {
-        let indent_width = IndentWidth::from(4);
-
         Self {
             project_root: project_root.to_path_buf(),
             rules: DEFAULT_SELECTORS
@@ -112,7 +109,7 @@ impl CheckSettings {
                 .collect(),
             per_file_ignores: CompiledPerFileIgnoreList::default(),
             line_length: 100,
-            indent_width,
+            indent_width: None,
             fix: false,
             fix_only: false,
             show_fixes: false,
@@ -135,10 +132,7 @@ impl CheckSettings {
             line_too_long: line_length::settings::Settings::default(),
             use_statements: use_statements::settings::Settings::default(),
             complexity: complexity::settings::Settings::default(),
-            incorrect_indentation:
-                whitespace::settings::IncorrectIndentationSettings::default_from_indent_width(
-                    indent_width.as_usize(),
-                ),
+            incorrect_indentation: IndentationSettings::default(),
         }
     }
 
@@ -180,7 +174,7 @@ impl fmt::Display for CheckSettings {
                 self.rules | nested,
                 self.per_file_ignores,
                 self.line_length,
-                self.indent_width,
+                self.indent_width | optional,
                 self.fix,
                 self.fix_only,
                 self.show_fixes,

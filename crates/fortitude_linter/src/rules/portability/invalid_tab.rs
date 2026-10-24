@@ -48,7 +48,7 @@ pub(crate) fn check_invalid_tab(context: &CheckContext, root: &Node) -> Vec<Diag
         .map(|(index, _)| {
             let start = TextSize::try_from(index).unwrap();
             let range = TextRange::new(start, start + TextSize::new(1));
-            let width = context.settings().indent_width.as_usize();
+            let width = context.indent_width().as_usize();
             let indent = format!("{:width$}", " ");
             let edit = Edit::range_replacement(indent, range);
             context

@@ -1229,7 +1229,7 @@ Default behaviour is to keep the current method.
 
 ### `check.incorrect-indentation`
 
-Options for the `incorrect-indentation` rule. The indent widths all default to using [`check.indent-width`](#check_indent-width)
+Options to set indentation preferences. The indent widths all default to using [`check.indent-width`](#check_indent-width)
 
 #### [`control-flow-indent`](#check_incorrect-indentation_control-flow-indent) {: #check_incorrect-indentation_control-flow-indent }
 <span id="control-flow-indent"></span>
@@ -1295,38 +1295,6 @@ The number of spaces to indent the contents of a derived type
 
 ---
 
-#### [`ignore-semicolons`](#check_incorrect-indentation_ignore-semicolons) {: #check_incorrect-indentation_ignore-semicolons }
-<span id="ignore-semicolons"></span>
-
-Whether to indent the contents of a program
-
-**Default value**: `true`
-
-**Type**: `bool`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    indent-programs = false
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    indent-programs = false
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    indent-programs = false
-    ```
-
----
-
 #### [`interface-indent`](#check_incorrect-indentation_interface-indent) {: #check_incorrect-indentation_interface-indent }
 <span id="interface-indent"></span>
 
@@ -1355,38 +1323,6 @@ The number of spaces to indent the contents of a interface
     ```toml
     [tool.fortitude.check.incorrect-indentation]
     interface-indent = 2
-    ```
-
----
-
-#### [`line-continuation-indent`](#check_incorrect-indentation_line-continuation-indent) {: #check_incorrect-indentation_line-continuation-indent }
-<span id="line-continuation-indent"></span>
-
-The number of spaces to indent after a line continuation (`&`)
-
-**Default value**: ``check.indent-width``
-
-**Type**: `int`
-
-**Example usage**:
-
-=== "`fpm.toml`"
-
-    ```toml
-    [extra.fortitude.check.incorrect-indentation]
-    line-continuation-indent = 2
-    ```
-=== "`fortitude.toml` or `.fortitude.toml`"
-
-    ```toml
-    [check.incorrect-indentation]
-    line-continuation-indent = 2
-    ```
-=== "`pyproject.toml`"
-
-    ```toml
-    [tool.fortitude.check.incorrect-indentation]
-    line-continuation-indent = 2
     ```
 
 ---

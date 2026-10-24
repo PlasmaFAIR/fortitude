@@ -345,14 +345,12 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 ///
 /// ## Options
 /// - `check.indent-width`
-/// - `check.incorrect-indentation.ignore-semicolons`
 /// - `check.incorrect-indentation.program-indent`
 /// - `check.incorrect-indentation.module-indent`
 /// - `check.incorrect-indentation.procedure-indent`
 /// - `check.incorrect-indentation.derived-type-indent`
 /// - `check.incorrect-indentation.control-flow-indent`
 /// - `check.incorrect-indentation.interface-indent`
-/// - `check.incorrect-indentation.line-continuation-indent`
 #[derive(ViolationMetadata)]
 pub(crate) struct IncorrectIndentation {
     actual: usize,
@@ -450,121 +448,6 @@ pub(crate) fn check_incorrect_indent(
         }
     }
     violations
-}
-
-pub mod settings {
-    use crate::display_settings;
-    use ruff_macros::CacheKey;
-    use std::{collections::HashMap, fmt::Display};
-
-    #[derive(Debug, Clone, CacheKey)]
-    pub struct IncorrectIndentationSettings {
-        pub ignore_semicolons: bool,
-        pub program_indent: usize,
-        pub module_indent: usize,
-        pub procedure_indent: usize,
-        pub derived_type_indent: usize,
-        pub control_flow_indent: usize,
-        pub interface_indent: usize,
-        pub line_continuation_indent: usize,
-    }
-
-    impl Default for IncorrectIndentationSettings {
-        fn default() -> Self {
-            Self {
-                ignore_semicolons: true,
-                program_indent: 4usize,
-                module_indent: 4usize,
-                procedure_indent: 4usize,
-                derived_type_indent: 4usize,
-                control_flow_indent: 4usize,
-                interface_indent: 4usize,
-                line_continuation_indent: 4usize,
-            }
-        }
-    }
-
-    pub struct IndentMap(HashMap<&'static str, usize>);
-
-    impl IndentMap {
-        pub fn get_indent(&self, construct: &str) -> usize {
-            *self.0.get(construct).unwrap()
-        }
-    }
-
-    static PROGRAM_STATEMENTS: &[&str] = &["program_statement"];
-    static MODULE_STATEMENTS: &[&str] = &["module_statement", "submodule_statement"];
-    static PROCEDURE_STATEMENTS: &[&str] =
-        &["subroutine_statement", "function_statement", "function"];
-    static TYPE_STATEMENTS: &[&str] = &["derived_type_statement"];
-    static CONTROL_FLOW_STATEMENTS: &[&str] = &[
-        "block_construct",
-        "if_statement",
-        "where_statement",
-        "select_case_statement",
-        "select_type_statement",
-        "select_rank_statement",
-        "do_loop",
-        "do_statement",
-        "associate_statement",
-    ];
-    static INTERFACE_STATEMENTS: &[&str] = &["interface_statement"];
-    static LINE_CONTINUATION_STATEMENTS: &[&str] = &["line_continuation"];
-
-    impl IncorrectIndentationSettings {
-        pub fn default_from_indent_width(indent_width: usize) -> Self {
-            Self {
-                ignore_semicolons: true,
-                program_indent: indent_width,
-                module_indent: indent_width,
-                procedure_indent: indent_width,
-                derived_type_indent: indent_width,
-                control_flow_indent: indent_width,
-                interface_indent: indent_width,
-                line_continuation_indent: indent_width,
-            }
-        }
-
-        pub fn indent_map(&self) -> IndentMap {
-            let mut construct_to_indent_map = HashMap::new();
-
-            for (statements, value) in [
-                (PROGRAM_STATEMENTS, self.program_indent),
-                (MODULE_STATEMENTS, self.module_indent),
-                (PROCEDURE_STATEMENTS, self.procedure_indent),
-                (TYPE_STATEMENTS, self.derived_type_indent),
-                (CONTROL_FLOW_STATEMENTS, self.control_flow_indent),
-                (INTERFACE_STATEMENTS, self.interface_indent),
-                (LINE_CONTINUATION_STATEMENTS, self.line_continuation_indent),
-            ] {
-                for node in statements {
-                    construct_to_indent_map.insert(*node, value);
-                }
-            }
-
-            IndentMap(construct_to_indent_map)
-        }
-    }
-
-    impl Display for IncorrectIndentationSettings {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            display_settings! {
-                formatter = f,
-                namespace = "check.incorrect-indentation",
-                fields = [
-                    self.ignore_semicolons,
-                    self.program_indent,
-                    self.module_indent,
-                    self.procedure_indent,
-                    self.derived_type_indent,
-                    self.control_flow_indent,
-                    self.interface_indent,
-                    self.line_continuation_indent,
-                ]
-            }
-            Ok(())
-        }
-    }
 }
 
 #[cfg(test)]
@@ -1029,6 +912,10 @@ function do_construct
     named_do: do i = 1, 10
       print *, i
     end do
+    do 10 i = 1, 10
+      do 10 j = i, 10
+        x = i * j
+    10 continue
 end function do_construct"#; "indent 2"
     )]
     #[test_case(
@@ -1126,54 +1013,6 @@ end subroutine associates"#;
         verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
     }
 
-    #[test_case(
-        8,
-        r#"
-function wrapped_function( &
-        i &
-)
-    integer, intent(in) :: i
-    print *, x
-    i = i + 1 &
-            + 2 &
-            + 3
-end function wrapped_function"#; "indent 2"
-    )]
-    #[test_case(
-        0,
-        r#"
-function wrapped_function( &
-i &
-)
-    integer, intent(in) :: i
-    print *, x
-    i = i + 1 &
-    + 2 &
-    + 3
-end function wrapped_function"#; "indent 0"
-    )]
-    fn line_continuation_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
-        let snippet = r#"
-function wrapped_function( &
-i &
-)
-integer, intent(in) :: i
-print *, x
-i = i + 1 &
-+ 2 &
-+ 3
-end function wrapped_function"#;
-        let toml_contents = format!(
-            r#"
-            [check.incorrect-indentation]
-            line-continuation-indent = {}
-            "#,
-            num_indents,
-        );
-
-        verify_s105_fixes(snippet, fixed_snippet, &toml_contents)
-    }
-
     #[test]
     fn where_statement() -> Result<()> {
         let before = r#"
@@ -1225,18 +1064,18 @@ end subroutine print_decorated_numbers
 
         let expected = r#"
 subroutine print_decorated_numbers(number)
-    class(*), intent(in) :: number
+  class(*), intent(in) :: number
 
-    select type(number)
-    type is (integer)
-        print*, 'integer'
-    type is (real)
-        print*, 'real'
-    class is (custom_type)
-        print*, 'custom'
-    class default
-        print*, 'not a number'
-    end select
+  select type(number)
+  type is (integer)
+    print*, 'integer'
+  type is (real)
+    print*, 'real'
+  class is (custom_type)
+    print*, 'custom'
+  class default
+    print*, 'not a number'
+  end select
 end subroutine print_decorated_numbers
 "#;
         verify_s105_fixes(before, expected, "")
@@ -1261,16 +1100,16 @@ end subroutine
 
         let expected = r#"
 subroutine assumed_rank(A)
-    integer, intent(inout) :: A(..)
+  integer, intent(inout) :: A(..)
 
-    select rank(A)
-    rank (0)
-        write(*, *) "scalar"
-    rank (1)
-        write(*, *) "rank 1"
-    rank default
-        error stop 'assumed_rank: only rank 0..2 is handled for now.'
-    end select
+  select rank(A)
+  rank (0)
+    write(*, *) "scalar"
+  rank (1)
+    write(*, *) "rank 1"
+  rank default
+    error stop 'assumed_rank: only rank 0..2 is handled for now.'
+  end select
 end subroutine
 "#;
         verify_s105_fixes(before, expected, "")

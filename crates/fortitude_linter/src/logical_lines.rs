@@ -13,6 +13,7 @@ pub(crate) struct LogicalLine<'source> {
     text: &'source str,
     range: TextRange,
     expected_indent: u8,
+    #[allow(dead_code)]
     ending: LogicalLineEnding,
 }
 
@@ -21,14 +22,11 @@ impl<'source> LogicalLine<'source> {
         self.text
     }
 
-    pub fn range(&self) -> TextRange {
-        self.range
-    }
-
     pub fn start_byte(&self) -> TextSize {
         self.range.start()
     }
 
+    #[allow(dead_code)]
     pub fn end_byte(&self) -> TextSize {
         self.range.end()
     }
@@ -46,6 +44,7 @@ impl<'source> LogicalLine<'source> {
         &self.text[..count]
     }
 
+    #[allow(dead_code)]
     pub fn ending(&self) -> &LogicalLineEnding {
         &self.ending
     }
@@ -59,12 +58,6 @@ impl<'source> LogicalLines<'source> {
     /// Returns an iterator over the logical lines
     pub fn iter(&self) -> impl Iterator<Item = &LogicalLine<'source>> {
         self.inner.iter()
-    }
-
-    /// Returns the number of lines
-    #[inline]
-    pub fn line_count(&self) -> usize {
-        self.inner.len()
     }
 }
 
@@ -238,6 +231,12 @@ impl<'source> LogicalLinesBuilder<'source> {
         // Dedentors and post-indentors affect the expected indentation of the
         // next logical line, so this must be performed after the current
         // logical line has been finalised.
+        let last_indent = self.indent_stack.last().copied().unwrap_or(0);
+        if DEDENTORS.contains(&kind_id) {
+            let dedent = self.indent_stack.pop().unwrap_or(0);
+            self.current_expected_indent = self.current_expected_indent.saturating_sub(dedent);
+            self.next_expected_indent = self.next_expected_indent.saturating_sub(dedent);
+        }
         if POST_INDENTORS.contains(&kind_id) {
             // Edge case: one-line if statements and where statements
             let one_line_if = kind_id == kind!("if_statement")
@@ -248,18 +247,13 @@ impl<'source> LogicalLinesBuilder<'source> {
                 let indent = if kind_id == kind!("contains_statement") {
                     // The indent is determined by the context in which the
                     // contains statement appears.
-                    self.indent_stack.last().copied().unwrap_or(0)
+                    last_indent
                 } else {
                     self.indent_map.get_indent(&kind_id)
                 };
                 self.next_expected_indent = self.current_expected_indent.saturating_add(indent);
                 self.indent_stack.push(indent);
             }
-        }
-        if DEDENTORS.contains(&kind_id) {
-            let dedent = self.indent_stack.pop().unwrap_or(0);
-            self.current_expected_indent = self.current_expected_indent.saturating_sub(dedent);
-            self.next_expected_indent = self.next_expected_indent.saturating_sub(dedent);
         }
 
         // Regardless of what happened, the current logical line is extended.

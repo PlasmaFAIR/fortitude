@@ -24,7 +24,7 @@ pub mod text_helpers;
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use diagnostics::{Diagnostic, Diagnostics, FixMap, Violation};
 use fix::{FixResult, fix_file};
-use indentation::IndentMap;
+use indentation::{IndentMap, IndentWidth};
 use line_filter::FilterSet;
 use locator::Locator;
 use logical_lines::LogicalLinesBuilder;
@@ -65,6 +65,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write};
 use std::iter::once;
+use std::num::NonZeroU8;
 use std::path::Path;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -121,6 +122,22 @@ impl<'a> CheckContext<'a> {
     #[inline]
     pub const fn any_rule_enabled(&self, rules: &[Rule]) -> bool {
         self.rules.any_enabled(rules)
+    }
+
+    /// The effective indent width: the user's setting, else the width detected by the
+    /// `Stylist`, else 4 (also used when the detected indentation is a tab).
+    pub fn indent_width(&self) -> IndentWidth {
+        self.settings.indent_width.unwrap_or_else(|| {
+            let indentation = self.stylist.indentation();
+            if indentation.chars().all(|c| c == ' ') {
+                u8::try_from(indentation.len())
+                    .ok()
+                    .and_then(NonZeroU8::new)
+                    .map_or_else(IndentWidth::default, IndentWidth::from)
+            } else {
+                IndentWidth::default()
+            }
+        })
     }
 
     /// Returns the source file.
@@ -308,9 +325,11 @@ pub(crate) fn check_path(
     // Perform AST analysis
     let root = tree.root_node();
     let mut comment_positions = HashSet::new();
-    // TODO! Build IndentMap from IndentationSettings and Stylist instead of using default
-    let mut logical_lines_builder =
-        LogicalLinesBuilder::new(file.source_text(), IndentMap::default());
+    let indent_map = IndentMap::from_settings(
+        &settings.incorrect_indentation,
+        context.indent_width().as_u8(),
+    );
+    let mut logical_lines_builder = LogicalLinesBuilder::new(file.source_text(), indent_map);
     let source_code = file.to_source_code();
     for node in once(root).chain(root.descendants()) {
         if context.is_rule_enabled(Rule::SyntaxError) && node.is_missing() {

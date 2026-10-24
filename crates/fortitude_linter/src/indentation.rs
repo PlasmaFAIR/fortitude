@@ -1,8 +1,38 @@
+use crate::display_settings;
 use fortitude_macros::kind;
 use ruff_macros::CacheKey;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::num::NonZeroU8;
+
+/// Per-construct indents; `None` falls back to the resolved `check.indent-width`.
+#[derive(Debug, Clone, Default, CacheKey)]
+pub struct IndentationSettings {
+    pub program_indent: Option<u8>,
+    pub module_indent: Option<u8>,
+    pub procedure_indent: Option<u8>,
+    pub derived_type_indent: Option<u8>,
+    pub control_flow_indent: Option<u8>,
+    pub interface_indent: Option<u8>,
+}
+
+impl fmt::Display for IndentationSettings {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        display_settings! {
+            formatter = f,
+            namespace = "check.incorrect-indentation",
+            fields = [
+                self.program_indent | optional,
+                self.module_indent | optional,
+                self.procedure_indent | optional,
+                self.derived_type_indent | optional,
+                self.control_flow_indent | optional,
+                self.interface_indent | optional,
+            ]
+        }
+        Ok(())
+    }
+}
 
 /// The size of a tab.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, CacheKey)]
@@ -13,7 +43,7 @@ impl IndentWidth {
         self.0.get() as usize
     }
 
-    pub(crate) fn as_u8(self) -> u8 {
+    pub fn as_u8(self) -> u8 {
         self.0.get()
     }
 }
@@ -155,13 +185,29 @@ impl IndentMap {
             | kind!("select_type_statement")
             | kind!("select_rank_statement")
             | kind!("do_statement")
-            | kind!("associate_statement") => self.control_flow_indent(),
+            | kind!("associate_statement")
+            | kind!("case_statement")
+            | kind!("type_statement")
+            | kind!("rank_statement")
+            | kind!("else_clause")
+            | kind!("elseif_clause")
+            | kind!("elsewhere_clause") => self.control_flow_indent(),
             kind!("interface_statement") => self.interface_indent(),
             _ => self.default_indent(),
         }
     }
 
-    // TODO! Function to build IndentMap from IndentationSettings and Stylist
+    pub fn from_settings(settings: &IndentationSettings, default_indent: u8) -> Self {
+        Self {
+            default_indent,
+            program_indent: settings.program_indent,
+            module_indent: settings.module_indent,
+            procedure_indent: settings.procedure_indent,
+            derived_type_indent: settings.derived_type_indent,
+            control_flow_indent: settings.control_flow_indent,
+            interface_indent: settings.interface_indent,
+        }
+    }
 }
 
 impl Default for IndentMap {

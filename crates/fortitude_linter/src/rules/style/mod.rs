@@ -28,13 +28,10 @@ mod tests {
     use test_case::test_case;
 
     use crate::apply_common_filters;
-    use crate::indentation::IndentWidth;
+    use crate::indentation::{IndentWidth, IndentationSettings};
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
-    use crate::rules::style::whitespace::settings::IncorrectIndentationSettings;
-    use crate::rules::style::{
-        complexity, inconsistent_dimension, keywords, line_length, strings, whitespace,
-    };
+    use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
     use crate::settings::CheckSettings;
     use crate::test::{test_contents, test_path};
 
@@ -140,33 +137,7 @@ mod tests {
         );
 
         let settings = CheckSettings {
-            indent_width: IndentWidth::from(2),
-            incorrect_indentation: IncorrectIndentationSettings::default_from_indent_width(2),
-            ..CheckSettings::for_rule(rule_code)
-        };
-        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
-        apply_common_filters!();
-        assert_snapshot!(snapshot, diagnostics);
-        Ok(())
-    }
-
-    #[test]
-    fn invalid_indentation_include_semicolons() -> Result<()> {
-        let rule_code = Rule::IncorrectIndentation;
-        let path = Path::new("S105.f90");
-        let snapshot = format!(
-            "{}_{}_include_semicolons",
-            rule_code.as_ref(),
-            path.to_string_lossy()
-        );
-
-        let incorrect_indentation_settings = whitespace::settings::IncorrectIndentationSettings {
-            ignore_semicolons: false,
-            ..Default::default()
-        };
-
-        let settings = CheckSettings {
-            incorrect_indentation: incorrect_indentation_settings,
+            indent_width: Some(IndentWidth::from(2)),
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
@@ -185,9 +156,9 @@ mod tests {
             path.to_string_lossy()
         );
 
-        let incorrect_indentation_settings = whitespace::settings::IncorrectIndentationSettings {
-            control_flow_indent: 0,
-            procedure_indent: 8,
+        let incorrect_indentation_settings = IndentationSettings {
+            control_flow_indent: Some(0),
+            procedure_indent: Some(8),
             ..Default::default()
         };
 
