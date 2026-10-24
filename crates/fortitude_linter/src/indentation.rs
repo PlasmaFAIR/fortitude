@@ -20,7 +20,7 @@ impl fmt::Display for IndentationSettings {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         display_settings! {
             formatter = f,
-            namespace = "check.incorrect-indentation",
+            namespace = "check.indentation",
             fields = [
                 self.program_indent | optional,
                 self.module_indent | optional,

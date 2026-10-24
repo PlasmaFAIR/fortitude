@@ -8,39 +8,19 @@ S105 [*] Incorrect indentation; expected 0 spaces, found 2
 1 |   !> my module
   | ^^
 2 | module mmod
-3 |   #if USE_MPI==1
+3 |     #if USE_MPI==1
   |
 help: Replace with correct number of spaces
   -   !> my module
 1 + !> my module
 2 | module mmod
-3 |   #if USE_MPI==1
-4 |   use mpi
-
-S105 [*] Incorrect indentation; expected 4 spaces, found 2
- --> ./resources/test/fixtures/style/S105.f90:4:1
-  |
-2 | module mmod
-3 |   #if USE_MPI==1
-4 |   use mpi
-  | ^^
-5 | #endif
-6 | implicit none
-  |
-help: Replace with correct number of spaces
-1 |   !> my module
-2 | module mmod
-3 |   #if USE_MPI==1
-  -   use mpi
-4 +     use mpi
-5 | #endif
-6 | implicit none
-7 |
+3 |     #if USE_MPI==1
+4 |     use mpi
 
 S105 [*] Incorrect indentation; expected 4 spaces, found 0
  --> ./resources/test/fixtures/style/S105.f90:6:1
   |
-4 |   use mpi
+4 |     use mpi
 5 | #endif
 6 | implicit none
   | ^
@@ -48,8 +28,8 @@ S105 [*] Incorrect indentation; expected 4 spaces, found 0
 8 | interface
   |
 help: Replace with correct number of spaces
-3 |   #if USE_MPI==1
-4 |   use mpi
+3 |     #if USE_MPI==1
+4 |     use mpi
 5 | #endif
   - implicit none
 6 +     implicit none
@@ -2095,13 +2075,13 @@ help: Replace with correct number of spaces
 163 | x = 1;20   x = 4
 164 | end subroutine labels
 
-S105 [*] Incorrect indentation; expected 8 spaces, found 0
+S105 [*] Incorrect indentation; expected 8 spaces, found 10
    --> ./resources/test/fixtures/style/S105.f90:162:1
     |
 160 | subroutine labels(x)
 161 | integer, intent(inout) :: x
 162 | 20        x = 3
-    | ^
+    | ^^^^^^^^^^
 163 | x = 1;20   x = 4
 164 | end subroutine labels
     |
@@ -2110,7 +2090,7 @@ help: Replace with correct number of spaces
 160 | subroutine labels(x)
 161 | integer, intent(inout) :: x
     - 20        x = 3
-162 +         20        x = 3
+162 + 20      x = 3
 163 | x = 1;20   x = 4
 164 | end subroutine labels
 165 |   end program mprog

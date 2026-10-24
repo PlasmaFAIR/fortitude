@@ -35,13 +35,33 @@ impl<'source> LogicalLine<'source> {
         self.expected_indent
     }
 
+    /// Leading whitespace, plus any statement label and the whitespace after it.
     pub fn indentation(&self) -> &'source str {
-        let count = self
-            .text
+        let leading = self.leading_whitespace_len();
+        let mut count = leading;
+        if let Some(label) = self.label() {
+            count += label.len();
+            count += self.text[count..]
+                .chars()
+                .take_while(|c| c.is_ascii_whitespace())
+                .count();
+        }
+        &self.text[..count]
+    }
+
+    /// The numeric statement label (e.g. `10` in `  10 continue`), if present.
+    pub fn label(&self) -> Option<&'source str> {
+        let rest = &self.text[self.leading_whitespace_len()..];
+        let digits = rest.chars().take_while(char::is_ascii_digit).count();
+        (digits > 0 && rest[digits..].starts_with(|c: char| c.is_ascii_whitespace()))
+            .then(|| &rest[..digits])
+    }
+
+    fn leading_whitespace_len(&self) -> usize {
+        self.text
             .chars()
             .take_while(|c| c.is_ascii_whitespace())
-            .count();
-        &self.text[..count]
+            .count()
     }
 
     #[allow(dead_code)]

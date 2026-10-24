@@ -246,6 +246,7 @@ pub struct Configuration {
     pub target_std: Option<FortranStandard>,
     pub progress_bar: Option<ProgressBar>,
     pub preview: Option<PreviewMode>,
+    pub indentation: Option<IndentationOptions>,
 
     // File resolver options
     pub include: Option<Vec<FilePattern>>,
@@ -265,7 +266,6 @@ pub struct Configuration {
     pub line_too_long: Option<LineTooLongOptions>,
     pub use_statements: Option<UseStatementsOptions>,
     pub complexity: Option<ComplexityOptions>,
-    pub incorrect_indentation: Option<IndentationOptions>,
 }
 
 impl Configuration {
@@ -324,6 +324,7 @@ impl Configuration {
             target_std: check.target_std,
             progress_bar: check.progress_bar,
             preview: check.preview.map(PreviewMode::from),
+            indentation: check.indentation,
             include: options.include.or(include).map(|paths| {
                 paths
                     .into_iter()
@@ -368,7 +369,6 @@ impl Configuration {
             line_too_long: check.line_too_long,
             use_statements: check.use_statements,
             complexity: check.complexity,
-            incorrect_indentation: check.incorrect_indentation,
         }
     }
 
@@ -405,6 +405,10 @@ impl Configuration {
                 indent_width: self.indent_width,
                 unsafe_fixes: self.unsafe_fixes.unwrap_or_default(),
                 preview,
+                indentation: self
+                    .indentation
+                    .map(IndentationOptions::into_settings)
+                    .unwrap_or_default(),
                 target_std: self.target_std.unwrap_or_default(),
                 progress_bar,
                 output_format: self.output_format.unwrap_or_default(),
@@ -461,10 +465,6 @@ impl Configuration {
                 complexity: self
                     .complexity
                     .map(ComplexityOptions::into_settings)
-                    .unwrap_or_default(),
-                incorrect_indentation: self
-                    .incorrect_indentation
-                    .map(IndentationOptions::into_settings)
                     .unwrap_or_default(),
             },
             file_resolver: FileResolverSettings {
@@ -530,6 +530,7 @@ impl Configuration {
             output_rule_id_format: self.output_rule_id_format.or(config.output_rule_id_format),
             progress_bar: self.progress_bar.or(config.progress_bar),
             preview: self.preview.or(config.preview),
+            indentation: self.indentation.or(config.indentation),
             exclude: self.exclude.or(config.exclude),
             extend_exclude: self
                 .extend_exclude
@@ -553,7 +554,6 @@ impl Configuration {
             line_too_long: self.line_too_long.or(config.line_too_long),
             use_statements: self.use_statements.or(config.use_statements),
             complexity: self.complexity.or(config.complexity),
-            incorrect_indentation: self.incorrect_indentation.or(config.incorrect_indentation),
         }
     }
 }

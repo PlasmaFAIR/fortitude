@@ -345,12 +345,12 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 ///
 /// ## Options
 /// - `check.indent-width`
-/// - `check.incorrect-indentation.program-indent`
-/// - `check.incorrect-indentation.module-indent`
-/// - `check.incorrect-indentation.procedure-indent`
-/// - `check.incorrect-indentation.derived-type-indent`
-/// - `check.incorrect-indentation.control-flow-indent`
-/// - `check.incorrect-indentation.interface-indent`
+/// - `check.indentation.program-indent`
+/// - `check.indentation.module-indent`
+/// - `check.indentation.procedure-indent`
+/// - `check.indentation.derived-type-indent`
+/// - `check.indentation.control-flow-indent`
+/// - `check.indentation.interface-indent`
 #[derive(ViolationMetadata)]
 pub(crate) struct IncorrectIndentation {
     actual: usize,
@@ -410,10 +410,14 @@ pub(crate) fn check_incorrect_indent(
             continue;
         }
 
-        let expected_indent = line.expected_indent();
+        // A label shares the indent, and is never pushed right of it
+        let label = line.label();
+        let expected_indent = label.map_or(line.expected_indent() as usize, |label| {
+            (line.expected_indent() as usize).max(label.len() + 1)
+        });
         let actual_indent = indentation.len();
 
-        if actual_indent != expected_indent as usize {
+        if actual_indent != expected_indent {
             let indentation_range = TextRange::new(
                 start_byte,
                 start_byte + TextSize::from(actual_indent as u32),
@@ -428,8 +432,11 @@ pub(crate) fn check_incorrect_indent(
                 );
             }
             if !preproc && context.is_rule_enabled(Rule::IncorrectIndentation) {
-                let edit = if expected_indent > 0 {
-                    Edit::range_replacement(" ".repeat(expected_indent as usize), indentation_range)
+                let edit = if let Some(label) = label {
+                    let padding = " ".repeat(expected_indent - label.len());
+                    Edit::range_replacement(format!("{label}{padding}"), indentation_range)
+                } else if expected_indent > 0 {
+                    Edit::range_replacement(" ".repeat(expected_indent), indentation_range)
                 } else {
                     Edit::range_deletion(indentation_range)
                 };
@@ -438,7 +445,7 @@ pub(crate) fn check_incorrect_indent(
                         .create_diagnostic(
                             IncorrectIndentation {
                                 actual: actual_indent,
-                                expected: expected_indent as usize,
+                                expected: expected_indent,
                             },
                             indentation_range,
                         )
@@ -469,7 +476,7 @@ mod tests {
         let snippet = "!> My program\nprogram test\nimplicit none\nend program test";
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             program-indent = {}
             "#,
             num_indents,
@@ -492,7 +499,7 @@ mod tests {
         let snippet = "!> My module\nmodule test\nimplicit none\ncontains\nend module test";
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             module-indent = {}
             "#,
             num_indents,
@@ -514,7 +521,7 @@ mod tests {
             "!> My submodule\nsubmodule (mmod) test\nimplicit none\ncontains\nend submodule test";
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             module-indent = {}
             "#,
             num_indents,
@@ -535,7 +542,7 @@ mod tests {
         let snippet = "!> My subroutine\nsubroutine test\nimplicit none\nend subroutine test";
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             procedure-indent = {}
             "#,
             num_indents,
@@ -609,7 +616,7 @@ end submodule msubmodule"#
     fn function_indentation(num_indents: i8, snippet: &str, fixed_snippet: &str) -> Result<()> {
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             procedure-indent = {}
             "#,
             num_indents,
@@ -654,7 +661,7 @@ contains
 end module mmod"#;
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             derived-type-indent = {}
             "#,
             num_indents,
@@ -708,7 +715,7 @@ end block
 end program mprog"#;
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             control-flow-indent = {}
             "#,
             num_indents,
@@ -788,7 +795,7 @@ end if
 end subroutine msub"#;
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             control-flow-indent = {}
             "#,
             num_indents,
@@ -839,7 +846,7 @@ end interface minterface
 end module mmod"#;
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             interface-indent = {}
             "#,
             num_indents,
@@ -890,7 +897,7 @@ i = 3
 end subroutine select_cases"#;
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             control-flow-indent = {}
             "#,
             num_indents,
@@ -915,7 +922,7 @@ function do_construct
     do 10 i = 1, 10
       do 10 j = i, 10
         x = i * j
-    10 continue
+10  continue
 end function do_construct"#; "indent 2"
     )]
     #[test_case(
@@ -934,7 +941,7 @@ function do_construct
     do 10 i = 1, 10
     do 10 j = i, 10
     x = i * j
-    10 continue
+10  continue
 end function do_construct"#; "indent 0"
     )]
     fn do_indentation(num_indents: i8, fixed_snippet: &str) -> Result<()> {
@@ -956,7 +963,7 @@ x = i * j
 end function do_construct"#;
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             control-flow-indent = {}
             "#,
             num_indents,
@@ -1004,7 +1011,7 @@ end associate named_associate
 end subroutine associates"#;
         let toml_contents = format!(
             r#"
-            [check.incorrect-indentation]
+            [check.indentation]
             control-flow-indent = {}
             "#,
             num_indents,
@@ -1111,6 +1118,37 @@ subroutine assumed_rank(A)
     error stop 'assumed_rank: only rank 0..2 is handled for now.'
   end select
 end subroutine
+"#;
+        verify_s105_fixes(before, expected, "")
+    }
+
+    #[test]
+    fn label_longer_than_indent_is_not_reported() -> Result<()> {
+        let snippet = r#"
+subroutine labels(x)
+  integer, intent(inout) :: x
+300 x = 2
+  x = 1
+end subroutine labels
+"#;
+        verify_s105_fixes(snippet, snippet, "")
+    }
+
+    #[test]
+    fn label_longer_than_indent_has_excess_padding_removed() -> Result<()> {
+        let before = r#"
+subroutine labels(x)
+  integer, intent(inout) :: x
+  300     x = 2
+  x = 1
+end subroutine labels
+"#;
+        let expected = r#"
+subroutine labels(x)
+  integer, intent(inout) :: x
+300 x = 2
+  x = 1
+end subroutine labels
 "#;
         verify_s105_fixes(before, expected, "")
     }

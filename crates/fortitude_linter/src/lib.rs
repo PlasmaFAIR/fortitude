@@ -325,10 +325,8 @@ pub(crate) fn check_path(
     // Perform AST analysis
     let root = tree.root_node();
     let mut comment_positions = HashSet::new();
-    let indent_map = IndentMap::from_settings(
-        &settings.incorrect_indentation,
-        context.indent_width().as_u8(),
-    );
+    let indent_map =
+        IndentMap::from_settings(&settings.indentation, context.indent_width().as_u8());
     let mut logical_lines_builder = LogicalLinesBuilder::new(file.source_text(), indent_map);
     let source_code = file.to_source_code();
     for node in once(root).chain(root.descendants()) {

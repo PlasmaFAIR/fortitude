@@ -156,14 +156,14 @@ mod tests {
             path.to_string_lossy()
         );
 
-        let incorrect_indentation_settings = IndentationSettings {
+        let indentation_settings = IndentationSettings {
             control_flow_indent: Some(0),
             procedure_indent: Some(8),
             ..Default::default()
         };
 
         let settings = CheckSettings {
-            incorrect_indentation: incorrect_indentation_settings,
+            indentation: indentation_settings,
             ..CheckSettings::for_rule(rule_code)
         };
         let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;

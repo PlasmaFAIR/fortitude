@@ -413,6 +413,10 @@ pub struct CheckOptions {
     #[option(default = "4", value_type = "int", example = "indent-width = 2")]
     pub indent_width: Option<IndentWidth>,
 
+    /// Options governing fine-grained indentation rules.
+    #[option_group]
+    pub indentation: Option<IndentationOptions>,
+
     /// By default disable ignore-comment-length behavior when running `fortitude`.
     #[option(
         default = "false",
@@ -483,10 +487,6 @@ pub struct CheckOptions {
     /// `too-many-arguments`, `too-many-nested-blocks`, etc.
     #[option_group]
     pub complexity: Option<ComplexityOptions>,
-
-    /// Options for `incorrect-indentation` rule
-    #[option_group]
-    pub incorrect_indentation: Option<IndentationOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
