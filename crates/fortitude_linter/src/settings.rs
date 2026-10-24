@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use crate::diagnostics::{Applicability, OutputRuleIdFormat, Severity};
-use crate::line_width::IndentWidth;
+use crate::indentation::IndentWidth;
 use lazy_static::lazy_static;
 use path_absolutize::path_dedot;
 use ruff_macros::CacheKey;

@@ -28,7 +28,7 @@ mod tests {
     use test_case::test_case;
 
     use crate::apply_common_filters;
-    use crate::line_width::IndentWidth;
+    use crate::indentation::IndentWidth;
     use crate::registry::Rule;
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
     use crate::rules::style::whitespace::settings::IncorrectIndentationSettings;

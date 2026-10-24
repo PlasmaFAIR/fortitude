@@ -1,15 +1,9 @@
-use fortitude_macros::kind;
-use line_filter::FilterSet;
-pub use rule_selector::RuleSelector;
-use rule_table::RuleTable;
-pub use settings::Settings;
-
 pub mod allow_comments;
 pub mod diagnostics;
 pub mod fix;
 pub mod fs;
+pub mod indentation;
 pub mod line_filter;
-pub mod line_width;
 pub mod locator;
 #[macro_use]
 pub mod logging;
@@ -30,7 +24,12 @@ pub mod text_helpers;
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use diagnostics::{Diagnostic, Diagnostics, FixMap, Violation};
 use fix::{FixResult, fix_file};
+use indentation::IndentMap;
+use line_filter::FilterSet;
 use locator::Locator;
+use logical_lines::LogicalLinesBuilder;
+pub use rule_selector::RuleSelector;
+use rule_table::RuleTable;
 use rules::correctness::shadowed_variable::check_shadowed_variables;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
@@ -46,11 +45,13 @@ use rules::style::whitespace::{
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
+pub use settings::Settings;
 use settings::{CheckSettings, FixMode};
 use stylist::Stylist;
 
 use anyhow::{Context, anyhow};
 use colored::Colorize;
+use fortitude_macros::kind;
 use fortitude_sitter::ast::symbol_table::{
     BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables,
 };
@@ -307,10 +308,16 @@ pub(crate) fn check_path(
     // Perform AST analysis
     let root = tree.root_node();
     let mut comment_positions = HashSet::new();
+    // TODO! Build IndentMap from IndentationSettings and Stylist instead of using default
+    let mut logical_lines_builder =
+        LogicalLinesBuilder::new(file.source_text(), IndentMap::default());
+    let source_code = file.to_source_code();
     for node in once(root).chain(root.descendants()) {
         if context.is_rule_enabled(Rule::SyntaxError) && node.is_missing() {
             violations.push(context.create_diagnostic(SyntaxError {}, node));
         }
+
+        logical_lines_builder.add_node(node, &source_code);
 
         if node.kind_id() == kind!("comment") {
             comment_positions.insert(node.start_position());
@@ -374,6 +381,8 @@ pub(crate) fn check_path(
         }
     }
 
+    let logical_lines = logical_lines_builder.finish();
+
     // ignore line length in comments requires AST
     if context.is_rule_enabled(Rule::LineTooLong) {
         violations.extend(LineTooLong::check(&context, &comment_positions));
@@ -387,7 +396,7 @@ pub(crate) fn check_path(
         Rule::IncorrectIndentation,
         Rule::IndentedPreprocessorStatement,
     ]) {
-        violations.append(&mut check_incorrect_indent(&context, &root));
+        violations.append(&mut check_incorrect_indent(&context, &logical_lines));
     }
 
     if context.is_rule_enabled(Rule::InvalidCharacter) {

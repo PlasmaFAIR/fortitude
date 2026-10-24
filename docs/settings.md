@@ -1298,7 +1298,7 @@ The number of spaces to indent the contents of a derived type
 #### [`ignore-semicolons`](#check_incorrect-indentation_ignore-semicolons) {: #check_incorrect-indentation_ignore-semicolons }
 <span id="ignore-semicolons"></span>
 
-Whether lines containing semicolons should be ignored
+Whether to indent the contents of a program
 
 **Default value**: `true`
 
@@ -1310,19 +1310,19 @@ Whether lines containing semicolons should be ignored
 
     ```toml
     [extra.fortitude.check.incorrect-indentation]
-    ignore-semicolons = false
+    indent-programs = false
     ```
 === "`fortitude.toml` or `.fortitude.toml`"
 
     ```toml
     [check.incorrect-indentation]
-    ignore-semicolons = false
+    indent-programs = false
     ```
 === "`pyproject.toml`"
 
     ```toml
     [tool.fortitude.check.incorrect-indentation]
-    ignore-semicolons = false
+    indent-programs = false
     ```
 
 ---

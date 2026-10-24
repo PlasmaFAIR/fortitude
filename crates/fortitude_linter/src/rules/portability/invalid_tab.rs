@@ -59,7 +59,7 @@ pub(crate) fn check_invalid_tab(context: &CheckContext, root: &Node) -> Vec<Diag
 }
 
 pub mod settings {
-    use crate::{display_settings, line_width::IndentWidth};
+    use crate::{display_settings, indentation::IndentWidth};
     use ruff_macros::CacheKey;
     use std::fmt::Display;
 

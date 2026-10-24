@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use thiserror::Error;
 
-use fortitude_linter::{RuleSelector, line_width::IndentWidth};
+use fortitude_linter::{RuleSelector, indentation::IndentWidth};
 use fortitude_workspace::options::Options;
 
 use crate::{

@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use fortitude_linter::{
     diagnostics::OutputRuleIdFormat,
     diagnostics::Severity,
-    line_width::IndentWidth,
+    indentation::IndentWidth,
     rule_selector::RuleSelector,
     rules::{
         correctness::{exit_labels, shadowed_variable, use_statements},
@@ -588,11 +588,11 @@ impl KeywordWhitespaceOptions {
 )]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct IncorrectIndentationOptions {
-    /// Whether lines containing semicolons should be ignored
+    /// Whether to indent the contents of a program
     #[option(
         default = "true",
         value_type = "bool",
-        example = "ignore-semicolons = false"
+        example = "indent-programs = false"
     )]
     pub ignore_semicolons: Option<bool>,
 

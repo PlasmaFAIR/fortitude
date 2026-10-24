@@ -4,16 +4,15 @@ Fix is always available.
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does
-Checks that the correct indentation has been used
-
-The complexity of handling semicolons requires that this
-rule either removes any semicolons used midway through a line
-or ignores any lines containing a semicolon. This logic can be
-toggled using the `ignore-semicolons` option.
+Checks that the correct indentation has been used.
 
 ## Why is this bad?
 Inconsistent indentation makes Fortran less readable and difficult to
 understand the scoping of logic.
+
+The expected indentation is inferred on a per-file basis, or it can be set
+using the `check.indent-width` option. Continued lines are ignored, as
+they are often indented differently for readability.
 
 ## Options
 - [`check.indent-width`][check.indent-width]

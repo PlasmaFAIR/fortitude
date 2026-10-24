@@ -9,7 +9,7 @@ use fortitude_linter::diagnostics::Severity;
 use fortitude_linter::fs::{
     EXCLUDE_BUILTINS, FORTRAN_EXTS, FilePattern, FilePatternSet, GlobPath, INCLUDE,
 };
-use fortitude_linter::line_width::IndentWidth;
+use fortitude_linter::indentation::IndentWidth;
 use fortitude_linter::registry::RuleNamespace;
 use fortitude_linter::rule_redirects::get_redirect;
 use fortitude_linter::rule_selector::{
