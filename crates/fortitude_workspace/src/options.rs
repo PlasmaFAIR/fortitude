@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use fortitude_linter::{
     diagnostics::OutputRuleIdFormat,
     diagnostics::Severity,
-    line_width::IndentWidth,
+    indentation::{IndentWidth, IndentationSettings},
     rule_selector::RuleSelector,
     rules::{
         correctness::{exit_labels, shadowed_variable, use_statements},
@@ -21,7 +21,6 @@ use fortitude_linter::{
             inconsistent_dimension::{self, settings::PreferAttribute},
             keywords, line_length,
             strings::{self, settings::Quote},
-            whitespace,
         },
     },
     settings::{FortranStandard, OutputFormat, ProgressBar},
@@ -414,6 +413,10 @@ pub struct CheckOptions {
     #[option(default = "4", value_type = "int", example = "indent-width = 2")]
     pub indent_width: Option<IndentWidth>,
 
+    /// Options governing fine-grained indentation rules.
+    #[option_group]
+    pub indentation: Option<IndentationOptions>,
+
     /// By default disable ignore-comment-length behavior when running `fortitude`.
     #[option(
         default = "false",
@@ -484,10 +487,6 @@ pub struct CheckOptions {
     /// `too-many-arguments`, `too-many-nested-blocks`, etc.
     #[option_group]
     pub complexity: Option<ComplexityOptions>,
-
-    /// Options for `incorrect-indentation` rule
-    #[option_group]
-    pub incorrect_indentation: Option<IncorrectIndentationOptions>,
 }
 
 /// Options for the `exit-or-cycle-in-unlabelled-loops` rule
@@ -582,27 +581,19 @@ impl KeywordWhitespaceOptions {
     }
 }
 
-/// Options for the `incorrect-indentation` rule. The indent widths all default to using [`check.indent-width`](#check_indent-width)
+/// Options to set indentation preferences. The indent widths all default to using [`check.indent-width`](#check_indent-width)
 #[derive(
     Clone, Debug, PartialEq, Eq, Default, OptionsMetadata, CombineOptions, Serialize, Deserialize,
 )]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct IncorrectIndentationOptions {
-    /// Whether lines containing semicolons should be ignored
-    #[option(
-        default = "true",
-        value_type = "bool",
-        example = "ignore-semicolons = false"
-    )]
-    pub ignore_semicolons: Option<bool>,
-
+pub struct IndentationOptions {
     /// The number of spaces to indent the contents of a program
     #[option(
         default = "`check.indent-width`",
         value_type = "int",
         example = "program-indent = 2"
     )]
-    pub program_indent: Option<usize>,
+    pub program_indent: Option<u8>,
 
     /// The number of spaces to indent the contents of modules and submodules
     #[option(
@@ -610,7 +601,7 @@ pub struct IncorrectIndentationOptions {
         value_type = "int",
         example = "module-indent = 2"
     )]
-    pub module_indent: Option<usize>,
+    pub module_indent: Option<u8>,
 
     /// The number of spaces to indent the contents of subroutines and functions
     #[option(
@@ -618,7 +609,7 @@ pub struct IncorrectIndentationOptions {
         value_type = "int",
         example = "procedure-indent = 2"
     )]
-    pub procedure_indent: Option<usize>,
+    pub procedure_indent: Option<u8>,
 
     /// The number of spaces to indent the contents of a derived type
     #[option(
@@ -626,7 +617,7 @@ pub struct IncorrectIndentationOptions {
         value_type = "int",
         example = "derived-type-indent = 2"
     )]
-    pub derived_type_indent: Option<usize>,
+    pub derived_type_indent: Option<u8>,
 
     /// The number of spaces to indent the contents of control flow units (i.e. `block`, `if`, `associate`, `do`, `select`)
     #[option(
@@ -634,7 +625,7 @@ pub struct IncorrectIndentationOptions {
         value_type = "int",
         example = "control-flow-indent = 2"
     )]
-    pub control_flow_indent: Option<usize>,
+    pub control_flow_indent: Option<u8>,
 
     /// The number of spaces to indent the contents of a interface
     #[option(
@@ -642,35 +633,27 @@ pub struct IncorrectIndentationOptions {
         value_type = "int",
         example = "interface-indent = 2"
     )]
-    pub interface_indent: Option<usize>,
+    pub interface_indent: Option<u8>,
 
-    /// The number of spaces to indent after a line continuation (`&`)
+    /// Whether to ignore comment lines when checking indentation.
     #[option(
-        default = "`check.indent-width`",
-        value_type = "int",
-        example = "line-continuation-indent = 2"
+        default = "false",
+        value_type = "bool",
+        example = "ignore-comments = true"
     )]
-    pub line_continuation_indent: Option<usize>,
+    pub ignore_comments: Option<bool>,
 }
 
-impl IncorrectIndentationOptions {
-    pub fn into_settings(
-        self,
-        default_indent: usize,
-    ) -> whitespace::settings::IncorrectIndentationSettings {
-        use whitespace::settings::IncorrectIndentationSettings;
-
-        IncorrectIndentationSettings {
-            ignore_semicolons: self
-                .ignore_semicolons
-                .unwrap_or(IncorrectIndentationSettings::default().ignore_semicolons),
-            program_indent: self.program_indent.unwrap_or(default_indent),
-            module_indent: self.module_indent.unwrap_or(default_indent),
-            procedure_indent: self.procedure_indent.unwrap_or(default_indent),
-            derived_type_indent: self.derived_type_indent.unwrap_or(default_indent),
-            control_flow_indent: self.control_flow_indent.unwrap_or(default_indent),
-            interface_indent: self.interface_indent.unwrap_or(default_indent),
-            line_continuation_indent: self.line_continuation_indent.unwrap_or(default_indent),
+impl IndentationOptions {
+    pub fn into_settings(self) -> IndentationSettings {
+        IndentationSettings {
+            program_indent: self.program_indent,
+            module_indent: self.module_indent,
+            procedure_indent: self.procedure_indent,
+            derived_type_indent: self.derived_type_indent,
+            control_flow_indent: self.control_flow_indent,
+            interface_indent: self.interface_indent,
+            ignore_comments: self.ignore_comments.unwrap_or_default(),
         }
     }
 }

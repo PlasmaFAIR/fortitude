@@ -552,7 +552,7 @@ impl ConfigurationTransformer for IdentityTransformer {
 
 #[cfg(test)]
 mod tests {
-    use fortitude_linter::line_width::IndentWidth;
+    use fortitude_linter::indentation::IndentWidth;
     use fortitude_workspace::options::{CheckOptions, Options};
 
     use super::*;

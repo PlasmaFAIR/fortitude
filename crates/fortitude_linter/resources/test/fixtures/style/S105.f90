@@ -1,7 +1,7 @@
   !> my module
 module mmod
-  #if USE_MPI==1
-  use mpi
+    #if USE_MPI==1
+    use mpi
 #endif
 implicit none
 
