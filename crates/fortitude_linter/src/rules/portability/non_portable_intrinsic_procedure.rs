@@ -18,6 +18,12 @@ use ruff_macros::derive_message_formats;
 /// versions. These extensions may not be available in other compilers, or may
 /// work differently, making the code non-portable.
 ///
+/// It is inherently tricky to identify compiler extensions, different compilers
+/// may have intrinsic procedures with the same name but different behaviour for
+/// example. So although we have automatic fixes for many of these, we recommend
+/// that they are always reviewed by a human; hence we mark all the fixes as
+/// [unsafe](../linter.md#fix-safety).
+///
 /// ## Example
 /// ```f90
 /// call system("dir")
@@ -30,18 +36,23 @@ use ruff_macros::derive_message_formats;
 ///
 /// ## Extensions and their standard equivalents
 ///
-/// | Extension          | Standard                       | Notes |
-/// |--------------------|--------------------------------|-------|
-/// | [`system`][system] | [`execute_command_line`][execute_command_line] | Extension can be either subroutine or function, standard version is a subroutine only |
-/// | [`exit`][exit]     | `stop`                         | Extension is a subroutine, standard version is a statement |
-/// | [`abort`][abort]   | `error stop`                   | Extension is a subroutine, standard version is a statement |
-/// | [`srand`][srand]   | [`random_seed`][random_seed]   | Standard has different semantics |
-/// | [`rand`][rand]     | [`random_number`][random_number] | Standard is a subroutine rather than function |
-/// | [`iargc`[iargc]    | [`command_argument_count`][command_argument_count] | |
-/// | [`getarg`[getarg]  | [`get_command_argument`][get_command_argument] | Different compilers may support different arguments in `getarg` |
-/// | [`etime`][etime]   | No exact replacement           | See below |
+/// Summary of compiler-specific intrinsics and their standard equivalents:
 ///
-/// ## Fix safety
+/// | Extension            | Standard                                           |
+/// |----------------------|----------------------------------------------------|
+/// | [`system`][system]   | [`execute_command_line`][execute_command_line]     |
+/// | [`exit`][exit]       | `stop`                                             |
+/// | [`abort`][abort]     | `error stop`                                       |
+/// | [`srand`][srand]     | [`random_seed`][random_seed]                       |
+/// | [`rand`][rand]       | [`random_number`][random_number]                   |
+/// | [`iargc`][iargc]     | [`command_argument_count`][command_argument_count] |
+/// | [`getarg`][getarg]   | [`get_command_argument`][get_command_argument]     |
+/// | [`etime`][etime]     | Various, see below                                 |
+/// | Time/date procedures | [`date_and_time`][date_and_time]                   |
+/// | [`lnblnk`][lnblnk]   | [`len_trim`][len_trim]                             |
+///
+/// See below for details on the specific procedures:
+///
 /// ### `system`
 /// When the gfortran `system` extension is used as a subroutine, it has nearly
 /// identical semantics to the standard `execute_command_line`, except that the
@@ -105,6 +116,11 @@ use ruff_macros::derive_message_formats;
 /// MPI and OpenMP also have standard facilities for getting elapsed time, which
 /// may be higher resolution.
 ///
+/// ### Time and date procedures
+/// There are many different procedures for getting or formatting the time and
+/// date in various ways, such as `itime`, `fdate`, `ctime`, and so on. They are
+/// mostly all replaced with the standard [`date_and_time`][date_and_time].
+///
 /// ## References
 /// - [GNU Fortran intrinsic procedures](https://gcc.gnu.org/onlinedocs/gfortran/Intrinsic-Procedures.html)
 /// - [Intel Fortran language reference](https://www.intel.com/content/www/us/en/docs/fortran-compiler/developer-guide-reference/2026-1/a-to-z-reference.html)
@@ -119,6 +135,8 @@ use ruff_macros::derive_message_formats;
 /// [get_command_argument]: https://gcc.gnu.org/onlinedocs/gfortran/GET_005fCOMMAND_005fARGUMENT.html
 /// [getarg]: https://gcc.gnu.org/onlinedocs/gfortran/GETARG.html
 /// [iargc]: https://gcc.gnu.org/onlinedocs/gfortran/IARGC.html
+/// [lnblnk]: https://gcc.gnu.org/onlinedocs/gfortran/LNBLNK.html
+/// [len_trim]: https://gcc.gnu.org/onlinedocs/gfortran/LEN_005fTRIM.html
 /// [rand]: https://gcc.gnu.org/onlinedocs/gfortran/RAND.html
 /// [random_number]: https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html
 /// [random_seed]: https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html
@@ -384,7 +402,16 @@ impl AstRule for NonPortableIntrinsicProcedure {
                 FortranStandard::F2003,
             ),
             // This can be subroutine/function, no exact replacement
-            "etime" => create_non_replacement(context, &procedure, "cpu_time|system_clock|date_and_time", FortranStandard::F95),
+            "etime" => create_non_replacement(
+                context,
+                &procedure,
+                "cpu_time|system_clock|date_and_time",
+                FortranStandard::F95,
+            ),
+            "idate" | "itime" | "fdate" | "ctime" | "time" | "gmtime" | "ltime" | "time8" => {
+                create_non_replacement(context, &procedure, "date_and_time", FortranStandard::F95)
+            }
+            "lnblnk" => create_replacement(context, &procedure, "len_trim", FortranStandard::F95),
             _ => None,
         }
     }

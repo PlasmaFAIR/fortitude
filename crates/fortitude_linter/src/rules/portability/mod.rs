@@ -31,7 +31,11 @@ mod tests {
     #[test_case(Rule::NonPortableIntrinsicProcedure, Path::new("PORT061_system.f90"))]
     #[test_case(Rule::NonPortableIntrinsicProcedure, Path::new("PORT061_exit.f90"))]
     #[test_case(Rule::NonPortableIntrinsicProcedure, Path::new("PORT061_rand.f90"))]
-    #[test_case(Rule::NonPortableIntrinsicProcedure, Path::new("PORT061_command_args.f90"))]
+    #[test_case(
+        Rule::NonPortableIntrinsicProcedure,
+        Path::new("PORT061_command_args.f90")
+    )]
+    #[test_case(Rule::NonPortableIntrinsicProcedure, Path::new("PORT061_times.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(
