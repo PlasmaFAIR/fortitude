@@ -283,7 +283,7 @@ help: Add parenthesese around the desired argument of the unary operator
 95 +     i = 10   **    (-      2)  *   3
 96 |     i = 10 ** -2 * 3 ** -7
 97 |
-98 | end program main
+98 |     ! These should all be flagged, but the fix must _include_ the exponent
 note: This is an unsafe fix and may change runtime behavior
 
 PORT051 [*] Unary operator following an arithmetic expression
@@ -294,7 +294,7 @@ PORT051 [*] Unary operator following an arithmetic expression
 96 |     i = 10 ** -2 * 3 ** -7
    |               ^
 97 |
-98 | end program main
+98 |     ! These should all be flagged, but the fix must _include_ the exponent
    |
 help: Add parenthesese around the desired argument of the unary operator
 93 |     i = 10 ** -2 ! some comment.
@@ -303,7 +303,8 @@ help: Add parenthesese around the desired argument of the unary operator
    -     i = 10 ** -2 * 3 ** -7
 96 +     i = 10 ** (-2) * 3 ** -7
 97 |
-98 | end program main
+98 |     ! These should all be flagged, but the fix must _include_ the exponent
+99 |     i = 2 * -3 ** 2
 note: This is an unsafe fix and may change runtime behavior
 
 PORT051 [*] Unary operator following an arithmetic expression
@@ -314,7 +315,7 @@ PORT051 [*] Unary operator following an arithmetic expression
 96 |     i = 10 ** -2 * 3 ** -7
    |                         ^
 97 |
-98 | end program main
+98 |     ! These should all be flagged, but the fix must _include_ the exponent
    |
 help: Add parenthesese around the desired argument of the unary operator
 93 |     i = 10 ** -2 ! some comment.
@@ -323,4 +324,62 @@ help: Add parenthesese around the desired argument of the unary operator
    -     i = 10 ** -2 * 3 ** -7
 96 +     i = 10 ** -2 * 3 ** (-7)
 97 |
-98 | end program main
+98 |     ! These should all be flagged, but the fix must _include_ the exponent
+99 |     i = 2 * -3 ** 2
+
+PORT051 [*] Unary operator following an arithmetic expression
+   --> ./resources/test/fixtures/portability/PORT051.f90:99:13
+    |
+ 98 |     ! These should all be flagged, but the fix must _include_ the exponent
+ 99 |     i = 2 * -3 ** 2
+    |             ^
+100 |     i = 2 - -3 ** 2 + 4
+101 |     i = 2.0 ** -1 ** 2
+    |
+help: Add parenthesese around the desired argument of the unary operator
+96  |     i = 10 ** -2 * 3 ** -7
+97  |
+98  |     ! These should all be flagged, but the fix must _include_ the exponent
+    -     i = 2 * -3 ** 2
+99  +     i = 2 * (-3 ** 2)
+100 |     i = 2 - -3 ** 2 + 4
+101 |     i = 2.0 ** -1 ** 2
+102 |
+
+PORT051 [*] Unary operator following an arithmetic expression
+   --> ./resources/test/fixtures/portability/PORT051.f90:100:13
+    |
+ 98 |     ! These should all be flagged, but the fix must _include_ the exponent
+ 99 |     i = 2 * -3 ** 2
+100 |     i = 2 - -3 ** 2 + 4
+    |             ^
+101 |     i = 2.0 ** -1 ** 2
+    |
+help: Add parenthesese around the desired argument of the unary operator
+97  |
+98  |     ! These should all be flagged, but the fix must _include_ the exponent
+99  |     i = 2 * -3 ** 2
+    -     i = 2 - -3 ** 2 + 4
+100 +     i = 2 - (-3 ** 2) + 4
+101 |     i = 2.0 ** -1 ** 2
+102 |
+103 | end program main
+
+PORT051 [*] Unary operator following an arithmetic expression
+   --> ./resources/test/fixtures/portability/PORT051.f90:101:16
+    |
+ 99 |     i = 2 * -3 ** 2
+100 |     i = 2 - -3 ** 2 + 4
+101 |     i = 2.0 ** -1 ** 2
+    |                ^
+102 |
+103 | end program main
+    |
+help: Add parenthesese around the desired argument of the unary operator
+98  |     ! These should all be flagged, but the fix must _include_ the exponent
+99  |     i = 2 * -3 ** 2
+100 |     i = 2 - -3 ** 2 + 4
+    -     i = 2.0 ** -1 ** 2
+101 +     i = 2.0 ** (-1 ** 2)
+102 |
+103 | end program main

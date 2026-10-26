@@ -95,4 +95,9 @@ program main
     i = 10   **    -      2  *   3
     i = 10 ** -2 * 3 ** -7
 
+    ! These should all be flagged, but the fix must _include_ the exponent
+    i = 2 * -3 ** 2
+    i = 2 - -3 ** 2 + 4
+    i = 2.0 ** -1 ** 2
+
 end program main
