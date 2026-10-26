@@ -1,6 +1,6 @@
 use crate::diagnostics::{Diagnostic, FixAvailability, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, field, kind, kw};
 use fortitude_sitter::Node;
 use fortitude_sitter::traits::TextRanged;
 use ruff_diagnostics::{Edit, Fix};
@@ -69,8 +69,22 @@ impl AstRule for UnaryFollowingArithmetic {
         // need the right-most one so its argument can be the only thing parenthesised.
         let unary_arg = right_most_unary(unary_exp).child_by_field_name("argument")?;
 
-        let parenthesise_end_node = if unary_arg.kind() == "math_expression" {
-            unary_arg.child_by_field_name("left")?
+        let parenthesise_end_node = if unary_arg.kind_id() == kind!("math_expression") {
+            // Exponential binds tighter than unary negation, so must be
+            // _inside_ parentheses for fix
+            let field = if unary_arg
+                .child(1)
+                .expect("'math_expression' should have exactly 3 children")
+                .kind_id()
+                == kw!("**")
+            {
+                field!("right")
+            } else {
+                field!("left")
+            };
+            unary_arg
+                .child_by_field_id(field.into())
+                .expect("'math_expression' should have left/right fields")
         } else {
             unary_arg
         };
