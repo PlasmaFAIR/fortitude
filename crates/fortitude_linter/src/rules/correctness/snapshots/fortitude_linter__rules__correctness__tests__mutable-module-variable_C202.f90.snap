@@ -1,0 +1,163 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+C202 Module variable 'counter' is public and mutable
+ --> ./resources/test/fixtures/correctness/C202.f90:4:14
+  |
+2 |   ! Default accessibility is public, so all mutable variables are exposed
+3 |   implicit none
+4 |   integer :: counter = 0                ! Bad
+  |              ^^^^^^^^^^^
+5 |   real :: x, y                          ! Bad (x and y)
+6 |   real, allocatable :: values(:)        ! Bad
+  |
+
+C202 Module variable 'x' is public and mutable
+ --> ./resources/test/fixtures/correctness/C202.f90:5:11
+  |
+3 |   implicit none
+4 |   integer :: counter = 0                ! Bad
+5 |   real :: x, y                          ! Bad (x and y)
+  |           ^
+6 |   real, allocatable :: values(:)        ! Bad
+7 |   character(len=8) :: label = "label"   ! Bad
+  |
+
+C202 Module variable 'y' is public and mutable
+ --> ./resources/test/fixtures/correctness/C202.f90:5:14
+  |
+3 |   implicit none
+4 |   integer :: counter = 0                ! Bad
+5 |   real :: x, y                          ! Bad (x and y)
+  |              ^
+6 |   real, allocatable :: values(:)        ! Bad
+7 |   character(len=8) :: label = "label"   ! Bad
+  |
+
+C202 Module variable 'values' is public and mutable
+ --> ./resources/test/fixtures/correctness/C202.f90:6:24
+  |
+4 |   integer :: counter = 0                ! Bad
+5 |   real :: x, y                          ! Bad (x and y)
+6 |   real, allocatable :: values(:)        ! Bad
+  |                        ^^^^^^^^^
+7 |   character(len=8) :: label = "label"   ! Bad
+8 |   integer, save :: saved = 1            ! Bad
+  |
+
+C202 Module variable 'label' is public and mutable
+ --> ./resources/test/fixtures/correctness/C202.f90:7:23
+  |
+5 |   real :: x, y                          ! Bad (x and y)
+6 |   real, allocatable :: values(:)        ! Bad
+7 |   character(len=8) :: label = "label"   ! Bad
+  |                       ^^^^^^^^^^^^^^^
+8 |   integer, save :: saved = 1            ! Bad
+9 |   integer, pointer :: ptr => null()     ! Bad
+  |
+
+C202 Module variable 'saved' is public and mutable
+ --> ./resources/test/fixtures/correctness/C202.f90:8:20
+  |
+6 |   real, allocatable :: values(:)        ! Bad
+7 |   character(len=8) :: label = "label"   ! Bad
+8 |   integer, save :: saved = 1            ! Bad
+  |                    ^^^^^^^^^
+9 |   integer, pointer :: ptr => null()     ! Bad
+  |
+
+C202 Module variable 'ptr' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:9:23
+   |
+ 7 |   character(len=8) :: label = "label"   ! Bad
+ 8 |   integer, save :: saved = 1            ! Bad
+ 9 |   integer, pointer :: ptr => null()     ! Bad
+   |                       ^^^^^^^^^^^^^
+10 |
+11 |   integer, parameter :: n = 3           ! Fine: constant
+   |
+
+C202 Module variable 'exposed' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:30:14
+   |
+29 |   integer :: internal = 0               ! Fine: private by default
+30 |   integer :: exposed = 0                ! Bad: public statement
+   |              ^^^^^^^^^^^
+31 |   integer :: Shout                      ! Bad: names are case-insensitive
+32 |   integer :: listed_a, listed_b         ! Bad (listed_a and listed_b)
+   |
+
+C202 Module variable 'Shout' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:31:14
+   |
+29 |   integer :: internal = 0               ! Fine: private by default
+30 |   integer :: exposed = 0                ! Bad: public statement
+31 |   integer :: Shout                      ! Bad: names are case-insensitive
+   |              ^^^^^
+32 |   integer :: listed_a, listed_b         ! Bad (listed_a and listed_b)
+33 |   integer, public :: attr_public        ! Bad: public attribute
+   |
+
+C202 Module variable 'listed_a' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:32:14
+   |
+30 |   integer :: exposed = 0                ! Bad: public statement
+31 |   integer :: Shout                      ! Bad: names are case-insensitive
+32 |   integer :: listed_a, listed_b         ! Bad (listed_a and listed_b)
+   |              ^^^^^^^^
+33 |   integer, public :: attr_public        ! Bad: public attribute
+34 |   integer, public, protected :: ro = 1  ! Fine: protected
+   |
+
+C202 Module variable 'listed_b' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:32:24
+   |
+30 |   integer :: exposed = 0                ! Bad: public statement
+31 |   integer :: Shout                      ! Bad: names are case-insensitive
+32 |   integer :: listed_a, listed_b         ! Bad (listed_a and listed_b)
+   |                        ^^^^^^^^
+33 |   integer, public :: attr_public        ! Bad: public attribute
+34 |   integer, public, protected :: ro = 1  ! Fine: protected
+   |
+
+C202 Module variable 'attr_public' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:33:22
+   |
+31 |   integer :: Shout                      ! Bad: names are case-insensitive
+32 |   integer :: listed_a, listed_b         ! Bad (listed_a and listed_b)
+33 |   integer, public :: attr_public        ! Bad: public attribute
+   |                      ^^^^^^^^^^^
+34 |   integer, public, protected :: ro = 1  ! Fine: protected
+35 |   integer, public, parameter :: pi = 3  ! Fine: constant
+   |
+
+C202 Module variable 'yes' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:43:14
+   |
+41 |   private :: nope
+42 |   integer :: nope                       ! Fine: private statement
+43 |   integer :: yes                        ! Bad
+   |              ^^^
+44 | end module explicit_public
+   |
+
+C202 Module variable 'origin' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:52:18
+   |
+50 |     real :: y = 0.0                     ! Fine: derived type component
+51 |   end type point
+52 |   type(point) :: origin                 ! Bad
+   |                  ^^^^^^
+53 |   type(point), parameter :: unit = point(1.0, 1.0)  ! Fine: constant
+54 | end module with_type
+   |
+
+C202 Module variable 'sub_counter' is public and mutable
+  --> ./resources/test/fixtures/correctness/C202.f90:57:14
+   |
+56 | submodule (with_type) with_type_impl
+57 |   integer :: sub_counter = 0            ! Bad
+   |              ^^^^^^^^^^^^^^^
+58 | end submodule with_type_impl
+   |
