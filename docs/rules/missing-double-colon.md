@@ -3,7 +3,7 @@ Fix is always available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks for missing double-colon separator in variable declarations.
 
 ## Why is this bad?

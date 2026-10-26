@@ -3,7 +3,7 @@ Fix is always available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks for old style array literals
 
 ## Why is this bad?

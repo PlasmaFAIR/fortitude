@@ -3,7 +3,7 @@ Fix is always available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks for outdated declarations of `character*N`, `character*(*)`,
 `character*(:)`, and `character*(integer-expression)`.
 

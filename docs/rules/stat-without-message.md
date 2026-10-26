@@ -1,5 +1,5 @@
 # stat-without-message (C183)
-## What does it do?
+## What it does
 This rule detects whether `stat` is used without also setting `errmsg` when
 allocating or deallocating. Similarly checks for the use of `iostat` without
 `iomsg` with IO routines, and `cmdstat` without `cmdmsg` when using

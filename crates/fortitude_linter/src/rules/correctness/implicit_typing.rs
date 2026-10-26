@@ -137,7 +137,7 @@ impl ImplicitTypingEdit {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for missing `implicit none`.
 ///
 /// ## Why is this bad?

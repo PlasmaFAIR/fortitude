@@ -45,7 +45,7 @@ fn semicolon_is_superfluous(node: &Node) -> bool {
     false
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Catches a semicolon at the end of a line of code.
 ///
 /// ## Why is this bad?
@@ -89,7 +89,7 @@ impl AstRule for SuperfluousSemicolon {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Catches multiple statements on the same line separated by a semicolon.
 ///
 /// ## Why is this bad?

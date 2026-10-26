@@ -1,7 +1,7 @@
 # line-too-long (S001)
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks line length isn't too long
 
 ## Why is this bad?

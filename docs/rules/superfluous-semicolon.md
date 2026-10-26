@@ -3,7 +3,7 @@ Fix is always available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Catches a semicolon at the end of a line of code.
 
 ## Why is this bad?

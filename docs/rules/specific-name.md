@@ -1,7 +1,7 @@
 # specific-name (OB031)
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks for uses of the deprecated specific names of intrinsic functions.
 
 ## Why is this bad?

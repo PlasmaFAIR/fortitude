@@ -1,7 +1,7 @@
 # assumed-size-character-intent (C072)
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks `character` dummy arguments with an assumed-size length have
 `intent(in)` only.
 

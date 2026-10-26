@@ -296,9 +296,7 @@ pub(crate) struct MyNewRule {}
 - `## What it does` is a short summary, usually one or two sentences. Note that
   `fortitude explain --summary` doesn't use this text: it shows the rule's
   diagnostic message, from `Violation::message`.
-- `## Why is this bad?` gives the reasoning. Some older rules use slightly
-  different headings (such as `## What does it do?`); please use the ones
-  above for new rules.
+- `## Why is this bad?` gives the reasoning.
 - `## Example` shows code that triggers the rule, followed by a corrected
   version after "Use instead:" where one exists. Use `f90` fenced code blocks.
   Keep examples short and self-contained, and check that Fortitude really does

@@ -4,7 +4,7 @@ use fortitude_macros::ViolationMetadata;
 use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for old style array literals
 ///
 /// ## Why is this bad?

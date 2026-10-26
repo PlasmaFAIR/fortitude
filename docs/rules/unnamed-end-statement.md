@@ -3,7 +3,7 @@ Fix is always available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks that `end` statements include the type of construct they're ending
 
 ## Why is this bad?

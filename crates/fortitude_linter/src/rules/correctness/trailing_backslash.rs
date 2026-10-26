@@ -6,7 +6,7 @@ use lazy_regex::regex;
 use ruff_macros::derive_message_formats;
 use ruff_text_size::{TextRange, TextSize};
 
-/// ## What does it do?
+/// ## What it does
 /// Checks if a backslash is the last character on a line
 ///
 /// ## Why is this bad?

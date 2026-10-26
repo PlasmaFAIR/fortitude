@@ -1,7 +1,7 @@
 # incorrect-space-before-comment (S102)
 Fix is always available.
 
-## What does it do?
+## What it does
 Checks for inline comments that aren't preceded by at least two spaces.
 
 ## Why is this bad?

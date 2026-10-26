@@ -1,7 +1,7 @@
 # incorrect-space-between-brackets (S104)
 Fix is always available.
 
-## What does it do?
+## What it does
 Checks for spaces between brackets and their contents.
 
 ## Why is this bad?

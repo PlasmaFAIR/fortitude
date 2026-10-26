@@ -7,7 +7,7 @@ use fortitude_sitter::Node;
 use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
 
-/// ## What does it do?
+/// ## What it does
 /// When using `exit` or `cycle` in a named `do` loop, the `exit`/`cycle` statement
 /// should use the loop name
 ///
@@ -80,7 +80,7 @@ impl AstRule for MissingExitOrCycleLabel {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for `exit` or `cycle` in unnamed `do` loops
 ///
 /// ## Why is this bad?
@@ -175,7 +175,7 @@ impl AstRule for ExitOrCycleInUnlabelledLoop {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Check for missing block labels on `end` statements
 ///
 /// ## Why is this bad?

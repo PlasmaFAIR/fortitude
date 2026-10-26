@@ -1,7 +1,7 @@
 # trailing-backslash (C051)
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks if a backslash is the last character on a line
 
 ## Why is this bad?

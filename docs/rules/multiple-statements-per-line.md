@@ -1,7 +1,7 @@
 # multiple-statements-per-line (S082)
 Fix is always available.
 
-## What does it do?
+## What it does
 Catches multiple statements on the same line separated by a semicolon.
 
 ## Why is this bad?

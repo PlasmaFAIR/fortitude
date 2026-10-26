@@ -67,7 +67,7 @@ enum CheckStatus {
     Overwritten(TextRange),
 }
 
-/// ## What does it do?
+/// ## What it does
 /// This rule detects whether a `stat`, `iostat`, and `cmdstat` argument is checked
 /// within the same scope it is set.
 ///
@@ -322,7 +322,7 @@ impl AllocationType {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// This rule detects whether `stat` is used alongside multiple allocations or
 /// deallocations.
 ///
@@ -386,7 +386,7 @@ fn count_deallocations(node: &Node) -> usize {
         .count()
 }
 
-/// ## What does it do?
+/// ## What it does
 /// This rule detects whether `stat` is used without also setting `errmsg` when
 /// allocating or deallocating. Similarly checks for the use of `iostat` without
 /// `iomsg` with IO routines, and `cmdstat` without `cmdmsg` when using

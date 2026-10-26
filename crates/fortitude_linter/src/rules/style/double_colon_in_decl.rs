@@ -5,7 +5,7 @@ use fortitude_sitter::Node;
 use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for missing double-colon separator in variable declarations.
 ///
 /// ## Why is this bad?

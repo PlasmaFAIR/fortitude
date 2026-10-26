@@ -7,7 +7,7 @@ use ruff_macros::derive_message_formats;
 use ruff_source_file::{LineEnding, find_newline};
 use ruff_text_size::TextSize;
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for misleading semicolons in `if` statements.
 ///
 /// ## Why is this bad?
@@ -100,7 +100,7 @@ impl AstRule for MisleadingInlineIfSemicolon {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for misleading line continuations in inline `if` statements.
 ///
 /// ## Why is this bad?

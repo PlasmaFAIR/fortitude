@@ -1,7 +1,7 @@
 # assumed-size (C071)
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks for assumed size variables
 
 ## Why is this bad?
