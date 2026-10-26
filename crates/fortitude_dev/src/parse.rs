@@ -14,7 +14,8 @@ use fortitude_macros::kind;
 use fortitude_sitter::{
     Node, TreeCursor,
     ast::types::{
-        Attribute, AttributeKind, HasName, NameDecl, Type, UseStatement, VariableDeclaration,
+        Attribute, AttributeKind, HasName, NameDecl, ProcedureCall, Type, UseStatement,
+        VariableDeclaration,
     },
     traits::HasNode,
 };
@@ -522,6 +523,19 @@ fn write_fortitude_type(
             };
             Ok(true)
         }
+        kind!("subroutine_call") | kind!("call_expression") => {
+            write!(out, "{}", paint(opts.parse_theme.missing, "ProcedureCall"))?;
+            match ProcedureCall::try_from_node(node) {
+                Ok(call) => {
+                    write_procedure_call(call, &preamble.with_indent(), opts, out)?;
+                }
+                Err(err) => {
+                    let msg = format!("INTERAL FORTITUDE ERROR: {err}");
+                    write!(out, " -- {}", paint(opts.parse_theme.error, &msg))?;
+                }
+            };
+            Ok(true)
+        }
         _ => {
             write!(out, "{}", paint(kind_color, node.kind()))?;
             Ok(false)
@@ -642,6 +656,55 @@ fn write_use_stmt(
     write_key_value(opts, out, "has_only", &stmt.has_only().to_string())?;
     preamble.writeln_nodeless(out)?;
     write_key_value(opts, out, "has_colon", &stmt.has_colon().to_string())?;
+
+    Ok(())
+}
+
+fn write_procedure_call(
+    call: ProcedureCall,
+    preamble: &Preamble,
+    opts: &ParseFileOptions,
+    out: &mut impl Write,
+) -> Result<()> {
+    preamble.writeln(out, call.name().node())?;
+    write_key_value(opts, out, "Name", call.name().as_str())?;
+
+    preamble.writeln_nodeless(out)?;
+    write_key_value(opts, out, "kind", &format!("{}", call.kind()))?;
+
+    preamble.writeln_nodeless(out)?;
+    write!(out, "{}", paint(opts.parse_theme.missing, "args:"))?;
+    if call.args().is_empty() {
+        write!(out, " {}", paint(opts.parse_theme.extra, "<empty>"))?;
+    } else {
+        let preamble = preamble.with_indent();
+        for (index, arg) in call.args().iter().enumerate() {
+            preamble.writeln(out, arg)?;
+            write!(
+                out,
+                "{}: {}",
+                paint(opts.parse_theme.extra, &index.to_string()),
+                paint(opts.parse_theme.field, arg.text())
+            )?;
+        }
+    }
+
+    preamble.writeln_nodeless(out)?;
+    write!(out, "{}", paint(opts.parse_theme.missing, "kwargs:"))?;
+    if call.kwargs().is_empty() {
+        write!(out, " {}", paint(opts.parse_theme.extra, "<empty>"))?;
+    } else {
+        let preamble = preamble.with_indent();
+        for kwarg in call.kwargs().values() {
+            preamble.writeln(out, kwarg.node())?;
+            write_key_value(
+                opts,
+                out,
+                &kwarg.name().to_lower_string(),
+                kwarg.value().text(),
+            )?;
+        }
+    }
 
     Ok(())
 }

@@ -889,7 +889,7 @@ impl<'a> ProcedureAttribute<'a> {
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIs, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, Display, EnumIs, EnumString, PartialEq)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum ProcedureKind {
     Function,
