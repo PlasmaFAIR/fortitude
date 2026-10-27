@@ -1,18 +1,13 @@
-use fortitude_macros::kind;
-use line_filter::FilterSet;
-pub use rule_selector::RuleSelector;
-use rule_table::RuleTable;
-pub use settings::Settings;
-
 pub mod allow_comments;
 pub mod diagnostics;
 pub mod fix;
 pub mod fs;
+pub mod indentation;
 pub mod line_filter;
-pub mod line_width;
 pub mod locator;
 #[macro_use]
 pub mod logging;
+pub mod logical_lines;
 pub mod preview;
 pub mod registry;
 pub mod rule_redirects;
@@ -29,7 +24,12 @@ pub mod text_helpers;
 use allow_comments::{check_allow_comments, gather_allow_comments};
 use diagnostics::{Diagnostic, Diagnostics, FixMap, Violation};
 use fix::{FixResult, fix_file};
+use indentation::{IndentMap, IndentWidth};
+use line_filter::FilterSet;
 use locator::Locator;
+use logical_lines::LogicalLinesBuilder;
+pub use rule_selector::RuleSelector;
+use rule_table::RuleTable;
 use rules::correctness::shadowed_variable::check_shadowed_variables;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
@@ -45,11 +45,13 @@ use rules::style::whitespace::{
 #[cfg(any(feature = "test-rules", test))]
 use rules::testing::test_rules::{self, TEST_RULES, TestRule};
 use rules::{Rule, portability::invalid_tab::check_invalid_tab};
+pub use settings::Settings;
 use settings::{CheckSettings, FixMode};
 use stylist::Stylist;
 
 use anyhow::{Context, anyhow};
 use colored::Colorize;
+use fortitude_macros::kind;
 use fortitude_sitter::ast::symbol_table::{
     BEGIN_SCOPE_NODES, END_SCOPE_NODES, SymbolTable, SymbolTables,
 };
@@ -63,6 +65,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write};
 use std::iter::once;
+use std::num::NonZeroU8;
 use std::path::Path;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -119,6 +122,22 @@ impl<'a> CheckContext<'a> {
     #[inline]
     pub const fn any_rule_enabled(&self, rules: &[Rule]) -> bool {
         self.rules.any_enabled(rules)
+    }
+
+    /// The effective indent width: the user's setting, else the width detected by the
+    /// `Stylist`, else 4 (also used when the detected indentation is a tab).
+    pub fn indent_width(&self) -> IndentWidth {
+        self.settings.indent_width.unwrap_or_else(|| {
+            let indentation = self.stylist.indentation();
+            if indentation.chars().all(|c| c == ' ') {
+                u8::try_from(indentation.len())
+                    .ok()
+                    .and_then(NonZeroU8::new)
+                    .map_or_else(IndentWidth::default, IndentWidth::from)
+            } else {
+                IndentWidth::default()
+            }
+        })
     }
 
     /// Returns the source file.
@@ -306,10 +325,16 @@ pub(crate) fn check_path(
     // Perform AST analysis
     let root = tree.root_node();
     let mut comment_positions = HashSet::new();
+    let indent_map =
+        IndentMap::from_settings(&settings.indentation, context.indent_width().as_u8());
+    let source_code = file.to_source_code();
+    let mut logical_lines_builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
     for node in once(root).chain(root.descendants()) {
         if context.is_rule_enabled(Rule::SyntaxError) && node.is_missing() {
             violations.push(context.create_diagnostic(SyntaxError {}, node));
         }
+
+        logical_lines_builder.add_node(node, &source_code);
 
         if node.kind_id() == kind!("comment") {
             comment_positions.insert(node.start_position());
@@ -373,6 +398,8 @@ pub(crate) fn check_path(
         }
     }
 
+    let logical_lines = logical_lines_builder.finish();
+
     // ignore line length in comments requires AST
     if context.is_rule_enabled(Rule::LineTooLong) {
         violations.extend(LineTooLong::check(&context, &comment_positions));
@@ -386,7 +413,7 @@ pub(crate) fn check_path(
         Rule::IncorrectIndentation,
         Rule::IndentedPreprocessorStatement,
     ]) {
-        violations.append(&mut check_incorrect_indent(&context, &root));
+        violations.append(&mut check_incorrect_indent(&context, &logical_lines));
     }
 
     if context.is_rule_enabled(Rule::InvalidCharacter) {

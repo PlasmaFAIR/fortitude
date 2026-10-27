@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
-use fortitude_linter::{RuleSelector, line_width::IndentWidth, rule_selector::ParseError};
+use fortitude_linter::{RuleSelector, indentation::IndentWidth, rule_selector::ParseError};
 
 use crate::session::{
     Client,
@@ -463,7 +463,7 @@ impl_noop_combine!(IndentWidth);
 
 #[cfg(test)]
 mod tests {
-    use fortitude_linter::line_width::IndentWidth;
+    use fortitude_linter::indentation::IndentWidth;
     use fortitude_workspace::options::{CheckOptions, Options};
     use insta::assert_debug_snapshot;
     use serde::de::DeserializeOwned;

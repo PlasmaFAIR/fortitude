@@ -4,7 +4,8 @@ Fix is always available.
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does
-Checks that preprocessor statements have zero indentation before the '#'
+Checks that preprocessor statements have zero indentation before the '#'.
 
 ## Why is this bad?
-Preprocessor statements with indentation are invalid fortran
+Preprocessor statements with indentation are invalid for most Fortran
+compilers and can lead to compilation errors.

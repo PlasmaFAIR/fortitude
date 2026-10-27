@@ -84,7 +84,7 @@ impl LineTooLong {
         let ignore_comments = settings.line_too_long.ignore_comments;
         let mut violations = Vec::new();
 
-        let tab_size = context.settings().indent_width.as_usize();
+        let tab_size = context.indent_width().as_usize();
 
         for line in source.text().universal_newlines() {
             // The maximum width of the line is the number of bytes multiplied by the tab size (the
