@@ -385,7 +385,7 @@ impl AstRule for IncorrectKeywordCase {
             // Filter node that wrap other nodes, we want only leafs
             return None;
         }
-        if node.parent()?.is_identifier_alias() {
+        if node.is_identifier_alias() || node.parent()?.is_identifier_alias() {
             // This is actually a name of some kind.
             return None;
         }
