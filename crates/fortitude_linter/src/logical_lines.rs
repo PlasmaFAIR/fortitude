@@ -119,35 +119,39 @@ impl<'source> LogicalLinesBuilder<'source> {
     }
 
     /// Consume the builder and returns the constructed `LogicalLines`.
-    pub fn finish(self) -> LogicalLines<'source> {
-        let mut lines = self.lines;
+    pub fn finish(mut self) -> LogicalLines<'source> {
         // If the last logical line has not been added, add it now
-        if self.current_start_byte != self.current_end_byte {
-            let line = &self.source
-                [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)];
-            let range = TextRange::new(self.current_start_byte, self.current_end_byte);
-            let ending = LogicalLineEnding::Newline;
-            // If the first non-whitespace character on the line is a '#',
-            // it is a preprocessor directive, so the expected indentation
-            // is zero.
-            let first_non_whitespace = line
-                .chars()
-                .find(|c| !c.is_ascii_whitespace())
-                .unwrap_or('\0');
-            let expected_indent = if first_non_whitespace == '#' {
-                0
-            } else {
-                self.current_expected_indent
-            };
-            let last_line = LogicalLine {
-                text: line,
-                range,
-                ending,
-                expected_indent,
-            };
-            lines.push(last_line);
+        self.finish_line();
+        LogicalLines { inner: self.lines }
+    }
+
+    fn finish_line(&mut self) {
+        if self.current_start_byte == self.current_end_byte {
+            return;
         }
-        LogicalLines { inner: lines }
+
+        let line =
+            &self.source[usize::from(self.current_start_byte)..usize::from(self.current_end_byte)];
+        let range = TextRange::new(self.current_start_byte, self.current_end_byte);
+        // If the first non-whitespace character on the line is a '#',
+        // it is a preprocessor directive, so the expected indentation
+        // is zero.
+        let first_non_whitespace = line
+            .chars()
+            .find(|c| !c.is_ascii_whitespace())
+            .unwrap_or('\0');
+        let expected_indent = if first_non_whitespace == '#' {
+            0
+        } else {
+            self.current_expected_indent
+        };
+        let logical_line = LogicalLine {
+            text: line,
+            range,
+            ending: LogicalLineEnding::Newline,
+            expected_indent,
+        };
+        self.lines.push(logical_line);
     }
 
     pub fn add_node(&mut self, node: Node<'source>, source: &'source SourceCode) {
@@ -179,31 +183,7 @@ impl<'source> LogicalLinesBuilder<'source> {
                 // It is possible for the current logical line to be empty if
                 // the previous line ended with a semicolon, so we check that
                 // the start and end bytes are not equal before adding the line.
-                if self.current_start_byte != self.current_end_byte {
-                    let line = &self.source
-                        [usize::from(self.current_start_byte)..usize::from(self.current_end_byte)];
-                    let range = TextRange::new(self.current_start_byte, self.current_end_byte);
-                    let ending = LogicalLineEnding::Newline;
-                    // If the first non-whitespace character on the line is a '#',
-                    // it is a preprocessor directive, so the expected indentation
-                    // is zero.
-                    let first_non_whitespace = line
-                        .chars()
-                        .find(|c| !c.is_ascii_whitespace())
-                        .unwrap_or('\0');
-                    let expected_indent = if first_non_whitespace == '#' {
-                        0
-                    } else {
-                        self.current_expected_indent
-                    };
-                    let logical_line = LogicalLine {
-                        text: line,
-                        range,
-                        ending,
-                        expected_indent,
-                    };
-                    self.lines.push(logical_line);
-                }
+                self.finish_line();
                 self.current_start_byte = source.line_start(line_number);
                 self.current_expected_indent = self.next_expected_indent;
             }
