@@ -4,7 +4,7 @@ use fortitude_macros::ViolationMetadata;
 use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for outdated declarations of `character*N`, `character*(*)`,
 /// `character*(:)`, and `character*(integer-expression)`.
 ///

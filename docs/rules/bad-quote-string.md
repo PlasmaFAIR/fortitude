@@ -3,7 +3,7 @@ Fix is sometimes available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Catches use of single- or double-quoted strings, depending on the value of
 [`check.strings.quotes`][check.strings.quotes] option.
 

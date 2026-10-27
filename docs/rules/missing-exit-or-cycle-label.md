@@ -3,7 +3,7 @@ Fix is sometimes available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 When using `exit` or `cycle` in a named `do` loop, the `exit`/`cycle` statement
 should use the loop name
 

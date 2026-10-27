@@ -1,5 +1,5 @@
 # exit-or-cycle-in-unlabelled-loop (C142)
-## What does it do?
+## What it does
 Checks for `exit` or `cycle` in unnamed `do` loops
 
 ## Why is this bad?

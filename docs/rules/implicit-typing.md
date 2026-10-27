@@ -3,7 +3,7 @@ Fix is sometimes available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks for missing `implicit none`.
 
 ## Why is this bad?

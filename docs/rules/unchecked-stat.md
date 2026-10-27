@@ -1,7 +1,7 @@
 # unchecked-stat (C181)
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 This rule detects whether a `stat`, `iostat`, and `cmdstat` argument is checked
 within the same scope it is set.
 

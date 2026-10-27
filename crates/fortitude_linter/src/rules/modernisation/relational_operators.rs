@@ -17,7 +17,7 @@ fn map_relational_symbols(name: &str) -> Option<&'static str> {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for deprecated relational operators
 ///
 /// ## Why is this bad?

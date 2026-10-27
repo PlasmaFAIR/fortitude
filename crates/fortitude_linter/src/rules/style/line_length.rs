@@ -8,7 +8,7 @@ use ruff_text_size::{TextLen, TextRange, TextSize};
 use std::collections::HashSet;
 use tree_sitter::Point;
 
-/// ## What does it do?
+/// ## What it does
 /// Checks line length isn't too long
 ///
 /// ## Why is this bad?

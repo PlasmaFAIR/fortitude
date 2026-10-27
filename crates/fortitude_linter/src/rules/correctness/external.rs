@@ -5,7 +5,7 @@ use ruff_macros::derive_message_formats;
 
 use crate::{AstRule, CheckContext, kind_ids};
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for procedures declared with just `external`
 ///
 /// ## Why is this bad?

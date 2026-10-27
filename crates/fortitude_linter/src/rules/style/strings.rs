@@ -10,7 +10,7 @@ use crate::stylist::Quote;
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_sitter::traits::TextRanged;
 
-/// ## What does it do?
+/// ## What it does
 /// Catches use of single- or double-quoted strings, depending on the value of
 /// [`check.strings.quotes`] option.
 ///

@@ -10,7 +10,7 @@ use itertools::Itertools;
 use log::debug;
 use ruff_macros::derive_message_formats;
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for assumed size variables
 ///
 /// ## Why is this bad?
@@ -105,7 +105,7 @@ impl AstRule for AssumedSize {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks `character` dummy arguments with an assumed-size length have
 /// `intent(in)` only.
 ///

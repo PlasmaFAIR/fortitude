@@ -10,7 +10,7 @@ use ruff_text_size::{TextLen, TextRange, TextSize};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_sitter::traits::TextRanged;
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for trailing whitespace.
 ///
 /// ## Why is this bad?
@@ -55,7 +55,7 @@ impl TrailingWhitespace {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for the absence of a new line at the end of the file.
 ///
 /// ## Why is this bad?
@@ -108,7 +108,7 @@ impl MissingNewlineAtEndOfFile {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for inline comments that aren't preceded by at least two spaces.
 ///
 /// ## Why is this bad?
@@ -170,7 +170,7 @@ impl AstRule for IncorrectSpaceBeforeComment {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for `::` that aren't surrounded by a space on either side.
 ///
 /// ## Why is this bad?
@@ -236,7 +236,7 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
     }
 }
 
-/// ## What does it do?
+/// ## What it does
 /// Checks for spaces between brackets and their contents.
 ///
 /// ## Why is this bad?

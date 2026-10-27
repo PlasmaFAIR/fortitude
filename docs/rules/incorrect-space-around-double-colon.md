@@ -1,7 +1,7 @@
 # incorrect-space-around-double-colon (S103)
 Fix is always available.
 
-## What does it do?
+## What it does
 Checks for `::` that aren't surrounded by a space on either side.
 
 ## Why is this bad?

@@ -1,7 +1,7 @@
 # multiple-allocations-with-stat (C182)
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 This rule detects whether `stat` is used alongside multiple allocations or
 deallocations.
 

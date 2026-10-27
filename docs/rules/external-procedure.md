@@ -1,7 +1,7 @@
 # external-procedure (C091)
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks for procedures declared with just `external`
 
 ## Why is this bad?

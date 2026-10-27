@@ -3,7 +3,7 @@ Fix is always available.
 
 This rule is turned on by default.
 
-## What does it do?
+## What it does
 Checks for the absence of a new line at the end of the file.
 
 ## Why is this bad?
