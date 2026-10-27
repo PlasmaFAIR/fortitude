@@ -327,8 +327,8 @@ pub(crate) fn check_path(
     let mut comment_positions = HashSet::new();
     let indent_map =
         IndentMap::from_settings(&settings.indentation, context.indent_width().as_u8());
-    let mut logical_lines_builder = LogicalLinesBuilder::new(file.source_text(), indent_map);
     let source_code = file.to_source_code();
+    let mut logical_lines_builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
     for node in once(root).chain(root.descendants()) {
         if context.is_rule_enabled(Rule::SyntaxError) && node.is_missing() {
             violations.push(context.create_diagnostic(SyntaxError {}, node));

@@ -98,23 +98,23 @@ pub(crate) struct LogicalLinesBuilder<'source> {
     current_expected_indent: u8,
     next_expected_indent: u8,
     indent_stack: Vec<u8>,
-    initialised: bool,
 }
 
 impl<'source> LogicalLinesBuilder<'source> {
     /// Create a new builder for the given source code.
-    pub fn new(source: &'source str, indent_map: IndentMap) -> Self {
+    pub fn new(root: Node<'source>, source: &'source SourceCode, indent_map: IndentMap) -> Self {
+        let start_byte = root.start_textsize();
+        let line_number = source.line_index(start_byte);
         Self {
-            source,
+            source: source.text(),
             lines: Vec::new(),
             indent_map,
-            current_line_number: OneIndexed::from_zero_indexed(0),
-            current_start_byte: TextSize::from(0),
-            current_end_byte: TextSize::from(0),
+            current_line_number: line_number,
+            current_start_byte: source.line_start(line_number),
+            current_end_byte: start_byte,
             current_expected_indent: 0,
             next_expected_indent: 0,
             indent_stack: vec![0],
-            initialised: false,
         }
     }
 
@@ -150,21 +150,7 @@ impl<'source> LogicalLinesBuilder<'source> {
         LogicalLines { inner: lines }
     }
 
-    /// Called by `add_node` on first encountering a node.
-    fn initialise(&mut self, node: Node<'source>, source: &'source SourceCode) {
-        let start_byte = node.start_textsize();
-        let line_number = source.line_index(start_byte);
-        self.current_line_number = line_number;
-        self.current_start_byte = source.line_start(line_number);
-        self.current_end_byte = start_byte;
-        self.initialised = true;
-    }
-
     pub fn add_node(&mut self, node: Node<'source>, source: &'source SourceCode) {
-        if !self.initialised {
-            self.initialise(node, source);
-        }
-
         let start_byte = node.start_textsize();
         let end_byte = node.end_textsize();
         let line_number = source.line_index(start_byte);
@@ -306,7 +292,7 @@ end program test
         let line_index = LineIndex::from_source_text(source);
         let source_code = SourceCode::new(source, &line_index);
         let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(source, indent_map);
+        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
         for node in root.descendants() {
             builder.add_node(node, &source_code);
         }
@@ -350,7 +336,7 @@ end module test
         let line_index = LineIndex::from_source_text(source);
         let source_code = SourceCode::new(source, &line_index);
         let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(source, indent_map);
+        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
         for node in root.descendants() {
             builder.add_node(node, &source_code);
         }
@@ -417,7 +403,7 @@ end function f
         let line_index = LineIndex::from_source_text(source);
         let source_code = SourceCode::new(source, &line_index);
         let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(source, indent_map);
+        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
         for node in root.descendants() {
             builder.add_node(node, &source_code);
         }
@@ -464,7 +450,7 @@ f
         let line_index = LineIndex::from_source_text(source);
         let source_code = SourceCode::new(source, &line_index);
         let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(source, indent_map);
+        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
         for node in root.descendants() {
             builder.add_node(node, &source_code);
         }
@@ -501,7 +487,7 @@ end function f
         let line_index = LineIndex::from_source_text(source);
         let source_code = SourceCode::new(source, &line_index);
         let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(source, indent_map);
+        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
         for node in root.descendants() {
             builder.add_node(node, &source_code);
         }
@@ -550,7 +536,7 @@ FOO
         let line_index = LineIndex::from_source_text(source);
         let source_code = SourceCode::new(source, &line_index);
         let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(source, indent_map);
+        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
         for node in root.descendants() {
             builder.add_node(node, &source_code);
         }
@@ -608,7 +594,7 @@ end &
         let line_index = LineIndex::from_source_text(source);
         let source_code = SourceCode::new(source, &line_index);
         let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(source, indent_map);
+        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
         for node in root.descendants() {
             builder.add_node(node, &source_code);
         }
