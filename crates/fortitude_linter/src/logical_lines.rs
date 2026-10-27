@@ -4,6 +4,7 @@ use fortitude_sitter::{Node, traits::TextRanged};
 use ruff_source_file::{OneIndexed, SourceCode};
 use ruff_text_size::{TextRange, TextSize};
 
+#[derive(Debug, PartialEq)]
 pub(crate) enum LogicalLineEnding {
     Newline,
     Semicolon,
@@ -257,14 +258,27 @@ mod tests {
     use itertools::Itertools;
     use ruff_source_file::LineIndex;
 
-    #[test]
-    fn test_simple_lines() -> Result<()> {
-        let source = r#"
-! Empty program
-program test
+    macro_rules! assert_logical_line {
+        ($line:expr, $text:expr, $expected_indent:expr) => {
+            assert_eq!($line.text, $text);
+            assert_eq!($line.expected_indent, $expected_indent);
+        };
+        ($line:expr, $text:expr, $expected_indent:expr, Newline) => {
+            assert_eq!($line.text, $text);
+            assert_eq!($line.expected_indent, $expected_indent);
+            assert_eq!($line.ending, LogicalLineEnding::Newline);
+        };
+        ($line:expr, $text:expr, $expected_indent:expr, Semicolon) => {
+            assert_eq!($line.text, $text);
+            assert_eq!($line.expected_indent, $expected_indent);
+            assert_eq!($line.ending, LogicalLineEnding::Semicolon);
+        };
+    }
 
-end program test
-"#;
+    fn test_logical_lines<F>(source: &str, test: F) -> Result<()>
+    where
+        F: FnOnce(&[LogicalLine<'_>]) -> Result<()>,
+    {
         let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
             .context("Error loading Fortran grammar")?;
         let tree = parser.parse(source, None).context("Failed to parse")?;
@@ -277,17 +291,24 @@ end program test
             builder.add_node(node, &source_code);
         }
         let logical_lines = builder.finish();
+        test(&logical_lines.inner)
+    }
 
-        assert_eq!(logical_lines.inner.len(), 3);
-        let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].text, "! Empty program");
-        assert_eq!(lines[1].text, "program test");
-        assert_eq!(lines[2].text, "end program test");
-        for line in lines {
-            assert!(matches!(line.ending, LogicalLineEnding::Newline));
-            assert_eq!(line.expected_indent, 0);
-        }
-        Ok(())
+    #[test]
+    fn test_simple_lines() -> Result<()> {
+        let source = r#"
+! Empty program
+program test
+
+end program test
+"#;
+        test_logical_lines(source, |lines| {
+            assert_eq!(lines.len(), 3);
+            assert_logical_line!(lines[0], "! Empty program", 0);
+            assert_logical_line!(lines[1], "program test", 0);
+            assert_logical_line!(lines[2], "end program test", 0);
+            Ok(())
+        })
     }
 
     #[test]
@@ -309,58 +330,25 @@ contains
     end subroutine sub
 end module test
 "#;
-        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
-            .context("Error loading Fortran grammar")?;
-        let tree = parser.parse(source, None).context("Failed to parse")?;
-        let root = tree.root_node();
-        let line_index = LineIndex::from_source_text(source);
-        let source_code = SourceCode::new(source, &line_index);
-        let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
-        for node in root.descendants() {
-            builder.add_node(node, &source_code);
-        }
-        let logical_lines = builder.finish();
-
-        assert_eq!(logical_lines.inner.len(), 15);
-        let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].text, "module test");
-        assert_eq!(lines[1].text, "    implicit none");
-        assert_eq!(lines[2].text, "contains");
-        assert_eq!(lines[3].text, "    subroutine sub(i)");
-        assert_eq!(lines[4].text, "        integer, intent(in) :: i");
-        assert_eq!(lines[5].text, "        if (i > 0) then");
-        assert_eq!(lines[6].text, "            print *, \"Positive\"");
-        assert_eq!(lines[7].text, "        else if (i < 0) then");
-        assert_eq!(lines[8].text, "            print *, \"Negative\"");
-        assert_eq!(lines[9].text, "        else");
-        assert_eq!(lines[10].text, "            print *, \"Zero\"");
-        assert_eq!(lines[11].text, "        end if");
-        assert_eq!(
-            lines[12].text,
-            "        if (i == 0) print *, \"Still zero\""
-        );
-        assert_eq!(lines[13].text, "    end subroutine sub");
-        assert_eq!(lines[14].text, "end module test");
-        assert_eq!(lines[0].expected_indent, 0);
-        assert_eq!(lines[1].expected_indent, 4);
-        assert_eq!(lines[2].expected_indent, 0);
-        assert_eq!(lines[3].expected_indent, 4);
-        assert_eq!(lines[4].expected_indent, 8);
-        assert_eq!(lines[5].expected_indent, 8);
-        assert_eq!(lines[6].expected_indent, 12);
-        assert_eq!(lines[7].expected_indent, 8);
-        assert_eq!(lines[8].expected_indent, 12);
-        assert_eq!(lines[9].expected_indent, 8);
-        assert_eq!(lines[10].expected_indent, 12);
-        assert_eq!(lines[11].expected_indent, 8);
-        assert_eq!(lines[12].expected_indent, 8);
-        assert_eq!(lines[13].expected_indent, 4);
-        assert_eq!(lines[14].expected_indent, 0);
-        for line in lines {
-            assert!(matches!(line.ending, LogicalLineEnding::Newline));
-        }
-        Ok(())
+        test_logical_lines(source, |lines| {
+            assert_eq!(lines.len(), 15);
+            assert_logical_line!(lines[0], "module test", 0);
+            assert_logical_line!(lines[1], "    implicit none", 4);
+            assert_logical_line!(lines[2], "contains", 0);
+            assert_logical_line!(lines[3], "    subroutine sub(i)", 4);
+            assert_logical_line!(lines[4], "        integer, intent(in) :: i", 8);
+            assert_logical_line!(lines[5], "        if (i > 0) then", 8);
+            assert_logical_line!(lines[6], "            print *, \"Positive\"", 12);
+            assert_logical_line!(lines[7], "        else if (i < 0) then", 8);
+            assert_logical_line!(lines[8], "            print *, \"Negative\"", 12);
+            assert_logical_line!(lines[9], "        else", 8);
+            assert_logical_line!(lines[10], "            print *, \"Zero\"", 12);
+            assert_logical_line!(lines[11], "        end if", 8);
+            assert_logical_line!(lines[12], "        if (i == 0) print *, \"Still zero\"", 8);
+            assert_logical_line!(lines[13], "    end subroutine sub", 4);
+            assert_logical_line!(lines[14], "end module test", 0);
+            Ok(())
+        })
     }
 
     /// Test that a nested non-block do loop terminated by `continue` is handled
@@ -376,37 +364,16 @@ function f()
     10 continue
 end function f
 "#;
-        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
-            .context("Error loading Fortran grammar")?;
-        let tree = parser.parse(source, None).context("Failed to parse")?;
-        let root = tree.root_node();
-        let line_index = LineIndex::from_source_text(source);
-        let source_code = SourceCode::new(source, &line_index);
-        let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
-        for node in root.descendants() {
-            builder.add_node(node, &source_code);
-        }
-        let logical_lines = builder.finish();
-
-        assert_eq!(logical_lines.inner.len(), 6);
-        let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].text, "function f()");
-        assert_eq!(lines[1].text, "    do 10 i = 1, n");
-        assert_eq!(lines[2].text, "        do 10 j = 1, m");
-        assert_eq!(lines[3].text, "            print *, i, j");
-        assert_eq!(lines[4].text, "    10 continue");
-        assert_eq!(lines[5].text, "end function f");
-        assert_eq!(lines[0].expected_indent, 0);
-        assert_eq!(lines[1].expected_indent, 4);
-        assert_eq!(lines[2].expected_indent, 8);
-        assert_eq!(lines[3].expected_indent, 12);
-        assert_eq!(lines[4].expected_indent, 4);
-        assert_eq!(lines[5].expected_indent, 0);
-        for line in lines {
-            assert!(matches!(line.ending, LogicalLineEnding::Newline));
-        }
-        Ok(())
+        test_logical_lines(source, |lines| {
+            assert_eq!(lines.len(), 6);
+            assert_logical_line!(lines[0], "function f()", 0, Newline);
+            assert_logical_line!(lines[1], "    do 10 i = 1, n", 4, Newline);
+            assert_logical_line!(lines[2], "        do 10 j = 1, m", 8, Newline);
+            assert_logical_line!(lines[3], "            print *, i, j", 12, Newline);
+            assert_logical_line!(lines[4], "    10 continue", 4, Newline);
+            assert_logical_line!(lines[5], "end function f", 0, Newline);
+            Ok(())
+        })
     }
 
     #[test]
@@ -423,34 +390,18 @@ end \
 & function &
 f
 "#;
-        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
-            .context("Error loading Fortran grammar")?;
-        let tree = parser.parse(source, None).context("Failed to parse")?;
-        let root = tree.root_node();
-        let line_index = LineIndex::from_source_text(source);
-        let source_code = SourceCode::new(source, &line_index);
-        let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
-        for node in root.descendants() {
-            builder.add_node(node, &source_code);
-        }
-        let logical_lines = builder.finish();
-
-        assert_eq!(logical_lines.inner.len(), 3);
-        let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].text, "function &\n    f()");
-        assert_eq!(
-            lines[1].text,
-            "    print *, &\n\"Hello &\n! mid string comment\n       & World\""
-        );
-        assert_eq!(lines[2].text, "end \\\n& function &\nf");
-        assert_eq!(lines[0].expected_indent, 0);
-        assert_eq!(lines[1].expected_indent, 4);
-        assert_eq!(lines[2].expected_indent, 0);
-        for line in lines {
-            assert!(matches!(line.ending, LogicalLineEnding::Newline));
-        }
-        Ok(())
+        test_logical_lines(source, |lines| {
+            assert_eq!(lines.len(), 3);
+            assert_logical_line!(lines[0], "function &\n    f()", 0, Newline);
+            assert_logical_line!(
+                lines[1],
+                "    print *, &\n\"Hello &\n! mid string comment\n       & World\"",
+                4,
+                Newline
+            );
+            assert_logical_line!(lines[2], "end \\\n& function &\nf", 0, Newline);
+            Ok(())
+        })
     }
 
     #[test]
@@ -460,36 +411,20 @@ function f();
 ; ;  print *, "Hello"  ;;print *, "World"
 end function f
 "#;
-        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
-            .context("Error loading Fortran grammar")?;
-        let tree = parser.parse(source, None).context("Failed to parse")?;
-        let root = tree.root_node();
-        let line_index = LineIndex::from_source_text(source);
-        let source_code = SourceCode::new(source, &line_index);
-        let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
-        for node in root.descendants() {
-            builder.add_node(node, &source_code);
-        }
-        let logical_lines = builder.finish();
-
-        assert_eq!(logical_lines.inner.len(), 7);
-        let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].text, "function f();");
-        assert_eq!(lines[1].text, ";"); // First superfluous semicolon on second line
-        assert_eq!(lines[2].text, " ;"); // Second superfluous semicolon on second line
-        assert_eq!(lines[3].text, "  print *, \"Hello\"  ;");
-        assert_eq!(lines[4].text, ";"); // Third superfluous semicolon on second line
-        assert_eq!(lines[5].text, "print *, \"World\"");
-        assert_eq!(lines[6].text, "end function f");
-        assert!(matches!(lines[0].ending, LogicalLineEnding::Semicolon));
-        assert!(matches!(lines[1].ending, LogicalLineEnding::Semicolon));
-        assert!(matches!(lines[2].ending, LogicalLineEnding::Semicolon));
-        assert!(matches!(lines[3].ending, LogicalLineEnding::Semicolon));
-        assert!(matches!(lines[4].ending, LogicalLineEnding::Semicolon));
-        assert!(matches!(lines[5].ending, LogicalLineEnding::Newline));
-        assert!(matches!(lines[6].ending, LogicalLineEnding::Newline));
-        Ok(())
+        test_logical_lines(source, |lines| {
+            assert_eq!(lines.len(), 7);
+            // Note: the expected indentations and the actual indentations do not match!
+            // All lines inside the function should be indented by 4 spaces, regardless of
+            // whether or not they are preceded by semicolons.
+            assert_logical_line!(lines[0], "function f();", 0, Semicolon);
+            assert_logical_line!(lines[1], ";", 4, Semicolon); // First superfluous semicolon on second line
+            assert_logical_line!(lines[2], " ;", 4, Semicolon); // Second superfluous semicolon on second line
+            assert_logical_line!(lines[3], "  print *, \"Hello\"  ;", 4, Semicolon);
+            assert_logical_line!(lines[4], ";", 4, Semicolon); // Third superfluous semicolon on second line
+            assert_logical_line!(lines[5], "print *, \"World\"", 4, Newline);
+            assert_logical_line!(lines[6], "end function f", 0, Newline);
+            Ok(())
+        })
     }
 
     #[test]
@@ -509,47 +444,21 @@ end function f
 #undef \
 FOO
 "#;
-        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
-            .context("Error loading Fortran grammar")?;
-        let tree = parser.parse(source, None).context("Failed to parse")?;
-        let root = tree.root_node();
-        let line_index = LineIndex::from_source_text(source);
-        let source_code = SourceCode::new(source, &line_index);
-        let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
-        for node in root.descendants() {
-            builder.add_node(node, &source_code);
-        }
-        let logical_lines = builder.finish();
-
-        assert_eq!(logical_lines.inner.len(), 11);
-        let lines = logical_lines.iter().collect_vec();
-        assert_eq!(lines[0].text, "#define FOO 1");
-        assert_eq!(lines[1].text, "function f()");
-        assert_eq!(lines[2].text, "#if FOO \\\n    == 1\n");
-        assert_eq!(lines[3].text, "    print *, \"Foo\"");
-        assert_eq!(lines[4].text, "#elif FOO == 2\n");
-        assert_eq!(lines[5].text, "    print *, \"Bar\"");
-        assert_eq!(lines[6].text, "#else");
-        assert_eq!(lines[7].text, "    print *, \"Baz\"");
-        assert_eq!(lines[8].text, "#endif");
-        assert_eq!(lines[9].text, "end function f");
-        assert_eq!(lines[10].text, "#undef \\\nFOO");
-        assert_eq!(lines[0].expected_indent, 0);
-        assert_eq!(lines[1].expected_indent, 0);
-        assert_eq!(lines[2].expected_indent, 0);
-        assert_eq!(lines[3].expected_indent, 4);
-        assert_eq!(lines[4].expected_indent, 0);
-        assert_eq!(lines[5].expected_indent, 4);
-        assert_eq!(lines[6].expected_indent, 0);
-        assert_eq!(lines[7].expected_indent, 4);
-        assert_eq!(lines[8].expected_indent, 0);
-        assert_eq!(lines[9].expected_indent, 0);
-        assert_eq!(lines[10].expected_indent, 0);
-        for line in lines {
-            assert!(matches!(line.ending, LogicalLineEnding::Newline));
-        }
-        Ok(())
+        test_logical_lines(source, |lines| {
+            assert_eq!(lines.len(), 11);
+            assert_logical_line!(lines[0], "#define FOO 1", 0, Newline);
+            assert_logical_line!(lines[1], "function f()", 0, Newline);
+            assert_logical_line!(lines[2], "#if FOO \\\n    == 1\n", 0, Newline);
+            assert_logical_line!(lines[3], "    print *, \"Foo\"", 4, Newline);
+            assert_logical_line!(lines[4], "#elif FOO == 2\n", 0, Newline);
+            assert_logical_line!(lines[5], "    print *, \"Bar\"", 4, Newline);
+            assert_logical_line!(lines[6], "#else", 0, Newline);
+            assert_logical_line!(lines[7], "    print *, \"Baz\"", 4, Newline);
+            assert_logical_line!(lines[8], "#endif", 0, Newline);
+            assert_logical_line!(lines[9], "end function f", 0, Newline);
+            assert_logical_line!(lines[10], "#undef \\\nFOO", 0, Newline);
+            Ok(())
+        })
     }
 
     #[test]
@@ -567,87 +476,22 @@ function func() result(res)
 end &
   & function func;end module mod
 "#;
-        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
-            .context("Error loading Fortran grammar")?;
-        let tree = parser.parse(source, None).context("Failed to parse")?;
-        let root = tree.root_node();
-        let line_index = LineIndex::from_source_text(source);
-        let source_code = SourceCode::new(source, &line_index);
-        let indent_map = IndentMap::default();
-        let mut builder = LogicalLinesBuilder::new(root, &source_code, indent_map);
-        for node in root.descendants() {
-            builder.add_node(node, &source_code);
-        }
-        let logical_lines = builder.finish();
+        test_logical_lines(source, |logical_lines| {
+            let lines = logical_lines.iter().collect_vec();
 
-        assert_eq!(logical_lines.inner.len(), 11);
-        assert_eq!(logical_lines.inner[0].text, "!  line1");
-        assert_eq!(logical_lines.inner[1].text, "module mod;");
-        assert_eq!(logical_lines.inner[2].text, " implicit &\nnone;");
-        assert_eq!(logical_lines.inner[3].text, "    contains ! comment");
-        assert_eq!(logical_lines.inner[4].text, "function func() result(res)");
-        assert_eq!(logical_lines.inner[5].text, "    integer :: res");
-        assert_eq!(logical_lines.inner[6].text, "#if FOO \\\n    == 1\n");
-        assert_eq!(logical_lines.inner[7].text, "    res = 1");
-        assert_eq!(logical_lines.inner[8].text, "#endif");
-        assert_eq!(logical_lines.inner[9].text, "end &\n  & function func;");
-        assert_eq!(logical_lines.inner[10].text, "end module mod");
-        assert_eq!(logical_lines.inner[0].expected_indent, 0);
-        assert_eq!(logical_lines.inner[1].expected_indent, 0);
-        assert_eq!(logical_lines.inner[2].expected_indent, 4);
-        assert_eq!(logical_lines.inner[3].expected_indent, 0);
-        assert_eq!(logical_lines.inner[4].expected_indent, 4);
-        assert_eq!(logical_lines.inner[5].expected_indent, 8);
-        assert_eq!(logical_lines.inner[6].expected_indent, 0);
-        assert_eq!(logical_lines.inner[7].expected_indent, 8);
-        assert_eq!(logical_lines.inner[8].expected_indent, 0);
-        assert_eq!(logical_lines.inner[9].expected_indent, 4);
-        assert_eq!(logical_lines.inner[10].expected_indent, 0);
-        assert!(matches!(
-            logical_lines.inner[0].ending,
-            LogicalLineEnding::Newline
-        ));
-        assert!(matches!(
-            logical_lines.inner[1].ending,
-            LogicalLineEnding::Semicolon
-        ));
-        assert!(matches!(
-            logical_lines.inner[2].ending,
-            LogicalLineEnding::Semicolon
-        ));
-        assert!(matches!(
-            logical_lines.inner[3].ending,
-            LogicalLineEnding::Newline
-        ));
-        assert!(matches!(
-            logical_lines.inner[4].ending,
-            LogicalLineEnding::Newline
-        ));
-        assert!(matches!(
-            logical_lines.inner[5].ending,
-            LogicalLineEnding::Newline
-        ));
-        assert!(matches!(
-            logical_lines.inner[6].ending,
-            LogicalLineEnding::Newline
-        ));
-        assert!(matches!(
-            logical_lines.inner[7].ending,
-            LogicalLineEnding::Newline
-        ));
-        assert!(matches!(
-            logical_lines.inner[8].ending,
-            LogicalLineEnding::Newline
-        ));
-        assert!(matches!(
-            logical_lines.inner[9].ending,
-            LogicalLineEnding::Semicolon
-        ));
-        assert!(matches!(
-            logical_lines.inner[10].ending,
-            LogicalLineEnding::Newline
-        ));
-
-        Ok(())
+            assert_eq!(lines.len(), 11);
+            assert_logical_line!(lines[0], "!  line1", 0, Newline);
+            assert_logical_line!(lines[1], "module mod;", 0, Semicolon);
+            assert_logical_line!(lines[2], " implicit &\nnone;", 4, Semicolon);
+            assert_logical_line!(lines[3], "    contains ! comment", 0, Newline);
+            assert_logical_line!(lines[4], "function func() result(res)", 4, Newline);
+            assert_logical_line!(lines[5], "    integer :: res", 8, Newline);
+            assert_logical_line!(lines[6], "#if FOO \\\n    == 1\n", 0, Newline);
+            assert_logical_line!(lines[7], "    res = 1", 8, Newline);
+            assert_logical_line!(lines[8], "#endif", 0, Newline);
+            assert_logical_line!(lines[9], "end &\n  & function func;", 4, Semicolon);
+            assert_logical_line!(lines[10], "end module mod", 0, Newline);
+            Ok(())
+        })
     }
 }
