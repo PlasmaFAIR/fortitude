@@ -2,7 +2,7 @@ use crate::{
     CheckContext,
     diagnostics::{Diagnostic, FixAvailability, Violation},
 };
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind};
 use fortitude_sitter::Node;
 use itertools::Itertools;
 use ruff_macros::derive_message_formats;
@@ -41,7 +41,10 @@ pub(crate) fn check_invalid_character(context: &CheckContext, root: &Node) -> Ve
         .filter(|(_, c)| !FORTRAN_VALID_CHARACTERS.contains(*c))
         .filter(|(index, _)| {
             if let Some(node) = root.named_descendant_for_byte_range(*index, *index) {
-                !matches!(node.kind(), "comment" | "string_literal")
+                !matches!(
+                    node.kind_id(),
+                    kind!("comment") | kind!("string_literal") | kind!("string_content")
+                )
             } else {
                 false
             }
