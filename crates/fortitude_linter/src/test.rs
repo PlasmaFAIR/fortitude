@@ -5,7 +5,7 @@ use ruff_diagnostics::Applicability;
 use ruff_source_file::{SourceFile, SourceFileBuilder};
 
 use crate::{
-    check_file,
+    FixerResult, check_and_fix_file, check_file,
     diagnostics::{DisplayDiagnosticConfig, DisplayDiagnostics},
     fs::read_to_string,
     settings::{self, CheckSettings, FixMode, OutputFormat},
@@ -32,6 +32,30 @@ pub(crate) fn test_path(path: impl AsRef<Path>, settings: &CheckSettings) -> Res
     let filename = path.to_string_lossy();
     let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
     Ok(test_contents(&path, &file, settings))
+}
+
+/// Run [`check_path`] on a Fortran file in the `resources/test/fixtures` directory,
+/// but check the file after applying any automatic fixes rather than checking the
+/// diagnostics.
+pub(crate) fn test_path_fixes(path: impl AsRef<Path>, settings: &CheckSettings) -> Result<String> {
+    let path = test_resource_path("fixtures").join(path);
+    let source = read_to_string(&path)?;
+    let filename = path.to_string_lossy();
+    let file = SourceFileBuilder::new(filename.as_ref(), source.as_str()).finish();
+    if let Ok(FixerResult {
+        result: _,
+        transformed,
+        fixed: _,
+    }) = check_and_fix_file(
+        &path,
+        &file,
+        settings,
+        settings::IgnoreAllowComments::Disabled,
+    ) {
+        Ok(transformed.source_text().to_string())
+    } else {
+        Err(anyhow::anyhow!("Failed to apply fixes"))
+    }
 }
 
 pub(crate) fn test_contents(path: &Path, file: &SourceFile, settings: &CheckSettings) -> String {

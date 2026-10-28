@@ -33,7 +33,7 @@ mod tests {
     use crate::rules::style::inconsistent_dimension::settings::PreferAttribute;
     use crate::rules::style::{complexity, inconsistent_dimension, keywords, line_length, strings};
     use crate::settings::CheckSettings;
-    use crate::test::{test_contents, test_path};
+    use crate::test::{test_contents, test_path, test_path_fixes};
 
     use super::strings::settings::Quote;
 
@@ -96,6 +96,19 @@ mod tests {
         Ok(())
     }
 
+    #[test_case(Rule::IncorrectIndentation, Path::new("S105_large.f90"))]
+    fn fixes(rule_code: Rule, path: &Path) -> Result<()> {
+        let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
+
+        let fixed = test_path_fixes(
+            Path::new("style").join(path).as_path(),
+            &CheckSettings::for_rule(rule_code),
+        )?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, fixed);
+        Ok(())
+    }
+
     #[test_case(Rule::LineTooLong, Path::new("S001_line_length_20.f90"))]
     fn line_too_long_line_length_20(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
@@ -129,7 +142,7 @@ mod tests {
     #[test]
     fn incorrect_indentation_width_2() -> Result<()> {
         let rule_code = Rule::IncorrectIndentation;
-        let path = Path::new("S105.f90");
+        let path = Path::new("S105_large.f90");
         let snapshot = format!(
             "{}_{}_indent_width_2",
             rule_code.as_ref(),
@@ -140,16 +153,16 @@ mod tests {
             indent_width: Some(IndentWidth::from(2)),
             ..CheckSettings::for_rule(rule_code)
         };
-        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        let fixed = test_path_fixes(Path::new("style").join(path).as_path(), &settings)?;
         apply_common_filters!();
-        assert_snapshot!(snapshot, diagnostics);
+        assert_snapshot!(snapshot, fixed);
         Ok(())
     }
 
     #[test]
     fn invalid_indentation_non_default_settings() -> Result<()> {
         let rule_code = Rule::IncorrectIndentation;
-        let path = Path::new("S105.f90");
+        let path = Path::new("S105_large.f90");
         let snapshot = format!(
             "{}_{}_non_default_settings",
             rule_code.as_ref(),
@@ -166,9 +179,9 @@ mod tests {
             indentation: indentation_settings,
             ..CheckSettings::for_rule(rule_code)
         };
-        let diagnostics = test_path(Path::new("style").join(path).as_path(), &settings)?;
+        let fixed = test_path_fixes(Path::new("style").join(path).as_path(), &settings)?;
         apply_common_filters!();
-        assert_snapshot!(snapshot, diagnostics);
+        assert_snapshot!(snapshot, fixed);
         Ok(())
     }
 
