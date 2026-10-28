@@ -205,7 +205,7 @@ fn create_replacement(
 ) -> Option<Vec<Diagnostic>> {
     let node = procedure.name().node();
     let edit = node.edit_replacement(replacement.to_string());
-    let fix = Fix::safe_edit(edit);
+    let fix = Fix::unsafe_edit(edit);
 
     create_diagnostic(
         context,

@@ -21,6 +21,7 @@ help: Replace with `command_argument_count`
 6 |     CALL getarg(i, arg)
 7 |     WRITE (*,*) arg
 8 |   END DO
+note: This is an unsafe fix and may change runtime behavior
 
 PORT061 [*] Use of non-portable `getarg` call
  --> ./resources/test/fixtures/portability/PORT061_command_args.f90:6:10
@@ -40,3 +41,4 @@ help: Replace with `get_command_argument`
 7 |     WRITE (*,*) arg
 8 |   END DO
 9 | END PROGRAM
+note: This is an unsafe fix and may change runtime behavior
