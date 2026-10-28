@@ -1,7 +1,8 @@
+use crate::CheckContext;
 use crate::diagnostics::{Diagnostic, Violation};
-use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind};
 use fortitude_sitter::Node;
+use fortitude_sitter::ast::symbol_table::SymbolTable;
 use fortitude_sitter::ast::types::{AttributeKind, HasName, VariableDeclaration};
 use fortitude_sitter::traits::HasNode;
 use ruff_macros::derive_message_formats;
@@ -131,45 +132,43 @@ impl Accessibility {
     }
 }
 
-impl AstRule for MutableModuleVariable {
-    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        // Only variables declared directly in a module's specification part
-        let module = node.parent()?;
-        if !matches!(module.kind_id(), kind!("module") | kind!("submodule")) {
-            return None;
-        }
+/// Check variable declarations in a module for public mutable variables
+pub(crate) fn check_mutable_module_variables(
+    context: &CheckContext,
+    module: &Node,
+    symbols: &SymbolTable,
+) -> Vec<Diagnostic> {
+    let access = Accessibility::from_module(module);
+    symbols
+        .iter_decl_lines()
+        .flat_map(|decl| check_declaration(context, &access, decl))
+        .collect()
+}
 
-        let decl = VariableDeclaration::try_from_node(node).ok()?;
-
-        // Constants and `protected` variables can't be modified from outside
-        if decl.has_any_attributes(&[AttributeKind::Parameter, AttributeKind::Protected]) {
-            return None;
-        }
-
-        // Explicitly private on the declaration
-        if decl.has_attribute(AttributeKind::Private) {
-            return None;
-        }
-        let explicitly_public = decl.has_attribute(AttributeKind::Public);
-
-        let access = Accessibility::from_module(&module);
-
-        let diagnostics = decl
-            .names()
-            .iter()
-            .filter(|name| {
-                explicitly_public || access.is_public(&name.name().as_str().to_ascii_lowercase())
-            })
-            .map(|name| {
-                let name_text = name.name().as_str().to_string();
-                context.create_diagnostic(Self { name: name_text }, name.node())
-            })
-            .collect::<Vec<_>>();
-
-        Some(diagnostics)
+fn check_declaration(
+    context: &CheckContext,
+    access: &Accessibility,
+    decl: &VariableDeclaration,
+) -> Vec<Diagnostic> {
+    // Constants and `protected` variables can't be modified from outside, and
+    // `private` variables can't be reached at all
+    if decl.has_any_attributes(&[
+        AttributeKind::Parameter,
+        AttributeKind::Protected,
+        AttributeKind::Private,
+    ]) {
+        return vec![];
     }
+    let explicitly_public = decl.has_attribute(AttributeKind::Public);
 
-    fn entrypoints() -> Vec<u16> {
-        kind_ids!["variable_declaration"]
-    }
+    decl.names()
+        .iter()
+        .filter(|name| {
+            explicitly_public || access.is_public(&name.name().as_str().to_ascii_lowercase())
+        })
+        .map(|name| {
+            let name_text = name.name().as_str().to_string();
+            context.create_diagnostic(MutableModuleVariable { name: name_text }, name.node())
+        })
+        .collect()
 }

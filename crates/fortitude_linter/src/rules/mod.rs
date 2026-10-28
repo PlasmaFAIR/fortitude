@@ -151,7 +151,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "183") => (RuleGroup::Stable, Ast, Optional, correctness::error_handling::StatWithoutMessage),
         (Correctness, "191") => (RuleGroup::Stable, Ast, Default, correctness::unreachable_statement::UnreachableStatement),
         (Correctness, "201") => (RuleGroup::Preview, None, Optional, correctness::shadowed_variable::ShadowedVariable),
-        (Correctness, "202") => (RuleGroup::Preview, Ast, Optional, correctness::mutable_module_variable::MutableModuleVariable),
+        (Correctness, "202") => (RuleGroup::Preview, None, Optional, correctness::mutable_module_variable::MutableModuleVariable),
 
         // modernisation
         (Modernisation, "001") => (RuleGroup::Stable, Ast, Optional, modernisation::double_precision::DoublePrecision),

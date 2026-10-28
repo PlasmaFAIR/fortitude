@@ -30,6 +30,7 @@ use locator::Locator;
 use logical_lines::LogicalLinesBuilder;
 pub use rule_selector::RuleSelector;
 use rule_table::RuleTable;
+use rules::correctness::mutable_module_variable::check_mutable_module_variables;
 use rules::correctness::shadowed_variable::check_shadowed_variables;
 use rules::correctness::split_escaped_quote::SplitEscapedQuote;
 use rules::error::invalid_character::check_invalid_character;
@@ -351,6 +352,13 @@ pub(crate) fn check_path(
             // Check for shadowed variables in this scope
             if context.rules.enabled(Rule::ShadowedVariable) {
                 violations.extend(check_shadowed_variables(&context, &new_table))
+            }
+
+            // Check for public mutable variables in module scope
+            if context.is_rule_enabled(Rule::MutableModuleVariable)
+                && node.kind_id() == kind!("module")
+            {
+                violations.extend(check_mutable_module_variables(&context, &node, &new_table))
             }
 
             // Run rules over variable declarations without needing to reparse

@@ -152,12 +152,3 @@ C202 Module variable 'origin' is public and mutable
 53 |   type(point), parameter :: unit = point(1.0, 1.0)  ! Fine: constant
 54 | end module with_type
    |
-
-C202 Module variable 'sub_counter' is public and mutable
-  --> ./resources/test/fixtures/correctness/C202.f90:57:14
-   |
-56 | submodule (with_type) with_type_impl
-57 |   integer :: sub_counter = 0            ! Bad
-   |              ^^^^^^^^^^^^^^^
-58 | end submodule with_type_impl
-   |

@@ -54,7 +54,7 @@ module with_type
 end module with_type
 
 submodule (with_type) with_type_impl
-  integer :: sub_counter = 0            ! Bad
+  integer :: sub_counter = 0            ! Fine: submodule entities are not reachable via `use`
 end submodule with_type_impl
 
 program test
