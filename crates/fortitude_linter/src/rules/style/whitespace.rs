@@ -1187,6 +1187,59 @@ end subroutine labels
         verify_s105_fixes(before, expected, "")
     }
 
+    /// Test to ensure Issue #717 is fixed correctly.
+    /// This concerns continued do loops in the BLAS corpus.
+    /// https://github.com/PlasmaFAIR/fortitude/issues/717
+    #[test]
+    fn issue_717() -> Result<()> {
+        let source = r#"
+SUBROUTINE BLAS_SNIPPET()
+    IF (BETA.NE.ONE) THEN
+        IF (INCY.EQ.1) THEN
+            IF (BETA.EQ.ZERO) THEN
+                DO 10 I = 1,N
+                    Y(I) = ZERO
+10              CONTINUE
+            ELSE
+                DO 20 I = 1,N
+                    Y(I) = BETA*Y(I)
+20              CONTINUE
+            END IF
+        ELSE
+            IY = KY
+            IF (BETA.EQ.ZERO) THEN
+                DO 30 I = 1,N
+                    Y(IY) = ZERO
+                    IY = IY + INCY
+30              CONTINUE
+            ELSE
+                DO 40 I = 1,N
+                    Y(IY) = BETA*Y(IY)
+                    IY = IY + INCY
+40              CONTINUE
+            END IF
+        END IF
+    END IF
+END SUBROUTINE BLAS_SNIPPET
+"#;
+        verify_s105_fixes(source, source, "")
+    }
+
+    /// Test to ensure that issue #718 is fixed correctly.
+    /// This concerns semicolons in inline comments.
+    /// https://github.com/PlasmaFAIR/fortitude/issues/718
+    #[test]
+    fn issue_718() -> Result<()> {
+        let source = r#"
+subroutine issue_718()
+    if( present(iStatus) ) then
+        iStatus = 0 ! = 0 - full stuck, 1 - slip, 2 - separation; 3 - full separation
+    endif
+end subroutine issue_718
+        "#;
+        verify_s105_fixes(source, source, "")
+    }
+
     fn verify_s105_fixes(snippet: &str, fixed_snippet: &str, toml_contents: &str) -> Result<()> {
         let temp_dir = TempDir::new()?;
         let fixed_src_path = temp_dir.path().join("S105-fixed.f90");
