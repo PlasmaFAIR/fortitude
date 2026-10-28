@@ -1,5 +1,7 @@
 //! Strong types for working with the tree-sitter AST
 
+use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::{rc::Rc, str::FromStr};
 
@@ -41,23 +43,59 @@ impl<'a> ParameterStatement<'a> {
 
 /// The name node of a variable declaration, procedure declaration, type
 /// definition, etc.
+///
+/// Compares case-insensitively with strings
 #[derive(Clone, Debug, HasNode)]
 pub struct Name<'a> {
-    name: String,
+    name: &'a str,
     node: Node<'a>,
+    /// Name but lowercase
+    lower: Cow<'a, str>,
 }
 
 impl<'a> Name<'a> {
     pub fn from_node(node: &Node<'a>) -> Self {
         let node = get_name_node_of_declarator(node);
-        Self {
-            name: node.text().to_string(),
-            node,
-        }
+        let name = node.text();
+
+        let lower = if name.chars().all(|c| c.is_ascii_lowercase()) {
+            name.into()
+        } else {
+            name.to_ascii_lowercase().into()
+        };
+        Self { name, node, lower }
     }
 
+    /// Return the original name
+    #[inline]
     pub fn as_str(&self) -> &str {
-        self.name.as_str()
+        self.name
+    }
+
+    /// Return the name as lower case
+    #[inline]
+    pub fn as_lower(&self) -> &Cow<'a, str> {
+        &self.lower
+    }
+
+    /// Return a copy of the name as lower case
+    #[inline]
+    pub fn to_lower_string(&self) -> String {
+        self.lower.to_string()
+    }
+}
+
+impl<'a, S: AsRef<str> + ?Sized> PartialEq<S> for Name<'a> {
+    #[inline]
+    fn eq(&self, other: &S) -> bool {
+        self.as_lower().eq_ignore_ascii_case(other.as_ref())
+    }
+}
+
+impl<'a> AsRef<str> for Name<'a> {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.as_str()
     }
 }
 
@@ -67,6 +105,7 @@ impl std::fmt::Display for Name<'_> {
     }
 }
 
+/// Get the [`Name`] of an entity
 pub trait HasName<'a> {
     fn name(&self) -> &Name<'a>;
 }
@@ -77,12 +116,6 @@ where
 {
     fn name(&self) -> &Name<'a> {
         T::name(self)
-    }
-}
-
-impl<'a> HasName<'a> for &'a Name<'a> {
-    fn name(&self) -> &Name<'a> {
-        self
     }
 }
 
@@ -234,11 +267,7 @@ pub enum BindLanguage {
 
 impl BindLanguage {
     pub fn from_node(node: &Node) -> Self {
-        if node.text().eq_ignore_ascii_case("C") {
-            Self::C
-        } else {
-            Self::Other
-        }
+        if node == "C" { Self::C } else { Self::Other }
     }
 }
 
@@ -639,6 +668,7 @@ pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
         kind!("identifier")
         | kind!("method_name")
         | kind!("type_name")
+        | kind!("type_member")
         | kind!("module_name")
         | kind!("local_name")
         | kind!("name") => *node,
@@ -661,6 +691,11 @@ pub fn get_name_node_of_declarator<'a>(node: &Node<'a>) -> Node<'a> {
         kind!("use_alias") => node
             .child_with_id(kind!("local_name"))
             .expect("use_alias should have local_name child"),
+        kind!("derived_type_member_expression") => get_name_node_of_declarator(
+            &node
+                .child_with_id(kind!("type_member"))
+                .expect("derived_type_member_expression must have type_member child"),
+        ),
         _ => unreachable!("unexpected node type in declarator ({node:?})"),
     }
 }
@@ -854,7 +889,7 @@ impl<'a> ProcedureAttribute<'a> {
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIs, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, Display, EnumIs, EnumString, PartialEq)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum ProcedureKind {
     Function,
@@ -943,6 +978,128 @@ impl<'a> Procedure<'a> {
 
     pub const fn is_subroutine(&self) -> bool {
         self.kind.is_subroutine()
+    }
+}
+
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct KeywordArgument<'a> {
+    /// The whole node
+    node: Node<'a>,
+    /// The argument name
+    name: Name<'a>,
+    /// The argument value
+    value: Node<'a>,
+}
+
+impl<'a> KeywordArgument<'a> {
+    pub fn from_node(node: Node<'a>) -> Self {
+        let name = Name::from_node(
+            &node
+                .child_by_field_id(field!("name").into())
+                .expect("keyword_argument should have `name` child"),
+        );
+
+        let value = node
+            .child_by_field_id(field!("value").into())
+            .expect("keyword_argument should have `value` child");
+
+        Self { node, name, value }
+    }
+
+    pub fn value(&self) -> Node<'a> {
+        self.value
+    }
+}
+
+/// A call to a subroutine or function
+#[derive(Clone, Debug, HasName, HasNode)]
+pub struct ProcedureCall<'a> {
+    name: Name<'a>,
+    node: Node<'a>,
+    kind: ProcedureKind,
+    args: Vec<Node<'a>>,
+    // TODO(peter): case-insensitive hashmap
+    kwargs: HashMap<String, KeywordArgument<'a>>,
+    // TODO: resolved procedure?
+}
+
+fn is_array_access(node: &Node) -> bool {
+    let child_node = node.child_with_name("argument_list");
+    match child_node {
+        Some(node) => node.child_with_name("extent_specifier").is_some(),
+        None => false,
+    }
+}
+
+impl<'a> ProcedureCall<'a> {
+    pub fn try_from_node(node: &Node<'a>) -> Result<Self> {
+        let is_subroutine = node.kind_id() == kind!("subroutine_call");
+
+        let (identifier, kind) = if is_subroutine {
+            (
+                node.child_by_field_id(field!("subroutine").into())
+                    .context("subroutine call missing subroutine name")?,
+                ProcedureKind::Subroutine,
+            )
+        } else if node.kind_id() == kind!("call_expression") {
+            // Check that this is not actually an array access/assignment
+            if node.is_assignment_lhs() || is_array_access(node) {
+                return Err(anyhow!("'call_expression' is not a function call"));
+            }
+
+            (
+                node.child_with_id(kind!("identifier"))
+                    .context("call_expression missing function name")?,
+                ProcedureKind::Function,
+            )
+        } else {
+            return Err(anyhow!("not a 'subroutine_call' or 'call_expression'"));
+        };
+
+        let (args, kwargs) = if let Some(args) = node.child_with_id(kind!("argument_list")) {
+            args.named_children(&mut args.walk())
+                .filter(|arg| arg.kind_id() != kind!("comment"))
+                .partition_map(|arg| match arg.kind_id() {
+                    kind!("keyword_argument") => {
+                        let kwarg = KeywordArgument::from_node(arg);
+                        let name = kwarg.name().to_lower_string();
+                        itertools::Either::Right((name, kwarg))
+                    }
+                    _ => itertools::Either::Left(arg),
+                })
+        } else {
+            (vec![], vec![])
+        };
+
+        let kwargs = HashMap::from_iter(kwargs);
+
+        Ok(Self {
+            name: Name::from_node(&identifier),
+            node: *node,
+            kind,
+            args,
+            kwargs,
+        })
+    }
+
+    pub fn kind(&self) -> ProcedureKind {
+        self.kind
+    }
+
+    pub fn args(&self) -> &Vec<Node<'a>> {
+        &self.args
+    }
+
+    pub fn arg(&self, index: usize) -> Option<Node<'a>> {
+        self.args.get(index).copied()
+    }
+
+    pub fn kwargs(&self) -> &HashMap<String, KeywordArgument<'a>> {
+        &self.kwargs
+    }
+
+    pub fn kwarg(&self, name: &str) -> Option<KeywordArgument<'a>> {
+        self.kwargs.get(name).cloned()
     }
 }
 
@@ -1533,6 +1690,68 @@ mod tests {
         let ampersand = node.next_line_continuation();
         assert!(ampersand.is_some());
         assert_eq!(ampersand.unwrap().start_position(), Point::new(2, 5));
+
+        Ok(())
+    }
+
+    #[test]
+    fn names() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program FOO
+          end program
+          "#,
+        );
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let names = root
+            .descendants()
+            .filter(|node| matches!(node.kind_id(), kind!("name")))
+            .map(|node| Name::from_node(&node))
+            .collect_vec();
+
+        assert_eq!(names.len(), 1);
+
+        assert_eq!(names[0].as_str(), "FOO");
+        assert_eq!(names[0].as_lower(), "foo");
+        assert_eq!(names[0], "Foo");
+
+        Ok(())
+    }
+
+    #[test]
+    fn procedure_calls() -> Result<()> {
+        let mut parser = Parser::new(&tree_sitter_fortran::LANGUAGE.into())
+            .context("Error loading Fortran grammar")?;
+
+        let code = dedent(
+            r#"
+          program foo
+            call a
+            call b()
+            call c(1, 2, x="a", y=2 + 3)
+            call d%e(10)
+          end program foo
+          "#,
+        );
+
+        let tree = parser.parse(&code, None).context("Failed to parse")?;
+        let root = tree.root_node();
+        let subroutines = root
+            .descendants()
+            .filter(|node| node.kind_id() == kind!("subroutine_call"))
+            .filter_map(|node| ProcedureCall::try_from_node(&node).ok())
+            .collect_vec();
+
+        assert_eq!(subroutines.len(), 4);
+
+        assert_eq!(subroutines[0].name(), "a");
+        assert_eq!(subroutines[1].name(), "b");
+        assert_eq!(subroutines[2].name(), "c");
+        assert_eq!(subroutines[3].name(), "e");
 
         Ok(())
     }

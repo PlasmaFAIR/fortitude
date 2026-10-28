@@ -1,0 +1,42 @@
+---
+source: crates/fortitude_linter/src/rules/portability/mod.rs
+expression: diagnostics
+---
+PORT061 Use of non-portable `ETIME` call
+ --> ./resources/test/fixtures/portability/PORT061_times.f90:5:10
+  |
+3 |     real, dimension(2) :: tarray
+4 |     real :: result
+5 |     call ETIME(tarray, result)
+  |          ^^^^^
+6 |     print *, result
+7 |     print *, tarray(1)
+  |
+help: Replace with `cpu_time|system_clock|date_and_time`
+help: The standard `cpu_time|system_clock|date_and_time` has different semantics. See the docs for more details
+
+PORT061 Use of non-portable `idate` call
+  --> ./resources/test/fixtures/portability/PORT061_times.f90:13:10
+   |
+11 |   idate: block
+12 |     integer, dimension(3) :: tarray
+13 |     call idate(tarray)
+   |          ^^^^^
+14 |     print *, tarray(1)
+15 |     print *, tarray(2)
+   |
+help: Replace with `date_and_time`
+help: The standard `date_and_time` has different semantics. See the docs for more details
+
+PORT061 Use of non-portable `fdate` call
+  --> ./resources/test/fixtures/portability/PORT061_times.f90:21:10
+   |
+19 |   fdate: block
+20 |     character(len=30) :: date
+21 |     call fdate(date)
+   |          ^^^^^
+22 |     print *, 'Program started on ', date
+23 |   end block fdate
+   |
+help: Replace with `date_and_time`
+help: The standard `date_and_time` has different semantics. See the docs for more details

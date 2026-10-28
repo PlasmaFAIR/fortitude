@@ -13,6 +13,7 @@ PORT061 [*] Use of non-portable `exit` call
 21 | call exit(1)  ! non-standard
    |
 help: Replace with `stop`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
 16 | implicit none
 17 | integer :: ierr
 18 | ierr = 1
@@ -21,7 +22,7 @@ help: Replace with `stop`
 20 | call exit()  ! non-standard
 21 | call exit(1)  ! non-standard
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
-note: This is an unsafe fix and may change runtime behavior
+note: This is a display-only fix and is likely to be incorrect
 
 PORT061 [*] Use of non-portable `exit` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:20:1
@@ -34,6 +35,7 @@ PORT061 [*] Use of non-portable `exit` call
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
    |
 help: Replace with `stop`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
 17 | integer :: ierr
 18 | ierr = 1
 19 | call exit  ! non-standard
@@ -42,7 +44,7 @@ help: Replace with `stop`
 21 | call exit(1)  ! non-standard
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
 23 | call EXIT(ierr)  ! non-standard
-note: This is an unsafe fix and may change runtime behavior
+note: This is a display-only fix and is likely to be incorrect
 
 PORT061 [*] Use of non-portable `exit` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:21:1
@@ -55,6 +57,7 @@ PORT061 [*] Use of non-portable `exit` call
 23 | call EXIT(ierr)  ! non-standard
    |
 help: Replace with `stop 1`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
 18 | ierr = 1
 19 | call exit  ! non-standard
 20 | call exit()  ! non-standard
@@ -63,9 +66,9 @@ help: Replace with `stop 1`
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
 23 | call EXIT(ierr)  ! non-standard
 24 | call exit(status=2)  ! non-standard
-note: This is an unsafe fix and may change runtime behavior
+note: This is a display-only fix and is likely to be incorrect
 
-PORT061 Use of non-portable `exit` call
+PORT061 [*] Use of non-portable `exit` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:22:1
    |
 20 | call exit()  ! non-standard
@@ -75,9 +78,19 @@ PORT061 Use of non-portable `exit` call
 23 | call EXIT(ierr)  ! non-standard
 24 | call exit(status=2)  ! non-standard
    |
-help: Replace with `stop`
+help: Replace with `stop 123456`
+info: A fix is available in Fortran standard f2008 (target standard: f95)
+19 | call exit  ! non-standard
+20 | call exit()  ! non-standard
+21 | call exit(1)  ! non-standard
+   - call exit(123456)  ! non-standard, 6 digits: no fix below F2008
+22 + stop 123456  ! non-standard, 6 digits: no fix below F2008
+23 | call EXIT(ierr)  ! non-standard
+24 | call exit(status=2)  ! non-standard
+25 | call abort  ! non-standard
+note: This is a display-only fix and is likely to be incorrect
 
-PORT061 Use of non-portable `exit` call
+PORT061 [*] Use of non-portable `EXIT` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:23:1
    |
 21 | call exit(1)  ! non-standard
@@ -87,9 +100,19 @@ PORT061 Use of non-portable `exit` call
 24 | call exit(status=2)  ! non-standard
 25 | call abort  ! non-standard
    |
-help: Replace with `stop`
+help: Replace with `stop ierr`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
+20 | call exit()  ! non-standard
+21 | call exit(1)  ! non-standard
+22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
+   - call EXIT(ierr)  ! non-standard
+23 + stop ierr  ! non-standard
+24 | call exit(status=2)  ! non-standard
+25 | call abort  ! non-standard
+26 | call abort(1)  ! non-standard
+note: This is a display-only fix and is likely to be incorrect
 
-PORT061 Use of non-portable `exit` call
+PORT061 [*] Use of non-portable `exit` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:24:1
    |
 22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
@@ -99,9 +122,19 @@ PORT061 Use of non-portable `exit` call
 25 | call abort  ! non-standard
 26 | call abort(1)  ! non-standard
    |
-help: Replace with `stop`
+help: Replace with `stop 2`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
+21 | call exit(1)  ! non-standard
+22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
+23 | call EXIT(ierr)  ! non-standard
+   - call exit(status=2)  ! non-standard
+24 + stop 2  ! non-standard
+25 | call abort  ! non-standard
+26 | call abort(1)  ! non-standard
+27 | call abort(123456)  ! non-standard
+note: This is a display-only fix and is likely to be incorrect
 
-PORT061 Use of non-portable `abort` call
+PORT061 [*] Use of non-portable `abort` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:25:1
    |
 23 | call EXIT(ierr)  ! non-standard
@@ -112,8 +145,18 @@ PORT061 Use of non-portable `abort` call
 27 | call abort(123456)  ! non-standard
    |
 help: Replace with `error stop`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
+22 | call exit(123456)  ! non-standard, 6 digits: no fix below F2008
+23 | call EXIT(ierr)  ! non-standard
+24 | call exit(status=2)  ! non-standard
+   - call abort  ! non-standard
+25 + error stop  ! non-standard
+26 | call abort(1)  ! non-standard
+27 | call abort(123456)  ! non-standard
+28 | call abort("message")  ! non-standard
+note: This is a display-only fix and is likely to be incorrect
 
-PORT061 Use of non-portable `abort` call
+PORT061 [*] Use of non-portable `abort` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:26:1
    |
 24 | call exit(status=2)  ! non-standard
@@ -123,9 +166,19 @@ PORT061 Use of non-portable `abort` call
 27 | call abort(123456)  ! non-standard
 28 | call abort("message")  ! non-standard
    |
-help: Replace with `error stop`
+help: Replace with `error stop 1`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
+23 | call EXIT(ierr)  ! non-standard
+24 | call exit(status=2)  ! non-standard
+25 | call abort  ! non-standard
+   - call abort(1)  ! non-standard
+26 + error stop 1  ! non-standard
+27 | call abort(123456)  ! non-standard
+28 | call abort("message")  ! non-standard
+29 | call abort(ierr)  ! non-standard
+note: This is a display-only fix and is likely to be incorrect
 
-PORT061 Use of non-portable `abort` call
+PORT061 [*] Use of non-portable `abort` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:27:1
    |
 25 | call abort  ! non-standard
@@ -135,9 +188,19 @@ PORT061 Use of non-portable `abort` call
 28 | call abort("message")  ! non-standard
 29 | call abort(ierr)  ! non-standard
    |
-help: Replace with `error stop`
+help: Replace with `error stop 123456`
+info: A fix is available in Fortran standard f2008 (target standard: f95)
+24 | call exit(status=2)  ! non-standard
+25 | call abort  ! non-standard
+26 | call abort(1)  ! non-standard
+   - call abort(123456)  ! non-standard
+27 + error stop 123456  ! non-standard
+28 | call abort("message")  ! non-standard
+29 | call abort(ierr)  ! non-standard
+30 | call abort(1, 2)  ! non-standard, more than one argument
+note: This is a display-only fix and is likely to be incorrect
 
-PORT061 Use of non-portable `abort` call
+PORT061 [*] Use of non-portable `abort` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:28:1
    |
 26 | call abort(1)  ! non-standard
@@ -147,9 +210,19 @@ PORT061 Use of non-portable `abort` call
 29 | call abort(ierr)  ! non-standard
 30 | call abort(1, 2)  ! non-standard, more than one argument
    |
-help: Replace with `error stop`
+help: Replace with `error stop "message"`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
+25 | call abort  ! non-standard
+26 | call abort(1)  ! non-standard
+27 | call abort(123456)  ! non-standard
+   - call abort("message")  ! non-standard
+28 + error stop "message"  ! non-standard
+29 | call abort(ierr)  ! non-standard
+30 | call abort(1, 2)  ! non-standard, more than one argument
+31 | do
+note: This is a display-only fix and is likely to be incorrect
 
-PORT061 Use of non-portable `abort` call
+PORT061 [*] Use of non-portable `abort` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:29:1
    |
 27 | call abort(123456)  ! non-standard
@@ -159,7 +232,17 @@ PORT061 Use of non-portable `abort` call
 30 | call abort(1, 2)  ! non-standard, more than one argument
 31 | do
    |
-help: Replace with `error stop`
+help: Replace with `error stop ierr`
+info: A fix is available in Fortran standard f2018 (target standard: f95)
+26 | call abort(1)  ! non-standard
+27 | call abort(123456)  ! non-standard
+28 | call abort("message")  ! non-standard
+   - call abort(ierr)  ! non-standard
+29 + error stop ierr  ! non-standard
+30 | call abort(1, 2)  ! non-standard, more than one argument
+31 | do
+32 |   exit  ! loop exit, should not trigger
+note: This is a display-only fix and is likely to be incorrect
 
 PORT061 Use of non-portable `abort` call
   --> ./resources/test/fixtures/portability/PORT061_exit.f90:30:1

@@ -171,9 +171,7 @@ impl<'a> SymbolTable<'a> {
     pub fn insert_from_decl_line(&mut self, decl: VariableDeclaration<'a>, dummy_vars: &[String]) {
         let decl = Rc::new(decl);
         for name in decl.names().iter() {
-            let is_dummy_var = dummy_vars
-                .iter()
-                .any(|val| val.eq_ignore_ascii_case(name.name().as_str()));
+            let is_dummy_var = dummy_vars.iter().any(|val| name.name() == val.as_str());
             self.insert_symbol(Symbol::Variable(Variable::new(
                 name.clone(),
                 is_dummy_var,
@@ -200,8 +198,7 @@ impl<'a> SymbolTable<'a> {
     /// Insert a symbol into the table, taking care to lowercase the name for case-insensitive lookup.
     /// This should always be used instead of inserting directly into the inner hashmap.
     pub fn insert_symbol(&mut self, symbol: Symbol<'a>) {
-        self.inner
-            .insert(symbol.name().as_str().to_ascii_lowercase(), symbol);
+        self.inner.insert(symbol.name().to_lower_string(), symbol);
     }
 
     /// Return the symbol with the given name if it exists
@@ -287,10 +284,10 @@ impl<'a> SymbolTables<'a> {
     }
 
     /// Return the symbol with the given name if it exists
-    pub fn get(&'_ self, name: &str) -> Option<&Symbol<'_>> {
+    pub fn get<S: AsRef<str>>(&'_ self, name: S) -> Option<&Symbol<'_>> {
         // Check the most recently inserted table first
         for table in self.inner.iter().rev() {
-            if let Some(var) = table.get(name) {
+            if let Some(var) = table.get(name.as_ref()) {
                 return Some(var);
             }
         }
@@ -340,7 +337,7 @@ end program foo
             x.textrange(),
             TextRange::new(TextSize::new(26), TextSize::new(27))
         );
-        assert_eq!(x.name().as_str(), "x");
+        assert_eq!(x.name(), "x");
         assert_eq!(x.type_().name(), "integer");
         assert_eq!(x.decl_statement().textrange(), first_decl_range);
 
@@ -350,7 +347,7 @@ end program foo
             y.textrange(),
             TextRange::new(TextSize::new(29), TextSize::new(33))
         );
-        assert_eq!(y.name().as_str(), "Y");
+        assert_eq!(y.name(), "Y");
         assert_eq!(y.decl_statement().textrange(), first_decl_range);
 
         assert!(z.is_some());
@@ -359,7 +356,7 @@ end program foo
             z.textrange(),
             TextRange::new(TextSize::new(35), TextSize::new(40))
         );
-        assert_eq!(z.name().as_str(), "z");
+        assert_eq!(z.name(), "z");
         assert_eq!(z.decl_statement().textrange(), first_decl_range);
 
         assert!(a.is_some());
@@ -368,7 +365,7 @@ end program foo
             a.textrange(),
             TextRange::new(TextSize::new(60), TextSize::new(71))
         );
-        assert_eq!(a.name().as_str(), "a");
+        assert_eq!(a.name(), "a");
         assert_eq!(a.type_().name(), "real");
         let a_attrs: Vec<&'static str> = a
             .attributes()
@@ -693,7 +690,7 @@ end program foo
         assert!(i8.is_some());
         let i8 = i8.unwrap();
         assert!(i8.is_used_item());
-        assert!(i8.name().as_str() == "i8");
+        assert!(i8.name() == "i8");
         let Symbol::UsedItem(i8) = i8 else {
             panic!("Expected i8 to be a UsedItem");
         };
@@ -707,7 +704,7 @@ end program foo
         assert!(real32.is_some());
         let real32 = real32.unwrap();
         assert!(real32.is_used_item());
-        assert!(real32.name().as_str() == "real32");
+        assert!(real32.name() == "real32");
         let Symbol::UsedItem(real32) = real32 else {
             panic!("Expected real32 to be a UsedItem");
         };
@@ -716,7 +713,7 @@ end program foo
         assert!(real32_module.as_str() == "iso_fortran_env");
 
         let iso_fortran_env = real32.decl_statement();
-        assert!(iso_fortran_env.name().as_str() == "iso_fortran_env");
+        assert!(iso_fortran_env.name() == "iso_fortran_env");
         assert!(iso_fortran_env.is_intrinsic());
         assert!(iso_fortran_env.has_colon());
         assert!(iso_fortran_env.has_only());
@@ -733,14 +730,14 @@ end program foo
         assert!(my_subroutine_module.as_str() == "my_module");
 
         let my_module = my_subroutine.decl_statement();
-        assert!(my_module.name().as_str() == "my_module");
+        assert!(my_module.name() == "my_module");
         assert!(!my_module.is_intrinsic());
         assert!(my_module.has_colon());
         assert!(my_module.has_only());
 
         let symbol_table = symbol_table.pop_table().unwrap();
         let another_module = symbol_table.iter_use_statements().last().unwrap();
-        assert!(another_module.name().as_str() == "another_module");
+        assert!(another_module.name() == "another_module");
         assert!(!another_module.is_intrinsic());
         assert!(!another_module.has_colon());
         assert!(!another_module.has_only());
@@ -805,32 +802,32 @@ end module mod
         let foo = symbol_table.get("Foo");
         assert!(foo.is_some());
         let foo = foo.unwrap();
-        assert!(foo.name().as_str() == "foo");
+        assert!(foo.name() == "foo");
 
         let bar = symbol_table.get("bar");
         assert!(bar.is_some());
         let bar = bar.unwrap();
-        assert!(bar.name().as_str() == "BaR");
+        assert!(bar.name() == "BaR");
 
         let idx = symbol_table.get("idx");
         assert!(idx.is_some());
         let idx = idx.unwrap();
-        assert!(idx.name().as_str() == "Idx");
+        assert!(idx.name() == "Idx");
 
         let count = symbol_table.get("COUNT");
         assert!(count.is_some());
         let count = count.unwrap();
-        assert!(count.name().as_str() == "count");
+        assert!(count.name() == "count");
 
         let sub = symbol_table.get("SUB");
         assert!(sub.is_some());
         let sub = sub.unwrap();
-        assert!(sub.name().as_str() == "sub");
+        assert!(sub.name() == "sub");
 
         let func = symbol_table.get("func");
         assert!(func.is_some());
         let func = func.unwrap();
-        assert!(func.name().as_str() == "FuNc");
+        assert!(func.name() == "FuNc");
         Ok(())
     }
 }

@@ -271,13 +271,9 @@ fn is_user_defined_type_io_subroutine(node: &Node, table: &SymbolTable) -> bool 
         let intent_out = intent == Some(&AttributeKind::Intent(Intent::Out));
         let intent_inout = intent == Some(&AttributeKind::Intent(Intent::InOut));
 
-        let names = decl
-            .names()
-            .iter()
-            .map(|name| name.name().as_str().to_ascii_lowercase())
-            .collect_vec();
+        let names = decl.names().iter().map(|name| name.name()).collect_vec();
 
-        let contains = |name: &str| names.contains(&name.to_string());
+        let contains = |name: &str| names.iter().any(|n| *n == name);
 
         let (is_character, is_integer) = if let Type::Intrinsic(type_) = decl.type_() {
             (type_.is_character(), type_.is_integer())

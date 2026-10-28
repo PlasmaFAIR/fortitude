@@ -1,7 +1,7 @@
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Fix};
 use crate::fix::edits::delete_stmt_part;
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kind};
 use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
 
@@ -53,11 +53,7 @@ impl AstRule for SuperfluousWhileTrue {
         // We're left with the final parenthesised expression. It's child will always be a logical
         //   expression (which is valid and thus we return)
         //   or a single entity like a boolean literal.
-        if !parenth_exp
-            .child_with_name("boolean_literal")?
-            .text()
-            .eq_ignore_ascii_case(".true.")
-        {
+        if parenth_exp.child_with_id(kind!("boolean_literal"))? != ".true." {
             return None;
         }
         let edits = delete_stmt_part(node, context.source_text());

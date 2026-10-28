@@ -92,10 +92,7 @@ struct PresentCall {
 }
 
 fn present_call(expr: &Node, function: &str) -> Option<PresentCall> {
-    if expr.kind_id() != kind!("call_expression") {
-        return None;
-    }
-    if !expr.child(0)?.text().eq_ignore_ascii_case(function) {
+    if expr.kind_id() != kind!("call_expression") || expr.child(0)? != function {
         return None;
     }
     let arg_list = expr.child_with_id(kind!("argument_list"))?;

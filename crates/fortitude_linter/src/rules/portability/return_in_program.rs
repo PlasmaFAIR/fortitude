@@ -40,7 +40,7 @@ impl AlwaysFixableViolation for ReturnInProgram {
 
 impl AstRule for ReturnInProgram {
     fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
-        if !node.child(0)?.text().eq_ignore_ascii_case("return") {
+        if node.child(0)? != "return" {
             return None;
         }
 

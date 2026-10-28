@@ -234,9 +234,10 @@ fn find_stat_in_siblings(node: &Node, stat_name: &str) -> Result<CheckStatus> {
             continue;
         }
 
-        if let Some(stat_node) = once(sibling).chain(sibling.descendants()).find(|d| {
-            d.kind_id() == kind!("identifier") && d.text().eq_ignore_ascii_case(stat_name)
-        }) {
+        if let Some(stat_node) = once(sibling)
+            .chain(sibling.descendants())
+            .find(|d| d.kind_id() == kind!("identifier") && d == stat_name)
+        {
             return stat_check_status(&stat_node, stat_name);
         }
     }
@@ -256,11 +257,9 @@ fn stat_check_status(node: &Node, stat_name: &str) -> Result<CheckStatus> {
 
     if ancestor.kind_id() == kind!("assignment_statement")
         && let Some(lhs) = ancestor.child_by_field_id(field!("left").into())
+        && lhs == stat_name
     {
-        let lhs_text = lhs.text();
-        if lhs_text.eq_ignore_ascii_case(stat_name) {
-            return Ok(CheckStatus::Overwritten(lhs.textrange()));
-        }
+        return Ok(CheckStatus::Overwritten(lhs.textrange()));
     }
     if ancestor.kind_id() == kind!("keyword_argument") {
         // See if the stat variable is passed to another error handling routine.

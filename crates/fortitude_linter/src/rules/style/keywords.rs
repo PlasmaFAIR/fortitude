@@ -259,7 +259,7 @@ impl AstRule for KeywordHasWhitespace {
         }
         // Check if immediate sibling is 'out'/'to'
         let sibling = first_child.next_sibling()?;
-        if sibling.text().to_lowercase() == second {
+        if sibling == second {
             let start = first_child.start_textsize();
             let end = sibling.end_textsize();
             let fix_start = first_child.end_textsize();
