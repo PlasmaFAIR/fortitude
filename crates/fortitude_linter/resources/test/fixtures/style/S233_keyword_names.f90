@@ -21,4 +21,11 @@ program d
   WHERE: do DATA = 1, 10
   end do WHERE
 
+  ! Labels that aren't keywords are identifiers too
+  MyIf: if (DATA) then
+  end if MyIf
+
+  MyLoop: do DATA = 1, 10
+  end do MyLoop
+
 end program d
