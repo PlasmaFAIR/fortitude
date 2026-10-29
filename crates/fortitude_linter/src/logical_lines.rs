@@ -107,6 +107,7 @@ pub(crate) struct LogicalLinesBuilder<'source> {
     current_expected_indent: u8,
     next_expected_indent: u8,
     indent_stack: Vec<u8>,
+    continuing: bool,
 }
 
 impl<'source> LogicalLinesBuilder<'source> {
@@ -124,6 +125,7 @@ impl<'source> LogicalLinesBuilder<'source> {
             current_expected_indent: 0,
             next_expected_indent: 0,
             indent_stack: vec![0],
+            continuing: false,
         }
     }
 
@@ -169,15 +171,13 @@ impl<'source> LogicalLinesBuilder<'source> {
         let line_number = source.line_index(start_byte);
         let kind_id = node.kind_id();
 
+        let new_line = line_number > self.current_line_number;
+
         // If the node starts on a new line, we might write out the previous line.
-        if line_number > self.current_line_number {
-            // Continued lines begin with a real '&' node or a virtual one of
-            // zero width located at the beginning of the first node on the
-            // line. If this is found on a new line, the current logical line is
-            // extended to include the next line.
-            // We can also check for preprocessor line continuations by checking
-            // if the current line ends with a backslash.
-            let continued = node.kind_id() == kw!("&");
+        if new_line {
+            // Preprocessor line continuations can be simply checked by seeing
+            // if the previous line ends with a backslash.
+
             // As line number must be greater than current_line_number, we can
             // safely subtract 1 to get the previous line.
             let last_physical_line = source.line_text(line_number.saturating_sub(1));
@@ -186,7 +186,7 @@ impl<'source> LogicalLinesBuilder<'source> {
                 .rev()
                 .find(|c| !c.is_ascii_whitespace())
                 == Some('\\');
-            if !continued && !preproc_continued {
+            if !self.continuing && !preproc_continued {
                 // The node starts on a new line, so we need to finish the
                 // current logical line.
                 // It is possible for the current logical line to be empty if
@@ -197,6 +197,13 @@ impl<'source> LogicalLinesBuilder<'source> {
                 self.current_expected_indent = self.next_expected_indent;
             }
             self.current_line_number = line_number;
+        }
+
+        // A '&' opening a new line closes the continuation; any other starts one.
+        // Virtual '&' nodes of zero width are inserted at the start of new lines
+        // by the parser if a physical '&' isn't present.
+        if kind_id == kw!("&") {
+            self.continuing = !new_line;
         }
 
         // If the node is a semicolon, we need to finish the current logical
@@ -391,7 +398,9 @@ function &
     f()
     print *, &
 "Hello &
+
 ! mid string comment
+
        & World"
 
 end \
@@ -399,16 +408,15 @@ function &
 f
 "#;
         test_logical_lines(source, |lines| {
-            assert_eq!(lines.len(), 4);
+            assert_eq!(lines.len(), 3);
             assert_logical_line!(lines[0], "function &\n    f()", 0, Newline);
-            assert_logical_line!(lines[1], "    print *, &\n\"Hello &", 4, Newline);
             assert_logical_line!(
-                lines[2],
-                "! mid string comment\n       & World\"",
+                lines[1],
+                "    print *, &\n\"Hello &\n\n! mid string comment\n\n       & World\"",
                 4,
                 Newline
             );
-            assert_logical_line!(lines[3], "end \\\nfunction &\nf", 0, Newline);
+            assert_logical_line!(lines[2], "end \\\nfunction &\nf", 0, Newline);
             Ok(())
         })
     }

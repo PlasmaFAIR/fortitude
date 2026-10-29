@@ -340,8 +340,33 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 /// understand the scoping of logic.
 ///
 /// The expected indentation is inferred on a per-file basis, or it can be set
-/// using the `check.indent-width` option. Continued lines are ignored, as
-/// they are often indented differently for readability.
+/// using the `check.indent-width` option.
+///
+/// Continued lines are often indented differently for readability. When
+/// applying fixes, Fortitude will try to preserve the existing indentation of
+/// continued lines, relative to the indentation of the preceding line.
+///
+/// ## Example
+///
+/// ```f90
+/// subroutine example()
+///     integer :: i
+///     do i = 1, 10
+///     print *, i
+///     end do
+/// end subroutine example
+/// ```
+///
+/// Prefer:
+///
+/// ```f90
+/// subroutine example()
+///     integer :: i
+///     do i = 1, 10
+///         print *, i
+///     end do
+/// end subroutine example
+/// ```
 ///
 /// ## Options
 /// - `check.indent-width`
@@ -414,11 +439,19 @@ fn indentation_edits(
         // For each line in the range, create an edit to adjust the indentation.
         if indentation_change > 0 {
             (line_start.get() + 1..=line_end.get())
-                .map(|line_index| {
+                .filter_map(|line_index| {
                     let line_index =
                         OneIndexed::new(line_index).expect("Type roundtrip should not fail");
-                    let start_byte = source.line_start(line_index);
-                    Edit::insertion(" ".repeat(indentation_change as usize), start_byte)
+                    let blank_line = source.line_text(line_index).trim().is_empty();
+                    if blank_line {
+                        None
+                    } else {
+                        let start_byte = source.line_start(line_index);
+                        Some(Edit::insertion(
+                            " ".repeat(indentation_change as usize),
+                            start_byte,
+                        ))
+                    }
                 })
                 .collect::<Vec<_>>()
         } else if indentation_change < 0 {
@@ -430,7 +463,7 @@ fn indentation_edits(
                     let line_indent = source
                         .line_text(line_index)
                         .bytes()
-                        .take_while(|c| c.is_ascii_whitespace())
+                        .take_while(|c| *c == b' ' || *c == b'\t')
                         .count();
                     let start_byte = source.line_start(line_index);
                     let remove_count = (-indentation_change as usize).min(line_indent);
@@ -1242,6 +1275,43 @@ subroutine labels(x)
 300 x = 2
   x = 1
 end subroutine labels
+"#;
+        verify_s105_fixes(before, expected, "")
+    }
+
+    #[test]
+    fn comments_in_continued_lines() -> Result<()> {
+        let before = r#"
+program p
+  implicit none (type, external)
+  integer :: x
+x = 1 + &
+  ! comment after continuation
+2 + &
+
+  & 3
+    print *, x, "String with &
+
+  ! comment
+
+    & continuation"
+end program p
+"#;
+        let expected = r#"
+program p
+  implicit none (type, external)
+  integer :: x
+  x = 1 + &
+    ! comment after continuation
+  2 + &
+
+    & 3
+  print *, x, "String with &
+
+! comment
+
+  & continuation"
+end program p
 "#;
         verify_s105_fixes(before, expected, "")
     }
