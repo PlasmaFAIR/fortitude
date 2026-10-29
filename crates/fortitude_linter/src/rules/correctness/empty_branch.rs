@@ -55,10 +55,10 @@ impl AstRule for EmptyBranch {
             return None;
         }
 
-        let (branch, target) = match node.kind() {
-            "if_statement" => ("if", node.child_with_name("parenthesized_expression")?),
-            "elseif_clause" => ("else if", *node),
-            "else_clause" => ("else", *node),
+        let branch = match node.kind() {
+            "if_statement" => "if",
+            "elseif_clause" => "else if",
+            "else_clause" => "else",
             _ => return None,
         };
 
@@ -66,7 +66,7 @@ impl AstRule for EmptyBranch {
             Self {
                 branch: branch.to_string(),
             },
-            target
+            node
         ))
     }
 
