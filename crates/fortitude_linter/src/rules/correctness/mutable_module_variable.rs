@@ -163,9 +163,7 @@ fn check_declaration(
 
     decl.names()
         .iter()
-        .filter(|name| {
-            explicitly_public || access.is_public(&name.name().as_str().to_ascii_lowercase())
-        })
+        .filter(|name| explicitly_public || access.is_public(name.name().as_lower()))
         .map(|name| {
             let name_text = name.name().as_str().to_string();
             context.create_diagnostic(MutableModuleVariable { name: name_text }, name.node())
