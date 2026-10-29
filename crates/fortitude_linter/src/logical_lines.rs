@@ -171,10 +171,8 @@ impl<'source> LogicalLinesBuilder<'source> {
         let line_number = source.line_index(start_byte);
         let kind_id = node.kind_id();
 
-        let new_line = line_number > self.current_line_number;
-
         // If the node starts on a new line, we might write out the previous line.
-        if new_line {
+        if line_number > self.current_line_number {
             // Preprocessor line continuations can be simply checked by seeing
             // if the previous line ends with a backslash.
 
@@ -199,11 +197,12 @@ impl<'source> LogicalLinesBuilder<'source> {
             self.current_line_number = line_number;
         }
 
-        // A '&' opening a new line closes the continuation; any other starts one.
-        // Virtual '&' nodes of zero width are inserted at the start of new lines
-        // by the parser if a physical '&' isn't present.
+        // A '&' opening a new line closes the continuation.  Virtual '&' nodes
+        // of zero width are inserted at the start of new lines by the parser if
+        // a physical '&' isn't present. Therefore, the continuation status is
+        // toggled whenever a '&' node is encountered.
         if kind_id == kw!("&") {
-            self.continuing = !new_line;
+            self.continuing = !self.continuing;
         }
 
         // If the node is a semicolon, we need to finish the current logical
