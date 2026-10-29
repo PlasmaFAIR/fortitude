@@ -1,8 +1,10 @@
 use crate::diagnostics::{Diagnostic, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
-use fortitude_macros::ViolationMetadata;
+use fortitude_macros::{ViolationMetadata, kw};
 use fortitude_sitter::Node;
+use fortitude_sitter::traits::TextRanged;
 use ruff_macros::derive_message_formats;
+use ruff_text_size::TextRange;
 
 /// ## What it does
 /// Checks for `if`, `else if` and `else` branches that contain no statements.
@@ -55,10 +57,19 @@ impl AstRule for EmptyBranch {
             return None;
         }
 
-        let branch = match node.kind() {
-            "if_statement" => "if",
-            "elseif_clause" => "else if",
-            "else_clause" => "else",
+        let (branch, range) = match node.kind() {
+            "if_statement" => {
+                let mut cursor = node.walk();
+                let then = node
+                    .children(&mut cursor)
+                    .find(|child| child.kind_id() == kw!("then"))?;
+                (
+                    "if",
+                    TextRange::new(node.start_textsize(), then.end_textsize()),
+                )
+            }
+            "elseif_clause" => ("else if", node.textrange()),
+            "else_clause" => ("else", node.textrange()),
             _ => return None,
         };
 
@@ -66,7 +77,7 @@ impl AstRule for EmptyBranch {
             Self {
                 branch: branch.to_string(),
             },
-            node
+            range
         ))
     }
 

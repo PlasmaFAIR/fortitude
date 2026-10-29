@@ -16,15 +16,12 @@ C153 Empty `else` branch
 C153 Empty `if` branch
   --> ./resources/test/fixtures/correctness/C153.f90:15:3
    |
-13 |     end if
+13 |   end if
 14 |
-15 | /   if (flag) then
-16 | |   else
-17 | |     x = 1
-18 | |   end if
-   | |________^
-19 |
-20 |     if (flag) then
+15 |   if (flag) then
+   |   ^^^^^^^^^^^^^^
+16 |   else
+17 |     x = 1
    |
 
 C153 Empty `else if` branch
@@ -41,14 +38,12 @@ C153 Empty `else if` branch
 C153 Empty `if` branch
   --> ./resources/test/fixtures/correctness/C153.f90:27:3
    |
-25 |     end if
+25 |   end if
 26 |
-27 | /   if (flag) then
-28 | |     ! x = 1
-29 | |   end if
-   | |________^
-30 |
-31 |     if (flag) then
+27 |   if (flag) then
+   |   ^^^^^^^^^^^^^^
+28 |     ! x = 1
+29 |   end if
    |
 
 C153 Empty `else` branch
