@@ -65,6 +65,14 @@ impl<'source> LogicalLine<'source> {
             .count()
     }
 
+    /// The byte range of the indentation
+    pub fn indentation_range(&self) -> TextRange {
+        TextRange::new(
+            self.start_byte(),
+            self.start_byte() + TextSize::from(self.indentation().len() as u32),
+        )
+    }
+
     #[allow(dead_code)]
     pub fn ending(&self) -> &LogicalLineEnding {
         &self.ending

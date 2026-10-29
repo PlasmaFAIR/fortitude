@@ -1,11 +1,11 @@
 /// Defines rules that enforce widely accepted whitespace rules.
 use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
-use crate::logical_lines::LogicalLines;
+use crate::logical_lines::{LogicalLine, LogicalLines};
 use crate::rules::Rule;
 use fortitude_macros::ViolationMetadata;
 use fortitude_sitter::Node;
 use ruff_macros::derive_message_formats;
-use ruff_source_file::{OneIndexed, UniversalNewlines};
+use ruff_source_file::{OneIndexed, SourceCode, UniversalNewlines};
 use ruff_text_size::{TextLen, TextRange, TextSize};
 
 use crate::{AstRule, CheckContext, kind_ids};
@@ -390,6 +390,71 @@ impl AlwaysFixableViolation for IndentedPreprocessorStatement {
     }
 }
 
+fn indentation_edits(
+    source: &SourceCode,
+    line: &LogicalLine,
+    expected_indent: usize,
+    actual_indent: usize,
+) -> (Edit, Vec<Edit>) {
+    // Determine the fix for the first line of the logical line, accounting for
+    // any statement label
+    let edit = if let Some(label) = line.label() {
+        let padding = " ".repeat(expected_indent - label.len());
+        Edit::range_replacement(format!("{label}{padding}"), line.indentation_range())
+    } else if expected_indent > 0 {
+        Edit::range_replacement(" ".repeat(expected_indent), line.indentation_range())
+    } else {
+        Edit::range_deletion(line.indentation_range())
+    };
+    // Handle continuation lines
+    let line_start = source.line_index(line.start_byte());
+    let line_end = source.line_index(line.end_byte());
+    let edits = if line_end > line_start {
+        let indentation_change = expected_indent as isize - actual_indent as isize;
+        // For each line in the range, create an edit to adjust the indentation.
+        if indentation_change > 0 {
+            (line_start.get() + 1..=line_end.get())
+                .map(|line_index| {
+                    let line_index =
+                        OneIndexed::new(line_index).expect("Type roundtrip should not fail");
+                    let start_byte = source.line_start(line_index);
+                    Edit::insertion(" ".repeat(indentation_change as usize), start_byte)
+                })
+                .collect::<Vec<_>>()
+        } else if indentation_change < 0 {
+            (line_start.get() + 1..=line_end.get())
+                .filter_map(|line_index| {
+                    let line_index =
+                        OneIndexed::new(line_index).expect("Type roundtrip should not fail");
+                    // TODO what do we do if continued lines start with tabs?
+                    let line_indent = source
+                        .line_text(line_index)
+                        .bytes()
+                        .take_while(|c| c.is_ascii_whitespace())
+                        .count();
+                    let start_byte = source.line_start(line_index);
+                    let remove_count = (-indentation_change as usize).min(line_indent);
+                    if remove_count > 0 {
+                        Some(Edit::range_deletion(TextRange::new(
+                            start_byte,
+                            start_byte + TextSize::from(remove_count as u32),
+                        )))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
+        } else {
+            // This shouldn't be reachable, but just to be safe...
+            Vec::new()
+        }
+    } else {
+        // No continuation lines
+        Vec::new()
+    };
+    (edit, edits)
+}
+
 pub(crate) fn check_incorrect_indent(
     context: &CheckContext,
     lines: &LogicalLines,
@@ -419,17 +484,17 @@ pub(crate) fn check_incorrect_indent(
         let actual_indent = indentation.len();
 
         if actual_indent != expected_indent {
-            let indentation_range = TextRange::new(
-                start_byte,
-                start_byte + TextSize::from(actual_indent as u32),
-            );
             let preproc = line.text().trim_start().starts_with('#');
             if preproc && context.is_rule_enabled(Rule::IndentedPreprocessorStatement) {
-                let edit = Edit::range_deletion(indentation_range);
+                let (edit, edits) =
+                    indentation_edits(&source_code, line, expected_indent, actual_indent);
                 violations.push(
                     context
-                        .create_diagnostic(IndentedPreprocessorStatement {}, indentation_range)
-                        .with_fix(Fix::safe_edit(edit)),
+                        .create_diagnostic(
+                            IndentedPreprocessorStatement {},
+                            line.indentation_range(),
+                        )
+                        .with_fix(Fix::safe_edits(edit, edits)),
                 );
             }
             if !preproc && context.is_rule_enabled(Rule::IncorrectIndentation) {
@@ -438,14 +503,8 @@ pub(crate) fn check_incorrect_indent(
                 {
                     continue;
                 }
-                let edit = if let Some(label) = label {
-                    let padding = " ".repeat(expected_indent - label.len());
-                    Edit::range_replacement(format!("{label}{padding}"), indentation_range)
-                } else if expected_indent > 0 {
-                    Edit::range_replacement(" ".repeat(expected_indent), indentation_range)
-                } else {
-                    Edit::range_deletion(indentation_range)
-                };
+                let (edit, edits) =
+                    indentation_edits(&source_code, line, expected_indent, actual_indent);
                 violations.push(
                     context
                         .create_diagnostic(
@@ -453,9 +512,9 @@ pub(crate) fn check_incorrect_indent(
                                 actual: actual_indent,
                                 expected: expected_indent,
                             },
-                            indentation_range,
+                            line.indentation_range(),
                         )
-                        .with_fix(Fix::safe_edit(edit)),
+                        .with_fix(Fix::safe_edits(edit, edits)),
                 );
             }
         }

@@ -32,12 +32,12 @@ contains
       integer function get_x_end_continuation() result(x)
       x = 1
             end&
-    function get_x
+    function get_x_end_continuation
 
       integer function get_x_continued_line() &
     result(x)
       x = 1
-      end function get_x
+      end function get_x_continued_line
 
         function minterface_i(x)
           integer :: x
