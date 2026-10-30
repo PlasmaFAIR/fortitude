@@ -1,0 +1,79 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+---
+S331 [*] Prefer `write` over `print`
+ --> ./resources/test/fixtures/style/S331.f90:3:5
+  |
+1 | program test_print
+2 |
+3 |     print *
+  |     ^^^^^^^
+4 |     print *, "hello"
+5 |     print "(A)", "hello"
+  |
+help: Replace `print` with `write`
+1 | program test_print
+2 |
+  -     print *
+3 +     write (*, *)
+4 |     print *, "hello"
+5 |     print "(A)", "hello"
+6 |     print "(I5)", 42
+
+S331 [*] Prefer `write` over `print`
+ --> ./resources/test/fixtures/style/S331.f90:4:5
+  |
+3 |     print *
+4 |     print *, "hello"
+  |     ^^^^^^^^^^^^^^^^
+5 |     print "(A)", "hello"
+6 |     print "(I5)", 42
+  |
+help: Replace `print` with `write`
+1 | program test_print
+2 |
+3 |     print *
+  -     print *, "hello"
+4 +     write (*, *) "hello"
+5 |     print "(A)", "hello"
+6 |     print "(I5)", 42
+7 |
+
+S331 [*] Prefer `write` over `print`
+ --> ./resources/test/fixtures/style/S331.f90:5:5
+  |
+3 |     print *
+4 |     print *, "hello"
+5 |     print "(A)", "hello"
+  |     ^^^^^^^^^^^^^^^^^^^^
+6 |     print "(I5)", 42
+  |
+help: Replace `print` with `write`
+2 |
+3 |     print *
+4 |     print *, "hello"
+  -     print "(A)", "hello"
+5 +     write (*, "(A)") "hello"
+6 |     print "(I5)", 42
+7 |
+8 | end program test_print
+
+S331 [*] Prefer `write` over `print`
+ --> ./resources/test/fixtures/style/S331.f90:6:5
+  |
+4 |     print *, "hello"
+5 |     print "(A)", "hello"
+6 |     print "(I5)", 42
+  |     ^^^^^^^^^^^^^^^^
+7 |
+8 | end program test_print
+  |
+help: Replace `print` with `write`
+3 |     print *
+4 |     print *, "hello"
+5 |     print "(A)", "hello"
+  -     print "(I5)", 42
+6 +     write (*, "(I5)") 42
+7 |
+8 | end program test_print
