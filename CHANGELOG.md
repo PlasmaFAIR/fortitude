@@ -49,12 +49,7 @@ versions 0.9.2 and 0.10.0.
 
 ### Rules
 
-- Generalise `PORT061`/`non-portable-system-call` into `non-portable-intrinsic-procedure`.
-It now also catches the use of non-portable `call exit(...)`/`call abort(...)` and the
-use of GFortran's `rand` and `srand` functions.
-([#750](https://github.com/PlasmaFAIR/fortitude/pull/750),
-[#755](https://github.com/PlasmaFAIR/fortitude/pull/755),
-[#764](https://github.com/PlasmaFAIR/fortitude/pull/764))
+- Generalise `PORT061`/`non-portable-system-call` into `non-portable-intrinsic-procedure`. It now also catches the use of non-portable `call exit(...)`/`call abort(...)` and the use of GFortran's `rand` and `srand` functions. ([#750](https://github.com/PlasmaFAIR/fortitude/pull/750), [#755](https://github.com/PlasmaFAIR/fortitude/pull/755), [#764](https://github.com/PlasmaFAIR/fortitude/pull/764))
 
 ### Documentation
 - Add examples for --show-fixes, -o and config files ([#756](https://github.com/PlasmaFAIR/fortitude/pull/756))
