@@ -211,27 +211,18 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
         let before_edit = Edit::insertion(" ".to_string(), node.start_textsize());
         let after_edit = Edit::insertion(" ".to_string(), node.end_textsize());
 
-        if !has_space_before {
-            if !has_space_after {
-                return some_vec!(
-                    context
-                        .create_diagnostic(Self {}, node)
-                        .with_fix(Fix::safe_edits(before_edit, [after_edit]))
-                );
-            }
-            return some_vec!(
-                context
-                    .create_diagnostic(Self {}, node)
-                    .with_fix(Fix::safe_edit(before_edit))
-            );
-        } else if !has_space_after {
-            return some_vec!(
-                context
-                    .create_diagnostic(Self {}, node)
-                    .with_fix(Fix::safe_edit(after_edit))
-            );
+        let fix = match (!has_space_before, !has_space_after) {
+            (true, true) => Some(Fix::safe_edits(before_edit, [after_edit])),
+            (true, false) => Some(Fix::safe_edit(before_edit)),
+            (false, true) => Some(Fix::safe_edit(after_edit)),
+            (false, false) => None,
+        };
+
+        if let Some(fix) = fix {
+            some_vec!(context.create_diagnostic(Self {}, node).with_fix(fix))
+        } else {
+            None
         }
-        None
     }
 
     fn entrypoints() -> Vec<u16> {
