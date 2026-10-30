@@ -14,7 +14,8 @@ S106 [*] Preprocessor statements should have zero indentation
 help: Remove indentation
 1 | module mmod
   -   #if USE_MPI==1
+  -   use mpi
 2 + #if USE_MPI==1
-3 |   use mpi
+3 + use mpi
 4 | #endif
 5 | end module mmod

@@ -11,8 +11,33 @@ Inconsistent indentation makes Fortran less readable and difficult to
 understand the scoping of logic.
 
 The expected indentation is inferred on a per-file basis, or it can be set
-using the `check.indent-width` option. Continued lines are ignored, as
-they are often indented differently for readability.
+using the `check.indent-width` option.
+
+Continued lines are often indented differently for readability. When
+applying fixes, Fortitude will try to preserve the existing indentation of
+continued lines, relative to the indentation of the preceding line.
+
+## Example
+
+```f90
+subroutine example()
+    integer :: i
+    do i = 1, 10
+    print *, i
+    end do
+end subroutine example
+```
+
+Prefer:
+
+```f90
+subroutine example()
+    integer :: i
+    do i = 1, 10
+        print *, i
+    end do
+end subroutine example
+```
 
 ## Options
 - [`check.indent-width`][check.indent-width]
