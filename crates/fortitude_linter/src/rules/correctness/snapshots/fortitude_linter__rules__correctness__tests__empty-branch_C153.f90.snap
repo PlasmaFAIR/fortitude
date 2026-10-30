@@ -1,0 +1,58 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+C153 Empty `else` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:11:5
+   |
+ 9 |     if (flag) then
+10 |       goto 100
+11 |     else
+   |     ^^^^
+12 |     end if
+13 |   end if
+   |
+
+C153 Empty `if` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:15:3
+   |
+13 |   end if
+14 |
+15 |   if (flag) then
+   |   ^^^^^^^^^^^^^^
+16 |   else
+17 |     x = 1
+   |
+
+C153 Empty `else if` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:22:3
+   |
+20 |   if (flag) then
+21 |     x = 1
+22 |   else if (nkeys > 1) then
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^
+23 |   else
+24 |     x = 2
+   |
+
+C153 Empty `if` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:27:3
+   |
+25 |   end if
+26 |
+27 |   if (flag) then
+   |   ^^^^^^^^^^^^^^
+28 |     ! x = 1
+29 |   end if
+   |
+
+C153 Empty `else` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:33:3
+   |
+31 |   if (flag) then
+32 |     x = 1
+33 |   else
+   |   ^^^^
+34 |     ! x = 2
+35 |   end if
+   |

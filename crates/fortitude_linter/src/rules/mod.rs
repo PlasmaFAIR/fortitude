@@ -144,6 +144,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Correctness, "143") => (RuleGroup::Stable, Ast, Default, correctness::exit_labels::MissingEndLabel),
         (Correctness, "151") => (RuleGroup::Stable, Ast, Default, correctness::conditionals::MisleadingInlineIfSemicolon),
         (Correctness, "152") => (RuleGroup::Stable, Ast, Default, correctness::conditionals::MisleadingInlineIfContinuation),
+        (Correctness, "153") => (RuleGroup::Preview, Ast, Optional, correctness::empty_branch::EmptyBranch),
         (Correctness, "161") => (RuleGroup::Stable, Ast, Default, correctness::nonportable_shortcircuit_inquiry::NonportableShortcircuitInquiry),
         (Correctness, "171") => (RuleGroup::Stable, None, Optional, correctness::split_escaped_quote::SplitEscapedQuote),
         (Correctness, "181") => (RuleGroup::Stable, Ast, Default, correctness::error_handling::UncheckedStat),

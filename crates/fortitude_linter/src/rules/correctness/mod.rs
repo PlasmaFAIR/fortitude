@@ -2,6 +2,7 @@ pub(crate) mod accessibility_statements;
 pub(crate) mod assumed_size;
 pub(crate) mod conditionals;
 pub(crate) mod derived_default_init;
+pub(crate) mod empty_branch;
 pub(crate) mod error_handling;
 pub mod exit_labels;
 pub(crate) mod external;
@@ -68,6 +69,7 @@ mod tests {
     #[test_case(Rule::MissingEndLabel, Path::new("C143.f90"))]
     #[test_case(Rule::MisleadingInlineIfSemicolon, Path::new("C151.f90"))]
     #[test_case(Rule::MisleadingInlineIfContinuation, Path::new("C152.f90"))]
+    #[test_case(Rule::EmptyBranch, Path::new("C153.f90"))]
     #[test_case(Rule::NonportableShortcircuitInquiry, Path::new("C161.f90"))]
     #[test_case(Rule::SplitEscapedQuote, Path::new("C171.f90"))]
     #[test_case(Rule::UncheckedStat, Path::new("C181.f90"))]
