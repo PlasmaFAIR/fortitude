@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.10.1
+
+Released on 2026-10-30. This release adds some new rules and various bug fixes.
+
+### Rules
+
+- Add `C153`/`empty-branch` (S331) ([#776](https://github.com/PlasmaFAIR/fortitude/pull/776))
+- Add `C202`/`mutable-module-variable` ([#774](https://github.com/PlasmaFAIR/fortitude/pull/774))
+- Rework `S105`/`incorrect-indentation` ([#734](https://github.com/PlasmaFAIR/fortitude/pull/734), [#785](https://github.com/PlasmaFAIR/fortitude/pull/785))
+- Handle more non-portable intrinsics in `PORT061`/`non-portable-intrinsic-procedure` ([#778](https://github.com/PlasmaFAIR/fortitude/pull/778))
+
+### Bug fixes
+
+- Fix `S103` & `S104` not converging with empty array literals ([#786](https://github.com/PlasmaFAIR/fortitude/pull/786))
+- Fix `incorrect-keyword-case` flagging construct labels ([#780](https://github.com/PlasmaFAIR/fortitude/pull/780))
+- Fix `unary-following-arithmetic` for exponentials ([#777](https://github.com/PlasmaFAIR/fortitude/pull/777))
+- Fix allow comment code locations when not written as `! allow(` ([#766](https://github.com/PlasmaFAIR/fortitude/pull/766))
+- Fix deserialization of `fortitude.applyAutofix` command arguments ([#767](https://github.com/PlasmaFAIR/fortitude/pull/767))
+- Fix panic in `magic-number-in-array-size` on literals with kind suffixes ([#771](https://github.com/PlasmaFAIR/fortitude/pull/771))
+- Handle continued lines in `S105`/`incorrect-indentation` ([#785](https://github.com/PlasmaFAIR/fortitude/pull/785))
+- Support `kind` and `len` attributes on derived type components ([#770](https://github.com/PlasmaFAIR/fortitude/pull/770))
+
+### Documentation
+
+- Add rule documentation guide ([#773](https://github.com/PlasmaFAIR/fortitude/pull/773))
+- Add agent skills guide ([#775](https://github.com/PlasmaFAIR/fortitude/pull/775))
+- Use consistent headings in rule documentation ([#779](https://github.com/PlasmaFAIR/fortitude/pull/779))
+
+### Other changes
+
+- Upgrade parser ([#772](https://github.com/PlasmaFAIR/fortitude/pull/772))
+
+### Contributors
+
+- [@ahmedmohiduet](https://github.com/ahmedmohiduet)
+- [@LiamPattinson](https://github.com/LiamPattinson)
+- [@stigh](https://github.com/stigh)
+- [@pmocz](https://github.com/pmocz)
+- [@ZedThree](https://github.com/ZedThree)
+
 ## 0.10.0
 
 Released on 2026-10-22.
@@ -10,11 +50,11 @@ versions 0.9.2 and 0.10.0.
 ### Rules
 
 - Generalise `PORT061`/`non-portable-system-call` into `non-portable-intrinsic-procedure`.
-  It now also catches the use of non-portable `call exit(...)`/`call abort(...)` and the
-  use of GFortran's `rand` and `srand` functions.
-  ([#750](https://github.com/PlasmaFAIR/fortitude/pull/750),
-  [#755](https://github.com/PlasmaFAIR/fortitude/pull/755),
-  [#764](https://github.com/PlasmaFAIR/fortitude/pull/764))
+It now also catches the use of non-portable `call exit(...)`/`call abort(...)` and the
+use of GFortran's `rand` and `srand` functions.
+([#750](https://github.com/PlasmaFAIR/fortitude/pull/750),
+[#755](https://github.com/PlasmaFAIR/fortitude/pull/755),
+[#764](https://github.com/PlasmaFAIR/fortitude/pull/764))
 
 ### Documentation
 - Add examples for --show-fixes, -o and config files ([#756](https://github.com/PlasmaFAIR/fortitude/pull/756))
