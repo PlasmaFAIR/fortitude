@@ -272,7 +272,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
         let bracket_end = node.end_textsize();
         let line_index = source.line_index(bracket_end);
 
-        let is_open_bracket = matches!(node_as_str, "(" | "[");
+        let is_open_bracket = matches!(node_as_str, "(" | "[" | "(/");
         let (whitespace_start, whitespace_end) = if is_open_bracket {
             // Get line after bracket
             let line_end = source.line_end(line_index);
@@ -316,7 +316,9 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 
         // If the space is between empty brackets only raise for closing bracket
         let after = source.after(whitespace_end);
-        if is_open_bracket && (after.starts_with(")") || after.starts_with("]")) {
+        if is_open_bracket
+            && (after.starts_with(")") || after.starts_with("]") || after.starts_with("/"))
+        {
             return None;
         }
 
@@ -328,7 +330,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
     }
 
     fn entrypoints() -> Vec<u16> {
-        kind_ids!["(" | kw, "[" | kw, ")" | kw, "]" | kw]
+        kind_ids!["(" | kw, "[" | kw, ")" | kw, "]" | kw, "(/" | kw, "/)" | kw]
     }
 }
 
