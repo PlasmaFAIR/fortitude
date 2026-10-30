@@ -356,4 +356,22 @@ mod tests {
         );
         Ok(())
     }
+
+    /// See https://github.com/PlasmaFAIR/fortitude/issues/784
+    #[test]
+    fn s103_s104_fix_conflict() -> Result<()> {
+        let path = Path::new("S103_S104_conflict.f90");
+        let snapshot = "s103_s104_fix_conflict".to_string();
+
+        let settings = CheckSettings {
+            ..CheckSettings::for_rules([
+                Rule::IncorrectSpaceAroundDoubleColon,
+                Rule::IncorrectSpaceBetweenBrackets,
+            ])
+        };
+        let fixed = test_path_fixes(Path::new("style").join(path).as_path(), &settings)?;
+        apply_common_filters!();
+        assert_snapshot!(snapshot, fixed);
+        Ok(())
+    }
 }

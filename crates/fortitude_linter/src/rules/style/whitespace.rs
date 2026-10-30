@@ -204,8 +204,10 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
         let bytes = context.source_text().as_bytes();
         let has_space_before =
             double_colon_start > 0 && bytes[double_colon_start - 1].is_ascii_whitespace();
-        let has_space_after =
-            double_colon_end < bytes.len() && bytes[double_colon_end].is_ascii_whitespace();
+        // Check for space or end of array literal
+        let has_space_after = double_colon_end < bytes.len()
+            && (bytes[double_colon_end].is_ascii_whitespace()
+                || matches!(bytes[double_colon_end], b']' | b'/'));
         let before_edit = Edit::insertion(" ".to_string(), node.start_textsize());
         let after_edit = Edit::insertion(" ".to_string(), node.end_textsize());
 
