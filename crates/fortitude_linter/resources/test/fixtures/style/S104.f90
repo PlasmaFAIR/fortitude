@@ -12,6 +12,7 @@ contains
     b = [ 4, & ! This should remove the space after the [
           5 ] ! This should remove the space before the ]
     write( *,* ) a, b, c ! This should remove the space before the ) and after the (
+    b = (/ 8, 9 /)     ! remove spaces at start/end
   end subroutine mysub
   subroutine myothersub( & ! This should be allowed for long parameter lists
     a &

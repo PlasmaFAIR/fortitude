@@ -204,32 +204,25 @@ impl AstRule for IncorrectSpaceAroundDoubleColon {
         let bytes = context.source_text().as_bytes();
         let has_space_before =
             double_colon_start > 0 && bytes[double_colon_start - 1].is_ascii_whitespace();
-        let has_space_after =
-            double_colon_end < bytes.len() && bytes[double_colon_end].is_ascii_whitespace();
+        // Check for space or end of array literal
+        let has_space_after = double_colon_end < bytes.len()
+            && (bytes[double_colon_end].is_ascii_whitespace()
+                || matches!(bytes[double_colon_end], b']' | b'/'));
         let before_edit = Edit::insertion(" ".to_string(), node.start_textsize());
         let after_edit = Edit::insertion(" ".to_string(), node.end_textsize());
 
-        if !has_space_before {
-            if !has_space_after {
-                return some_vec!(
-                    context
-                        .create_diagnostic(Self {}, node)
-                        .with_fix(Fix::safe_edits(before_edit, [after_edit]))
-                );
-            }
-            return some_vec!(
-                context
-                    .create_diagnostic(Self {}, node)
-                    .with_fix(Fix::safe_edit(before_edit))
-            );
-        } else if !has_space_after {
-            return some_vec!(
-                context
-                    .create_diagnostic(Self {}, node)
-                    .with_fix(Fix::safe_edit(after_edit))
-            );
+        let fix = match (!has_space_before, !has_space_after) {
+            (true, true) => Some(Fix::safe_edits(before_edit, [after_edit])),
+            (true, false) => Some(Fix::safe_edit(before_edit)),
+            (false, true) => Some(Fix::safe_edit(after_edit)),
+            (false, false) => None,
+        };
+
+        if let Some(fix) = fix {
+            some_vec!(context.create_diagnostic(Self {}, node).with_fix(fix))
+        } else {
+            None
         }
-        None
     }
 
     fn entrypoints() -> Vec<u16> {
@@ -272,7 +265,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
         let bracket_end = node.end_textsize();
         let line_index = source.line_index(bracket_end);
 
-        let is_open_bracket = matches!(node_as_str, "(" | "[");
+        let is_open_bracket = matches!(node_as_str, "(" | "[" | "(/");
         let (whitespace_start, whitespace_end) = if is_open_bracket {
             // Get line after bracket
             let line_end = source.line_end(line_index);
@@ -316,7 +309,9 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
 
         // If the space is between empty brackets only raise for closing bracket
         let after = source.after(whitespace_end);
-        if is_open_bracket && (after.starts_with(")") || after.starts_with("]")) {
+        if is_open_bracket
+            && (after.starts_with(")") || after.starts_with("]") || after.starts_with("/"))
+        {
             return None;
         }
 
@@ -328,7 +323,7 @@ impl AstRule for IncorrectSpaceBetweenBrackets {
     }
 
     fn entrypoints() -> Vec<u16> {
-        kind_ids!["(" | kw, "[" | kw, ")" | kw, "]" | kw]
+        kind_ids!["(" | kw, "[" | kw, ")" | kw, "]" | kw, "(/" | kw, "/)" | kw]
     }
 }
 

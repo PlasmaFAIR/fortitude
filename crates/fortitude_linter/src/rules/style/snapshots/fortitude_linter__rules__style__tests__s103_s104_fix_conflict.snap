@@ -1,0 +1,8 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: fixed
+---
+program p
+  points = [real ::]
+  points = (/integer ::/)
+end program p
