@@ -1,0 +1,115 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+C154 Left operand of `.and.` is the constant `.true.`
+  --> ./resources/test/fixtures/correctness/C154.f90:9:7
+   |
+ 8 |   ! Left operand is a constant.
+ 9 |   if (.true. .and. ready) print *, "left and"
+   |       ^^^^^^
+10 |   if (.false. .or. ready) print *, "left or"
+   |
+
+C154 Left operand of `.or.` is the constant `.false.`
+  --> ./resources/test/fixtures/correctness/C154.f90:10:7
+   |
+ 8 |   ! Left operand is a constant.
+ 9 |   if (.true. .and. ready) print *, "left and"
+10 |   if (.false. .or. ready) print *, "left or"
+   |       ^^^^^^^
+11 |
+12 |   ! Right operand is a constant.
+   |
+
+C154 Right operand of `.and.` is the constant `.false.`
+  --> ./resources/test/fixtures/correctness/C154.f90:13:19
+   |
+12 |   ! Right operand is a constant.
+13 |   if (ready .and. .false.) print *, "right and"
+   |                   ^^^^^^^
+14 |   if (ready .or. .true.) print *, "right or"
+   |
+
+C154 Right operand of `.or.` is the constant `.true.`
+  --> ./resources/test/fixtures/correctness/C154.f90:14:18
+   |
+12 |   ! Right operand is a constant.
+13 |   if (ready .and. .false.) print *, "right and"
+14 |   if (ready .or. .true.) print *, "right or"
+   |                  ^^^^^^
+15 |
+16 |   ! Nested, so the inner expression is reported too.
+   |
+
+C154 Left operand of `.or.` is the constant `.false.`
+  --> ./resources/test/fixtures/correctness/C154.f90:17:20
+   |
+16 |   ! Nested, so the inner expression is reported too.
+17 |   if (ready .and. (.false. .or. done)) print *, "nested"
+   |                    ^^^^^^^
+18 |
+19 |   ! Both sides constant: two diagnostics.
+   |
+
+C154 Left operand of `.or.` is the constant `.true.`
+  --> ./resources/test/fixtures/correctness/C154.f90:20:7
+   |
+19 |   ! Both sides constant: two diagnostics.
+20 |   if (.true. .or. .false.) print *, "both"
+   |       ^^^^^^
+21 |
+22 |   ! The spelling of the keyword and of the literal does not matter, and a
+   |
+
+C154 Right operand of `.or.` is the constant `.false.`
+  --> ./resources/test/fixtures/correctness/C154.f90:20:19
+   |
+19 |   ! Both sides constant: two diagnostics.
+20 |   if (.true. .or. .false.) print *, "both"
+   |                   ^^^^^^^
+21 |
+22 |   ! The spelling of the keyword and of the literal does not matter, and a
+   |
+
+C154 Left operand of `.and.` is the constant `.false.`
+  --> ./resources/test/fixtures/correctness/C154.f90:24:7
+   |
+22 |   ! The spelling of the keyword and of the literal does not matter, and a
+23 |   ! keyword split by a line continuation is still the same operator.
+24 |   if (.FALSE. .AND. ready) print *, "upper"
+   |       ^^^^^^^
+25 |   if (ready .&
+26 |        &or. .true.) print *, "spliced"
+   |
+
+C154 Right operand of `.or.` is the constant `.true.`
+  --> ./resources/test/fixtures/correctness/C154.f90:26:13
+   |
+24 |   if (.FALSE. .AND. ready) print *, "upper"
+25 |   if (ready .&
+26 |        &or. .true.) print *, "spliced"
+   |             ^^^^^^
+27 |
+28 |   ! A kind suffix does not hide the literal, and parentheses do not either.
+   |
+
+C154 Right operand of `.or.` is the constant `.true.`
+  --> ./resources/test/fixtures/correctness/C154.f90:29:18
+   |
+28 |   ! A kind suffix does not hide the literal, and parentheses do not either.
+29 |   if (ready .or. .true._4) print *, "kinded"
+   |                  ^^^^^^^^
+30 |   if (ready .and. (.false.)) print *, "parenthesised"
+   |
+
+C154 Right operand of `.and.` is the constant `.false.`
+  --> ./resources/test/fixtures/correctness/C154.f90:30:20
+   |
+28 |   ! A kind suffix does not hide the literal, and parentheses do not either.
+29 |   if (ready .or. .true._4) print *, "kinded"
+30 |   if (ready .and. (.false.)) print *, "parenthesised"
+   |                    ^^^^^^^
+31 |
+32 |   ! Not reported: no constant operand, or the constant is not an operand of
+   |

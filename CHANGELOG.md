@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Rules
+
+- Add `C154`/`constant-logical-operand`, a preview rule for a constant `.true.`/`.false.` operand of
+  `.and.`/`.or.`
+
 ## 0.10.1
 
 Released on 2026-10-30. This release adds some new rules and various bug fixes.

@@ -1,4 +1,4 @@
-use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix};
+use crate::diagnostics::{AlwaysFixableViolation, Diagnostic, Edit, Fix, Violation};
 use crate::{AstRule, CheckContext, kind_ids};
 use fortitude_macros::{ViolationMetadata, kind, kw};
 use fortitude_sitter::Node;
@@ -208,4 +208,109 @@ pub fn ifthenify(node: &Node) -> Option<String> {
     Some(format!(
         "{prelude} then{nl}{indentation}  {body}{nl}{indentation}end if"
     ))
+}
+
+/// ## What it does
+/// Checks for a constant `.true.` or `.false.` as an operand of `.and.` or `.or.`.
+///
+/// ## Why is this bad?
+/// A constant operand either cannot change the result or fixes it, so the
+/// expression does not test what it appears to test. Both shapes usually come
+/// from an edit that left a placeholder behind or from a condition that was
+/// rewritten by halves.
+///
+/// ## Example
+/// ```f90
+/// if (is_ready .or. .true.) then
+///     call run()
+/// end if
+/// ```
+/// Use instead:
+/// ```f90
+/// if (is_ready) then
+///     call run()
+/// end if
+/// ```
+#[derive(ViolationMetadata)]
+pub(crate) struct ConstantLogicalOperand {
+    operand: String,
+    operator: String,
+    literal: String,
+}
+
+impl Violation for ConstantLogicalOperand {
+    #[derive_message_formats]
+    fn message(&self) -> String {
+        let Self {
+            operand,
+            operator,
+            literal,
+        } = self;
+        format!("{operand} operand of `{operator}` is the constant `{literal}`")
+    }
+}
+
+impl AstRule for ConstantLogicalOperand {
+    fn check(context: &CheckContext, node: &Node) -> Option<Vec<Diagnostic>> {
+        // The operator token is aliased to the canonical lower-case keyword, so
+        // its kind matches every spelling, including a keyword split by a line
+        // continuation. `.not.` has two children instead of three and is
+        // rejected here on purpose; `.eqv.`/`.neqv.` too, because a constant
+        // operand there flips the result instead of being redundant.
+        let operator = node.child(1)?.kind().to_string();
+        if !matches!(operator.as_str(), ".and." | ".or.") {
+            return None;
+        }
+
+        let mut diagnostics = vec![];
+        for (index, operand) in [(0, "Left"), (2, "Right")] {
+            let Some(side) = node.child(index) else {
+                continue;
+            };
+            // `x .and. (.false.)` is the same expression as `x .and. .false.`.
+            let side = strip_parentheses(side);
+            if side.kind_id() != kind!("boolean_literal") {
+                continue;
+            }
+            let Some(literal) = boolean_literal_text(&side) else {
+                continue;
+            };
+            diagnostics.push(context.create_diagnostic(
+                ConstantLogicalOperand {
+                    operand: operand.to_string(),
+                    operator: operator.clone(),
+                    literal,
+                },
+                side,
+            ));
+        }
+
+        if diagnostics.is_empty() {
+            None
+        } else {
+            Some(diagnostics)
+        }
+    }
+
+    fn entrypoints() -> Vec<u16> {
+        kind_ids!["logical_expression"]
+    }
+}
+
+/// The `.true.`/`.false.` text of a `boolean_literal`, without the optional
+/// kind suffix (`.true._4`) and without the original spelling's case.
+fn boolean_literal_text(node: &Node) -> Option<String> {
+    let token = node.child(0)?.kind().to_lowercase();
+    matches!(token.as_str(), ".true." | ".false.").then_some(token)
+}
+
+/// Unwrap `((...))` around an expression.
+fn strip_parentheses(mut node: Node) -> Node {
+    while node.kind_id() == kind!("parenthesized_expression") {
+        let Some(inner) = node.child(1) else {
+            break;
+        };
+        node = inner;
+    }
+    node
 }
