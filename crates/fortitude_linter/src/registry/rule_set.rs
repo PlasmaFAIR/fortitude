@@ -9,7 +9,7 @@ use ruff_macros::CacheKey;
 
 use crate::registry::Rule;
 
-const RULESET_SIZE: usize = 2;
+const RULESET_SIZE: usize = 3;
 
 /// A set of [`Rule`]s.
 ///
