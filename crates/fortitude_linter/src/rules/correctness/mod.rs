@@ -71,6 +71,7 @@ mod tests {
     #[test_case(Rule::MisleadingInlineIfSemicolon, Path::new("C151.f90"))]
     #[test_case(Rule::MisleadingInlineIfContinuation, Path::new("C152.f90"))]
     #[test_case(Rule::EmptyBranch, Path::new("C153.f90"))]
+    #[test_case(Rule::ConstantLogicalOperand, Path::new("C154.f90"))]
     #[test_case(Rule::NonportableShortcircuitInquiry, Path::new("C161.f90"))]
     #[test_case(Rule::SplitEscapedQuote, Path::new("C171.f90"))]
     #[test_case(Rule::UncheckedStat, Path::new("C181.f90"))]
