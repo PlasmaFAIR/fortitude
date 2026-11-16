@@ -5,7 +5,7 @@
 ### Rules
 
 - Add `C154`/`constant-logical-operand`, a preview rule for a constant `.true.`/`.false.` operand of
-  `.and.`/`.or.`
+  `.and.`/`.or.`; the redundant shape (`x .and. .true.`, `.false. .or. x`) is fixed automatically
 
 ## 0.10.1
 

@@ -262,7 +262,7 @@ impl AstRule for ConstantLogicalOperand {
             return None;
         }
 
-        let mut diagnostics = vec![];
+        let mut literals = vec![];
         for (index, operand) in [(0, "Left"), (2, "Right")] {
             let Some(side) = node.child(index) else {
                 continue;
@@ -275,26 +275,51 @@ impl AstRule for ConstantLogicalOperand {
             let Some(literal) = boolean_literal_text(&side) else {
                 continue;
             };
-            diagnostics.push(context.create_diagnostic(
+            literals.push((index, operand, side, literal));
+        }
+
+        // The literal and its operator can go only when the other operand is the
+        // whole expression. The other two shapes fix the result instead, and a
+        // literal on both sides makes the whole expression constant.
+        let replacement = match literals.as_slice() {
+            [(index, _, _, literal)] if is_redundant(literal, &operator) => {
+                node.child(2 - index).map(|keep| keep.text().to_string())
+            }
+            _ => None,
+        };
+
+        let mut diagnostics = Vec::with_capacity(literals.len());
+        for (_, operand, side, literal) in literals {
+            let mut diagnostic = context.create_diagnostic(
                 ConstantLogicalOperand {
                     operand: operand.to_string(),
                     operator: operator.clone(),
                     literal,
                 },
                 side,
-            ));
+            );
+            if let Some(text) = &replacement {
+                diagnostic =
+                    diagnostic.with_fix(Fix::safe_edit(node.edit_replacement(text.clone())));
+            }
+            diagnostics.push(diagnostic);
         }
 
-        if diagnostics.is_empty() {
-            None
-        } else {
-            Some(diagnostics)
-        }
+        (!diagnostics.is_empty()).then_some(diagnostics)
     }
 
     fn entrypoints() -> Vec<u16> {
         kind_ids!["logical_expression"]
     }
+}
+
+/// Whether the literal leaves the other operand as the whole expression, as in
+/// `x .and. .true.` or `.false. .or. x`, rather than fixing the result.
+fn is_redundant(literal: &str, operator: &str) -> bool {
+    matches!(
+        (literal, operator),
+        (".true.", ".and.") | (".false.", ".or.")
+    )
 }
 
 /// The `.true.`/`.false.` text of a `boolean_literal`, without the optional
