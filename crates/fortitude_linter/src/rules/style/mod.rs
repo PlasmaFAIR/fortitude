@@ -9,6 +9,7 @@ pub mod inconsistent_dimension;
 pub mod keywords;
 pub mod line_length;
 pub mod literals;
+pub mod missing_blank_line_between_procedures;
 pub(crate) mod semicolons;
 pub mod strings;
 pub mod superfluous_while_true;
@@ -50,6 +51,7 @@ mod tests {
     #[test_case(Rule::IncorrectSpaceBetweenBrackets, Path::new("S104.f90"))]
     #[test_case(Rule::IncorrectIndentation, Path::new("S105.f90"))]
     #[test_case(Rule::IndentedPreprocessorStatement, Path::new("S106.f90"))]
+    #[test_case(Rule::MissingBlankLineBetweenProcedures, Path::new("S107.f90"))]
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201.f90"))]
     #[test_case(Rule::MultipleModules, Path::new("S211.f90"))]
     #[test_case(Rule::ProgramWithModule, Path::new("S212.f90"))]
@@ -84,6 +86,7 @@ mod tests {
     #[test_case(Rule::LineTooLong, Path::new("S001_line_length_pfunit_ok.pf"))]
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201_ok.f90"))]
     #[test_case(Rule::UnsortedUses, Path::new("S271_ok.f90"))]
+    #[test_case(Rule::MissingBlankLineBetweenProcedures, Path::new("S107_ok.f90"))]
     fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),
