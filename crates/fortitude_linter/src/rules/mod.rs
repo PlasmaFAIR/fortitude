@@ -207,6 +207,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "262") => (RuleGroup::Stable, None, Optional, style::inconsistent_dimension::MixedScalarArrayDeclaration),
         (Style, "263") => (RuleGroup::Stable, None, Optional, style::inconsistent_dimension::BadArrayDeclaration),
         (Style, "271") => (RuleGroup::Stable, Ast, Optional, style::use_statement::UnsortedUses),
+        (Style, "272") => (RuleGroup::Preview, Ast, Optional, style::unsorted_use_statement::UnsortedUseStatement),
         (Style, "291") => (RuleGroup::Stable, Ast, Default, style::literals::BareDecimal),
         (Style, "301") => (RuleGroup::Preview, Ast, Optional, style::superfluous_while_true::SuperfluousWhileTrue),
         (Style, "311") => (RuleGroup::Preview, Ast, Default, style::keywords::KeywordReuse),

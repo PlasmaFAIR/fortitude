@@ -12,6 +12,7 @@ pub mod literals;
 pub(crate) mod semicolons;
 pub mod strings;
 pub mod superfluous_while_true;
+pub(crate) mod unsorted_use_statement;
 pub(crate) mod use_statement;
 pub mod useless_return;
 pub mod whitespace;
@@ -66,6 +67,7 @@ mod tests {
     #[test_case(Rule::SuperfluousElseExit, Path::new("S254.f90"))]
     #[test_case(Rule::SuperfluousElseStop, Path::new("S255.f90"))]
     #[test_case(Rule::UnsortedUses, Path::new("S271.f90"))]
+    #[test_case(Rule::UnsortedUseStatement, Path::new("S272.f90"))]
     #[test_case(Rule::BareDecimal, Path::new("S291.f90"))]
     #[test_case(Rule::SuperfluousWhileTrue, Path::new("S301.f90"))]
     #[test_case(Rule::KeywordReuse, Path::new("S311_keyword_reuse.f90"))]
@@ -84,6 +86,7 @@ mod tests {
     #[test_case(Rule::LineTooLong, Path::new("S001_line_length_pfunit_ok.pf"))]
     #[test_case(Rule::SuperfluousImplicitNone, Path::new("S201_ok.f90"))]
     #[test_case(Rule::UnsortedUses, Path::new("S271_ok.f90"))]
+    #[test_case(Rule::UnsortedUseStatement, Path::new("S272_ok.f90"))]
     fn rules_pass(rule_code: Rule, path: &Path) -> Result<()> {
         let diagnostics = test_path(
             Path::new("style").join(path).as_path(),
