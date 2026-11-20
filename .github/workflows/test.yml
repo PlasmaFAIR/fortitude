@@ -26,9 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: Swatinem/rust-cache@v2.7.8
     - name: "Install Rust toolchain"
-      run: rustup show
+      run: rustup override set 1.99
+    - uses: Swatinem/rust-cache@v2.7.8
     - name: "Install cargo nextest"
       uses: taiki-e/install-action@v2.56.10
       with:
@@ -62,9 +62,9 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: Swatinem/rust-cache@v2.7.8
     - name: "Install Rust toolchain"
-      run: rustup show
+      run: rustup override set 1.99
+    - uses: Swatinem/rust-cache@v2.7.8
     - name: "Install cargo nextest"
       uses: taiki-e/install-action@v2.56.10
       with:
@@ -86,9 +86,9 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: Swatinem/rust-cache@v2.7.8
     - name: "Install Rust toolchain"
-      run: rustup show
+      run: rustup override set 1.99
+    - uses: Swatinem/rust-cache@v2.7.8
     - name: "Install cargo nextest"
       uses: taiki-e/install-action@v2.56.10
       with:
