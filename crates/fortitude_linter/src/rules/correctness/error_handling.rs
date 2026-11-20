@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::iter::once;
 
 use crate::diagnostics::{Annotation, Diagnostic, Span, Violation};
@@ -126,7 +127,7 @@ impl AstRule for UncheckedStat {
         };
         let stat_node = arg_list.kwarg(stat_name)?;
 
-        let name = stat_node.child_by_field_id(field!("value").into())?.text();
+        let name = stat_node.child_by_field_id(field!("value").into())?;
 
         // Check if the 'stat' variable is checked.
         //
@@ -161,7 +162,7 @@ impl AstRule for UncheckedStat {
             .chain(node.ancestors())
             .take_while(not_scope_boundary)
         {
-            match find_stat_in_siblings(&ancestor, name) {
+            match find_stat_in_siblings(&ancestor, &name) {
                 Ok(CheckStatus::Checked) => {
                     // Found the variable, so stop checking.
                     return None;
@@ -170,7 +171,7 @@ impl AstRule for UncheckedStat {
                     // Found the variable, but it has been overwritten.
                     let mut diagnostic = context.create_diagnostic(
                         Self {
-                            name: name.to_owned(),
+                            name: name.text().to_owned(),
                             stat: stat_type,
                             result: CheckStatus::Overwritten(textrange),
                         },
@@ -199,7 +200,7 @@ impl AstRule for UncheckedStat {
         }
         some_vec!(context.create_diagnostic(
             Self {
-                name: name.to_owned(),
+                name: name.text().to_owned(),
                 stat: stat_type,
                 result: CheckStatus::Unchecked
             },
@@ -222,9 +223,28 @@ impl AstRule for UncheckedStat {
     }
 }
 
-fn find_stat_in_siblings(node: &Node, stat_name: &str) -> Result<CheckStatus> {
-    let mut sibling = *node;
+/// Checks if two strings are equal, ignoring both case and whitespace, without
+/// allocating if possible
+///
+/// `lhs` should already have whitespace removed
+fn eq_ignore_whitespace_and_case(lhs: &str, rhs: &str) -> bool {
+    let mut rhs = Cow::from(rhs);
+    if rhs.contains(' ') {
+        rhs = rhs.replace(' ', "").into();
+    }
+    lhs.eq_ignore_ascii_case(&rhs)
+}
 
+fn find_stat_in_siblings(node: &Node, stat_name: &Node) -> Result<CheckStatus> {
+    let stat_kind = stat_name.kind_id();
+
+    // Possibly remove whitespace, to make checking arrays and derived types more robust
+    let mut stat_name = Cow::from(stat_name.text());
+    if stat_name.contains(' ') {
+        stat_name = stat_name.replace(' ', "").into();
+    }
+
+    let mut sibling = *node;
     while let Some(node) = sibling.next_sibling() {
         sibling = node;
 
@@ -234,11 +254,10 @@ fn find_stat_in_siblings(node: &Node, stat_name: &str) -> Result<CheckStatus> {
             continue;
         }
 
-        if let Some(stat_node) = once(sibling)
-            .chain(sibling.descendants())
-            .find(|d| d.kind_id() == kind!("identifier") && d == stat_name)
-        {
-            return stat_check_status(&stat_node, stat_name);
+        if let Some(stat_node) = once(sibling).chain(sibling.descendants()).find(|d| {
+            d.kind_id() == stat_kind && eq_ignore_whitespace_and_case(&stat_name, d.text())
+        }) {
+            return stat_check_status(&stat_node, &stat_name);
         }
     }
     Ok(CheckStatus::Unchecked)
