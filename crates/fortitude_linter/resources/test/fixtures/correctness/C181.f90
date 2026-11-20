@@ -163,4 +163,33 @@ contains
     call execute_command_line("ls", Cmdstat=status)
   end function cmd_line
 
+  subroutine issue_794_array()
+    integer, allocatable :: x
+    integer :: status(2)
+
+    allocate(x, stat=status ( 2 ))  ! overwritten in next statement
+
+    allocate(x, stat=status(2))  ! ok
+    if (status ( 2 ) /= 0) then
+      print *, "Error allocating x"
+      stop 1
+    end if
+  end subroutine issue_794_array
+
+  subroutine issue_794_type()
+    integer, allocatable :: x
+    type :: status_t
+      integer :: alloc
+    end type status_t
+    type(status_t) :: status
+
+    allocate(x, stat=status%alloc)  ! overwritten in next statement
+
+    allocate(x, stat=status % alloc)  ! ok
+    if (STATUS%ALLOC /= 0) then
+      print *, "Error allocating x"
+      stop 1
+    end if
+  end subroutine issue_794_type
+
 end program p
