@@ -290,3 +290,31 @@ C181 cmdstat argument 'status' is not checked in this scope.
     |                                     ^^^^^^^^^^^^^^
 164 |   end function cmd_line
     |
+
+C181 stat argument 'status ( 2 )' is overwritten before being checked in this scope.
+   --> ./resources/test/fixtures/correctness/C181.f90:170:17
+    |
+168 |     integer :: status(2)
+169 |
+170 |     allocate(x, stat=status ( 2 ))  ! overwritten in next statement
+    |                 ^^^^^^^^^^^^^^^^^ Set here...
+171 |
+172 |     allocate(x, stat=status(2))  ! ok
+    |                 -------------- ... and overwritten here
+173 |     if (status ( 2 ) /= 0) then
+174 |       print *, "Error allocating x"
+    |
+
+C181 stat argument 'status%alloc' is overwritten before being checked in this scope.
+   --> ./resources/test/fixtures/correctness/C181.f90:186:17
+    |
+184 |     type(status_t) :: status
+185 |
+186 |     allocate(x, stat=status%alloc)  ! overwritten in next statement
+    |                 ^^^^^^^^^^^^^^^^^ Set here...
+187 |
+188 |     allocate(x, stat=status % alloc)  ! ok
+    |                 ------------------- ... and overwritten here
+189 |     if (STATUS%ALLOC /= 0) then
+190 |       print *, "Error allocating x"
+    |
