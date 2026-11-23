@@ -189,6 +189,7 @@ pub fn code_to_rule(category: Category, code: &str) -> Option<(RuleGroup, Rule)>
         (Style, "104") => (RuleGroup::Stable, Ast, Optional, style::whitespace::IncorrectSpaceBetweenBrackets),
         (Style, "105") => (RuleGroup::Preview, None, Optional, style::whitespace::IncorrectIndentation),
         (Style, "106") => (RuleGroup::Preview, None, Optional, style::whitespace::IndentedPreprocessorStatement),
+        (Style, "107") => (RuleGroup::Preview, Ast, Optional, style::missing_blank_line_between_procedures::MissingBlankLineBetweenProcedures),
         (Style, "201") => (RuleGroup::Stable, Ast, Optional, style::implicit_none::SuperfluousImplicitNone),
         (Style, "211") => (RuleGroup::Stable, Ast, Optional, style::file_contents::MultipleModules),
         (Style, "212") => (RuleGroup::Stable, Ast, Optional, style::file_contents::ProgramWithModule),
