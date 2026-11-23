@@ -6,7 +6,7 @@ This rule is turned on by default.
 ## What it does
 Checks for the use of keywords comprised of two words where the space is
 omitted, such as `elseif` instead of `else if` and `endmodule` instead of
-`endmodule`. The keywords `inout` and `goto` are exempt from this rule by
+`end module`. The keywords `inout` and `goto` are exempt from this rule by
 default, but may be included by setting the options
 [`check.keyword-whitespace.inout-with-space`][check.keyword-whitespace.inout-with-space] and
 [`check.keyword-whitespace.goto-with-space`][check.keyword-whitespace.goto-with-space].
