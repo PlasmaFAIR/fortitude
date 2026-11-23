@@ -6,7 +6,7 @@ Checks for missing `intent` on dummy arguments
 
 ## Why is this bad?
 Procedure dummy arguments should have an explicit `intent`
-attributes. This can help catch logic errors, potentially improve
+attribute. This can help catch logic errors, potentially improve
 performance, as well as serving as documentation for users of
 the procedure.
 
