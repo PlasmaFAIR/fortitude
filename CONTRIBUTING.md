@@ -51,6 +51,31 @@ cargo install cargo-nextest --locked
 Throughout this guide, any usages of `cargo test` can be replaced with `cargo nextest run`,
 if you choose to install `nextest`.
 
+### Use of Generative AI
+
+We accept the usage of generative AI tools to assist with software development,
+subject to the following policies:
+
+- **Human accountability**: There must be a human-in-the-loop who can take
+  responsibility for the submission. Fully autonomous contributions will be
+  rejected.
+- **Understanding and Review**: Any generated code must be thoroughly
+  reviewed and understood by the contributor. You must be able to explain
+  any design decisions to the reviewers and respond meaningfully to feedback.
+- **Code Quality**: AI-generated code can introduce unnecessary complexity and
+  abstractions. Please ensure that solutions are as simple, maintainable and
+  consistent with the existing codebase as possible.
+- **Testing**: AI-generated tests must be reviewed with the same rigour as other
+  contributions. Tests must be concise, understandable to a human reviewer, and
+  meaningfully validate the intended behaviour.
+- **Transparency**: We permit the use of AI tools to assist with communications
+  in issues and pull requests, including spelling and grammar checking.
+  However, any substantive AI-generated content must be disclosed.
+- **AI-Assisted Code Review**: Please do not use GitHub Copilot or similar AI
+  tools to automatically review pull requests. Its suggestions can be misleading
+  and introduce noise to the review process, increasing the work burden on the
+  human reviewers.
+
 ## Building and running from source
 
 To build Fortitude from source, you must first have a working Rust environment
