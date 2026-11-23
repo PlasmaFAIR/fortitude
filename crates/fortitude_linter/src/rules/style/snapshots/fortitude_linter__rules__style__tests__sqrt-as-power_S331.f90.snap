@@ -1,0 +1,148 @@
+---
+source: crates/fortitude_linter/src/rules/style/mod.rs
+expression: diagnostics
+---
+S331 [*] `x ** 0.5` can be written as `sqrt(x)`
+ --> ./resources/test/fixtures/style/S331.f90:7:7
+  |
+6 |   ! Should be flagged
+7 |   y = x ** 0.5
+  |       ^^^^^^^^
+8 |   y = x**0.5_dp
+9 |   y = x ** 5e-1
+  |
+help: Use `sqrt`
+4  |   real(dp) :: x, y, a, b
+5  |
+6  |   ! Should be flagged
+   -   y = x ** 0.5
+7  +   y = sqrt(x)
+8  |   y = x**0.5_dp
+9  |   y = x ** 5e-1
+10 |   y = x ** 5.0d-1
+note: This is an unsafe fix and may change runtime behavior
+
+S331 [*] `x ** 0.5` can be written as `sqrt(x)`
+  --> ./resources/test/fixtures/style/S331.f90:8:7
+   |
+ 6 |   ! Should be flagged
+ 7 |   y = x ** 0.5
+ 8 |   y = x**0.5_dp
+   |       ^^^^^^^^^
+ 9 |   y = x ** 5e-1
+10 |   y = x ** 5.0d-1
+   |
+help: Use `sqrt`
+5  |
+6  |   ! Should be flagged
+7  |   y = x ** 0.5
+   -   y = x**0.5_dp
+8  +   y = sqrt(x)
+9  |   y = x ** 5e-1
+10 |   y = x ** 5.0d-1
+11 |   y = x ** (0.5)
+note: This is an unsafe fix and may change runtime behavior
+
+S331 [*] `x ** 0.5` can be written as `sqrt(x)`
+  --> ./resources/test/fixtures/style/S331.f90:9:7
+   |
+ 7 |   y = x ** 0.5
+ 8 |   y = x**0.5_dp
+ 9 |   y = x ** 5e-1
+   |       ^^^^^^^^^
+10 |   y = x ** 5.0d-1
+11 |   y = x ** (0.5)
+   |
+help: Use `sqrt`
+6  |   ! Should be flagged
+7  |   y = x ** 0.5
+8  |   y = x**0.5_dp
+   -   y = x ** 5e-1
+9  +   y = sqrt(x)
+10 |   y = x ** 5.0d-1
+11 |   y = x ** (0.5)
+12 |   y = (a + b) ** 0.5
+note: This is an unsafe fix and may change runtime behavior
+
+S331 [*] `x ** 0.5` can be written as `sqrt(x)`
+  --> ./resources/test/fixtures/style/S331.f90:10:7
+   |
+ 8 |   y = x**0.5_dp
+ 9 |   y = x ** 5e-1
+10 |   y = x ** 5.0d-1
+   |       ^^^^^^^^^^^
+11 |   y = x ** (0.5)
+12 |   y = (a + b) ** 0.5
+   |
+help: Use `sqrt`
+7  |   y = x ** 0.5
+8  |   y = x**0.5_dp
+9  |   y = x ** 5e-1
+   -   y = x ** 5.0d-1
+10 +   y = sqrt(x)
+11 |   y = x ** (0.5)
+12 |   y = (a + b) ** 0.5
+13 |   y = 2.0 * x ** 0.5 + 1.0
+note: This is an unsafe fix and may change runtime behavior
+
+S331 [*] `x ** 0.5` can be written as `sqrt(x)`
+  --> ./resources/test/fixtures/style/S331.f90:11:7
+   |
+ 9 |   y = x ** 5e-1
+10 |   y = x ** 5.0d-1
+11 |   y = x ** (0.5)
+   |       ^^^^^^^^^^
+12 |   y = (a + b) ** 0.5
+13 |   y = 2.0 * x ** 0.5 + 1.0
+   |
+help: Use `sqrt`
+8  |   y = x**0.5_dp
+9  |   y = x ** 5e-1
+10 |   y = x ** 5.0d-1
+   -   y = x ** (0.5)
+11 +   y = sqrt(x)
+12 |   y = (a + b) ** 0.5
+13 |   y = 2.0 * x ** 0.5 + 1.0
+14 |
+note: This is an unsafe fix and may change runtime behavior
+
+S331 [*] `x ** 0.5` can be written as `sqrt(x)`
+  --> ./resources/test/fixtures/style/S331.f90:12:7
+   |
+10 |   y = x ** 5.0d-1
+11 |   y = x ** (0.5)
+12 |   y = (a + b) ** 0.5
+   |       ^^^^^^^^^^^^^^
+13 |   y = 2.0 * x ** 0.5 + 1.0
+   |
+help: Use `sqrt`
+9  |   y = x ** 5e-1
+10 |   y = x ** 5.0d-1
+11 |   y = x ** (0.5)
+   -   y = (a + b) ** 0.5
+12 +   y = sqrt(a + b)
+13 |   y = 2.0 * x ** 0.5 + 1.0
+14 |
+15 |   ! Should not be flagged
+note: This is an unsafe fix and may change runtime behavior
+
+S331 [*] `x ** 0.5` can be written as `sqrt(x)`
+  --> ./resources/test/fixtures/style/S331.f90:13:13
+   |
+11 |   y = x ** (0.5)
+12 |   y = (a + b) ** 0.5
+13 |   y = 2.0 * x ** 0.5 + 1.0
+   |             ^^^^^^^^
+14 |
+15 |   ! Should not be flagged
+   |
+help: Use `sqrt`
+10 |   y = x ** 5.0d-1
+11 |   y = x ** (0.5)
+12 |   y = (a + b) ** 0.5
+   -   y = 2.0 * x ** 0.5 + 1.0
+13 +   y = 2.0 * sqrt(x) + 1.0
+14 |
+15 |   ! Should not be flagged
+16 |   y = sqrt(x)
+note: This is an unsafe fix and may change runtime behavior
