@@ -34,6 +34,34 @@ program test
     ! x = 2
   end if
 
+  if (flag) then
+  end if
+
+  if (flag .and. nkeys > 0) then
+  else
+    x = 1
+  end if
+
+  if (flag) then
+  else if (nkeys > 1) then
+    x = 1
+  else
+    x = 2
+  end if
+
+  if (flag) then
+    x = 1
+  else if (nkeys > 1) then
+    x = 2
+  else
+  end if
+
+  if (flag) then
+  else
+    ! x = 2
+    x = 3
+  end if
+
   ! No violations
   if (flag) then
     x = 1

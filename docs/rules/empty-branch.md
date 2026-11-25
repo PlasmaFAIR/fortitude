@@ -1,4 +1,6 @@
 # empty-branch (C153)
+Fix is sometimes available.
+
 This rule is unstable and in [preview](../preview.md). The `--preview` flag is required for use.
 
 ## What it does
@@ -33,3 +35,9 @@ else
     continue
 end if
 ```
+
+## Fix safety
+Empty `else` branches without comments are removed, and an empty `if` branch
+followed by a plain `else` is inverted. Both fixes are safe. Branches with
+comments and empty `else if` branches only get display-only fixes that show
+an inserted `continue`.

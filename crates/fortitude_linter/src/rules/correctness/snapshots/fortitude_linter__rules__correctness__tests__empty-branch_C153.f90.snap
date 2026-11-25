@@ -2,7 +2,7 @@
 source: crates/fortitude_linter/src/rules/correctness/mod.rs
 expression: diagnostics
 ---
-C153 Empty `else` branch
+C153 [*] Empty `else` branch
   --> ./resources/test/fixtures/correctness/C153.f90:11:5
    |
  9 |     if (flag) then
@@ -12,8 +12,16 @@ C153 Empty `else` branch
 12 |     end if
 13 |   end if
    |
+help: Remove empty branch or insert `continue`
+8  |     call next_record()
+9  |     if (flag) then
+10 |       goto 100
+   -     else
+11 |     end if
+12 |   end if
+13 |
 
-C153 Empty `if` branch
+C153 [*] Empty `if` branch
   --> ./resources/test/fixtures/correctness/C153.f90:15:3
    |
 13 |   end if
@@ -23,8 +31,18 @@ C153 Empty `if` branch
 16 |   else
 17 |     x = 1
    |
+help: Remove empty branch or insert `continue`
+12 |     end if
+13 |   end if
+14 |
+   -   if (flag) then
+   -   else
+15 +   if (.not. (flag)) then
+16 |     x = 1
+17 |   end if
+18 |
 
-C153 Empty `else if` branch
+C153 [*] Empty `else if` branch
   --> ./resources/test/fixtures/correctness/C153.f90:22:3
    |
 20 |   if (flag) then
@@ -34,8 +52,18 @@ C153 Empty `else if` branch
 23 |   else
 24 |     x = 2
    |
+help: Remove empty branch or insert `continue`
+help: Delete the branch instead if it is not needed
+20 |   if (flag) then
+21 |     x = 1
+22 |   else if (nkeys > 1) then
+23 +     continue
+24 |   else
+25 |     x = 2
+26 |   end if
+note: This is a display-only fix and is likely to be incorrect
 
-C153 Empty `if` branch
+C153 [*] Empty `if` branch
   --> ./resources/test/fixtures/correctness/C153.f90:27:3
    |
 25 |   end if
@@ -45,8 +73,18 @@ C153 Empty `if` branch
 28 |     ! x = 1
 29 |   end if
    |
+help: Remove empty branch or insert `continue`
+help: Delete the branch instead if it is not needed
+25 |   end if
+26 |
+27 |   if (flag) then
+28 +     continue
+29 |     ! x = 1
+30 |   end if
+31 |
+note: This is a display-only fix and is likely to be incorrect
 
-C153 Empty `else` branch
+C153 [*] Empty `else` branch
   --> ./resources/test/fixtures/correctness/C153.f90:33:3
    |
 31 |   if (flag) then
@@ -56,3 +94,114 @@ C153 Empty `else` branch
 34 |     ! x = 2
 35 |   end if
    |
+help: Remove empty branch or insert `continue`
+help: Delete the branch instead if it is not needed
+31 |   if (flag) then
+32 |     x = 1
+33 |   else
+34 +     continue
+35 |     ! x = 2
+36 |   end if
+37 |
+note: This is a display-only fix and is likely to be incorrect
+
+C153 [*] Empty `if` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:37:3
+   |
+35 |   end if
+36 |
+37 |   if (flag) then
+   |   ^^^^^^^^^^^^^^
+38 |   end if
+   |
+help: Remove empty branch or insert `continue`
+help: Delete the branch instead if it is not needed
+35 |   end if
+36 |
+37 |   if (flag) then
+38 +     continue
+39 |   end if
+40 |
+41 |   if (flag .and. nkeys > 0) then
+note: This is a display-only fix and is likely to be incorrect
+
+C153 [*] Empty `if` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:40:3
+   |
+38 |   end if
+39 |
+40 |   if (flag .and. nkeys > 0) then
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+41 |   else
+42 |     x = 1
+   |
+help: Remove empty branch or insert `continue`
+37 |   if (flag) then
+38 |   end if
+39 |
+   -   if (flag .and. nkeys > 0) then
+   -   else
+40 +   if (.not. (flag .and. nkeys > 0)) then
+41 |     x = 1
+42 |   end if
+43 |
+
+C153 [*] Empty `if` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:45:3
+   |
+43 |   end if
+44 |
+45 |   if (flag) then
+   |   ^^^^^^^^^^^^^^
+46 |   else if (nkeys > 1) then
+47 |     x = 1
+   |
+help: Remove empty branch or insert `continue`
+help: Delete the branch instead if it is not needed
+43 |   end if
+44 |
+45 |   if (flag) then
+46 +     continue
+47 |   else if (nkeys > 1) then
+48 |     x = 1
+49 |   else
+note: This is a display-only fix and is likely to be incorrect
+
+C153 [*] Empty `else` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:56:3
+   |
+54 |   else if (nkeys > 1) then
+55 |     x = 2
+56 |   else
+   |   ^^^^
+57 |   end if
+   |
+help: Remove empty branch or insert `continue`
+53 |     x = 1
+54 |   else if (nkeys > 1) then
+55 |     x = 2
+   -   else
+56 |   end if
+57 |
+58 |   if (flag) then
+
+C153 [*] Empty `if` branch
+  --> ./resources/test/fixtures/correctness/C153.f90:59:3
+   |
+57 |   end if
+58 |
+59 |   if (flag) then
+   |   ^^^^^^^^^^^^^^
+60 |   else
+61 |     ! x = 2
+   |
+help: Remove empty branch or insert `continue`
+help: Delete the branch instead if it is not needed
+57 |   end if
+58 |
+59 |   if (flag) then
+60 +     continue
+61 |   else
+62 |     ! x = 2
+63 |     x = 3
+note: This is a display-only fix and is likely to be incorrect
