@@ -15,6 +15,11 @@ use ruff_macros::derive_message_formats;
 /// values with `==`, `/=`, `.eq.` or `.ne.` can therefore give surprising
 /// results.
 ///
+/// ## Example
+/// ```f90
+/// if (x == y) error stop
+/// ```
+///
 /// Use an explicit tolerance instead:
 ///
 /// ```f90
