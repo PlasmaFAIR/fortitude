@@ -1,5 +1,6 @@
 pub(crate) mod accessibility_statements;
 pub(crate) mod assumed_size;
+pub(crate) mod compare_reals;
 pub(crate) mod conditionals;
 pub(crate) mod derived_default_init;
 pub(crate) mod empty_branch;
@@ -79,6 +80,7 @@ mod tests {
     #[test_case(Rule::UnreachableStatement, Path::new("C191.f90"))]
     #[test_case(Rule::ShadowedVariable, Path::new("C201_shadowed_variable.f90"))]
     #[test_case(Rule::MutableModuleVariable, Path::new("C202.f90"))]
+    #[test_case(Rule::CompareReals, Path::new("C184.f90"))]
     fn rules(rule_code: Rule, path: &Path) -> Result<()> {
         let snapshot = format!("{}_{}", rule_code.as_ref(), path.to_string_lossy());
         let diagnostics = test_path(

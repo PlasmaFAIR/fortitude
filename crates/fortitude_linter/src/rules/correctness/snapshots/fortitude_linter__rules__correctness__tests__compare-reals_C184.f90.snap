@@ -1,0 +1,45 @@
+---
+source: crates/fortitude_linter/src/rules/correctness/mod.rs
+expression: diagnostics
+---
+C184 real values compared with '=='; use a tolerance instead
+  --> ./resources/test/fixtures/correctness/C184.f90:10:9
+   |
+ 8 |     i = 1
+ 9 |
+10 |     if (x == y) error stop
+   |         ^^^^^^
+11 |     if (x /= y) error stop
+12 |     if (x .eq. y) error stop
+   |
+
+C184 real values compared with '/='; use a tolerance instead
+  --> ./resources/test/fixtures/correctness/C184.f90:11:9
+   |
+10 |     if (x == y) error stop
+11 |     if (x /= y) error stop
+   |         ^^^^^^
+12 |     if (x .eq. y) error stop
+13 |     if (i == 1) error stop
+   |
+
+C184 real values compared with '.eq.'; use a tolerance instead
+  --> ./resources/test/fixtures/correctness/C184.f90:12:9
+   |
+10 |     if (x == y) error stop
+11 |     if (x /= y) error stop
+12 |     if (x .eq. y) error stop
+   |         ^^^^^^^^
+13 |     if (i == 1) error stop
+14 |     if (1.0 == 2.0) error stop
+   |
+
+C184 real values compared with '=='; use a tolerance instead
+  --> ./resources/test/fixtures/correctness/C184.f90:14:9
+   |
+12 |     if (x .eq. y) error stop
+13 |     if (i == 1) error stop
+14 |     if (1.0 == 2.0) error stop
+   |         ^^^^^^^^^^
+15 | end program test
+   |
