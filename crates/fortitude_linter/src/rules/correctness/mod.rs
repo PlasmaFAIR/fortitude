@@ -1,6 +1,6 @@
 pub(crate) mod accessibility_statements;
 pub(crate) mod assumed_size;
-pub mod compare_reals;
+pub(crate) mod compare_reals;
 pub(crate) mod conditionals;
 pub(crate) mod derived_default_init;
 pub(crate) mod empty_branch;

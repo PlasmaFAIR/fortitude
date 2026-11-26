@@ -28,6 +28,8 @@ use ruff_macros::derive_message_formats;
 ///
 /// ## References
 /// - [Fortran-Lang Best Practices on Floating Point Numbers](https://fortran-lang.org/learn/best_practices/floating_point/)
+/// - Clerman, N. Spector, W., 2012, _Modern Fortran: Style and Usage_, Cambridge
+///   University Press, Rule 171, p. 250.
 /// - [Ruff RUF069](https://docs.astral.sh/ruff/rules/float-equality-comparison/)
 #[derive(ViolationMetadata)]
 pub(crate) struct CompareReals {
